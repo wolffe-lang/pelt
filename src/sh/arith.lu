@@ -377,7 +377,7 @@ fn binary(mut sh: Sh, mut r: Ar, level: int) -> int {
 
 fn binop(mut r: Ar, op: str, a: int, b: int) -> int {
     if op == "+" {
-        return wsub(a, b)
+        return wadd(a, b)
     }
     if op == "-" {
         return wsub(a, b)
