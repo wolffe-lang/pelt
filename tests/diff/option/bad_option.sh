@@ -1,0 +1,2 @@
+set -Q
+echo after
