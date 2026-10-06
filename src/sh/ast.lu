@@ -1,0 +1,111 @@
+//! sh.ast — the syntax tree, as an arena.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.9 (the shapes of commands)
+//! and 2.10 (the grammar).
+//!
+//! **Why an arena.** wolf 0.2.24 refuses an `enum` whose variants carry
+//! payloads of different shapes ("enum payload slots with conflicting
+//! types across variants", c06) and a struct that holds a `List` of
+//! itself at the push ("`copy` of a value nested this deep"). So every
+//! node lives in one `List[Node]` and refers to its children by index.
+//! The arena is the shell's for its whole life: a function body parsed
+//! by `eval` or `.` stays where its definition can find it.
+//!
+//! One `Node` shape serves every kind; what each field means per kind:
+//!
+//! | kind | text | words | kids | ints |
+//! |---|---|---|---|---|
+//! | LIST | | | and-or lists | 1 per kid when it ends in `&` |
+//! | ANDOR | | | pipelines | the operator before each later kid: 1 `&&`, 2 `\|\|` |
+//! | PIPE | | | commands | [bang] |
+//! | SIMPLE | | every word, assignments first | | [count of assignments] |
+//! | REDIR | operator | [target word] | | [fd or -1, here-doc id or -1, delimiter quoted] |
+//! | SUBSHELL, BRACE | | | [list] | |
+//! | IF | | | [cond, then, cond, then, …, else?] | [has else] |
+//! | WHILE, UNTIL | | | [cond, body] | |
+//! | FOR | name | the word list | [body] | [has `in`] |
+//! | CASE | the word | | items | |
+//! | ITEM | | patterns | [body or -1] | [0 `;;` or none, 1 `;&`] |
+//! | FUNC | name | | [body] | |
+//!
+//! Any command may carry redirections in `redirs`.
+
+const K_LIST: int = 1
+
+const K_ANDOR: int = 2
+
+const K_PIPE: int = 3
+
+const K_SIMPLE: int = 4
+
+const K_REDIR: int = 5
+
+const K_SUBSHELL: int = 6
+
+const K_BRACE: int = 7
+
+const K_IF: int = 8
+
+const K_WHILE: int = 9
+
+const K_UNTIL: int = 10
+
+const K_FOR: int = 11
+
+const K_CASE: int = 12
+
+const K_ITEM: int = 13
+
+const K_FUNC: int = 14
+
+struct Node {
+    kind: int,
+    text: str,
+    words: List[str],
+    kids: List[int],
+    ints: List[int],
+    redirs: List[int],
+    line: int,
+}
+
+struct Ast {
+    nodes: List[Node],
+    docs: List[str],
+}
+
+fn new_ast() -> Ast {
+    Ast { nodes: List[Node](), docs: List[str]() }
+}
+
+fn add(mut a: Ast, kind: int, text: str, line: int) -> int {
+    (mut a.nodes).push(Node {
+        kind: kind,
+        text: text,
+        words: List[str](),
+        kids: List[int](),
+        ints: List[int](),
+        redirs: List[int](),
+        line: line,
+    })
+    a.nodes.len - 1
+}
+
+fn kind_name(k: int) -> str {
+    match k {
+        1 => "list",
+        2 => "andor",
+        3 => "pipe",
+        4 => "simple",
+        5 => "redir",
+        6 => "subshell",
+        7 => "brace",
+        8 => "if",
+        9 => "while",
+        10 => "until",
+        11 => "for",
+        12 => "case",
+        13 => "item",
+        14 => "func",
+        _ => "?",
+    }
+}
