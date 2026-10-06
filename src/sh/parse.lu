@@ -264,7 +264,7 @@ fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
                 p.pos += 1
             }
             if p.pos >= p.src.len {
-                fail_at(mut p, "unterminated single quote", line)
+                fail(mut p, "unterminated single quote")
                 return
             }
             p.pos += 1
@@ -304,7 +304,7 @@ fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
     p.pos += 1
     loop {
         if p.pos >= p.src.len {
-            fail_at(mut p, "unterminated double quote", line)
+            fail(mut p, "unterminated double quote")
             return
         }
         let c = at(p, p.pos)
@@ -353,7 +353,7 @@ fn scan_bq(mut p: P, mut o: Buf) {
     p.pos += 1
     loop {
         if p.pos >= p.src.len {
-            fail_at(mut p, "unterminated backquote", line)
+            fail(mut p, "unterminated backquote")
             return
         }
         let c = at(p, p.pos)
@@ -455,7 +455,7 @@ fn scan_cmdsub(mut p: P, mut a: Ast, mut o: Buf) {
     let k = peek(mut p, mut a)
     if k != T_OP || p.tx != ")" {
         if k == T_EOF {
-            fail_at(mut p, "unterminated command substitution", line)
+            fail(mut p, "unterminated command substitution")
         } else {
             unexpected(mut p)
         }
@@ -474,7 +474,7 @@ fn scan_brace(mut p: P, mut a: Ast, mut o: Buf) {
     var junk = buf()
     loop {
         if p.pos >= p.src.len {
-            fail_at(mut p, "unterminated parameter expansion", line)
+            fail(mut p, "unterminated parameter expansion")
             return
         }
         let c = at(p, p.pos)
@@ -641,6 +641,9 @@ fn unexpected(mut p: P) {
     let what = token_name(p)
     if p.tk == T_EOF {
         fail(mut p, "syntax error: unexpected end of file")
+    } else if p.tk == T_NL {
+        // the newline is already behind the lexer, as it is for dash
+        fail(mut p, "syntax error: unexpected {what}")
     } else {
         fail_at(mut p, "syntax error: unexpected {what}", p.tl)
     }
