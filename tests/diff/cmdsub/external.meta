@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+bash=agree
+pending=capture
+why=a command substitution running another program needs a pipe
