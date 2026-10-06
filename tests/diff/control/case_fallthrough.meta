@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+oracle=bash
+why=POSIX.1-2024 ;& (ruling #44); dash 0.5.13.4 refuses it
+dash=differs

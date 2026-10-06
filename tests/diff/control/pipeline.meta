@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+bash=agree
+pending=pipe
+why=pipelines need s215's pipe

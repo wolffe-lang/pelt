@@ -1,0 +1,2 @@
+true & wait
+echo $?
