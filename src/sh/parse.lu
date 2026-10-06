@@ -1,0 +1,1309 @@
+//! sh.parse — the lexer and the parser, XCU 2.3 and 2.10.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.2 (quoting), 2.3 (token
+//! recognition), 2.7.4 (here-documents), 2.9 (commands) and 2.10 (the
+//! grammar); black-box runs of `dash` 0.5.13.4 for where it refuses.
+//! No shell's source.
+//!
+//! The lexer is pulled by the parser one token at a time, so the
+//! parser decides what a word MEANS (a reserved word only in command
+//! position, an assignment only before the command name) and the lexer
+//! only finds where a token ENDS. Finding the end of `$(…)` needs the
+//! grammar itself — a `case` pattern's `)` does not close it — so the
+//! lexer calls back into the parser for that and keeps the raw text.
+//!
+//! A word token's text is the source text with its quotes intact and
+//! every `\`-newline removed; expansion reads the quotes later. A
+//! here-document's body is read when the lexer reaches the newline that
+//! ends the line its operator is on, and lands in `Ast.docs`.
+//!
+//! Errors do not unwind: the first one is recorded in `P.err` with its
+//! line, the token becomes end-of-file, and every caller stops.
+
+const T_WORD: int = 1
+
+const T_NL: int = 2
+
+const T_EOF: int = 3
+
+const T_OP: int = 4
+
+const T_IONUM: int = 5
+
+struct P {
+    src: str,
+    pos: int,
+    line: int,
+    have: bool,
+    tk: int,
+    tx: str,
+    tl: int,
+    tdoc: int,
+    tq: bool,
+    want_doc: int,
+    pend: List[int],
+    pend_delim: List[str],
+    pend_strip: List[bool],
+    err: str,
+    err_line: int,
+}
+
+fn new_parser(src: str, line: int) -> P {
+    P {
+        src: src,
+        pos: 0,
+        line: line,
+        have: false,
+        tk: 0,
+        tx: "",
+        tl: line,
+        tdoc: -1,
+        tq: false,
+        want_doc: 0,
+        pend: List[int](),
+        pend_delim: List[str](),
+        pend_strip: List[bool](),
+        err: "",
+        err_line: 0,
+    }
+}
+
+fn fail(mut p: P, msg: str) {
+    if p.err.len == 0 {
+        p.err = msg
+        p.err_line = p.line
+    }
+    p.tk = T_EOF
+    p.tx = ""
+    p.have = true
+    p.pos = p.src.len
+}
+
+fn fail_at(mut p: P, msg: str, line: int) {
+    if p.err.len == 0 {
+        p.err = msg
+        p.err_line = line
+    }
+    p.tk = T_EOF
+    p.tx = ""
+    p.have = true
+    p.pos = p.src.len
+}
+
+fn is_meta(c: char) -> bool {
+    c == ' ' ||
+        c == '\t' ||
+        c == '\n' ||
+        c == ';' ||
+        c == '&' ||
+        c == '|' ||
+        c == '<' ||
+        c == '>' ||
+        c == '(' ||
+        c == ')'
+}
+
+fn at(p: P, i: int) -> char {
+    ch(p.src, i)
+}
+
+// ---------------------------------------------------------------- lexer
+
+fn lex(mut p: P, mut a: Ast) {
+    loop {
+        let c = at(p, p.pos)
+        if p.pos < p.src.len && (c == ' ' || c == '\t') {
+            p.pos += 1
+            continue
+        }
+        if c == '\\' && at(p, p.pos + 1) == '\n' {
+            p.pos += 2
+            p.line += 1
+            continue
+        }
+        if c == '#' {
+            while p.pos < p.src.len && at(p, p.pos) != '\n' {
+                p.pos += 1
+            }
+            continue
+        }
+        break
+    }
+    p.tl = p.line
+    p.tdoc = -1
+    p.tq = false
+    p.tx = ""
+    if p.pos >= p.src.len {
+        p.tk = T_EOF
+        return
+    }
+    let c = at(p, p.pos)
+    if c == '\n' {
+        p.pos += 1
+        p.line += 1
+        p.tk = T_NL
+        p.tx = "\n"
+        read_docs(mut p, mut a)
+        return
+    }
+    if is_meta(c) {
+        lex_op(mut p)
+        return
+    }
+    let start_line = p.line
+    var o = buf()
+    var quoted = false
+    scan_word(mut p, mut a, mut o, mut quoted)
+    if p.err.len > 0 {
+        return
+    }
+    let w = text(o)
+    p.tq = quoted
+    p.tx = w
+    p.tl = start_line
+    p.tk = T_WORD
+    p.tdoc = -1
+    let nc = at(p, p.pos)
+    if is_digits(w) && (nc == '<' || nc == '>') {
+        p.tk = T_IONUM
+        return
+    }
+    if p.want_doc > 0 {
+        let id = a.docs.len
+        (mut a.docs).push("")
+        (mut p.pend).push(id)
+        (mut p.pend_delim).push(unquote_delim(w))
+        (mut p.pend_strip).push(p.want_doc == 2)
+        p.tdoc = id
+        p.want_doc = 0
+    }
+}
+
+fn lex_op(mut p: P) {
+    let c = at(p, p.pos)
+    let d = at(p, p.pos + 1)
+    var op = ""
+    if c == '&' {
+        op = if d == '&' then "&&" else "&"
+    } else if c == '|' {
+        op = if d == '|' then "||" else "|"
+    } else if c == ';' {
+        if d == ';' {
+            op = ";;"
+        } else if d == '&' {
+            op = ";&"
+        } else {
+            op = ";"
+        }
+    } else if c == '<' {
+        if d == '<' {
+            op = if at(p, p.pos + 2) == '-' then "<<-" else "<<"
+        } else if d == '&' {
+            op = "<&"
+        } else if d == '>' {
+            op = "<>"
+        } else {
+            op = "<"
+        }
+    } else if c == '>' {
+        if d == '>' {
+            op = ">>"
+        } else if d == '&' {
+            op = ">&"
+        } else if d == '|' {
+            op = ">|"
+        } else {
+            op = ">"
+        }
+    } else if c == '(' {
+        op = "("
+    } else {
+        op = ")"
+    }
+    p.pos += op.len
+    p.tk = T_OP
+    p.tx = op
+    if op == "<<" {
+        p.want_doc = 1
+    } else if op == "<<-" {
+        p.want_doc = 2
+    }
+}
+
+fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
+    while p.pos < p.src.len {
+        let c = at(p, p.pos)
+        if is_meta(c) {
+            return
+        }
+        if c == '\\' {
+            quoted = true
+            if at(p, p.pos + 1) == '\n' {
+                p.pos += 2
+                p.line += 1
+                continue
+            }
+            if p.pos + 1 < p.src.len {
+                put_range(mut o, p.src, p.pos, p.pos + 2)
+                p.pos += 2
+            } else {
+                putc(mut o, '\\')
+                p.pos += 1
+            }
+            continue
+        }
+        if c == '\'' {
+            quoted = true
+            let start = p.pos
+            let line = p.line
+            p.pos += 1
+            while p.pos < p.src.len && at(p, p.pos) != '\'' {
+                if at(p, p.pos) == '\n' {
+                    p.line += 1
+                }
+                p.pos += 1
+            }
+            if p.pos >= p.src.len {
+                fail_at(mut p, "unterminated single quote", line)
+                return
+            }
+            p.pos += 1
+            put_range(mut o, p.src, start, p.pos)
+            continue
+        }
+        if c == '"' {
+            quoted = true
+            scan_dq(mut p, mut a, mut o)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        if c == '$' {
+            scan_dollar(mut p, mut a, mut o)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        if c == '`' {
+            scan_bq(mut p, mut o)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        putb(mut o, byte_at(p.src, p.pos))
+        p.pos += 1
+    }
+}
+
+fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
+    let line = p.line
+    putc(mut o, '"')
+    p.pos += 1
+    loop {
+        if p.pos >= p.src.len {
+            fail_at(mut p, "unterminated double quote", line)
+            return
+        }
+        let c = at(p, p.pos)
+        if c == '"' {
+            putc(mut o, '"')
+            p.pos += 1
+            return
+        }
+        if c == '\\' {
+            if at(p, p.pos + 1) == '\n' {
+                p.pos += 2
+                p.line += 1
+                continue
+            }
+            if p.pos + 1 < p.src.len {
+                put_range(mut o, p.src, p.pos, p.pos + 2)
+                p.pos += 2
+                continue
+            }
+        }
+        if c == '$' {
+            scan_dollar(mut p, mut a, mut o)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        if c == '`' {
+            scan_bq(mut p, mut o)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        if c == '\n' {
+            p.line += 1
+        }
+        putb(mut o, byte_at(p.src, p.pos))
+        p.pos += 1
+    }
+}
+
+fn scan_bq(mut p: P, mut o: Buf) {
+    let line = p.line
+    let start = p.pos
+    p.pos += 1
+    loop {
+        if p.pos >= p.src.len {
+            fail_at(mut p, "unterminated backquote", line)
+            return
+        }
+        let c = at(p, p.pos)
+        if c == '`' {
+            p.pos += 1
+            put_range(mut o, p.src, start, p.pos)
+            return
+        }
+        if c == '\\' && p.pos + 1 < p.src.len {
+            if at(p, p.pos + 1) == '\n' {
+                p.line += 1
+            }
+            p.pos += 2
+            continue
+        }
+        if c == '\n' {
+            p.line += 1
+        }
+        p.pos += 1
+    }
+}
+
+fn scan_dollar(mut p: P, mut a: Ast, mut o: Buf) {
+    let d = at(p, p.pos + 1)
+    if d == '(' {
+        if at(p, p.pos + 2) == '(' && scan_arith(mut p, mut o) {
+            return
+        }
+        scan_cmdsub(mut p, mut a, mut o)
+        return
+    }
+    if d == '{' {
+        scan_brace(mut p, mut a, mut o)
+        return
+    }
+    putc(mut o, '$')
+    p.pos += 1
+}
+
+/// `$((…))`: true when the text from here closes as arithmetic, with
+/// the text appended and the position past it; false (nothing moved)
+/// when the parentheses close some other way, which makes it a command
+/// substitution whose first command is a subshell.
+fn scan_arith(mut p: P, mut o: Buf) -> bool {
+    var i = p.pos + 3
+    var depth = 2
+    var lines = 0
+    while i < p.src.len {
+        let c = at(p, i)
+        if c == '(' {
+            depth += 1
+        } else if c == ')' {
+            depth -= 1
+            if depth == 1 {
+                if at(p, i + 1) != ')' {
+                    return false
+                }
+                put_range(mut o, p.src, p.pos, i + 2)
+                p.pos = i + 2
+                p.line += lines
+                return true
+            }
+        } else if c == '\n' {
+            lines += 1
+        }
+        i += 1
+    }
+    false
+}
+
+fn scan_cmdsub(mut p: P, mut a: Ast, mut o: Buf) {
+    let start = p.pos
+    let line = p.line
+    p.pos += 2
+    // `$()` and `$( )` are empty command substitutions.
+    var j = p.pos
+    while j < p.src.len && (at(p, j) == ' ' || at(p, j) == '\t' || at(p, j) == '\n') {
+        j += 1
+    }
+    if at(p, j) == ')' {
+        var k = p.pos
+        while k < j {
+            if at(p, k) == '\n' {
+                p.line += 1
+            }
+            k += 1
+        }
+        p.pos = j + 1
+        put_range(mut o, p.src, start, p.pos)
+        return
+    }
+    let saved_want = p.want_doc
+    p.want_doc = 0
+    p.have = false
+    let _body = parse_clist(mut p, mut a)
+    if p.err.len > 0 {
+        return
+    }
+    let k = peek(mut p, mut a)
+    if k != T_OP || p.tx != ")" {
+        if k == T_EOF {
+            fail_at(mut p, "unterminated command substitution", line)
+        } else {
+            unexpected(mut p)
+        }
+        return
+    }
+    p.have = false
+    p.want_doc = saved_want
+    put_range(mut o, p.src, start, p.pos)
+}
+
+fn scan_brace(mut p: P, mut a: Ast, mut o: Buf) {
+    let start = p.pos
+    let line = p.line
+    p.pos += 2
+    var depth = 1
+    var junk = buf()
+    loop {
+        if p.pos >= p.src.len {
+            fail_at(mut p, "unterminated parameter expansion", line)
+            return
+        }
+        let c = at(p, p.pos)
+        if c == '}' {
+            depth -= 1
+            p.pos += 1
+            if depth == 0 {
+                put_range(mut o, p.src, start, p.pos)
+                return
+            }
+            continue
+        }
+        if c == '{' {
+            depth += 1
+            p.pos += 1
+            continue
+        }
+        if c == '\\' && p.pos + 1 < p.src.len {
+            if at(p, p.pos + 1) == '\n' {
+                p.line += 1
+            }
+            p.pos += 2
+            continue
+        }
+        if c == '\'' {
+            p.pos += 1
+            while p.pos < p.src.len && at(p, p.pos) != '\'' {
+                if at(p, p.pos) == '\n' {
+                    p.line += 1
+                }
+                p.pos += 1
+            }
+            p.pos += 1
+            continue
+        }
+        if c == '"' {
+            scan_dq(mut p, mut a, mut junk)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        if c == '$' {
+            scan_dollar(mut p, mut a, mut junk)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        if c == '`' {
+            scan_bq(mut p, mut junk)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
+        if c == '\n' {
+            p.line += 1
+        }
+        p.pos += 1
+    }
+}
+
+/// A here-document delimiter with its quoting removed (XCU 2.7.4).
+fn unquote_delim(w: str) -> str {
+    var o = buf()
+    var i = 0
+    while i < w.len {
+        let c = ch(w, i)
+        if c == '\\' && i + 1 < w.len {
+            putb(mut o, byte_at(w, i + 1))
+            i += 2
+            continue
+        }
+        if c == '\'' || c == '"' {
+            i += 1
+            continue
+        }
+        putb(mut o, byte_at(w, i))
+        i += 1
+    }
+    text(o)
+}
+
+fn read_docs(mut p: P, mut a: Ast) {
+    var k = 0
+    while k < p.pend.len {
+        let id = p.pend[k]
+        let delim = p.pend_delim[k]
+        let strip = p.pend_strip[k]
+        var body = buf()
+        loop {
+            if p.pos >= p.src.len {
+                break
+            }
+            var e = p.pos
+            while e < p.src.len && at(p, e) != '\n' {
+                e += 1
+            }
+            var s = p.pos
+            if strip {
+                while s < e && at(p, s) == '\t' {
+                    s += 1
+                }
+            }
+            let line = p.src[s..e]
+            p.pos = if e < p.src.len then e + 1 else e
+            p.line += 1
+            if line == delim {
+                break
+            }
+            put(mut body, line)
+            putc(mut body, '\n')
+        }
+        a.docs[id] = text(body)
+        k += 1
+    }
+    p.pend = List[int]()
+    p.pend_delim = List[str]()
+    p.pend_strip = List[bool]()
+}
+
+// --------------------------------------------------------------- parser
+
+fn peek(mut p: P, mut a: Ast) -> int {
+    if !p.have {
+        lex(mut p, mut a)
+        p.have = true
+    }
+    p.tk
+}
+
+fn advance(mut p: P) {
+    p.have = false
+}
+
+fn is_word(mut p: P, mut a: Ast, w: str) -> bool {
+    let k = peek(mut p, mut a)
+    k == T_WORD && p.tx == w
+}
+
+fn is_op(mut p: P, mut a: Ast, op: str) -> bool {
+    let k = peek(mut p, mut a)
+    k == T_OP && p.tx == op
+}
+
+fn skip_nl(mut p: P, mut a: Ast) {
+    while peek(mut p, mut a) == T_NL {
+        advance(mut p)
+    }
+}
+
+fn token_name(p: P) -> str {
+    if p.tk == T_EOF {
+        return "end of file"
+    }
+    if p.tk == T_NL {
+        return "newline"
+    }
+    "'{p.tx}'"
+}
+
+fn unexpected(mut p: P) {
+    let what = token_name(p)
+    if p.tk == T_EOF {
+        fail(mut p, "syntax error: unexpected end of file")
+    } else {
+        fail_at(mut p, "syntax error: unexpected {what}", p.tl)
+    }
+}
+
+fn expect_word(mut p: P, mut a: Ast, w: str) -> bool {
+    if is_word(mut p, mut a, w) {
+        advance(mut p)
+        return true
+    }
+    if p.err.len == 0 {
+        if p.tk == T_EOF {
+            fail(mut p, "syntax error: unexpected end of file (expecting '{w}')")
+        } else {
+            unexpected(mut p)
+        }
+    }
+    false
+}
+
+fn expect_op(mut p: P, mut a: Ast, op: str) -> bool {
+    if is_op(mut p, mut a, op) {
+        advance(mut p)
+        return true
+    }
+    if p.err.len == 0 {
+        if p.tk == T_EOF {
+            fail(mut p, "syntax error: unexpected end of file (expecting '{op}')")
+        } else {
+            unexpected(mut p)
+        }
+    }
+    false
+}
+
+/// The next complete command (XCU 2.10's `complete_command`): its LIST
+/// node, -1 at end of input, -2 on a syntax error (in `p.err`).
+fn parse_complete(mut p: P, mut a: Ast) -> int {
+    skip_nl(mut p, mut a)
+    if p.err.len > 0 {
+        return -2
+    }
+    if peek(mut p, mut a) == T_EOF {
+        return -1
+    }
+    let n = parse_list_top(mut p, mut a)
+    if p.err.len > 0 {
+        return -2
+    }
+    let k = peek(mut p, mut a)
+    if k == T_NL {
+        advance(mut p)
+    } else if k != T_EOF {
+        unexpected(mut p)
+        return -2
+    }
+    if p.err.len > 0 {
+        return -2
+    }
+    n
+}
+
+fn parse_list_top(mut p: P, mut a: Ast) -> int {
+    let n = add(mut a, K_LIST, "", p.tl)
+    loop {
+        let ao = parse_andor(mut p, mut a)
+        if p.err.len > 0 {
+            return n
+        }
+        (mut a.nodes[n].kids).push(ao)
+        (mut a.nodes[n].ints).push(0)
+        if is_op(mut p, mut a, ";") || is_op(mut p, mut a, "&") {
+            if p.tx == "&" {
+                let last = a.nodes[n].ints.len - 1
+                a.nodes[n].ints[last] = 1
+            }
+            advance(mut p)
+            let k = peek(mut p, mut a)
+            if k == T_NL || k == T_EOF {
+                break
+            }
+            continue
+        }
+        break
+    }
+    n
+}
+
+fn at_close(mut p: P, mut a: Ast) -> bool {
+    let k = peek(mut p, mut a)
+    if k == T_EOF {
+        return true
+    }
+    if k == T_OP {
+        return p.tx == ")" || p.tx == ";;" || p.tx == ";&"
+    }
+    if k == T_WORD {
+        let w = p.tx
+        return w == "then" ||
+            w == "else" ||
+            w == "elif" ||
+            w == "fi" ||
+            w == "do" ||
+            w == "done" ||
+            w == "esac" ||
+            w == "}}"
+    }
+    false
+}
+
+/// XCU 2.10's `compound_list`: at least one and-or list, separated by
+/// `;`, `&` or newlines, up to a closing reserved word or operator.
+fn parse_clist(mut p: P, mut a: Ast) -> int {
+    skip_nl(mut p, mut a)
+    let n = add(mut a, K_LIST, "", p.tl)
+    loop {
+        if p.err.len > 0 {
+            return n
+        }
+        if at_close(mut p, mut a) {
+            break
+        }
+        let ao = parse_andor(mut p, mut a)
+        if p.err.len > 0 {
+            return n
+        }
+        (mut a.nodes[n].kids).push(ao)
+        (mut a.nodes[n].ints).push(0)
+        if is_op(mut p, mut a, ";") || is_op(mut p, mut a, "&") {
+            if p.tx == "&" {
+                let last = a.nodes[n].ints.len - 1
+                a.nodes[n].ints[last] = 1
+            }
+            advance(mut p)
+            skip_nl(mut p, mut a)
+            continue
+        }
+        if peek(mut p, mut a) == T_NL {
+            skip_nl(mut p, mut a)
+            continue
+        }
+        break
+    }
+    if p.err.len == 0 && a.nodes[n].kids.len == 0 {
+        unexpected(mut p)
+    }
+    n
+}
+
+fn parse_andor(mut p: P, mut a: Ast) -> int {
+    let first = parse_pipeline(mut p, mut a)
+    if p.err.len > 0 {
+        return first
+    }
+    if !(is_op(mut p, mut a, "&&") || is_op(mut p, mut a, "||")) {
+        return first
+    }
+    let n = add(mut a, K_ANDOR, "", a.nodes[first].line)
+    (mut a.nodes[n].kids).push(first)
+    while is_op(mut p, mut a, "&&") || is_op(mut p, mut a, "||") {
+        let op = if p.tx == "&&" then 1 else 2
+        advance(mut p)
+        skip_nl(mut p, mut a)
+        let next = parse_pipeline(mut p, mut a)
+        if p.err.len > 0 {
+            return n
+        }
+        (mut a.nodes[n].kids).push(next)
+        (mut a.nodes[n].ints).push(op)
+    }
+    n
+}
+
+fn parse_pipeline(mut p: P, mut a: Ast) -> int {
+    var bang = 0
+    let line = p.tl
+    if is_word(mut p, mut a, "!") {
+        bang = 1
+        advance(mut p)
+    }
+    let first = parse_command(mut p, mut a)
+    if p.err.len > 0 {
+        return first
+    }
+    if bang == 0 && !is_op(mut p, mut a, "|") {
+        return first
+    }
+    let n = add(mut a, K_PIPE, "", line)
+    (mut a.nodes[n].ints).push(bang)
+    (mut a.nodes[n].kids).push(first)
+    while is_op(mut p, mut a, "|") {
+        advance(mut p)
+        skip_nl(mut p, mut a)
+        let next = parse_command(mut p, mut a)
+        if p.err.len > 0 {
+            return n
+        }
+        (mut a.nodes[n].kids).push(next)
+    }
+    n
+}
+
+fn is_redir_op(w: str) -> bool {
+    w == "<" ||
+        w == ">" ||
+        w == ">>" ||
+        w == "<&" ||
+        w == ">&" ||
+        w == "<>" ||
+        w == ">|" ||
+        w == "<<" ||
+        w == "<<-"
+}
+
+fn at_redir(mut p: P, mut a: Ast) -> bool {
+    let k = peek(mut p, mut a)
+    k == T_IONUM || k == T_OP && is_redir_op(p.tx)
+}
+
+fn parse_command(mut p: P, mut a: Ast) -> int {
+    let k = peek(mut p, mut a)
+    var n = -1
+    if k == T_OP && p.tx == "(" {
+        n = add(mut a, K_SUBSHELL, "", p.tl)
+        advance(mut p)
+        let body = parse_clist(mut p, mut a)
+        (mut a.nodes[n].kids).push(body)
+        if p.err.len > 0 || !expect_op(mut p, mut a, ")") {
+            return n
+        }
+    } else if k == T_WORD && p.tx == "{{" {
+        n = add(mut a, K_BRACE, "", p.tl)
+        advance(mut p)
+        let body = parse_clist(mut p, mut a)
+        (mut a.nodes[n].kids).push(body)
+        if p.err.len > 0 || !expect_word(mut p, mut a, "}}") {
+            return n
+        }
+    } else if k == T_WORD && p.tx == "if" {
+        n = parse_if(mut p, mut a)
+    } else if k == T_WORD && (p.tx == "while" || p.tx == "until") {
+        n = parse_while(mut p, mut a)
+    } else if k == T_WORD && p.tx == "for" {
+        n = parse_for(mut p, mut a)
+    } else if k == T_WORD && p.tx == "case" {
+        n = parse_case(mut p, mut a)
+    } else if k == T_WORD &&
+        (
+            p.tx == "then" ||
+                p.tx == "else" ||
+                p.tx == "elif" ||
+                p.tx == "fi" ||
+                p.tx == "do" ||
+                p.tx == "done" ||
+                p.tx == "esac" ||
+                p.tx == "}}" ||
+                p.tx == "in"
+        ) {
+        unexpected(mut p)
+        return -1
+    } else if k == T_WORD || at_redir(mut p, mut a) {
+        return parse_simple(mut p, mut a)
+    } else {
+        unexpected(mut p)
+        return -1
+    }
+    if p.err.len > 0 {
+        return n
+    }
+    while at_redir(mut p, mut a) {
+        let r = parse_redir(mut p, mut a)
+        if p.err.len > 0 {
+            return n
+        }
+        (mut a.nodes[n].redirs).push(r)
+    }
+    n
+}
+
+fn is_assignment(w: str) -> bool {
+    let eq = w.find("=") else -1
+    eq > 0 && is_name(w[0..eq])
+}
+
+fn parse_simple(mut p: P, mut a: Ast) -> int {
+    let n = add(mut a, K_SIMPLE, "", p.tl)
+    var nassign = 0
+    var seen_cmd = false
+    loop {
+        if p.err.len > 0 {
+            return n
+        }
+        if at_redir(mut p, mut a) {
+            let r = parse_redir(mut p, mut a)
+            if p.err.len > 0 {
+                return n
+            }
+            (mut a.nodes[n].redirs).push(r)
+            continue
+        }
+        if peek(mut p, mut a) != T_WORD {
+            break
+        }
+        let w = p.tx
+        if !seen_cmd && is_assignment(w) {
+            (mut a.nodes[n].words).push(w)
+            nassign += 1
+            advance(mut p)
+            continue
+        }
+        if !seen_cmd && nassign == 0 && a.nodes[n].redirs.len == 0 && a.nodes[n].words.len == 0 {
+            let line = p.tl
+            advance(mut p)
+            if is_op(mut p, mut a, "(") {
+                return parse_func(mut p, mut a, w, line)
+            }
+            (mut a.nodes[n].words).push(w)
+            seen_cmd = true
+            continue
+        }
+        (mut a.nodes[n].words).push(w)
+        seen_cmd = true
+        advance(mut p)
+    }
+    (mut a.nodes[n].ints).push(nassign)
+    if a.nodes[n].words.len == 0 && a.nodes[n].redirs.len == 0 {
+        unexpected(mut p)
+    }
+    n
+}
+
+fn parse_func(mut p: P, mut a: Ast, name: str, line: int) -> int {
+    advance(mut p)
+    if !is_name(name) {
+        fail_at(mut p, "syntax error: '{name}' is not a valid function name", line)
+        return -1
+    }
+    if !expect_op(mut p, mut a, ")") {
+        return -1
+    }
+    skip_nl(mut p, mut a)
+    let k = peek(mut p, mut a)
+    let ok = k == T_OP && p.tx == "(" ||
+        k == T_WORD &&
+            (
+                p.tx == "{{" ||
+                    p.tx == "if" ||
+                    p.tx == "while" ||
+                    p.tx == "until" ||
+                    p.tx == "for" ||
+                    p.tx == "case"
+            )
+    if !ok {
+        unexpected(mut p)
+        return -1
+    }
+    let body = parse_command(mut p, mut a)
+    let n = add(mut a, K_FUNC, name, line)
+    (mut a.nodes[n].kids).push(body)
+    n
+}
+
+fn parse_redir(mut p: P, mut a: Ast) -> int {
+    var fd = -1
+    let line = p.tl
+    if peek(mut p, mut a) == T_IONUM {
+        fd = to_int(p.tx) else -1
+        advance(mut p)
+        if !at_redir(mut p, mut a) {
+            unexpected(mut p)
+            return -1
+        }
+    }
+    let op = p.tx
+    advance(mut p)
+    if peek(mut p, mut a) != T_WORD {
+        unexpected(mut p)
+        return -1
+    }
+    let n = add(mut a, K_REDIR, op, line)
+    (mut a.nodes[n].words).push(p.tx)
+    (mut a.nodes[n].ints).push(fd)
+    (mut a.nodes[n].ints).push(p.tdoc)
+    (mut a.nodes[n].ints).push(if p.tq then 1 else 0)
+    advance(mut p)
+    n
+}
+
+fn parse_if(mut p: P, mut a: Ast) -> int {
+    let n = add(mut a, K_IF, "", p.tl)
+    advance(mut p)
+    let c = parse_clist(mut p, mut a)
+    if p.err.len > 0 || !expect_word(mut p, mut a, "then") {
+        return n
+    }
+    let b = parse_clist(mut p, mut a)
+    if p.err.len > 0 {
+        return n
+    }
+    (mut a.nodes[n].kids).push(c)
+    (mut a.nodes[n].kids).push(b)
+    var has_else = 0
+    loop {
+        if is_word(mut p, mut a, "elif") {
+            advance(mut p)
+            let c2 = parse_clist(mut p, mut a)
+            if p.err.len > 0 || !expect_word(mut p, mut a, "then") {
+                return n
+            }
+            let b2 = parse_clist(mut p, mut a)
+            if p.err.len > 0 {
+                return n
+            }
+            (mut a.nodes[n].kids).push(c2)
+            (mut a.nodes[n].kids).push(b2)
+            continue
+        }
+        if is_word(mut p, mut a, "else") {
+            advance(mut p)
+            let e = parse_clist(mut p, mut a)
+            if p.err.len > 0 {
+                return n
+            }
+            (mut a.nodes[n].kids).push(e)
+            has_else = 1
+        }
+        break
+    }
+    (mut a.nodes[n].ints).push(has_else)
+    let _ok = expect_word(mut p, mut a, "fi")
+    n
+}
+
+fn parse_while(mut p: P, mut a: Ast) -> int {
+    let kind = if p.tx == "while" then K_WHILE else K_UNTIL
+    let n = add(mut a, kind, "", p.tl)
+    advance(mut p)
+    let c = parse_clist(mut p, mut a)
+    if p.err.len > 0 || !expect_word(mut p, mut a, "do") {
+        return n
+    }
+    let b = parse_clist(mut p, mut a)
+    if p.err.len > 0 {
+        return n
+    }
+    (mut a.nodes[n].kids).push(c)
+    (mut a.nodes[n].kids).push(b)
+    let _ok = expect_word(mut p, mut a, "done")
+    n
+}
+
+fn parse_for(mut p: P, mut a: Ast) -> int {
+    let line = p.tl
+    advance(mut p)
+    if peek(mut p, mut a) != T_WORD {
+        unexpected(mut p)
+        return -1
+    }
+    let name = p.tx
+    if !is_name(name) {
+        fail_at(mut p, "syntax error: '{name}' is not a valid loop variable", p.tl)
+        return -1
+    }
+    let n = add(mut a, K_FOR, name, line)
+    advance(mut p)
+    skip_nl(mut p, mut a)
+    var has_in = 0
+    if is_word(mut p, mut a, "in") {
+        has_in = 1
+        advance(mut p)
+        loop {
+            let k = peek(mut p, mut a)
+            if k == T_WORD {
+                (mut a.nodes[n].words).push(p.tx)
+                advance(mut p)
+                continue
+            }
+            if k == T_OP && p.tx == ";" {
+                advance(mut p)
+                break
+            }
+            if k == T_NL {
+                break
+            }
+            unexpected(mut p)
+            return n
+        }
+        skip_nl(mut p, mut a)
+    } else if is_op(mut p, mut a, ";") {
+        advance(mut p)
+        skip_nl(mut p, mut a)
+    }
+    (mut a.nodes[n].ints).push(has_in)
+    if p.err.len > 0 || !expect_word(mut p, mut a, "do") {
+        return n
+    }
+    let b = parse_clist(mut p, mut a)
+    if p.err.len > 0 {
+        return n
+    }
+    (mut a.nodes[n].kids).push(b)
+    let _ok = expect_word(mut p, mut a, "done")
+    n
+}
+
+fn parse_case(mut p: P, mut a: Ast) -> int {
+    let line = p.tl
+    advance(mut p)
+    if peek(mut p, mut a) != T_WORD {
+        unexpected(mut p)
+        return -1
+    }
+    let n = add(mut a, K_CASE, p.tx, line)
+    advance(mut p)
+    skip_nl(mut p, mut a)
+    if !expect_word(mut p, mut a, "in") {
+        return n
+    }
+    skip_nl(mut p, mut a)
+    loop {
+        if p.err.len > 0 {
+            return n
+        }
+        if is_word(mut p, mut a, "esac") {
+            advance(mut p)
+            return n
+        }
+        let item = add(mut a, K_ITEM, "", p.tl)
+        if is_op(mut p, mut a, "(") {
+            advance(mut p)
+        }
+        loop {
+            if peek(mut p, mut a) != T_WORD {
+                unexpected(mut p)
+                return n
+            }
+            (mut a.nodes[item].words).push(p.tx)
+            advance(mut p)
+            if is_op(mut p, mut a, "|") {
+                advance(mut p)
+                continue
+            }
+            break
+        }
+        if !expect_op(mut p, mut a, ")") {
+            return n
+        }
+        skip_nl(mut p, mut a)
+        var body = -1
+        if !(
+            is_op(mut p, mut a, ";;") || is_op(mut p, mut a, ";&") || is_word(mut p, mut a, "esac")
+        ) {
+            body = parse_clist(mut p, mut a)
+            if p.err.len > 0 {
+                return n
+            }
+        }
+        (mut a.nodes[item].kids).push(body)
+        (mut a.nodes[n].kids).push(item)
+        if is_op(mut p, mut a, ";;") {
+            (mut a.nodes[item].ints).push(0)
+            advance(mut p)
+            skip_nl(mut p, mut a)
+            continue
+        }
+        if is_op(mut p, mut a, ";&") {
+            (mut a.nodes[item].ints).push(1)
+            advance(mut p)
+            skip_nl(mut p, mut a)
+            continue
+        }
+        (mut a.nodes[item].ints).push(0)
+        if !is_word(mut p, mut a, "esac") {
+            if p.err.len == 0 {
+                if p.tk == T_EOF {
+                    fail(mut p, "syntax error: unexpected end of file (expecting 'esac')")
+                } else {
+                    unexpected(mut p)
+                }
+            }
+            return n
+        }
+    }
+    n
+}
+
+// ------------------------------------------------------------ the dump
+
+/// The tree under `n`, one node per line, indented two spaces a level:
+/// the `--parse` debug mode.
+fn dump(a: Ast, n: int, depth: int, mut o: Buf) {
+    var pad = 0
+    while pad < depth {
+        put(mut o, "  ")
+        pad += 1
+    }
+    if n < 0 {
+        put(mut o, "(none)\n")
+        return
+    }
+    let k = a.nodes[n].kind
+    put(mut o, kind_name(k))
+    if k == K_SIMPLE {
+        let na = a.nodes[n].ints[0]
+        var i = 0
+        for w in a.nodes[n].words {
+            let tag = if i < na then "assign" else "word"
+            put(mut o, " {tag}\"{escaped(w)}\"")
+            i += 1
+        }
+    } else if k == K_REDIR {
+        let fd = a.nodes[n].ints[0]
+        put(mut o, " {a.nodes[n].text}")
+        if fd >= 0 {
+            put(mut o, " fd={fd}")
+        }
+        put(mut o, " \"{escaped(a.nodes[n].words[0])}\"")
+        let doc = a.nodes[n].ints[1]
+        if doc >= 0 {
+            let q = if a.nodes[n].ints[2] == 1 then " quoted" else ""
+            put(mut o, "{q} body=\"{escaped(a.docs[doc])}\"")
+        }
+    } else if k == K_LIST {
+        for x in a.nodes[n].ints {
+            put(mut o, if x == 1 then " &" else " ;")
+        }
+    } else if k == K_ANDOR {
+        for x in a.nodes[n].ints {
+            put(mut o, if x == 1 then " &&" else " ||")
+        }
+    } else if k == K_PIPE {
+        if a.nodes[n].ints[0] == 1 {
+            put(mut o, " !")
+        }
+    } else if k == K_IF {
+        if a.nodes[n].ints[0] == 1 {
+            put(mut o, " else")
+        }
+    } else if k == K_FOR {
+        put(mut o, " {a.nodes[n].text}")
+        if a.nodes[n].ints[0] == 1 {
+            put(mut o, " in")
+            for w in a.nodes[n].words {
+                put(mut o, " \"{escaped(w)}\"")
+            }
+        }
+    } else if k == K_CASE {
+        put(mut o, " \"{escaped(a.nodes[n].text)}\"")
+    } else if k == K_ITEM {
+        for w in a.nodes[n].words {
+            put(mut o, " \"{escaped(w)}\"")
+        }
+        if a.nodes[n].ints[0] == 1 {
+            put(mut o, " ;&")
+        }
+    } else if k == K_FUNC {
+        put(mut o, " {a.nodes[n].text}")
+    }
+    putc(mut o, '\n')
+    for r in a.nodes[n].redirs {
+        dump(a, r, depth + 1, mut o)
+    }
+    for kid in a.nodes[n].kids {
+        dump(a, kid, depth + 1, mut o)
+    }
+}
