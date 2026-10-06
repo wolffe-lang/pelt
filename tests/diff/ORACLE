@@ -1,0 +1,7 @@
+dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+bash 5.3.20-2 run as `bash --posix` — the second opinion (kasumi, /usr/bin/bash sha256 a8ce2b3c38c81853…)
+
+Recorded by tools/oracle-record, which refuses to write against any other
+dash package. Each case runs from nothing: PATH=/usr/bin:/bin,
+HOME=/home/pelt, LC_ALL=C, a fresh scratch directory as the working
+directory, the script as `../s.sh`.
