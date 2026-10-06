@@ -1,0 +1,5 @@
+mode=parse
+exit=0
+line=0
+stderr=no
+bash=agree

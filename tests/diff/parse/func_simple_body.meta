@@ -1,0 +1,3 @@
+mode=parse
+oracle=bash
+why=XCU 2.10 makes a function body a compound command (ruling #44); dash 0.5.13.4 also takes a simple command
