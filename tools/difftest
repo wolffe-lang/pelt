@@ -83,6 +83,8 @@ def main(argv):
         if not os.path.exists(mpath) or not os.path.exists(opath):
             die(f"{area}/{name}: no recorded expectation (run tools/oracle-record on the oracle host)")
         meta = lc.read_meta(mpath)
+        if "exit" not in meta:
+            die(f"{area}/{name}: the expectation has no exit status (run tools/oracle-record on the oracle host)")
         want = open(opath, "rb").read()
         got = lc.run([pelt], script, meta)
         ok, why = verdict(meta, want, got)
