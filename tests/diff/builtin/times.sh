@@ -1,0 +1,2 @@
+times >/dev/null
+echo $?

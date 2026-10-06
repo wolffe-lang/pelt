@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+stdin=a\\b\nc\\d\n
+bash=differs

@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+stdin=one two three\n  four  \n
+bash=agree

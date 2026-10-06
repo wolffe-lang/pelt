@@ -1,0 +1,6 @@
+export HOME='/home/pelt'
+export LC_ALL='C'
+export PATH='/usr/bin:/bin'
+export PELT_A='1'
+export PELT_B='p q'
+export PWD='/home/mfwolffe/lanes/sh01/tmp/pelt-case.764shlfe/w'

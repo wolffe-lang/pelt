@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+stdin=x:y:z\n
+bash=agree
