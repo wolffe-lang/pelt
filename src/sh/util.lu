@@ -1,0 +1,633 @@
+//! sh.util — `echo`, `printf` and `test`, the regular built-ins whose
+//! output scripts compare most.
+//!
+//! References consulted: POSIX.1-2024 XCU `echo` (the XSI escapes),
+//! `printf` (and XBD 5, File Format Notation), `test`; the `dash(1)`
+//! manual; black-box runs of `dash` 0.5.13.4 for `printf %u` of a
+//! negative number, a non-numeric argument (a message, `0`, status 1),
+//! and `%b`'s `\c` (which ends all output). The messages are pelt's own.
+
+/// `echo`, dash's way: `-n` only as the first operand, and the
+/// backslash escapes of the XSI option always on; `\c` ends the output.
+fn bi_echo(mut sh: Sh, args: List[str]) -> int {
+    var i = 0
+    var newline = true
+    if args.len > 0 && args[0] == "-n" {
+        newline = false
+        i = 1
+    }
+    var first = true
+    while i < args.len {
+        if !first {
+            emitc(mut sh, ' ')
+        }
+        first = false
+        if escapes(mut sh, args[i], true) {
+            return 0
+        }
+        i += 1
+    }
+    if newline {
+        emitc(mut sh, '\n')
+    }
+    0
+}
+
+/// Write `s` with backslash escapes interpreted; true when `\c` was
+/// met and output must stop. `zero_octal`: octal is `\0ddd` (echo and
+/// `%b`) rather than `\ddd` (a printf format).
+fn escapes(mut sh: Sh, s: str, zero_octal: bool) -> bool {
+    var i = 0
+    while i < s.len {
+        let c = ch(s, i)
+        if c != '\\' || i + 1 >= s.len {
+            emitb(mut sh, byte_at(s, i))
+            i += 1
+            continue
+        }
+        let n = ch(s, i + 1)
+        i += 2
+        if n == 'a' {
+            emitb(mut sh, 7)
+        } else if n == 'b' {
+            emitb(mut sh, 8)
+        } else if n == 'c' {
+            return true
+        } else if n == 'f' {
+            emitb(mut sh, 12)
+        } else if n == 'n' {
+            emitb(mut sh, 10)
+        } else if n == 'r' {
+            emitb(mut sh, 13)
+        } else if n == 't' {
+            emitb(mut sh, 9)
+        } else if n == 'v' {
+            emitb(mut sh, 11)
+        } else if n == '\\' {
+            emitb(mut sh, 92)
+        } else if zero_octal && n == '0' || !zero_octal && n >= '0' && n <= '7' {
+            var v = 0
+            var count = 0
+            var j = if zero_octal then i else i - 1
+            while count < 3 && j < s.len && ch(s, j) >= '0' && ch(s, j) <= '7' {
+                v = v * 8 + (ch(s, j) as int - 48)
+                j += 1
+                count += 1
+            }
+            emitb(mut sh, v & 255)
+            i = j
+        } else if !zero_octal && n == '"' {
+            emitb(mut sh, 34)
+        } else if !zero_octal && n == '\'' {
+            emitb(mut sh, 39)
+        } else {
+            emitb(mut sh, 92)
+            emitb(mut sh, byte_at(s, i - 1))
+        }
+    }
+    false
+}
+
+// ------------------------------------------------------------------ printf
+
+/// An integer argument of `printf` (XCU `printf`, EXTENDED
+/// DESCRIPTION): a C constant, or a quote and a character for that
+/// character's value. A bad one is reported, counts as what was read,
+/// and makes the status 1.
+fn num_arg(mut sh: Sh, a: str, mut bad: bool) -> int {
+    if a.len == 0 {
+        return 0
+    }
+    let c = ch(a, 0)
+    if c == '\'' || c == '"' {
+        if a.len < 2 {
+            return 0
+        }
+        return byte_at(a, 1)
+    }
+    let n = parse_const(a) else |_| {
+        diag(mut sh, "printf: {a}: not a number")
+        bad = true
+        return 0
+    }
+    n
+}
+
+/// Digits of `n` in `base` as an unsigned 64-bit number.
+fn udigits(n: int, base: int, upper: bool) -> str {
+    let digits = if upper then "0123456789ABCDEF" else "0123456789abcdef"
+    if n == 0 {
+        return "0"
+    }
+    var out = List[int]()
+    var v = n
+    if v < 0 {
+        // the value is v + 2^64: halve it unsigned, divide, and correct
+        let half = band(wshr(v, 1), 9223372036854775807)
+        var q = half / base * 2
+        var r = wsub(v, wmul(q, base))
+        while r >= base {
+            q += 1
+            r -= base
+        }
+        (mut out).push(r)
+        v = q
+    }
+    while v > 0 {
+        (mut out).push(v % base)
+        v = v / base
+    }
+    var o = buf()
+    var i = out.len - 1
+    while i >= 0 {
+        put(mut o, digits[out[i]..out[i] + 1])
+        i -= 1
+    }
+    text(o)
+}
+
+fn pad(s: str, width: int, left: bool, zero: bool) -> str {
+    if s.len >= width {
+        return s
+    }
+    var o = buf()
+    let fill = width - s.len
+    if left {
+        put(mut o, s)
+        var k = 0
+        while k < fill {
+            putc(mut o, ' ')
+            k += 1
+        }
+        return text(o)
+    }
+    if zero {
+        var start = 0
+        if s.len > 0 && (ch(s, 0) == '-' || ch(s, 0) == '+' || ch(s, 0) == ' ') {
+            putb(mut o, byte_at(s, 0))
+            start = 1
+        }
+        var k = 0
+        while k < fill {
+            putc(mut o, '0')
+            k += 1
+        }
+        put(mut o, s[start..s.len])
+        return text(o)
+    }
+    var k = 0
+    while k < fill {
+        putc(mut o, ' ')
+        k += 1
+    }
+    put(mut o, s)
+    text(o)
+}
+
+/// `printf format [argument…]`: the format is reused while arguments
+/// remain and it consumed at least one.
+fn bi_printf(mut sh: Sh, args: List[str]) -> int {
+    if args.len == 0 {
+        diag(mut sh, "printf: a format is required")
+        return 2
+    }
+    let fmt = args[0]
+    var ai = 1
+    var bad = false
+    loop {
+        let start_ai = ai
+        var i = 0
+        var stop = false
+        while i < fmt.len {
+            let c = ch(fmt, i)
+            if c == '\\' {
+                // one escape of the format
+                var j = i + 1
+                var o = buf()
+                put_range(mut o, fmt, i, i + 2)
+                if j < fmt.len && ch(fmt, j) >= '0' && ch(fmt, j) <= '7' {
+                    o = buf()
+                    putc(mut o, '\\')
+                    var count = 0
+                    while count < 3 && j < fmt.len && ch(fmt, j) >= '0' && ch(fmt, j) <= '7' {
+                        putb(mut o, byte_at(fmt, j))
+                        j += 1
+                        count += 1
+                    }
+                    i = j
+                } else {
+                    i += 2
+                }
+                if escapes(mut sh, text(o), false) {
+                    stop = true
+                    break
+                }
+                continue
+            }
+            if c != '%' {
+                emitb(mut sh, byte_at(fmt, i))
+                i += 1
+                continue
+            }
+            if ch(fmt, i + 1) == '%' {
+                emitc(mut sh, '%')
+                i += 2
+                continue
+            }
+            // %[flags][width][.precision]conversion
+            var j = i + 1
+            var left = false
+            var zero = false
+            var plus = false
+            var space = false
+            var alt = false
+            loop {
+                let f = ch(fmt, j)
+                if f == '-' {
+                    left = true
+                } else if f == '0' {
+                    zero = true
+                } else if f == '+' {
+                    plus = true
+                } else if f == ' ' {
+                    space = true
+                } else if f == '#' {
+                    alt = true
+                } else {
+                    break
+                }
+                j += 1
+            }
+            var width = 0
+            if ch(fmt, j) == '*' {
+                let a = if ai < args.len then args[ai] else ""
+                ai += 1
+                width = num_arg(mut sh, a, mut bad)
+                if width < 0 {
+                    left = true
+                    width = -width
+                }
+                j += 1
+            } else {
+                while is_digit(ch(fmt, j)) {
+                    width = width * 10 + (ch(fmt, j) as int - 48)
+                    j += 1
+                }
+            }
+            var prec = -1
+            if ch(fmt, j) == '.' {
+                j += 1
+                prec = 0
+                if ch(fmt, j) == '*' {
+                    let a = if ai < args.len then args[ai] else ""
+                    ai += 1
+                    prec = num_arg(mut sh, a, mut bad)
+                    j += 1
+                } else {
+                    while is_digit(ch(fmt, j)) {
+                        prec = prec * 10 + (ch(fmt, j) as int - 48)
+                        j += 1
+                    }
+                }
+            }
+            let conv = ch(fmt, j)
+            i = j + 1
+            let a = if ai < args.len then args[ai] else ""
+            let have = ai < args.len
+            if conv == 's' {
+                ai += 1
+                var s = a
+                if prec >= 0 && prec < s.len {
+                    s = s.get(0..prec) else s
+                }
+                emit(mut sh, pad(s, width, left, false))
+            } else if conv == 'b' {
+                ai += 1
+                cap_begin(mut sh)
+                let cut = escapes(mut sh, a, true)
+                var s = cap_end(mut sh)
+                if prec >= 0 && prec < s.len {
+                    s = s.get(0..prec) else s
+                }
+                emit(mut sh, pad(s, width, left, false))
+                if cut {
+                    stop = true
+                    break
+                }
+            } else if conv == 'c' {
+                ai += 1
+                let s = if a.len > 0 then a[0..1] else ""
+                emit(mut sh, pad(s, width, left, false))
+            } else if conv == 'd' || conv == 'i' {
+                ai += 1
+                let n = num_arg(mut sh, a, mut bad)
+                var digits = if n < 0 then udigits(wneg(n), 10, false) else udigits(n, 10, false)
+                if prec >= 0 {
+                    digits = pad_zeros(digits, prec)
+                    if prec == 0 && n == 0 {
+                        digits = ""
+                    }
+                }
+                var sign = ""
+                if n < 0 {
+                    sign = "-"
+                } else if plus {
+                    sign = "+"
+                } else if space {
+                    sign = " "
+                }
+                emit(mut sh, pad(sign + digits, width, left, zero && prec < 0))
+            } else if conv == 'u' || conv == 'o' || conv == 'x' || conv == 'X' {
+                ai += 1
+                let n = num_arg(mut sh, a, mut bad)
+                let base = if conv == 'o' then 8 else if conv == 'u' then 10 else 16
+                var digits = udigits(n, base, conv == 'X')
+                if prec >= 0 {
+                    digits = pad_zeros(digits, prec)
+                    if prec == 0 && n == 0 {
+                        digits = ""
+                    }
+                }
+                if alt && n != 0 {
+                    if conv == 'o' && ch(digits, 0) != '0' {
+                        digits = "0" + digits
+                    } else if conv == 'x' {
+                        digits = "0x" + digits
+                    } else if conv == 'X' {
+                        digits = "0X" + digits
+                    }
+                }
+                emit(mut sh, pad(digits, width, left, zero && prec < 0))
+            } else {
+                diag(mut sh, "printf: %{conv}: conversion not supported")
+                return 1
+            }
+            if !have {
+                // an absent argument is "" or 0, and consumes nothing
+                ai = args.len
+            }
+        }
+        if stop || ai >= args.len || ai == start_ai {
+            break
+        }
+    }
+    if bad {
+        return 1
+    }
+    0
+}
+
+fn pad_zeros(digits: str, prec: int) -> str {
+    if digits.len >= prec {
+        return digits
+    }
+    var o = buf()
+    var k = digits.len
+    while k < prec {
+        putc(mut o, '0')
+        k += 1
+    }
+    put(mut o, digits)
+    text(o)
+}
+
+// -------------------------------------------------------------------- test
+
+fn is_unary(op: str) -> bool {
+    op == "-b" ||
+        op == "-c" ||
+        op == "-d" ||
+        op == "-e" ||
+        op == "-f" ||
+        op == "-g" ||
+        op == "-h" ||
+        op == "-L" ||
+        op == "-n" ||
+        op == "-p" ||
+        op == "-r" ||
+        op == "-S" ||
+        op == "-s" ||
+        op == "-t" ||
+        op == "-u" ||
+        op == "-w" ||
+        op == "-x" ||
+        op == "-z"
+}
+
+fn is_binary(op: str) -> bool {
+    op == "=" ||
+        op == "!=" ||
+        op == "-eq" ||
+        op == "-ne" ||
+        op == "-gt" ||
+        op == "-ge" ||
+        op == "-lt" ||
+        op == "-le" ||
+        op == "-nt" ||
+        op == "-ot" ||
+        op == "-ef"
+}
+
+struct Tst {
+    args: List[str],
+    i: int,
+    err: str,
+}
+
+/// `test` (XCU `test`): the operand-count rules for up to four
+/// operands, then the `-a`/`-o`/`!`/`( )` grammar. Status 0 true, 1
+/// false, 2 an error.
+fn bi_test(mut sh: Sh, args: List[str]) -> int {
+    var t = Tst { args: copy args, i: 0, err: "" }
+    var r = false
+    let n = args.len
+    if n == 0 {
+        return 1
+    } else if n == 1 {
+        r = args[0].len > 0
+    } else if n == 2 && args[0] == "!" {
+        r = args[1].len == 0
+    } else if n == 2 {
+        r = unary_test(sh, mut t, args[0], args[1])
+    } else if n == 3 && is_binary(args[1]) {
+        r = binary_test(sh, mut t, args[0], args[1], args[2])
+    } else if n == 3 && args[0] == "!" {
+        r = !test_two(sh, mut t, args[1], args[2])
+    } else if n == 3 && args[0] == "(" && args[2] == ")" {
+        r = args[1].len > 0
+    } else if n == 4 && args[0] == "!" && is_binary(args[2]) {
+        r = !binary_test(sh, mut t, args[1], args[2], args[3])
+    } else if n == 4 && args[0] == "(" && args[3] == ")" {
+        r = test_two(sh, mut t, args[1], args[2])
+    } else {
+        r = t_or(mut sh, mut t)
+        if t.err.len == 0 && t.i < t.args.len {
+            t.err = "{t.args[t.i]}: unexpected operand"
+        }
+    }
+    if t.err.len > 0 {
+        diag(mut sh, "test: {t.err}")
+        return 2
+    }
+    if r then 0 else 1
+}
+
+fn test_two(sh: Sh, mut t: Tst, a: str, b: str) -> bool {
+    if a == "!" {
+        return b.len == 0
+    }
+    unary_test(sh, mut t, a, b)
+}
+
+fn t_or(mut sh: Sh, mut t: Tst) -> bool {
+    var r = t_and(mut sh, mut t)
+    while t.err.len == 0 && t.i < t.args.len && t.args[t.i] == "-o" {
+        t.i += 1
+        let b = t_and(mut sh, mut t)
+        r = r || b
+    }
+    r
+}
+
+fn t_and(mut sh: Sh, mut t: Tst) -> bool {
+    var r = t_not(mut sh, mut t)
+    while t.err.len == 0 && t.i < t.args.len && t.args[t.i] == "-a" {
+        t.i += 1
+        let b = t_not(mut sh, mut t)
+        r = r && b
+    }
+    r
+}
+
+fn t_not(mut sh: Sh, mut t: Tst) -> bool {
+    if t.i < t.args.len && t.args[t.i] == "!" {
+        t.i += 1
+        return !t_not(mut sh, mut t)
+    }
+    t_prim(mut sh, mut t)
+}
+
+fn t_prim(mut sh: Sh, mut t: Tst) -> bool {
+    if t.i >= t.args.len {
+        t.err = "an operand is missing"
+        return false
+    }
+    let a = t.args[t.i]
+    if a == "(" {
+        t.i += 1
+        let r = t_or(mut sh, mut t)
+        if t.i >= t.args.len || t.args[t.i] != ")" {
+            if t.err.len == 0 {
+                t.err = "')' expected"
+            }
+            return false
+        }
+        t.i += 1
+        return r
+    }
+    if t.i + 2 < t.args.len && is_binary(t.args[t.i + 1]) {
+        let r = binary_test(sh, mut t, a, t.args[t.i + 1], t.args[t.i + 2])
+        t.i += 3
+        return r
+    }
+    if is_unary(a) && t.i + 1 < t.args.len {
+        let r = unary_test(sh, mut t, a, t.args[t.i + 1])
+        t.i += 2
+        return r
+    }
+    t.i += 1
+    a.len > 0
+}
+
+fn file_kind(path: str) -> int {
+    let fd = fs_open(path) else |_| { return -1 }
+    let st = fs_fstat(fd) else |_| {
+        fs_close(fd) else |_| {}
+        return -1
+    }
+    fs_close(fd) else |_| {}
+    st[0]
+}
+
+fn unary_test(sh: Sh, mut t: Tst, op: str, a: str) -> bool {
+    if op == "-n" {
+        return a.len > 0
+    }
+    if op == "-z" {
+        return a.len == 0
+    }
+    if op == "-e" {
+        return fs_exists(a) || fs_is_dir(a)
+    }
+    if op == "-f" {
+        return fs_is_file(a)
+    }
+    if op == "-d" {
+        return fs_is_dir(a)
+    }
+    if op == "-s" {
+        let n = fs_size(a) else 0
+        return n > 0
+    }
+    if op == "-r" || op == "-w" || op == "-x" {
+        // no permission bits at wolf 0.2.24 (wolf-lang#346): existence
+        // is the closest answer, and `-x` holds for directories
+        if op == "-x" {
+            return fs_is_dir(a)
+        }
+        return fs_exists(a) || fs_is_dir(a)
+    }
+    if op == "-p" || op == "-S" || op == "-b" || op == "-c" {
+        return file_kind(a) == 2
+    }
+    if op == "-h" || op == "-L" || op == "-g" || op == "-u" || op == "-t" {
+        return false
+    }
+    t.err = "{op}: unknown operator"
+    false
+}
+
+fn int_operand(mut t: Tst, s: str) -> int {
+    let n = to_int(s.trim()) else |_| {
+        if t.err.len == 0 {
+            t.err = "{s}: an integer is required"
+        }
+        return 0
+    }
+    n
+}
+
+fn binary_test(sh: Sh, mut t: Tst, a: str, op: str, b: str) -> bool {
+    if op == "=" {
+        return a == b
+    }
+    if op == "!=" {
+        return a != b
+    }
+    if op == "-nt" || op == "-ot" {
+        let ma = fs_modified_ms(a) else |_| { return op == "-nt" && fs_exists(a) }
+        let mb = fs_modified_ms(b) else |_| { return op == "-ot" && fs_exists(b) }
+        return if op == "-nt" then ma > mb else ma < mb
+    }
+    if op == "-ef" {
+        return false
+    }
+    let x = int_operand(mut t, a)
+    let y = int_operand(mut t, b)
+    if op == "-eq" {
+        return x == y
+    }
+    if op == "-ne" {
+        return x != y
+    }
+    if op == "-gt" {
+        return x > y
+    }
+    if op == "-ge" {
+        return x >= y
+    }
+    if op == "-lt" {
+        return x < y
+    }
+    x <= y
+}
