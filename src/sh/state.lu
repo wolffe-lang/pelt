@@ -1,0 +1,367 @@
+//! sh.state — the shell's execution environment (XCU 2.13 of 2024,
+//! "Shell Execution Environment"): variables, functions, positional
+//! parameters, options, traps, and where output goes.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.5 (parameters and
+//! variables), 2.12 (the execution environment), the `set`, `export`,
+//! `readonly` and `trap` pages; black-box runs of `dash` 0.5.13.4.
+//!
+//! **Output.** Everything pelt itself writes to standard output goes
+//! through `out`, a byte buffer flushed in 64 KiB pieces, before any
+//! child runs, before any diagnostic, and at exit — so pelt's bytes and
+//! a child's interleave in program order. A command substitution is a
+//! CAPTURE: it records where in `out` it began, nothing is flushed while
+//! one is open, and its result is cut back out of the buffer.
+//!
+//! **Subshells run in-process.** wolf 0.2.24 has no fork, so `( … )`
+//! and `$( … )` copy the environment, run, and put it back (`snap` and
+//! `restore`). What a real subshell would isolate and this does too:
+//! variables, functions, positional parameters, options, traps, the
+//! `local` stack. What it cannot: the working directory (there is no
+//! `chdir` to isolate yet) and the process environment a child sees.
+
+const F_NONE: int = 0
+
+const F_BREAK: int = 1
+
+const F_CONTINUE: int = 2
+
+const F_RETURN: int = 3
+
+const F_EXIT: int = 4
+
+struct Sh {
+    ast: Ast,
+    vals: Map[str, str],
+    exported: Map[str, bool],
+    ronly: Map[str, bool],
+    funcs: Map[str, int],
+    pos: List[str],
+    arg0: str,
+    status: int,
+    flow: int,
+    flow_n: int,
+    opt_e: bool,
+    opt_u: bool,
+    opt_x: bool,
+    opt_f: bool,
+    opt_n: bool,
+    opt_v: bool,
+    opt_a: bool,
+    opt_bigc: bool,
+    no_e: int,
+    loops: int,
+    fdepth: int,
+    dots: int,
+    traps: Map[str, str],
+    out: List[byte],
+    out_fd: int,
+    caps: List[int],
+    name: str,
+    line: int,
+    cs_status: int,
+    cs_ran: bool,
+    cs_node: Map[str, int],
+    cs_end: Map[str, int],
+    bq_node: Map[str, int],
+    sub: int,
+    lnames: List[str],
+    lvals: List[str],
+    lset: List[bool],
+    lexp: List[bool],
+    lframes: List[int],
+    exiting: bool,
+    gopt_sub: int,
+    gopt_ind: int,
+}
+
+struct Snap {
+    vals: Map[str, str],
+    exported: Map[str, bool],
+    ronly: Map[str, bool],
+    funcs: Map[str, int],
+    pos: List[str],
+    arg0: str,
+    opts: List[bool],
+    traps: Map[str, str],
+    loops: int,
+    fdepth: int,
+    dots: int,
+    lnames: List[str],
+    lvals: List[str],
+    lset: List[bool],
+    lexp: List[bool],
+    lframes: List[int],
+}
+
+fn new_sh(name: str) -> Sh {
+    Sh {
+        ast: new_ast(),
+        vals: Map[str, str](),
+        exported: Map[str, bool](),
+        ronly: Map[str, bool](),
+        funcs: Map[str, int](),
+        pos: List[str](),
+        arg0: name,
+        status: 0,
+        flow: F_NONE,
+        flow_n: 0,
+        opt_e: false,
+        opt_u: false,
+        opt_x: false,
+        opt_f: false,
+        opt_n: false,
+        opt_v: false,
+        opt_a: false,
+        opt_bigc: false,
+        no_e: 0,
+        loops: 0,
+        fdepth: 0,
+        dots: 0,
+        traps: Map[str, str](),
+        out: List[byte](),
+        out_fd: -1,
+        caps: List[int](),
+        name: name,
+        line: 0,
+        cs_status: 0,
+        cs_ran: false,
+        cs_node: Map[str, int](),
+        cs_end: Map[str, int](),
+        bq_node: Map[str, int](),
+        sub: 0,
+        lnames: List[str](),
+        lvals: List[str](),
+        lset: List[bool](),
+        lexp: List[bool](),
+        lframes: List[int](),
+        exiting: false,
+        gopt_sub: 1,
+        gopt_ind: 0,
+    }
+}
+
+fn opts_list(sh: Sh) -> List[bool] {
+    var o = List[bool]()
+    (mut o).push(sh.opt_e)
+    (mut o).push(sh.opt_u)
+    (mut o).push(sh.opt_x)
+    (mut o).push(sh.opt_f)
+    (mut o).push(sh.opt_n)
+    (mut o).push(sh.opt_v)
+    (mut o).push(sh.opt_a)
+    (mut o).push(sh.opt_bigc)
+    o
+}
+
+fn snap(sh: Sh) -> Snap {
+    Snap {
+        vals: copy sh.vals,
+        exported: copy sh.exported,
+        ronly: copy sh.ronly,
+        funcs: copy sh.funcs,
+        pos: copy sh.pos,
+        arg0: sh.arg0,
+        opts: opts_list(sh),
+        traps: copy sh.traps,
+        loops: sh.loops,
+        fdepth: sh.fdepth,
+        dots: sh.dots,
+        lnames: copy sh.lnames,
+        lvals: copy sh.lvals,
+        lset: copy sh.lset,
+        lexp: copy sh.lexp,
+        lframes: copy sh.lframes,
+    }
+}
+
+fn restore(mut sh: Sh, s: Snap) {
+    sh.vals = copy s.vals
+    sh.exported = copy s.exported
+    sh.ronly = copy s.ronly
+    sh.funcs = copy s.funcs
+    sh.pos = copy s.pos
+    sh.arg0 = s.arg0
+    sh.opt_e = s.opts[0]
+    sh.opt_u = s.opts[1]
+    sh.opt_x = s.opts[2]
+    sh.opt_f = s.opts[3]
+    sh.opt_n = s.opts[4]
+    sh.opt_v = s.opts[5]
+    sh.opt_a = s.opts[6]
+    sh.opt_bigc = s.opts[7]
+    sh.traps = copy s.traps
+    sh.loops = s.loops
+    sh.fdepth = s.fdepth
+    sh.dots = s.dots
+    sh.lnames = copy s.lnames
+    sh.lvals = copy s.lvals
+    sh.lset = copy s.lset
+    sh.lexp = copy s.lexp
+    sh.lframes = copy s.lframes
+}
+
+// ------------------------------------------------------------ variables
+
+fn has_var(sh: Sh, name: str) -> bool {
+    sh.vals.has(name)
+}
+
+fn value_of(sh: Sh, name: str) -> str {
+    sh.vals[name] else ""
+}
+
+fn is_ronly(sh: Sh, name: str) -> bool {
+    sh.ronly[name] else false
+}
+
+fn is_exported(sh: Sh, name: str) -> bool {
+    sh.exported[name] else false
+}
+
+/// Assign, honouring `readonly` and `set -a`. False (and nothing set)
+/// when the variable is read-only; the caller reports it.
+fn set_var(mut sh: Sh, name: str, value: str) -> bool {
+    if is_ronly(sh, name) {
+        return false
+    }
+    sh.vals[name] = value
+    if sh.opt_a {
+        sh.exported[name] = true
+    }
+    true
+}
+
+fn unset_var(mut sh: Sh, name: str) -> bool {
+    if is_ronly(sh, name) {
+        return false
+    }
+    let _v = (mut sh.vals).remove(name) else ""
+    let _e = (mut sh.exported).remove(name) else false
+    true
+}
+
+fn ifs(sh: Sh) -> str {
+    sh.vals["IFS"] else " \t\n"
+}
+
+/// `$-`: the single-letter options that are on.
+fn dash_flags(sh: Sh) -> str {
+    var o = buf()
+    if sh.opt_a {
+        putc(mut o, 'a')
+    }
+    if sh.opt_bigc {
+        putc(mut o, 'C')
+    }
+    if sh.opt_e {
+        putc(mut o, 'e')
+    }
+    if sh.opt_f {
+        putc(mut o, 'f')
+    }
+    if sh.opt_n {
+        putc(mut o, 'n')
+    }
+    if sh.opt_u {
+        putc(mut o, 'u')
+    }
+    if sh.opt_v {
+        putc(mut o, 'v')
+    }
+    if sh.opt_x {
+        putc(mut o, 'x')
+    }
+    text(o)
+}
+
+// --------------------------------------------------------------- output
+
+fn emit(mut sh: Sh, s: str) {
+    for x in s.bytes() {
+        (mut sh.out).push(x)
+    }
+    if sh.caps.len == 0 && sh.out.len >= 65536 {
+        flush(mut sh)
+    }
+}
+
+fn emitc(mut sh: Sh, c: char) {
+    (mut sh.out).push(c as int as byte)
+}
+
+fn emitb(mut sh: Sh, n: int) {
+    (mut sh.out).push(n as byte)
+}
+
+/// Write what is buffered to standard output, unless a capture is open.
+fn flush(mut sh: Sh) {
+    if sh.caps.len > 0 || sh.out.len == 0 {
+        return
+    }
+    if sh.out_fd == -1 {
+        sh.out_fd = fs_open_mode("/dev/stdout", 2) else -2
+    }
+    if sh.out_fd >= 0 {
+        fs_write_chunk(sh.out_fd, sh.out) else |_| {}
+    } else {
+        print_raw(text(Buf { b: copy sh.out }))
+    }
+    sh.out = List[byte]()
+}
+
+fn cap_begin(mut sh: Sh) {
+    if sh.caps.len == 0 {
+        flush(mut sh)
+    }
+    (mut sh.caps).push(sh.out.len)
+}
+
+fn cap_end(mut sh: Sh) -> str {
+    let start = (mut sh.caps).pop() else 0
+    let part = sh.out[start..sh.out.len]
+    sh.out = sh.out[0..start]
+    text(Buf { b: part })
+}
+
+/// A diagnostic: pelt's own words, on standard error, after whatever
+/// standard output is pending.
+fn diag(mut sh: Sh, msg: str) {
+    flush(mut sh)
+    if sh.line > 0 {
+        eprint("pelt: {sh.name}: line {sh.line}: {msg}")
+    } else {
+        eprint("pelt: {sh.name}: {msg}")
+    }
+}
+
+/// A shell error that ends a non-interactive shell (XCU 2.8.1): the
+/// message, status `code`, and the exit flow. Inside a subshell or a
+/// command substitution it ends only that.
+fn fatal(mut sh: Sh, msg: str, code: int) {
+    diag(mut sh, msg)
+    sh.status = code
+    sh.flow = F_EXIT
+    sh.flow_n = 0
+}
+
+// ---------------------------------------------------------------- quoting
+
+/// `s` in single quotes, a quote inside it written `'"'"'`: the form
+/// `set`, `export -p`, `readonly -p` and `trap` print, which a shell
+/// reads back as `s`.
+fn squote(s: str) -> str {
+    var o = buf()
+    putc(mut o, '\'')
+    var i = 0
+    while i < s.len {
+        if ch(s, i) == '\'' {
+            put(mut o, "'\"'\"'")
+        } else {
+            putb(mut o, byte_at(s, i))
+        }
+        i += 1
+    }
+    putc(mut o, '\'')
+    text(o)
+}
