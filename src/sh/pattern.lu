@@ -1,0 +1,255 @@
+//! sh.pattern — pattern matching notation (XCU "Pattern Matching
+//! Notation": `*`, `?`, bracket expressions) for `case`, the `${…%…}`
+//! family and pathname expansion.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.14 (pattern matching
+//! notation) and XBD 9.3.5 (bracket expressions); black-box runs of
+//! `dash` 0.5.13.4. No shell's source.
+//!
+//! A pattern arrives MARKED by expansion (see `sh.expand`): a byte that
+//! was quoted is preceded by `Q` (0x01) and matches only itself. An
+//! unquoted backslash escapes the byte after it, which is how a pattern
+//! that came out of a variable (`p='\*'`) still means a literal `*`.
+//! Matching is by byte, the C locale's answer.
+
+const Q: int = 1
+
+/// Does the marked pattern `pat` match all of `s`?
+fn pmatch(pat: str, s: str) -> bool {
+    var pi = 0
+    var si = 0
+    var star_pi = -1
+    var star_si = 0
+    let plen = pat.len
+    let slen = s.len
+    loop {
+        if pi < plen {
+            let c = byte_at(pat, pi)
+            if c == Q {
+                if si < slen && byte_at(s, si) == byte_at(pat, pi + 1) {
+                    pi += 2
+                    si += 1
+                    continue
+                }
+            } else if c == 42 {
+                // `*`
+                star_pi = pi
+                star_si = si
+                pi += 1
+                continue
+            } else if c == 63 {
+                // `?`
+                if si < slen {
+                    pi += 1
+                    si += 1
+                    continue
+                }
+            } else if c == 91 {
+                // `[`
+                let end = bracket_end(pat, pi)
+                if end < 0 {
+                    if si < slen && byte_at(s, si) == 91 {
+                        pi += 1
+                        si += 1
+                        continue
+                    }
+                } else if si < slen && bracket_match(pat, pi, end, byte_at(s, si)) {
+                    pi = end + 1
+                    si += 1
+                    continue
+                }
+            } else if c == 92 && pi + 1 < plen {
+                // an unquoted backslash escapes the next byte
+                if si < slen && byte_at(s, si) == byte_at(pat, pi + 1) {
+                    pi += 2
+                    si += 1
+                    continue
+                }
+            } else if si < slen && byte_at(s, si) == c {
+                pi += 1
+                si += 1
+                continue
+            }
+        } else if si == slen {
+            return true
+        }
+        if star_pi >= 0 && star_si < slen {
+            star_si += 1
+            si = star_si
+            pi = star_pi + 1
+            continue
+        }
+        return false
+    }
+    false
+}
+
+/// The index of the `]` that closes the bracket expression opening at
+/// `start`, or -1 when there is none (and the `[` is an ordinary byte).
+fn bracket_end(pat: str, start: int) -> int {
+    var j = start + 1
+    if byte_at(pat, j) == 33 || byte_at(pat, j) == 94 {
+        j += 1
+    }
+    // a `]` first in the list is a member, not the end
+    if byte_at(pat, j) == 93 {
+        j += 1
+    } else if byte_at(pat, j) == Q && byte_at(pat, j + 1) == 93 {
+        j += 2
+    }
+    while j < pat.len {
+        let c = byte_at(pat, j)
+        if c == Q {
+            j += 2
+            continue
+        }
+        if c == 91 && byte_at(pat, j + 1) == 58 {
+            // `[:class:]`
+            let close = find_class_end(pat, j + 2)
+            if close > 0 {
+                j = close + 2
+                continue
+            }
+        }
+        if c == 93 {
+            return j
+        }
+        if c == 47 {
+            // a `/` cannot be inside a bracket expression
+            return -1
+        }
+        j += 1
+    }
+    -1
+}
+
+fn find_class_end(pat: str, from: int) -> int {
+    var j = from
+    while j + 1 < pat.len {
+        if byte_at(pat, j) == 58 && byte_at(pat, j + 1) == 93 {
+            return j
+        }
+        if !is_alpha(ch(pat, j)) {
+            return -1
+        }
+        j += 1
+    }
+    -1
+}
+
+fn bracket_match(pat: str, start: int, end: int, b: int) -> bool {
+    var j = start + 1
+    var neg = false
+    if byte_at(pat, j) == 33 || byte_at(pat, j) == 94 {
+        neg = true
+        j += 1
+    }
+    var hit = false
+    var first = true
+    while j < end {
+        var lo = byte_at(pat, j)
+        var width = 1
+        if lo == Q {
+            lo = byte_at(pat, j + 1)
+            width = 2
+        } else if lo == 91 && byte_at(pat, j + 1) == 58 {
+            let close = find_class_end(pat, j + 2)
+            if close > 0 {
+                if in_class(pat[j + 2..close], b) {
+                    hit = true
+                }
+                j = close + 2
+                first = false
+                continue
+            }
+        } else if lo == 92 && j + 1 < end {
+            lo = byte_at(pat, j + 1)
+            width = 2
+        }
+        let after = j + width
+        if byte_at(pat, after) == 45 && after + 1 < end && !(first && false) {
+            // a range `lo-hi`
+            var hi = byte_at(pat, after + 1)
+            var hw = 1
+            if hi == Q {
+                hi = byte_at(pat, after + 2)
+                hw = 2
+            }
+            if b >= lo && b <= hi {
+                hit = true
+            }
+            j = after + 1 + hw
+            first = false
+            continue
+        }
+        if b == lo {
+            hit = true
+        }
+        j = after
+        first = false
+    }
+    hit != neg
+}
+
+fn in_class(name: str, b: int) -> bool {
+    let c = b as int as char
+    if name == "alpha" {
+        return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+    }
+    if name == "digit" {
+        return is_digit(c)
+    }
+    if name == "alnum" {
+        return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || is_digit(c)
+    }
+    if name == "upper" {
+        return c >= 'A' && c <= 'Z'
+    }
+    if name == "lower" {
+        return c >= 'a' && c <= 'z'
+    }
+    if name == "space" {
+        return c == ' ' || b >= 9 && b <= 13
+    }
+    if name == "blank" {
+        return c == ' ' || c == '\t'
+    }
+    if name == "punct" {
+        return b > 32 && b < 127 && !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || is_digit(c))
+    }
+    if name == "print" {
+        return b >= 32 && b < 127
+    }
+    if name == "graph" {
+        return b > 32 && b < 127
+    }
+    if name == "cntrl" {
+        return b < 32 || b == 127
+    }
+    if name == "xdigit" {
+        return is_digit(c) || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'
+    }
+    false
+}
+
+/// Does a marked string hold an unquoted `*`, `?` or `[` — that is,
+/// is it a pattern rather than a plain word?
+fn has_magic(f: str) -> bool {
+    var i = 0
+    while i < f.len {
+        let c = byte_at(f, i)
+        if c == Q {
+            i += 2
+            continue
+        }
+        if c == 92 {
+            i += 2
+            continue
+        }
+        if c == 42 || c == 63 || c == 91 {
+            return true
+        }
+        i += 1
+    }
+    false
+}
