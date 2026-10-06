@@ -1,3 +1,7 @@
 mode=parse
+exit=2
+line=1
+stderr=yes
 oracle=bash
 why=XCU 2.10 makes a function body a compound command (ruling #44); dash 0.5.13.4 also takes a simple command
+dash=differs
