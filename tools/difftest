@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""difftest — pelt against the recorded oracle, one tier at a time.
+
+Every case under tests/diff/ (see tools/lib_cases.py) runs through
+pelt and is compared with the expectation `tools/oracle-record` wrote
+from dash: standard output byte for byte, the exit status, and whether
+anything reached standard error (presence only — pelt's messages are
+its own, CLAUDE.md). A parse row (`mode=parse`) compares the exit
+status of `-n` and the line it refused at.
+
+A case marked `pending=` needs a primitive pelt does not have yet. It
+still RUNS, and its verdict is printed as PEND-ok or PEND-fail, but it
+does not decide the exit status; and every such case must be listed by
+name in tests/diff/PENDING.md, or the run fails — a pending case is
+never a silent skip.
+
+The report is written line by line as each case is decided, and ends
+with the counts by area. Exit 0 when every non-pending case passes, 1
+when one fails, 2 when the harness cannot run.
+
+usage: tools/difftest [--bin DIR] [area ...]   (default target/release)
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_cases as lc  # noqa: E402
+
+
+def die(msg):
+    print(f"difftest: {msg}", file=sys.stderr)
+    sys.exit(2)
+
+
+def verdict(meta, want_out, got):
+    if got is None:
+        return False, "timed out"
+    if meta.get("mode") == "parse":
+        want_exit = int(meta["exit"])
+        if got["exit"] != want_exit:
+            return False, f"exit {got['exit']}, oracle {want_exit}"
+        if want_exit != 0 and got["line"] != int(meta.get("line", "0")):
+            return False, f"refused at line {got['line']}, oracle at {meta.get('line')}"
+        return True, ""
+    why = []
+    if got["stdout"] != want_out:
+        why.append("stdout")
+    if got["exit"] != int(meta["exit"]):
+        why.append(f"exit {got['exit']} (oracle {meta['exit']})")
+    if got["stderr"] != (meta.get("stderr") == "yes"):
+        why.append("stderr " + ("present" if got["stderr"] else "absent"))
+    return not why, ", ".join(why)
+
+
+def main(argv):
+    sys.stdout.reconfigure(line_buffering=True)
+    bindir = os.path.join(lc.ROOT, "target", "release")
+    if argv[:1] == ["--bin"]:
+        if len(argv) < 2:
+            die("--bin needs a directory")
+        bindir = os.path.abspath(argv[1])
+        argv = argv[2:]
+    pelt = os.path.join(bindir, "pelt")
+    if not os.access(pelt, os.X_OK):
+        die(f"no pelt at {pelt} (run tools/build)")
+    try:
+        listed = open(os.path.join(lc.DIFF, "PENDING.md"), encoding="utf-8").read()
+    except OSError:
+        die("tests/diff/PENDING.md is missing")
+    print(f"difftest: pelt = {pelt}")
+    print("difftest: oracle = " + open(os.path.join(lc.DIFF, "ORACLE"),
+                                       encoding="utf-8").readline().strip())
+    counts = {}
+    failed = 0
+    unlisted = []
+    all_cases = lc.cases(argv or None)
+    if not all_cases:
+        die("no cases found")
+    for area, name, script in all_cases:
+        mpath = script[:-3] + ".meta"
+        opath = script[:-3] + ".out"
+        if not os.path.exists(mpath) or not os.path.exists(opath):
+            die(f"{area}/{name}: no recorded expectation (run tools/oracle-record on the oracle host)")
+        meta = lc.read_meta(mpath)
+        want = open(opath, "rb").read()
+        got = lc.run([pelt], script, meta)
+        ok, why = verdict(meta, want, got)
+        c = counts.setdefault(area, [0, 0, 0, 0])
+        label = f"{area}/{name}"
+        if "pending" in meta:
+            c[2] += 1
+            if f"`{label}`" not in listed:
+                unlisted.append(label)
+            print(f"PEND-{'ok  ' if ok else 'fail'} {label} (waits on {meta['pending']})")
+            if ok:
+                c[3] += 1
+            continue
+        if ok:
+            c[0] += 1
+            print(f"ok   {label}")
+        else:
+            c[1] += 1
+            failed += 1
+            print(f"FAIL {label}: {why}")
+            if got is not None:
+                print(f"     pelt stdout: {got['stdout'][:300]!r}")
+                print(f"     want stdout: {want[:300]!r}")
+                if got["err"]:
+                    print(f"     pelt stderr: {got['err'][:300]!r}")
+    print("difftest: area        pass  fail  pending (of which pass)")
+    tp = tf = tn = tq = 0
+    for area in sorted(counts):
+        p, f, n, q = counts[area]
+        tp, tf, tn, tq = tp + p, tf + f, tn + n, tq + q
+        print(f"difftest: {area:<10} {p:5} {f:5} {n:5} ({q})")
+    print(f"difftest: {'total':<10} {tp:5} {tf:5} {tn:5} ({tq})")
+    if unlisted:
+        for u in unlisted:
+            print(f"UNLISTED {u}: pending but not named in tests/diff/PENDING.md")
+        return 1
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
