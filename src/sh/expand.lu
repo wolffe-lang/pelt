@@ -43,6 +43,8 @@ const X_ASSIGN: int = 2
 
 const X_TILDE: int = 4
 
+const X_PWORD: int = 8
+
 fn lit(mut o: Buf, b: int) {
     if b >= 1 && b <= 6 {
         putb(mut o, Q)
@@ -340,6 +342,12 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
         }
         let c = ch(w, i)
         if dq {
+            if c == '"' && flags & X_PWORD != 0 {
+                // a double quote inside a double-quoted `${x-word}`
+                // quotes nothing more; it is removed
+                i += 1
+                continue
+            }
             if c == '\\' {
                 let n = ch(w, i + 1)
                 if n == '$' || n == '`' || n == '"' || n == '\\' {
@@ -824,7 +832,7 @@ fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
         return
     }
     var wo = buf()
-    xw(mut sh, word, 0, word.len, if dq then X_DQ else X_TILDE, mut wo)
+    xw(mut sh, word, 0, word.len, if dq then X_DQ | X_PWORD else X_TILDE, mut wo)
     if sh.flow != F_NONE {
         return
     }
@@ -853,7 +861,7 @@ fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
 /// is quoted text; unquoted, its literal bytes may be split as well.
 fn word_in(mut sh: Sh, word: str, dq: bool, mut o: Buf) {
     if dq {
-        xw(mut sh, word, 0, word.len, X_DQ, mut o)
+        xw(mut sh, word, 0, word.len, X_DQ | X_PWORD, mut o)
         return
     }
     putb(mut o, RB)
