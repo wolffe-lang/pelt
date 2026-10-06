@@ -1,0 +1,9 @@
+#!/bin/sh
+# check-test — the unit tests (`*_test.lu`) on the native tier.
+set -eu
+PELT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+export PELT_ROOT
+cd "$PELT_ROOT"
+. tools/lib-toolchain.sh
+cd src
+"$WOLF" test

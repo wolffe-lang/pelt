@@ -1,0 +1,35 @@
+#!/bin/sh
+# build — compile pelt on one tier or both.
+#
+# The program is `src/pelt.lu` (marked `//! member: false`) over the
+# module `src/sh/`. Usage: tools/build [--native|--release|--all]
+#   --native   the fast default backend  -> target/native/pelt
+#   --release  LLVM with the mid-end on  -> target/release/pelt
+#   --all      both (the default)
+# Every build denies warnings.
+set -eu
+PELT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+export PELT_ROOT
+cd "$PELT_ROOT"
+. tools/lib-toolchain.sh
+
+tiers="native release"
+case "${1:-}" in
+--native) tiers=native ;;
+--release) tiers=release ;;
+--all | "") ;;
+*)
+    echo "build: unknown option $1" >&2
+    exit 2
+    ;;
+esac
+
+for tier in $tiers; do
+    mkdir -p "target/$tier"
+    if [ "$tier" = release ]; then
+        "$WOLF" build --release --deny-warnings src/pelt.lu -o "target/$tier/pelt"
+    else
+        "$WOLF" build --deny-warnings src/pelt.lu -o "target/$tier/pelt"
+    fi
+    echo "build: target/$tier/pelt"
+done
