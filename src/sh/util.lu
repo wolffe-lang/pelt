@@ -425,7 +425,9 @@ fn is_binary(op: str) -> bool {
         op == "-le" ||
         op == "-nt" ||
         op == "-ot" ||
-        op == "-ef"
+        op == "-ef" ||
+        op == "<" ||
+        op == ">"
 }
 
 struct Tst {
@@ -603,6 +605,12 @@ fn binary_test(sh: Sh, mut t: Tst, a: str, op: str, b: str) -> bool {
     }
     if op == "!=" {
         return a != b
+    }
+    if op == "<" {
+        return a < b
+    }
+    if op == ">" {
+        return b < a
     }
     if op == "-nt" || op == "-ot" {
         let ma = fs_modified_ms(a) else |_| { return op == "-nt" && fs_exists(a) }
