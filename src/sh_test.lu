@@ -1,0 +1,12 @@
+//! The table checks of module `sh` (`sh/selftest.lu`), run by
+//! `wolf test`: each failing check is one line, and none may fail.
+
+use sh
+
+fn main() {
+    let bad = sh.self_test()
+    for line in bad {
+        eprint(line)
+    }
+    assert(bad.len == 0, "{bad.len} table checks failed")
+}

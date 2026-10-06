@@ -1,0 +1,156 @@
+//! sh.selftest — table checks of the pieces under the differential
+//! corpus: the pattern matcher, the arithmetic evaluator, field
+//! splitting, prefix and suffix trimming, unsigned digits, and the
+//! parser's tree. `src/sh_test.lu` runs them under `wolf test`.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.6.4, 2.6.5, 2.14; every
+//! expected value here was read off a black-box run of `dash` 0.5.13.4
+//! (the corpus rows that cover the same shapes cite the same runs).
+
+fn want_match(mut bad: List[str], pat: str, s: str, want: bool) {
+    if pmatch(pat, s) != want {
+        (mut bad).push("pmatch({pat}, {s}) is not {want}")
+    }
+}
+
+/// A pattern whose `*` was quoted: the `Q` mark, then the byte.
+fn quoted_star() -> str {
+    var o = buf()
+    putb(mut o, Q)
+    putc(mut o, '*')
+    text(o)
+}
+
+fn want_arith(mut bad: List[str], expr: str, want: int) {
+    var sh = new_sh("selftest")
+    let (v, err) = arith(mut sh, expr)
+    if err.len > 0 || v != want {
+        (mut bad).push("arith({expr}) = {v} err={err}, want {want}")
+    }
+}
+
+fn want_arith_error(mut bad: List[str], expr: str) {
+    var sh = new_sh("selftest")
+    let (_v, err) = arith(mut sh, expr)
+    if err.len == 0 {
+        (mut bad).push("arith({expr}) should be an error")
+    }
+}
+
+fn joined(xs: List[str]) -> str {
+    var o = buf()
+    for x in xs {
+        put(mut o, "[{unmark(x)}]")
+    }
+    text(o)
+}
+
+fn want_split(mut bad: List[str], ifs_value: str, value: str, want: str) {
+    var sh = new_sh("selftest")
+    sh.vals["IFS"] = ifs_value
+    var m = buf()
+    ustr(mut m, value)
+    let got = joined(split_marked(sh, text(m)))
+    if got != want {
+        (mut bad).push("split({value}) on IFS {escaped(ifs_value)} = {got}, want {want}")
+    }
+}
+
+fn want_trim(mut bad: List[str], v: str, pat: str, prefix: bool, longest: bool, want: str) {
+    let got = trim_pattern(v, pat, prefix, longest)
+    if got != want {
+        (mut bad).push("trim({v}, {pat}) = {got}, want {want}")
+    }
+}
+
+fn want_tree(mut bad: List[str], src: str, want: str) {
+    var a = new_ast()
+    var p = new_parser(src, 1)
+    var o = buf()
+    loop {
+        let n = parse_complete(mut p, mut a)
+        if n < 0 {
+            break
+        }
+        dump(a, n, 0, mut o)
+    }
+    let got = text(o)
+    if got != want || p.err.len > 0 {
+        (mut bad).push("tree of {escaped(src)}:\n{got}err={p.err}\nwant:\n{want}")
+    }
+}
+
+/// Run every table check; answers one line per check that failed,
+/// empty when all pass.
+pub fn self_test() -> List[str] {
+    var bad = List[str]()
+    want_match(mut bad, "*", "", true)
+    want_match(mut bad, "a*c", "abbbc", true)
+    want_match(mut bad, "a*c", "abbb", false)
+    want_match(mut bad, "?", "", false)
+    want_match(mut bad, "[a-c]x", "bx", true)
+    want_match(mut bad, "[!a-c]x", "bx", false)
+    want_match(mut bad, "[]]", "]", true)
+    want_match(mut bad, "[[:digit:]]*", "7up", true)
+    want_match(mut bad, "\\*", "*", true)
+    want_match(mut bad, "\\*", "a", false)
+    want_match(mut bad, "[ab", "[ab", true)
+    want_match(mut bad, quoted_star(), "*", true)
+    want_match(mut bad, quoted_star(), "x", false)
+    want_match(mut bad, "*.tar.gz", "a.tar.gz", true)
+    want_arith(mut bad, "1+2*3", 7)
+    want_arith(mut bad, "(1+2)*3", 9)
+    want_arith(mut bad, "-7/2", -3)
+    want_arith(mut bad, "-7%2", -1)
+    want_arith(mut bad, "1<<62<<1", -9223372036854775807 - 1)
+    want_arith(mut bad, "9223372036854775807+1", -9223372036854775807 - 1)
+    want_arith(mut bad, "0x1f + 010", 39)
+    want_arith(mut bad, "1 ? 2 ? 3 : 4 : 5", 3)
+    want_arith(mut bad, "0 && 1/0", 0)
+    want_arith(mut bad, "1 || 1/0", 1)
+    want_arith(mut bad, "~0", -1)
+    want_arith(mut bad, "!5 == 0", 1)
+    want_arith_error(mut bad, "x = 3, 1")
+    want_arith_error(mut bad, "1/0")
+    want_arith_error(mut bad, "1 +")
+    want_arith_error(mut bad, "09")
+    want_split(mut bad, " \t\n", "  a  b ", "[a][b]")
+    want_split(mut bad, ":", "::a::", "[][][a][]")
+    want_split(mut bad, " :", " :a : b: ", "[][a][b]")
+    want_split(mut bad, "", "a b", "[a b]")
+    want_split(mut bad, "1", "a1b11c", "[a][b][][c]")
+    want_trim(mut bad, "a/b/c", "*/", true, false, "b/c")
+    want_trim(mut bad, "a/b/c", "*/", true, true, "c")
+    want_trim(mut bad, "f.tar.gz", ".*", false, false, "f.tar")
+    want_trim(mut bad, "f.tar.gz", ".*", false, true, "f")
+    want_trim(mut bad, "abc", "z", true, true, "abc")
+    if udigits(-1, 10, false) != "18446744073709551615" {
+        (mut bad).push("udigits(-1, 10) = {udigits(-1, 10, false)}")
+    }
+    if udigits(-1, 16, false) != "ffffffffffffffff" {
+        (mut bad).push("udigits(-1, 16) = {udigits(-1, 16, false)}")
+    }
+    if udigits(255, 8, false) != "377" {
+        (mut bad).push("udigits(255, 8) = {udigits(255, 8, false)}")
+    }
+    let n = to_int("-9223372036854775808") else 0
+    if n != -9223372036854775807 - 1 {
+        (mut bad).push("to_int(min) = {n}")
+    }
+    want_tree(
+        mut bad,
+        "a && b || ! c\n",
+        "list ;\n  andor && ||\n    simple word\"a\"\n    simple word\"b\"\n    pipe !\n      simple word\"c\"\n",
+    )
+    want_tree(
+        mut bad,
+        "f() {{ :; }}\n",
+        "list ;\n  func f\n    brace\n      list ;\n        simple word\":\"\n",
+    )
+    want_tree(
+        mut bad,
+        "for i in a; do :; done\n",
+        "list ;\n  for i in \"a\"\n    list ;\n      simple word\":\"\n",
+    )
+    bad
+}
