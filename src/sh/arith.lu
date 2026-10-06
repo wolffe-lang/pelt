@@ -1,0 +1,487 @@
+//! sh.arith — arithmetic expansion, `$((expression))` (XCU 2.6.4).
+//!
+//! References consulted: POSIX.1-2024 XCU 2.6.4 and the C operator
+//! table it defers to (signed long arithmetic, here 64-bit); black-box
+//! runs of `dash` 0.5.13.4 for overflow (it wraps), octal and hex
+//! constants, and what a variable's value may be (an integer constant,
+//! or the expansion is an error). No shell's source.
+//!
+//! The text has already had its parameters, command substitutions and
+//! quotes expanded. It is parsed and evaluated in one pass by
+//! precedence climbing; `skip` counts the unevaluated sides of `&&`,
+//! `||` and `?:`, under which an assignment changes nothing — the
+//! short-circuit is about side effects, not only the value. Overflow
+//! wraps at 64 bits (the arithmetic is `wrapping[i64]`), division by
+//! zero is an error, and so is `min / -1`, whose quotient does not fit.
+
+struct Ar {
+    s: str,
+    i: int,
+    err: str,
+    skip: int,
+}
+
+fn ar_err(mut r: Ar, msg: str) {
+    if r.err.len == 0 {
+        r.err = msg
+    }
+    r.i = r.s.len
+}
+
+fn ws(mut r: Ar) {
+    while r.i < r.s.len {
+        let c = ch(r.s, r.i)
+        if c == ' ' || c == '\t' || c == '\n' || c == '\r' {
+            r.i += 1
+        } else {
+            break
+        }
+    }
+}
+
+/// Is the operator `op` next (after blanks)? Consumes it when it is and
+/// is not the start of a longer operator in `longer`.
+fn eat(mut r: Ar, op: str, not_before: str) -> bool {
+    ws(mut r)
+    let end = r.i + op.len
+    if end > r.s.len || (r.s.get(r.i..end) else "") != op {
+        return false
+    }
+    if not_before.len > 0 && end < r.s.len {
+        let next = ch(r.s, end)
+        var k = 0
+        while k < not_before.len {
+            if ch(not_before, k) == next {
+                return false
+            }
+            k += 1
+        }
+    }
+    r.i = end
+    true
+}
+
+fn wadd(a: int, b: int) -> int {
+    (a as wrapping[i64] + b as wrapping[i64]) as int
+}
+
+fn wsub(a: int, b: int) -> int {
+    (a as wrapping[i64] - b as wrapping[i64]) as int
+}
+
+fn wmul(a: int, b: int) -> int {
+    (a as wrapping[i64] * b as wrapping[i64]) as int
+}
+
+fn wshl(a: int, b: int) -> int {
+    (a as wrapping[i64] << b as wrapping[i64]) as int
+}
+
+fn wshr(a: int, b: int) -> int {
+    (a as wrapping[i64] >> b as wrapping[i64]) as int
+}
+
+fn wneg(a: int) -> int {
+    wsub(0, a)
+}
+
+fn band(a: int, b: int) -> int {
+    (a as wrapping[i64] & b as wrapping[i64]) as int
+}
+
+fn bor(a: int, b: int) -> int {
+    (a as wrapping[i64] | b as wrapping[i64]) as int
+}
+
+fn bxor(a: int, b: int) -> int {
+    (a as wrapping[i64] ^ b as wrapping[i64]) as int
+}
+
+fn bnot(a: int) -> int {
+    bxor(a, -1)
+}
+
+/// An integer constant in C's spelling (decimal, `0x` hex, `0` octal),
+/// with an optional sign: the form both a literal in an expression and
+/// a variable's value must take.
+fn parse_const(s: str) -> int ! {parse} {
+    var t = s.trim()
+    var neg = false
+    if t.len > 0 && (ch(t, 0) == '-' || ch(t, 0) == '+') {
+        neg = ch(t, 0) == '-'
+        t = t[1..t.len]
+    }
+    if t.len == 0 {
+        return parse
+    }
+    var base: int = 10
+    var i = 0
+    if t.len > 1 && ch(t, 0) == '0' && (ch(t, 1) == 'x' || ch(t, 1) == 'X') {
+        base = 16
+        i = 2
+        if t.len == 2 {
+            return parse
+        }
+    } else if t.len > 1 && ch(t, 0) == '0' {
+        base = 8
+        i = 1
+    }
+    var n: int = 0
+    while i < t.len {
+        let c = ch(t, i)
+        var d: int = -1
+        if is_digit(c) {
+            d = c as int - 48
+        } else if c >= 'a' && c <= 'f' {
+            d = c as int - 87
+        } else if c >= 'A' && c <= 'F' {
+            d = c as int - 55
+        }
+        if d < 0 || d >= base {
+            return parse
+        }
+        n = wadd(wmul(n, base), d)
+        i += 1
+    }
+    if neg {
+        return wneg(n)
+    }
+    n
+}
+
+fn var_value(sh: Sh, mut r: Ar, name: str) -> int {
+    if !has_var(sh, name) {
+        if sh.opt_u && r.skip == 0 {
+            ar_err(mut r, "{name}: parameter not set")
+        }
+        return 0
+    }
+    let v = value_of(sh, name)
+    if v.len == 0 {
+        return 0
+    }
+    let n = parse_const(v) else |_| {
+        if r.skip == 0 {
+            ar_err(mut r, "{v}: not a number")
+        }
+        return 0
+    }
+    n
+}
+
+/// Evaluate `s`. The error, when there is one, is in the second field.
+fn arith(mut sh: Sh, s: str) -> (int, str) {
+    var r = Ar { s: s, i: 0, err: "", skip: 0 }
+    ws(mut r)
+    if r.i >= r.s.len {
+        return (0, "")
+    }
+    let v = assign_expr(mut sh, mut r)
+    ws(mut r)
+    if r.err.len == 0 && r.i < r.s.len {
+        ar_err(mut r, "syntax error in \"{s}\"")
+    }
+    (v, r.err)
+}
+
+fn read_name(mut r: Ar) -> str {
+    let start = r.i
+    while r.i < r.s.len && is_alnum(ch(r.s, r.i)) {
+        r.i += 1
+    }
+    r.s[start..r.i]
+}
+
+fn assign_expr(mut sh: Sh, mut r: Ar) -> int {
+    ws(mut r)
+    let save = r.i
+    if r.i < r.s.len && is_alpha(ch(r.s, r.i)) {
+        let name = read_name(mut r)
+        ws(mut r)
+        var op = ""
+        if eat(mut r, "<<=", "") {
+            op = "<<"
+        } else if eat(mut r, ">>=", "") {
+            op = ">>"
+        } else if eat(mut r, "*=", "") {
+            op = "*"
+        } else if eat(mut r, "/=", "") {
+            op = "/"
+        } else if eat(mut r, "%=", "") {
+            op = "%"
+        } else if eat(mut r, "+=", "") {
+            op = "+"
+        } else if eat(mut r, "-=", "") {
+            op = "-"
+        } else if eat(mut r, "&=", "") {
+            op = "&"
+        } else if eat(mut r, "^=", "") {
+            op = "^"
+        } else if eat(mut r, "|=", "") {
+            op = "|"
+        } else if eat(mut r, "=", "=") {
+            op = "="
+        }
+        if op.len > 0 {
+            let rhs = assign_expr(mut sh, mut r)
+            if r.err.len > 0 {
+                return 0
+            }
+            var v = rhs
+            if op != "=" {
+                let cur = var_value(sh, mut r, name)
+                v = binop(mut r, op, cur, rhs)
+            }
+            if r.skip == 0 && r.err.len == 0 {
+                if !set_var(mut sh, name, "{v}") {
+                    ar_err(mut r, "{name}: is read-only")
+                }
+            }
+            return v
+        }
+        r.i = save
+    }
+    cond_expr(mut sh, mut r)
+}
+
+fn cond_expr(mut sh: Sh, mut r: Ar) -> int {
+    let c = binary(mut sh, mut r, 0)
+    if !eat(mut r, "?", "") {
+        return c
+    }
+    if c != 0 {
+        let a = assign_expr(mut sh, mut r)
+        if !eat(mut r, ":", "") {
+            ar_err(mut r, "expecting ':' in \"{r.s}\"")
+            return 0
+        }
+        r.skip += 1
+        let _b = assign_expr(mut sh, mut r)
+        r.skip -= 1
+        return a
+    }
+    r.skip += 1
+    let _a = assign_expr(mut sh, mut r)
+    r.skip -= 1
+    if !eat(mut r, ":", "") {
+        ar_err(mut r, "expecting ':' in \"{r.s}\"")
+        return 0
+    }
+    assign_expr(mut sh, mut r)
+}
+
+/// The binary operators by level, loosest first.
+fn level_ops(level: int) -> List[str] {
+    var o = List[str]()
+    if level == 0 {
+        (mut o).push("||")
+    } else if level == 1 {
+        (mut o).push("&&")
+    } else if level == 2 {
+        (mut o).push("|")
+    } else if level == 3 {
+        (mut o).push("^")
+    } else if level == 4 {
+        (mut o).push("&")
+    } else if level == 5 {
+        (mut o).push("==")
+        (mut o).push("!=")
+    } else if level == 6 {
+        (mut o).push("<=")
+        (mut o).push(">=")
+        (mut o).push("<")
+        (mut o).push(">")
+    } else if level == 7 {
+        (mut o).push("<<")
+        (mut o).push(">>")
+    } else if level == 8 {
+        (mut o).push("+")
+        (mut o).push("-")
+    } else {
+        (mut o).push("*")
+        (mut o).push("/")
+        (mut o).push("%")
+    }
+    o
+}
+
+/// What may not follow an operator for it to be that operator: `|` is
+/// not `||` or `|=`, `<` is not `<<` or `<=`, and so on.
+fn not_after(op: str) -> str {
+    if op == "|" {
+        return "|="
+    }
+    if op == "&" {
+        return "&="
+    }
+    if op == "<" || op == ">" {
+        return "<>="
+    }
+    if op == "<<" || op == ">>" {
+        return "="
+    }
+    if op == "+" || op == "-" || op == "*" || op == "/" || op == "%" || op == "^" {
+        return "="
+    }
+    ""
+}
+
+fn binary(mut sh: Sh, mut r: Ar, level: int) -> int {
+    if level > 9 {
+        return unary(mut sh, mut r)
+    }
+    var a = binary(mut sh, mut r, level + 1)
+    let ops = level_ops(level)
+    loop {
+        if r.err.len > 0 {
+            return 0
+        }
+        var found = ""
+        for op in ops {
+            if found.len == 0 && eat(mut r, op, not_after(op)) {
+                found = op
+            }
+        }
+        if found.len == 0 {
+            return a
+        }
+        if found == "&&" {
+            if a == 0 {
+                r.skip += 1
+                let _b = binary(mut sh, mut r, level + 1)
+                r.skip -= 1
+                a = 0
+            } else {
+                let b = binary(mut sh, mut r, level + 1)
+                a = if b != 0 then 1 else 0
+            }
+            continue
+        }
+        if found == "||" {
+            if a != 0 {
+                r.skip += 1
+                let _b = binary(mut sh, mut r, level + 1)
+                r.skip -= 1
+                a = 1
+            } else {
+                let b = binary(mut sh, mut r, level + 1)
+                a = if b != 0 then 1 else 0
+            }
+            continue
+        }
+        let b = binary(mut sh, mut r, level + 1)
+        a = binop(mut r, found, a, b)
+    }
+    a
+}
+
+fn binop(mut r: Ar, op: str, a: int, b: int) -> int {
+    if op == "+" {
+        return wadd(a, b)
+    }
+    if op == "-" {
+        return wsub(a, b)
+    }
+    if op == "*" {
+        return wmul(a, b)
+    }
+    if op == "/" || op == "%" {
+        if b == 0 {
+            if r.skip == 0 {
+                ar_err(mut r, "division by zero")
+            }
+            return 0
+        }
+        if b == -1 {
+            return if op == "/" then wneg(a) else 0
+        }
+        return if op == "/" then a / b else a % b
+    }
+    if op == "<<" {
+        return wshl(a, b)
+    }
+    if op == ">>" {
+        return wshr(a, b)
+    }
+    if op == "<" {
+        return if a < b then 1 else 0
+    }
+    if op == "<=" {
+        return if a <= b then 1 else 0
+    }
+    if op == ">" {
+        return if a > b then 1 else 0
+    }
+    if op == ">=" {
+        return if a >= b then 1 else 0
+    }
+    if op == "==" {
+        return if a == b then 1 else 0
+    }
+    if op == "!=" {
+        return if a != b then 1 else 0
+    }
+    if op == "&" {
+        return band(a, b)
+    }
+    if op == "|" {
+        return bor(a, b)
+    }
+    if op == "^" {
+        return bxor(a, b)
+    }
+    0
+}
+
+fn unary(mut sh: Sh, mut r: Ar) -> int {
+    ws(mut r)
+    if eat(mut r, "!", "=") {
+        let v = unary(mut sh, mut r)
+        return if v == 0 then 1 else 0
+    }
+    if eat(mut r, "~", "") {
+        return bnot(unary(mut sh, mut r))
+    }
+    if eat(mut r, "-", "-=") {
+        return wneg(unary(mut sh, mut r))
+    }
+    if eat(mut r, "+", "+=") {
+        return unary(mut sh, mut r)
+    }
+    primary(mut sh, mut r)
+}
+
+fn primary(mut sh: Sh, mut r: Ar) -> int {
+    ws(mut r)
+    if r.i >= r.s.len {
+        ar_err(mut r, "missing operand in \"{r.s}\"")
+        return 0
+    }
+    if eat(mut r, "(", "") {
+        let v = assign_expr(mut sh, mut r)
+        if !eat(mut r, ")", "") {
+            ar_err(mut r, "missing ')' in \"{r.s}\"")
+            return 0
+        }
+        return v
+    }
+    let c = ch(r.s, r.i)
+    if is_digit(c) {
+        let start = r.i
+        while r.i < r.s.len && is_alnum(ch(r.s, r.i)) {
+            r.i += 1
+        }
+        let lit = r.s[start..r.i]
+        let n = parse_const(lit) else |_| {
+            ar_err(mut r, "{lit}: not a number")
+            return 0
+        }
+        return n
+    }
+    if is_alpha(c) {
+        let name = read_name(mut r)
+        return var_value(sh, mut r, name)
+    }
+    ar_err(mut r, "unexpected '{c}' in \"{r.s}\"")
+    0
+}
