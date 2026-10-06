@@ -1,0 +1,5 @@
+exit=1
+stderr=no
+bash=agree
+pending=env unset
+why=no environment unset (wolf-lang#534)

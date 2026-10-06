@@ -1,0 +1,5 @@
+exit=0
+stderr=yes
+bash=agree
+pending=signal number
+why=os_wait drops the signal number (wolf-lang#534)

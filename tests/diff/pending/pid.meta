@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+bash=agree
+pending=getpid
+why=$$ reads /proc/self/stat on linux only (wolf-lang#141)
