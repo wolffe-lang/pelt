@@ -1,0 +1,50 @@
+# pelt — the pinned toolchain.
+#
+# wolf and lupin come from their RELEASE ARCHIVES, pinned by sha256
+# digest, never from a source build: the shape boreutils pins with.
+# `tools/fetch-toolchain` downloads the archive for this host, refuses
+# on a digest mismatch, and stages the whole archive into `.wolf-bin/`
+# (gitignored) — the native tier needs `libwolf_rt.a` beside the driver.
+#
+# Identity is the FIRST line of `--version`: `tools/lib-toolchain.sh`
+# refuses when it drifts from `version_line`. `rev` is information: the
+# commit the tag names.
+#
+# One row per host target pelt is built on. Windows is out of scope
+# (a POSIX shell), so its archive is not pinned.
+#
+# ## The first pin: 0.2.24 / 0.1.47 (sh01, 2026-10-06)
+#
+# Digests read from the release pages (wolf-lang release 404332628,
+# wolf-interp release 404283632) and re-hashed after download on
+# kasumi for the linux x86-64 pair. wolf-std trunk is `2f389a7`, which
+# ws51 found builds byte-identical to `14f0ab2` at 0.2.24; pelt imports
+# no std module at this pin, so the tree is staged for `wolf test` and
+# for the lanes that will.
+
+[wolf]
+version = "0.2.24"
+repo = "wolffe-lang/wolf-lang"
+rev = "294d626dd596122285d5df954762e3aee3e5db71"
+version_line = "wolf 0.2.24 (wolfgang, pin 294d626)"
+aarch64-apple-darwin = "597421eb349dcba4a45922a47799b4ac72cd0f05d6383b8cb8eac60307a2230a"
+x86_64-unknown-linux-gnu = "501d6d3f45124c84708b410dac62af5d358d24c1746323f17d42378b043519c7"
+aarch64-unknown-linux-gnu = "3e4386bbba3c8a28647d2c4952e6b57f069720844e09ae079adac0162fdf3271"
+
+[lupin]
+# The reference interpreter wolf 0.2.24 declares as its pairing:
+# `wolf --version` line 2 reads "paired with lupin 0.1.47 (reference
+# interpreter), pin 8e36bc1".
+version = "0.1.47"
+repo = "wolffe-lang/wolf-interp"
+rev = "b3228cb5905f2520aa36810c6bb09978e770372e"
+version_line = "lupin 0.1.47 (wolf-interp, reference interpreter at pin 8e36bc1)"
+aarch64-apple-darwin = "f58a51c888b53522130f6b42b267f198a0761f414fdc95930619a6b836740bd1"
+x86_64-unknown-linux-gnu = "0ddc4ff38d6178ae9f0fe0f007546f6e304216e5ad999b2509d2817a57912788"
+aarch64-unknown-linux-gnu = "470b43c2e2852c84be4dc4246d9c1e2f52ee42beaddb1e79bac2ba0b61bbe4d0"
+
+[std]
+# wolf-std ships no release archive, so the tree is pinned by commit:
+# git's object hash is the digest.
+repo = "wolffe-lang/wolf-std"
+rev = "2f389a7f60a88452063c26aea7b8dad55472982e"
