@@ -732,10 +732,6 @@ fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
         let nl = special_name_len(inner, 1)
         if nl > 0 && nl == inner.len - 1 {
             let name = inner[1..inner.len]
-            if name == "@" || name == "*" {
-                emit_val(mut o, "{sh.pos.len}", dq)
-                return
-            }
             let (v, set) = param(sh, name)
             if !set && sh.opt_u {
                 unset_error(mut sh, name)
