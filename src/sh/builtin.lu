@@ -1,0 +1,872 @@
+//! sh.builtin — the special built-ins (XCU 2.15 of 2024, "Special
+//! Built-In Utilities") and the regular built-ins pelt carries.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.15 and the utility pages of
+//! `cd`, `command`, `echo`, `false`, `getopts`, `pwd`, `read`, `test`,
+//! `true`; the `dash(1)` manual for `echo` (dash's echo interprets
+//! backslash escapes, the XSI form) and `local`; black-box runs of
+//! `dash` 0.5.13.4 for statuses and what each prints. The messages are
+//! pelt's own.
+//!
+//! An error in a special built-in ends a non-interactive shell (XCU
+//! 2.8.1); in a regular one it is only a status.
+
+fn args_of(fields: List[str]) -> List[str] {
+    var out = List[str]()
+    var i = 1
+    while i < fields.len {
+        (mut out).push(fields[i])
+        i += 1
+    }
+    out
+}
+
+fn builtin(mut sh: Sh, fields: List[str]) -> int {
+    let name = fields[0]
+    let args = args_of(fields)
+    var st = 0
+    if name == ":" || name == "true" {
+        st = 0
+    } else if name == "false" {
+        st = 1
+    } else if name == "echo" {
+        st = bi_echo(mut sh, args)
+    } else if name == "printf" {
+        st = bi_printf(mut sh, args)
+    } else if name == "test" {
+        st = bi_test(mut sh, args)
+    } else if name == "[" {
+        if args.len == 0 || args[args.len - 1] != "]" {
+            diag(mut sh, "[: missing ]")
+            st = 2
+        } else {
+            st = bi_test(mut sh, args[0..args.len - 1])
+        }
+    } else if name == "exit" {
+        st = bi_exit(mut sh, args)
+    } else if name == "return" {
+        st = bi_return(mut sh, args)
+    } else if name == "break" || name == "continue" {
+        st = bi_break(mut sh, name, args)
+    } else if name == "set" {
+        st = bi_set(mut sh, args)
+    } else if name == "shift" {
+        st = bi_shift(mut sh, args)
+    } else if name == "export" || name == "readonly" {
+        st = bi_export(mut sh, name, args)
+    } else if name == "unset" {
+        st = bi_unset(mut sh, args)
+    } else if name == "eval" {
+        st = bi_eval(mut sh, args)
+    } else if name == "." {
+        st = bi_dot(mut sh, args)
+    } else if name == "exec" {
+        st = bi_exec(mut sh, args)
+    } else if name == "trap" {
+        st = bi_trap(mut sh, args)
+    } else if name == "times" {
+        emit(mut sh, "0m0.000s 0m0.000s\n0m0.000s 0m0.000s\n")
+    } else if name == "pwd" {
+        st = bi_pwd(mut sh, args)
+    } else if name == "cd" {
+        diag(mut sh, "cd: changing directory is not supported yet (no chdir before wolf-lang s215)")
+        st = 2
+    } else if name == "command" {
+        st = bi_command(mut sh, args)
+    } else if name == "read" {
+        st = bi_read(mut sh, args)
+    } else if name == "local" {
+        st = bi_local(mut sh, args)
+    } else if name == "getopts" {
+        st = bi_getopts(mut sh, args)
+    } else if name == "wait" {
+        st = 0
+    } else if name == "umask" {
+        diag(mut sh, "umask: not supported yet (no umask builtin in wolf 0.2.24)")
+        st = 2
+    } else if name == "alias" || name == "unalias" || name == "type" {
+        diag(mut sh, "{name}: not supported yet")
+        st = 2
+    }
+    if sh.flow == F_NONE || sh.flow == F_EXIT {
+        if sh.flow == F_NONE {
+            sh.status = st
+        }
+    }
+    st
+}
+
+fn bi_exit(mut sh: Sh, args: List[str]) -> int {
+    var code = sh.status
+    if args.len > 0 {
+        code = to_int(args[0]) else |_| {
+            fatal(mut sh, "exit: {args[0]}: not a number", 2)
+            return 2
+        }
+    }
+    sh.status = code & 255
+    sh.flow = F_EXIT
+    sh.status
+}
+
+fn bi_return(mut sh: Sh, args: List[str]) -> int {
+    var code = sh.status
+    if args.len > 0 {
+        code = to_int(args[0]) else |_| {
+            fatal(mut sh, "return: {args[0]}: not a number", 2)
+            return 2
+        }
+    }
+    sh.status = code & 255
+    if sh.fdepth == 0 && sh.dots == 0 {
+        // outside a function or a dot script: dash ends the shell
+        sh.flow = F_EXIT
+        return sh.status
+    }
+    sh.flow = F_RETURN
+    sh.status
+}
+
+fn bi_break(mut sh: Sh, name: str, args: List[str]) -> int {
+    var n = 1
+    if args.len > 0 {
+        n = to_int(args[0]) else |_| {
+            fatal(mut sh, "{name}: {args[0]}: not a number", 2)
+            return 2
+        }
+        if n < 1 {
+            fatal(mut sh, "{name}: {args[0]}: out of range", 2)
+            return 2
+        }
+    }
+    if sh.loops == 0 {
+        return 0
+    }
+    if n > sh.loops {
+        n = sh.loops
+    }
+    sh.flow = if name == "break" then F_BREAK else F_CONTINUE
+    sh.flow_n = n
+    0
+}
+
+fn bi_shift(mut sh: Sh, args: List[str]) -> int {
+    var n = 1
+    if args.len > 0 {
+        n = to_int(args[0]) else |_| {
+            fatal(mut sh, "shift: {args[0]}: not a number", 2)
+            return 2
+        }
+    }
+    if n < 0 || n > sh.pos.len {
+        fatal(mut sh, "shift: {n}: more than the {sh.pos.len} positional parameters", 2)
+        return 2
+    }
+    sh.pos = sh.pos[n..sh.pos.len]
+    0
+}
+
+/// `set` with no operands: every variable, sorted, quoted for reinput.
+fn print_vars(mut sh: Sh) {
+    for k in sort_strs(sh.vals.keys()) {
+        emit(mut sh, "{k}={squote(sh.vals[k] else "")}\n")
+    }
+}
+
+fn option_letter(mut sh: Sh, c: char, on: bool) -> bool {
+    if c == 'e' {
+        sh.opt_e = on
+    } else if c == 'u' {
+        sh.opt_u = on
+    } else if c == 'x' {
+        sh.opt_x = on
+    } else if c == 'f' {
+        sh.opt_f = on
+    } else if c == 'n' {
+        sh.opt_n = on
+    } else if c == 'v' {
+        sh.opt_v = on
+    } else if c == 'a' {
+        sh.opt_a = on
+    } else if c == 'C' {
+        sh.opt_bigc = on
+    } else if c == 'b' || c == 'm' || c == 'h' {
+        // job notification, monitor and hashing: accepted, nothing to do
+    } else {
+        return false
+    }
+    true
+}
+
+fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
+    if name == "errexit" {
+        return option_letter(mut sh, 'e', on)
+    }
+    if name == "nounset" {
+        return option_letter(mut sh, 'u', on)
+    }
+    if name == "xtrace" {
+        return option_letter(mut sh, 'x', on)
+    }
+    if name == "noglob" {
+        return option_letter(mut sh, 'f', on)
+    }
+    if name == "noexec" {
+        return option_letter(mut sh, 'n', on)
+    }
+    if name == "verbose" {
+        return option_letter(mut sh, 'v', on)
+    }
+    if name == "allexport" {
+        return option_letter(mut sh, 'a', on)
+    }
+    if name == "noclobber" {
+        return option_letter(mut sh, 'C', on)
+    }
+    name == "notify" ||
+        name == "monitor" ||
+        name == "ignoreeof" ||
+        name == "nolog" ||
+        name == "vi" ||
+        name == "pipefail"
+}
+
+fn print_options(mut sh: Sh, reinput: bool) {
+    let names = [
+        "allexport",
+        "errexit",
+        "noclobber",
+        "noexec",
+        "noglob",
+        "nounset",
+        "verbose",
+        "xtrace",
+    ]
+    let letters = ['a', 'e', 'C', 'n', 'f', 'u', 'v', 'x']
+    let flags = dash_flags(sh)
+    var i = 0
+    while i < names.len {
+        let on = (flags.find("{letters[i]}") else -1) >= 0
+        if reinput {
+            emit(mut sh, "set {if on then "-o" else "+o"} {names[i]}\n")
+        } else {
+            emit(mut sh, "{names[i]}\t{if on then "on" else "off"}\n")
+        }
+        i += 1
+    }
+}
+
+/// `set` (XCU 2.15): options and the positional parameters.
+fn bi_set(mut sh: Sh, args: List[str]) -> int {
+    if args.len == 0 {
+        print_vars(mut sh)
+        return 0
+    }
+    var i = 0
+    while i < args.len {
+        let a = args[i]
+        if a == "--" {
+            i += 1
+            sh.pos = args[i..args.len]
+            return 0
+        }
+        if a == "-" {
+            sh.opt_x = false
+            sh.opt_v = false
+            i += 1
+            break
+        }
+        let c0 = ch(a, 0)
+        if (c0 == '-' || c0 == '+') && a.len > 1 {
+            let on = c0 == '-'
+            if a.len == 2 && ch(a, 1) == 'o' {
+                if i + 1 >= args.len {
+                    print_options(mut sh, !on)
+                    i += 1
+                    continue
+                }
+                if !option_name(mut sh, args[i + 1], on) {
+                    fatal(mut sh, "set: {args[i + 1]}: no such option", 2)
+                    return 2
+                }
+                i += 2
+                continue
+            }
+            var k = 1
+            while k < a.len {
+                if !option_letter(mut sh, ch(a, k), on) {
+                    fatal(mut sh, "set: -{ch(a, k)}: no such option", 2)
+                    return 2
+                }
+                k += 1
+            }
+            i += 1
+            continue
+        }
+        break
+    }
+    if i < args.len {
+        sh.pos = args[i..args.len]
+    }
+    0
+}
+
+/// `export` and `readonly`, including `-p`.
+fn bi_export(mut sh: Sh, name: str, args: List[str]) -> int {
+    let ro = name == "readonly"
+    if args.len == 0 || args.len == 1 && args[0] == "-p" {
+        for k in sort_strs(sh.vals.keys()) {
+            let marked = if ro then is_ronly(sh, k) else is_exported(sh, k)
+            if marked {
+                emit(mut sh, "{name} {k}={squote(sh.vals[k] else "")}\n")
+            }
+        }
+        if !ro {
+            for k in sort_strs(sh.exported.keys()) {
+                if !has_var(sh, k) && (sh.exported[k] else false) {
+                    emit(mut sh, "{name} {k}\n")
+                }
+            }
+        }
+        return 0
+    }
+    for a in args {
+        let eq = a.find("=") else -1
+        let vname = if eq >= 0 then a[0..eq] else a
+        if !is_name(vname) {
+            fatal(mut sh, "{name}: {vname}: not a valid name", 2)
+            return 2
+        }
+        if eq >= 0 {
+            if !set_var(mut sh, vname, a[eq + 1..a.len]) {
+                fatal(mut sh, "{vname}: is read-only", 2)
+                return 2
+            }
+        }
+        if ro {
+            sh.ronly[vname] = true
+        } else {
+            sh.exported[vname] = true
+        }
+    }
+    0
+}
+
+fn bi_unset(mut sh: Sh, args: List[str]) -> int {
+    var funcs = false
+    var i = 0
+    while i < args.len && ch(args[i], 0) == '-' {
+        if args[i] == "-f" {
+            funcs = true
+        } else if args[i] == "-v" {
+            funcs = false
+        } else if args[i] == "--" {
+            i += 1
+            break
+        } else {
+            fatal(mut sh, "unset: {args[i]}: no such option", 2)
+            return 2
+        }
+        i += 1
+    }
+    while i < args.len {
+        let n = args[i]
+        if funcs {
+            let _f = (mut sh.funcs).remove(n) else 0
+        } else if !unset_var(mut sh, n) {
+            fatal(mut sh, "unset: {n}: is read-only", 2)
+            return 2
+        }
+        i += 1
+    }
+    0
+}
+
+fn join_args(args: List[str]) -> str {
+    var o = buf()
+    var k = 0
+    for a in args {
+        if k > 0 {
+            putc(mut o, ' ')
+        }
+        put(mut o, a)
+        k += 1
+    }
+    text(o)
+}
+
+fn bi_eval(mut sh: Sh, args: List[str]) -> int {
+    if args.len == 0 {
+        return 0
+    }
+    let line = sh.line
+    let st = eval_string(mut sh, join_args(args), "eval")
+    sh.line = line
+    st
+}
+
+/// `.` (XCU 2.15): a name without `/` is looked for in `PATH`.
+fn bi_dot(mut sh: Sh, args: List[str]) -> int {
+    if args.len == 0 {
+        fatal(mut sh, ".: a file name is required", 2)
+        return 2
+    }
+    var path = args[0]
+    if (path.find("/") else -1) < 0 {
+        path = find_in_path(sh, path)
+    }
+    if path.len == 0 || !fs_is_file(path) {
+        fatal(mut sh, ".: {args[0]}: not found", 2)
+        return 2
+    }
+    let src = fs_read_text(path) else |_| {
+        fatal(mut sh, ".: {args[0]}: cannot read", 2)
+        return 2
+    }
+    let line = sh.line
+    sh.dots += 1
+    var st = eval_string(mut sh, src, path)
+    sh.dots -= 1
+    if sh.flow == F_RETURN {
+        sh.flow = F_NONE
+        st = sh.status
+    }
+    sh.line = line
+    st
+}
+
+/// `exec` with a command: wolf 0.2.24 cannot replace the process
+/// (wolf-lang#534), so pelt runs it and then exits with its status,
+/// without running the `EXIT` trap, as a real exec would not.
+fn bi_exec(mut sh: Sh, args: List[str]) -> int {
+    if args.len == 0 {
+        return 0
+    }
+    let st = run_external(mut sh, args, List[str](), List[str]())
+    sh.traps = Map[str, str]()
+    sh.status = st
+    sh.flow = F_EXIT
+    st
+}
+
+fn trap_name(c: str) -> str {
+    if c == "0" || c == "EXIT" {
+        return "EXIT"
+    }
+    if c == "1" || c == "HUP" {
+        return "HUP"
+    }
+    if c == "2" || c == "INT" {
+        return "INT"
+    }
+    if c == "3" || c == "QUIT" {
+        return "QUIT"
+    }
+    if c == "6" || c == "ABRT" {
+        return "ABRT"
+    }
+    if c == "9" || c == "KILL" {
+        return "KILL"
+    }
+    if c == "14" || c == "ALRM" {
+        return "ALRM"
+    }
+    if c == "15" || c == "TERM" {
+        return "TERM"
+    }
+    if c == "USR1" || c == "USR2" || c == "CHLD" || c == "PIPE" || c == "CONT" || c == "TSTP" {
+        return c
+    }
+    ""
+}
+
+/// `trap`: every condition is recorded and printed back; only `EXIT`
+/// runs (catching signals waits on a later wolf lane).
+fn bi_trap(mut sh: Sh, args: List[str]) -> int {
+    if args.len == 0 {
+        for k in sort_strs(sh.traps.keys()) {
+            emit(mut sh, "trap -- {squote(sh.traps[k] else "")} {k}\n")
+        }
+        return 0
+    }
+    var i = 0
+    if args[0] == "--" {
+        i = 1
+    }
+    if i >= args.len {
+        return 0
+    }
+    var action = args[i]
+    var reset = action == "-"
+    var conds = args[i + 1..args.len]
+    // a lone unsigned integer is a condition, and resets it
+    if is_digits(action) && trap_name(action).len > 0 {
+        reset = true
+        conds = args[i..args.len]
+    }
+    var st = 0
+    for c in conds {
+        let n = trap_name(c)
+        if n.len == 0 {
+            diag(mut sh, "trap: {c}: no such condition")
+            st = 1
+            continue
+        }
+        if reset {
+            let _t = (mut sh.traps).remove(n) else ""
+        } else {
+            sh.traps[n] = action
+        }
+    }
+    st
+}
+
+fn bi_pwd(mut sh: Sh, args: List[str]) -> int {
+    var physical = false
+    for a in args {
+        if a == "-P" {
+            physical = true
+        } else if a == "-L" {
+            physical = false
+        }
+    }
+    var dir = value_of(sh, "PWD")
+    if physical || dir.len == 0 || ch(dir, 0) != '/' {
+        dir = os_cwd() else |_| {
+            diag(mut sh, "pwd: cannot read the working directory")
+            return 1
+        }
+    }
+    emit(mut sh, "{dir}\n")
+    0
+}
+
+/// `command [-p] [-v|-V] name [arg…]` (XCU `command`).
+fn bi_command(mut sh: Sh, args: List[str]) -> int {
+    var i = 0
+    var show = false
+    while i < args.len && ch(args[i], 0) == '-' && args[i].len > 1 {
+        let a = args[i]
+        if a == "--" {
+            i += 1
+            break
+        }
+        if a == "-v" || a == "-V" {
+            show = true
+        } else if a != "-p" {
+            diag(mut sh, "command: {a}: no such option")
+            return 2
+        }
+        i += 1
+    }
+    if i >= args.len {
+        return 0
+    }
+    let name = args[i]
+    if show {
+        if sh.funcs.has(name) ||
+            is_special_builtin(name) ||
+            is_regular_builtin(name) ||
+            is_reserved(name) {
+            emit(mut sh, "{name}\n")
+            return 0
+        }
+        if (name.find("/") else -1) >= 0 {
+            if fs_is_file(name) {
+                emit(mut sh, "{name}\n")
+                return 0
+            }
+            return 127
+        }
+        let p = find_in_path(sh, name)
+        if p.len == 0 {
+            return 127
+        }
+        emit(mut sh, "{p}\n")
+        return 0
+    }
+    let rest = args[i..args.len]
+    if is_special_builtin(name) || is_regular_builtin(name) {
+        return builtin(mut sh, rest)
+    }
+    run_external(mut sh, rest, List[str](), List[str]())
+}
+
+fn is_reserved(w: str) -> bool {
+    w == "if" ||
+        w == "then" ||
+        w == "else" ||
+        w == "elif" ||
+        w == "fi" ||
+        w == "do" ||
+        w == "done" ||
+        w == "case" ||
+        w == "esac" ||
+        w == "while" ||
+        w == "until" ||
+        w == "for" ||
+        w == "in" ||
+        w == "{{" ||
+        w == "}}" ||
+        w == "!"
+}
+
+fn bi_local(mut sh: Sh, args: List[str]) -> int {
+    if sh.fdepth == 0 {
+        diag(mut sh, "local: not in a function")
+        return 2
+    }
+    for a in args {
+        let eq = a.find("=") else -1
+        let name = if eq >= 0 then a[0..eq] else a
+        if !is_name(name) {
+            diag(mut sh, "local: {name}: not a valid name")
+            return 2
+        }
+        (mut sh.lnames).push(name)
+        (mut sh.lvals).push(value_of(sh, name))
+        (mut sh.lset).push(has_var(sh, name))
+        (mut sh.lexp).push(is_exported(sh, name))
+        if eq >= 0 {
+            if !set_var(mut sh, name, a[eq + 1..a.len]) {
+                diag(mut sh, "{name}: is read-only")
+                return 2
+            }
+        }
+    }
+    0
+}
+
+/// `read [-r] var…` (XCU `read`): one line of standard input, split
+/// on `IFS` into the variables, the last taking the rest. wolf's
+/// `read_line` cannot say whether the line ended in a newline, so a
+/// final line without one answers 0 where the utility answers 1.
+fn bi_read(mut sh: Sh, args: List[str]) -> int {
+    var raw = false
+    var i = 0
+    while i < args.len && ch(args[i], 0) == '-' {
+        if args[i] == "-r" {
+            raw = true
+        } else if args[i] == "--" {
+            i += 1
+            break
+        } else {
+            diag(mut sh, "read: {args[i]}: no such option")
+            return 2
+        }
+        i += 1
+    }
+    var names = args[i..args.len]
+    if names.len == 0 {
+        names = ["REPLY"]
+    }
+    flush(mut sh)
+    var line = buf()
+    var eof = false
+    loop {
+        let piece = read_line() else |e| match e {
+            eof => {
+                eof = true
+                break
+            },
+            io => {
+                eof = true
+                break
+            },
+            utf8 => {
+                eof = true
+                break
+            },
+        }
+        if !raw && piece.len > 0 && ch(piece, piece.len - 1) == '\\' {
+            put_range(mut line, piece, 0, piece.len - 1)
+            continue
+        }
+        put(mut line, piece)
+        break
+    }
+    let s = text(line)
+    if eof && s.len == 0 {
+        for n in names {
+            let _ok = set_var(mut sh, n, "")
+        }
+        return 1
+    }
+    // the line as a marked string: escaped bytes are literal
+    var m = buf()
+    putb(mut m, RB)
+    var k = 0
+    while k < s.len {
+        let b = byte_at(s, k)
+        if !raw && b == 92 && k + 1 < s.len {
+            qlit(mut m, byte_at(s, k + 1))
+            k += 2
+            continue
+        }
+        lit(mut m, b)
+        k += 1
+    }
+    putb(mut m, RE)
+    let marked = text(m)
+    assign_fields(mut sh, names, marked)
+    0
+}
+
+/// Split a marked line for `read`: each variable but the last takes one
+/// field; the last takes the rest of the line with surrounding `IFS`
+/// white space removed.
+fn assign_fields(mut sh: Sh, names: List[str], marked: str) {
+    let f = ifs(sh)
+    var i = 0
+    var n = 0
+    while n < names.len {
+        // skip leading IFS white space
+        while i < marked.len {
+            let b = byte_at(marked, i)
+            if b == RB || b == RE {
+                i += 1
+                continue
+            }
+            if in_ifs(f, b) && is_ifs_ws(b) {
+                i += 1
+                continue
+            }
+            break
+        }
+        if n == names.len - 1 {
+            // the rest, trailing IFS white space trimmed
+            var end = marked.len
+            loop {
+                if end <= i {
+                    break
+                }
+                let b = byte_at(marked, end - 1)
+                if b == RE {
+                    end -= 1
+                    continue
+                }
+                if in_ifs(f, b) && is_ifs_ws(b) && !(end >= 2 && byte_at(marked, end - 2) == Q) {
+                    end -= 1
+                    continue
+                }
+                break
+            }
+            let _ok = set_var(mut sh, names[n], unmark(marked[i..end]))
+            return
+        }
+        var cur = buf()
+        while i < marked.len {
+            let b = byte_at(marked, i)
+            if b == Q {
+                putb(mut cur, Q)
+                putb(mut cur, byte_at(marked, i + 1))
+                i += 2
+                continue
+            }
+            if b == RB || b == RE {
+                i += 1
+                continue
+            }
+            if in_ifs(f, b) {
+                if !is_ifs_ws(b) {
+                    i += 1
+                } else {
+                    // white space, then at most one other IFS character
+                    while i < marked.len &&
+                        in_ifs(f, byte_at(marked, i)) &&
+                        is_ifs_ws(byte_at(marked, i)) {
+                        i += 1
+                    }
+                    if i < marked.len &&
+                        in_ifs(f, byte_at(marked, i)) &&
+                        !is_ifs_ws(byte_at(marked, i)) {
+                        i += 1
+                    }
+                }
+                break
+            }
+            putb(mut cur, b)
+            i += 1
+        }
+        let _ok = set_var(mut sh, names[n], unmark(text(cur)))
+        n += 1
+    }
+}
+
+/// `getopts optstring name [arg…]` (XCU `getopts`).
+fn bi_getopts(mut sh: Sh, args: List[str]) -> int {
+    if args.len < 2 {
+        diag(mut sh, "getopts: usage: getopts optstring name [arg ...]")
+        return 2
+    }
+    let spec = args[0]
+    let var_name = args[1]
+    let params = if args.len > 2 then args[2..args.len] else copy sh.pos
+    let silent = spec.len > 0 && ch(spec, 0) == ':'
+    var ind = to_int(value_of(sh, "OPTIND")) else 1
+    if ind < 1 {
+        ind = 1
+    }
+    // where inside a clustered argument we are, forgotten whenever
+    // OPTIND moves under it
+    var sub = sh.gopt_sub
+    if sh.gopt_ind != ind {
+        sub = 1
+    }
+    if ind > params.len {
+        let _a = set_var(mut sh, var_name, "?")
+        return 1
+    }
+    let arg = params[ind - 1]
+    if sub == 1 && (arg.len < 2 || ch(arg, 0) != '-' || arg == "-") {
+        let _a = set_var(mut sh, var_name, "?")
+        return 1
+    }
+    if sub == 1 && arg == "--" {
+        let _a = set_var(mut sh, "OPTIND", "{ind + 1}")
+        let _b = set_var(mut sh, var_name, "?")
+        return 1
+    }
+    let c = arg[sub..sub + 1]
+    var next_sub = sub + 1
+    var next_ind = ind
+    if next_sub >= arg.len {
+        next_sub = 1
+        next_ind = ind + 1
+    }
+    let at = spec.find(c) else -1
+    if at < 0 || c == ":" {
+        if silent {
+            let _a = set_var(mut sh, "OPTARG", c)
+        } else {
+            let _u = unset_var(mut sh, "OPTARG")
+            diag(mut sh, "getopts: -{c}: no such option")
+        }
+        let _b = set_var(mut sh, var_name, "?")
+    } else if at + 1 < spec.len && ch(spec, at + 1) == ':' {
+        if next_sub != 1 {
+            let _a = set_var(mut sh, "OPTARG", arg[sub + 1..arg.len])
+            next_sub = 1
+            next_ind = ind + 1
+            let _b = set_var(mut sh, var_name, c)
+        } else if next_ind <= params.len {
+            let _a = set_var(mut sh, "OPTARG", params[next_ind - 1])
+            next_ind += 1
+            let _b = set_var(mut sh, var_name, c)
+        } else if silent {
+            let _a = set_var(mut sh, "OPTARG", c)
+            let _b = set_var(mut sh, var_name, ":")
+        } else {
+            let _u = unset_var(mut sh, "OPTARG")
+            diag(mut sh, "getopts: -{c}: needs an argument")
+            let _b = set_var(mut sh, var_name, "?")
+        }
+    } else {
+        let _u = unset_var(mut sh, "OPTARG")
+        let _b = set_var(mut sh, var_name, c)
+    }
+    let _i = set_var(mut sh, "OPTIND", "{next_ind}")
+    sh.gopt_sub = next_sub
+    sh.gopt_ind = next_ind
+    0
+}
