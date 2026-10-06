@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""oracle-record — write each case's expectation from the oracle.
+
+Runs every case (or the named areas) under `dash` and under
+`bash --posix`, and writes <name>.out and <name>.meta from the oracle
+the case names (dash unless `oracle=bash`), recording whether the
+second opinion agrees. Keys a person wrote in the meta (pending, why,
+args, stdin, mode, oracle) are kept.
+
+The oracle is a program we RUN, never a source we read (ruling #43).
+Run it on a host with the oracle of record (tests/diff/ORACLE names the
+versions); it refuses to write against any other dash.
+
+usage: tools/oracle-record [--check] [area ...]
+  --check  write nothing; exit 1 when a recorded expectation no longer
+           matches what this host's oracle answers
+"""
+
+import os
+import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_cases as lc  # noqa: E402
+
+KEEP = ("mode", "args", "stdin", "oracle", "pending", "why")
+
+
+def version(cmd):
+    out = subprocess.run(cmd, capture_output=True, text=True)
+    return (out.stdout or out.stderr).splitlines()[0] if (out.stdout or out.stderr) else ""
+
+
+def main(argv):
+    check = False
+    if argv[:1] == ["--check"]:
+        check = True
+        argv = argv[1:]
+    want = open(os.path.join(lc.DIFF, "ORACLE"), encoding="utf-8").read()
+    dash_pkg = subprocess.run(["pacman", "-Q", "dash"], capture_output=True,
+                              text=True).stdout.strip()
+    if dash_pkg and dash_pkg not in want:
+        print(f"oracle-record: this host has {dash_pkg}; tests/diff/ORACLE "
+              f"names another dash", file=sys.stderr)
+        return 2
+    changed = 0
+    for area, name, script in lc.cases(argv or None):
+        mpath = script[:-3] + ".meta"
+        opath = script[:-3] + ".out"
+        old = lc.read_meta(mpath) if os.path.exists(mpath) else {}
+        meta = {k: old[k] for k in KEEP if k in old}
+        d = lc.run(["dash"], script, meta)
+        b = lc.run(["bash", "--posix"], script, meta)
+        if d is None or b is None:
+            print(f"TIMEOUT {area}/{name}")
+            changed += 1
+            continue
+        primary, second = (b, d) if meta.get("oracle") == "bash" else (d, b)
+        meta["exit"] = str(primary["exit"])
+        meta["stderr"] = "yes" if primary["stderr"] else "no"
+        if meta.get("mode") == "parse":
+            meta["line"] = str(primary["line"])
+        same = (second["stdout"] == primary["stdout"]
+                and second["exit"] == primary["exit"])
+        meta["bash" if meta.get("oracle") != "bash" else "dash"] = \
+            "agree" if same else "differs"
+        if check:
+            have = open(opath, "rb").read() if os.path.exists(opath) else None
+            if have != primary["stdout"] or lc.read_meta(mpath).get("exit") != meta["exit"]:
+                print(f"DRIFT {area}/{name}")
+                changed += 1
+            continue
+        with open(opath, "wb") as fh:
+            fh.write(primary["stdout"])
+        lc.write_meta(mpath, meta)
+        print(f"recorded {area}/{name}: exit {meta['exit']}"
+              f"{' (bash differs)' if not same else ''}")
+    if check:
+        print(f"oracle-record: {changed} drifted")
+        return 1 if changed else 0
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
