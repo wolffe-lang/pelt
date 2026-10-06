@@ -1,0 +1,186 @@
+//! sh.main — the command line: which input, which mode.
+//!
+//! References consulted: POSIX.1-2024 XCU `sh` (OPTIONS, OPERANDS,
+//! STDIN); black-box runs of `dash` 0.5.13.4 for `-c` and the `$0` it
+//! reports.
+
+/// The whole shell: parse the command line `args` (argv without argv[0]),
+/// run what it names, and answer the exit status.
+pub fn run_main(args: List[str]) -> int {
+    var i = 0
+    var parse_only = false
+    var dump_tree = false
+    var cmd_string = false
+    var opts = List[str]()
+    while i < args.len {
+        let a = args[i]
+        if a == "--parse" {
+            dump_tree = true
+            i += 1
+            continue
+        }
+        if a == "--" {
+            i += 1
+            break
+        }
+        if a == "-c" {
+            cmd_string = true
+            i += 1
+            continue
+        }
+        if a == "-n" {
+            parse_only = true
+            i += 1
+            continue
+        }
+        if (a == "-o" || a == "+o") && i + 1 < args.len {
+            (mut opts).push(a)
+            (mut opts).push(args[i + 1])
+            i += 2
+            continue
+        }
+        if a.len > 1 && (ch(a, 0) == '-' || ch(a, 0) == '+') && a != "-" {
+            (mut opts).push(a)
+            i += 1
+            continue
+        }
+        break
+    }
+    var src = ""
+    var name = "pelt"
+    var rest = List[str]()
+    if cmd_string {
+        if i >= args.len {
+            eprint("pelt: -c needs a command string")
+            return 2
+        }
+        src = args[i]
+        i += 1
+        if i < args.len {
+            name = args[i]
+            i += 1
+        }
+    } else if i < args.len {
+        name = args[i]
+        i += 1
+        let bytes = fs_read_bytes(name) else |_| {
+            eprint("pelt: cannot open {name}")
+            return 127
+        }
+        src = str_from_utf8(bytes) else |_| {
+            eprint("pelt: {name}: not UTF-8 text")
+            return 2
+        }
+    } else {
+        var o = buf()
+        loop {
+            let line = read_line() else |e| match e {
+                eof => { break },
+                io => { break },
+                utf8 => { break },
+            }
+            put(mut o, line)
+            putc(mut o, '\n')
+        }
+        src = text(o)
+    }
+    while i < args.len {
+        (mut rest).push(args[i])
+        i += 1
+    }
+    if dump_tree {
+        return dump_all(src, name)
+    }
+    if parse_only {
+        return check_all(src, name)
+    }
+    run_source(src, name, rest, opts, cmd_string)
+}
+
+fn report(name: str, line: int, msg: str) {
+    eprint("pelt: {name}: line {line}: {msg}")
+}
+
+fn dump_all(src: str, name: str) -> int {
+    var a = new_ast()
+    var p = new_parser(src, 1)
+    var o = buf()
+    loop {
+        let n = parse_complete(mut p, mut a)
+        if n == -1 {
+            break
+        }
+        if n == -2 {
+            print_raw(text(o))
+            report(name, p.err_line, p.err)
+            return 2
+        }
+        dump(a, n, 0, mut o)
+    }
+    print_raw(text(o))
+    0
+}
+
+fn check_all(src: str, name: str) -> int {
+    var a = new_ast()
+    var p = new_parser(src, 1)
+    loop {
+        let n = parse_complete(mut p, mut a)
+        if n == -1 {
+            return 0
+        }
+        if n == -2 {
+            report(name, p.err_line, p.err)
+            return 2
+        }
+    }
+    0
+}
+
+fn run_source(src: str, name: str, rest: List[str], opts: List[str], cmd_string: bool) -> int {
+    var sh = new_sh(name)
+    import_env(mut sh)
+    sh.pos = copy rest
+    if opts.len > 0 {
+        let _st = bi_set(mut sh, opts)
+        if sh.flow == F_EXIT {
+            flush(mut sh)
+            return sh.status
+        }
+    }
+    var st = eval_string(mut sh, src, name)
+    if sh.flow == F_EXIT {
+        st = sh.status
+    }
+    sh.flow = F_NONE
+    sh.line = 0
+    st = run_exit_trap(mut sh, st)
+    flush(mut sh)
+    st
+}
+
+/// The variables a shell starts with (XCU 2.5.3): everything in the
+/// environment, exported; then the shell's own.
+fn import_env(mut sh: Sh) {
+    for kv in env_vars() {
+        let eq = kv.find("=") else -1
+        if eq > 0 {
+            let k = kv[0..eq]
+            if is_name(k) {
+                sh.vals[k] = kv[eq + 1..kv.len]
+                sh.exported[k] = true
+            }
+        }
+    }
+    sh.vals["IFS"] = " \t\n"
+    let _e = (mut sh.exported).remove("IFS") else false
+    sh.vals["PS1"] = "$ "
+    sh.vals["PS2"] = "> "
+    sh.vals["PS4"] = "+ "
+    sh.vals["OPTIND"] = "1"
+    let cwd = os_cwd() else ""
+    if cwd.len > 0 {
+        sh.vals["PWD"] = cwd
+        sh.exported["PWD"] = true
+    }
+}

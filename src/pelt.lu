@@ -1,0 +1,16 @@
+//! member: false
+//!
+//! pelt — a POSIX shell. `pelt -c 'string' [name [arg…]]` runs the
+//! string, `pelt script [arg…]` runs the file, and plain `pelt` runs
+//! its standard input. `-n` parses without running; `--parse` prints
+//! the tree the parser built.
+//!
+//! References consulted: POSIX.1-2024 XCU chapter 2 and the `sh`
+//! utility page; black-box runs of `dash` 0.5.13.4 and `bash --posix`
+//! 5.3. No shell's source.
+
+use sh
+
+fn main() -> int {
+    sh.run_main(env_args())
+}
