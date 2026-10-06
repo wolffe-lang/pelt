@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+bash=agree
+pending=user database
+why=~login needs getpwnam; wolf 0.2.24 has none
