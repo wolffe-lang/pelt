@@ -1,0 +1,1179 @@
+//! sh.expand — word expansions (XCU 2.6): tilde, parameter, command
+//! substitution, arithmetic, field splitting, pathname expansion, quote
+//! removal.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.2 (quoting), 2.6 and its
+//! subsections, 2.14 (patterns); black-box runs of `dash` 0.5.13.4 for
+//! the shapes the text leaves open (how `IFS` white space and other
+//! `IFS` characters combine, `"$@"` with no parameters beside other
+//! text, the length of a multibyte value). No shell's source.
+//!
+//! **The marked string.** Expansion turns a word's source text into a
+//! string that still remembers which bytes were quoted and which came
+//! out of an unquoted expansion, because field splitting needs the
+//! second and pathname expansion and quote removal need the first. Six
+//! control bytes carry it, and a source byte in that range is itself
+//! quoted so it can never be mistaken for one:
+//!
+//! | byte | meaning |
+//! |---|---|
+//! | `Q` 0x01 | the next byte was quoted: literal, never split, never a pattern character |
+//! | `RB` 0x02 / `RE` 0x03 | an unquoted expansion's result begins / ends: its bytes may be split on `IFS` |
+//! | `BRK` 0x04 | a field ends here whatever follows (between the parameters of `$@`) |
+//! | `EQ` 0x06 | an empty quoted string: a field exists here even if no byte does |
+//!
+//! Command substitution runs IN-PROCESS (see `sh.state`), so it can
+//! capture what built-ins and functions write; a substitution that
+//! would run another program cannot be captured at wolf 0.2.24 (no
+//! pipe builtin, `[os.proc.spawn]`) and is refused by name in `sh.exec`.
+
+const RB: int = 2
+
+const RE: int = 3
+
+const BRK: int = 4
+
+const AT0: int = 5
+
+const EQ: int = 6
+
+const X_DQ: int = 1
+
+const X_ASSIGN: int = 2
+
+const X_TILDE: int = 4
+
+fn lit(mut o: Buf, b: int) {
+    if b >= 1 && b <= 6 {
+        putb(mut o, Q)
+    }
+    putb(mut o, b)
+}
+
+fn qlit(mut o: Buf, b: int) {
+    putb(mut o, Q)
+    putb(mut o, b)
+}
+
+fn qstr(mut o: Buf, s: str) {
+    for x in s.bytes() {
+        putb(mut o, Q)
+        (mut o.b).push(x)
+    }
+}
+
+/// An unquoted expansion's result: splittable, and every byte live as a
+/// pattern character.
+fn ustr(mut o: Buf, s: str) {
+    putb(mut o, RB)
+    var i = 0
+    while i < s.len {
+        lit(mut o, byte_at(s, i))
+        i += 1
+    }
+    putb(mut o, RE)
+}
+
+fn emit_val(mut o: Buf, s: str, dq: bool) {
+    if dq {
+        qstr(mut o, s)
+    } else {
+        ustr(mut o, s)
+    }
+}
+
+/// Quote removal: the bytes, with every marker gone.
+fn unmark(m: str) -> str {
+    var o = buf()
+    var i = 0
+    while i < m.len {
+        let b = byte_at(m, i)
+        if b == Q {
+            if i + 1 < m.len {
+                putb(mut o, byte_at(m, i + 1))
+            }
+            i += 2
+            continue
+        }
+        if b >= 2 && b <= 6 {
+            i += 1
+            continue
+        }
+        putb(mut o, b)
+        i += 1
+    }
+    text(o)
+}
+
+/// A marked pattern: the region and field markers dropped, the quoting
+/// kept.
+fn pattern_of(m: str) -> str {
+    var o = buf()
+    var i = 0
+    while i < m.len {
+        let b = byte_at(m, i)
+        if b == Q {
+            putb(mut o, Q)
+            putb(mut o, byte_at(m, i + 1))
+            i += 2
+            continue
+        }
+        if b >= 2 && b <= 6 {
+            i += 1
+            continue
+        }
+        putb(mut o, b)
+        i += 1
+    }
+    text(o)
+}
+
+// ------------------------------------------------------- finding the end
+
+/// The index just past the `"` that closes the double quote at `i`.
+fn dq_end(sh: Sh, w: str, i: int) -> int {
+    var j = i + 1
+    while j < w.len {
+        let c = ch(w, j)
+        if c == '\\' {
+            j += 2
+            continue
+        }
+        if c == '"' {
+            return j + 1
+        }
+        if c == '`' {
+            j = bq_end(w, j)
+            continue
+        }
+        if c == '$' && ch(w, j + 1) == '{' {
+            j = brace_end(w, j)
+            continue
+        }
+        if c == '$' && ch(w, j + 1) == '(' {
+            j = paren_skip(w, j + 1)
+            continue
+        }
+        j += 1
+    }
+    w.len
+}
+
+fn bq_end(w: str, i: int) -> int {
+    var j = i + 1
+    while j < w.len {
+        let c = ch(w, j)
+        if c == '\\' {
+            j += 2
+            continue
+        }
+        if c == '`' {
+            return j + 1
+        }
+        j += 1
+    }
+    w.len
+}
+
+/// Past the `)` matching the `(` at `i`, counting parentheses and
+/// skipping quotes: good enough to step over a `$(…)` inside `${…}` or
+/// `"…"` whose real extent the parser already checked.
+fn paren_skip(w: str, i: int) -> int {
+    var depth = 0
+    var j = i
+    while j < w.len {
+        let c = ch(w, j)
+        if c == '\\' {
+            j += 2
+            continue
+        }
+        if c == '\'' {
+            j += 1
+            while j < w.len && ch(w, j) != '\'' {
+                j += 1
+            }
+            j += 1
+            continue
+        }
+        if c == '"' {
+            var k = j + 1
+            while k < w.len && ch(w, k) != '"' {
+                if ch(w, k) == '\\' {
+                    k += 1
+                }
+                k += 1
+            }
+            j = k + 1
+            continue
+        }
+        if c == '(' {
+            depth += 1
+        } else if c == ')' {
+            depth -= 1
+            if depth == 0 {
+                return j + 1
+            }
+        }
+        j += 1
+    }
+    w.len
+}
+
+/// Past the `}` closing the `${` at `i`.
+fn brace_end(w: str, i: int) -> int {
+    var depth = 0
+    var j = i + 1
+    while j < w.len {
+        let c = ch(w, j)
+        if c == '\\' {
+            j += 2
+            continue
+        }
+        if c == '\'' {
+            j += 1
+            while j < w.len && ch(w, j) != '\'' {
+                j += 1
+            }
+            j += 1
+            continue
+        }
+        if c == '"' {
+            var k = j + 1
+            while k < w.len && ch(w, k) != '"' {
+                if ch(w, k) == '\\' {
+                    k += 1
+                }
+                k += 1
+            }
+            j = k + 1
+            continue
+        }
+        if c == '`' {
+            j = bq_end(w, j)
+            continue
+        }
+        if c == '$' && ch(w, j + 1) == '(' {
+            j = paren_skip(w, j + 1)
+            continue
+        }
+        if c == '{' {
+            depth += 1
+        } else if c == '}' {
+            depth -= 1
+            if depth == 0 {
+                return j + 1
+            }
+        }
+        j += 1
+    }
+    w.len
+}
+
+/// Past the `))` closing the `$((` at `i`, or -1 when the parentheses
+/// do not close that way (then it is a command substitution).
+fn arith_end(w: str, i: int) -> int {
+    var depth = 2
+    var j = i + 3
+    while j < w.len {
+        let c = ch(w, j)
+        if c == '(' {
+            depth += 1
+        } else if c == ')' {
+            depth -= 1
+            if depth == 1 {
+                if ch(w, j + 1) == ')' {
+                    return j + 2
+                }
+                return -1
+            }
+        }
+        j += 1
+    }
+    -1
+}
+
+/// The `$(…)` at `i`: its parsed body (or -1 for an empty one) and the
+/// index past its `)`. Parsed once per (text, offset) and remembered.
+fn cmdsub_at(mut sh: Sh, w: str, i: int) -> (int, int) {
+    let key = "{i}:{w}"
+    let known = sh.cs_end[key] else -1
+    if known >= 0 {
+        return (sh.cs_node[key] else -1, known)
+    }
+    var j = i + 2
+    while j < w.len && (ch(w, j) == ' ' || ch(w, j) == '\t' || ch(w, j) == '\n') {
+        j += 1
+    }
+    var node = -1
+    var end = j + 1
+    if ch(w, j) != ')' {
+        var p = new_parser(w, sh.line)
+        p.pos = i + 2
+        node = parse_clist(mut p, mut sh.ast)
+        let k = peek(mut p, mut sh.ast)
+        if p.err.len > 0 || k != T_OP || p.tx != ")" {
+            fatal(mut sh, "syntax error in command substitution", 2)
+            return (-1, w.len)
+        }
+        end = p.pos
+    }
+    sh.cs_node[key] = node
+    sh.cs_end[key] = end
+    (node, end)
+}
+
+// ------------------------------------------------------------ the walk
+
+/// Expand `w[from..to]` into `o`, marked. `X_DQ`: inside double
+/// quotes. `X_TILDE`: a tilde prefix may start at `from`. `X_ASSIGN`:
+/// the text is an assignment's value, where a tilde may also follow a
+/// `:`.
+fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
+    let dq = flags & X_DQ != 0
+    var i = from
+    if !dq && flags & X_TILDE != 0 && ch(w, from) == '~' {
+        i = tilde(sh, w, from, to, flags, mut o)
+    }
+    while i < to {
+        if sh.flow != F_NONE {
+            return
+        }
+        let c = ch(w, i)
+        if dq {
+            if c == '\\' {
+                let n = ch(w, i + 1)
+                if n == '$' || n == '`' || n == '"' || n == '\\' {
+                    qlit(mut o, byte_at(w, i + 1))
+                    i += 2
+                } else if n == '\n' {
+                    i += 2
+                } else {
+                    qlit(mut o, 92)
+                    i += 1
+                }
+                continue
+            }
+            if c == '$' {
+                i = dollar(mut sh, w, i, to, true, mut o)
+                continue
+            }
+            if c == '`' {
+                i = backquote(mut sh, w, i, true, mut o)
+                continue
+            }
+            qlit(mut o, byte_at(w, i))
+            i += 1
+            continue
+        }
+        if c == '\'' {
+            var j = i + 1
+            while j < to && ch(w, j) != '\'' {
+                j += 1
+            }
+            if j == i + 1 {
+                putb(mut o, EQ)
+            }
+            var k = i + 1
+            while k < j {
+                qlit(mut o, byte_at(w, k))
+                k += 1
+            }
+            i = j + 1
+            continue
+        }
+        if c == '"' {
+            let e = dq_end(sh, w, i)
+            let mark = o.b.len
+            xw(mut sh, w, i + 1, e - 1, flags | X_DQ, mut o)
+            if o.b.len == mark {
+                let inner = w[i + 1..e - 1]
+                if inner != "$@" && inner != "${{@}}" {
+                    putb(mut o, EQ)
+                }
+            }
+            i = e
+            continue
+        }
+        if c == '\\' {
+            if i + 1 < to {
+                if ch(w, i + 1) == '\n' {
+                    i += 2
+                    continue
+                }
+                qlit(mut o, byte_at(w, i + 1))
+                i += 2
+            } else {
+                lit(mut o, 92)
+                i += 1
+            }
+            continue
+        }
+        if c == '$' {
+            i = dollar(mut sh, w, i, to, false, mut o)
+            continue
+        }
+        if c == '`' {
+            i = backquote(mut sh, w, i, false, mut o)
+            continue
+        }
+        if flags & X_ASSIGN != 0 && c == ':' && ch(w, i + 1) == '~' {
+            lit(mut o, 58)
+            i = tilde(sh, w, i + 1, to, flags, mut o)
+            continue
+        }
+        lit(mut o, byte_at(w, i))
+        i += 1
+    }
+}
+
+/// A tilde prefix at `i` (XCU 2.6.1): `~` alone or before `/` is
+/// `$HOME`. `~login` needs the user database, which wolf 0.2.24 cannot
+/// read, so it is left as written (PENDING). Returns where to resume.
+fn tilde(sh: Sh, w: str, i: int, to: int, flags: int, mut o: Buf) -> int {
+    var j = i + 1
+    while j < to {
+        let c = ch(w, j)
+        if c == '/' || flags & X_ASSIGN != 0 && c == ':' {
+            break
+        }
+        if c == '\'' || c == '"' || c == '\\' || c == '$' || c == '`' {
+            lit(mut o, 126)
+            return i + 1
+        }
+        j += 1
+    }
+    if j == i + 1 && has_var(sh, "HOME") {
+        qstr(mut o, value_of(sh, "HOME"))
+        return j
+    }
+    lit(mut o, 126)
+    i + 1
+}
+
+fn positional(sh: Sh, n: int) -> (str, bool) {
+    if n == 0 {
+        return (sh.arg0, true)
+    }
+    if n <= sh.pos.len {
+        return (sh.pos[n - 1], true)
+    }
+    ("", false)
+}
+
+fn is_special(c: char) -> bool {
+    c == '@' || c == '*' || c == '#' || c == '?' || c == '$' || c == '!' || c == '-' || c == '0'
+}
+
+/// A parameter's value and whether it is set. `$@` and `$*` are joined
+/// with spaces here; the callers that must keep them apart do so first.
+fn param(sh: Sh, name: str) -> (str, bool) {
+    if is_digits(name) {
+        let n = to_int(name) else 0
+        return positional(sh, n)
+    }
+    if name == "#" {
+        return ("{sh.pos.len}", true)
+    }
+    if name == "?" {
+        return ("{sh.status}", true)
+    }
+    if name == "-" {
+        return (dash_flags(sh), true)
+    }
+    if name == "$" {
+        return (shell_pid(), true)
+    }
+    if name == "!" {
+        return ("", false)
+    }
+    if name == "@" || name == "*" {
+        var o = buf()
+        var k = 0
+        for p in sh.pos {
+            if k > 0 {
+                putc(mut o, ' ')
+            }
+            put(mut o, p)
+            k += 1
+        }
+        return (text(o), sh.pos.len > 0)
+    }
+    if has_var(sh, name) {
+        return (value_of(sh, name), true)
+    }
+    ("", false)
+}
+
+/// `$$`. wolf 0.2.24 has no `getpid` (wolf-lang#141); on linux the
+/// process's own `/proc/self/stat` begins with it, and elsewhere the
+/// answer is a fixed stand-in (PENDING on #141).
+fn shell_pid() -> str {
+    let stat = fs_read_text("/proc/self/stat") else |_| { return "1" }
+    let sp = stat.find(" ") else -1
+    if sp > 0 {
+        return stat[0..sp]
+    }
+    "1"
+}
+
+/// `$@` / `$*` in place, keeping the parameters apart (XCU 2.5.2).
+fn emit_all(sh: Sh, star: bool, dq: bool, mut o: Buf) {
+    if dq && star {
+        let f = ifs(sh)
+        var k = 0
+        for p in sh.pos {
+            if k > 0 && f.len > 0 {
+                qlit(mut o, byte_at(f, 0))
+            }
+            qstr(mut o, p)
+            k += 1
+        }
+        return
+    }
+    if dq {
+        var k = 0
+        for p in sh.pos {
+            if k > 0 {
+                putb(mut o, BRK)
+            }
+            if p.len == 0 {
+                putb(mut o, EQ)
+            }
+            qstr(mut o, p)
+            k += 1
+        }
+        return
+    }
+    putb(mut o, RB)
+    var k = 0
+    for p in sh.pos {
+        if k > 0 {
+            putb(mut o, BRK)
+        }
+        var i = 0
+        while i < p.len {
+            lit(mut o, byte_at(p, i))
+            i += 1
+        }
+        k += 1
+    }
+    putb(mut o, RE)
+}
+
+fn unset_error(mut sh: Sh, name: str) {
+    fatal(mut sh, "{name}: parameter not set", 2)
+}
+
+/// A `$` at `i`. Returns where to resume.
+fn dollar(mut sh: Sh, w: str, i: int, to: int, dq: bool, mut o: Buf) -> int {
+    let n = ch(w, i + 1)
+    if n == '(' {
+        if ch(w, i + 2) == '(' {
+            let e = arith_end(w, i)
+            if e > 0 {
+                let v = arith_text(mut sh, w[i + 3..e - 2])
+                if sh.flow == F_NONE {
+                    emit_val(mut o, v, dq)
+                }
+                return e
+            }
+        }
+        let (node, e) = cmdsub_at(mut sh, w, i)
+        if sh.flow != F_NONE {
+            return to
+        }
+        let out = run_cmdsub(mut sh, node)
+        emit_val(mut o, out, dq)
+        return e
+    }
+    if n == '{' {
+        let e = brace_end(w, i)
+        brace_param(mut sh, w[i + 2..e - 1], dq, mut o)
+        return e
+    }
+    if is_alpha(n) {
+        var j = i + 1
+        while j < to && is_alnum(ch(w, j)) {
+            j += 1
+        }
+        let name = w[i + 1..j]
+        let (v, set) = param(sh, name)
+        if !set && sh.opt_u {
+            unset_error(mut sh, name)
+            return to
+        }
+        emit_val(mut o, v, dq)
+        return j
+    }
+    if is_digit(n) || is_special(n) {
+        let name = w[i + 1..i + 2]
+        if name == "@" || name == "*" {
+            emit_all(sh, name == "*", dq, mut o)
+            return i + 2
+        }
+        let (v, set) = param(sh, name)
+        if !set && sh.opt_u {
+            unset_error(mut sh, name)
+            return to
+        }
+        emit_val(mut o, v, dq)
+        return i + 2
+    }
+    lit(mut o, 36)
+    i + 1
+}
+
+fn arith_text(mut sh: Sh, inner: str) -> str {
+    var o = buf()
+    xw(mut sh, inner, 0, inner.len, X_DQ, mut o)
+    if sh.flow != F_NONE {
+        return ""
+    }
+    let expr = unmark(text(o))
+    let (v, err) = arith(mut sh, expr)
+    if err.len > 0 {
+        fatal(mut sh, "arithmetic: {err}", 2)
+        return ""
+    }
+    "{v}"
+}
+
+/// `` `…` `` at `i` (XCU 2.6.3): inside, a backslash quotes only `$`,
+/// `` ` ``, `\` (and `"` within double quotes); the rest is a script.
+fn backquote(mut sh: Sh, w: str, i: int, dq: bool, mut o: Buf) -> int {
+    let e = bq_end(w, i)
+    let raw = w[i + 1..e - 1]
+    var t = buf()
+    var k = 0
+    while k < raw.len {
+        let c = ch(raw, k)
+        if c == '\\' && k + 1 < raw.len {
+            let n = ch(raw, k + 1)
+            if n == '$' || n == '`' || n == '\\' || dq && n == '"' {
+                putb(mut t, byte_at(raw, k + 1))
+                k += 2
+                continue
+            }
+        }
+        putb(mut t, byte_at(raw, k))
+        k += 1
+    }
+    let src = text(t)
+    var node = sh.bq_node[src] else -2
+    if node == -2 {
+        node = parse_script_list(mut sh, src)
+        if sh.flow != F_NONE {
+            return w.len
+        }
+        sh.bq_node[src] = node
+    }
+    let out = run_cmdsub(mut sh, node)
+    emit_val(mut o, out, dq)
+    e
+}
+
+/// A whole script parsed at once into one LIST whose kids are its
+/// complete commands; a syntax error is fatal.
+fn parse_script_list(mut sh: Sh, src: str) -> int {
+    var p = new_parser(src, sh.line)
+    let top = add(mut sh.ast, K_LIST, "", sh.line)
+    loop {
+        let n = parse_complete(mut p, mut sh.ast)
+        if n == -1 {
+            break
+        }
+        if n == -2 {
+            fatal(mut sh, p.err, 2)
+            return -1
+        }
+        (mut sh.ast.nodes[top].kids).push(n)
+        (mut sh.ast.nodes[top].ints).push(0)
+    }
+    top
+}
+
+fn special_name_len(inner: str, at: int) -> int {
+    let c = ch(inner, at)
+    if is_alpha(c) {
+        var j = at
+        while j < inner.len && is_alnum(ch(inner, j)) {
+            j += 1
+        }
+        return j - at
+    }
+    if is_digit(c) {
+        var j = at
+        while j < inner.len && is_digit(ch(inner, j)) {
+            j += 1
+        }
+        return j - at
+    }
+    if is_special(c) {
+        return 1
+    }
+    0
+}
+
+/// `${…}` with `inner` the text between the braces (XCU 2.6.2).
+fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
+    if inner == "#" {
+        emit_val(mut o, "{sh.pos.len}", dq)
+        return
+    }
+    if inner.len > 1 && ch(inner, 0) == '#' {
+        let nl = special_name_len(inner, 1)
+        if nl > 0 && nl == inner.len - 1 {
+            let name = inner[1..inner.len]
+            if name == "@" || name == "*" {
+                emit_val(mut o, "{sh.pos.len}", dq)
+                return
+            }
+            let (v, set) = param(sh, name)
+            if !set && sh.opt_u {
+                unset_error(mut sh, name)
+                return
+            }
+            emit_val(mut o, "{v.len}", dq)
+            return
+        }
+    }
+    let nl = special_name_len(inner, 0)
+    if nl == 0 {
+        fatal(mut sh, "${{{inner}}}: bad substitution", 2)
+        return
+    }
+    let name = inner[0..nl]
+    let rest = inner[nl..inner.len]
+    if rest.len == 0 {
+        if name == "@" || name == "*" {
+            emit_all(sh, name == "*", dq, mut o)
+            return
+        }
+        let (v, set) = param(sh, name)
+        if !set && sh.opt_u {
+            unset_error(mut sh, name)
+            return
+        }
+        emit_val(mut o, v, dq)
+        return
+    }
+    var colon = false
+    var op = ch(rest, 0)
+    var wstart = 1
+    if op == ':' {
+        colon = true
+        op = ch(rest, 1)
+        wstart = 2
+        if !(op == '-' || op == '=' || op == '?' || op == '+') {
+            fatal(mut sh, "${{{inner}}}: bad substitution", 2)
+            return
+        }
+    }
+    if op == '%' || op == '#' {
+        var longest = false
+        if ch(rest, 1) == op {
+            longest = true
+            wstart = 2
+        }
+        let word = rest[wstart..rest.len]
+        let (v, set) = param(sh, name)
+        if !set && sh.opt_u {
+            unset_error(mut sh, name)
+            return
+        }
+        var po = buf()
+        xw(mut sh, word, 0, word.len, X_TILDE, mut po)
+        if sh.flow != F_NONE {
+            return
+        }
+        let pat = pattern_of(text(po))
+        emit_val(mut o, trim_pattern(v, pat, op == '#', longest), dq)
+        return
+    }
+    if !(op == '-' || op == '=' || op == '?' || op == '+') {
+        fatal(mut sh, "${{{inner}}}: bad substitution", 2)
+        return
+    }
+    let word = rest[wstart..rest.len]
+    let (v, set) = param(sh, name)
+    let usable = set && !(colon && v.len == 0)
+    if op == '-' {
+        if usable {
+            if name == "@" || name == "*" {
+                emit_all(sh, name == "*", dq, mut o)
+            } else {
+                emit_val(mut o, v, dq)
+            }
+            return
+        }
+        word_in(mut sh, word, dq, mut o)
+        return
+    }
+    if op == '+' {
+        if usable {
+            word_in(mut sh, word, dq, mut o)
+        }
+        return
+    }
+    if usable {
+        if name == "@" || name == "*" {
+            emit_all(sh, name == "*", dq, mut o)
+        } else {
+            emit_val(mut o, v, dq)
+        }
+        return
+    }
+    var wo = buf()
+    xw(mut sh, word, 0, word.len, if dq then X_DQ else X_TILDE, mut wo)
+    if sh.flow != F_NONE {
+        return
+    }
+    let value = unmark(text(wo))
+    if op == '?' {
+        var msg = value
+        if msg.len == 0 {
+            msg = if colon then "parameter null or not set" else "parameter not set"
+        }
+        fatal(mut sh, "{name}: {msg}", 2)
+        return
+    }
+    // `=`
+    if !is_name(name) {
+        fatal(mut sh, "${{{inner}}}: cannot assign in this way", 2)
+        return
+    }
+    if !set_var(mut sh, name, value) {
+        fatal(mut sh, "{name}: is read-only", 2)
+        return
+    }
+    emit_val(mut o, value, dq)
+}
+
+/// The word of `${x-word}`/`${x+word}` in place: under double quotes it
+/// is quoted text; unquoted, its literal bytes may be split as well.
+fn word_in(mut sh: Sh, word: str, dq: bool, mut o: Buf) {
+    if dq {
+        xw(mut sh, word, 0, word.len, X_DQ, mut o)
+        return
+    }
+    putb(mut o, RB)
+    xw(mut sh, word, 0, word.len, X_TILDE, mut o)
+    putb(mut o, RE)
+}
+
+/// `${x#p}`, `${x##p}`, `${x%p}`, `${x%%p}`.
+fn trim_pattern(v: str, pat: str, prefix: bool, longest: bool) -> str {
+    let n = v.len
+    if prefix {
+        var k = if longest then n else 0
+        loop {
+            let head = v.get(0..k) else ""
+            if (k == 0 || head.len > 0) && pmatch(pat, head) {
+                return v.get(k..n) else v
+            }
+            if longest {
+                if k == 0 {
+                    break
+                }
+                k -= 1
+            } else {
+                if k == n {
+                    break
+                }
+                k += 1
+            }
+        }
+        return v
+    }
+    var k = if longest then 0 else n
+    loop {
+        let tail = v.get(k..n) else ""
+        if (k == n || tail.len > 0) && pmatch(pat, tail) {
+            return v.get(0..k) else v
+        }
+        if longest {
+            if k == n {
+                break
+            }
+            k += 1
+        } else {
+            if k == 0 {
+                break
+            }
+            k -= 1
+        }
+    }
+    v
+}
+
+// ---------------------------------------------------- fields and paths
+
+fn is_ifs_ws(b: int) -> bool {
+    b == 32 || b == 9 || b == 10
+}
+
+fn in_ifs(f: str, b: int) -> bool {
+    var i = 0
+    while i < f.len {
+        if byte_at(f, i) == b {
+            return true
+        }
+        i += 1
+    }
+    false
+}
+
+/// Field splitting (XCU 2.6.5) of a marked string; the fields keep
+/// their `Q` marks for pathname expansion.
+fn split_marked(sh: Sh, m: str) -> List[str] {
+    let f = ifs(sh)
+    var fields = List[str]()
+    var cur = buf()
+    // 0 nothing yet, 1 in a field, 2 after IFS white space, 3 after
+    // another IFS character
+    var state = 0
+    var depth = 0
+    var i = 0
+    while i < m.len {
+        let b = byte_at(m, i)
+        if b == Q {
+            putb(mut cur, Q)
+            putb(mut cur, byte_at(m, i + 1))
+            state = 1
+            i += 2
+            continue
+        }
+        if b == RB {
+            depth += 1
+            i += 1
+            continue
+        }
+        if b == RE {
+            depth -= 1
+            i += 1
+            continue
+        }
+        if b == BRK {
+            if state == 1 {
+                (mut fields).push(text(cur))
+                cur = buf()
+            }
+            state = 0
+            i += 1
+            continue
+        }
+        if b == EQ {
+            state = 1
+            i += 1
+            continue
+        }
+        if b == AT0 {
+            i += 1
+            continue
+        }
+        if depth > 0 && in_ifs(f, b) {
+            if is_ifs_ws(b) {
+                if state == 1 {
+                    (mut fields).push(text(cur))
+                    cur = buf()
+                    state = 2
+                }
+            } else {
+                if state == 1 {
+                    (mut fields).push(text(cur))
+                    cur = buf()
+                } else if state != 2 {
+                    (mut fields).push("")
+                }
+                state = 3
+            }
+            i += 1
+            continue
+        }
+        putb(mut cur, b)
+        state = 1
+        i += 1
+    }
+    if state == 1 {
+        (mut fields).push(text(cur))
+    }
+    fields
+}
+
+/// The full expansion of a list of words into fields (XCU 2.6, all
+/// steps), as for a simple command's words or a `for` list.
+fn expand_words(mut sh: Sh, words: List[str]) -> List[str] {
+    var out = List[str]()
+    for w in words {
+        var o = buf()
+        xw(mut sh, w, 0, w.len, X_TILDE, mut o)
+        if sh.flow != F_NONE {
+            return out
+        }
+        for f in split_marked(sh, text(o)) {
+            if !sh.opt_f && has_magic(f) {
+                let found = glob(f)
+                if found.len > 0 {
+                    for g in found {
+                        (mut out).push(g)
+                    }
+                    continue
+                }
+            }
+            (mut out).push(unmark(f))
+        }
+    }
+    out
+}
+
+/// One word expanded without splitting or pathname expansion: a `case`
+/// word, a here-document delimiter's sibling, an assignment's value.
+fn expand_one(mut sh: Sh, w: str, flags: int) -> str {
+    var o = buf()
+    xw(mut sh, w, 0, w.len, flags, mut o)
+    unmark(text(o))
+}
+
+/// A word as a pattern (a `case` pattern): expanded, quoting kept.
+fn expand_pattern(mut sh: Sh, w: str) -> str {
+    var o = buf()
+    xw(mut sh, w, 0, w.len, X_TILDE, mut o)
+    pattern_of(text(o))
+}
+
+fn starts_with_dot(comp: str) -> bool {
+    byte_at(comp, 0) == 46 || byte_at(comp, 0) == Q && byte_at(comp, 1) == 46
+}
+
+fn join_path(base: str, name: str) -> str {
+    if base.len == 0 {
+        return name
+    }
+    if ch(base, base.len - 1) == '/' {
+        return base + name
+    }
+    "{base}/{name}"
+}
+
+/// Pathname expansion (XCU 2.6.6) of one marked field: the matching
+/// paths, sorted by byte, or an empty list when nothing matches.
+fn glob(f: str) -> List[str] {
+    var comps = List[str]()
+    var cur = buf()
+    var i = 0
+    while i < f.len {
+        let b = byte_at(f, i)
+        if b == Q && byte_at(f, i + 1) == 47 {
+            (mut comps).push(text(cur))
+            cur = buf()
+            i += 2
+            continue
+        }
+        if b == Q {
+            putb(mut cur, Q)
+            putb(mut cur, byte_at(f, i + 1))
+            i += 2
+            continue
+        }
+        if b == 47 {
+            (mut comps).push(text(cur))
+            cur = buf()
+            i += 1
+            continue
+        }
+        putb(mut cur, b)
+        i += 1
+    }
+    (mut comps).push(text(cur))
+    var paths = List[str]()
+    var k = 0
+    if comps[0].len == 0 && comps.len > 1 {
+        (mut paths).push("/")
+        k = 1
+    } else {
+        (mut paths).push("")
+    }
+    var last_literal = true
+    while k < comps.len {
+        let comp = comps[k]
+        let last = k == comps.len - 1
+        var next = List[str]()
+        if comp.len == 0 {
+            // `a//b` or a trailing `/`: directories only, slash kept
+            for p in paths {
+                if p.len == 0 || fs_is_dir(p) {
+                    (mut next).push(p + "/")
+                }
+            }
+            last_literal = false
+        } else if !has_magic(comp) {
+            let name = unmark(comp)
+            for p in paths {
+                (mut next).push(join_path(p, name))
+            }
+            last_literal = true
+        } else {
+            let dot = starts_with_dot(comp)
+            for p in paths {
+                let dir = if p.len == 0 then "." else p
+                var names = fs_read_dir(dir) else |_| List[str]()
+                if dot {
+                    (mut names).push(".")
+                    (mut names).push("..")
+                }
+                for name in sort_strs(names) {
+                    if ch(name, 0) == '.' && !dot {
+                        continue
+                    }
+                    if pmatch(comp, name) {
+                        let full = join_path(p, name)
+                        if last || fs_is_dir(full) {
+                            (mut next).push(full)
+                        }
+                    }
+                }
+            }
+            last_literal = false
+        }
+        paths = next
+        k += 1
+    }
+    var out = List[str]()
+    for p in paths {
+        if !last_literal || fs_exists(p) || fs_is_dir(p) {
+            (mut out).push(p)
+        }
+    }
+    sort_strs(out)
+}
+
+/// Byte-order merge sort.
+fn sort_strs(xs: List[str]) -> List[str] {
+    if xs.len <= 1 {
+        return copy xs
+    }
+    let mid = xs.len / 2
+    let a = sort_strs(xs[0..mid])
+    let b = sort_strs(xs[mid..xs.len])
+    var out = List[str]()
+    var i = 0
+    var j = 0
+    while i < a.len && j < b.len {
+        if b[j] < a[i] {
+            (mut out).push(b[j])
+            j += 1
+        } else {
+            (mut out).push(a[i])
+            i += 1
+        }
+    }
+    while i < a.len {
+        (mut out).push(a[i])
+        i += 1
+    }
+    while j < b.len {
+        (mut out).push(b[j])
+        j += 1
+    }
+    out
+}
