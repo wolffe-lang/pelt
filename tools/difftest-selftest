@@ -1,0 +1,52 @@
+#!/bin/sh
+# difftest-selftest — the harness sees a difference (the planted red).
+#
+# Three corpora in a scratch directory, each run through tools/difftest
+# against the pelt just built: one whose expectation is right (exit 0),
+# one whose recorded stdout is wrong (exit 1), and one with a pending
+# case PENDING.md does not name (exit 1). A harness that cannot fail is
+# not a gate.
+set -eu
+PELT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+bin=${1:-$PELT_ROOT/target/release}
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/pelt-selftest.XXXXXX")
+trap 'rm -rf "$tmp"' EXIT
+
+make_corpus() { # dir out meta pending_md
+    mkdir -p "$1/a"
+    printf 'oracle: selftest\n' >"$1/ORACLE"
+    printf '%s' "$4" >"$1/PENDING.md"
+    printf 'echo a\n' >"$1/a/x.sh"
+    printf '%s' "$2" >"$1/a/x.out"
+    printf '%s' "$3" >"$1/a/x.meta"
+}
+
+expect() { # want dir
+    set +e
+    PELT_DIFF_DIR=$2 "$PELT_ROOT/tools/difftest" --bin "$bin" >"$2.log" 2>&1
+    got=$?
+    set -e
+    if [ "$got" != "$1" ]; then
+        echo "difftest-selftest: $2 exited $got, want $1" >&2
+        cat "$2.log" >&2
+        exit 1
+    fi
+    echo "difftest-selftest: $(basename "$2") exits $got as it must"
+}
+
+make_corpus "$tmp/right" 'a
+' 'exit=0
+stderr=no
+' ''
+expect 0 "$tmp/right"
+make_corpus "$tmp/wrong" 'b
+' 'exit=0
+stderr=no
+' ''
+expect 1 "$tmp/wrong"
+make_corpus "$tmp/unlisted" 'a
+' 'exit=0
+stderr=no
+pending=nothing
+' ''
+expect 1 "$tmp/unlisted"

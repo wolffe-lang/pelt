@@ -41,7 +41,8 @@ import subprocess
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DIFF = os.path.join(ROOT, "tests", "diff")
+# $PELT_DIFF_DIR points the tools at another corpus (the self-test's).
+DIFF = os.environ.get("PELT_DIFF_DIR") or os.path.join(ROOT, "tests", "diff")
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/home/pelt", "LC_ALL": "C"}
 
 
