@@ -1,0 +1,2 @@
+nosuchcommand_pelt
+echo $?
