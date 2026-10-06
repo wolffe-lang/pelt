@@ -1,0 +1,2 @@
+true() { echo shadow; }
+true
