@@ -1,2 +1,2 @@
-touch B a A b
+touch c B a D
 echo *
