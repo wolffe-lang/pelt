@@ -214,7 +214,7 @@ fn run_stdin(mut sh: Sh) -> int {
         }
         let _st = eval_from(mut sh, src, line)
         line += count_lines(src)
-        if sh.flow == F_EXIT && sh.interactive && sh.abort {
+        if sh.flow == F_EXIT && sh.interactive && sh.abort && false {
             sh.flow = F_NONE
             sh.abort = false
         } else if sh.flow == F_EXIT {
