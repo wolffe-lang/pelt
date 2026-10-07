@@ -8,7 +8,8 @@
 # source), and runs the differential corpus on each tier.
 #
 # THE ORACLE IS RECORDED, NOT RUN HERE. Every expectation under
-# tests/diff/ was written by tools/oracle-record from dash 0.5.13.4
+# tests/diff/ was written by tools/oracle-record (and every transcript
+# under tests/session/ by tools/session-record) from dash 0.5.13.4
 # (tests/diff/ORACLE names it and its digest), so every host compares
 # against one answer rather than against whatever dash its image ships.
 # The oracle is a program we ran, never a source we read (ruling #43).
@@ -95,3 +96,18 @@ jobs:
       - name: the harness sees a difference (the planted red)
         if: matrix.builds
         run: tools/difftest-selftest target/release
+
+      # The prompt: sessions typed into pelt through a pseudo-terminal
+      # and compared with transcripts tools/session-record wrote from
+      # `dash -i +m` (tests/session/, tools/lib_session.py).
+      - name: the session corpus, native tier
+        if: matrix.builds
+        run: tools/session --bin target/native
+
+      - name: the session corpus, release tier
+        if: matrix.builds
+        run: tools/session --bin target/release
+
+      - name: the session harness sees a difference (the planted red)
+        if: matrix.builds
+        run: tools/session-selftest target/release
