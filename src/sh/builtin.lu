@@ -641,9 +641,11 @@ fn bi_local(mut sh: Sh, args: List[str]) -> int {
 }
 
 /// `read [-r] var…` (XCU `read`): one line of standard input, split
-/// on `IFS` into the variables, the last taking the rest. wolf's
-/// `read_line` cannot say whether the line ended in a newline, so a
-/// final line without one answers 0 where the utility answers 1.
+/// on `IFS` into the variables, the last taking the rest. The line is
+/// read byte by byte through the handle the shell reads its own
+/// commands from (`sh.interact`), so a `read` at the prompt takes the
+/// next line typed and nothing more. A final line with no newline is
+/// assigned and answers 1, as the utility's end-of-file status says.
 fn bi_read(mut sh: Sh, args: List[str]) -> int {
     var raw = false
     var i = 0
@@ -667,19 +669,16 @@ fn bi_read(mut sh: Sh, args: List[str]) -> int {
     var line = buf()
     var eof = false
     loop {
-        let piece = read_line() else |e| match e {
-            eof => {
-                eof = true
-                break
-            },
-            io => {
-                eof = true
-                break
-            },
-            utf8 => {
-                eof = true
-                break
-            },
+        let (got, how) = read_raw_line(mut sh)
+        var piece = got
+        if how == 0 {
+            piece = got[0..got.len - 1]
+        } else {
+            eof = true
+        }
+        if eof {
+            put(mut line, piece)
+            break
         }
         if !raw && piece.len > 0 && ch(piece, piece.len - 1) == '\\' {
             put_range(mut line, piece, 0, piece.len - 1)
@@ -712,7 +711,7 @@ fn bi_read(mut sh: Sh, args: List[str]) -> int {
     putb(mut m, RE)
     let marked = text(m)
     assign_fields(mut sh, names, marked)
-    0
+    if eof then 1 else 0
 }
 
 /// Split a marked line for `read`: each variable but the last takes one
