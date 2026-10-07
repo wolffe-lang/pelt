@@ -14,7 +14,7 @@ in the commit that makes it pass.
 | **pipe** — `a \| b` | wolf-lang s215 (`os_pipe`, a descriptor map), pelt H2 | `pipe` |
 | **redirection** — `>`, `<`, here-documents to a command | wolf-lang s215 (a descriptor map), pelt H2 | `redirect_file`, `heredoc` |
 | **background jobs** — `&`, `wait`, later `jobs`, `fg`, `bg`, Ctrl-Z | a spawn that does not wait and `$!` (wolf-lang#141), pelt H2; job control (process groups, the terminal's foreground group) a later s lane, pelt H3 | `background` |
-| **interrupt** — Ctrl-C | `[os.signal.set]` has no meaning for `SIGINT` (filed below), so pelt cannot catch it: Ctrl-C at the prompt, or while a child runs, kills pelt with the child | `ctrl_c_prompt`, `ctrl_c_child` |
+| **interrupt** — Ctrl-C | `[os.signal.set]` has no meaning for `SIGINT` (wolf-lang#622), so pelt cannot catch it: Ctrl-C at the prompt, or while a child runs, kills pelt with the child | `ctrl_c_prompt`, `ctrl_c_child` |
 
 **Gaps with no session case**, because the harness cannot type them:
 
