@@ -106,6 +106,7 @@ fn bi_exit(mut sh: Sh, args: List[str]) -> int {
     }
     sh.status = code & 255
     sh.flow = F_EXIT
+    sh.abort = false
     sh.status
 }
 
@@ -121,6 +122,7 @@ fn bi_return(mut sh: Sh, args: List[str]) -> int {
     if sh.fdepth == 0 && sh.dots == 0 {
         // outside a function or a dot script: dash ends the shell
         sh.flow = F_EXIT
+        sh.abort = false
         return sh.status
     }
     sh.flow = F_RETURN
@@ -446,6 +448,7 @@ fn bi_exec(mut sh: Sh, args: List[str]) -> int {
     sh.traps = Map[str, str]()
     sh.status = st
     sh.flow = F_EXIT
+    sh.abort = false
     st
 }
 

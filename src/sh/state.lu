@@ -73,6 +73,10 @@ struct Sh {
     exiting: bool,
     gopt_sub: int,
     gopt_ind: int,
+    interactive: bool,
+    from_stdin: bool,
+    abort: bool,
+    in_fd: int,
 }
 
 struct Snap {
@@ -138,6 +142,10 @@ fn new_sh(name: str) -> Sh {
         exiting: false,
         gopt_sub: 1,
         gopt_ind: 0,
+        interactive: false,
+        from_stdin: false,
+        abort: false,
+        in_fd: -1,
     }
 }
 
@@ -245,32 +253,41 @@ fn ifs(sh: Sh) -> str {
     sh.vals["IFS"] else " \t\n"
 }
 
-/// `$-`: the single-letter options that are on.
+/// `$-`: the single-letter options that are on, in the order dash
+/// prints them (black-box: `set -a -C -e -f -u -v -x` shows `uaCvxfe`,
+/// and an interactive shell reading standard input puts `si` before
+/// `f`).
 fn dash_flags(sh: Sh) -> str {
     var o = buf()
+    if sh.opt_u {
+        putc(mut o, 'u')
+    }
     if sh.opt_a {
         putc(mut o, 'a')
     }
     if sh.opt_bigc {
         putc(mut o, 'C')
     }
-    if sh.opt_e {
-        putc(mut o, 'e')
-    }
-    if sh.opt_f {
-        putc(mut o, 'f')
-    }
-    if sh.opt_n {
-        putc(mut o, 'n')
-    }
-    if sh.opt_u {
-        putc(mut o, 'u')
-    }
     if sh.opt_v {
         putc(mut o, 'v')
     }
     if sh.opt_x {
         putc(mut o, 'x')
+    }
+    if sh.from_stdin {
+        putc(mut o, 's')
+    }
+    if sh.interactive {
+        putc(mut o, 'i')
+    }
+    if sh.opt_f {
+        putc(mut o, 'f')
+    }
+    if sh.opt_e {
+        putc(mut o, 'e')
+    }
+    if sh.opt_n {
+        putc(mut o, 'n')
     }
     text(o)
 }
@@ -337,12 +354,16 @@ fn diag(mut sh: Sh, msg: str) {
 
 /// A shell error that ends a non-interactive shell (XCU 2.8.1): the
 /// message, status `code`, and the exit flow. Inside a subshell or a
-/// command substitution it ends only that.
+/// command substitution it ends only that. `abort` marks the exit as an
+/// error's, which an interactive shell turns into "abandon this command
+/// and prompt again" (`sh.interact`); every other way to `F_EXIT`
+/// (`exit`, `return` outside a function, `exec`, `set -e`) clears it.
 fn fatal(mut sh: Sh, msg: str, code: int) {
     diag(mut sh, msg)
     sh.status = code
     sh.flow = F_EXIT
     sh.flow_n = 0
+    sh.abort = true
 }
 
 // ---------------------------------------------------------------- quoting
