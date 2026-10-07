@@ -130,8 +130,9 @@ answer the same 51/0/8), aarch64 asserting its refusals.
 The session corpus: 59 cases typed through a pty, each recorded twice
 from `dash -i +m` (`tools/session-record` refuses a transcript two runs
 disagree on) and once from `bash --posix -i +m` as a second opinion on
-standard output and exit status (8 differ: bash's `--posix` interactive
-shell takes another line for some errors; dash is the oracle). The one
+standard output and exit status (8 differ, marked `bash=differs` in
+their `.meta`; e.g. after `echo ${x?boom}` bash's `$?` is 1 where dash's
+is 2; dash is the oracle). The one
 pending case that passes, `background`, does so because `sleep 0 &` run
 in the foreground prints what dash prints; it stays pending.
 
