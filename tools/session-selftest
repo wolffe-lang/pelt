@@ -1,0 +1,55 @@
+#!/bin/sh
+# session-selftest — the session harness sees a difference (the planted
+# red).
+#
+# Three session corpora in a scratch directory, each typed into the pelt
+# just built through tools/session: one whose transcript is right
+# (exit 0), one whose recorded prompt is wrong (exit 1), and one with a
+# pending case PENDING.md does not name (exit 1). A harness that cannot
+# fail is not a gate.
+set -eu
+PELT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+bin=${1:-$PELT_ROOT/target/release}
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/pelt-session-selftest.XXXXXX")
+trap 'rm -rf "$tmp"' EXIT
+
+make_corpus() { # dir prompt meta pending_md
+    mkdir -p "$1"
+    printf '%s' "$4" >"$1/PENDING.md"
+    printf 'echo a\nexit\n' >"$1/x.keys"
+    printf '%s' "$3" >"$1/x.meta"
+    cat >"$1/x.tr" <<TR
+step 0
+err no
+prompt "$2"
+step 1 "echo a"
+out "a\\n"
+err no
+prompt "$2"
+step 2 "exit"
+err no
+prompt ""
+exit 0 at step 2
+TR
+}
+
+expect() { # want dir
+    set +e
+    PELT_SESSION_DIR=$2 "$PELT_ROOT/tools/session" --bin "$bin" >"$2.log" 2>&1
+    got=$?
+    set -e
+    if [ "$got" != "$1" ]; then
+        echo "session-selftest: $2 exited $got, want $1" >&2
+        cat "$2.log" >&2
+        exit 1
+    fi
+    echo "session-selftest: $(basename "$2") exits $got as it must"
+}
+
+make_corpus "$tmp/right" '$ ' '' ''
+expect 0 "$tmp/right"
+make_corpus "$tmp/wrong" '% ' '' ''
+expect 1 "$tmp/wrong"
+make_corpus "$tmp/unlisted" '$ ' 'pending=nothing
+' ''
+expect 1 "$tmp/unlisted"
