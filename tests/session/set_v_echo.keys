@@ -1,0 +1,5 @@
+set -v
+echo x
+set +v
+echo y
+exit

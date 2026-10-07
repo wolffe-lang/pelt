@@ -1,0 +1,4 @@
+set -- a b
+shift 5; echo after
+echo st=$? $#
+exit

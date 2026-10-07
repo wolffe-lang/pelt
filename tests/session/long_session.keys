@@ -1,0 +1,15 @@
+a=1
+b=2
+echo $((a+b))
+c=$((a*10))
+echo $c
+f() { echo $(( $1 * 2 )); }
+f 21
+set -- x y z
+echo $#
+shift
+echo $1
+for w in p q; do echo $w; done
+case $c in 10) echo ten;; esac
+echo done
+exit

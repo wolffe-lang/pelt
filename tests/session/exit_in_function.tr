@@ -1,0 +1,11 @@
+step 0
+err no
+prompt "$ "
+step 1 "f() { echo in; exit 6; }"
+err no
+prompt "$ "
+step 2 "f"
+out "in\n"
+err no
+prompt ""
+exit 6 at step 2

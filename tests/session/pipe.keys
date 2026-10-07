@@ -1,0 +1,2 @@
+echo abc | tr a x
+exit

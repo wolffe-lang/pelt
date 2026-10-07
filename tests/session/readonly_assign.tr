@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "readonly r=1"
+err no
+prompt "$ "
+step 2 "r=2; echo after"
+err yes
+prompt "$ "
+step 3 "echo st=$? r=$r"
+out "st=2 r=1\n"
+err no
+prompt "$ "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

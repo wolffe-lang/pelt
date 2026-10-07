@@ -1,0 +1,20 @@
+step 0
+err no
+prompt "$ "
+step 1 "if true"
+err no
+prompt "> "
+step 2 "then echo yes"
+err no
+prompt "> "
+step 3 "else echo no"
+err no
+prompt "> "
+step 4 "fi"
+out "yes\n"
+err no
+prompt "$ "
+step 5 "exit"
+err no
+prompt ""
+exit 0 at step 5

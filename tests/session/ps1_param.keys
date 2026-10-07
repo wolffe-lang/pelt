@@ -1,0 +1,4 @@
+x=7; PS1='[$x]> '
+x=9
+echo $x
+exit

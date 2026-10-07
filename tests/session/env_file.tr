@@ -1,0 +1,16 @@
+step 0
+out "rc-ran\n"
+err no
+prompt "$ "
+step 1 "echo $FROMENV"
+out "loaded\n"
+err no
+prompt "$ "
+step 2 "envfn"
+out "envfn ran\n"
+err no
+prompt "$ "
+step 3 "exit"
+err no
+prompt ""
+exit 0 at step 3

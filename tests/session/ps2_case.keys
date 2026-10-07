@@ -1,0 +1,5 @@
+case abc in
+a*) echo starts-a;;
+*) echo other;;
+esac
+exit

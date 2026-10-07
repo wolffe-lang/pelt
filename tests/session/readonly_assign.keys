@@ -1,0 +1,4 @@
+readonly r=1
+r=2; echo after
+echo st=$? r=$r
+exit

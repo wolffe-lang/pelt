@@ -1,0 +1,3 @@
+echo a; fi; echo b
+echo st=$?
+exit

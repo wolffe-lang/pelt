@@ -1,0 +1,4 @@
+cat <<E
+hi there
+E
+exit

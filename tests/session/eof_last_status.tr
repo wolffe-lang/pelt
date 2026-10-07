@@ -1,0 +1,10 @@
+step 0
+err no
+prompt "$ "
+step 1 "false"
+err no
+prompt "$ "
+step 2 "^D"
+err no
+prompt ""
+exit 1 at step 2

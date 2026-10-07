@@ -1,0 +1,57 @@
+step 0
+err no
+prompt "$ "
+step 1 "a=1"
+err no
+prompt "$ "
+step 2 "b=2"
+err no
+prompt "$ "
+step 3 "echo $((a+b))"
+out "3\n"
+err no
+prompt "$ "
+step 4 "c=$((a*10))"
+err no
+prompt "$ "
+step 5 "echo $c"
+out "10\n"
+err no
+prompt "$ "
+step 6 "f() { echo $(( $1 * 2 )); }"
+err no
+prompt "$ "
+step 7 "f 21"
+out "42\n"
+err no
+prompt "$ "
+step 8 "set -- x y z"
+err no
+prompt "$ "
+step 9 "echo $#"
+out "3\n"
+err no
+prompt "$ "
+step 10 "shift"
+err no
+prompt "$ "
+step 11 "echo $1"
+out "y\n"
+err no
+prompt "$ "
+step 12 "for w in p q; do echo $w; done"
+out "p\nq\n"
+err no
+prompt "$ "
+step 13 "case $c in 10) echo ten;; esac"
+out "ten\n"
+err no
+prompt "$ "
+step 14 "echo done"
+out "done\n"
+err no
+prompt "$ "
+step 15 "exit"
+err no
+prompt ""
+exit 0 at step 15

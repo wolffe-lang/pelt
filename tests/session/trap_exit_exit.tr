@@ -1,0 +1,11 @@
+step 0
+err no
+prompt "$ "
+step 1 "trap 'echo bye $?' EXIT"
+err no
+prompt "$ "
+step 2 "exit 3"
+out "bye 3\n"
+err no
+prompt ""
+exit 3 at step 2

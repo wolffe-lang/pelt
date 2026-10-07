@@ -1,0 +1,3 @@
+echo $FROMENV
+envfn
+exit

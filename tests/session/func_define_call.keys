@@ -1,0 +1,4 @@
+f() { echo "f:$1:$#"; }
+f one two
+f
+exit

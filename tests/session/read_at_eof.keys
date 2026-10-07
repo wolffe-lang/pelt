@@ -1,0 +1,4 @@
+read a
+^D
+echo st=$?
+exit

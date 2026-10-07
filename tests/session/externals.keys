@@ -1,0 +1,4 @@
+expr 2 + 3
+basename /a/b/c
+/usr/bin/false; echo $?
+exit

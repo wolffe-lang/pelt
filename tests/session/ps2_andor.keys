@@ -1,0 +1,5 @@
+true &&
+echo yes
+false ||
+echo also
+exit

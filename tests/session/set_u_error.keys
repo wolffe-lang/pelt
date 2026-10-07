@@ -1,0 +1,4 @@
+set -u
+echo $nope; echo after
+echo st=$?
+exit

@@ -1,0 +1,19 @@
+step 0
+err no
+prompt "$ "
+step 1 "expr 2 + 3"
+out "5\n"
+err no
+prompt "$ "
+step 2 "basename /a/b/c"
+out "c\n"
+err no
+prompt "$ "
+step 3 "/usr/bin/false; echo $?"
+out "1\n"
+err no
+prompt "$ "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

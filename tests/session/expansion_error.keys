@@ -1,0 +1,3 @@
+echo ${x?boom}; echo after
+echo st=$?
+exit

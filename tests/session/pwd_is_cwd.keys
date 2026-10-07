@@ -1,0 +1,3 @@
+p=$(pwd); echo "${p##*/}"
+[ "$(pwd)" = "$PWD" ] && echo same
+exit

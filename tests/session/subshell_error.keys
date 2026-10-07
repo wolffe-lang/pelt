@@ -1,0 +1,3 @@
+(shift 9); echo after
+echo st=$?
+exit

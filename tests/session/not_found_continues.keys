@@ -1,0 +1,4 @@
+nosuchcmd; echo after
+nosuchcmd
+echo st=$?
+exit

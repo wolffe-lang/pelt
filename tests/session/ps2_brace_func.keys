@@ -1,0 +1,5 @@
+g() {
+echo in g
+}
+g
+exit

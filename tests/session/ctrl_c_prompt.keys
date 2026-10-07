@@ -1,0 +1,4 @@
+^C
+
+echo alive
+exit

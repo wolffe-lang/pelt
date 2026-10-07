@@ -1,0 +1,5 @@
+PS2='more> '
+if :
+then echo ok
+fi
+exit

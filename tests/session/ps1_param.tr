@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "x=7; PS1='[$x]> '"
+err no
+prompt "[7]> "
+step 2 "x=9"
+err no
+prompt "[9]> "
+step 3 "echo $x"
+out "9\n"
+err no
+prompt "[9]> "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

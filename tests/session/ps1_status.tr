@@ -1,0 +1,16 @@
+step 0
+err no
+prompt "$ "
+step 1 "PS1='$? $ '"
+err no
+prompt "0 $ "
+step 2 "false"
+err no
+prompt "1 $ "
+step 3 "true"
+err no
+prompt "0 $ "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

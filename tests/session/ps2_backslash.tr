@@ -1,0 +1,14 @@
+step 0
+err no
+prompt "$ "
+step 1 "echo a \\"
+err no
+prompt "> "
+step 2 "b"
+out "a b\n"
+err no
+prompt "$ "
+step 3 "exit"
+err no
+prompt ""
+exit 0 at step 3
