@@ -126,6 +126,30 @@ def _ctty():
     # the pty slave is already descriptor 0; make it this new session's
     # controlling terminal so the interrupt character reaches us
     fcntl.ioctl(0, termios.TIOCSCTTY, 0)
+    # and start the shell as a terminal would: SIGINT and SIGQUIT at
+    # their defaults, nothing blocked. A harness launched in the
+    # background of a non-interactive shell inherits both IGNORED (XCU
+    # 2.11), and dash and its children would then never see Ctrl-C:
+    # the first recording of ctrl_c_child showed `sleep 5` outliving
+    # its ^C for exactly that reason.
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGQUIT, signal.SIG_DFL)
+    signal.pthread_sigmask(signal.SIG_SETMASK, [])
+
+
+# The shell's signal mask and ignored set as /proc showed them, for a
+# case that types ^C (linux only; None elsewhere): the evidence that a
+# signal row's answer was not decided by an inherited mask.
+last_sig = None
+
+
+def _sig_state(pid):
+    try:
+        with open(f"/proc/{pid}/status", encoding="utf-8") as fh:
+            rows = [ln.split()[1] for ln in fh if ln.startswith(("SigBlk:", "SigIgn:"))]
+        return f"SigBlk {rows[0]} SigIgn {rows[1]}"
+    except (OSError, IndexError):
+        return None
 
 
 class Step:
@@ -231,6 +255,10 @@ def _session(argv, keys, env, cwd, expect):
     s0 = Step(None)
     settle(s0, want(0))
     steps.append(s0)
+    global last_sig
+    last_sig = None
+    if any(label == "^C" for label, _ in keys):
+        last_sig = _sig_state(p.pid)
     exit_line = None
     for label, data in keys:
         if p.poll() is not None:
