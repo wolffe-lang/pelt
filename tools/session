@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""session — pelt typed at through a pseudo-terminal, against the
+recorded oracle (tools/lib_session.py says what a case and a transcript
+are).
+
+Every case under tests/session/ is typed into pelt one line at a time,
+each line once pelt shows the prompt dash showed at that point, and the
+transcript is compared line for line with the one tools/session-record
+wrote from `dash -i +m`: the output of every step, whether anything but
+the prompt reached standard error, every prompt string, and the exit
+status and the step it came at.
+
+A case marked `pending=` needs a primitive pelt does not have yet. It
+still RUNS and is reported as PEND-ok or PEND-fail without deciding the
+exit status; every such case must be named in tests/session/PENDING.md
+or the run fails.
+
+Exit 0 when every non-pending case matches, 1 when one does not, 2 when
+the harness cannot run.
+
+usage: tools/session [--bin DIR] [case ...]   (default target/release)
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+
+
+def die(msg):
+    print(f"session: {msg}", file=sys.stderr)
+    sys.exit(2)
+
+
+def main(argv):
+    sys.stdout.reconfigure(line_buffering=True)
+    bindir = os.path.join(ls.ROOT, "target", "release")
+    if argv[:1] == ["--bin"]:
+        if len(argv) < 2:
+            die("--bin needs a directory")
+        bindir = os.path.abspath(argv[1])
+        argv = argv[2:]
+    pelt = os.path.join(bindir, "pelt")
+    if not os.access(pelt, os.X_OK):
+        die(f"no pelt at {pelt} (run tools/build)")
+    try:
+        listed = open(os.path.join(ls.SESS, "PENDING.md"), encoding="utf-8").read()
+    except OSError:
+        die("tests/session/PENDING.md is missing")
+    all_cases = ls.cases(argv or None)
+    if not all_cases:
+        die("no cases found")
+    print(f"session: pelt = {pelt}")
+    passed = failed = pend = pend_ok = 0
+    unlisted = []
+    for name, keys in all_cases:
+        trp = keys[:-5] + ".tr"
+        if not os.path.exists(trp):
+            die(f"{name}: no recorded transcript (run tools/session-record on the oracle host)")
+        meta = ls.read_meta(keys[:-5] + ".meta")
+        want = open(trp, encoding="utf-8").read().split("\n")[:-1]
+        got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, ls.parse_tr(want))
+        ok = got == want
+        if "pending" in meta:
+            pend += 1
+            pend_ok += ok
+            if f"`{name}`" not in listed:
+                unlisted.append(name)
+            print(f"PEND-{'ok  ' if ok else 'fail'} {name} (waits on {meta['pending']})")
+            continue
+        if ok:
+            passed += 1
+            print(f"ok   {name}")
+            continue
+        failed += 1
+        print(f"FAIL {name}")
+        n = max(len(got), len(want))
+        for i in range(n):
+            g = got[i] if i < len(got) else "<none>"
+            w = want[i] if i < len(want) else "<none>"
+            mark = "  " if g == w else "! "
+            print(f"     {mark}pelt {g}")
+            if g != w:
+                print(f"       dash {w}")
+    print(f"session: pass {passed}  fail {failed}  pending {pend} ({pend_ok})")
+    if unlisted:
+        for u in unlisted:
+            print(f"UNLISTED {u}: pending but not named in tests/session/PENDING.md")
+        return 1
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
