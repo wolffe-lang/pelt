@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""session-record — write each session case's transcript from the oracle.
+
+Types every case (or the named ones) into `dash -i +m` through a
+pseudo-terminal, pacing by quiet (tools/lib_session.py), and writes
+<name>.tr; types it into `bash --posix -i +m` too and records in the
+meta whether the second opinion agrees on standard output and the exit
+status (its prompts and its messages are its own). Keys a person wrote
+in the meta are kept.
+
+The oracle is a program we RUN, never a source we read (ruling #43).
+Run it on the oracle host (tests/diff/ORACLE); it refuses another dash.
+
+usage: tools/session-record [--check] [case ...]
+  --check  write nothing; exit 1 when a recorded transcript no longer
+           matches what this host's oracle answers
+"""
+
+import os
+import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+
+KEEP = ("args", "pelt_args", "env", "pending", "why")
+
+
+def main(argv):
+    sys.stdout.reconfigure(line_buffering=True)
+    check = False
+    if argv[:1] == ["--check"]:
+        check = True
+        argv = argv[1:]
+    want = open(os.path.join(ls.ROOT, "tests", "diff", "ORACLE"), encoding="utf-8").read()
+    pkg = subprocess.run(["pacman", "-Q", "dash"], capture_output=True, text=True).stdout.strip()
+    if not pkg or pkg not in want:
+        print(f"session-record: this host has {pkg or 'no pacman dash'}; tests/diff/ORACLE "
+              f"names another dash", file=sys.stderr)
+        return 2
+    drift = 0
+    for name, keys in ls.cases(argv or None):
+        mpath = keys[:-5] + ".meta"
+        trp = keys[:-5] + ".tr"
+        old = ls.read_meta(mpath)
+        meta = {k: old[k] for k in KEEP if k in old}
+        d = ls.run(ls.argv_for(ls.ORACLE, meta, False), keys, meta)
+        # a second recording: the transcript must not depend on timing
+        d2 = ls.run(ls.argv_for(ls.ORACLE, meta, False), keys, meta)
+        if d != d2:
+            print(f"UNSTABLE {name}: two dash runs differ")
+            drift += 1
+            continue
+        b = ls.run(ls.argv_for(ls.SECOND, meta, False), keys, meta)
+        same = ls.stdout_and_exit(b) == ls.stdout_and_exit(d)
+        meta["bash"] = "agree" if same else "differs"
+        if check:
+            have = open(trp, encoding="utf-8").read().split("\n")[:-1] if os.path.exists(trp) else None
+            if have != d:
+                print(f"DRIFT {name}")
+                drift += 1
+            continue
+        with open(trp, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(d) + "\n")
+        ls.write_meta(mpath, meta)
+        print(f"recorded {name}: {d[-1]}{'' if same else ' (bash differs)'}")
+    if check:
+        print(f"session-record: {drift} drifted")
+    return 1 if drift else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
