@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""session-demo — what a person at a terminal sees.
+
+Types a keys file (tests/session's format: one line per line, `^D` for
+Ctrl-D) into SHELL with all three standard descriptors on one
+pseudo-terminal, as a terminal emulator runs it, one line each time the
+shell has gone quiet, and prints everything the terminal showed:
+prompts, the echo of what was typed, output and messages, in order.
+The exit status follows.
+
+usage: tools/session-demo KEYS SHELL [ARG ...]
+"""
+
+import os
+import pty
+import select
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+
+
+def main(argv):
+    if len(argv) < 2:
+        print(__doc__, file=sys.stderr)
+        return 2
+    keys = ls.keystrokes(argv[0])
+    master, slave = pty.openpty()
+    env = {"PATH": "/usr/bin:/bin", "HOME": os.environ.get("HOME", "/"),
+           "LC_ALL": "C", "TERM": "dumb"}
+    p = subprocess.Popen(argv[1:], stdin=slave, stdout=slave, stderr=slave,
+                         env=env, start_new_session=True, preexec_fn=ls._ctty)
+    os.close(slave)
+    shown = b""
+
+    def quiet():
+        nonlocal shown
+        last = time.time()
+        while time.time() - last < ls.SETTLE:
+            r, _, _ = select.select([master], [], [], 0.05)
+            if r:
+                try:
+                    d = os.read(master, 65536)
+                except OSError:
+                    return
+                if not d:
+                    return
+                shown += d
+                last = time.time()
+
+    quiet()
+    for _, data in keys:
+        if p.poll() is not None:
+            break
+        os.write(master, data)
+        quiet()
+    rc = p.wait(timeout=10)
+    quiet()
+    sys.stdout.write(shown.decode("utf-8", "replace").replace("\r\n", "\n"))
+    print(f"[exit status {rc}]")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
