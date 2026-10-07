@@ -1,0 +1,68 @@
+difftest: pelt = /home/mfwolffe/lanes/sh01/old/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   parse/arith_ok
+ok   parse/bad_funcname
+ok   parse/bang_ok
+ok   parse/case_no_in
+ok   parse/cmdsub_nested_ok
+ok   parse/comments_ok
+ok   parse/compound_ok
+ok   parse/continuation_ok
+ok   parse/done_late
+ok   parse/empty_brace
+ok   parse/fi_unexpected
+ok   parse/for_bad_name
+ok   parse/func_simple_body
+ok   parse/heredoc_ok
+ok   parse/leading_semicolon
+ok   parse/missing_done
+ok   parse/missing_esac
+ok   parse/missing_fi
+ok   parse/missing_then
+ok   parse/newlines_ok
+ok   parse/quotes_ok
+FAIL parse/redirect_no_target: refused at line 1, oracle at 2
+     pelt stdout: b''
+     want stdout: b''
+     pelt stderr: b'pelt: ../s.sh: line 1: syntax error: unexpected newline\n'
+ok   parse/redirs_ok
+ok   parse/simple_ok
+ok   parse/stray_dsemi
+ok   parse/stray_paren
+ok   parse/then_empty
+ok   parse/trailing_andand
+ok   parse/trailing_pipe
+ok   parse/two_heredocs_ok
+FAIL parse/unterminated_backquote: refused at line 1, oracle at 2
+     pelt stdout: b''
+     want stdout: b''
+     pelt stderr: b'pelt: ../s.sh: line 1: unterminated backquote\n'
+FAIL parse/unterminated_cmdsub: refused at line 1, oracle at 2
+     pelt stdout: b''
+     want stdout: b''
+     pelt stderr: b'pelt: ../s.sh: line 1: unterminated command substitution\n'
+FAIL parse/unterminated_dquote: refused at line 1, oracle at 2
+     pelt stdout: b''
+     want stdout: b''
+     pelt stderr: b'pelt: ../s.sh: line 1: unterminated double quote\n'
+FAIL parse/unterminated_squote: refused at line 2, oracle at 3
+     pelt stdout: b''
+     want stdout: b''
+     pelt stderr: b'pelt: ../s.sh: line 2: unterminated single quote\n'
+ok   quote/backslash
+ok   quote/continuation
+ok   quote/dollar_single
+ok   quote/double
+FAIL quote/dq_in_param: stdout
+     pelt stdout: b'\'a\' "b" c d\n'
+     want stdout: b"'a' b c d\n"
+ok   quote/empty_args
+ok   quote/mixed
+ok   quote/newline_inside
+ok   quote/single
+ok   quote/special_chars
+ok   quote/tab
+difftest: area        pass  fail  pending (of which pass)
+difftest: parse         29     5     0 (0)
+difftest: quote         10     1     0 (0)
+difftest: total         39     6     0 (0)
