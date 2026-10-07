@@ -46,6 +46,7 @@ struct P {
     pend_strip: List[bool],
     err: str,
     err_line: int,
+    more: bool,
 }
 
 fn new_parser(src: str, line: int) -> P {
@@ -65,6 +66,7 @@ fn new_parser(src: str, line: int) -> P {
         pend_strip: List[bool](),
         err: "",
         err_line: 0,
+        more: false,
     }
 }
 
@@ -77,6 +79,17 @@ fn fail(mut p: P, msg: str) {
     p.tx = ""
     p.have = true
     p.pos = p.src.len
+}
+
+/// An error that only the end of the text caused: an open quote, an
+/// unclosed compound command, a missing operand after `&&`. An
+/// interactive shell reads another line (`PS2`) rather than report it;
+/// `P.more` says so.
+fn fail_eof(mut p: P, msg: str) {
+    if p.err.len == 0 {
+        p.more = true
+    }
+    fail(mut p, msg)
 }
 
 fn fail_at(mut p: P, msg: str, line: int) {
@@ -119,6 +132,9 @@ fn lex(mut p: P, mut a: Ast) {
         if c == '\\' && at(p, p.pos + 1) == '\n' {
             p.pos += 2
             p.line += 1
+            if p.pos >= p.src.len {
+                p.more = true
+            }
             continue
         }
         if c == '#' {
@@ -241,6 +257,9 @@ fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
             if at(p, p.pos + 1) == '\n' {
                 p.pos += 2
                 p.line += 1
+                if p.pos >= p.src.len {
+                    p.more = true
+                }
                 continue
             }
             if p.pos + 1 < p.src.len {
@@ -264,7 +283,7 @@ fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
                 p.pos += 1
             }
             if p.pos >= p.src.len {
-                fail(mut p, "unterminated single quote")
+                fail_eof(mut p, "unterminated single quote")
                 return
             }
             p.pos += 1
@@ -304,7 +323,7 @@ fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
     p.pos += 1
     loop {
         if p.pos >= p.src.len {
-            fail(mut p, "unterminated double quote")
+            fail_eof(mut p, "unterminated double quote")
             return
         }
         let c = at(p, p.pos)
@@ -317,6 +336,9 @@ fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
             if at(p, p.pos + 1) == '\n' {
                 p.pos += 2
                 p.line += 1
+                if p.pos >= p.src.len {
+                    p.more = true
+                }
                 continue
             }
             if p.pos + 1 < p.src.len {
@@ -353,7 +375,7 @@ fn scan_bq(mut p: P, mut o: Buf) {
     p.pos += 1
     loop {
         if p.pos >= p.src.len {
-            fail(mut p, "unterminated backquote")
+            fail_eof(mut p, "unterminated backquote")
             return
         }
         let c = at(p, p.pos)
@@ -455,7 +477,7 @@ fn scan_cmdsub(mut p: P, mut a: Ast, mut o: Buf) {
     let k = peek(mut p, mut a)
     if k != T_OP || p.tx != ")" {
         if k == T_EOF {
-            fail(mut p, "unterminated command substitution")
+            fail_eof(mut p, "unterminated command substitution")
         } else {
             unexpected(mut p)
         }
@@ -474,7 +496,7 @@ fn scan_brace(mut p: P, mut a: Ast, mut o: Buf) {
     var junk = buf()
     loop {
         if p.pos >= p.src.len {
-            fail(mut p, "unterminated parameter expansion")
+            fail_eof(mut p, "unterminated parameter expansion")
             return
         }
         let c = at(p, p.pos)
@@ -568,6 +590,9 @@ fn read_docs(mut p: P, mut a: Ast) {
         var body = buf()
         loop {
             if p.pos >= p.src.len {
+                // the delimiter has not come: at the end of a script the
+                // body ends here; an interactive shell reads on
+                p.more = true
                 break
             }
             var e = p.pos
@@ -640,7 +665,7 @@ fn token_name(p: P) -> str {
 fn unexpected(mut p: P) {
     let what = token_name(p)
     if p.tk == T_EOF {
-        fail(mut p, "syntax error: unexpected end of file")
+        fail_eof(mut p, "syntax error: unexpected end of file")
     } else if p.tk == T_NL {
         // the newline is already behind the lexer, as it is for dash
         fail(mut p, "syntax error: unexpected {what}")
@@ -656,7 +681,7 @@ fn expect_word(mut p: P, mut a: Ast, w: str) -> bool {
     }
     if p.err.len == 0 {
         if p.tk == T_EOF {
-            fail(mut p, "syntax error: unexpected end of file (expecting '{w}')")
+            fail_eof(mut p, "syntax error: unexpected end of file (expecting '{w}')")
         } else {
             unexpected(mut p)
         }
@@ -671,7 +696,7 @@ fn expect_op(mut p: P, mut a: Ast, op: str) -> bool {
     }
     if p.err.len == 0 {
         if p.tk == T_EOF {
-            fail(mut p, "syntax error: unexpected end of file (expecting '{op}')")
+            fail_eof(mut p, "syntax error: unexpected end of file (expecting '{op}')")
         } else {
             unexpected(mut p)
         }
@@ -1219,7 +1244,7 @@ fn parse_case(mut p: P, mut a: Ast) -> int {
         if !is_word(mut p, mut a, "esac") {
             if p.err.len == 0 {
                 if p.tk == T_EOF {
-                    fail(mut p, "syntax error: unexpected end of file (expecting 'esac')")
+                    fail_eof(mut p, "syntax error: unexpected end of file (expecting 'esac')")
                 } else {
                     unexpected(mut p)
                 }
