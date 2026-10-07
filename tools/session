@@ -33,6 +33,17 @@ def die(msg):
     sys.exit(2)
 
 
+def show_diff(got, want):
+    n = max(len(got), len(want))
+    for i in range(n):
+        g = got[i] if i < len(got) else "<none>"
+        w = want[i] if i < len(want) else "<none>"
+        mark = "  " if g == w else "! "
+        print(f"     {mark}pelt {g}")
+        if g != w:
+            print(f"       dash {w}")
+
+
 def main(argv):
     sys.stdout.reconfigure(line_buffering=True)
     bindir = os.path.join(ls.ROOT, "target", "release")
@@ -62,12 +73,16 @@ def main(argv):
         want = open(trp, encoding="utf-8").read().split("\n")[:-1]
         got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, ls.parse_tr(want))
         ok = got == want
+        if ls.last_sig:
+            print(f"     ({name}: pelt {ls.last_sig})")
         if "pending" in meta:
             pend += 1
             pend_ok += ok
             if f"`{name}`" not in listed:
                 unlisted.append(name)
             print(f"PEND-{'ok  ' if ok else 'fail'} {name} (waits on {meta['pending']})")
+            if not ok:
+                show_diff(got, want)
             continue
         if ok:
             passed += 1
@@ -75,14 +90,7 @@ def main(argv):
             continue
         failed += 1
         print(f"FAIL {name}")
-        n = max(len(got), len(want))
-        for i in range(n):
-            g = got[i] if i < len(got) else "<none>"
-            w = want[i] if i < len(want) else "<none>"
-            mark = "  " if g == w else "! "
-            print(f"     {mark}pelt {g}")
-            if g != w:
-                print(f"       dash {w}")
+        show_diff(got, want)
     print(f"session: pass {passed}  fail {failed}  pending {pend} ({pend_ok})")
     if unlisted:
         for u in unlisted:
