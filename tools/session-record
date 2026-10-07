@@ -45,6 +45,7 @@ def main(argv):
         old = ls.read_meta(mpath)
         meta = {k: old[k] for k in KEEP if k in old}
         d = ls.run(ls.argv_for(ls.ORACLE, meta, False), keys, meta)
+        dash_sig = ls.last_sig
         # a second recording: the transcript must not depend on timing
         d2 = ls.run(ls.argv_for(ls.ORACLE, meta, False), keys, meta)
         if d != d2:
@@ -63,7 +64,8 @@ def main(argv):
         with open(trp, "w", encoding="utf-8") as fh:
             fh.write("\n".join(d) + "\n")
         ls.write_meta(mpath, meta)
-        print(f"recorded {name}: {d[-1]}{'' if same else ' (bash differs)'}")
+        sig = f" (dash {dash_sig})" if dash_sig else ""
+        print(f"recorded {name}: {d[-1]}{'' if same else ' (bash differs)'}{sig}")
     if check:
         print(f"session-record: {drift} drifted")
     return 1 if drift else 0
