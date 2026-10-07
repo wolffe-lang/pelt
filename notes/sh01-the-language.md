@@ -131,8 +131,18 @@ the corpus goes red on it: `plant-a56d609-native.log`
 (`gauntlet-plant-a56d609-mislabelled-header.log` `d148c769a323e9d1…`:
 its header line says 9dcdd27 because I had not yet synced the revert to
 kasumi; its body is the plant's — `test rc=1`, 10 FAIL on each tier).
-In CI the plant is run **37548350989**; the revert `9dcdd27` restores
-`+`, and its tree is byte-identical to `4939a9f`'s.
+In CI the plant is run **37548350989**: red on linux x86-64 and macOS
+arm64 at "wolf test (the table checks)" (`sh_test.lu::main ...
+FAILED (trap(assert))`, the arithmetic rows); the revert `9dcdd27`
+restores `+`, and its tree is byte-identical to `4939a9f`'s.
+
+**Drift from the contract, found by that run**: linux aarch64 has no
+native tier at wolf 0.2.24. Its job in run 37548350989 failed at the
+build, before the plant mattered: "this host cannot run the native
+tier: native codegen targets linux/x86-64, macOS/aarch64, and
+windows/x86-64 … the rest of D35's matrix is c13". Filed as
+wolf-lang#614. That host now builds and runs the release tier only, and
+a CI step asserts the refusal by name so it reds when the tier comes.
 
 **The oracle**: dash 0.5.13.4-1.1, `/usr/bin/dash` `c6221703b6197ce2…`;
 bash 5.3.20-2 as `bash --posix`, `/usr/bin/bash` `a8ce2b3c38c81853…`
