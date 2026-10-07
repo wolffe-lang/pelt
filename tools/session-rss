@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""session-rss — a shell's resident memory over N interactive commands.
+
+Types `x=$((x+1))` N times into the shell through a pseudo-terminal
+(tools/lib_session.py's arrangement: the pty is standard input and the
+controlling terminal, the outputs are pipes), each line once the prompt
+`$ ` is back, and prints the shell's resident set size (`ps -o rss=`,
+KB) before the first command and after every N/4, then checks `$x`.
+This is the measurement wolf-lang#612 is about, taken at the prompt.
+
+usage: tools/session-rss [-n N] SHELL [ARG ...]
+   eg: tools/session-rss target/release/pelt -i
+       tools/session-rss -n 1000 dash -i +m
+"""
+
+import os
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+import pty  # noqa: E402
+import select  # noqa: E402
+
+
+def rss(pid):
+    out = subprocess.run(["ps", "-o", "rss=", "-p", str(pid)],
+                         capture_output=True, text=True).stdout.strip()
+    return int(out) if out else -1
+
+
+def main(argv):
+    n = 1000
+    if argv[:1] == ["-n"]:
+        n = int(argv[1])
+        argv = argv[2:]
+    if not argv:
+        print(__doc__, file=sys.stderr)
+        return 2
+    master, slave = pty.openpty()
+    rout, wout = os.pipe()
+    rerr, werr = os.pipe()
+    env = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+    p = subprocess.Popen(argv, stdin=slave, stdout=wout, stderr=werr, env=env,
+                         start_new_session=True, preexec_fn=ls._ctty)
+    os.close(slave)
+    os.close(wout)
+    os.close(werr)
+    err = b""
+    out = b""
+
+    def wait_prompt():
+        nonlocal err, out
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            r, _, _ = select.select([rout, rerr, master], [], [], 0.5)
+            for fd in r:
+                try:
+                    d = os.read(fd, 65536)
+                except OSError:
+                    d = b""
+                if fd == rerr:
+                    err += d
+                elif fd == rout:
+                    out += d
+            if err.endswith(b"$ "):
+                err = b""
+                return True
+        return False
+
+    if not wait_prompt():
+        print("session-rss: no first prompt", file=sys.stderr)
+        p.kill()
+        return 2
+    t0 = time.time()
+    print(f"session-rss: {' '.join(argv)}")
+    print(f"commands {0:6}  rss_kb {rss(p.pid)}")
+    for i in range(1, n + 1):
+        os.write(master, b"x=$((x+1))\n")
+        if not wait_prompt():
+            print(f"session-rss: no prompt after command {i}", file=sys.stderr)
+            p.kill()
+            return 2
+        if i % (n // 4 or 1) == 0:
+            print(f"commands {i:6}  rss_kb {rss(p.pid)}")
+    os.write(master, b"echo $x\n")
+    wait_prompt()
+    secs = time.time() - t0
+    os.write(master, b"exit\n")
+    p.wait(timeout=10)
+    print(f"x = {out.decode().strip()}  ({secs:.3f} s)")
+    return 0 if out.decode().strip() == str(n) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
