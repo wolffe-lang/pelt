@@ -1,0 +1,31 @@
+# pelt 1ba87c0, release tier, kasumi, 2026-10-07T20:49:08Z: tools/session-demo notes/sh02-evidence/demo.keys (cwd holds README hello.lu notes.txt)
+$ echo hi
+hi
+$ ls
+README	hello.lu  notes.txt
+$ date
+Wed Oct  7 16:49:09 EDT 2026
+$ pwd
+/home/mfwolffe/lanes/sh02/demo
+$ x=3; echo $((x*2))
+6
+$ greet() {
+>   echo "hello, $1"
+> }
+$ greet maintainer
+hello, maintainer
+$ if [ $x -gt 2 ]
+> then echo big
+> fi
+big
+$ fi
+pelt: line 13: syntax error: unexpected 'fi'
+$ echo "status after the error: $?"
+status after the error: 2
+$ exit
+[exit status 0]
+
+# the same, then: tools/session-demo notes/sh02-evidence/demo-eof.keys
+$ false
+$ 
+[exit status 1]

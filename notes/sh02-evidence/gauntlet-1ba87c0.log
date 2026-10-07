@@ -1,0 +1,66 @@
+gauntlet sh02 at 1ba87c073323a56f2cc65db939807738282f97a0 on kasumi 2026-10-07T20:47:55Z taskset -c 0-3
+sources sha256 4103e296752df968
+wolf 0.2.24 (wolfgang, pin 294d626)
+lupin 0.1.47 (wolf-interp, reference interpreter at pin 8e36bc1)
+fmt rc=0
+build: target/native/pelt
+build: target/release/pelt
+build rc=0
+test rc=0
+difftest native rc=0
+difftest: total        244     0    19 (3)
+session native rc=0
+PEND-ok   background (waits on background jobs)
+PEND-fail cd_root (waits on chdir)
+PEND-fail child_stdin (waits on child stdin)
+     (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+PEND-fail ctrl_c_child (waits on interrupt)
+     (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+PEND-fail ctrl_c_prompt (waits on interrupt)
+PEND-fail heredoc (waits on redirection)
+PEND-fail pipe (waits on pipe)
+PEND-fail redirect_file (waits on redirection)
+session: pass 51  fail 0  pending 8 (1)
+difftest release rc=0
+difftest: total        244     0    19 (3)
+session release rc=0
+PEND-ok   background (waits on background jobs)
+PEND-fail cd_root (waits on chdir)
+PEND-fail child_stdin (waits on child stdin)
+     (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+PEND-fail ctrl_c_child (waits on interrupt)
+     (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+PEND-fail ctrl_c_prompt (waits on interrupt)
+PEND-fail heredoc (waits on redirection)
+PEND-fail pipe (waits on pipe)
+PEND-fail redirect_file (waits on redirection)
+session: pass 51  fail 0  pending 8 (1)
+session-selftest: right exits 0 as it must
+session-selftest: wrong exits 1 as it must
+session-selftest: unlisted exits 1 as it must
+session-selftest rc=0
+difftest-selftest rc=0
+session-rss: target/native/pelt -i
+commands      0  rss_kb 2856
+commands    250  rss_kb 4468
+commands    500  rss_kb 5888
+commands    750  rss_kb 7348
+commands   1000  rss_kb 8732
+x = 1000  (0.038 s)
+rss native rc=0
+session-rss: target/release/pelt -i
+commands      0  rss_kb 2628
+commands    250  rss_kb 4060
+commands    500  rss_kb 5480
+commands    750  rss_kb 6940
+commands   1000  rss_kb 8324
+x = 1000  (0.034 s)
+rss release rc=0
+session-rss: dash -i +m
+commands      0  rss_kb 2744
+commands    250  rss_kb 2812
+commands    500  rss_kb 2812
+commands    750  rss_kb 2812
+commands   1000  rss_kb 2812
+x = 1000  (0.019 s)
+rss dash rc=0

@@ -1,0 +1,1592 @@
+session: pelt = /home/mfwolffe/lanes/sh02/base/target/native/pelt
+FAIL arith_assign
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "x=3; echo $((x*2))"
+     ! pelt err no
+       dash out "6\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "echo $((x+1)) $x"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "echo $((x+1)) $x"
+     ! pelt prompt ""
+       dash out "4 3\n"
+     ! pelt step 3 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 3 "exit"
+     ! pelt alive at step 3
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL arith_error
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo $((1+))"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "echo st=$?"
+     ! pelt err no
+       dash out "st=2\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+PEND-fail background (waits on background jobs)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "sleep 0 &"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "wait"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo after"
+     ! pelt err no
+       dash out "after\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+PEND-fail cd_root (waits on chdir)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "cd /"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "pwd"
+     ! pelt err no
+       dash out "/\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+PEND-fail child_stdin (waits on child stdin)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "cat"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "hello"
+     ! pelt err no
+       dash out "hello\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "^D"
+       dash prompt ""
+     ! pelt err yes
+       dash step 3 "^D"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 2 at step 3
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 4 "echo after"
+     ! pelt <none>
+       dash out "after\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 5 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL comment_and_blank
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "# a comment"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 ""
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "   "
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 4 "echo after"
+     ! pelt err no
+       dash out "after\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 5
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+     (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+PEND-fail ctrl_c_child (waits on interrupt)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "sleep 5"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^C"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt signal 2 at step 2
+       dash step 3 "echo st=$?"
+     ! pelt <none>
+       dash out "st=130\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 4 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+     (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+PEND-fail ctrl_c_prompt (waits on interrupt)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "^C"
+       pelt err no
+       pelt prompt ""
+     ! pelt signal 2 at step 1
+       dash step 2 ""
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 3 "echo alive"
+     ! pelt <none>
+       dash out "alive\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 4 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL dash_s_args
+       pelt step 0
+     ! pelt err yes
+       dash err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt exit 127 at step 0
+       dash step 1 "echo $# $1 $2"
+     ! pelt <none>
+       dash out "2 a b\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 2 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 2
+FAIL default_interactive
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo hi"
+     ! pelt err no
+       dash out "hi\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "exit 5"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "exit 5"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 2
+       dash prompt ""
+     ! pelt <none>
+       dash exit 5 at step 2
+FAIL dollar_dash
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo \"$-\""
+     ! pelt err no
+       dash out "si\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "set -e -u"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "set -e -u"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "echo \"$-\""
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "echo \"$-\""
+     ! pelt prompt ""
+       dash out "usie\n"
+     ! pelt step 4 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 4 "exit"
+     ! pelt alive at step 4
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL echo_hi
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo hi"
+     ! pelt err no
+       dash out "hi\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 2
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 2
+FAIL env_file
+       pelt step 0
+     ! pelt err no
+       dash out "rc-ran\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 1 "echo $FROMENV"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 1 "echo $FROMENV"
+     ! pelt prompt ""
+       dash out "loaded\n"
+     ! pelt step 2 "envfn"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 2 "envfn"
+     ! pelt step 3 "exit"
+       dash out "envfn ran\n"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt alive at step 3
+       dash step 3 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL env_missing
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo ok"
+     ! pelt err no
+       dash out "ok\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 2
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 2
+FAIL eof_at_once
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "^D"
+     ! pelt err yes
+       dash err no
+       pelt prompt ""
+     ! pelt exit 2 at step 1
+       dash exit 0 at step 1
+FAIL eof_in_if
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "if true"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "^D"
+       pelt err yes
+       pelt prompt ""
+       pelt exit 2 at step 2
+FAIL eof_in_if_trap
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "trap 'echo bye' EXIT"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "if true"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 3 "^D"
+     ! pelt err yes
+       dash out "bye\n"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 2 at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 2 at step 3
+FAIL eof_last_status
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "false"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "^D"
+     ! pelt err yes
+       dash err no
+       pelt prompt ""
+     ! pelt exit 2 at step 2
+       dash exit 1 at step 2
+FAIL exit_in_function
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "f() { echo in; exit 6; }"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "f"
+     ! pelt err no
+       dash out "in\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "echo never"
+       dash prompt ""
+     ! pelt err no
+       dash exit 6 at step 2
+     ! pelt prompt ""
+       dash <none>
+     ! pelt alive at step 3
+       dash <none>
+FAIL exit_last_status
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "false"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "exit"
+       pelt err no
+       pelt prompt ""
+     ! pelt alive at step 2
+       dash exit 1 at step 2
+FAIL exit_n
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "exit 7"
+       pelt err no
+       pelt prompt ""
+     ! pelt step 2 "echo never"
+       dash exit 7 at step 1
+     ! pelt err no
+       dash <none>
+     ! pelt prompt ""
+       dash <none>
+     ! pelt alive at step 2
+       dash <none>
+FAIL expansion_error
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo ${x?boom}; echo after"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "echo st=$?"
+     ! pelt err no
+       dash out "st=2\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL externals
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "expr 2 + 3"
+     ! pelt err no
+       dash out "5\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "basename /a/b/c"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "basename /a/b/c"
+     ! pelt prompt ""
+       dash out "c\n"
+     ! pelt step 3 "/usr/bin/false; echo $?"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 3 "/usr/bin/false; echo $?"
+     ! pelt step 4 "exit"
+       dash out "1\n"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt alive at step 4
+       dash step 4 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL for_loop
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "for i in 1 2 3; do echo $i; done"
+     ! pelt err no
+       dash out "1\n2\n3\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 2
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 2
+FAIL func_define_call
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "f() { echo \"f:$1:$#\"; }"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "f one two"
+     ! pelt err no
+       dash out "f:one:2\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "f"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "f"
+     ! pelt prompt ""
+       dash out "f::0\n"
+     ! pelt step 4 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 4 "exit"
+     ! pelt alive at step 4
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+PEND-fail heredoc (waits on redirection)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "cat <<E"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "hi there"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 3 "E"
+     ! pelt err no
+       dash out "hi there\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL long_session
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "a=1"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "b=2"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo $((a+b))"
+     ! pelt err no
+       dash out "3\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "c=$((a*10))"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "c=$((a*10))"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "echo $c"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "echo $c"
+     ! pelt prompt ""
+       dash out "10\n"
+     ! pelt step 6 "f() { echo $(( $1 * 2 )); }"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 6 "f() { echo $(( $1 * 2 )); }"
+     ! pelt step 7 "f 21"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 7 "f 21"
+     ! pelt step 8 "set -- x y z"
+       dash out "42\n"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt step 9 "echo $#"
+       dash step 8 "set -- x y z"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt step 10 "shift"
+       dash step 9 "echo $#"
+     ! pelt err no
+       dash out "3\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 11 "echo $1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 10 "shift"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 12 "for w in p q; do echo $w; done"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 11 "echo $1"
+     ! pelt prompt ""
+       dash out "y\n"
+     ! pelt step 13 "case $c in 10) echo ten;; esac"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 12 "for w in p q; do echo $w; done"
+     ! pelt step 14 "echo done"
+       dash out "p\nq\n"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt step 15 "exit"
+       dash step 13 "case $c in 10) echo ten;; esac"
+     ! pelt err no
+       dash out "ten\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 15
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 14 "echo done"
+     ! pelt <none>
+       dash out "done\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 15 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 15
+FAIL ls_dir
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "ls"
+     ! pelt err no
+       dash out "a\nb\nc\nsub\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "ls -a"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "ls -a"
+     ! pelt prompt ""
+       dash out ".\n..\n.hidden\na\nb\nc\nsub\n"
+     ! pelt step 3 "^D"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 3 "^D"
+     ! pelt exit 2 at step 3
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL not_found_continues
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "nosuchcmd; echo after"
+     ! pelt err no
+       dash out "after\n"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 2 "nosuchcmd"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "nosuchcmd"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 3 "echo st=$?"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "echo st=$?"
+     ! pelt prompt ""
+       dash out "st=127\n"
+     ! pelt step 4 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 4 "exit"
+     ! pelt alive at step 4
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+PEND-fail pipe (waits on pipe)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo abc | tr a x"
+     ! pelt err no
+       dash out "xbc\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 2
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 2
+FAIL ps1_arith_cmdsub
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "n=1; PS1='$((n+1))$(echo c)> '"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "2c> "
+       pelt step 2 "n=5"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "6c> "
+       pelt step 3 "exit"
+       pelt err no
+       pelt prompt ""
+     ! pelt alive at step 3
+       dash exit 0 at step 3
+FAIL ps1_param
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "x=7; PS1='[$x]> '"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "[7]> "
+       pelt step 2 "x=9"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "[9]> "
+       pelt step 3 "echo $x"
+     ! pelt err no
+       dash out "9\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "[9]> "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL ps1_status
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "PS1='$? $ '"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "0 $ "
+       pelt step 2 "false"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "1 $ "
+       pelt step 3 "true"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "0 $ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+     ! pelt alive at step 4
+       dash exit 0 at step 4
+FAIL ps1_unchanged_status
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "PS1='$(false)> '"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "true"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 3 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "> "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL ps2_andor
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "true &&"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "echo yes"
+     ! pelt err no
+       dash out "yes\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "false ||"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "false ||"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "echo also"
+       dash prompt "> "
+     ! pelt err no
+       dash step 4 "echo also"
+     ! pelt prompt ""
+       dash out "also\n"
+     ! pelt step 5 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 5 "exit"
+     ! pelt alive at step 5
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL ps2_backslash
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo a \\"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "b"
+     ! pelt err no
+       dash out "a b\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL ps2_brace_func
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "g() {"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "echo in g"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 3 "}"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 4 "g"
+     ! pelt err no
+       dash out "in g\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 5
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL ps2_case
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "case abc in"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "a*) echo starts-a;;"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 3 "*) echo other;;"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 4 "esac"
+     ! pelt err no
+       dash out "starts-a\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 5
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL ps2_cmdsub
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo $(echo inner"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "echo second)"
+     ! pelt err no
+       dash out "inner second\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL ps2_custom
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "PS2='more> '"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "if :"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "more> "
+       pelt step 3 "then echo ok"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "more> "
+       pelt step 4 "fi"
+     ! pelt err no
+       dash out "ok\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 5
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL ps2_double_quote
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo \"abc"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "def\""
+     ! pelt err no
+       dash out "abc\ndef\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL ps2_if
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "if true"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "then echo yes"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 3 "else echo no"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 4 "fi"
+     ! pelt err no
+       dash out "yes\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 5
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL ps2_single_quote
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo 'one"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 2 "two'"
+     ! pelt err no
+       dash out "one\ntwo\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL ps2_while
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "i=0"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "while [ $i -lt 3 ]"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 3 "do"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 4 "i=$((i+1)); echo $i"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "> "
+       pelt step 5 "done"
+     ! pelt err no
+       dash out "1\n2\n3\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL pwd_is_cwd
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "p=$(pwd); echo \"${p##*/}\""
+     ! pelt err no
+       dash out "w\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "[ \"$(pwd)\" = \"$PWD\" ] && echo same"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "[ \"$(pwd)\" = \"$PWD\" ] && echo same"
+     ! pelt prompt ""
+       dash out "same\n"
+     ! pelt step 3 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 3 "exit"
+     ! pelt alive at step 3
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL read_at_eof
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "read a"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^D"
+       pelt err yes
+       pelt prompt ""
+     ! pelt exit 2 at step 2
+       dash exit 1 at step 2
+FAIL read_builtin
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "read a b"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "one two three"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo \"$a|$b\""
+     ! pelt err no
+       dash out "one|two three\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL readonly_assign
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "readonly r=1"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "r=2; echo after"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo st=$? r=$r"
+     ! pelt err no
+       dash out "st=2 r=1\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+PEND-fail redirect_file (waits on redirection)
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo a > f"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "cat f"
+     ! pelt err no
+       dash out "a\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL return_top
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "return 4"
+       pelt err no
+       pelt prompt ""
+     ! pelt step 2 "echo never"
+       dash exit 4 at step 1
+     ! pelt err no
+       dash <none>
+     ! pelt prompt ""
+       dash <none>
+     ! pelt alive at step 2
+       dash <none>
+FAIL set_e_exits
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "set -e"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "false"
+       pelt err no
+       pelt prompt ""
+     ! pelt step 3 "echo never"
+       dash exit 1 at step 2
+     ! pelt err no
+       dash <none>
+     ! pelt prompt ""
+       dash <none>
+     ! pelt alive at step 3
+       dash <none>
+FAIL set_u_error
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "set -u"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "echo $nope; echo after"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo st=$?"
+     ! pelt err no
+       dash out "st=2\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL set_v_echo
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "set -v"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "echo x"
+     ! pelt err no
+       dash out "x\n"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 3 "set +v"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "set +v"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 4 "echo y"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "echo y"
+     ! pelt prompt ""
+       dash out "y\n"
+     ! pelt step 5 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 5 "exit"
+     ! pelt alive at step 5
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL special_builtin_error
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "set -- a b"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "shift 5; echo after"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo st=$? $#"
+     ! pelt err no
+       dash out "st=2 2\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL subshell_error
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "(shift 9); echo after"
+     ! pelt err no
+       dash out "after\n"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 2 "echo st=$?"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "echo st=$?"
+     ! pelt prompt ""
+       dash out "st=0\n"
+     ! pelt step 3 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 3 "exit"
+     ! pelt alive at step 3
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL syntax_error_continues
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "fi"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "echo st=$?"
+     ! pelt err no
+       dash out "st=2\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL syntax_error_midline
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "echo a; fi; echo b"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "echo st=$?"
+     ! pelt err no
+       dash out "st=2\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL trap_exit_eof
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "trap 'echo bye' EXIT"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "echo before"
+     ! pelt err no
+       dash out "before\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "^D"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "^D"
+     ! pelt prompt ""
+       dash out "bye\n"
+     ! pelt exit 2 at step 3
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL trap_exit_exit
+       pelt step 0
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 1 "trap 'echo bye $?' EXIT"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "exit 3"
+     ! pelt err no
+       dash out "bye 3\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt alive at step 2
+       dash prompt ""
+     ! pelt <none>
+       dash exit 3 at step 2
+session: pass 0  fail 51  pending 8 (0)

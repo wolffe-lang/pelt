@@ -104,3 +104,102 @@ slurped whole as sh01's `pelt` did.
   by RSS that stops growing.
 - Wolf-lang findings to file: **one** (no interrupt meaning). Falsified
   by a second gap I have to name.
+
+## 4. Evidence index
+
+Every log named here is committed under `notes/sh02-evidence/`, with its
+sha256. The gauntlet ran on kasumi from a clean clone at the named sha,
+`taskset -c 0-3`, `WOLF_PAIRING_REQUIRE_SIBLING=1`, lupin 0.1.47 staged
+beside wolf 0.2.24 (both version lines are in the log).
+
+**At head** (`1ba87c0`; `gauntlet-1ba87c0.log` `b6f7a68d6df58dea…`,
+sources digest `4103e296752df968…` over `src tools tests`): `wolf fmt`
+clean, both tiers build with warnings denied, `wolf test` rc 0, and on
+**both tiers, identical**:
+
+| corpus | pass | fail | pending (of which pass) |
+|---|---|---|---|
+| differential (`tests/diff/`, sh01's) | 244 | 0 | 19 (3) |
+| session (`tests/session/`, new) | 51 | 0 | 8 (1) |
+
+`session-selftest` (right 0, wrong prompt 1, unlisted pending 1) and
+`difftest-selftest` rc 0. CI at `1ba87c0`: run **37684766817**, green on
+linux x86-64 and macOS arm64 (both tiers, both corpora; the macOS legs
+answer the same 51/0/8), aarch64 asserting its refusals.
+
+The session corpus: 59 cases typed through a pty, each recorded twice
+from `dash -i +m` (`tools/session-record` refuses a transcript two runs
+disagree on) and once from `bash --posix -i +m` as a second opinion on
+standard output and exit status (8 differ: bash's `--posix` interactive
+shell takes another line for some errors; dash is the oracle). The one
+pending case that passes, `background`, does so because `sleep 0 &` run
+in the foreground prints what dash prints; it stays pending.
+
+**Signal rows** (`ctrl_c_prompt`, `ctrl_c_child`): the harness starts
+the shell with SIGINT and SIGQUIT at their defaults and nothing blocked
+(a harness launched in a non-interactive shell's background inherits
+both ignored — the first recording showed `sleep 5` outliving its ^C for
+that reason, and it was re-recorded after the fix, `df942b5`). Measured
+from `/proc`: dash `SigBlk 0000000000000000 SigIgn 0000000000004004`
+(QUIT and TERM ignored, as an interactive shell does); pelt `SigBlk
+0000000000000000 SigIgn 0000000000000000` on both tiers. pelt dies of
+the ^C (`signal 2`): wolf-lang#622.
+
+**Red, then green** (the session corpus run against trunk's pelt):
+`witness-f0014da-native.log` `61d1b8ab89bf30a9…`: pelt built at
+`f0014da`, **pass 0, fail 51**, pending 8 (0) — it reads all of standard
+input before running anything and takes `-i` for an unknown `set`
+option. Green: the head gauntlet above. (The release-tier run of the
+same witness was stopped after the native one finished: every case waits
+out the prompt timeout there, and the two tiers share the source.)
+
+**The planted break**: `c940f04` makes an interactive shell exit on a
+shell error, as a script does. Locally (`plant-c940f04-release.log`
+`4fb9d6c5fa3cca9f…`): 7 FAIL — `arith_error`, `expansion_error`,
+`readonly_assign`, `set_u_error`, `special_builtin_error`,
+`syntax_error_continues`, `syntax_error_midline`. In CI: run
+**37681872386**, red on linux x86-64 and macOS arm64 at "the session
+corpus, native tier" with the same seven. The revert `36a2fc5` has a tree
+byte-identical to `e8658aa`'s (`git diff e8658aa 36a2fc5` empty); its run
+**37683449313** is green.
+
+**RSS after 1,000 interactive commands** (`tools/session-rss`, in the
+head gauntlet log; `x=$((x+1))` typed 1,000 times, each after its
+prompt; `ps -o rss`, KB):
+
+| shell | 0 | 250 | 500 | 750 | 1,000 | per command |
+|---|---|---|---|---|---|---|
+| pelt native | 2,856 | 4,468 | 5,888 | 7,348 | 8,732 | 5.9 KB |
+| pelt release | 2,628 | 4,060 | 5,480 | 6,940 | 8,324 | 5.7 KB |
+| dash 0.5.13.4 | 2,744 | 2,812 | 2,812 | 2,812 | 2,812 | flat |
+
+Linear and never returned: wolf-lang#612's shape at the prompt (the
+command's scratch in the ambient region) plus the parse arena, which
+keeps every line's nodes in `Sh.ast`. The two are not separated here.
+pelt would hold about 60 MB after 10,000 commands; not worked around, as
+the contract says.
+
+**The demo** (`demo-1ba87c0.txt` `ba058980c1d27038…`, from
+`tools/session-demo`: all three descriptors on one pty, as a terminal
+runs it): the maintainer's first commands, typed into pelt `1ba87c0`'s
+release build on kasumi.
+
+## 5. Prediction against result
+
+| prediction | result |
+|---|---|
+| plain `pelt`, `-i`, `-s` prompt with `PS1`, continue with `PS2` on an open quote, `if`, `{`, here-document, trailing `&&`/`\|`/`\` | as predicted; the here-document's prompts are right but the case is pending (a here-document needs a redirection) |
+| `PS1`/`PS2` expanded as dash does (parameter, arithmetic, built-in command substitution), `$?` untouched | as predicted (`ps1_param`, `ps1_arith_cmdsub`, `ps1_status`, `ps1_unchanged_status`) |
+| EOF exits with the last status; `exit` works; 2.8.1's interactive column | as predicted, and dash's EOF inside an open `if` (syntax error, `EXIT` trap, status 2) matches too |
+| `$ENV` expanded and run; `$-` carries `s` and `i` | as predicted; `$-` now also in dash's letter order (`uaCvxsife`), which sh01's order was not |
+| the maintainer's list works, `ls`/`date` straight to the terminal | as predicted (the demo) |
+| interactive unless standard input is a regular file | as predicted; the pipe case is a named gap (PENDING) |
+| PENDING: child stdin, `cd`, pipes, redirections, jobs, Ctrl-C, isatty, line editing | as predicted; 8 pending cases plus two named gaps without a case |
+| at least 30 session cases, expected 35–40; 5–10 pending; identical verdicts on both tiers | **59** cases (more than expected), 8 pending, identical on both tiers |
+| **RSS: 10–20 KB per command, 12–25 MB after 1,000** | **wrong by half**: 5.7–5.9 KB per command, 8.3–8.7 MB after 1,000. The shape held (linear, never returned; dash flat at 2.8 MB), and the falsifier's bounds (growth under 5 MB or over 40 MB) were not crossed — 5.7 MB grew |
+| one wolf-lang finding (no interrupt meaning) | one: **wolf-lang#622** |
+
+Not predicted, found by the work: the harness itself had a signal hole
+(an inherited SIGINT ignore made dash's ^C rows meaningless until
+`df942b5`), and the `read` built-in now answers 1 on a final line with
+no newline, as the utility says (sh01 noted `read_line` could not tell).

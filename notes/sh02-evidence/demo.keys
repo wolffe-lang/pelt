@@ -1,0 +1,15 @@
+echo hi
+ls
+date
+pwd
+x=3; echo $((x*2))
+greet() {
+  echo "hello, $1"
+}
+greet maintainer
+if [ $x -gt 2 ]
+then echo big
+fi
+fi
+echo "status after the error: $?"
+exit
