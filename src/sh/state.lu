@@ -345,6 +345,15 @@ fn cap_end(mut sh: Sh) -> str {
 /// standard output is pending.
 fn diag(mut sh: Sh, msg: str) {
     flush(mut sh)
+    if sh.from_stdin {
+        // no script to name: the line counts from the session's start
+        if sh.line > 0 {
+            eprint("pelt: line {sh.line}: {msg}")
+        } else {
+            eprint("pelt: {msg}")
+        }
+        return
+    }
     if sh.line > 0 {
         eprint("pelt: {sh.name}: line {sh.line}: {msg}")
     } else {
