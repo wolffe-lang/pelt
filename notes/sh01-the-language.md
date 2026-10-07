@@ -136,13 +136,20 @@ arm64 at "wolf test (the table checks)" (`sh_test.lu::main ...
 FAILED (trap(assert))`, the arithmetic rows); the revert `9dcdd27`
 restores `+`, and its tree is byte-identical to `4939a9f`'s.
 
-**Drift from the contract, found by that run**: linux aarch64 has no
-native tier at wolf 0.2.24. Its job in run 37548350989 failed at the
-build, before the plant mattered: "this host cannot run the native
-tier: native codegen targets linux/x86-64, macOS/aarch64, and
-windows/x86-64 … the rest of D35's matrix is c13". Filed as
-wolf-lang#614. That host now builds and runs the release tier only, and
-a CI step asserts the refusal by name so it reds when the tier comes.
+**Drift from the contract, found by CI**: wolf 0.2.24 builds NO tier
+on linux aarch64. The plant run 37548350989 failed there at the native
+build ("this host cannot run the native tier: native codegen targets
+linux/x86-64, macOS/aarch64, and windows/x86-64 … the rest of D35's
+matrix is c13"), and run 37554842187 at the release build ("this host
+cannot run the release tier: the release tier targets linux/x86-64 and
+macOS/aarch64 (s41 + s127; c13 owns the matrix)"). Filed as
+wolf-lang#614. The aarch64 job fetches the pinned archive by digest and
+asserts both refusals by name, so it reds the day a tier arrives; the
+corpus runs on linux x86-64 and macOS arm64, both tiers each.
+
+Run 37554842187 also found a case flaw on macOS: `glob/sorted` touched
+`B a A b`, and APFS is case-insensitive, so two files existed. The case
+now uses distinct names (`c B a D`), re-recorded from dash.
 
 **The oracle**: dash 0.5.13.4-1.1, `/usr/bin/dash` `c6221703b6197ce2…`;
 bash 5.3.20-2 as `bash --posix`, `/usr/bin/bash` `a8ce2b3c38c81853…`
