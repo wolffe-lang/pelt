@@ -2,7 +2,7 @@
 #
 # Three hosts, because a shell is the program every other program
 # leans on: linux x86-64, linux aarch64 and macOS arm64. Each builds
-# pelt on BOTH tiers (the fast default backend and --release) from the
+# pelt on every tier its toolchain has — both (the fast default backend and --release) from the
 # release archives pinned BY DIGEST in wolf-toolchain.toml
 # (tools/fetch-toolchain refuses a mismatch; nothing is built from
 # source), and runs the differential corpus on each tier.
@@ -32,7 +32,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+        include:
+          - os: ubuntu-latest
+            native: true
+          - os: macos-latest
+            native: true
+          # wolf 0.2.24's native (fast-backend) tier does not exist on
+          # linux aarch64: `wolf build` refuses by name ("native codegen
+          # targets linux/x86-64, macOS/aarch64, and windows/x86-64 …
+          # the rest of D35's matrix is c13"). This host builds and runs
+          # the release tier only, and a step ASSERTS the refusal, so
+          # the day the tier arrives this job goes red and the matrix
+          # is widened rather than left quietly narrow.
+          - os: ubuntu-24.04-arm
+            native: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
@@ -45,12 +58,33 @@ jobs:
         run: tools/check-fmt
 
       - name: build, both tiers
+        if: matrix.native
         run: tools/build --all
+
+      - name: build, release tier
+        if: ${{ !matrix.native }}
+        run: tools/build --release
+
+      - name: the native tier is refused on this host, by name
+        if: ${{ !matrix.native }}
+        shell: bash
+        run: |
+          set +e
+          tools/build --native >native.log 2>&1
+          code=$?
+          set -e
+          cat native.log
+          if [ "$code" = 0 ]; then
+            echo "::error::the native tier now builds on linux aarch64; widen the matrix"
+            exit 1
+          fi
+          grep -q "this host cannot run the native tier" native.log
 
       - name: wolf test (the table checks)
         run: tools/check-test
 
       - name: the differential corpus, native tier
+        if: matrix.native
         run: tools/difftest --bin target/native
 
       - name: the differential corpus, release tier
