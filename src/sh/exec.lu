@@ -107,6 +107,7 @@ fn check_e(mut sh: Sh, st: int) {
     if st != 0 && sh.opt_e && sh.no_e == 0 && sh.flow == F_NONE {
         sh.status = st
         sh.flow = F_EXIT
+        sh.abort = false
     }
 }
 
@@ -417,7 +418,14 @@ fn run_exit_trap(mut sh: Sh, st: int) -> int {
 /// `-c` string, `eval` and `.` all are: a syntax error ends it after
 /// whatever came before has already run.
 fn eval_string(mut sh: Sh, src: str, what: str) -> int {
-    var p = new_parser(src, 1)
+    eval_from(mut sh, src, 1)
+}
+
+/// `eval_string` for text whose first line is line `line` of a longer
+/// input: what an interactive shell runs after each prompt, so its
+/// diagnostics count lines from the start of the session.
+fn eval_from(mut sh: Sh, src: str, line: int) -> int {
+    var p = new_parser(src, line)
     var st = 0
     loop {
         let n = parse_complete(mut p, mut sh.ast)

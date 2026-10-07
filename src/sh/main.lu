@@ -1,8 +1,8 @@
 //! sh.main — the command line: which input, which mode.
 //!
 //! References consulted: POSIX.1-2024 XCU `sh` (OPTIONS, OPERANDS,
-//! STDIN); black-box runs of `dash` 0.5.13.4 for `-c` and the `$0` it
-//! reports.
+//! STDIN); black-box runs of `dash` 0.5.13.4 for `-c`, `-i`, `-s` and
+//! the `$0` it reports.
 
 /// The whole shell: parse the command line `args` (argv without argv[0]),
 /// run what it names, and answer the exit status.
@@ -11,6 +11,8 @@ pub fn run_main(args: List[str]) -> int {
     var parse_only = false
     var dump_tree = false
     var cmd_string = false
+    var force_i = false
+    var read_stdin = false
     var opts = List[str]()
     while i < args.len {
         let a = args[i]
@@ -39,7 +41,29 @@ pub fn run_main(args: List[str]) -> int {
             i += 2
             continue
         }
-        if a.len > 1 && (ch(a, 0) == '-' || ch(a, 0) == '+') && a != "-" {
+        if a.len > 1 && ch(a, 0) == '-' {
+            // `-i` and `-s` are the command line's alone (`set` has
+            // neither); the other letters go to `set`
+            var o = buf()
+            var k = 1
+            while k < a.len {
+                let c = ch(a, k)
+                if c == 'i' {
+                    force_i = true
+                } else if c == 's' {
+                    read_stdin = true
+                } else {
+                    putc(mut o, c)
+                }
+                k += 1
+            }
+            if o.b.len > 0 {
+                (mut opts).push("-{text(o)}")
+            }
+            i += 1
+            continue
+        }
+        if a.len > 1 && ch(a, 0) == '+' {
             (mut opts).push(a)
             i += 1
             continue
@@ -60,7 +84,7 @@ pub fn run_main(args: List[str]) -> int {
             name = args[i]
             i += 1
         }
-    } else if i < args.len {
+    } else if !read_stdin && i < args.len {
         name = args[i]
         i += 1
         let bytes = fs_read_bytes(name) else |_| {
@@ -71,6 +95,12 @@ pub fn run_main(args: List[str]) -> int {
             eprint("pelt: {name}: not UTF-8 text")
             return 2
         }
+    } else if !dump_tree && !parse_only {
+        while i < args.len {
+            (mut rest).push(args[i])
+            i += 1
+        }
+        return run_input(name, rest, opts, force_i)
     } else {
         var o = buf()
         loop {
@@ -149,6 +179,33 @@ fn run_source(src: str, name: str, rest: List[str], opts: List[str], cmd_string:
         }
     }
     var st = eval_string(mut sh, src, name)
+    if sh.flow == F_EXIT {
+        st = sh.status
+    }
+    sh.flow = F_NONE
+    sh.line = 0
+    st = run_exit_trap(mut sh, st)
+    flush(mut sh)
+    st
+}
+
+/// The shell reading its standard input (no operand and no `-c`, or
+/// `-s`): interactive when forced by `-i` or when standard input is not
+/// a regular file (`sh.interact`).
+fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int {
+    var sh = new_sh(name)
+    import_env(mut sh)
+    sh.pos = copy rest
+    sh.from_stdin = true
+    sh.interactive = force_i || !stdin_is_file()
+    if opts.len > 0 {
+        let _st = bi_set(mut sh, opts)
+        if sh.flow == F_EXIT {
+            flush(mut sh)
+            return sh.status
+        }
+    }
+    var st = run_stdin(mut sh)
     if sh.flow == F_EXIT {
         st = sh.status
     }

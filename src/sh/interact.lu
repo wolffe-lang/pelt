@@ -1,0 +1,230 @@
+//! sh.interact — commands from standard input, and the prompt.
+//!
+//! References consulted: POSIX.1-2024 XCU `sh` (DESCRIPTION, OPTIONS
+//! `-i` and `-s`, STDIN, ENVIRONMENT VARIABLES `ENV`, `PS1`, `PS2`),
+//! XCU 2.5.3 (`ENV`, `PS1`, `PS2`) and 2.8.1 (the consequences of
+//! shell errors, interactive column); black-box runs of `dash -i`
+//! 0.5.13.4 through a pty. No shell's source.
+//!
+//! **Reading.** Standard input is read one byte at a time, so the shell
+//! never takes a byte past the newline it needs: what follows is left
+//! for the `read` built-in, which reads through the same handle. wolf
+//! 0.2.24 has no byte read on descriptor 0 (`[os.fs.std]`,
+//! wolf-lang#405), so the handle is `/dev/stdin` opened anew, after
+//! `/dev/stdout` (the guide's ordering rule); if that open fails the
+//! shell falls back to `read_line`, which reads ahead.
+//!
+//! **A complete command.** After each line the text so far is parsed in
+//! a scratch region; when the only thing wrong with it is that it ended
+//! (an open quote, an unclosed `if`, a here-document whose delimiter has
+//! not come, a trailing `&&` or `\`), the parser says so in `P.more` and
+//! the shell prompts with `PS2` for another line. Then the whole text is
+//! parsed again into the shell's tree and run.
+//!
+//! **Interactive or not.** POSIX makes the shell interactive with `-i`,
+//! or with no operands and no `-c` when standard input and standard
+//! error are terminals. wolf 0.2.24 cannot ask whether a descriptor is a
+//! terminal (`os_isatty` is s215's, unreleased): `fs_fstat(0)` tells a
+//! regular file from everything else, and nothing finer. So pelt is
+//! interactive when standard input is its command source and is not a
+//! regular file; a pipe prompts where dash does not (PENDING.md).
+//!
+//! **Errors.** XCU 2.8.1: a syntax error, a special built-in's error,
+//! an expansion error and an assignment error end a non-interactive
+//! shell and do not end an interactive one. `fatal` marks such an exit
+//! (`Sh.abort`); here an interactive shell abandons the rest of the
+//! command it was running, keeps the status (2), and prompts again.
+
+/// Whether standard input is a regular file (`fs_fstat` kind 0): the
+/// one thing 0.2.24 can see of what POSIX's terminal test asks.
+fn stdin_is_file() -> bool {
+    let st = fs_fstat(0) else |_| { return false }
+    st.len > 0 && st[0] == 0
+}
+
+fn open_input(mut sh: Sh) {
+    if sh.out_fd == -1 {
+        sh.out_fd = fs_open_mode("/dev/stdout", 2) else -2
+    }
+    sh.in_fd = fs_open("/dev/stdin") else -2
+}
+
+/// One line of standard input, its newline kept, and how it ended:
+/// 0 at a newline, 1 at the end of input after some bytes, 2 at the end
+/// of input before any. Once the end is seen it is remembered: a
+/// terminal's end of file (Ctrl-D) is one zero-byte read, and the next
+/// read would wait for more typing.
+fn read_raw_line(mut sh: Sh) -> (str, int) {
+    if sh.in_fd == -3 {
+        return ("", 2)
+    }
+    if sh.in_fd == -1 {
+        open_input(mut sh)
+    }
+    if sh.in_fd == -2 {
+        let line = read_line() else |_| {
+            sh.in_fd = -3
+            return ("", 2)
+        }
+        return ("{line}\n", 0)
+    }
+    let fd = sh.in_fd
+    var o = buf()
+    loop {
+        var b = -1
+        region scratch {
+            let c = fs_read_chunk(fd, 1) else |_| List[byte]()
+            if c.len > 0 {
+                b = c[0] as int
+            }
+        }
+        if b < 0 {
+            sh.in_fd = -3
+            if o.b.len == 0 {
+                return ("", 2)
+            }
+            return (text(o), 1)
+        }
+        putb(mut o, b)
+        if b == 10 {
+            return (text(o), 0)
+        }
+    }
+    ("", 2)
+}
+
+/// Whether `src` stops short of a complete command only because it
+/// ended (`P.more`). Parsed in a scratch region: nothing it builds is
+/// kept.
+fn needs_more(src: str) -> bool {
+    var more = false
+    region scratch {
+        var a = new_ast()
+        var p = new_parser(src, 1)
+        loop {
+            let n = parse_complete(mut p, mut a)
+            if n < 0 {
+                break
+            }
+        }
+        more = p.more
+    }
+    more
+}
+
+/// Write the prompt `var` (`PS1` or `PS2`) to standard error, expanded
+/// as a double-quoted word is (XCU 2.5.3; dash also runs arithmetic and
+/// command substitution there). The expansion leaves `$?` alone, and an
+/// error in it does not end the shell.
+fn prompt(mut sh: Sh, var_name: str) {
+    flush(mut sh)
+    let raw = sh.vals[var_name] else ""
+    if raw.len == 0 {
+        return
+    }
+    let saved_status = sh.status
+    let saved_cs = sh.cs_status
+    let saved_ran = sh.cs_ran
+    let shown = expand_one(mut sh, raw, X_DQ)
+    if sh.flow != F_NONE {
+        sh.flow = F_NONE
+        sh.abort = false
+    }
+    sh.status = saved_status
+    sh.cs_status = saved_cs
+    sh.cs_ran = saved_ran
+    flush(mut sh)
+    eprint_raw(shown)
+}
+
+/// `$ENV` (XCU 2.5.3): an interactive shell expands it and runs the
+/// file it names before the first prompt. A file that cannot be read
+/// is passed over without a word, as dash does.
+fn run_env_file(mut sh: Sh) {
+    let raw = sh.vals["ENV"] else ""
+    if raw.len == 0 {
+        return
+    }
+    let path = expand_one(mut sh, raw, X_DQ)
+    if sh.flow != F_NONE {
+        if sh.abort {
+            sh.flow = F_NONE
+            sh.abort = false
+        }
+        return
+    }
+    let src = fs_read_text(path) else |_| { return }
+    let _st = eval_string(mut sh, src, path)
+    if sh.flow == F_EXIT && sh.abort {
+        sh.flow = F_NONE
+        sh.abort = false
+    }
+}
+
+fn count_lines(s: str) -> int {
+    var n = 0
+    for b in s.bytes() {
+        if b as int == 10 {
+            n += 1
+        }
+    }
+    n
+}
+
+/// Read and run standard input, one complete command at a time: with
+/// prompts and 2.8.1's interactive rules when `sh.interactive`, as a
+/// script otherwise. Answers the status the shell leaves with.
+fn run_stdin(mut sh: Sh) -> int {
+    if sh.interactive {
+        run_env_file(mut sh)
+        if sh.flow == F_EXIT {
+            return sh.status
+        }
+    }
+    var line = 1
+    loop {
+        var o = buf()
+        var first = true
+        var ended = false
+        loop {
+            if sh.interactive {
+                prompt(mut sh, if first then "PS1" else "PS2")
+            }
+            let (got, how) = read_raw_line(mut sh)
+            if sh.opt_v && got.len > 0 {
+                eprint_raw(got)
+            }
+            put(mut o, got)
+            if how != 0 {
+                ended = true
+                break
+            }
+            first = false
+            if !needs_more(text(o)) {
+                break
+            }
+        }
+        let src = text(o)
+        if src.len == 0 {
+            if sh.interactive {
+                // leave the terminal's cursor off the prompt line
+                eprint_raw("\n")
+            }
+            break
+        }
+        let _st = eval_from(mut sh, src, line)
+        line += count_lines(src)
+        if sh.flow == F_EXIT && sh.interactive && sh.abort {
+            sh.flow = F_NONE
+            sh.abort = false
+        } else if sh.flow == F_EXIT {
+            return sh.status
+        } else if sh.flow != F_NONE {
+            sh.flow = F_NONE
+        }
+        if ended && !sh.interactive {
+            break
+        }
+    }
+    sh.status
+}
