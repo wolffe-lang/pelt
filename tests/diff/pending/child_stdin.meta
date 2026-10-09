@@ -1,6 +1,0 @@
-exit=0
-stderr=no
-stdin=through\n
-bash=agree
-pending=child stdin
-why=a child's descriptor 0 is the null device ([os.proc.spawn])

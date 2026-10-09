@@ -7,12 +7,20 @@
 //! `set` page for `-e`, `-u`, `-x`, `-f`; black-box runs of `dash`
 //! 0.5.13.4. No shell's source.
 //!
-//! **What H1 does not run, and says so.** Pipelines of more than one
-//! command, redirections, and a command substitution that would start
-//! another program all need wolf-lang s215's descriptor builtins; pelt
-//! refuses each BY NAME on standard error with status 2 rather than
-//! guess. An `&` list runs in the foreground (no job control yet) and
-//! sets `$?` to 0 as an asynchronous list does.
+//! **Plumbing without fork (H2).** wolf has no fork, so pelt runs
+//! every subshell, command substitution and in-process pipeline stage
+//! itself (`sh.state`) and starts programs with `os_spawn_fds` and a
+//! map built from its descriptor table: the programs of a pipeline run
+//! together, a stage pelt runs itself runs to the end before the next
+//! starts (`run_pipeline` says why), and `&` starts a program without
+//! waiting. `$!` names a job, not a process: wolf gives no process id
+//! (wolf-lang#141).
+//!
+//! **Memory.** A simple command runs inside `copy region`
+//! (`[mem.region.copyout]`) with the state read only and copies out
+//! only its status and assigned values (`run_fast`); one that must
+//! write the state while it runs (a command substitution, `${x=…}`, a
+//! function, most built-ins) runs the ordinary way (`run_slow`).
 
 fn is_special_builtin(name: str) -> bool {
     name == ":" ||
@@ -53,18 +61,31 @@ fn is_regular_builtin(name: str) -> bool {
 }
 
 /// Run node `n`; answers the status, which is also left in `sh.status`.
+/// A compound command's redirections are applied around it.
 fn run(mut sh: Sh, n: int) -> int {
     if n < 0 || sh.flow != F_NONE {
         return sh.status
     }
     let k = sh.ast.nodes[n].kind
-    var st = 0
-    if sh.ast.nodes[n].redirs.len > 0 && k != K_SIMPLE {
+    if sh.ast.nodes[n].redirs.len > 0 && k != K_SIMPLE && k != K_FUNC {
         sh.line = sh.ast.nodes[n].line
-        diag(mut sh, "redirections are not supported yet (pelt H2)")
-        sh.status = 2
-        return 2
+        let rds = redirs_of(sh.ast, n)
+        if !apply_redirs(mut sh, rds) {
+            end_redirs(mut sh)
+            if sh.flow == F_NONE {
+                sh.status = 2
+            }
+            return sh.status
+        }
+        let st = run_node(mut sh, n, k)
+        end_redirs(mut sh)
+        return st
     }
+    run_node(mut sh, n, k)
+}
+
+fn run_node(mut sh: Sh, n: int, k: int) -> int {
+    var st = 0
     if k == K_LIST {
         st = run_list(mut sh, n)
     } else if k == K_ANDOR {
@@ -112,18 +133,17 @@ fn check_e(mut sh: Sh, st: int) {
 }
 
 fn run_list(mut sh: Sh, n: int) -> int {
-    let kids = copy sh.ast.nodes[n].kids
-    let asyncs = copy sh.ast.nodes[n].ints
     var st = sh.status
     var i = 0
-    while i < kids.len {
-        st = run(mut sh, kids[i])
+    while i < sh.ast.nodes[n].kids.len {
+        let kid = sh.ast.nodes[n].kids[i]
+        if sh.ast.nodes[n].ints[i] == 1 {
+            st = run_async(mut sh, kid)
+        } else {
+            st = run(mut sh, kid)
+        }
         if sh.flow != F_NONE {
             return st
-        }
-        if asyncs[i] == 1 {
-            st = 0
-            sh.status = 0
         }
         i += 1
     }
@@ -131,23 +151,22 @@ fn run_list(mut sh: Sh, n: int) -> int {
 }
 
 fn run_andor(mut sh: Sh, n: int) -> int {
-    let kids = copy sh.ast.nodes[n].kids
-    let ops = copy sh.ast.nodes[n].ints
+    let count = sh.ast.nodes[n].kids.len
     sh.no_e += 1
-    var st = run(mut sh, kids[0])
+    var st = run(mut sh, sh.ast.nodes[n].kids[0])
     sh.no_e -= 1
     var i = 1
-    while i < kids.len {
+    while i < count {
         if sh.flow != F_NONE {
             return st
         }
-        let op = ops[i - 1]
+        let op = sh.ast.nodes[n].ints[i - 1]
         if op == 1 && st == 0 || op == 2 && st != 0 {
-            let last = i == kids.len - 1
+            let last = i == count - 1
             if !last {
                 sh.no_e += 1
             }
-            st = run(mut sh, kids[i])
+            st = run(mut sh, sh.ast.nodes[n].kids[i])
             if !last {
                 sh.no_e -= 1
             }
@@ -158,45 +177,57 @@ fn run_andor(mut sh: Sh, n: int) -> int {
 }
 
 fn run_pipe(mut sh: Sh, n: int) -> int {
-    let kids = copy sh.ast.nodes[n].kids
     let bang = sh.ast.nodes[n].ints[0] == 1
-    if kids.len > 1 {
+    if sh.ast.nodes[n].kids.len > 1 {
         sh.line = sh.ast.nodes[n].line
-        diag(mut sh, "pipelines are not supported yet (pelt H2)")
-        sh.status = 2
-        return 2
+        if bang {
+            sh.no_e += 1
+        }
+        let st = run_pipeline(mut sh, n)
+        if bang {
+            sh.no_e -= 1
+        }
+        if sh.flow != F_NONE {
+            return st
+        }
+        if !bang {
+            check_e(mut sh, st)
+            return st
+        }
+        return if st == 0 then 1 else 0
     }
+    let only = sh.ast.nodes[n].kids[0]
     if bang {
         sh.no_e += 1
-        let st = run(mut sh, kids[0])
+        let st = run(mut sh, only)
         sh.no_e -= 1
         if sh.flow != F_NONE {
             return st
         }
         return if st == 0 then 1 else 0
     }
-    run(mut sh, kids[0])
+    run(mut sh, only)
 }
 
 fn run_if(mut sh: Sh, n: int) -> int {
-    let kids = copy sh.ast.nodes[n].kids
+    let count = sh.ast.nodes[n].kids.len
     let has_else = sh.ast.nodes[n].ints[0] == 1
-    let pairs = if has_else then (kids.len - 1) / 2 else kids.len / 2
+    let pairs = if has_else then (count - 1) / 2 else count / 2
     var i = 0
     while i < pairs {
         sh.no_e += 1
-        let c = run(mut sh, kids[2 * i])
+        let c = run(mut sh, sh.ast.nodes[n].kids[2 * i])
         sh.no_e -= 1
         if sh.flow != F_NONE {
             return c
         }
         if c == 0 {
-            return run(mut sh, kids[2 * i + 1])
+            return run(mut sh, sh.ast.nodes[n].kids[2 * i + 1])
         }
         i += 1
     }
     if has_else {
-        return run(mut sh, kids[kids.len - 1])
+        return run(mut sh, sh.ast.nodes[n].kids[count - 1])
     }
     0
 }
@@ -293,33 +324,34 @@ fn run_case(mut sh: Sh, n: int) -> int {
     if sh.flow != F_NONE {
         return sh.status
     }
-    let items = copy sh.ast.nodes[n].kids
+    let count = sh.ast.nodes[n].kids.len
     var i = 0
-    while i < items.len {
-        let item = items[i]
+    while i < count {
+        let item = sh.ast.nodes[n].kids[i]
         var hit = false
-        for pw in copy sh.ast.nodes[item].words {
-            if !hit {
-                let pat = expand_pattern(mut sh, pw)
-                if sh.flow != F_NONE {
-                    return sh.status
-                }
-                if pmatch(pat, word) {
-                    hit = true
-                }
+        var j = 0
+        while !hit && j < sh.ast.nodes[item].words.len {
+            let pat = expand_pattern(mut sh, sh.ast.nodes[item].words[j])
+            if sh.flow != F_NONE {
+                return sh.status
             }
+            if pmatch(pat, word) {
+                hit = true
+            }
+            j += 1
         }
         if hit {
             var st = 0
-            var j = i
+            var at = i
             loop {
-                let body = sh.ast.nodes[items[j]].kids[0]
+                let it = sh.ast.nodes[n].kids[at]
+                let body = sh.ast.nodes[it].kids[0]
                 st = if body >= 0 then run(mut sh, body) else 0
                 if sh.flow != F_NONE {
                     return st
                 }
-                if sh.ast.nodes[items[j]].ints[0] == 1 && j + 1 < items.len {
-                    j += 1
+                if sh.ast.nodes[it].ints[0] == 1 && at + 1 < count {
+                    at += 1
                     continue
                 }
                 break
@@ -472,8 +504,8 @@ fn xtrace(mut sh: Sh, assigns: List[str], fields: List[str]) {
         put(mut o, f)
         k += 1
     }
-    flush(mut sh)
-    eprint(text(o))
+    putc(mut o, '\n')
+    write_fd(mut sh, 2, text(o))
 }
 
 fn split_assign(a: str) -> (str, str) {
@@ -481,12 +513,269 @@ fn split_assign(a: str) -> (str, str) {
     (a[0..eq], a[eq + 1..a.len])
 }
 
+/// A simple command (XCU 2.9.1). The common case runs inside
+/// `copy region` (`run_fast`) and only its result is kept; anything the
+/// fast path cannot finish without writing the state runs the ordinary
+/// way (`run_slow`), from the start.
 fn run_simple(mut sh: Sh, n: int) -> int {
     sh.line = sh.ast.nodes[n].line
-    sh.vals["LINENO"] = "{sh.line}"
+    sh.cs_ran = false
+    let nowait = sh.nowait
+    sh.nowait = false
+    if !nowait && fast_ok(sh) {
+        flush(mut sh)
+        let r = copy region turn {
+            run_fast(sh, sh.ast, n)
+        }
+        if r.kind != R_SLOW {
+            return commit_fast(mut sh, r)
+        }
+    }
+    run_slow(mut sh, n, nowait)
+}
+
+// ------------------------------------------------------ the fast path
+
+const R_SLOW: int = 0
+
+const R_DONE: int = 1
+
+const R_ASSIGN: int = 2
+
+/// What a simple command run in the shadow state leaves for the real
+/// one: only scalars and one `str`, so that copying it out of the
+/// region costs nothing per command but the assigned values themselves
+/// (`[mem.region.copyout]`: every `List` in the copied value would be a
+/// fresh buffer in the root region, which frees nothing).
+struct Fast {
+    kind: int,
+    status: int,
+    /// R_ASSIGN: `name` NUL `value` NUL, for each assignment in order.
+    enc: str,
+    reads: int,
+}
+
+fn slow() -> Fast {
+    Fast { kind: R_SLOW, status: 0, enc: "", reads: 0 }
+}
+
+fn fast_ok(sh: Sh) -> bool {
+    !sh.opt_x && !sh.shadow && sh.caps.len == 0
+}
+
+/// The built-ins that change nothing but their output and status.
+fn is_pure_builtin(name: str) -> bool {
+    name == "echo" ||
+        name == "printf" ||
+        name == "test" ||
+        name == "[" ||
+        name == "true" ||
+        name == "false" ||
+        name == "pwd" ||
+        name == ":"
+}
+
+/// What expansion and the pure built-ins read, copied: the shadow a
+/// simple command runs in inside the region. Writing to it writes
+/// nothing the shell keeps; anything that would have to (`set_var`,
+/// `diag`, a command substitution) sets `bail` instead.
+fn shadow_of(sh: Sh) -> Sh {
+    var t = new_sh(sh.name)
+    t.vals = copy sh.vals
+    t.exported = copy sh.exported
+    t.ronly = copy sh.ronly
+    t.pos = copy sh.pos
+    t.arg0 = sh.arg0
+    t.status = sh.status
+    t.opt_e = sh.opt_e
+    t.opt_u = sh.opt_u
+    t.opt_f = sh.opt_f
+    t.opt_a = sh.opt_a
+    t.opt_bigc = sh.opt_bigc
+    t.fds = copy sh.fds
+    t.line = sh.line
+    t.interactive = sh.interactive
+    t.from_stdin = sh.from_stdin
+    t.last_bg = sh.last_bg
+    t.phys = sh.phys
+    t.shadow = true
+    t
+}
+
+/// The simple command `n` with the state read only: expanded,
+/// redirected, and run when it is a program or a pure built-in.
+fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
+    var t = shadow_of(sh)
+    t.line = a.nodes[n].line
+    let na = a.nodes[n].ints[0]
+    var assigns = List[str]()
+    var rest = List[str]()
+    var i = 0
+    for w in a.nodes[n].words {
+        if i < na {
+            (mut assigns).push(w)
+        } else {
+            (mut rest).push(w)
+        }
+        i += 1
+    }
+    let fields = expand_words(mut t, rest)
+    if t.bail || t.flow != F_NONE {
+        return slow()
+    }
+    var pure = false
+    if fields.len > 0 {
+        let cmd = fields[0]
+        if sh.funcs.has(cmd) {
+            return slow()
+        }
+        if is_special_builtin(cmd) || is_regular_builtin(cmd) {
+            if !is_pure_builtin(cmd) || assigns.len > 0 {
+                return slow()
+            }
+            pure = true
+        }
+    }
+    var enc = buf()
+    var names = List[str]()
+    var values = List[str]()
+    for a in assigns {
+        let (name, raw) = split_assign(a)
+        let v = expand_one(mut t, raw, X_TILDE | X_ASSIGN)
+        if t.bail || t.flow != F_NONE {
+            return slow()
+        }
+        if is_ronly(sh, name) {
+            return slow()
+        }
+        put(mut enc, name)
+        putb(mut enc, 0)
+        put(mut enc, v)
+        putb(mut enc, 0)
+        (mut names).push(name)
+        (mut values).push(v)
+    }
+    if a.nodes[n].redirs.len > 0 {
+        let rds = redirs_of(a, n)
+        if !apply_redirs(mut t, rds) || t.bail {
+            close_opened(t)
+            return slow()
+        }
+    }
+    if fields.len == 0 {
+        close_opened(t)
+        if assigns.len == 0 {
+            return Fast { kind: R_DONE, status: 0, enc: "", reads: t.dir_reads }
+        }
+        return Fast { kind: R_ASSIGN, status: 0, enc: text(enc), reads: t.dir_reads }
+    }
+    if pure {
+        let st = builtin(mut t, fields)
+        let h = fd_get(t, 1)
+        if t.bail || t.flow != F_NONE || t.out.len > 0 && h < 0 {
+            close_opened(t)
+            return slow()
+        }
+        if t.out.len > 0 {
+            fs_write_chunk(h, t.out) else |_| {}
+        }
+        close_opened(t)
+        return Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads }
+    }
+    // a program: found, and given no capture, or the ordinary path runs it
+    let cmd = fields[0]
+    var path = cmd
+    if (cmd.find("/") else -1) < 0 {
+        path = find_in_path(t, cmd)
+        if path.len == 0 {
+            close_opened(t)
+            return slow()
+        }
+    }
+    for h in t.fds {
+        if is_cap(h) {
+            close_opened(t)
+            return slow()
+        }
+    }
+    sync_env(t)
+    var k = 0
+    while k < names.len {
+        env_set(names[k], values[k]) else |_| {}
+        k += 1
+    }
+    let hd = os_spawn_fds(path, fields[1..fields.len], child_map(t)) else -1
+    var st = 0
+    if hd >= 0 {
+        st = wait_child(hd)
+    }
+    k = 0
+    while k < names.len {
+        if is_exported(t, names[k]) {
+            env_set(names[k], value_of(t, names[k])) else |_| {}
+        }
+        k += 1
+    }
+    close_opened(t)
+    if hd < 0 {
+        return slow()
+    }
+    Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads }
+}
+
+/// A line typed at the prompt, parsed and run inside the region when it
+/// is one simple command the fast path can finish: then nothing of it
+/// is kept, not even its parse tree (`sh.interact`).
+fn run_turn_fast(sh: Sh, src: str, line: int) -> Fast {
+    var a = new_ast()
+    var p = new_parser(src, line)
+    let n = parse_complete(mut p, mut a)
+    if n < 0 || parse_complete(mut p, mut a) != -1 {
+        return slow()
+    }
+    if a.nodes[n].kind != K_LIST || a.nodes[n].kids.len != 1 || a.nodes[n].ints[0] != 0 {
+        return slow()
+    }
+    let k = a.nodes[n].kids[0]
+    if a.nodes[k].kind != K_SIMPLE {
+        return slow()
+    }
+    run_fast(sh, a, k)
+}
+
+fn nul_at(s: str, from: int) -> int {
+    var i = from
+    while i < s.len && byte_at(s, i) != 0 {
+        i += 1
+    }
+    i
+}
+
+/// Write a fast result into the state: its assignments and status.
+fn commit_fast(mut sh: Sh, r: Fast) -> int {
+    sh.dir_reads += r.reads
+    if r.kind == R_ASSIGN {
+        var at = 0
+        while at < r.enc.len {
+            let z = nul_at(r.enc, at)
+            let z2 = nul_at(r.enc, z + 1)
+            let name = r.enc[at..z]
+            if !set_var(mut sh, name, r.enc[z + 1..z2]) {
+                fatal(mut sh, "{name}: is read-only", 2)
+                return 2
+            }
+            at = z2 + 1
+        }
+    }
+    sh.status = r.status
+    r.status
+}
+
+// ---------------------------------------------------- the ordinary path
+
+fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
     let words = copy sh.ast.nodes[n].words
     let na = sh.ast.nodes[n].ints[0]
-    sh.cs_ran = false
     var assigns = List[str]()
     var rest = List[str]()
     var i = 0
@@ -502,10 +791,34 @@ fn run_simple(mut sh: Sh, n: int) -> int {
     if sh.flow != F_NONE {
         return sh.status
     }
-    if sh.ast.nodes[n].redirs.len > 0 {
-        diag(mut sh, "redirections are not supported yet (pelt H2)")
-        sh.status = 2
-        return 2
+    let rds = redirs_of(sh.ast, n)
+    if fields.len == 0 {
+        // redirections alone are performed and undone (XCU 2.9.1); when
+        // one fails the assignments are not made
+        if rds.len > 0 {
+            let ok = apply_redirs(mut sh, rds)
+            end_redirs(mut sh)
+            if !ok {
+                if sh.flow == F_NONE {
+                    sh.status = 2
+                }
+                return sh.status
+            }
+        }
+        for a in assigns {
+            let (name, raw) = split_assign(a)
+            let v = expand_one(mut sh, raw, X_TILDE | X_ASSIGN)
+            if sh.flow != F_NONE {
+                return sh.status
+            }
+            if !set_var(mut sh, name, v) {
+                fatal(mut sh, "{name}: is read-only", 2)
+                return 2
+            }
+        }
+        let st = if sh.cs_ran then sh.cs_status else 0
+        sh.status = st
+        return st
     }
     // the assignments' values, expanded in order (XCU 2.9.1 step 4)
     var names = List[str]()
@@ -522,31 +835,38 @@ fn run_simple(mut sh: Sh, n: int) -> int {
         (mut shown).push("{name}={v}")
     }
     xtrace(mut sh, shown, fields)
-    if fields.len == 0 {
-        var k = 0
-        while k < names.len {
-            if !set_var(mut sh, names[k], values[k]) {
-                fatal(mut sh, "{names[k]}: is read-only", 2)
-                return 2
-            }
-            k += 1
+    let cmd = fields[0]
+    if cmd == "exec" && fields.len == 1 {
+        // `exec` with redirections only: they outlive the command
+        if !apply_permanent(mut sh, rds) {
+            return special_redir_failed(mut sh)
         }
-        let st = if sh.cs_ran then sh.cs_status else 0
-        sh.status = st
+        if !assign_all(mut sh, names, values) {
+            return 2
+        }
+        sh.status = 0
+        return 0
+    }
+    if is_special_builtin(cmd) {
+        if !assign_all(mut sh, names, values) {
+            return 2
+        }
+        if !apply_redirs(mut sh, rds) {
+            end_redirs(mut sh)
+            return special_redir_failed(mut sh)
+        }
+        let st = builtin(mut sh, fields)
+        end_redirs(mut sh)
         return st
     }
-    let cmd = fields[0]
-    if is_special_builtin(cmd) {
-        var k = 0
-        while k < names.len {
-            if !set_var(mut sh, names[k], values[k]) {
-                fatal(mut sh, "{names[k]}: is read-only", 2)
-                return 2
-            }
-            k += 1
+    if !apply_redirs(mut sh, rds) {
+        end_redirs(mut sh)
+        if sh.flow == F_NONE {
+            sh.status = 2
         }
-        return builtin(mut sh, fields)
+        return sh.status
     }
+    var st = 0
     let fnode = sh.funcs[cmd] else -1
     if fnode >= 0 || is_regular_builtin(cmd) {
         // temporary assignments, undone after (XCU 2.9.1)
@@ -557,12 +877,12 @@ fn run_simple(mut sh: Sh, n: int) -> int {
             (mut had).push(has_var(sh, names[k]))
             (mut old).push(value_of(sh, names[k]))
             if !set_var(mut sh, names[k], values[k]) {
+                end_redirs(mut sh)
                 fatal(mut sh, "{names[k]}: is read-only", 2)
                 return 2
             }
             k += 1
         }
-        var st = 0
         if fnode >= 0 {
             st = call_function(mut sh, fnode, fields)
         } else {
@@ -577,9 +897,36 @@ fn run_simple(mut sh: Sh, n: int) -> int {
             }
             k -= 1
         }
-        return st
+    } else {
+        st = run_external(mut sh, fields, names, values, nowait)
     }
-    run_external(mut sh, fields, names, values)
+    end_redirs(mut sh)
+    st
+}
+
+/// A special built-in's redirection failed: reported already; it ends a
+/// non-interactive shell (XCU 2.8.1), with status 2 as dash.
+fn special_redir_failed(mut sh: Sh) -> int {
+    if sh.flow == F_NONE {
+        sh.status = 2
+        sh.flow = F_EXIT
+        sh.flow_n = 0
+        sh.abort = true
+    }
+    2
+}
+
+/// The assignments before a special built-in, made for good.
+fn assign_all(mut sh: Sh, names: List[str], values: List[str]) -> bool {
+    var k = 0
+    while k < names.len {
+        if !set_var(mut sh, names[k], values[k]) {
+            fatal(mut sh, "{names[k]}: is read-only", 2)
+            return false
+        }
+        k += 1
+    }
+    true
 }
 
 fn call_function(mut sh: Sh, body: int, fields: List[str]) -> int {
@@ -648,10 +995,9 @@ fn find_in_path(sh: Sh, name: str) -> str {
 }
 
 /// Hand the exported variables to the process environment, which is
-/// the only environment `os_spawn` can give a child. A variable that is
-/// unset or unexported in pelt but was in the environment pelt started
-/// with still reaches the child: wolf 0.2.24 cannot remove one
-/// (wolf-lang#534).
+/// the only environment a child can be given. A variable that is unset
+/// or unexported in pelt but was in the environment pelt started with
+/// still reaches the child: wolf cannot remove one (wolf-lang#534).
 fn sync_env(sh: Sh) {
     for k in sh.exported.keys() {
         if sh.exported[k] else false {
@@ -661,7 +1007,153 @@ fn sync_env(sh: Sh) {
     }
 }
 
-fn run_external(mut sh: Sh, fields: List[str], names: List[str], values: List[str]) -> int {
+/// A child's descriptor map (`[os.proc.fds]`) for a table with no
+/// capture in it: every open shell descriptor at its own number, and
+/// 0..2 closed in the child where the table has them closed.
+fn child_map(sh: Sh) -> List[int] {
+    var map = List[int]()
+    var k = 0
+    while k < sh.fds.len {
+        let h = sh.fds[k]
+        if h == FD_CLOSED {
+            if k <= 2 {
+                (mut map).push(k)
+                (mut map).push(-1)
+            }
+        } else {
+            (mut map).push(k)
+            (mut map).push(h)
+        }
+        k += 1
+    }
+    map
+}
+
+/// A child's status: its exit code, or 128 when a signal ended it
+/// (`os_wait` does not say which, wolf-lang#534).
+fn wait_child(h: int) -> int {
+    os_wait(h) else |e| match e {
+        signal => { 128 },
+        io => { 1 },
+    }
+}
+
+/// Everything readable from `r` into the open capture; `r` is closed.
+fn drain(mut sh: Sh, r: int) {
+    loop {
+        let c = fs_read_chunk(r, 65536) else |e| match e {
+            eof => { break },
+            io => { break },
+        }
+        for x in c {
+            (mut sh.cap_data).push(x)
+        }
+    }
+    fs_close(r) else |_| {}
+}
+
+/// The temporary-file captures of a pipeline's children, read once they
+/// have ended.
+fn read_pending_caps(mut sh: Sh) {
+    while sh.pend_cap.len > 0 {
+        let r = (mut sh.pend_cap).pop() else -1
+        let _l = (mut sh.pend_level).pop() else 0
+        if r >= 0 {
+            drain(mut sh, r)
+        }
+    }
+}
+
+/// Start `path` with `args` and the descriptor table as its map. A
+/// descriptor that is an open capture goes, when the caller waits, to
+/// one pipe read to its end here; when it does not (a pipeline stage),
+/// the stage's own capture goes to the stage's pipe (`stage_w`) and any
+/// other to a temporary file read back when the pipeline ends. Answers
+/// the child's handle, or -1 and the status (the failure reported).
+fn start_child(mut sh: Sh, cmd: str, path: str, args: List[str], nowait: bool) -> (int, int) {
+    flush(mut sh)
+    var map = List[int]()
+    var cap_r = -1
+    var cap_w = -1
+    var temps = List[int]()
+    var k = 0
+    while k < sh.fds.len {
+        let h = sh.fds[k]
+        if is_cap(h) {
+            let level = CAP_BASE - h
+            var to = -1
+            if nowait && sh.stage_w >= 0 && level == sh.stage_cap {
+                to = sh.stage_w
+            } else if nowait {
+                let (w, p) = temp_create(sh)
+                if w >= 0 {
+                    let r = fs_open(p) else -1
+                    fs_remove(p) else |_| {}
+                    if r >= 0 {
+                        (mut sh.pend_cap).push(r)
+                        (mut sh.pend_level).push(level)
+                    }
+                    (mut temps).push(w)
+                    to = w
+                }
+            } else {
+                if cap_w < 0 {
+                    let (r, w) = os_pipe() else (-1, -1)
+                    cap_r = r
+                    cap_w = w
+                }
+                to = cap_w
+            }
+            (mut map).push(k)
+            (mut map).push(to)
+        } else if h == FD_CLOSED {
+            if k <= 2 {
+                (mut map).push(k)
+                (mut map).push(-1)
+            }
+        } else {
+            (mut map).push(k)
+            (mut map).push(h)
+        }
+        k += 1
+    }
+    let hd = os_spawn_fds(path, args, map) else |e| match e {
+        not_found => { -127 },
+        denied => { -126 },
+        invalid => { -126 },
+        io => { -126 },
+        unsupported => { -126 },
+    }
+    if cap_w >= 0 {
+        fs_close(cap_w) else |_| {}
+    }
+    for w in temps {
+        fs_close(w) else |_| {}
+    }
+    if hd < 0 {
+        if cap_r >= 0 {
+            fs_close(cap_r) else |_| {}
+        }
+        if hd == -127 {
+            diag(mut sh, "{cmd}: not found")
+        } else {
+            diag(mut sh, "{cmd}: cannot run: {why_failed()}")
+        }
+        return (-1, -hd)
+    }
+    if cap_r >= 0 {
+        drain(mut sh, cap_r)
+    }
+    (hd, 0)
+}
+
+fn run_external(
+    mut sh: Sh,
+    fields: List[str],
+    names: List[str],
+    values: List[str],
+    nowait: bool,
+) -> int {
     let cmd = fields[0]
     var path = cmd
     if (cmd.find("/") else -1) < 0 {
@@ -672,14 +1164,6 @@ fn run_external(mut sh: Sh, fields: List[str], names: List[str], values: List[st
             return 127
         }
     }
-    if sh.caps.len > 0 {
-        diag(
-            mut sh,
-            "{cmd}: running a program inside a command substitution is not supported yet (pelt H2)",
-        )
-        sh.status = 2
-        return 2
-    }
     flush(mut sh)
     sync_env(sh)
     // the command's own assignments, exported to it alone; set back
@@ -689,30 +1173,14 @@ fn run_external(mut sh: Sh, fields: List[str], names: List[str], values: List[st
         env_set(names[k], values[k]) else |_| {}
         k += 1
     }
-    var argv = List[str]()
-    (mut argv).push(path)
-    var i = 1
-    while i < fields.len {
-        (mut argv).push(fields[i])
-        i += 1
-    }
-    var st = 0
-    let h = os_spawn(argv) else |e| match e {
-        not_found => { -127 },
-        denied => { -126 },
-        io => { -126 },
-    }
-    if h < 0 {
-        st = -h
-        if st == 127 {
-            diag(mut sh, "{cmd}: not found")
+    let (h, failed) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait)
+    var st = failed
+    if h >= 0 {
+        if nowait {
+            sh.stage_child = h
+            st = 0
         } else {
-            diag(mut sh, "{cmd}: cannot run")
-        }
-    } else {
-        st = os_wait(h) else |e| match e {
-            signal => { 128 },
-            io => { 1 },
+            st = wait_child(h)
         }
     }
     k = 0
@@ -723,5 +1191,120 @@ fn run_external(mut sh: Sh, fields: List[str], names: List[str], values: List[st
         k += 1
     }
     sh.status = st
+    st
+}
+
+// ------------------------------------------------- asynchronous lists
+
+/// `list &` (XCU 2.9.3.1): standard input is the null device before the
+/// list's own redirections. A simple command that runs a program is
+/// started and not waited for; anything else pelt runs itself, to the
+/// end, as a subshell (no fork), and records as a finished job. `$!` is
+/// the job's number in pelt's table, not a process id (wolf-lang#141).
+fn run_async(mut sh: Sh, node: int) -> int {
+    flush(mut sh)
+    let saved_in = fd_get(sh, 0)
+    let null = fs_open("/dev/null") else FD_CLOSED
+    fd_set(mut sh, 0, null)
+    sh.stage_child = -1
+    sh.nowait = sh.ast.nodes[node].kind == K_SIMPLE && sh.caps.len == 0
+    let st = run_subshell(mut sh, node)
+    sh.nowait = false
+    let child = sh.stage_child
+    sh.stage_child = -1
+    fd_set(mut sh, 0, saved_in)
+    if null >= 3 && !names_handle(sh.fds, null) {
+        fs_close(null) else |_| {}
+    }
+    (mut sh.jobs).push(child)
+    (mut sh.job_st).push(if child >= 0 then -1 else st)
+    sh.last_bg = sh.jobs.len
+    sh.status = 0
+    0
+}
+
+/// Job `i`'s status, waiting for it if it still runs.
+fn wait_job(mut sh: Sh, i: int) -> int {
+    if sh.job_st[i] >= 0 {
+        return sh.job_st[i]
+    }
+    let st = wait_child(sh.jobs[i])
+    sh.job_st[i] = st
+    st
+}
+
+// ------------------------------------------------------------ pipelines
+
+/// `a | b | …` (XCU 2.9.2), stages left to right. A stage that is a
+/// simple command running a program is started with its descriptor 1 a
+/// pipe's write end and not waited for, so the programs of a pipeline
+/// run together. A stage pelt runs itself (a built-in, a function, a
+/// compound command) runs as a subshell, to the end: if it is not the
+/// last, what it writes is caught and becomes the next stage's input
+/// (`input_from`), so pelt never blocks writing a pipe nobody drains.
+/// The status is the last stage's.
+fn run_pipeline(mut sh: Sh, n: int) -> int {
+    flush(mut sh)
+    let count = sh.ast.nodes[n].kids.len
+    var input = fd_get(sh, 0)
+    var own_in = false
+    var kids = List[int]()
+    var st = 0
+    var i = 0
+    while i < count {
+        let node = sh.ast.nodes[n].kids[i]
+        if i == count - 1 {
+            st = run_stage(mut sh, node, input, false)
+            if own_in {
+                fs_close(input) else |_| {}
+            }
+            break
+        }
+        let (r, w) = os_pipe() else (-1, -1)
+        if r < 0 {
+            diag(mut sh, "cannot make a pipe")
+            st = 2
+            break
+        }
+        cap_begin(mut sh)
+        sh.stage_w = w
+        sh.stage_cap = sh.caps.len
+        sh.stage_child = -1
+        let simple = sh.ast.nodes[node].kind == K_SIMPLE
+        let _st = run_stage(mut sh, node, input, simple)
+        let child = sh.stage_child
+        sh.stage_child = -1
+        sh.stage_w = -1
+        sh.stage_cap = 0
+        let caught = cap_end_bytes(mut sh)
+        fs_close(w) else |_| {}
+        if own_in {
+            fs_close(input) else |_| {}
+        }
+        if child >= 0 {
+            (mut kids).push(child)
+            input = r
+        } else {
+            fs_close(r) else |_| {}
+            input = input_from(mut sh, caught)
+        }
+        own_in = true
+        i += 1
+    }
+    for h in kids {
+        let _s = wait_child(h)
+    }
+    read_pending_caps(mut sh)
+    st
+}
+
+/// One pipeline stage as a subshell, with descriptor 0 `input`.
+fn run_stage(mut sh: Sh, node: int, input: int, nowait: bool) -> int {
+    let saved_in = fd_get(sh, 0)
+    fd_set(mut sh, 0, input)
+    sh.nowait = nowait
+    let st = run_subshell(mut sh, node)
+    sh.nowait = false
+    fd_set(mut sh, 0, saved_in)
     st
 }
