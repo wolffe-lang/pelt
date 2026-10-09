@@ -1,0 +1,2 @@
+printf 'b\na\nc\n' | sort | head -n 2
+exit

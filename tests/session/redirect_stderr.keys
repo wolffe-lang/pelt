@@ -1,0 +1,3 @@
+nosuch_cmd_r 2>/dev/null
+echo st=$?
+exit

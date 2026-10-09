@@ -1,0 +1,5 @@
+exec 3> g
+echo three >&3
+exec 3>&-
+cat g
+exit

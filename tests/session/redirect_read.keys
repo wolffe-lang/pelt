@@ -1,0 +1,4 @@
+echo hello > f
+read x < f
+echo [$x]
+exit

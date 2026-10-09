@@ -1,0 +1,3 @@
+cd /nonexistent_dir_s
+echo st=$?
+exit

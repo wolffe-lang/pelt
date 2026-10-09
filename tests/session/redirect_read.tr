@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "echo hello > f"
+err no
+prompt "$ "
+step 2 "read x < f"
+err no
+prompt "$ "
+step 3 "echo [$x]"
+out "[hello]\n"
+err no
+prompt "$ "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

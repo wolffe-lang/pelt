@@ -1,0 +1,4 @@
+/bin/sh -c 'exit 6' &
+wait $!
+echo st=$?
+exit

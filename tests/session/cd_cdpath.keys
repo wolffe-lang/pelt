@@ -1,0 +1,4 @@
+CDPATH=/
+cd usr
+pwd
+exit

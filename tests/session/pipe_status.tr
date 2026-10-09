@@ -1,0 +1,21 @@
+step 0
+err no
+prompt "$ "
+step 1 "true | false"
+err no
+prompt "$ "
+step 2 "echo st=$?"
+out "st=1\n"
+err no
+prompt "$ "
+step 3 "! true | false"
+err no
+prompt "$ "
+step 4 "echo st=$?"
+out "st=0\n"
+err no
+prompt "$ "
+step 5 "exit"
+err no
+prompt ""
+exit 0 at step 5

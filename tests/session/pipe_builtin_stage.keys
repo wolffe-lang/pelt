@@ -1,0 +1,2 @@
+echo x y | while read a b; do echo got $b $a; done
+exit
