@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""glob-rss — does a word that is not a pattern read the directory?
+
+Runs `i=0; while [ $i -lt N ]; do i=$((i+1)); done; echo $i` under
+SHELL twice: from an empty working directory and from one holding
+FILES files, and reads each run's peak resident set (`wait4`'s
+`ru_maxrss`). The words `[` and `]` are not patterns (XCU: a `[` that
+opens no bracket expression matches itself), so the shell has no reason
+to list the directory, and the two peaks agree. A shell that lists it
+for every `[ … ]` keeps what it listed (wolf-lang#612: per-command
+scratch is not freed), and the full directory's peak runs away
+(pelt#3: 163 MB against 490 MB at 20,000 turns and 24 files).
+
+usage: tools/glob-rss [-n N] [-f FILES] SHELL
+Exits 1 when the full directory's peak exceeds the empty one's by more
+than 10% plus 2 MB, or when either run answers anything but N.
+"""
+
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+def measure(shell, n, cwd):
+    """Peak RSS in KB of one run, from a child process of its own so the
+    high-water mark is that run's alone."""
+    probe = (
+        "import os,resource,subprocess,sys\n"
+        "env={'PATH':'/usr/bin:/bin','HOME':'/','LC_ALL':'C'}\n"
+        f"s='i=0; while [ $i -lt {n} ]; do i=$((i+1)); done; echo $i'\n"
+        "r=subprocess.run([sys.argv[1],'-c',s],env=env,capture_output=True)\n"
+        "m=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss\n"
+        "m=m//1024 if sys.platform=='darwin' else m\n"
+        "print(m, r.returncode, r.stdout.decode().strip(), len(r.stderr))\n"
+    )
+    r = subprocess.run([sys.executable, "-c", probe, shell], cwd=cwd,
+                       capture_output=True, text=True, check=True)
+    kb, rc, out, nerr = r.stdout.split(" ")
+    return int(kb), int(rc), out, int(nerr)
+
+
+def main(argv):
+    n = 2000
+    files = 64
+    while argv[:1] in (["-n"], ["-f"]):
+        if argv[0] == "-n":
+            n = int(argv[1])
+        else:
+            files = int(argv[1])
+        argv = argv[2:]
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    shell = os.path.abspath(argv[0]) if os.sep in argv[0] else shutil.which(argv[0])
+    top = tempfile.mkdtemp(prefix="glob-rss.")
+    try:
+        empty = os.path.join(top, "empty")
+        full = os.path.join(top, "full")
+        os.mkdir(empty)
+        os.mkdir(full)
+        for k in range(files):
+            open(os.path.join(full, f"file{k:04d}"), "w").close()
+        rows = []
+        for name, cwd in (("empty", empty), (f"{files} files", full)):
+            kb, rc, out, nerr = measure(shell, n, cwd)
+            rows.append((name, kb, rc, out, nerr))
+            print(f"glob-rss: {argv[0]} n={n} cwd={name:>9}  peak_kb {kb:8}  "
+                  f"exit {rc}  out {out!r}  stderr_bytes {nerr}")
+        ok = True
+        for name, kb, rc, out, nerr in rows:
+            if rc != 0 or out != str(n):
+                print(f"glob-rss: FAIL the run in {name} answered {out!r} (exit {rc})")
+                ok = False
+        e, f = rows[0][1], rows[1][1]
+        bound = e + e // 10 + 2048
+        if f > bound:
+            print(f"glob-rss: FAIL {files} files peaks at {f} KB against {e} KB "
+                  f"empty (bound {bound}): a non-pattern word read the directory")
+            ok = False
+        else:
+            print(f"glob-rss: ok ({f} KB with {files} files, {e} KB empty, bound {bound})")
+        return 0 if ok else 1
+    finally:
+        shutil.rmtree(top)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
