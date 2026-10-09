@@ -23,9 +23,8 @@
 //! | `EQ` 0x06 | an empty quoted string: a field exists here even if no byte does |
 //!
 //! Command substitution runs IN-PROCESS (see `sh.state`), so it can
-//! capture what built-ins and functions write; a substitution that
-//! would run another program cannot be captured at wolf 0.2.24 (no
-//! pipe builtin, `[os.proc.spawn]`) and is refused by name in `sh.exec`.
+//! capture what built-ins and functions write; a program it runs writes
+//! into a pipe pelt reads to its end (`sh.exec`'s `start_child`).
 
 const RB: int = 2
 
@@ -44,6 +43,10 @@ const X_ASSIGN: int = 2
 const X_TILDE: int = 4
 
 const X_PWORD: int = 8
+
+/// A here-document's body: as inside double quotes, except that `"` is
+/// an ordinary character and a backslash before it stays (XCU 2.7.4).
+const X_DOC: int = 16
 
 fn lit(mut o: Buf, b: int) {
     if b >= 1 && b <= 6 {
@@ -350,7 +353,7 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
             }
             if c == '\\' {
                 let n = ch(w, i + 1)
-                if n == '$' || n == '`' || n == '"' || n == '\\' {
+                if n == '$' || n == '`' || n == '"' && flags & X_DOC == 0 || n == '\\' {
                     qlit(mut o, byte_at(w, i + 1))
                     i += 2
                 } else if n == '\n' {
@@ -492,6 +495,9 @@ fn param(sh: Sh, name: str) -> (str, bool) {
         return (shell_pid(), true)
     }
     if name == "!" {
+        if sh.last_bg > 0 {
+            return ("{sh.last_bg}", true)
+        }
         return ("", false)
     }
     if name == "@" || name == "*" {
@@ -505,6 +511,11 @@ fn param(sh: Sh, name: str) -> (str, bool) {
             k += 1
         }
         return (text(o), sh.pos.len > 0)
+    }
+    if name == "LINENO" {
+        // the current line, read when asked: never stored, so a command
+        // keeps nothing for it (XCU 2.5.3)
+        return ("{sh.line}", true)
     }
     if has_var(sh, name) {
         return (value_of(sh, name), true)
@@ -586,6 +597,11 @@ fn dollar(mut sh: Sh, w: str, i: int, to: int, dq: bool, mut o: Buf) -> int {
                 return e
             }
         }
+        if sh.shadow {
+            sh.bail = true
+            sh.flow = F_EXIT
+            return to
+        }
         let (node, e) = cmdsub_at(mut sh, w, i)
         if sh.flow != F_NONE {
             return to
@@ -650,6 +666,11 @@ fn arith_text(mut sh: Sh, inner: str) -> str {
 /// `` ` ``, `\` (and `"` within double quotes); the rest is a script.
 fn backquote(mut sh: Sh, w: str, i: int, dq: bool, mut o: Buf) -> int {
     let e = bq_end(w, i)
+    if sh.shadow {
+        sh.bail = true
+        sh.flow = F_EXIT
+        return e
+    }
     let raw = w[i + 1..e - 1]
     var t = buf()
     var k = 0
