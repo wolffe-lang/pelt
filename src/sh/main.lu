@@ -190,14 +190,14 @@ fn run_source(src: str, name: str, rest: List[str], opts: List[str], cmd_string:
 }
 
 /// The shell reading its standard input (no operand and no `-c`, or
-/// `-s`): interactive when forced by `-i` or when standard input is not
-/// a regular file (`sh.interact`).
+/// `-s`): interactive when forced by `-i` or when standard input and
+/// standard error are terminals (`sh.interact`).
 fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
     sh.pos = copy rest
     sh.from_stdin = true
-    sh.interactive = force_i || !stdin_is_file()
+    sh.interactive = force_i || on_terminal()
     if opts.len > 0 {
         let _st = bi_set(mut sh, opts)
         if sh.flow == F_EXIT {
@@ -236,6 +236,7 @@ fn import_env(mut sh: Sh) {
     sh.vals["PS4"] = "+ "
     sh.vals["OPTIND"] = "1"
     let cwd = os_cwd() else ""
+    sh.phys = cwd
     if cwd.len > 0 {
         sh.vals["PWD"] = cwd
         sh.exported["PWD"] = true

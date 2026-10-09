@@ -6,13 +6,12 @@
 //! shell errors, interactive column); black-box runs of `dash -i`
 //! 0.5.13.4 through a pty. No shell's source.
 //!
-//! **Reading.** Standard input is read one byte at a time, so the shell
-//! never takes a byte past the newline it needs: what follows is left
-//! for the `read` built-in, which reads through the same handle. wolf
-//! 0.2.24 has no byte read on descriptor 0 (`[os.fs.std]`,
-//! wolf-lang#405), so the handle is `/dev/stdin` opened anew, after
-//! `/dev/stdout` (the guide's ordering rule); if that open fails the
-//! shell falls back to `read_line`, which reads ahead.
+//! **Reading.** Commands are read one byte at a time from shell
+//! descriptor 0 (since wolf 0.2.26 the process's descriptor 0 itself,
+//! `[os.fs.std]`), so the shell never takes a byte past the newline it
+//! needs: what follows is left for the `read` built-in and for any
+//! program given the shell's standard input, which continue where the
+//! shell stopped.
 //!
 //! **A complete command.** After each line the text so far is parsed in
 //! a scratch region; when the only thing wrong with it is that it ended
@@ -23,11 +22,9 @@
 //!
 //! **Interactive or not.** POSIX makes the shell interactive with `-i`,
 //! or with no operands and no `-c` when standard input and standard
-//! error are terminals. wolf 0.2.24 cannot ask whether a descriptor is a
-//! terminal (`os_isatty` is s215's, unreleased): `fs_fstat(0)` tells a
-//! regular file from everything else, and nothing finer. So pelt is
-//! interactive when standard input is its command source and is not a
-//! regular file; a pipe prompts where dash does not (PENDING.md).
+//! error are terminals: `os_isatty(0)` and `os_isatty(2)`
+//! (`[os.fs.isatty]`), so a pipe or a file on standard input runs as a
+//! script, with no prompt.
 //!
 //! **Errors.** XCU 2.8.1: a syntax error, a special built-in's error,
 //! an expansion error and an assignment error end a non-interactive
@@ -35,56 +32,44 @@
 //! (`Sh.abort`); here an interactive shell abandons the rest of the
 //! command it was running, keeps the status (2), and prompts again.
 
-/// Whether standard input is a regular file (`fs_fstat` kind 0): the
-/// one thing 0.2.24 can see of what POSIX's terminal test asks.
-fn stdin_is_file() -> bool {
-    let st = fs_fstat(0) else |_| { return false }
-    st.len > 0 && st[0] == 0
+/// Whether descriptors 0 and 2 are both terminals (XCU `sh`).
+fn on_terminal() -> bool {
+    let i = os_isatty(0) else false
+    let e = os_isatty(2) else false
+    i && e
 }
 
-fn open_input(mut sh: Sh) {
-    if sh.out_fd == -1 {
-        sh.out_fd = fs_open_mode("/dev/stdout", 2) else -2
-    }
-    sh.in_fd = fs_open("/dev/stdin") else -2
-}
-
-/// One line of standard input, its newline kept, and how it ended:
+/// One line of shell descriptor 0, its newline kept, and how it ended:
 /// 0 at a newline, 1 at the end of input after some bytes, 2 at the end
-/// of input before any. Once the end is seen it is remembered: a
-/// terminal's end of file (Ctrl-D) is one zero-byte read, and the next
-/// read would wait for more typing.
+/// of input before any. The end of the process's own standard input is
+/// remembered: a terminal's end of file (Ctrl-D) is one zero-byte read,
+/// and the next read would wait for more typing. The bytes are gathered
+/// inside a region and only the line is kept.
 fn read_raw_line(mut sh: Sh) -> (str, int) {
-    if sh.in_fd == -3 {
+    let fd = fd_get(sh, 0)
+    if fd < 0 || fd == 0 && sh.eof0 {
         return ("", 2)
     }
-    if sh.in_fd == -1 {
-        open_input(mut sh)
+    let (line, how) = copy region rl {
+        line_of(fd)
     }
-    if sh.in_fd == -2 {
-        let line = read_line() else |_| {
-            sh.in_fd = -3
-            return ("", 2)
-        }
-        return ("{line}\n", 0)
+    if how != 0 && fd == 0 {
+        sh.eof0 = true
     }
-    let fd = sh.in_fd
+    (line, how)
+}
+
+fn line_of(fd: int) -> (str, int) {
     var o = buf()
     loop {
-        var b = -1
-        region scratch {
-            let c = fs_read_chunk(fd, 1) else |_| List[byte]()
-            if c.len > 0 {
-                b = c[0] as int
-            }
-        }
-        if b < 0 {
-            sh.in_fd = -3
+        let c = fs_read_chunk(fd, 1) else |_| List[byte]()
+        if c.len == 0 {
             if o.b.len == 0 {
                 return ("", 2)
             }
             return (text(o), 1)
         }
+        let b = c[0] as int
         putb(mut o, b)
         if b == 10 {
             return (text(o), 0)
@@ -122,6 +107,12 @@ fn prompt(mut sh: Sh, var_name: str) {
     if raw.len == 0 {
         return
     }
+    let done = copy region pr {
+        prompt_fast(sh, raw)
+    }
+    if done {
+        return
+    }
     let saved_status = sh.status
     let saved_cs = sh.cs_status
     let saved_ran = sh.cs_ran
@@ -133,8 +124,20 @@ fn prompt(mut sh: Sh, var_name: str) {
     sh.status = saved_status
     sh.cs_status = saved_cs
     sh.cs_ran = saved_ran
-    flush(mut sh)
-    eprint_raw(shown)
+    write_fd(mut sh, 2, shown)
+}
+
+/// The prompt expanded and written in the shadow state, inside the
+/// region; false when its expansion would write the state (a command
+/// substitution, an error), and `prompt` does it the ordinary way.
+fn prompt_fast(sh: Sh, raw: str) -> bool {
+    var t = shadow_of(sh)
+    let shown = expand_one(mut t, raw, X_DQ)
+    if t.bail || t.flow != F_NONE {
+        return false
+    }
+    write_fd(mut t, 2, shown)
+    true
 }
 
 /// `$ENV` (XCU 2.5.3): an interactive shell expands it and runs the
@@ -183,7 +186,11 @@ fn run_stdin(mut sh: Sh) -> int {
     }
     var line = 1
     loop {
+        // a one-line command is kept as read; only a continued one is
+        // joined in a buffer
+        var src = ""
         var o = buf()
+        var joined = false
         var first = true
         var ended = false
         loop {
@@ -192,27 +199,54 @@ fn run_stdin(mut sh: Sh) -> int {
             }
             let (got, how) = read_raw_line(mut sh)
             if sh.opt_v && got.len > 0 {
-                eprint_raw(got)
+                write_fd(mut sh, 2, got)
             }
-            put(mut o, got)
+            if first {
+                src = got
+            } else {
+                if !joined {
+                    put(mut o, src)
+                    joined = true
+                }
+                put(mut o, got)
+            }
             if how != 0 {
                 ended = true
                 break
             }
             first = false
-            if !needs_more(text(o)) {
+            if !needs_more(if joined then text(o) else src) {
                 break
             }
         }
-        let src = text(o)
+        if joined {
+            src = text(o)
+        }
         if src.len == 0 {
             if sh.interactive {
                 // leave the terminal's cursor off the prompt line
-                eprint_raw("\n")
+                write_fd(mut sh, 2, "\n")
             }
             break
         }
-        let _st = eval_from(mut sh, src, line)
+        var fast = false
+        if sh.interactive && !sh.opt_n && !sh.opt_v && fast_ok(sh) {
+            // a typed simple command runs inside the region, its parse
+            // tree included (`sh.exec`'s `run_turn_fast`)
+            flush(mut sh)
+            let r = copy region turn {
+                run_turn_fast(sh, src, line)
+            }
+            if r.kind != R_SLOW {
+                sh.line = line
+                let st = commit_fast(mut sh, r)
+                check_e(mut sh, st)
+                fast = true
+            }
+        }
+        if !fast {
+            let _st = eval_from(mut sh, src, line)
+        }
         line += count_lines(src)
         if sh.flow == F_EXIT && sh.interactive && sh.abort {
             sh.flow = F_NONE
