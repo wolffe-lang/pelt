@@ -21,27 +21,37 @@
 # ws51 found builds byte-identical to `14f0ab2` at 0.2.24; pelt imports
 # no std module at this pin, so the tree is staged for `wolf test` and
 # for the lanes that will.
+#
+# ## The second pin: 0.2.26 / 0.1.49 (sh03, 2026-10-09)
+#
+# Digests read from the release API (wolf-lang release 408143286,
+# wolf-interp release 408028965) and re-hashed after download on
+# kasumi for all six archives. 0.2.26 is the release that carries
+# s215's descriptor builtins (os_spawn_fds, os_pipe, os_chdir,
+# os_isatty), s200's bytes on descriptors 0..2 and s216's
+# `copy region`: pelt H2. The std tree stays at 2f389a7: pelt imports
+# no std module, so its pin is inert here.
 
 [wolf]
-version = "0.2.24"
+version = "0.2.26"
 repo = "wolffe-lang/wolf-lang"
-rev = "294d626dd596122285d5df954762e3aee3e5db71"
-version_line = "wolf 0.2.24 (wolfgang, pin 294d626)"
-aarch64-apple-darwin = "597421eb349dcba4a45922a47799b4ac72cd0f05d6383b8cb8eac60307a2230a"
-x86_64-unknown-linux-gnu = "501d6d3f45124c84708b410dac62af5d358d24c1746323f17d42378b043519c7"
-aarch64-unknown-linux-gnu = "3e4386bbba3c8a28647d2c4952e6b57f069720844e09ae079adac0162fdf3271"
+rev = "89dc139443da38078df6093568da87bc6d0ee6f9"
+version_line = "wolf 0.2.26 (wolfgang, pin 89dc139)"
+aarch64-apple-darwin = "8ea7ef3b1e6ccab2ed784ad4c52285f226434ef7bf1b22272940d01a80b7f684"
+x86_64-unknown-linux-gnu = "05acdc5ea2f261f67cf48f4a174cff780a8c765e5f447354e1712d488e5a8064"
+aarch64-unknown-linux-gnu = "8b019b649575dd5770b2482bb764e8a1cc6961fefcd575ae3b98f9aeca1e5927"
 
 [lupin]
-# The reference interpreter wolf 0.2.24 declares as its pairing:
-# `wolf --version` line 2 reads "paired with lupin 0.1.47 (reference
-# interpreter), pin 8e36bc1".
-version = "0.1.47"
+# The reference interpreter wolf 0.2.26 declares as its pairing:
+# `wolf --version` line 2 reads "paired with lupin 0.1.49 (reference
+# interpreter), pin 294d626".
+version = "0.1.49"
 repo = "wolffe-lang/wolf-interp"
-rev = "b3228cb5905f2520aa36810c6bb09978e770372e"
-version_line = "lupin 0.1.47 (wolf-interp, reference interpreter at pin 8e36bc1)"
-aarch64-apple-darwin = "f58a51c888b53522130f6b42b267f198a0761f414fdc95930619a6b836740bd1"
-x86_64-unknown-linux-gnu = "0ddc4ff38d6178ae9f0fe0f007546f6e304216e5ad999b2509d2817a57912788"
-aarch64-unknown-linux-gnu = "470b43c2e2852c84be4dc4246d9c1e2f52ee42beaddb1e79bac2ba0b61bbe4d0"
+rev = "f516a5f4ea4341acd3a30f3e5cdd4327aede1912"
+version_line = "lupin 0.1.49 (wolf-interp, reference interpreter at pin 294d626)"
+aarch64-apple-darwin = "ad188d5872f520efed4caa1af3f6e083b90c43e1b625e734a96b64ae4bfbf8fa"
+x86_64-unknown-linux-gnu = "84911a353a03878c630762896ca2a19c2e2e20bf1a774d3f13858c99c9f56d6d"
+aarch64-unknown-linux-gnu = "e1f53d15d92d604cccf967644288b2cf90550d489d98719de46fef0207527955"
 
 [std]
 # wolf-std ships no release archive, so the tree is pinned by commit:
