@@ -1,7 +1,9 @@
 //! sh.selftest — table checks of the pieces under the differential
 //! corpus: the pattern matcher, the arithmetic evaluator, field
-//! splitting, prefix and suffix trimming, unsigned digits, and the
-//! parser's tree. `src/sh_test.lu` runs them under `wolf test`.
+//! splitting, prefix and suffix trimming, unsigned digits, the parser's
+//! tree, the descriptor table's redirection frames, `cd`'s logical
+//! path, and which simple commands run inside the region (`sh.exec`'s
+//! fast path). `src/sh_test.lu` runs them under `wolf test`.
 //!
 //! References consulted: POSIX.1-2024 XCU 2.6.4, 2.6.5, 2.14; every
 //! expected value here was read off a black-box run of `dash` 0.5.13.4
@@ -93,6 +95,117 @@ fn want_reads(mut bad: List[str], word: str, noglob: bool, want: int) {
     if sh.dir_reads != want {
         (mut bad).push("expanding {escaped(word)} listed {sh.dir_reads} directories, want {want}")
     }
+}
+
+/// A redirection as the parser would have read it.
+fn rd(op: str, word: str, fd: int) -> Rd {
+    Rd { op: op, word: word, fd: fd, body: "", has_doc: false, quoted: false, line: 1 }
+}
+
+fn table(sh: Sh) -> str {
+    var o = buf()
+    var k = 0
+    while k < sh.fds.len {
+        put(mut o, "{sh.fds[k]} ")
+        k += 1
+    }
+    text(o)
+}
+
+/// A frame changes the table and its end puts the table back; `exec`'s
+/// permanent form does not; a here-document is a handle that reads the
+/// body and is closed with its frame; a duplicate of a closed
+/// descriptor fails.
+fn want_frames(mut bad: List[str]) {
+    var sh = new_sh("selftest")
+    var rds = List[Rd]()
+    (mut rds).push(rd(">&", "1", 3))
+    (mut rds).push(rd(">&", "-", 1))
+    (mut rds).push(rd("<&", "2", 0))
+    if !apply_redirs(mut sh, rds) {
+        (mut bad).push("frame: 3>&1 1>&- 0<&2 refused")
+    }
+    if table(sh) != "2 -1 2 1 " {
+        (mut bad).push("frame: inside, the table is {table(sh)}, want 2 -1 2 1")
+    }
+    end_redirs(mut sh)
+    if table(sh) != "0 1 2 -1 " {
+        (mut bad).push("frame: after, the table is {table(sh)}, want 0 1 2 -1")
+    }
+    var p = List[Rd]()
+    (mut p).push(rd(">&", "2", 4))
+    if !apply_permanent(mut sh, p) || fd_get(sh, 4) != 2 {
+        (mut bad).push("exec 4>&2: the table is {table(sh)}")
+    }
+    var docs = List[Rd]()
+    (mut docs).push(Rd {
+        op: "<<",
+        word: "E",
+        fd: -1,
+        body: "a $x\n",
+        has_doc: true,
+        quoted: true,
+        line: 1,
+    })
+    if !apply_redirs(mut sh, docs) {
+        (mut bad).push("here-document refused")
+    }
+    let h = fd_get(sh, 0)
+    let got = fs_read_chunk(h, 64) else List[byte]()
+    let body = text(Buf { b: got })
+    if h < 3 || body != "a $x\n" {
+        (mut bad).push("here-document: handle {h} read {escaped(body)}")
+    }
+    end_redirs(mut sh)
+    var still_open = true
+    fs_close(h) else |_| {
+        still_open = false
+    }
+    if fd_get(sh, 0) != 0 || still_open {
+        (mut bad).push(
+            "here-document: after its frame fd 0 is {fd_get(sh, 0)}, handle {h} still open",
+        )
+    }
+    // a duplicate of a closed descriptor fails (the shadow: no message)
+    var q = new_sh("selftest")
+    q.shadow = true
+    var bad_dup = List[Rd]()
+    (mut bad_dup).push(rd(">&", "7", 1))
+    if apply_redirs(mut q, bad_dup) {
+        (mut bad).push("1>&7 with 7 closed was accepted")
+    }
+}
+
+fn want_canon(mut bad: List[str], p: str, want: str) {
+    if canon(p) != want {
+        (mut bad).push("canon({p}) = {canon(p)}, want {want}")
+    }
+}
+
+/// Which typed lines `run_turn_fast` finishes inside the region (and
+/// with what), and which it hands to the ordinary path.
+fn want_route(mut bad: List[str], src: str, nounset: bool, want: int, want_enc: str) {
+    var sh = new_sh("selftest")
+    sh.vals["i"] = "1"
+    sh.opt_u = nounset
+    let r = copy region t {
+        run_turn_fast(sh, src, 1)
+    }
+    if r.kind != want || r.enc != want_enc {
+        (mut bad).push(
+            "route {escaped(src)}: kind {r.kind} enc {escaped(r.enc)}, want {want} {escaped(want_enc)}",
+        )
+    }
+}
+
+/// `name` NUL `value` NUL, as the fast path encodes an assignment.
+fn enc1(name: str, value: str) -> str {
+    var o = buf()
+    put(mut o, name)
+    putb(mut o, 0)
+    put(mut o, value)
+    putb(mut o, 0)
+    text(o)
 }
 
 /// Run every table check; answers one line per check that failed,
@@ -207,5 +320,25 @@ pub fn self_test() -> List[str] {
     want_reads(mut bad, "[a/*", false, 1)
     // `set -f`: nothing is a pattern
     want_reads(mut bad, "*", true, 0)
+    want_frames(mut bad)
+    want_canon(mut bad, "/a/./b/../c", "/a/c")
+    want_canon(mut bad, "/..", "/")
+    want_canon(mut bad, "//usr", "//usr")
+    want_canon(mut bad, "///usr//", "/usr")
+    want_canon(mut bad, "/a/b/../../..", "/")
+    // inside the region: a test, an assignment, output to a file
+    want_route(mut bad, "[ 1 -lt 2 ]\n", false, R_DONE, "")
+    want_route(mut bad, "true\n", false, R_DONE, "")
+    want_route(mut bad, "i=$((i+1))\n", false, R_ASSIGN, enc1("i", "2"))
+    want_route(mut bad, "echo hi >/dev/null\n", false, R_DONE, "")
+    // the ordinary path: anything that writes the state while it runs
+    want_route(mut bad, "x=$(true)\n", false, R_SLOW, "")
+    want_route(mut bad, ": ${{y:=1}}\n", false, R_SLOW, "")
+    want_route(mut bad, "echo $((z=1))\n", false, R_SLOW, "")
+    want_route(mut bad, "cd /\n", false, R_SLOW, "")
+    want_route(mut bad, "read x\n", false, R_SLOW, "")
+    want_route(mut bad, "echo $nope\n", true, R_SLOW, "")
+    want_route(mut bad, "true; true\n", false, R_SLOW, "")
+    want_route(mut bad, "true | true\n", false, R_SLOW, "")
     bad
 }
