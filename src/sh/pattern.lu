@@ -255,7 +255,7 @@ fn has_magic(f: str) -> bool {
         if c == 42 || c == 63 {
             return true
         }
-        if c == 91 && bracket_end(f, i) >= 0 {
+        if c == 91 {
             return true
         }
         i += 1
