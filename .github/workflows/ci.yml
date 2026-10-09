@@ -88,12 +88,14 @@ jobs:
       # pelt#3: a word that is not a pattern (`[`, `a]`, `[a`) reads no
       # directory. End to end: a `[ … ]` loop's peak RSS in a directory
       # of 64 files must match an empty directory's (tools/glob-rss).
+      # It runs even when `wolf test` is red, so the table check's count
+      # and this measurement each report on their own.
       - name: no directory read for a non-pattern word, native tier
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         run: tools/glob-rss target/native/pelt
 
       - name: no directory read for a non-pattern word, release tier
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         run: tools/glob-rss target/release/pelt
 
       - name: the differential corpus, native tier
