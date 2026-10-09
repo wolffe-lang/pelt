@@ -1,0 +1,24 @@
+START=2026-10-09T15:13:40Z
+pelt dfbe7ae990f9fba287fd9a7a92b5bdac0342ed00 (green)
+wolf 0.2.24 (wolfgang, pin 294d626)
+paired with lupin 0.1.47 (reference interpreter), pin 8e36bc1
+check-fmt rc=0
+build: target/native/pelt
+build: target/release/pelt
+build rc=0
+ded2d08fd3d89290de02a6a054bb69bf47913d0e69338e7b9d85eb87b2ebb32e  target/native/pelt
+174e6945b959762732c5a5cd0fb4595061be421d2fb81fb9b757d793ce3f2124  target/release/pelt
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+check-test rc=0
+glob-rss: target/native/pelt n=2000 cwd=    empty  peak_kb    17868  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/native/pelt n=2000 cwd= 64 files  peak_kb    17496  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (17496 KB with 64 files, 17868 KB empty, bound 21702)
+glob-rss native rc=0
+glob-rss: target/release/pelt n=2000 cwd=    empty  peak_kb    17288  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/release/pelt n=2000 cwd= 64 files  peak_kb    17252  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (17252 KB with 64 files, 17288 KB empty, bound 21064)
+glob-rss release rc=0
+difftest native rc=0 difftest: total        257     0    19 (3)
+difftest release rc=0 difftest: total        257     0    19 (3)
+END=2026-10-09T15:13:54Z

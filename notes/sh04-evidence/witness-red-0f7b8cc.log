@@ -1,0 +1,34 @@
+START=2026-10-09T15:11:41Z
+pelt 0f7b8cca9630824bbedcbfafb3a34e0dfe6c1231 (red)
+wolf 0.2.24 (wolfgang, pin 294d626)
+paired with lupin 0.1.47 (reference interpreter), pin 8e36bc1
+wolf fmt --check: src/sh/selftest.lu is not canonically formatted
+check-fmt rc=1
+build: target/native/pelt
+build: target/release/pelt
+build rc=0
+62eca3958a42c1de9c270ec48ec568f54f511babb1fcc1f0bbbc56da990cb2e0  target/native/pelt
+76b4b69fa1af542857a68b6b729c59f59c8e3b7cf49429d90e53d2c882c89448  target/release/pelt
+test ./sh_test.lu::main ... FAILED (trap(assert) [native])
+  stderr: expanding [ listed 1 directories, want 0
+  stderr: expanding [a listed 1 directories, want 0
+  stderr: expanding x[a listed 1 directories, want 0
+  stderr: expanding [a\"]\" listed 1 directories, want 0
+  stderr: expanding [] listed 1 directories, want 0
+  stderr: expanding [!] listed 1 directories, want 0
+  stderr: expanding [a/b] listed 1 directories, want 0
+  stderr: wolf-trap: assert
+  stderr:   at ./sh_test.lu:11:5
+wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out
+check-test rc=1
+glob-rss: target/native/pelt n=2000 cwd=    empty  peak_kb    19108  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/native/pelt n=2000 cwd= 64 files  peak_kb   111388  exit 0  out '2000'  stderr_bytes 0
+glob-rss: FAIL 64 files peaks at 111388 KB against 19108 KB empty (bound 23066): a non-pattern word read the directory
+glob-rss native rc=1
+glob-rss: target/release/pelt n=2000 cwd=    empty  peak_kb    18580  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/release/pelt n=2000 cwd= 64 files  peak_kb   110732  exit 0  out '2000'  stderr_bytes 0
+glob-rss: FAIL 64 files peaks at 110732 KB against 18580 KB empty (bound 22486): a non-pattern word read the directory
+glob-rss release rc=1
+difftest native rc=0 difftest: total        257     0    19 (3)
+difftest release rc=0 difftest: total        257     0    19 (3)
+END=2026-10-09T15:11:47Z

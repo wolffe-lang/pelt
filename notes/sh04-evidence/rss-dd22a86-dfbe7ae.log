@@ -1,0 +1,49 @@
+START=2026-10-09T15:19:19Z
+wolf 0.2.24 (wolfgang, pin 294d626)
+build dd22a86 rc=0
+  dd22a86 native 9861efb3469558ff…
+  dd22a86 release 87fd254955d59a3e…
+build dfbe7ae rc=0
+  dfbe7ae native ded2d08fd3d89290…
+  dfbe7ae release 174e6945b9597627…
+rss cwd=empty dd22a86 native n=20000 median_kb=163488 runs=[ 163336 163488 163580 ] out=20000|
+rss cwd=empty dd22a86 native n=40000 median_kb=323896 runs=[ 324216 323716 323896 ] out=40000|
+rss cwd=empty dd22a86 release n=20000 median_kb=163124 runs=[ 163228 162924 163124 ] out=20000|
+rss cwd=empty dd22a86 release n=40000 median_kb=323468 runs=[ 323468 323592 323420 ] out=40000|
+rss cwd=empty dfbe7ae native n=20000 median_kb=150372 runs=[ 150304 150372 150536 ] out=20000|
+rss cwd=empty dfbe7ae native n=40000 median_kb=297792 runs=[ 297860 297712 297792 ] out=40000|
+rss cwd=empty dfbe7ae release n=20000 median_kb=149896 runs=[ 149920 149896 149680 ] out=20000|
+rss cwd=empty dfbe7ae release n=40000 median_kb=297200 runs=[ 297164 297200 297292 ] out=40000|
+rss cwd=24 dd22a86 native n=20000 median_kb=490256 runs=[ 490256 490492 490148 ] out=20000|
+rss cwd=24 dd22a86 native n=40000 median_kb=976876 runs=[ 976876 976764 977144 ] out=40000|
+rss cwd=24 dd22a86 release n=20000 median_kb=489508 runs=[ 489996 489368 489508 ] out=20000|
+rss cwd=24 dd22a86 release n=40000 median_kb=976716 runs=[ 976912 976716 976520 ] out=40000|
+rss cwd=24 dfbe7ae native n=20000 median_kb=150448 runs=[ 150200 150448 150492 ] out=20000|
+rss cwd=24 dfbe7ae native n=40000 median_kb=297788 runs=[ 297768 297844 297788 ] out=40000|
+rss cwd=24 dfbe7ae release n=20000 median_kb=149844 runs=[ 149844 149828 150012 ] out=20000|
+rss cwd=24 dfbe7ae release n=40000 median_kb=297300 runs=[ 297256 297300 297328 ] out=40000|
+session-rss: /home/mfwolffe/lanes/sh04/rssab/pelt-dd22a86-release -i
+commands      0  rss_kb 2588
+commands    250  rss_kb 4024
+commands    500  rss_kb 5444
+commands    750  rss_kb 6904
+commands   1000  rss_kb 8288
+x = 1000  (0.045 s)
+session-rss dd22a86 rc=0
+session-rss: /home/mfwolffe/lanes/sh04/rssab/pelt-dfbe7ae-release -i
+commands      0  rss_kb 2532
+commands    250  rss_kb 3968
+commands    500  rss_kb 5388
+commands    750  rss_kb 6848
+commands   1000  rss_kb 8232
+x = 1000  (0.060 s)
+session-rss dfbe7ae rc=0
+session-rss: dash -i +m
+commands      0  rss_kb 2680
+commands    250  rss_kb 2748
+commands    500  rss_kb 2748
+commands    750  rss_kb 2748
+commands   1000  rss_kb 2748
+x = 1000  (0.036 s)
+session-rss dash rc=0
+END=2026-10-09T15:20:02Z
