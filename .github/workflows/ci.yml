@@ -38,7 +38,7 @@ jobs:
             builds: true
           - os: macos-latest
             builds: true
-          # wolf 0.2.24 builds NO tier on linux aarch64: `wolf build`
+          # wolf 0.2.24 and 0.2.26 build NO tier on linux aarch64: `wolf build`
           # refuses the native tier ("native codegen targets linux/x86-64,
           # macOS/aarch64, and windows/x86-64 … c13") and the release
           # tier ("the release tier targets linux/x86-64 and
@@ -98,6 +98,19 @@ jobs:
         if: ${{ matrix.builds && !cancelled() }}
         run: tools/glob-rss target/release/pelt
 
+      # wolf-lang#612, sh03: each command's scratch dies with it
+      # (`copy region`), so a loop of commands keeps only what it
+      # assigns. s216's loop at 10,000 and 20,000 turns; the larger may
+      # peak at most 100 bytes a turn (plus 1 MiB) above the smaller
+      # (tools/loop-rss; pelt before sh03 grew 7.4 KB a turn).
+      - name: memory flat over a loop of commands, native tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/loop-rss target/native/pelt
+
+      - name: memory flat over a loop of commands, release tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/loop-rss target/release/pelt
+
       - name: the differential corpus, native tier
         if: matrix.builds
         run: tools/difftest --bin target/native
@@ -113,12 +126,17 @@ jobs:
       # The prompt: sessions typed into pelt through a pseudo-terminal
       # and compared with transcripts tools/session-record wrote from
       # `dash -i +m` (tests/session/, tools/lib_session.py).
+      # A session step that stops making progress is a failure, not a
+      # 45-minute job timeout (trunk's push run 37953346374 hung here on
+      # macOS and was cancelled with no verdict).
       - name: the session corpus, native tier
         if: matrix.builds
+        timeout-minutes: 10
         run: tools/session --bin target/native
 
       - name: the session corpus, release tier
         if: matrix.builds
+        timeout-minutes: 10
         run: tools/session --bin target/release
 
       - name: the session harness sees a difference (the planted red)
