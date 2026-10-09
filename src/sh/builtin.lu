@@ -3,7 +3,7 @@
 //!
 //! References consulted: POSIX.1-2024 XCU 2.15 and the utility pages of
 //! `cd`, `command`, `echo`, `false`, `getopts`, `pwd`, `read`, `test`,
-//! `true`; the `dash(1)` manual for `echo` (dash's echo interprets
+//! `true`, `wait`; the `dash(1)` manual for `echo` (dash's echo interprets
 //! backslash escapes, the XSI form) and `local`; black-box runs of
 //! `dash` 0.5.13.4 for statuses and what each prints. The messages are
 //! pelt's own.
@@ -69,8 +69,7 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
     } else if name == "pwd" {
         st = bi_pwd(mut sh, args)
     } else if name == "cd" {
-        diag(mut sh, "cd: changing directory is not supported yet (no chdir before wolf-lang s215)")
-        st = 2
+        st = bi_cd(mut sh, args)
     } else if name == "command" {
         st = bi_command(mut sh, args)
     } else if name == "read" {
@@ -80,13 +79,19 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
     } else if name == "getopts" {
         st = bi_getopts(mut sh, args)
     } else if name == "wait" {
-        st = 0
+        st = bi_wait(mut sh, args)
     } else if name == "umask" {
         diag(mut sh, "umask: not supported yet (no umask builtin in wolf 0.2.24)")
         st = 2
     } else if name == "alias" || name == "unalias" || name == "type" {
         diag(mut sh, "{name}: not supported yet")
         st = 2
+    }
+    if sh.out.len > 0 && fd_get(sh, 1) == FD_CLOSED {
+        // output to a closed descriptor is a write error (dash: status 1)
+        sh.out = List[byte]()
+        diag(mut sh, "{name}: write error: bad file descriptor")
+        st = 1
     }
     if sh.flow == F_NONE || sh.flow == F_EXIT {
         if sh.flow == F_NONE {
@@ -437,14 +442,15 @@ fn bi_dot(mut sh: Sh, args: List[str]) -> int {
     st
 }
 
-/// `exec` with a command: wolf 0.2.24 cannot replace the process
-/// (wolf-lang#534), so pelt runs it and then exits with its status,
-/// without running the `EXIT` trap, as a real exec would not.
+/// `exec` with a command: wolf cannot replace the process
+/// (wolf-lang#534), so pelt runs it, its redirections applied, and then
+/// exits with its status, without running the `EXIT` trap, as a real
+/// exec would not. `exec` with redirections alone is `sh.exec`'s.
 fn bi_exec(mut sh: Sh, args: List[str]) -> int {
     if args.len == 0 {
         return 0
     }
-    let st = run_external(mut sh, args, List[str](), List[str]())
+    let st = run_external(mut sh, args, List[str](), List[str](), false)
     sh.traps = Map[str, str]()
     sh.status = st
     sh.flow = F_EXIT
@@ -592,7 +598,7 @@ fn bi_command(mut sh: Sh, args: List[str]) -> int {
     if is_special_builtin(name) || is_regular_builtin(name) {
         return builtin(mut sh, rest)
     }
-    run_external(mut sh, rest, List[str](), List[str]())
+    run_external(mut sh, rest, List[str](), List[str](), false)
 }
 
 fn is_reserved(w: str) -> bool {
@@ -871,4 +877,151 @@ fn bi_getopts(mut sh: Sh, args: List[str]) -> int {
     sh.gopt_sub = next_sub
     sh.gopt_ind = next_ind
     0
+}
+
+// ------------------------------------------------------------------ cd
+
+/// The logical path `p` (absolute) with `.` and `..` components removed
+/// textually and runs of `/` folded, as XCU `cd` step 8 does for `-L`.
+/// A leading `//` is kept (implementation-defined; dash keeps it).
+fn canon(p: str) -> str {
+    var parts = List[str]()
+    for c in p.split("/") {
+        if c.len == 0 || c == "." {
+            continue
+        }
+        if c == ".." {
+            let _x = (mut parts).pop() else ""
+            continue
+        }
+        (mut parts).push(c)
+    }
+    var o = buf()
+    if p.len >= 2 && ch(p, 0) == '/' && ch(p, 1) == '/' && (p.len == 2 || ch(p, 2) != '/') {
+        putc(mut o, '/')
+    }
+    if parts.len == 0 {
+        putc(mut o, '/')
+    }
+    for c in parts {
+        putc(mut o, '/')
+        put(mut o, c)
+    }
+    text(o)
+}
+
+/// `cd [-L|-P] [directory]` and `cd -` (XCU `cd`): `CDPATH` searched
+/// for a relative name not starting with `.` or `..`, the new directory
+/// printed when `CDPATH` (a non-empty entry) or `-` chose it, `PWD` and
+/// `OLDPWD` set. Failure is status 2 with a message, as dash, and does
+/// not end the shell.
+fn bi_cd(mut sh: Sh, args: List[str]) -> int {
+    var physical = false
+    var i = 0
+    while i < args.len && args[i].len > 1 && ch(args[i], 0) == '-' {
+        let a = args[i]
+        if a == "--" {
+            i += 1
+            break
+        }
+        if a == "-L" {
+            physical = false
+        } else if a == "-P" {
+            physical = true
+        } else {
+            diag(mut sh, "cd: {a}: no such option")
+            return 2
+        }
+        i += 1
+    }
+    var dir = ""
+    var show = false
+    if i >= args.len {
+        dir = value_of(sh, "HOME")
+        if dir.len == 0 {
+            return 0
+        }
+    } else {
+        dir = args[i]
+        if dir == "-" {
+            dir = value_of(sh, "OLDPWD")
+            if dir.len == 0 {
+                diag(mut sh, "cd: OLDPWD not set")
+                return 2
+            }
+            show = true
+        }
+    }
+    var cur = dir
+    let first = ch(dir, 0)
+    let dotted = dir == "." || dir == ".." || dir.starts_with("./") || dir.starts_with("../")
+    if first != '/' && !dotted {
+        let cdpath = sh.vals["CDPATH"] else ""
+        if cdpath.len > 0 {
+            for entry in cdpath.split(":") {
+                let base = if entry.len == 0 then "." else entry
+                let cand = "{base}/{dir}"
+                if fs_is_dir(cand) {
+                    cur = cand
+                    if entry.len > 0 {
+                        show = true
+                    }
+                    break
+                }
+            }
+        }
+    }
+    let old = value_of(sh, "PWD")
+    var target = cur
+    if !physical {
+        if ch(cur, 0) != '/' {
+            let base = if old.len > 0 && ch(old, 0) == '/' then old else (os_cwd() else "/")
+            target = canon("{base}/{cur}")
+        } else {
+            target = canon(cur)
+        }
+    }
+    os_chdir(target) else |_| {
+        diag(mut sh, "cd: {dir}: cannot change directory: {why_failed()}")
+        return 2
+    }
+    sh.phys = os_cwd() else copy target
+    let now = if physical then sh.phys else target
+    if old.len > 0 {
+        let _o = set_var(mut sh, "OLDPWD", old)
+        sh.exported["OLDPWD"] = true
+    }
+    let _p = set_var(mut sh, "PWD", now)
+    if show {
+        emit(mut sh, "{now}\n")
+    }
+    0
+}
+
+// ---------------------------------------------------------------- wait
+
+/// `wait [job…]` (XCU `wait`): with no operand, wait for every job and
+/// answer 0; otherwise each operand's status, 127 for one pelt does not
+/// know. A job is named by the number `$!` gave (`sh.exec`'s
+/// `run_async`).
+fn bi_wait(mut sh: Sh, args: List[str]) -> int {
+    flush(mut sh)
+    if args.len == 0 {
+        var i = 0
+        while i < sh.jobs.len {
+            let _st = wait_job(mut sh, i)
+            i += 1
+        }
+        return 0
+    }
+    var st = 0
+    for a in args {
+        let id = to_int(a) else -1
+        if id < 1 || id > sh.jobs.len {
+            st = 127
+            continue
+        }
+        st = wait_job(mut sh, id - 1)
+    }
+    st
 }
