@@ -69,8 +69,66 @@ the empty run not below trunk's; any differential verdict moving.
 
 ## 4. Evidence index
 
-(filled in as the work lands)
+Every log named here is committed under `notes/sh04-evidence/`, with its
+sha256. Runs on kasumi (CachyOS linux x86-64, 16 cpus), wolf 0.2.24 /
+lupin 0.1.47 fetched by digest, from a clean clone in `~/lanes/sh04/`.
+
+**The fix** (`dfbe7ae`): `has_magic` answers true for a `[` only when
+`bracket_end` finds its closing `]`; `glob` counts each directory it
+lists in `Sh.dir_reads` (`9952adf`).
+
+**Red, then green, on kasumi:**
+- `witness-red-0f7b8cc.log` `03d4567e39fd9fe4…` — the tests on trunk's
+  matcher: `wolf test` FAILS with 7 words that listed a directory (`[`,
+  `[a`, `x[a`, `[a"]"`, `[]`, `[!]`, `[a/b]`); `tools/glob-rss` FAILS on
+  both tiers (64 files 111,388 / 110,732 KB against 19,108 / 18,580 KB
+  empty); the differential corpus 257/0/19 on both tiers (the 13 new
+  cases pass on trunk, as §3 said). That head was also not `wolf fmt`
+  clean (fixed in `fc293ae`).
+- `witness-green-dfbe7ae.log` `571be5c2a16d350e…` — the fix: fmt clean,
+  `wolf test` ok, `glob-rss` ok on both tiers (17,496 / 17,252 KB with
+  64 files against 17,868 / 17,288 empty), differential 257/0/19 on
+  both tiers.
+
+**Red, then green, in CI** (linux x86-64 and macOS arm64, both tiers;
+linux aarch64 asserts its refusals and is green throughout):
+
+| head | what | run | result |
+|---|---|---|---|
+| `06642ab` | the tests and the CI step, trunk's matcher | 37950114998 | **red** on both hosts at `wolf test` (the same 7 words) and both `glob-rss` steps (linux 110,844 vs 18,492 KB native; macOS 110,976 vs 18,112) |
+| `dfbe7ae` | the fix | 37950830381 | green |
+| `83e8b83` | **PLANT**: any unquoted `[` magic again | 37951506549 | **red** on both hosts, the same three steps |
+| `4a7acca` | the plant reverted (tree identical to `dfbe7ae` over `src tools tests .github`) | 37951656767 | green |
+
+**RSS** (`rss-dd22a86-dfbe7ae.log` `b1c183810b52f7d8…`; s216's method:
+`pelt -c 'i=0; while [ $i -lt N ]; do i=$((i+1)); done; echo $i'`,
+`env -i`, `/usr/bin/time -f %M`, median of 3, KB; trunk `dd22a86` and the
+fix `dfbe7ae` built in the same job):
+
+| directory | tier | trunk 20,000 | fix 20,000 | trunk 40,000 | fix 40,000 |
+|---|---|---|---|---|---|
+| empty | native | 163,488 | 150,372 | 323,896 | 297,792 |
+| empty | release | 163,124 | 149,896 | 323,468 | 297,200 |
+| 24 files | native | 490,256 | 150,448 | 976,876 | 297,788 |
+| 24 files | release | 489,508 | 149,844 | 976,716 | 297,300 |
+
+The directory no longer matters (24 files within 0.05% of empty on
+both tiers); the empty directory's own read is gone too (−13.2 MB at
+20,000, about 0.66 KB a turn). What is left grows 7.4 KB a turn:
+wolf-lang#612's per-command scratch, which s216's `copy region` (on
+wolf-lang trunk, due in 0.2.26, sh03's pin) is for. `tools/session-rss` (no `[` in its
+command) is unmoved, as it should be: 8,288 → 8,232 KB after 1,000
+commands; dash flat at 2,748.
 
 ## 5. Prediction against result
 
-(filled in at the end)
+| prediction | result |
+|---|---|
+| the rule: `*`, `?`, or a `[` that `bracket_end` closes; every `[` tried | as predicted |
+| still glob: `*`, `?`, `x*[`, `[!x]`, `[]]`, `[!]]`, `[a-]`, `["a"]`, `[\a]`, `[[:alpha:]]`, `[[:alpha:]` | as predicted (one read each, `wolf test`) |
+| no longer read: `[`, `]`, the fields of `[ -f x ]`, `[a`, `a]`, `"["a]`, `[a"]"`, `\[a]`, `'['a]`, `[]`, `[!]`, `[a/b]` | none read now; **but only 7 of them read before** — `]`, `a]`, `-f`, `x`, `\[a]`, `'['a]` never did (no unquoted `[`). pelt#3's title says `[` and `]` are globbed; only `[` was |
+| standard output unchanged; new cases green on trunk; the red is the read count and the RSS gap | as predicted: 13 cases green before and after; red at `wolf test` and `glob-rss` |
+| empty 20,000: 135,000–155,000 KB | **149,896** (release), 150,372 (native) |
+| 24 files within 2% of empty | **within 0.05%** (149,844 vs 149,896) |
+| 40,000 about twice 20,000; slope ~7 KB a turn | 297,200 / 149,896 = 1.98; 7.4 KB a turn |
+| no differential verdict moves | 244/0/19 → 257/0/19, the 13 new cases the only change; the 276 verdict lines of trunk's matcher and the fix identical on each tier, and the two tiers identical |
