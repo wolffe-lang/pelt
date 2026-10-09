@@ -589,7 +589,10 @@ fn shadow_of(sh: Sh) -> Sh {
     t.status = sh.status
     t.opt_e = sh.opt_e
     t.opt_u = sh.opt_u
+    t.opt_x = sh.opt_x
     t.opt_f = sh.opt_f
+    t.opt_n = sh.opt_n
+    t.opt_v = sh.opt_v
     t.opt_a = sh.opt_a
     t.opt_bigc = sh.opt_bigc
     t.fds = copy sh.fds

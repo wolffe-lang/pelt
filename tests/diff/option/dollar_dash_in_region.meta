@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+bash=differs
+why=$- read inside the region (sh03): the shadow state copies every option; stderr dropped because pelt does not yet echo a script under set -v (pelt#6)
