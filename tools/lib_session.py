@@ -15,6 +15,10 @@ A session case is a set of files in tests/session/:
                   pelt_args=…   pelt's whole argument list instead, for
                                 cases about how pelt decides to be
                                 interactive (`pelt_args=` is none at all)
+                  oracle_args=… the oracle's whole argument list after
+                                its name, instead of `-i +m` and `args`:
+                                for such a case the oracle must decide
+                                for itself too (`oracle_args=+m`)
                   env=K=V …     extra environment, split on blanks; a
                                 `$HOME` in a value is left for the shell
                   bash=agree|differs  the second opinion (`bash --posix
@@ -81,7 +85,7 @@ def read_meta(path):
 
 
 def write_meta(path, meta):
-    order = ["args", "pelt_args", "env", "bash", "pending", "why"]
+    order = ["args", "pelt_args", "oracle_args", "env", "bash", "pending", "why"]
     keys = [k for k in order if k in meta] + sorted(
         k for k in meta if k not in order)
     with open(path, "w", encoding="utf-8") as fh:
@@ -119,6 +123,8 @@ def argv_for(shell, meta, is_pelt):
         if "pelt_args" in meta:
             return [shell] + meta["pelt_args"].split()
         return [shell, "-i"] + meta.get("args", "").split()
+    if "oracle_args" in meta:
+        return [a for a in shell if a not in ("-i", "+m")] + meta["oracle_args"].split()
     return list(shell) + meta.get("args", "").split()
 
 

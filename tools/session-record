@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_session as ls  # noqa: E402
 
-KEEP = ("args", "pelt_args", "env", "pending", "why")
+KEEP = ("args", "pelt_args", "oracle_args", "env", "pending", "why")
 
 
 def main(argv):
