@@ -80,6 +80,21 @@ fn want_tree(mut bad: List[str], src: str, want: str) {
     }
 }
 
+/// pelt#3: how many directories pathname expansion lists for one
+/// word, as the shell's source spells it. A word that is not a pattern
+/// (XCU: a `[` that opens no bracket expression matches itself) lists
+/// none, whatever the working directory holds.
+fn want_reads(mut bad: List[str], word: str, noglob: bool, want: int) {
+    var sh = new_sh("selftest")
+    sh.opt_f = noglob
+    var words = List[str]()
+    (mut words).push(word)
+    let _fields = expand_words(mut sh, words)
+    if sh.dir_reads != want {
+        (mut bad).push("expanding {escaped(word)} listed {sh.dir_reads} directories, want {want}")
+    }
+}
+
 /// Run every table check; answers one line per check that failed,
 /// empty when all pass.
 pub fn self_test() -> List[str] {
@@ -152,5 +167,17 @@ pub fn self_test() -> List[str] {
         "for i in a; do :; done\n",
         "list ;\n  for i in \"a\"\n    list ;\n      simple word\":\"\n",
     )
+    // not patterns: no directory is read
+    for w in ["[", "]", "-f", "[a", "a]", "x[a", "\"[\"a]", "[a\"]\"", "\\[a]", "'['a]", "[]", "[!]", "[a/b]", "\"*\"", "'?'"] {
+        want_reads(mut bad, w, false, 0)
+    }
+    // patterns: one read each (one magic component in the cwd)
+    for w in ["*", "?", "x*[", "[!x]", "[]]", "[!]]", "[a-]", "[\"a\"]", "[\\a]", "[[:alpha:]]", "[[:alpha:]"] {
+        want_reads(mut bad, w, false, 1)
+    }
+    // `[a/*`: the `[a` component is a literal, only `*` lists `[a/`
+    want_reads(mut bad, "[a/*", false, 1)
+    // `set -f`: nothing is a pattern
+    want_reads(mut bad, "*", true, 0)
     bad
 }
