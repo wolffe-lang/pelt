@@ -1,0 +1,33 @@
+START=2026-10-09T15:06:51Z
+pelt dd22a86caf4911c90e37779ffbb353ad92c808b2
+fetch-toolchain: .wolf-bin/ already holds the pin (x86_64-unknown-linux-gnu)
+fetch rc=0
+wolf 0.2.24 (wolfgang, pin 294d626)
+paired with lupin 0.1.47 (reference interpreter), pin 8e36bc1
+build: target/native/pelt
+build: target/release/pelt
+build rc=0
+9861efb3469558ff279ea6f44e4e4a28218fbbc475d65eae0106e02c03ca3051  target/native/pelt
+87fd254955d59a3e912b0ad8e428c466d1ae4af311f26fd834b0e54345ca93bc  target/release/pelt
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+check-test rc=0
+difftest native rc=0 difftest: total        244     0    19 (3)
+difftest release rc=0 difftest: total        244     0    19 (3)
+rss base cwd=empty native n=20000 median_kb=162840 runs=[ 162840 162712 163336 ] out=20000|
+rss base cwd=empty native n=40000 median_kb=323248 runs=[ 323452 323196 323248 ] out=40000|
+rss base cwd=empty release n=20000 median_kb=162852 runs=[ 162852 162864 162576 ] out=20000|
+rss base cwd=empty release n=40000 median_kb=323128 runs=[ 323252 322840 323128 ] out=40000|
+rss base cwd=24 native n=20000 median_kb=489552 runs=[ 489656 489552 489488 ] out=20000|
+rss base cwd=24 native n=40000 median_kb=977148 runs=[ 976792 977148 977444 ] out=40000|
+rss base cwd=24 release n=20000 median_kb=489608 runs=[ 489608 489484 490044 ] out=20000|
+rss base cwd=24 release n=40000 median_kb=977092 runs=[ 976968 977108 977092 ] out=40000|
+session-rss: target/release/pelt -i
+commands      0  rss_kb 2584
+commands    250  rss_kb 4016
+commands    500  rss_kb 5436
+commands    750  rss_kb 6896
+commands   1000  rss_kb 8280
+x = 1000  (0.021 s)
+session-rss rc=0
+END=2026-10-09T15:07:15Z
