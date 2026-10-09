@@ -1,0 +1,306 @@
+//! sh.redir — redirections (XCU 2.7): opening, duplicating and closing
+//! descriptors, here-documents, and the frames that put them back.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.7 (redirection, each
+//! operator's subsection), 2.7.4 (here-documents), 2.8.1 (the
+//! consequences of a redirection error), the `set -C` (noclobber) text;
+//! black-box runs of `dash` 0.5.13.4 for the status (2) and which
+//! errors end a non-interactive shell (only a special built-in's). No
+//! shell's source.
+//!
+//! **pelt's own table.** A redirection changes `Sh.fds` (`sh.state`),
+//! never the process's descriptors: wolf has no `dup2` for them. A
+//! child sees the table through its spawn map; a built-in writes and
+//! reads through it.
+//!
+//! **Frames.** A command's redirections are applied in a frame that
+//! records, for each descriptor it changes, what that descriptor was,
+//! and which handles it opened; `end_redirs` puts the descriptors back
+//! and closes what it opened unless the table still names it (an `exec`
+//! inside the frame may have copied it). `exec` with no command applies
+//! its list with no frame: the change outlives the command.
+//!
+//! **Here-documents** are fed through a pipe when the body fits one
+//! write that never blocks (4 KiB, under every host's pipe size), and
+//! otherwise through a temporary file opened and unlinked at once.
+
+/// One redirection, read out of the tree so that applying it needs no
+/// claim on the tree.
+struct Rd {
+    op: str,
+    word: str,
+    fd: int,
+    body: str,
+    has_doc: bool,
+    quoted: bool,
+    line: int,
+}
+
+fn rd_of(a: Ast, r: int) -> Rd {
+    let doc = a.nodes[r].ints[1]
+    Rd {
+        op: a.nodes[r].text,
+        word: a.nodes[r].words[0],
+        fd: a.nodes[r].ints[0],
+        body: if doc >= 0 then a.docs[doc] else "",
+        has_doc: doc >= 0,
+        quoted: a.nodes[r].ints[2] == 1,
+        line: a.nodes[r].line,
+    }
+}
+
+fn redirs_of(a: Ast, n: int) -> List[Rd] {
+    var out = List[Rd]()
+    for r in a.nodes[n].redirs {
+        (mut out).push(rd_of(a, r))
+    }
+    out
+}
+
+fn default_fd(op: str) -> int {
+    if op == "<" || op == "<&" || op == "<>" || op == "<<" || op == "<<-" {
+        return 0
+    }
+    1
+}
+
+/// The host's words for the last failed fs call, or a fallback.
+fn why_failed() -> str {
+    let code = os_error()
+    if code == 0 {
+        return "cannot open"
+    }
+    os_error_text(code)
+}
+
+// ---------------------------------------------------- feeding bytes in
+
+/// A read handle that yields `data` and then end of file.
+fn input_from(mut sh: Sh, data: List[byte]) -> int {
+    if data.len <= 4096 {
+        let (r, w) = os_pipe() else |_| { return temp_input(mut sh, data) }
+        if data.len > 0 {
+            fs_write_chunk(w, data) else |_| {}
+        }
+        fs_close(w) else |_| {}
+        return r
+    }
+    temp_input(mut sh, data)
+}
+
+/// `data` in a fresh temporary file, opened for reading and unlinked.
+fn temp_input(mut sh: Sh, data: List[byte]) -> int {
+    let (w, path) = temp_create(sh)
+    if w < 0 {
+        diag(mut sh, "cannot make a temporary file in {temp_dir(sh)}")
+        return FD_CLOSED
+    }
+    if data.len > 0 {
+        fs_write_chunk(w, data) else |_| {}
+    }
+    let r = fs_open(path) else -1
+    fs_remove(path) else |_| {}
+    fs_close(w) else |_| {}
+    if r < 0 {
+        diag(mut sh, "cannot read back a temporary file")
+        return FD_CLOSED
+    }
+    r
+}
+
+fn temp_dir(sh: Sh) -> str {
+    let d = sh.vals["TMPDIR"] else ""
+    if d.len > 0 && fs_is_dir(d) {
+        return d
+    }
+    "/tmp"
+}
+
+/// A new file nobody else has (`fs_open_mode` 4, create-new): its write
+/// handle and path, or (-1, "").
+fn temp_create(sh: Sh) -> (int, str) {
+    let dir = temp_dir(sh)
+    var tries = 0
+    while tries < 16 {
+        var o = buf()
+        put(mut o, dir)
+        put(mut o, "/pelt.")
+        for x in os_random(12) {
+            putb(mut o, 97 + (x & 255) % 26)
+        }
+        let path = text(o)
+        let h = fs_open_mode(path, 4) else -1
+        if h >= 0 {
+            return (h, path)
+        }
+        tries += 1
+    }
+    (-1, "")
+}
+
+/// A here-document's body as the command reads it: expanded (parameter,
+/// command and arithmetic substitution, and the backslash before `$`,
+/// `` ` ``, `\` and a newline) unless any part of the delimiter was
+/// quoted (XCU 2.7.4).
+fn doc_text(mut sh: Sh, rd: Rd) -> str {
+    if rd.quoted {
+        return rd.body
+    }
+    var o = buf()
+    xw(mut sh, rd.body, 0, rd.body.len, X_DQ | X_DOC, mut o)
+    unmark(text(o))
+}
+
+// ------------------------------------------------------------- applying
+
+fn begin_frame(mut sh: Sh) {
+    (mut sh.rs_frames).push(sh.rs_fd.len)
+    (mut sh.rs_oframes).push(sh.rs_open.len)
+}
+
+/// Apply `rds` in a new frame. False when one failed: it has been
+/// reported, the ones before it stay applied, and the caller ends the
+/// frame as usual.
+fn apply_redirs(mut sh: Sh, rds: List[Rd]) -> bool {
+    begin_frame(mut sh)
+    for rd in rds {
+        if !redir_one(mut sh, rd, true) {
+            return false
+        }
+    }
+    true
+}
+
+/// Apply `rds` for good (`exec` with no command).
+fn apply_permanent(mut sh: Sh, rds: List[Rd]) -> bool {
+    for rd in rds {
+        if !redir_one(mut sh, rd, false) {
+            return false
+        }
+    }
+    true
+}
+
+/// Put back what the innermost frame changed and close what it opened
+/// that the table no longer names.
+fn end_redirs(mut sh: Sh) {
+    let start = (mut sh.rs_frames).pop() else 0
+    let ostart = (mut sh.rs_oframes).pop() else 0
+    while sh.rs_fd.len > start {
+        let fd = (mut sh.rs_fd).pop() else 0
+        let was = (mut sh.rs_was).pop() else FD_CLOSED
+        fd_set(mut sh, fd, was)
+    }
+    while sh.rs_open.len > ostart {
+        let h = (mut sh.rs_open).pop() else -1
+        if h >= 3 && !names_handle(sh.fds, h) {
+            fs_close(h) else |_| {}
+        }
+    }
+}
+
+/// Close every handle the frames opened, without putting anything back:
+/// the shadow state's end (`sh.fast`), whose table is a copy.
+fn close_opened(sh: Sh) {
+    for h in sh.rs_open {
+        if h >= 3 {
+            fs_close(h) else |_| {}
+        }
+    }
+}
+
+fn install(mut sh: Sh, fd: int, h: int, framed: bool) {
+    let old = fd_get(sh, fd)
+    if framed {
+        (mut sh.rs_fd).push(fd)
+        (mut sh.rs_was).push(old)
+    }
+    fd_set(mut sh, fd, h)
+    if !framed && old >= 3 && !names_handle(sh.fds, old) && !names_handle(sh.rs_was, old) {
+        fs_close(old) else |_| {}
+    }
+}
+
+fn opened(mut sh: Sh, h: int, framed: bool) {
+    if framed {
+        (mut sh.rs_open).push(h)
+    }
+}
+
+fn redir_one(mut sh: Sh, rd: Rd, framed: bool) -> bool {
+    let fd = if rd.fd >= 0 then rd.fd else default_fd(rd.op)
+    let op = rd.op
+    if op == "<<" || op == "<<-" {
+        let body = doc_text(mut sh, rd)
+        if sh.flow != F_NONE {
+            return false
+        }
+        var data = List[byte]()
+        for x in body.bytes() {
+            (mut data).push(x)
+        }
+        let h = input_from(mut sh, data)
+        if h < 0 {
+            return false
+        }
+        opened(mut sh, h, framed)
+        install(mut sh, fd, h, framed)
+        return true
+    }
+    let target = expand_one(mut sh, rd.word, X_TILDE)
+    if sh.flow != F_NONE {
+        return false
+    }
+    if op == ">&" || op == "<&" {
+        if target == "-" {
+            install(mut sh, fd, FD_CLOSED, framed)
+            return true
+        }
+        if !is_digits(target) {
+            diag(mut sh, "{target}: not a descriptor number")
+            return false
+        }
+        let m = to_int(target) else -1
+        let h = fd_get(sh, m)
+        if h == FD_CLOSED {
+            diag(mut sh, "{m}: bad file descriptor")
+            return false
+        }
+        install(mut sh, fd, h, framed)
+        return true
+    }
+    var h = -1
+    if op == "<" {
+        h = fs_open(target) else -1
+        if h < 0 {
+            diag(mut sh, "cannot open {target}: {why_failed()}")
+            return false
+        }
+    } else if op == "<>" {
+        h = fs_open_mode(target, 3) else -1
+        if h < 0 {
+            diag(mut sh, "cannot open {target}: {why_failed()}")
+            return false
+        }
+    } else if op == ">>" {
+        h = fs_open_mode(target, 2) else -1
+        if h < 0 {
+            diag(mut sh, "cannot create {target}: {why_failed()}")
+            return false
+        }
+    } else {
+        // `>` and `>|`; with `set -C`, `>` refuses an existing regular file
+        if op == ">" && sh.opt_bigc && fs_is_file(target) {
+            diag(mut sh, "cannot create {target}: the file exists (noclobber)")
+            return false
+        }
+        h = fs_open_mode(target, 1) else -1
+        if h < 0 {
+            diag(mut sh, "cannot create {target}: {why_failed()}")
+            return false
+        }
+    }
+    opened(mut sh, h, framed)
+    install(mut sh, fd, h, framed)
+    true
+}
