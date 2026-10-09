@@ -6,19 +6,29 @@
 //! variables), 2.12 (the execution environment), the `set`, `export`,
 //! `readonly` and `trap` pages; black-box runs of `dash` 0.5.13.4.
 //!
-//! **Output.** Everything pelt itself writes to standard output goes
-//! through `out`, a byte buffer flushed in 64 KiB pieces, before any
-//! child runs, before any diagnostic, and at exit — so pelt's bytes and
-//! a child's interleave in program order. A command substitution is a
-//! CAPTURE: it records where in `out` it began, nothing is flushed while
-//! one is open, and its result is cut back out of the buffer.
+//! **Descriptors.** wolf has no `dup2` for a program's own
+//! descriptors, so pelt keeps its own table, `fds`: shell descriptor
+//! `n` is a wolf handle (0..2 the process's standard streams, 3 and up
+//! a handle pelt opened), `FD_CLOSED`, or a capture marker (below).
+//! Everything pelt writes or reads goes through it, and a child gets
+//! the whole table as its descriptor map (`os_spawn_fds`), so a
+//! redirection means the same to a built-in and to a program.
 //!
-//! **Subshells run in-process.** wolf 0.2.24 has no fork, so `( … )`
-//! and `$( … )` copy the environment, run, and put it back (`snap` and
-//! `restore`). What a real subshell would isolate and this does too:
-//! variables, functions, positional parameters, options, traps, the
-//! `local` stack. What it cannot: the working directory (there is no
-//! `chdir` to isolate yet) and the process environment a child sees.
+//! **Output.** Everything pelt itself writes to standard output goes
+//! through `out`, a byte buffer for whatever descriptor 1 is now,
+//! flushed in 64 KiB pieces, before any child runs, before any
+//! diagnostic, before descriptor 1 changes, and at exit — so pelt's
+//! bytes and a child's interleave in program order. A command
+//! substitution is a CAPTURE: descriptor 1 becomes the marker
+//! `cap_mark(level)`, what is flushed there lands in `cap_data` after
+//! the position the capture began at, and its result is cut back out.
+//!
+//! **Subshells run in-process.** wolf has no fork, so `( … )`, `$( … )`
+//! and an in-process pipeline stage copy the environment, run, and put
+//! it back (`snap` and `restore`): variables, functions, positional
+//! parameters, options, traps, the `local` stack, the descriptor table
+//! and the working directory. What it cannot isolate: the process
+//! environment a child sees (wolf-lang#534).
 
 const F_NONE: int = 0
 
@@ -29,6 +39,21 @@ const F_CONTINUE: int = 2
 const F_RETURN: int = 3
 
 const F_EXIT: int = 4
+
+/// A shell descriptor that is not open.
+const FD_CLOSED: int = -1
+
+/// Capture markers are `CAP_BASE - level` (level 1 is the outermost
+/// open capture).
+const CAP_BASE: int = -10
+
+fn cap_mark(level: int) -> int {
+    CAP_BASE - level
+}
+
+fn is_cap(h: int) -> bool {
+    h <= CAP_BASE
+}
 
 struct Sh {
     ast: Ast,
@@ -55,8 +80,52 @@ struct Sh {
     dots: int,
     traps: Map[str, str],
     out: List[byte],
-    out_fd: int,
+    /// The descriptor table: shell descriptor → handle (module doc).
+    fds: List[int],
+    /// Where each open capture began in `cap_data`, and what
+    /// descriptor 1 was before it.
     caps: List[int],
+    cap_was: List[int],
+    cap_data: List[byte],
+    /// Redirection frames: (descriptor, what it was) pairs to put back,
+    /// and the handles the frame opened, each frame's start in `rs_fd`
+    /// and `rs_open`.
+    rs_fd: List[int],
+    rs_was: List[int],
+    rs_open: List[int],
+    rs_frames: List[int],
+    rs_oframes: List[int],
+    /// Asynchronous lists (`&`): a child handle, or -1 for a list pelt
+    /// ran itself; its status once known, or -1.
+    jobs: List[int],
+    job_st: List[int],
+    /// `$!`: the last asynchronous list's job number, or 0 for none.
+    last_bg: int,
+    /// A pipeline stage's external command is started, not waited for
+    /// (`nowait`); its handle lands in `stage_child`, and `stage_w` is
+    /// the pipe its descriptor 1 goes to (the stage's capture level is
+    /// `stage_cap`).
+    nowait: bool,
+    stage_child: int,
+    stage_w: int,
+    stage_cap: int,
+    /// Temporary-file captures of children still running: the read
+    /// handle and the capture level each belongs to.
+    pend_cap: List[int],
+    pend_level: List[int],
+    /// The working directory as `os_cwd` last answered it ("" until
+    /// asked): what a subshell puts back.
+    phys: str,
+    /// A copy of the state that runs a simple command inside
+    /// `copy region` (`sh.fast`): it must not write anything the real
+    /// state keeps, so whatever would (an assignment, a diagnostic, a
+    /// command substitution) sets `bail` and the command is run again
+    /// the ordinary way.
+    shadow: bool,
+    bail: bool,
+    /// End of file seen on descriptor 0 (a terminal's Ctrl-D is one
+    /// zero-byte read; the next read would wait for more typing).
+    eof0: bool,
     name: str,
     line: int,
     cs_status: int,
@@ -76,7 +145,6 @@ struct Sh {
     interactive: bool,
     from_stdin: bool,
     abort: bool,
-    in_fd: int,
     /// Directories pathname expansion has listed: the count the
     /// table checks read (pelt#3: a word that is not a pattern reads
     /// none).
@@ -100,6 +168,8 @@ struct Snap {
     lset: List[bool],
     lexp: List[bool],
     lframes: List[int],
+    fds: List[int],
+    phys: str,
 }
 
 fn new_sh(name: str) -> Sh {
@@ -128,8 +198,28 @@ fn new_sh(name: str) -> Sh {
         dots: 0,
         traps: Map[str, str](),
         out: List[byte](),
-        out_fd: -1,
+        fds: std_fds(),
         caps: List[int](),
+        cap_was: List[int](),
+        cap_data: List[byte](),
+        rs_fd: List[int](),
+        rs_was: List[int](),
+        rs_open: List[int](),
+        rs_frames: List[int](),
+        rs_oframes: List[int](),
+        jobs: List[int](),
+        job_st: List[int](),
+        last_bg: 0,
+        nowait: false,
+        stage_child: -1,
+        stage_w: -1,
+        stage_cap: 0,
+        pend_cap: List[int](),
+        pend_level: List[int](),
+        phys: "",
+        shadow: false,
+        bail: false,
+        eof0: false,
         name: name,
         line: 0,
         cs_status: 0,
@@ -149,9 +239,17 @@ fn new_sh(name: str) -> Sh {
         interactive: false,
         from_stdin: false,
         abort: false,
-        in_fd: -1,
         dir_reads: 0,
     }
+}
+
+/// The table a shell starts with: 0, 1 and 2 its own standard streams.
+fn std_fds() -> List[int] {
+    var f = List[int]()
+    (mut f).push(0)
+    (mut f).push(1)
+    (mut f).push(2)
+    f
 }
 
 fn opts_list(sh: Sh) -> List[bool] {
@@ -185,6 +283,8 @@ fn snap(sh: Sh) -> Snap {
         lset: copy sh.lset,
         lexp: copy sh.lexp,
         lframes: copy sh.lframes,
+        fds: copy sh.fds,
+        phys: sh.phys,
     }
 }
 
@@ -212,12 +312,61 @@ fn restore(mut sh: Sh, s: Snap) {
     sh.lset = copy s.lset
     sh.lexp = copy s.lexp
     sh.lframes = copy s.lframes
+    restore_fds(mut sh, s.fds)
+    if s.phys.len > 0 && s.phys != sh.phys {
+        os_chdir(s.phys) else |_| {}
+        sh.phys = s.phys
+    }
+}
+
+/// Put the descriptor table back to `was`, closing every handle pelt
+/// opened that the table no longer names.
+fn restore_fds(mut sh: Sh, was: List[int]) {
+    flush(mut sh)
+    for h in sh.fds {
+        if h >= 3 && !names_handle(was, h) {
+            fs_close(h) else |_| {}
+        }
+    }
+    sh.fds = copy was
+}
+
+fn names_handle(fds: List[int], h: int) -> bool {
+    for x in fds {
+        if x == h {
+            return true
+        }
+    }
+    false
+}
+
+/// The handle behind shell descriptor `fd`, or `FD_CLOSED`.
+fn fd_get(sh: Sh, fd: int) -> int {
+    if fd < 0 || fd >= sh.fds.len {
+        return FD_CLOSED
+    }
+    sh.fds[fd]
+}
+
+fn fd_set(mut sh: Sh, fd: int, h: int) {
+    if fd == 1 {
+        flush(mut sh)
+    }
+    while sh.fds.len <= fd {
+        (mut sh.fds).push(FD_CLOSED)
+    }
+    sh.fds[fd] = h
 }
 
 // ------------------------------------------------------------ variables
 
 fn has_var(sh: Sh, name: str) -> bool {
-    sh.vals.has(name)
+    // the map's own lookup: `std.map`'s `has` builds a list of the
+    // pairs per call (s216 measured it)
+    let _v = sh.vals[name] else {
+        return false
+    }
+    true
 }
 
 fn value_of(sh: Sh, name: str) -> str {
@@ -235,6 +384,10 @@ fn is_exported(sh: Sh, name: str) -> bool {
 /// Assign, honouring `readonly` and `set -a`. False (and nothing set)
 /// when the variable is read-only; the caller reports it.
 fn set_var(mut sh: Sh, name: str, value: str) -> bool {
+    if sh.shadow {
+        sh.bail = true
+        sh.flow = F_EXIT
+    }
     if is_ronly(sh, name) {
         return false
     }
@@ -246,6 +399,10 @@ fn set_var(mut sh: Sh, name: str, value: str) -> bool {
 }
 
 fn unset_var(mut sh: Sh, name: str) -> bool {
+    if sh.shadow {
+        sh.bail = true
+        sh.flow = F_EXIT
+    }
     if is_ronly(sh, name) {
         return false
     }
@@ -303,7 +460,7 @@ fn emit(mut sh: Sh, s: str) {
     for x in s.bytes() {
         (mut sh.out).push(x)
     }
-    if sh.caps.len == 0 && sh.out.len >= 65536 {
+    if sh.out.len >= 65536 {
         flush(mut sh)
     }
 }
@@ -316,53 +473,93 @@ fn emitb(mut sh: Sh, n: int) {
     (mut sh.out).push(n as byte)
 }
 
-/// Write what is buffered to standard output, unless a capture is open.
+/// Write what is buffered to wherever descriptor 1 now is: a handle, the
+/// open capture, or nowhere (closed).
 fn flush(mut sh: Sh) {
-    if sh.caps.len > 0 || sh.out.len == 0 {
+    if sh.out.len == 0 {
         return
     }
-    if sh.out_fd == -1 {
-        sh.out_fd = fs_open_mode("/dev/stdout", 2) else -2
-    }
-    if sh.out_fd >= 0 {
-        fs_write_chunk(sh.out_fd, sh.out) else |_| {}
-    } else {
-        print_raw(text(Buf { b: copy sh.out }))
+    let h = fd_get(sh, 1)
+    if is_cap(h) {
+        for x in sh.out {
+            (mut sh.cap_data).push(x)
+        }
+    } else if h >= 0 {
+        fs_write_chunk(h, sh.out) else |_| {}
     }
     sh.out = List[byte]()
 }
 
-fn cap_begin(mut sh: Sh) {
-    if sh.caps.len == 0 {
-        flush(mut sh)
+/// Bytes for shell descriptor `fd` other than 1 (a diagnostic, a prompt,
+/// a trace line), after whatever descriptor 1 has pending.
+fn write_fd(mut sh: Sh, fd: int, s: str) {
+    flush(mut sh)
+    let h = fd_get(sh, fd)
+    if is_cap(h) {
+        for x in s.bytes() {
+            (mut sh.cap_data).push(x)
+        }
+        return
     }
-    (mut sh.caps).push(sh.out.len)
+    if h == 2 {
+        eprint_raw(s)
+        return
+    }
+    if h >= 0 {
+        var b = List[byte]()
+        for x in s.bytes() {
+            (mut b).push(x)
+        }
+        fs_write_chunk(h, b) else |_| {}
+    }
+}
+
+/// Open a capture: descriptor 1 becomes its marker until `cap_end`.
+fn cap_begin(mut sh: Sh) {
+    flush(mut sh)
+    (mut sh.caps).push(sh.cap_data.len)
+    (mut sh.cap_was).push(fd_get(sh, 1))
+    fd_set(mut sh, 1, cap_mark(sh.caps.len))
+}
+
+/// Close the innermost capture and answer what it caught, as bytes.
+fn cap_end_bytes(mut sh: Sh) -> List[byte] {
+    flush(mut sh)
+    let start = (mut sh.caps).pop() else 0
+    let was = (mut sh.cap_was).pop() else 1
+    let part = sh.cap_data[start..sh.cap_data.len]
+    sh.cap_data = sh.cap_data[0..start]
+    fd_set(mut sh, 1, was)
+    part
 }
 
 fn cap_end(mut sh: Sh) -> str {
-    let start = (mut sh.caps).pop() else 0
-    let part = sh.out[start..sh.out.len]
-    sh.out = sh.out[0..start]
+    let part = cap_end_bytes(mut sh)
     text(Buf { b: part })
 }
 
-/// A diagnostic: pelt's own words, on standard error, after whatever
-/// standard output is pending.
+/// A diagnostic: pelt's own words, on descriptor 2, after whatever
+/// standard output is pending. In the shadow state (`sh.fast`) nothing
+/// is written: the command is run again the ordinary way, which says it.
 fn diag(mut sh: Sh, msg: str) {
-    flush(mut sh)
+    if sh.shadow {
+        sh.bail = true
+        sh.flow = F_EXIT
+        return
+    }
     if sh.from_stdin {
         // no script to name: the line counts from the session's start
         if sh.line > 0 {
-            eprint("pelt: line {sh.line}: {msg}")
+            write_fd(mut sh, 2, "pelt: line {sh.line}: {msg}\n")
         } else {
-            eprint("pelt: {msg}")
+            write_fd(mut sh, 2, "pelt: {msg}\n")
         }
         return
     }
     if sh.line > 0 {
-        eprint("pelt: {sh.name}: line {sh.line}: {msg}")
+        write_fd(mut sh, 2, "pelt: {sh.name}: line {sh.line}: {msg}\n")
     } else {
-        eprint("pelt: {sh.name}: {msg}")
+        write_fd(mut sh, 2, "pelt: {sh.name}: {msg}\n")
     }
 }
 
