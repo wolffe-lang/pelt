@@ -1016,7 +1016,7 @@ fn expand_words(mut sh: Sh, words: List[str]) -> List[str] {
         }
         for f in split_marked(sh, text(o)) {
             if !sh.opt_f && has_magic(f) {
-                let found = glob(f)
+                let found = glob(mut sh, f)
                 if found.len > 0 {
                     for g in found {
                         (mut out).push(g)
@@ -1061,7 +1061,7 @@ fn join_path(base: str, name: str) -> str {
 
 /// Pathname expansion (XCU 2.6.6) of one marked field: the matching
 /// paths, sorted by byte, or an empty list when nothing matches.
-fn glob(f: str) -> List[str] {
+fn glob(mut sh: Sh, f: str) -> List[str] {
     var comps = List[str]()
     var cur = buf()
     var i = 0
@@ -1120,6 +1120,7 @@ fn glob(f: str) -> List[str] {
             let dot = starts_with_dot(comp)
             for p in paths {
                 let dir = if p.len == 0 then "." else p
+                sh.dir_reads += 1
                 var names = fs_read_dir(dir) else |_| List[str]()
                 if dot {
                     (mut names).push(".")

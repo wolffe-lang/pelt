@@ -77,6 +77,10 @@ struct Sh {
     from_stdin: bool,
     abort: bool,
     in_fd: int,
+    /// Directories pathname expansion has listed: the count the
+    /// table checks read (pelt#3: a word that is not a pattern reads
+    /// none).
+    dir_reads: int,
 }
 
 struct Snap {
@@ -146,6 +150,7 @@ fn new_sh(name: str) -> Sh {
         from_stdin: false,
         abort: false,
         in_fd: -1,
+        dir_reads: 0,
     }
 }
 
