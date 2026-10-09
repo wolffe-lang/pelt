@@ -1,0 +1,4 @@
+mode=stdin
+exit=2
+stderr=yes
+bash=agree
