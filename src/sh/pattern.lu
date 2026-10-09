@@ -232,8 +232,14 @@ fn in_class(name: str, b: int) -> bool {
     false
 }
 
-/// Does a marked string hold an unquoted `*`, `?` or `[` — that is,
-/// is it a pattern rather than a plain word?
+/// Is a marked string a pattern rather than a plain word? It is when
+/// it holds an unquoted `*` or `?`, or an unquoted `[` that opens a
+/// bracket expression: one `bracket_end` can close. A `[` with no
+/// closing `]` (or with a `/` before it) matches itself (XCU, pattern
+/// matching notation), so a word like `[`, `]` or `[a` is not a
+/// pattern and pathname expansion has no directory to read for it
+/// (pelt#3: `[ … ]` listed the working directory on every turn). Each
+/// `[` is tried, so `[[:alpha:]` is a pattern through its second.
 fn has_magic(f: str) -> bool {
     var i = 0
     while i < f.len {
@@ -246,7 +252,10 @@ fn has_magic(f: str) -> bool {
             i += 2
             continue
         }
-        if c == 42 || c == 63 || c == 91 {
+        if c == 42 || c == 63 {
+            return true
+        }
+        if c == 91 && bracket_end(f, i) >= 0 {
             return true
         }
         i += 1
