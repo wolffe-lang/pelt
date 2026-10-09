@@ -1,0 +1,111 @@
+START=2026-10-09T19:51:03Z
+head 0750bf072e28fe3f81af4883b9e4bdf7b52e1fc7
+STEP fetch rc=0
+wolf 0.2.26 (wolfgang, pin 89dc139)
+STEP fmt rc=0
+build: target/native/pelt
+build: target/release/pelt
+STEP build rc=0
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+STEP wolf-test rc=0
+Note: switching to '0750bf072e28fe3f81af4883b9e4bdf7b52e1fc7'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+pin 1d7c8da341e774eeffa243ecbd0bc18379e5e9bc
+STEP pin-build rc=0
+STEP difftest-head-native rc=0 difftest: total        350     0     4 (1)
+STEP difftest-pin-native rc=1 difftest: total        266    84     4 (1) FAIL-lines 84
+STEP session-head-native rc=0 session: pass 71  fail 0  pending 2 (0)
+STEP session-pin-native rc=1 session: pass 52  fail 19  pending 2 (0)
+STEP glob-rss-native rc=0
+loop-rss: target/native/pelt turns=  10000  peak_kb     3688  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/native/pelt turns=  20000  peak_kb     4004  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 316 KB, about 32 B a turn; bound 2000 KB)
+STEP loop-rss-head-native rc=0
+loop-rss: /home/mfwolffe/lanes/sh03/evpin/target/native/pelt turns=  10000  peak_kb    76748  exit 0  out '10000'  stderr_bytes 0
+loop-rss: /home/mfwolffe/lanes/sh03/evpin/target/native/pelt turns=  20000  peak_kb   150288  exit 0  out '20000'  stderr_bytes 0
+loop-rss: FAIL 10000 more turns grew 73540 KB (about 7530 B a turn); the bound is 2000 KB (100 B a turn + 1 MiB)
+STEP loop-rss-pin-native rc=1
+STEP difftest-head-release rc=0 difftest: total        350     0     4 (1)
+STEP difftest-pin-release rc=1 difftest: total        266    84     4 (1) FAIL-lines 84
+STEP session-head-release rc=0 session: pass 71  fail 0  pending 2 (0)
+STEP session-pin-release rc=1 session: pass 52  fail 19  pending 2 (0)
+STEP glob-rss-release rc=0
+loop-rss: target/release/pelt turns=  10000  peak_kb     3056  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/release/pelt turns=  20000  peak_kb     3204  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 148 KB, about 15 B a turn; bound 2000 KB)
+STEP loop-rss-head-release rc=0
+loop-rss: /home/mfwolffe/lanes/sh03/evpin/target/release/pelt turns=  10000  peak_kb    76264  exit 0  out '10000'  stderr_bytes 0
+loop-rss: /home/mfwolffe/lanes/sh03/evpin/target/release/pelt turns=  20000  peak_kb   150020  exit 0  out '20000'  stderr_bytes 0
+loop-rss: FAIL 10000 more turns grew 73756 KB (about 7552 B a turn); the bound is 2000 KB (100 B a turn + 1 MiB)
+STEP loop-rss-pin-release rc=1
+STEP difftest-selftest rc=0
+STEP session-selftest rc=0
+rss cwd=empty pin-native n=20000 median_kb=150360 runs=[ 150360 150368 150288 ] out=20000|
+rss cwd=empty pin-native n=40000 median_kb=297804 runs=[ 297784 297804 297804 ] out=40000|
+rss cwd=empty pin-release n=20000 median_kb=150004 runs=[ 150004 149836 150012 ] out=20000|
+rss cwd=empty pin-release n=40000 median_kb=297300 runs=[ 297268 297300 297352 ] out=40000|
+rss cwd=empty head-native n=20000 median_kb=3864 runs=[ 3900 3736 3864 ] out=20000|
+rss cwd=empty head-native n=40000 median_kb=4364 runs=[ 4524 4240 4364 ] out=40000|
+rss cwd=empty head-release n=20000 median_kb=3352 runs=[ 3372 3200 3352 ] out=20000|
+rss cwd=empty head-release n=40000 median_kb=4028 runs=[ 4028 3756 4040 ] out=40000|
+rss cwd=empty dash n=20000 median_kb=2568 runs=[ 2568 2588 2564 ]
+rss cwd=empty dash n=40000 median_kb=2568 runs=[ 2568 2548 2568 ]
+rss cwd=24 pin-native n=20000 median_kb=150296 runs=[ 150388 150292 150296 ] out=20000|
+rss cwd=24 pin-native n=40000 median_kb=297740 runs=[ 297740 297784 297676 ] out=40000|
+rss cwd=24 pin-release n=20000 median_kb=149880 runs=[ 149844 149972 149880 ] out=20000|
+rss cwd=24 pin-release n=40000 median_kb=297376 runs=[ 297376 297164 297388 ] out=40000|
+rss cwd=24 head-native n=20000 median_kb=4056 runs=[ 4056 4064 3960 ] out=20000|
+rss cwd=24 head-native n=40000 median_kb=4516 runs=[ 4240 4524 4516 ] out=40000|
+rss cwd=24 head-release n=20000 median_kb=3352 runs=[ 3196 3384 3352 ] out=20000|
+rss cwd=24 head-release n=40000 median_kb=4016 runs=[ 4016 3928 4080 ] out=40000|
+rss cwd=24 dash n=20000 median_kb=2584 runs=[ 2584 2548 2648 ]
+rss cwd=24 dash n=40000 median_kb=2608 runs=[ 2608 2668 2564 ]
+session-rss: target/native/pelt -i
+commands      0  rss_kb 3000
+commands   5000  rss_kb 3716
+commands  10000  rss_kb 4108
+commands  15000  rss_kb 4500
+commands  20000  rss_kb 4892
+x = 20000  (0.365 s)
+STEP session-rss-head-native rc=0
+session-rss: target/release/pelt -i
+commands      0  rss_kb 2576
+commands   5000  rss_kb 2980
+commands  10000  rss_kb 3372
+commands  15000  rss_kb 3764
+commands  20000  rss_kb 4156
+x = 20000  (0.278 s)
+STEP session-rss-head-release rc=0
+session-rss: /home/mfwolffe/lanes/sh03/evpin/target/release/pelt -i
+commands      0  rss_kb 2536
+commands   5000  rss_kb 31312
+commands  10000  rss_kb 60036
+commands  15000  rss_kb 87732
+commands  20000  rss_kb 118048
+x = 20000  (0.328 s)
+STEP session-rss-pin-release rc=0
+session-rss: dash -i +m
+commands      0  rss_kb 2684
+commands   5000  rss_kb 2752
+commands  10000  rss_kb 2752
+commands  15000  rss_kb 2752
+commands  20000  rss_kb 2752
+x = 20000  (0.163 s)
+STEP session-rss-dash rc=0
+END=2026-10-09T19:52:55Z

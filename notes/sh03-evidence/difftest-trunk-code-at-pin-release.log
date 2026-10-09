@@ -1,0 +1,623 @@
+difftest: pelt = /home/mfwolffe/lanes/sh03/evpin/target/release/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   arith/assign_ops
+ok   arith/assign_var
+ok   arith/basic
+ok   arith/compare
+ok   arith/divzero
+ok   arith/hex_octal
+ok   arith/illegal_value
+ok   arith/logical
+ok   arith/negative_div
+ok   arith/nested
+ok   arith/overflow
+ok   arith/precedence
+ok   arith/shifts_bits
+ok   arith/short_circuit
+ok   arith/spaces_newlines
+ok   arith/syntax_error
+ok   arith/ternary
+ok   arith/unary
+ok   arith/variables
+ok   builtin/bracket
+ok   builtin/break_n
+ok   builtin/break_outside
+FAIL builtin/cd: stdout, stderr present
+     pelt stdout: b'/tmp/pelt-case.dvvk9uys/w\n'
+     want stdout: b'/\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\n'
+ok   builtin/colon_true_false
+ok   builtin/command_bypass
+ok   builtin/command_v
+ok   builtin/continue_n
+FAIL builtin/dot: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'sourced\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: .: ./lib.sh: not found\n'
+ok   builtin/echo_escapes
+ok   builtin/echo_n
+ok   builtin/eval
+ok   builtin/eval_syntax_error
+ok   builtin/exec
+ok   builtin/exit_code
+ok   builtin/exit_default
+ok   builtin/exit_in_function
+ok   builtin/export_p
+ok   builtin/getopts
+ok   builtin/getopts_bad
+ok   builtin/local
+ok   builtin/printf_b
+ok   builtin/printf_bad_number
+ok   builtin/printf_char_value
+ok   builtin/printf_escapes
+ok   builtin/printf_formats
+ok   builtin/printf_reuse
+ok   builtin/printf_unsigned
+ok   builtin/printf_width_star
+ok   builtin/printf_zero_pad
+ok   builtin/pwd
+ok   builtin/read
+ok   builtin/read_ifs
+ok   builtin/read_raw
+ok   builtin/readonly_error
+ok   builtin/readonly_p
+ok   builtin/return_status
+ok   builtin/return_top
+ok   builtin/set_positional
+ok   builtin/shift
+ok   builtin/shift_error
+ok   builtin/test_errors
+ok   builtin/test_files
+ok   builtin/test_integers
+ok   builtin/test_logic
+ok   builtin/test_string_order
+ok   builtin/test_strings
+FAIL builtin/times: stdout, stderr present
+     pelt stdout: b'2\n'
+     want stdout: b'0\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+ok   builtin/trap_exit
+ok   builtin/trap_exit_status
+ok   builtin/trap_in_exit
+ok   builtin/trap_print
+ok   builtin/trap_reset
+ok   builtin/unset
+ok   builtin/unset_readonly
+FAIL cd/cd_subshell: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b'/tmp/pelt-case.hblxbuyy/w\n'
+     want stdout: b'/\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\n'
+FAIL cd/cdpath: stdout, stderr present
+     pelt stdout: b'2\nw\n'
+     want stdout: b'0\ne\n'
+     pelt stderr: b'pelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\n'
+FAIL cd/cdpath_prints: stdout, stderr present
+     pelt stdout: b'/tmp/pelt-case.d41y6krr/w\n'
+     want stdout: b'//usr\n//usr\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\n'
+FAIL cd/child_sees_it: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'sub\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 3: /bin/pwd: running a program inside a command substitution is not supported yet (pelt H2)\n'
+FAIL cd/dotdot: stdout, stderr present
+     pelt stdout: b'w\nw\n'
+     want stdout: b'a\nb\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 3: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 5: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\n'
+ok   cd/fail
+FAIL cd/home: stdout, stderr present
+     pelt stdout: b'/tmp/pelt-case.huvihdyl/w\n'
+     want stdout: b'/usr\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\n'
+FAIL cd/minus: stdout, stderr present
+     pelt stdout: b'/tmp/pelt-case.mo5l0jee/w\n'
+     want stdout: b'/\n/\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 2: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 3: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\n'
+FAIL cd/oldpwd: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'/\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 2: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\n'
+FAIL cd/relative_file: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'in-t\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\ncat: f: No such file or directory\n'
+FAIL cd/subshell_restores: stdout, stderr present
+     pelt stdout: b'w\n\n/tmp/pelt-case.efxmi0cg/w\nw\n'
+     want stdout: b'w\nw\n/\nw\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 4: /bin/pwd: running a program inside a command substitution is not supported yet (pelt H2)\npelt: ../s.sh: line 6: cd: changing directory is not supported yet (no chdir before wolf'
+FAIL cd/symlink: stdout, stderr present
+     pelt stdout: b'w\nw\nw\n'
+     want stdout: b'link\nreal\nw\n'
+     pelt stderr: b'pelt: ../s.sh: line 3: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 5: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 7: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\n'
+ok   cmdsub/backquote
+ok   cmdsub/basic
+ok   cmdsub/case_inside
+ok   cmdsub/empty
+ok   cmdsub/exit_inside
+FAIL cmdsub/external: stdout, stderr present
+     pelt stdout: b'ext\nrun\n[]\n'
+     want stdout: b'ext\nrun\n[x]\n'
+     pelt stderr: b'pelt: ../s.sh: line 3: /usr/bin/printf: running a program inside a command substitution is not supported yet (pelt H2)\n'
+ok   cmdsub/function
+ok   cmdsub/in_dquotes
+ok   cmdsub/isolation
+ok   cmdsub/nested
+FAIL cmdsub/program_backquote: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'bq\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: /bin/echo: running a program inside a command substitution is not supported yet (pelt H2)\n'
+FAIL cmdsub/program_in_loop: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'30\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: expr: running a program inside a command substitution is not supported yet (pelt H2)\npelt: ../s.sh: line 2: test: -lt: unknown operator\n'
+FAIL cmdsub/program_large: stdout, stderr present
+     pelt stdout: b'\n\n'
+     want stdout: b'2999\n2\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 3: cat: running a program inside a command substitution is not supported yet (pelt H2)\npelt: ../s.sh: line 3: pipelines are not supported yet (pelt H2)\n'
+FAIL cmdsub/program_nested: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'inner\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: /bin/echo: running a program inside a command substitution is not supported yet (pelt H2)\n'
+FAIL cmdsub/program_newlines: stdout, stderr present
+     pelt stdout: b'[]\n'
+     want stdout: b'[a]\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: /usr/bin/printf: running a program inside a command substitution is not supported yet (pelt H2)\n'
+FAIL cmdsub/program_status: stdout, stderr present
+     pelt stdout: b'2\n'
+     want stdout: b'3\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: /bin/sh: running a program inside a command substitution is not supported yet (pelt H2)\n'
+FAIL cmdsub/program_stderr: stdout, stderr present
+     pelt stdout: b'[]\n\n'
+     want stdout: b'[]\n1\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: pipelines are not supported yet (pelt H2)\n'
+ok   cmdsub/status
+ok   cmdsub/trailing_newlines
+ok   control/and_or
+ok   control/async_list
+ok   control/brace_group
+ok   control/case_basic
+ok   control/case_fallthrough
+ok   control/case_multi
+ok   control/case_quoted_pattern
+ok   control/case_status
+ok   control/for_empty
+ok   control/for_in
+ok   control/for_positional
+ok   control/for_var_after
+ok   control/if_elif_else
+ok   control/if_status
+ok   control/loop_status
+ok   control/nested_loops
+ok   control/not
+FAIL control/pipeline: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'a\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+ok   control/subshell
+ok   control/until
+ok   control/while
+ok   control/while_break_value
+ok   func/args
+ok   func/basic
+ok   func/compound_body
+ok   func/global_assign
+ok   func/in_cmdsub
+ok   func/name_shadows_builtin
+ok   func/positional_restore
+ok   func/recursion
+ok   func/redefine
+ok   func/return_in_loop
+ok   func/status_of_def
+ok   func/temp_assign
+FAIL func/unset_f: stdout, stderr present
+     pelt stdout: b'2\n'
+     want stdout: b'127\n'
+     pelt stderr: b'pelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\n'
+ok   glob/bracket
+ok   glob/class
+ok   glob/dirs_only
+ok   glob/edge_a_close
+ok   glob/edge_backslash
+ok   glob/edge_class
+ok   glob/edge_empty
+ok   glob/edge_lone_close
+ok   glob/edge_lone_open
+ok   glob/edge_negate
+ok   glob/edge_open_a
+ok   glob/edge_quoted
+ok   glob/edge_slash
+ok   glob/edge_star_open
+ok   glob/edge_test_cmd
+ok   glob/edge_var
+ok   glob/hidden
+ok   glob/in_for
+ok   glob/no_match
+ok   glob/noglob
+ok   glob/path
+ok   glob/question
+ok   glob/quoted
+ok   glob/sorted
+ok   glob/star
+ok   jobs/background
+FAIL jobs/bang: stdout
+     pelt stdout: b'[unset]\n[]\n'
+     want stdout: b'[unset]\n[set]\n'
+ok   jobs/output
+FAIL jobs/stdin_null: stderr present
+     pelt stdout: b'end\n'
+     want stdout: b'end\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL jobs/two: stdout
+     pelt stdout: b'0\n0\n'
+     want stdout: b'0\n5\n'
+ok   jobs/wait_all
+FAIL jobs/wait_program_status: stdout
+     pelt stdout: b'0\n'
+     want stdout: b'4\n'
+FAIL jobs/wait_subshell_status: stdout
+     pelt stdout: b'0\n'
+     want stdout: b'3\n'
+FAIL jobs/wait_unknown: stdout
+     pelt stdout: b'0\n'
+     want stdout: b'127\n'
+ok   option/allexport
+ok   option/bad_option
+ok   option/dollar_dash
+FAIL option/dollar_dash_in_region: stderr present
+     pelt stdout: b'[v]\n[a]\n[aCf]\n'
+     want stdout: b'[v]\n[a]\n[aCf]\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+ok   option/errexit
+ok   option/errexit_andor
+ok   option/errexit_function
+ok   option/errexit_if
+ok   option/errexit_not
+ok   option/errexit_subshell
+ok   option/errexit_while
+ok   option/noglob
+ok   option/nounset
+ok   option/nounset_positional
+ok   option/set_o
+ok   option/xtrace
+ok   param/alternative
+ok   param/assign
+ok   param/assign_positional_error
+ok   param/at_empty
+ok   param/at_in_word
+ok   param/at_star
+ok   param/bad_substitution
+ok   param/concat
+ok   param/default
+ok   param/default_split
+ok   param/dollar_alone
+ok   param/error_null
+ok   param/error_unset
+ok   param/ifs_star
+ok   param/length
+ok   param/length_all
+ok   param/lineno
+ok   param/nested
+ok   param/positional
+ok   param/simple
+ok   param/status
+ok   param/ten
+ok   param/trim_prefix
+ok   param/trim_quoted
+ok   param/trim_suffix
+ok   param/trim_var_pattern
+ok   param/underscore_names
+ok   param/unset_var
+ok   param/zero
+ok   parse/arith_ok
+ok   parse/bad_funcname
+ok   parse/bang_ok
+ok   parse/case_no_in
+ok   parse/cmdsub_nested_ok
+ok   parse/comments_ok
+ok   parse/compound_ok
+ok   parse/continuation_ok
+ok   parse/done_late
+ok   parse/empty_brace
+ok   parse/fi_unexpected
+ok   parse/for_bad_name
+ok   parse/func_simple_body
+ok   parse/heredoc_ok
+ok   parse/leading_semicolon
+ok   parse/missing_done
+ok   parse/missing_esac
+ok   parse/missing_fi
+ok   parse/missing_then
+ok   parse/newlines_ok
+ok   parse/quotes_ok
+ok   parse/redirect_no_target
+ok   parse/redirs_ok
+ok   parse/simple_ok
+ok   parse/stray_dsemi
+ok   parse/stray_paren
+ok   parse/then_empty
+ok   parse/trailing_andand
+ok   parse/trailing_pipe
+ok   parse/two_heredocs_ok
+ok   parse/unterminated_backquote
+ok   parse/unterminated_cmdsub
+ok   parse/unterminated_dquote
+ok   parse/unterminated_squote
+PEND-ok   pending/pid (waits on getpid)
+PEND-fail pending/signal_status (waits on signal number)
+PEND-fail pending/unset_env (waits on env unset)
+FAIL pipe/builtin_to_program: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'Hi\n2\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 2: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/cd_in_stage: stdout, stderr present
+     pelt stdout: b'/tmp/pelt-case.8u81chdx/w\n'
+     want stdout: b'/\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: cd: changing directory is not supported yet (no chdir before wolf-lang s215)\npelt: ../s.sh: line 2: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/compound_stage: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'n1\nn2\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/exit_in_stage: stdout, stderr present
+     pelt stdout: b'2\n'
+     want stdout: b'3\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/function_stage: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'from f\nagain\nf\n\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 3: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/large_in_process: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'3000\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/many_stages: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'ABc\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/negation: stdout, stderr present
+     pelt stdout: b'2\n2\n'
+     want stdout: b'0\n1\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 3: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/pipeline_status: stdout, stderr present
+     pelt stdout: b'2\n2\n'
+     want stdout: b'0\n1\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 3: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/program_to_builtin: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'y x\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/set_e: stdout, exit 0 (oracle 1), stderr present
+     pelt stdout: b'survived\nnot reached\n'
+     want stdout: b'survived\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 4: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/sigpipe_producer: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'5000\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/stage_is_subshell: stderr present
+     pelt stdout: b'[1]\n1\n'
+     want stdout: b'[1]\n1\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 4: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/status_last: stdout, stderr present
+     pelt stdout: b'2\n2\n2\n'
+     want stdout: b'1\n0\n7\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 3: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 5: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/stderr_through: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'1\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/stdin_through: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'bbb\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+FAIL pipe/three: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'A\nB\nC\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+ok   quote/backslash
+ok   quote/continuation
+ok   quote/dollar_single
+ok   quote/double
+ok   quote/dq_in_param
+ok   quote/empty_args
+ok   quote/mixed
+ok   quote/newline_inside
+ok   quote/single
+ok   quote/special_chars
+ok   quote/tab
+FAIL redir/append: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'a\nb\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\n'
+ok   redir/assign_fail
+ok   redir/bad_fd
+FAIL redir/child_inherits_fd: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'child\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n/bin/sh: line 1: 3: Bad file descriptor\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\n'
+FAIL redir/close_out: stdout
+     pelt stdout: b'st 2\n'
+     want stdout: b'st 1\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/compound_out: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'a\nb\na\nb\nc\n1\n2\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\npelt: ../s.sh: line 5: pipelines are not supported yet (pelt H2)\n'
+FAIL redir/devnull: stdout, stderr present
+     pelt stdout: b'st 2\nst 2\n'
+     want stdout: b'st 0\nst 0\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\n'
+FAIL redir/dup_err_to_out: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'out\nerr\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\n'
+ok   redir/exec_command
+FAIL redir/exec_fd: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'one\ntwo\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 4: redirections are not supported yet (pelt H2)\ncat: f: No such file or dire'
+FAIL redir/exec_in_group: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'kept\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\n'
+FAIL redir/exec_stdout: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b'hidden\nback\n'
+     want stdout: b'back\nhidden\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 4: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\n'
+ok   redir/fail_status
+FAIL redir/func_body: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'in\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\ncat: g: No such file or directory\n'
+FAIL redir/heredoc: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'<a>\n<b /home/pelt>\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/heredoc_expand: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'1 $x "q" \\ \\" c 3 d\nnext line\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\n'
+FAIL redir/heredoc_function: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'in one\nin two\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\n'
+FAIL redir/heredoc_large: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'1500\n1499\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: cat: running a program inside a command substitution is not supported yet (pelt H2)\npelt: ../s.sh: line 4: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 7: redirections are not supported yet (p'
+FAIL redir/heredoc_quoted: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'$x $(nope) \\$x\n$x\n$x\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 5: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 8: redirections are not supported yet (pelt H2)\n'
+FAIL redir/heredoc_read: stdout, stderr present
+     pelt stdout: b'|\n'
+     want stdout: b'two three|one\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/heredoc_strip: stdout, stderr present
+     pelt stdout: b'after\n'
+     want stdout: b'one\ntwo\n  three\nafter\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/heredoc_two: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'a\nb\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/in_file: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'[x]\n[y z]\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\n'
+FAIL redir/noclobber: stdout, exit 1 (oracle 0)
+     pelt stdout: b'st 2\n'
+     want stdout: b'st 2\nc\nd\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 5: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\npelt: ../s.sh: line 8: redirections are not supported yet (pel'
+FAIL redir/order_matters: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'1\n0\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: pipelines are not supported yet (pelt H2)\npelt: ../s.sh: line 2: pipelines are not supported yet (pelt H2)\n'
+FAIL redir/out_trunc: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'b\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\ncat: f: No such file or directory\n'
+FAIL redir/read_fd: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'a b\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 4: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 5: redir'
+FAIL redir/readwrite: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b'\n'
+     want stdout: b'hello\nmade\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 5: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 6: redir'
+FAIL redir/redir_only: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'made\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/redirect_err: stdout, stderr present
+     pelt stdout: b'2\n'
+     want stdout: b'127\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/redirect_out: stdout, stderr present
+     pelt stdout: b'\n'
+     want stdout: b'a\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\n'
+FAIL redir/special_fail_exits: stdout, exit 0 (oracle 2)
+     pelt stdout: b'not reached\n'
+     want stdout: b''
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+FAIL redir/target_expansion: stdout, stderr present
+     pelt stdout: b''
+     want stdout: b'a\nb\n*\nout.2\nout.txt\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 3: redirections are not supported yet (pelt H2)\ncat: out.txt: No such file or directory\ncat: out.2: No such file or directory\npelt: ../s.sh: line 5: redirections are not supported yet (pelt H2)\n'
+FAIL redir/while_in: stdout, stderr present
+     pelt stdout: b'done\n'
+     want stdout: b'n1\nn2\ndone\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\npelt: ../s.sh: line 2: redirections are not supported yet (pelt H2)\n'
+ok   simple/assign_expansion
+ok   simple/assign_only
+ok   simple/assign_status
+FAIL simple/child_stdin: stdout
+     pelt stdout: b''
+     want stdout: b'through\n'
+ok   simple/command_name_from_var
+ok   simple/empty_command
+ok   simple/external
+ok   simple/external_args
+ok   simple/external_env
+ok   simple/not_found
+ok   simple/path_search
+ok   simple/persist_special
+ok   simple/readonly_assign
+ok   simple/slash_not_found
+ok   simple/temp_builtin
+ok   split/cmdsub
+ok   split/colon
+ok   split/default
+ok   split/empty_ifs
+ok   split/empty_unquoted
+ok   split/ifs_digits
+ok   split/joined_word
+ok   split/leading_colon
+ok   split/literal_not_split
+ok   split/mixed_ifs
+ok   split/quoted
+ok   split/unset_ifs
+FAIL stdin/no_prompt: stderr present
+     pelt stdout: b'hi\nthere\n'
+     want stdout: b'hi\nthere\n'
+     pelt stderr: b'$ $ $ \n'
+FAIL stdin/program_takes_rest: stdout, stderr present
+     pelt stdout: b'a\n'
+     want stdout: b'a\nmore text\n'
+     pelt stderr: b'$ $ $ more: cannot open text: No such file or directory\n$ \n'
+FAIL stdin/read_takes_next_line: stderr present
+     pelt stdout: b'[this is data]\n'
+     want stdout: b'[this is data]\n'
+     pelt stderr: b'$ $ $ \n'
+FAIL stdin/syntax_error_ends: stdout, exit 0 (oracle 2)
+     pelt stdout: b'a\nb\n'
+     want stdout: b'a\n'
+     pelt stderr: b"$ $ pelt: line 2: syntax error: unexpected ')'\n$ $ \n"
+ok   tilde/assign
+ok   tilde/home
+FAIL tilde/middle: stdout, stderr present
+     pelt stdout: b'x~y\n'
+     want stdout: b'a~ ~a/\nx~y\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: redirections are not supported yet (pelt H2)\n'
+ok   tilde/unset_home
+PEND-fail tilde/user (waits on user database)
+difftest: area        pass  fail  pending (of which pass)
+difftest: arith         19     0     0 (0)
+difftest: builtin       52     3     0 (0)
+difftest: cd             1    11     0 (0)
+difftest: cmdsub        11     8     0 (0)
+difftest: control       21     1     0 (0)
+difftest: func          12     1     0 (0)
+difftest: glob          25     0     0 (0)
+difftest: jobs           3     6     0 (0)
+difftest: option        15     1     0 (0)
+difftest: param         29     0     0 (0)
+difftest: parse         34     0     0 (0)
+difftest: pending        0     0     3 (1)
+difftest: pipe           0    17     0 (0)
+difftest: quote         11     0     0 (0)
+difftest: redir          4    30     0 (0)
+difftest: simple        14     1     0 (0)
+difftest: split         12     0     0 (0)
+difftest: stdin          0     4     0 (0)
+difftest: tilde          3     1     1 (0)
+difftest: total        266    84     4 (1)

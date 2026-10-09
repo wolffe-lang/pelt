@@ -1,0 +1,131 @@
+session: pelt = /home/mfwolffe/lanes/sh03/ev/target/release/pelt
+ok   arith_assign
+ok   arith_error
+ok   background
+ok   background_status
+ok   cd_cdpath
+ok   cd_fail_continues
+ok   cd_minus
+ok   cd_root
+ok   cd_then_program
+ok   child_stdin
+ok   cmdsub_program
+ok   comment_and_blank
+     (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000001)
+PEND-fail ctrl_c_child (waits on interrupt)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 5"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^C"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt signal 2 at step 2
+       dash step 3 "echo st=$?"
+     ! pelt <none>
+       dash out "st=130\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 4 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+     (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000001)
+PEND-fail ctrl_c_prompt (waits on interrupt)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "^C"
+       pelt err no
+       pelt prompt ""
+     ! pelt signal 2 at step 1
+       dash step 2 ""
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 3 "echo alive"
+     ! pelt <none>
+       dash out "alive\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 4 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+ok   dash_s_args
+ok   default_interactive
+ok   dollar_dash
+ok   echo_hi
+ok   env_file
+ok   env_missing
+ok   eof_at_once
+ok   eof_in_if
+ok   eof_in_if_trap
+ok   eof_last_status
+ok   exit_in_function
+ok   exit_last_status
+ok   exit_n
+ok   expansion_error
+ok   externals
+ok   for_loop
+ok   func_define_call
+ok   heredoc
+ok   long_session
+ok   ls_dir
+ok   not_found_continues
+ok   pipe
+ok   pipe_builtin_stage
+ok   pipe_status
+ok   pipe_three
+ok   ps1_arith_cmdsub
+ok   ps1_param
+ok   ps1_status
+ok   ps1_unchanged_status
+ok   ps2_andor
+ok   ps2_backslash
+ok   ps2_brace_func
+ok   ps2_case
+ok   ps2_cmdsub
+ok   ps2_custom
+ok   ps2_double_quote
+ok   ps2_if
+ok   ps2_single_quote
+ok   ps2_while
+ok   pwd_is_cwd
+ok   read_at_eof
+ok   read_builtin
+ok   readonly_assign
+ok   redirect_append
+ok   redirect_exec_fd
+ok   redirect_file
+ok   redirect_heredoc_quoted
+ok   redirect_read
+ok   redirect_stderr
+ok   return_top
+ok   set_e_exits
+ok   set_u_error
+ok   set_v_echo
+ok   special_builtin_error
+ok   subshell_error
+ok   syntax_error_continues
+ok   syntax_error_midline
+ok   trap_exit_eof
+ok   trap_exit_exit
+session: pass 71  fail 0  pending 2 (0)

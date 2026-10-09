@@ -1,0 +1,59 @@
+START=2026-10-09T19:00:20Z
+head 1d7c8da341e774eeffa243ecbd0bc18379e5e9bc branch sh03
+fetch-toolchain: /home/mfwolffe/lanes/sh03/archives/wolf-0.2.26-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 05acdc5ea2f261f67cf48f4a174cff780a8c765e5f447354e1712d488e5a8064 OK
+fetch-toolchain: /home/mfwolffe/lanes/sh03/archives/lupin-0.1.49-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 84911a353a03878c630762896ca2a19c2e2e20bf1a774d3f13858c99c9f56d6d OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at 2f389a7f60a88452063c26aea7b8dad55472982e
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+fetch rc=0
+wolf 0.2.26 (wolfgang, pin 89dc139)
+paired with lupin 0.1.49 (reference interpreter), pin 294d626
+lupin 0.1.49 (wolf-interp, reference interpreter at pin 294d626)
+fmt rc=0
+build: target/native/pelt
+build: target/release/pelt
+build rc=0
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+test rc=0
+difftest native rc=0 difftest: total        257     0    19 (3)
+PEND-ok   control/async_list (waits on background jobs)
+PEND-ok   pending/background (waits on background jobs)
+PEND-ok   pending/pid (waits on getpid)
+difftest release rc=0 difftest: total        257     0    19 (3)
+PEND-ok   control/async_list (waits on background jobs)
+PEND-ok   pending/background (waits on background jobs)
+PEND-ok   pending/pid (waits on getpid)
+session native rc=0 session: pass 51  fail 0  pending 8 (1)
+session release rc=0 session: pass 51  fail 0  pending 8 (1)
+glob-rss: target/native/pelt n=2000 cwd=    empty  peak_kb    17688  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/native/pelt n=2000 cwd= 64 files  peak_kb    17552  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (17552 KB with 64 files, 17688 KB empty, bound 21504)
+glob-rss native rc=0
+glob-rss: target/release/pelt n=2000 cwd=    empty  peak_kb    17288  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/release/pelt n=2000 cwd= 64 files  peak_kb    17284  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (17284 KB with 64 files, 17288 KB empty, bound 21064)
+glob-rss release rc=0
+old head 1c1d0f7d9bdaf1c72e3e856d65c64b5582b56c0a
+fetch-toolchain: https://github.com/wolffe-lang/wolf-lang/releases/download/v0.2.24/wolf-0.2.24-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 501d6d3f45124c84708b410dac62af5d358d24c1746323f17d42378b043519c7 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-interp/releases/download/v0.1.47/lupin-0.1.47-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 0ddc4ff38d6178ae9f0fe0f007546f6e304216e5ad999b2509d2817a57912788 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at 2f389a7f60a88452063c26aea7b8dad55472982e
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+old fetch rc=0
+build: target/native/pelt
+build: target/release/pelt
+old build rc=0
+strip native: 0.2.24 2a0d0a36d1199227… 0.2.26 8ce05ace467f1070… DIFFER
+strip release: 0.2.24 53ed7cb489e72633… 0.2.26 0cce9d03ee53e6b9… DIFFER
+rss old-native n=20000 median_kb=150084 runs=[ 150084 150016 150200 ] out=20000|
+rss old-native n=40000 median_kb=297556 runs=[ 297500 297592 297556 ] out=40000|
+rss old-release n=20000 median_kb=149920 runs=[ 149920 150096 149916 ] out=20000|
+rss old-release n=40000 median_kb=297388 runs=[ 297148 297424 297388 ] out=40000|
+rss pelt-native n=20000 median_kb=150300 runs=[ 150228 150348 150300 ] out=20000|
+rss pelt-native n=40000 median_kb=297504 runs=[ 297504 297368 297772 ] out=40000|
+rss pelt-release n=20000 median_kb=150052 runs=[ 150052 150100 149924 ] out=20000|
+rss pelt-release n=40000 median_kb=297292 runs=[ 297224 297292 297408 ] out=40000|
+END=2026-10-09T19:01:38Z
