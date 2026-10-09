@@ -10,10 +10,14 @@ A case is three files in tests/diff/<area>/:
                  stderr=yes|no   whether the oracle wrote to standard error
                                  (compared by presence only: pelt's
                                  messages are its own)
-                 mode=script|parse
+                 mode=script|parse|stdin
                                  script (default): `SHELL ../s.sh ARGS`
                                  parse: `SHELL -n ../s.sh`, and `line=N`
                                  is the line the oracle refused at
+                                 stdin: `SHELL` with no operand and the
+                                 script on standard input (a pipe): the
+                                 shell must not take itself for
+                                 interactive (XCU `sh`)
                  line=N          parse rows only
                  args=a b c      optional operands, split on blanks
                  stdin=TEXT      optional standard input (\\n for newline)
@@ -95,12 +99,14 @@ def run(shell, script, meta, timeout=10):
         w = os.path.join(holder, "w")
         os.mkdir(w)
         argv = list(shell)
+        data = None
         if meta.get("mode") == "parse":
             argv += ["-n", "../s.sh"]
+        elif meta.get("mode") == "stdin":
+            data = open(script, "rb").read()
         else:
             argv += ["../s.sh"] + meta.get("args", "").split()
-        data = None
-        if "stdin" in meta:
+        if "stdin" in meta and meta.get("mode") != "stdin":
             data = meta["stdin"].replace("\\n", "\n").encode()
         try:
             p = subprocess.run(argv, cwd=w, env=dict(ENV), input=data,
