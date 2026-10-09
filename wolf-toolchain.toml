@@ -29,8 +29,12 @@
 # kasumi for all six archives. 0.2.26 is the release that carries
 # s215's descriptor builtins (os_spawn_fds, os_pipe, os_chdir,
 # os_isatty), s200's bytes on descriptors 0..2 and s216's
-# `copy region`: pelt H2. The std tree stays at 2f389a7: pelt imports
-# no std module, so its pin is inert here.
+# `copy region`: pelt H2. The std tree stays at 2f389a7, which builds
+# pelt clean at 0.2.26. It is NOT inert, whatever the first pin's note
+# below says: pelt imports no std module by name, but `Map.keys` and
+# `Map.has` resolve to `std.map` ([type.method.root]), so without the
+# tree the build is E0301 (sh03 measured it). wolf-std's own 0.2.26
+# bump (sc57) is in flight.
 
 [wolf]
 version = "0.2.26"
