@@ -33,6 +33,15 @@ the man pages, and black-box runs of `dash` and `bash --posix`. No
 | oracle | dash 0.5.13.4, bash 5.3.20 on kasumi | `pacman -Q`: `dash 0.5.13.4-1.1`, `bash 5.3.20-2`; `tests/diff/ORACLE` names both | none |
 | kasumi | disk tight | `/home` 887 G used of 928 G, 38 G free (96%) at 14:45Z | builds use `CARGO_INCREMENTAL=0`, one target dir, pruned |
 
+**Correction to this section, found after the prediction commit:** the
+std row above (and §3.1's "pelt imports no std module, so the pin is
+inert", and sh01's note in `wolf-toolchain.toml`) is wrong. pelt imports
+no std module by name, but `Map.keys` and `Map.has` resolve to
+`std.map` (`[type.method.root]`): built without the std tree, pelt is
+E0301 at eight sites (`builtin.lu`, `exec.lu`, `state.lu`). The tree is
+part of the build; `2f389a7` builds pelt clean at 0.2.26, so the pin
+stays, and the toolchain note now says so.
+
 ## 3. Prediction (committed before either archive is unpacked)
 
 ### 3.1 The pin alone (0.2.24 / 0.1.47 → 0.2.26 / 0.1.49), before any pelt change
@@ -177,3 +186,100 @@ question"). What remains is named in §5 with what it would take.
 - `wolf test` gains table checks for the descriptor table (which
   handles a redirection list opens, saves and restores) and the
   side-effect test that routes a command to the region path.
+
+## 4. Evidence index
+
+Logs committed under `notes/sh03-evidence/`, with sha256. kasumi
+(CachyOS linux x86-64, 16 cpus), toolchain from the archives by digest;
+difftest under `taskset -c 0-3`; the pelt harnesses have no SKIP: a case
+passes, fails, or is PENDING and counted.
+
+**The prediction** is `36262e1`; **the pin**, its own commit, is
+`1d7c8da` (the six archives re-hashed after download, §2).
+
+**The pin alone**, before any code (`pin-alone-1d7c8da.log`
+`f3230e7bd86f962b…`): fmt clean, both tiers build under
+`--deny-warnings`, `wolf test` ok, difftest `257 0 19 (3)` and session
+`51 0 8 (1)` on both tiers, `glob-rss` ok; stripped binaries differ from
+0.2.24's (native `2a0d0a36…` → `8ce05ace…`, release `53ed7cb4…` →
+`0cce9d03…`); s216's loop at 20,000 turns 149,920 → 150,052 KB
+(release).
+
+**Red first, locally**: trunk's code at the pin (`1d7c8da`) against the
+head's corpus (`head-0750bf0.log` `47de25b2a3b22fac…`): difftest
+`266 84 4` on both tiers (`difftest-trunk-code-at-pin-release.log`
+`d2443822591b21ec…`, the 84 FAIL lines), session `52 19 2`
+(`session-trunk-code-at-pin-release.log` `5d705b868358c0bb…`),
+`loop-rss` FAIL on both tiers. Nine of the 93 new or cleared cases
+already passed on trunk's code and do not discriminate — `cd/fail`,
+`jobs/background`, `jobs/output`, `jobs/wait_all`, `redir/assign_fail`,
+`redir/bad_fd`, `redir/exec_command`, `redir/fail_status` and
+`control/async_list` (a refusal and dash's error share status 2, or `&`
+ran in the foreground). The first `stdin/no_prompt` and
+`stdin/syntax_error_ends` also passed on trunk; `fa5e8d3` replaced them
+with forms a prompting shell fails.
+
+**Green at the head** (`0750bf0`, `head-0750bf0.log`): fmt, build,
+`wolf test` (with the new frame, `canon` and routing checks),
+`glob-rss`, difftest `350 0 4 (1)` on both tiers
+(`difftest-head-0750bf0-release.log` `433c972e1ee7e1d1…`), session
+`71 0 2 (0)` on both (`session-head-0750bf0-release.log`
+`efea0b25c4b25642…`), both selftests, `loop-rss` on both tiers.
+
+**In CI** (linux x86-64 and macOS arm64, both tiers; linux aarch64
+asserts both refusals, still true at 0.2.26):
+
+| head | what | run | result |
+|---|---|---|---|
+| `0522da2` | the tests and tools, trunk's code at the pin | 37980439931 | **red** on both hosts at the native differential corpus (`266 68 19`: the 15 cleared cases still marked pending there); aarch64 green |
+| `fa5e8d3` | the code | 37981706495 | green on all three |
+| `a3fff13` | **PLANT**: `fast_ok` answers false (no simple command inside the region) | 37981880137 | **red** at exactly the four `loop-rss` steps (both hosts, both tiers: 58,612–58,912 KB over 10,000 more turns, about 6 KB a turn); every other step green |
+| `b3d7204` | the plant reverted (tree identical to `fa5e8d3`) | 37981964176 | green on all three: difftest `349 0 4` and session `71 0 2` on both hosts and tiers, `loop-rss` 316–368 KB over 10,000 more turns |
+| `0750bf0` | `$-` in the region, the std note, PENDING | 37983032044 | green on all three |
+
+**Memory** (`head-0750bf0.log`; s216's method: `env -i`,
+`/usr/bin/time -f %M`, median of 3, KB):
+
+| loop | tier | pin 20,000 | head 20,000 | pin 40,000 | head 40,000 |
+|---|---|---|---|---|---|
+| empty dir | native | 150,360 | 3,864 | 297,804 | 4,364 |
+| empty dir | release | 150,004 | 3,352 | 297,300 | 4,028 |
+| 24 files | native | 150,296 | 4,056 | 297,740 | 4,516 |
+| 24 files | release | 149,880 | 3,352 | 297,376 | 4,016 |
+| empty dir | dash | 2,568 | | 2,568 | |
+| 24 files | dash | 2,584 | | 2,608 | |
+
+At the prompt (`tools/session-rss -n 20000`, `x=$((x+1))` typed 20,000
+times): head release 2,576 → 4,156 KB (79 B a command), native 3,000 →
+4,892; the pin's code 2,536 → 118,048 KB (5.8 KB a command); dash 2,684
+→ 2,752.
+
+## 5. Prediction against result
+
+| prediction | result |
+|---|---|
+| the six archives at the API's digests | as predicted |
+| the pin alone: fmt clean, builds, `wolf test` ok, no verdict moves (257/0/19, 51/0/8), aarch64 refusals unchanged | as predicted |
+| every binary moves, stripped too | as predicted |
+| s216's loop moves < 5% at the pin | +0.1% (149,920 → 150,052 KB) |
+| the std pin inert | **wrong**: pelt reaches `std.map` through methods (§2's correction) |
+| the 15 s215 cases pass on both tiers; 272/0/4 before new cases | as predicted; with 78 new cases 350/0/4 |
+| the four left: `signal_status`, `unset_env`, `pid` (PEND-ok on linux), `tilde/user` | as predicted |
+| the six session cases pass: 57/0/2 | as predicted; with 14 new, 71/0/2 |
+| the design: own descriptor table, pipelines left to right with in-process stages run to the end, here-documents through a pipe or an unlinked file, `&` spawns, `$!` a job number, `cd` with `CDPATH`, isatty, input from descriptor 0 | as predicted. **Not predicted:** `default_interactive` had been recorded from `dash -i`, which forces a prompt; with standard error a pipe, dash without `-i` does not prompt (black-box), so the case is now recorded from `dash +m` (`oracle_args`) |
+| loop, 20,000 turns: ≤ 10,000 KB | 3,352 KB release, 3,864 native |
+| loop, 40,000 − 20,000: ≤ 2,000 KB | 676 KB release (34 B a turn), 500 native (25 B) |
+| 24 files within 2% above empty | release 0.0%; **native +5.0%** here (4,056 vs 3,864), −0.8% in the run before (`b3d7204`); repeats of one binary spread ±4%, so the 2% bound was tighter than the measurement, and no directory is read in this loop |
+| at the prompt, 20,000 commands: ≤ 25,000 KB, **not flat** (the parse tree kept) | 4,156 KB release: **better than predicted**. A typed simple command is parsed and run inside the region (`run_turn_fast`), so its tree is not kept; the prompt and the line read run in regions too. What still grows (79 B a command) is the kept line, the superseded value of `x`, and their copies out |
+| `loop-rss` planted red in CI, green after | §4's table |
+
+**What is left, named.** A command that is not a simple command the fast
+path can finish (a function call, a pipeline, a compound command, a
+command substitution, most built-ins) runs the ordinary way and keeps
+its scratch, and a compound command typed at the prompt keeps its parse
+tree: the state's own garbage, which `[mem.region.copyout]` calls a
+separate question. `$!` is a job number and a background child is
+reaped only by `wait` (s219, wolf-lang PR #636, brings a child's pid,
+`-N` statuses and a CHILD poll). An in-process pipeline stage runs to
+the end before the next starts (no fork). `set -v` echoes nothing for a
+script (pelt#6, found here, not an H2 gap).
