@@ -1,10 +1,10 @@
 step 0
 err no
-prompt "$ "
+prompt ""
 step 1 "echo hi"
 out "hi\n"
 err no
-prompt "$ "
+prompt ""
 step 2 "exit 5"
 err no
 prompt ""

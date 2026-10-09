@@ -1,2 +1,4 @@
 pelt_args=
+oracle_args=+m
 bash=agree
+why=no operands, standard input a terminal, standard error a pipe: not interactive (XCU sh: both must be terminals); recorded from `dash +m`, which decides the same way, since sh03 (it was `dash -i +m`, which forces a prompt)
