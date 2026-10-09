@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""loop-rss — does a shell's memory stay flat over a loop of commands?
+
+Runs `i=0; while [ $i -lt N ]; do i=$((i+1)); done; echo $i` (s216's
+loop, two simple commands a turn) under SHELL at N and at 2N, each in a
+child process of its own, and reads each run's peak resident set
+(`/usr/bin/time`'s maximum resident set size). A shell that frees each command's scratch
+grows only by what it keeps — here the superseded values of `i` — so
+the second run peaks at most `BOUND_B` bytes a turn above the first,
+plus a fixed slack for the allocator's steps. A shell that keeps its
+scratch grows by kilobytes a turn (pelt before sh03: 7.4 KB, wolf-lang
+#612).
+
+usage: tools/loop-rss [-n N] [-b BOUND_B] SHELL
+Exits 1 when the 2N run exceeds the N run by more than
+N * BOUND_B bytes + 1 MiB, or when either run answers anything but its
+N.
+"""
+
+import os
+import subprocess
+import sys
+import tempfile
+
+
+def measure(shell, n):
+    """Peak RSS in KB of one run, as `/usr/bin/time` reports its child.
+    Not `getrusage` from Python: a child forked from Python starts with
+    Python's resident pages counted (about 12 MB), which would hide any
+    growth below that floor."""
+    script = f"i=0; while [ $i -lt {n} ]; do i=$((i+1)); done; echo $i"
+    env = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+    with tempfile.TemporaryDirectory(prefix="loop-rss.") as cwd:
+        if sys.platform == "darwin":
+            r = subprocess.run(["/usr/bin/time", "-l", shell, "-c", script], cwd=cwd,
+                               env=env, capture_output=True, text=True)
+            kb = -1
+            for line in r.stderr.splitlines():
+                if line.strip().endswith("maximum resident set size"):
+                    kb = int(line.split()[0]) // 1024
+            nerr = len([ln for ln in r.stderr.splitlines()
+                        if ln and not ln.startswith(" ") and "real" not in ln])
+        else:
+            out = os.path.join(cwd, "time.out")
+            r = subprocess.run(["/usr/bin/time", "-f", "%M", "-o", out, shell, "-c", script],
+                               cwd=cwd, env=env, capture_output=True, text=True)
+            kb = int(open(out).read().strip().splitlines()[-1])
+            nerr = len(r.stderr)
+    return kb, r.returncode, r.stdout.strip(), nerr
+
+
+def main(argv):
+    n = 10000
+    bound_b = 100
+    while argv[:1] in (["-n"], ["-b"]):
+        if argv[0] == "-n":
+            n = int(argv[1])
+        else:
+            bound_b = int(argv[1])
+        argv = argv[2:]
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    shell = os.path.abspath(argv[0])
+    ok = True
+    rows = []
+    for size in (n, 2 * n):
+        kb, rc, out, nerr = measure(shell, size)
+        rows.append(kb)
+        print(f"loop-rss: {argv[0]} turns={size:>7}  peak_kb {kb:8}  exit {rc}  "
+              f"out {out!r}  stderr_bytes {nerr}")
+        if rc != 0 or out != str(size):
+            print(f"loop-rss: FAIL the run of {size} turns answered {out!r} (exit {rc})")
+            ok = False
+    grew = rows[1] - rows[0]
+    limit = n * bound_b // 1024 + 1024
+    per_turn = grew * 1024 // n
+    if grew > limit:
+        print(f"loop-rss: FAIL {n} more turns grew {grew} KB (about {per_turn} B a "
+              f"turn); the bound is {limit} KB ({bound_b} B a turn + 1 MiB)")
+        ok = False
+    else:
+        print(f"loop-rss: ok ({n} more turns grew {grew} KB, about {per_turn} B a "
+              f"turn; bound {limit} KB)")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
