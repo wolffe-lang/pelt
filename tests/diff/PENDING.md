@@ -9,9 +9,19 @@ makes it pass.
 
 | primitive pelt waits on | where it comes from | cases |
 |---|---|---|
-| **signal number** — `128+N` for a child killed by signal N | wolf-lang#534 (`os_wait`'s `signal` row carries no number: pelt answers 128) | `pending/signal_status` |
+| **signal number** — `128+N` for a child killed by signal N | wolf-lang#534 (`os_wait`'s `signal` row carries no number: pelt answers 128); s219's `os_wait_status` (wolf-lang PR #636, unreleased) answers `-N` | `pending/signal_status` |
 | **env unset** — removing a variable from the environment a child receives | wolf-lang#534 (no environment unset or clear: `unset HOME` still reaches `/usr/bin/env`) | `pending/unset_env` |
 | **getpid** — `$$` on every host | wolf-lang#141 (pelt reads `/proc/self/stat` on linux; macOS has no `/proc`) | `pending/pid` |
+
+**No case, named:** `$!` is pelt's job number, not a process id: the
+handle `os_spawn_fds` answers is a table index (wolf-lang#141 covers the
+process's own pid, not a child's), so `wait $!` works and `kill $!`
+would signal the wrong process. s219's `os_proc_pid` (wolf-lang PR #636,
+unreleased) is the way to a real one; reaping a background child
+without waiting for it needs its CHILD meaning and poll. And with no
+fork, a pipeline stage pelt runs itself runs to the end before the next
+starts, so an endless in-process producer (`while :; do echo y; done |
+head -1`) does not end as it does under dash.
 | **user database** — `~login` | no `getpwnam` surface in wolf 0.2.26; not filed until a lane needs it beyond this case | `tilde/user` |
 
 **Cleared by sh03 (H2, wolf 0.2.26):** the fifteen cases that waited on
