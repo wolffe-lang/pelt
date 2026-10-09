@@ -168,11 +168,39 @@ pub fn self_test() -> List[str] {
         "list ;\n  for i in \"a\"\n    list ;\n      simple word\":\"\n",
     )
     // not patterns: no directory is read
-    for w in ["[", "]", "-f", "[a", "a]", "x[a", "\"[\"a]", "[a\"]\"", "\\[a]", "'['a]", "[]", "[!]", "[a/b]", "\"*\"", "'?'"] {
+    for w in [
+        "[",
+        "]",
+        "-f",
+        "[a",
+        "a]",
+        "x[a",
+        "\"[\"a]",
+        "[a\"]\"",
+        "\\[a]",
+        "'['a]",
+        "[]",
+        "[!]",
+        "[a/b]",
+        "\"*\"",
+        "'?'",
+    ] {
         want_reads(mut bad, w, false, 0)
     }
     // patterns: one read each (one magic component in the cwd)
-    for w in ["*", "?", "x*[", "[!x]", "[]]", "[!]]", "[a-]", "[\"a\"]", "[\\a]", "[[:alpha:]]", "[[:alpha:]"] {
+    for w in [
+        "*",
+        "?",
+        "x*[",
+        "[!x]",
+        "[]]",
+        "[!]]",
+        "[a-]",
+        "[\"a\"]",
+        "[\\a]",
+        "[[:alpha:]]",
+        "[[:alpha:]",
+    ] {
         want_reads(mut bad, w, false, 1)
     }
     // `[a/*`: the `[a` component is a literal, only `*` lists `[a/`
