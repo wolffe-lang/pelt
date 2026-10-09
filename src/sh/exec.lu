@@ -560,7 +560,8 @@ fn slow() -> Fast {
 }
 
 fn fast_ok(sh: Sh) -> bool {
-    !sh.opt_x && !sh.shadow && sh.caps.len == 0
+    // PLANT (to be reverted): no simple command runs inside the region
+    false && !sh.opt_x && !sh.shadow && sh.caps.len == 0
 }
 
 /// The built-ins that change nothing but their output and status.
