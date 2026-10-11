@@ -1,0 +1,6 @@
+true && true   stdout=pty   rss@500 4800 KB  rss@3000 13836 KB   3702.6 B/command
+{ true; }      stdout=pty   rss@500 4744 KB  rss@3000 13356 KB   3528.9 B/command
+true;          stdout=pty   rss@500 3216 KB  rss@3000 3956 KB    303.2 B/command
+true &         stdout=pty   rss@500 5952 KB  rss@3000 20724 KB   6053.0 B/command
+true | true    stdout=pty   rss@500 8144 KB  rss@3000 33952 KB  10575.2 B/command
+if true; then :; fi stdout=pty   rss@500 5632 KB  rss@3000 19008 KB   5481.0 B/command

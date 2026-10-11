@@ -1,0 +1,3 @@
+interactive-census: startup, median and min of 11
+  pelt          -c :     0.34 ms (min   0.30)   to the first prompt     0.40 ms (min   0.36)
+  dash          -c :     0.36 ms (min   0.31)   to the first prompt     0.37 ms (min   0.35)

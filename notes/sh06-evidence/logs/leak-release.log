@@ -1,0 +1,14 @@
+:              stdout=pty   rss@500 3188 KB  rss@3000 3928 KB    303.2 B/command
+:              stdout=pipe  rss@500 3212 KB  rss@3000 3952 KB    303.2 B/command
+x=1            stdout=pty   rss@500 3184 KB  rss@3000 3924 KB    303.2 B/command
+x=1            stdout=pipe  rss@500 3200 KB  rss@3000 3940 KB    303.2 B/command
+x=$((x+1))     stdout=pty   rss@500 3200 KB  rss@3000 3940 KB    303.2 B/command
+x=$((x+1))     stdout=pipe  rss@500 3200 KB  rss@3000 3940 KB    303.2 B/command
+echo hi        stdout=pty   rss@500 3172 KB  rss@3000 3912 KB    303.2 B/command
+echo hi        stdout=pipe  rss@500 3176 KB  rss@3000 3916 KB    303.2 B/command
+echo $x        stdout=pty   rss@500 3224 KB  rss@3000 3964 KB    303.2 B/command
+echo $x        stdout=pipe  rss@500 3196 KB  rss@3000 3936 KB    303.2 B/command
+true; true     stdout=pty   rss@500 4504 KB  rss@3000 12128 KB   3124.0 B/command
+true; true     stdout=pipe  rss@500 4552 KB  rss@3000 12176 KB   3124.0 B/command
+/bin/true      stdout=pty   rss@500 3308 KB  rss@3000 4216 KB    372.1 B/command
+/bin/true      stdout=pipe  rss@500 3324 KB  rss@3000 4232 KB    372.1 B/command

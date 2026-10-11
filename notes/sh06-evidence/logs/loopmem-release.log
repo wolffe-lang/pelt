@@ -1,0 +1,18 @@
+loop 5000 [true && true]: out+KB 5000 3156 
+loop 20000 [true && true]: out+KB 20000 3892 
+loop 5000 [/bin/true]: out+KB 5000 2840 
+loop 20000 [/bin/true]: out+KB 20000 3868 
+loop 5000 [x=$(true)]: out+KB 5000 33620 
+loop 20000 [x=$(true)]: out+KB 20000 126620 
+loop 5000 [true | true]: out+KB 5000 52124 
+loop 20000 [true | true]: out+KB 20000 200160 
+loop 5000 [{ true; }]: out+KB 5000 3104 
+loop 20000 [{ true; }]: out+KB 20000 3688 
+loop 5000 [echo x | cat >/dev/null]: out+KB 5000 54940 
+loop 20000 [echo x | cat >/dev/null]: out+KB 20000 212252 
+loop 5000 [case a in a) :;; esac]: out+KB 5000 4588 
+loop 20000 [case a in a) :;; esac]: out+KB 20000 9704 
+loop 5000 [f]: out+KB 5000 9304 
+loop 20000 [f]: out+KB 20000 28508 
+loop 5000 [i=$i]: out+KB 5000 3068 
+loop 20000 [i=$i]: out+KB 20000 3680 

@@ -1,0 +1,11 @@
+interactive-census: startup, median and min of 21
+  pelt          -c :     1.35 ms (min   0.57)   to the first prompt     2.70 ms (min   1.12)
+  dash          -c :     2.32 ms (min   1.00)   to the first prompt     2.32 ms (min   1.15)
+  bash --posix  -c :     2.39 ms (min   1.44)   to the first prompt     3.42 ms (min   1.95)
+interactive-census: peak RSS (VmHWM, KB) after N typed commands
+  pelt          100: 3400  1000: 6148  5000: 18136  10000: 33172
+  dash          100: 2780  1000: 2780  5000: 2780  10000: 2780
+  bash --posix  100: 4144  1000: 4188  5000: 4188  10000: 4188
+interactive-census: a session typed a byte at a time (20 ms a byte, ~500 baud) against at once
+  pelt          same output: True  (3 lines: ['HELLO WORLD', '1,2,3,', 'continued'])
+  dash          same output: True  (4 lines: ["dash: 0: can't access tty; job control turned off", 'HELLO WORLD', '1,2,3,', 'continued'])
