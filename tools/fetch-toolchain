@@ -69,6 +69,16 @@ fetch_archive() {
 fetch_archive wolf wolf "$wolf_digest"
 fetch_archive lupin lupin "$lupin_digest"
 
+# Since wolf 0.2.27 the wolf archive carries a `std/` of its own
+# (`std/STD-REV` names its commit). The pin below is unpacked into an
+# empty place, never over that tree: a mix of two commits' files is
+# neither. What the archive bundled is said, so a pin that has drifted
+# from it is seen.
+if [ -d .wolf-bin/std ]; then
+    echo "fetch-toolchain: the archive bundles std $(cat .wolf-bin/std/STD-REV 2>/dev/null || echo '(no STD-REV)'); staging the pin instead"
+    rm -rf .wolf-bin/std
+fi
+
 std_repo=$(toml_value std repo)
 echo "fetch-toolchain: https://github.com/$std_repo at $std_rev"
 git init -q "$tmp/std"
