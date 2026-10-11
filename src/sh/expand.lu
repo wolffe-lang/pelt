@@ -523,7 +523,7 @@ fn param(sh: Sh, name: str) -> (str, bool) {
     ("", false)
 }
 
-/// `$$`. wolf 0.2.24 has no `getpid` (wolf-lang#141); on linux the
+/// `$$`. wolf 0.2.27 has no `getpid` (wolf-lang#141); on linux the
 /// process's own `/proc/self/stat` begins with it, and elsewhere the
 /// answer is a fixed stand-in (PENDING on #141).
 fn shell_pid() -> str {
