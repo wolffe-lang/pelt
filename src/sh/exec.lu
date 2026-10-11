@@ -627,7 +627,7 @@ fn shadow_of(sh: Sh) -> Sh {
     t.id_state = sh.id_state
     t.euid = sh.euid
     t.egid = sh.egid
-    t.groups = copy sh.groups
+    t.groups = sh.groups
     t.shadow = true
     t
 }
@@ -669,6 +669,7 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
     var enc = buf()
     var names = List[str]()
     var values = List[str]()
+    var ai = 0
     for a in assigns {
         let (name, raw) = split_assign(a)
         let v = expand_one(mut t, raw, X_TILDE | X_ASSIGN)
@@ -679,8 +680,12 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
             return slow()
         }
         // the next assignment's expansion sees this one (XCU 2.9.1.1:
-        // in order, left to right); the shadow keeps nothing
-        t.vals[name] = v
+        // in order, left to right); the shadow keeps nothing, and the
+        // last one has nobody after it to see it
+        ai += 1
+        if ai < assigns.len {
+            t.vals[name] = v
+        }
         put(mut enc, name)
         putb(mut enc, 0)
         put(mut enc, v)
@@ -862,6 +867,7 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
     var shown = List[str]()
     var had = List[bool]()
     var old = List[str]()
+    let many = assigns.len > 1
     for a in assigns {
         let (name, raw) = split_assign(a)
         let v = expand_one(mut sh, raw, X_TILDE | X_ASSIGN)
@@ -872,10 +878,12 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
         (mut names).push(name)
         (mut values).push(v)
         (mut shown).push("{name}={v}")
-        (mut had).push(has_var(sh, name))
-        (mut old).push(value_of(sh, name))
-        if !is_ronly(sh, name) {
-            sh.vals[name] = v
+        if many {
+            (mut had).push(has_var(sh, name))
+            (mut old).push(value_of(sh, name))
+            if !is_ronly(sh, name) {
+                sh.vals[name] = v
+            }
         }
     }
     unassign(mut sh, names, had, old)
@@ -955,7 +963,7 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
 /// Put back what `run_slow` assigned for its expansion: each name's old
 /// value, or no value, last first. Read-only names were never written.
 fn unassign(mut sh: Sh, names: List[str], had: List[bool], old: List[str]) {
-    var k = names.len - 1
+    var k = had.len - 1
     while k >= 0 {
         if !is_ronly(sh, names[k]) {
             if had[k] {
