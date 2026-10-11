@@ -353,7 +353,13 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
             }
             if c == '\\' {
                 let n = ch(w, i + 1)
-                if n == '$' || n == '`' || n == '"' && flags & X_DOC == 0 || n == '\\' {
+                // inside `"${x-word}"` a backslash also quotes the `}`
+                // that would otherwise end the expansion (XCU 2.2.3)
+                if n == '$' ||
+                    n == '`' ||
+                    n == '"' && flags & X_DOC == 0 ||
+                    n == '\\' ||
+                    n == '}' && flags & X_PWORD != 0 {
                     qlit(mut o, byte_at(w, i + 1))
                     i += 2
                 } else if n == '\n' {
