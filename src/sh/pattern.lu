@@ -46,7 +46,7 @@ fn pmatch(pat: str, s: str) -> bool {
                 }
             } else if c == 91 {
                 // `[`
-                let end = bracket_end(pat, pi)
+                let end = bracket_end(pat, pi, false)
                 if end < 0 {
                     if si < slen && byte_at(s, si) == 91 {
                         pi += 1
@@ -86,7 +86,12 @@ fn pmatch(pat: str, s: str) -> bool {
 
 /// The index of the `]` that closes the bracket expression opening at
 /// `start`, or -1 when there is none (and the `[` is an ordinary byte).
-fn bracket_end(pat: str, start: int) -> int {
+/// With `paths`, a `/` before the `]` also means there is none: in
+/// pathname expansion a slash is matched only by a slash in the
+/// pattern (XCU 2.14.3). In `case` and the `${x#…}` family no such rule
+/// holds (2.14.1), so `[\\/]` there is a bracket expression holding a
+/// slash, as every autoconf `configure` writes it.
+fn bracket_end(pat: str, start: int, paths: bool) -> int {
     var j = start + 1
     if byte_at(pat, j) == 33 || byte_at(pat, j) == 94 {
         j += 1
@@ -114,8 +119,7 @@ fn bracket_end(pat: str, start: int) -> int {
         if c == 93 {
             return j
         }
-        if c == 47 {
-            // a `/` cannot be inside a bracket expression
+        if c == 47 && paths {
             return -1
         }
         j += 1
@@ -255,7 +259,7 @@ fn has_magic(f: str) -> bool {
         if c == 42 || c == 63 {
             return true
         }
-        if c == 91 && bracket_end(f, i) >= 0 {
+        if c == 91 && bracket_end(f, i, true) >= 0 {
             return true
         }
         i += 1
