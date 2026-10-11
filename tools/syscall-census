@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""syscall-census — which system calls does pelt itself make?
+
+For whoever runs pelt on a kernel that is not Linux (PAX runs the
+static build as pid 1): the list of system calls pelt asks for over
+the differential corpus and the session corpus, counted.
+
+pelt is run under `strace -f -ff` (one file per process). A call counts
+as pelt's when the process making it is running pelt's image: the
+shell process itself up to an `execve` that succeeds (the `exec`
+built-in), every thread of it, and every child it forks up to the
+child's own successful `execve` — what the wolf runtime does between
+`fork` and `exec` is pelt's too. A process forked by a program pelt
+started is not pelt and is not counted.
+
+usage: tools/syscall-census BIN_DIR OUT_DIR [--no-session]
+  BIN_DIR holds `pelt` (tools/build --static writes target/static)
+  OUT_DIR gets census.txt (`count name`, sorted by name), the corpus
+          verdicts under strace, and traces/ (removed unless
+          KEEP_TRACES=1)
+Linux only; needs strace. Exit 0 when the census was taken; the corpus
+verdicts under strace are reported, not judged (strace slows the
+timing-sensitive cases).
+"""
+
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CALL = re.compile(r"^(?:\d+:\d+:\d+(?:\.\d+)? )?([a-z_0-9]+)\((.*)")
+RESUMED = re.compile(r"^<\.\.\. ([a-z_0-9]+) resumed>(.*)")
+FORKS = ("clone", "clone3", "fork", "vfork")
+
+
+def census_of(tdir):
+    """Syscall counts made in pelt's image, over every trace under tdir."""
+    by_pid = {}
+    for f in os.listdir(tdir):
+        run, _, pid = f.rpartition(".")
+        by_pid.setdefault(run, {})[int(pid)] = os.path.join(tdir, f)
+    counts = {}
+    for run, pids in by_pid.items():
+        # the root is the process strace started: its trace begins with execve
+        root = min(pids)
+        for p, path in pids.items():
+            with open(path, errors="replace") as fh:
+                first = fh.readline()
+            if first.startswith("execve("):
+                root = p
+                break
+        seen = set()
+        todo = [root]
+        while todo:
+            p = todo.pop()
+            if p in seen or p not in pids:
+                continue
+            seen.add(p)
+            is_root = p == root
+            execs = 0
+            with open(pids[p], errors="replace") as fh:
+                for line in fh:
+                    name, rest = None, ""
+                    m = CALL.match(line)
+                    if m:
+                        name, rest = m.group(1), m.group(2)
+                    else:
+                        m = RESUMED.match(line)
+                        if m:
+                            # counted when it began
+                            if m.group(1) in FORKS:
+                                r = re.search(r"= (\d+)\s*$", m.group(2))
+                                if r:
+                                    todo.append(int(r.group(1)))
+                            continue
+                    if name is None:
+                        continue
+                    counts[name] = counts.get(name, 0) + 1
+                    if name in FORKS:
+                        r = re.search(r"= (\d+)\s*$", rest)
+                        if r:
+                            todo.append(int(r.group(1)))
+                    if name == "execve" and re.search(r"= 0\s*$", rest):
+                        execs += 1
+                        # the root's first execve is strace starting pelt
+                        if execs > (1 if is_root else 0):
+                            break
+    return counts
+
+
+def main(argv):
+    with_session = "--no-session" not in argv
+    argv = [a for a in argv if a != "--no-session"]
+    if len(argv) != 2 or not sys.platform.startswith("linux"):
+        print(__doc__, file=sys.stderr)
+        return 2
+    bindir, out = os.path.abspath(argv[0]), os.path.abspath(argv[1])
+    real = os.path.join(bindir, "pelt")
+    if not os.access(real, os.X_OK) or not shutil.which("strace"):
+        print("syscall-census: needs BIN_DIR/pelt and strace", file=sys.stderr)
+        return 2
+    tdir = os.path.join(out, "traces")
+    wdir = os.path.join(out, "wrap")
+    shutil.rmtree(tdir, ignore_errors=True)
+    os.makedirs(tdir)
+    os.makedirs(wdir, exist_ok=True)
+    wrap = os.path.join(wdir, "pelt")
+    with open(wrap, "w") as fh:
+        fh.write("#!/bin/bash\n"
+                 f'exec strace -f -ff -qq -o "{tdir}/r$$-$RANDOM$RANDOM" "{real}" "$@"\n')
+    os.chmod(wrap, 0o755)
+    runs = [("difftest", [os.path.join(ROOT, "tools", "difftest"), "--bin", wdir])]
+    if with_session:
+        runs.append(("session", [os.path.join(ROOT, "tools", "session"), "--bin", wdir]))
+    for name, cmd in runs:
+        with open(os.path.join(out, f"{name}-under-strace.log"), "w") as log:
+            rc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT).returncode
+        tail = open(os.path.join(out, f"{name}-under-strace.log")).read().splitlines()[-1:]
+        print(f"syscall-census: {name} under strace exit {rc}: {tail[0] if tail else ''}")
+    counts = census_of(tdir)
+    with open(os.path.join(out, "census.txt"), "w") as fh:
+        for name in sorted(counts):
+            fh.write(f"{counts[name]:9} {name}\n")
+    print(f"syscall-census: {len(counts)} distinct system calls, "
+          f"{sum(counts.values())} calls, {len(os.listdir(tdir))} processes and threads -> "
+          f"{os.path.join(out, 'census.txt')}")
+    if os.environ.get("KEEP_TRACES") != "1":
+        shutil.rmtree(tdir, ignore_errors=True)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
