@@ -38,7 +38,7 @@ jobs:
             builds: true
           - os: macos-latest
             builds: true
-          # wolf 0.2.24 and 0.2.26 build NO tier on linux aarch64: `wolf build`
+          # wolf 0.2.24 through 0.2.27 build NO tier on linux aarch64: `wolf build`
           # refuses the native tier ("native codegen targets linux/x86-64,
           # macOS/aarch64, and windows/x86-64 … c13") and the release
           # tier ("the release tier targets linux/x86-64 and
@@ -111,12 +111,30 @@ jobs:
         if: ${{ matrix.builds && !cancelled() }}
         run: tools/loop-rss target/release/pelt
 
+      # sh05: `exec cmd` replaces the shell (`os_exec`). The corpus sees
+      # only what a script prints, and a shell that ran the program as
+      # a child and then left would print the same; this asks the host:
+      # the same pid becomes the program, with no child under it, the
+      # environment handed over is exactly the exported variables, a
+      # descriptor the shell opened is the program's, and a death by
+      # signal reaches the shell's parent as one (tools/exec-witness).
+      - name: exec replaces the shell (same pid), native tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/exec-witness target/native/pelt
+
+      - name: exec replaces the shell (same pid), release tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/exec-witness target/release/pelt
+
+      # The corpus steps run whatever came before, so that a break seen
+      # only from outside (above) and one seen only by a script each
+      # report on their own.
       - name: the differential corpus, native tier
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         run: tools/difftest --bin target/native
 
       - name: the differential corpus, release tier
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         run: tools/difftest --bin target/release
 
       - name: the harness sees a difference (the planted red)
