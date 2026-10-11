@@ -1,0 +1,11 @@
+step 1 f3f0d15 60085cbca844d406
+step 1 census=0 script-census: differs 7  same 11  of 18  (/home/mfwolffe/lanes/sh07/sc/step1-f3f0d15.tsv)
+step 2 df1a62e aeb2f600f6625ebb
+step 2 census=0 script-census: differs 6  same 12  of 18  (/home/mfwolffe/lanes/sh07/sc/step2-df1a62e.tsv)
+step 3 d5bd035 e78047aa6e4e4c36
+step 3 census=0 script-census: differs 6  same 12  of 18  (/home/mfwolffe/lanes/sh07/sc/step3-d5bd035.tsv)
+step 4 c130113 1547e7e016b94aa0
+step 4 census=0 script-census: differs 5  same 13  of 18  (/home/mfwolffe/lanes/sh07/sc/step4-c130113.tsv)
+step 5 b0d0814 4c09ebfa0b209608
+step 5 census=0 script-census: differs 2  same 16  of 18  (/home/mfwolffe/lanes/sh07/sc/step5-b0d0814.tsv)
+done
