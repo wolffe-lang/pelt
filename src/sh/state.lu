@@ -27,8 +27,9 @@
 //! and an in-process pipeline stage copy the environment, run, and put
 //! it back (`snap` and `restore`): variables, functions, positional
 //! parameters, options, traps, the `local` stack, the descriptor table
-//! and the working directory. What it cannot isolate: the process
-//! environment a child sees (wolf-lang#534).
+//! and the working directory. The process environment a child sees is
+//! made to match the variables before every spawn (`sh.exec`'s
+//! `sync_env`), so a subshell's `export` or `unset` ends with it too.
 
 const F_NONE: int = 0
 
@@ -39,6 +40,10 @@ const F_CONTINUE: int = 2
 const F_RETURN: int = 3
 
 const F_EXIT: int = 4
+
+/// `$!` for an asynchronous list pelt ran itself: above any process id
+/// a host hands out (linux's ceiling is 2^22, macOS's 99,998).
+const NO_PID_BASE: int = 1073741824
 
 /// A shell descriptor that is not open.
 const FD_CLOSED: int = -1
@@ -96,11 +101,27 @@ struct Sh {
     rs_frames: List[int],
     rs_oframes: List[int],
     /// Asynchronous lists (`&`): a child handle, or -1 for a list pelt
-    /// ran itself; its status once known, or -1.
+    /// ran itself; its status once known, or -1; and the number `$!`
+    /// gave it — the child's process id (`os_proc_pid`), or for a list
+    /// pelt ran itself a number no process has (`NO_PID_BASE` and up).
     jobs: List[int],
     job_st: List[int],
-    /// `$!`: the last asynchronous list's job number, or 0 for none.
+    job_id: List[int],
+    /// `$!`: the last asynchronous list's id, or 0 for none.
     last_bg: int,
+    /// Signals (`sh.signal`): the meanings the process now listens for
+    /// and ignores, the ones this shell (not an enclosing one) polls,
+    /// whether a trap action is running and `$?` when it began, and an
+    /// interactive Ctrl-C on its way back to the prompt.
+    sig_listen: int,
+    sig_ignore: int,
+    sig_mine: int,
+    in_trap: bool,
+    trap_status: int,
+    intr: bool,
+    at_prompt: bool,
+    /// Whether the last `run_external` started its program.
+    started: bool,
     /// A pipeline stage's external command is started, not waited for
     /// (`nowait`); its handle lands in `stage_child`, and `stage_w` is
     /// the pipe its descriptor 1 goes to (the stage's capture level is
@@ -209,7 +230,16 @@ fn new_sh(name: str) -> Sh {
         rs_oframes: List[int](),
         jobs: List[int](),
         job_st: List[int](),
+        job_id: List[int](),
         last_bg: 0,
+        sig_listen: 0,
+        sig_ignore: 0,
+        sig_mine: 0,
+        in_trap: false,
+        trap_status: 0,
+        intr: false,
+        at_prompt: false,
+        started: false,
         nowait: false,
         stage_child: -1,
         stage_w: -1,
