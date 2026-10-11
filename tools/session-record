@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_session as ls  # noqa: E402
 
-KEEP = ("args", "pelt_args", "oracle_args", "env", "pending", "why")
+KEEP = ("args", "pelt_args", "oracle_args", "env", "oracle", "compare", "pending", "why")
 
 
 def main(argv):
@@ -44,20 +44,24 @@ def main(argv):
         trp = keys[:-5] + ".tr"
         old = ls.read_meta(mpath)
         meta = {k: old[k] for k in KEEP if k in old}
-        d = ls.run(ls.argv_for(ls.ORACLE, meta, False), keys, meta)
+        first, other = ls.ORACLE, ls.SECOND
+        if meta.get("oracle") == "bash":
+            first, other = ls.SECOND, ls.ORACLE
+        view = ls.stdout_and_exit if meta.get("compare") == "stdout" else (lambda t: t)
+        d = ls.run(ls.argv_for(first, meta, False), keys, meta)
         dash_sig = ls.last_sig
         # a second recording: the transcript must not depend on timing
-        d2 = ls.run(ls.argv_for(ls.ORACLE, meta, False), keys, meta)
-        if d != d2:
-            print(f"UNSTABLE {name}: two dash runs differ")
+        d2 = ls.run(ls.argv_for(first, meta, False), keys, meta)
+        if view(d) != view(d2):
+            print(f"UNSTABLE {name}: two {first[0]} runs differ")
             drift += 1
             continue
-        b = ls.run(ls.argv_for(ls.SECOND, meta, False), keys, meta)
+        b = ls.run(ls.argv_for(other, meta, False), keys, meta)
         same = ls.stdout_and_exit(b) == ls.stdout_and_exit(d)
-        meta["bash"] = "agree" if same else "differs"
+        meta["dash" if meta.get("oracle") == "bash" else "bash"] = "agree" if same else "differs"
         if check:
             have = open(trp, encoding="utf-8").read().split("\n")[:-1] if os.path.exists(trp) else None
-            if have != d:
+            if have is None or view(have) != view(d):
                 print(f"DRIFT {name}")
                 drift += 1
             continue

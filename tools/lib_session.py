@@ -5,8 +5,13 @@ A session case is a set of files in tests/session/:
 
   <name>.keys   what is typed, one line per line; a line that is exactly
                 `^D` types Ctrl-D (the terminal's end-of-file character)
-                and `^C` types Ctrl-C (its interrupt character). Every
-                other line is typed followed by a newline.
+                and `^C` types Ctrl-C (its interrupt character); `^Z`
+                types Ctrl-Z (its suspend character). A line that
+                starts with a backslash, `k` and a space types the rest
+                as raw keys with no newline after them: backslash-e is
+                ESC, backslash-xNN a byte, and backslash-r, -n, -t and
+                a doubled backslash as in C (an arrow key is ESC `[D`).
+                Every other line is typed followed by a newline.
   <name>.tr     the oracle's transcript (below), written by
                 tools/session-record from `dash -i +m`
   <name>.meta   key=value lines:
@@ -23,6 +28,16 @@ A session case is a set of files in tests/session/:
                                 `$HOME` in a value is left for the shell
                   bash=agree|differs  the second opinion (`bash --posix
                                 -i`), on standard output and exit status
+                  oracle=bash   the transcript is `bash --posix -i`'s:
+                                for behaviour dash does not have (the
+                                line editor's keys) or where POSIX and
+                                dash part; `dash=agree|differs` is then
+                                the second opinion
+                  compare=stdout  compare standard output per step and
+                                the exit only, not the prompt or the
+                                presence of diagnostics: for a case
+                                whose oracle draws its own line (an
+                                editor echoes through standard error)
                   pending=WHAT  needs a primitive pelt lacks; listed by
                                 name in tests/session/PENDING.md
                   why=TEXT      free text
@@ -68,6 +83,9 @@ SECOND = ["bash", "--posix", "-i", "+m"]
 SETTLE = 0.6       # quiet that means "waiting for input" (oracle runs)
 PROMPT_WAIT = 8.0  # how long pelt may take to show the expected prompt
 EXIT_WAIT = 8.0
+# $PELT_SESSION_SLOW=seconds types every byte on its own with that gap
+# (0.02 is about a 500-baud line); the transcripts must not change.
+SLOW = float(os.environ.get("PELT_SESSION_SLOW") or 0)
 
 
 def read_meta(path):
@@ -85,7 +103,8 @@ def read_meta(path):
 
 
 def write_meta(path, meta):
-    order = ["args", "pelt_args", "oracle_args", "env", "bash", "pending", "why"]
+    order = ["args", "pelt_args", "oracle_args", "env", "oracle", "compare",
+             "bash", "dash", "pending", "why"]
     keys = [k for k in order if k in meta] + sorted(
         k for k in meta if k not in order)
     with open(path, "w", encoding="utf-8") as fh:
@@ -113,9 +132,34 @@ def keystrokes(path):
                 out.append(("^D", b"\x04"))
             elif line == "^C":
                 out.append(("^C", b"\x03"))
+            elif line == "^Z":
+                out.append(("^Z", b"\x1a"))
+            elif line.startswith("\\k "):
+                out.append((line, _raw_keys(line[3:])))
             else:
                 out.append((line, line.encode() + b"\n"))
     return out
+
+
+def _raw_keys(text):
+    out = bytearray()
+    i = 0
+    simple = {"e": 0x1b, "r": 0x0d, "n": 0x0a, "t": 0x09, "\\": 0x5c}
+    while i < len(text):
+        c = text[i]
+        if c == "\\" and i + 1 < len(text):
+            n = text[i + 1]
+            if n in simple:
+                out.append(simple[n])
+                i += 2
+                continue
+            if n == "x" and i + 3 < len(text):
+                out.append(int(text[i + 2:i + 4], 16))
+                i += 4
+                continue
+        out += c.encode()
+        i += 1
+    return bytes(out)
 
 
 def argv_for(shell, meta, is_pelt):
@@ -271,7 +315,14 @@ def _session(argv, keys, env, cwd, expect):
             break
         st = Step(label)
         try:
-            os.write(master, data)
+            if SLOW > 0:
+                # a slow line: one byte at a time, as a serial console
+                # at a low rate delivers them
+                for i in range(len(data)):
+                    os.write(master, data[i:i + 1])
+                    time.sleep(SLOW)
+            else:
+                os.write(master, data)
         except OSError:
             break
         settle(st, want(len(steps)))
