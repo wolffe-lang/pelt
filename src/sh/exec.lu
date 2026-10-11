@@ -624,6 +624,10 @@ fn shadow_of(sh: Sh) -> Sh {
     t.from_stdin = sh.from_stdin
     t.last_bg = sh.last_bg
     t.phys = sh.phys
+    t.id_state = sh.id_state
+    t.euid = sh.euid
+    t.egid = sh.egid
+    t.groups = copy sh.groups
     t.shadow = true
     t
 }
@@ -712,7 +716,7 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
     let cmd = fields[0]
     var path = cmd
     if (cmd.find("/") else -1) < 0 {
-        path = find_in_path(t, cmd)
+        path = find_in(mut t, search_path(t, names, values), cmd)
         if path.len == 0 {
             close_opened(t)
             return slow()
@@ -1010,13 +1014,55 @@ fn pop_locals(mut sh: Sh) {
 }
 
 /// The command search of XCU 2.9.1.4 for a name with no `/`: the first
-/// `PATH` directory holding a regular file of that name, or "".
-fn find_in_path(sh: Sh, name: str) -> str {
+/// `PATH` directory holding a regular file of that name this shell may
+/// execute (`sh.util`'s `may`), or "". A file it may not execute is
+/// passed over and the search goes on, as dash's does (black-box: a
+/// mode-0610 file of one's own before an executable one).
+fn find_in_path(mut sh: Sh, name: str) -> str {
+    let path = sh.vals["PATH"] else ""
+    find_in(mut sh, path, name)
+}
+
+/// The `PATH` a command searches: its own assignment to `PATH` when it
+/// has one (`PATH=dir cmd` searches `dir`, as dash), else the shell's.
+fn search_path(sh: Sh, names: List[str], values: List[str]) -> str {
+    var path = sh.vals["PATH"] else ""
+    var k = 0
+    while k < names.len {
+        if names[k] == "PATH" {
+            path = values[k]
+        }
+        k += 1
+    }
+    path
+}
+
+/// `find_in_path` over the directories of `path`.
+fn find_in(mut sh: Sh, path: str, name: str) -> str {
+    for dir in path.split(":") {
+        let d = if dir.len == 0 then "." else dir
+        let full = "{d}/{name}"
+        let st = stat_of(full, false)
+        if st.len > 0 && st[0] == K_FILE && may(mut sh, st, 1) {
+            return full
+        }
+        if sh.bail {
+            return ""
+        }
+    }
+    ""
+}
+
+/// `.`'s search (XCU 2.15 dot): the first `PATH` directory holding a
+/// file of that name that is not a directory; it need not be
+/// executable.
+fn find_readable_in_path(sh: Sh, name: str) -> str {
     let path = sh.vals["PATH"] else ""
     for dir in path.split(":") {
         let d = if dir.len == 0 then "." else dir
         let full = "{d}/{name}"
-        if fs_is_file(full) {
+        let st = stat_of(full, false)
+        if st.len > 0 && st[0] != K_DIR {
             return full
         }
     }
@@ -1257,7 +1303,7 @@ fn run_external(
     var path = cmd
     sh.started = false
     if (cmd.find("/") else -1) < 0 {
-        path = find_in_path(sh, cmd)
+        path = find_in(mut sh, search_path(sh, names, values), cmd)
         if path.len == 0 {
             diag(mut sh, "{cmd}: not found")
             sh.status = 127
@@ -1393,7 +1439,7 @@ fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
     let cmd = args[0]
     var path = cmd
     if (cmd.find("/") else -1) < 0 {
-        path = find_in_path(sh, cmd)
+        path = find_in_path(mut sh, cmd)
         if path.len == 0 {
             diag(mut sh, "exec: {cmd}: not found")
             return 127

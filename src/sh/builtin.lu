@@ -425,7 +425,7 @@ fn bi_dot(mut sh: Sh, args: List[str]) -> int {
     }
     var path = args[0]
     if (path.find("/") else -1) < 0 {
-        path = find_in_path(sh, path)
+        path = find_readable_in_path(sh, path)
     }
     if path.len == 0 || !fs_is_file(path) {
         fatal(mut sh, ".: {args[0]}: not found", 2)
@@ -594,7 +594,7 @@ fn bi_command(mut sh: Sh, args: List[str]) -> int {
             }
             return 127
         }
-        let p = find_in_path(sh, name)
+        let p = find_in_path(mut sh, name)
         if p.len == 0 {
             return 127
         }
