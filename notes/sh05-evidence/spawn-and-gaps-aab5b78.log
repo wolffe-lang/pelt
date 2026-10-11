@@ -1,0 +1,73 @@
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+ 01:08:06 up 6 days,  9:42,  5 users,  load average: 6.52, 7.46, 7.63
+spawn2000 base release: 0.47 s 0.33 user 0.15 sys
+spawn2000 pin release: 0.47 s 0.33 user 0.14 sys
+spawn2000 pelt release: 0.48 s 0.34 user 0.15 sys
+spawn2000 base release: 0.47 s 0.34 user 0.14 sys
+spawn2000 pin release: 0.47 s 0.33 user 0.15 sys
+spawn2000 pelt release: 0.47 s 0.34 user 0.14 sys
+spawn2000 base release: 0.47 s 0.33 user 0.15 sys
+spawn2000 pin release: 0.47 s 0.33 user 0.16 sys
+spawn2000 pelt release: 0.48 s 0.34 user 0.15 sys
+spawn2000 base release: 0.47 s 0.33 user 0.14 sys
+spawn2000 pin release: 0.46 s 0.33 user 0.14 sys
+spawn2000 pelt release: 0.46 s 0.34 user 0.13 sys
+spawn2000 base release: 0.46 s 0.34 user 0.13 sys
+spawn2000 pin release: 0.46 s 0.34 user 0.13 sys
+spawn2000 pelt release: 0.47 s 0.34 user 0.14 sys
+build 0
+listen 16 (INTERRUPT): ok
+listen 512: ok
+listen 1024: ok
+--- A-usr1
+[dash]
+caught
+after=0
+exit=0
+[pelt]
+/home/mfwolffe/lanes/sh05/k/w.sh: line 5: 1127741 User defined signal 1      env -i PATH=/usr/bin:/bin timeout 10 $s -c "$2"
+exit=138
+--- A-alrm
+[dash]
+alarm
+after=0
+exit=0
+[pelt]
+/home/mfwolffe/lanes/sh05/k/w.sh: line 5: 1127749 Alarm clock                env -i PATH=/usr/bin:/bin timeout 10 $s -c "$2"
+exit=142
+--- B-wait
+[dash]
+t
+st=143 after 3 tenths
+exit=0
+[pelt]
+t
+st=0 after 20 tenths
+exit=0
+--- C ignored at entry
+[dash]
+after
+[pelt]
+t
+after
+--- D-enoexec
+[dash]
+ran-as-script
+st=0
+./junk: ./junk: cannot execute binary file
+st=126
+exit=0
+[pelt]
+ran-as-script
+st=0
+./junk: ./junk: cannot execute binary file
+st=126
+exit=0
+--- odd names in the environment
+[dash]
+PATH=/usr/bin:/bin
+ok=3
+[pelt]
+PATH=/usr/bin:/bin
+ok=3

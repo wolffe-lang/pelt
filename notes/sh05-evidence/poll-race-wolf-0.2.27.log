@@ -1,0 +1,34 @@
+build pollrace native 0
+build pollrace release 0
+build barrier native 0
+build barrier release 0
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+[pollrace-native]
+poll right after raise answered 0 in 2000 of 2000 rounds
+[pollrace-native taskset -c 0-3]
+poll right after raise answered 0 in 2000 of 2000 rounds
+[pollrace-native taskset -c 0]
+poll right after raise answered 0 in 691 of 2000 rounds
+  0.00 s for 2000 rounds
+[pollrace-release]
+poll right after raise answered 0 in 2000 of 2000 rounds
+[pollrace-release taskset -c 0-3]
+poll right after raise answered 0 in 1999 of 2000 rounds
+[pollrace-release taskset -c 0]
+poll right after raise answered 0 in 6 of 2000 rounds
+  0.00 s for 2000 rounds
+[barrier-native]
+with the barrier: 0 in 0 of 2000 rounds
+[barrier-native taskset -c 0-3]
+with the barrier: 0 in 0 of 2000 rounds
+[barrier-native taskset -c 0]
+with the barrier: 0 in 0 of 2000 rounds
+  0.00 s for 2000 rounds
+[barrier-release]
+with the barrier: 0 in 0 of 2000 rounds
+[barrier-release taskset -c 0-3]
+with the barrier: 0 in 0 of 2000 rounds
+[barrier-release taskset -c 0]
+with the barrier: 0 in 0 of 2000 rounds
+  0.00 s for 2000 rounds

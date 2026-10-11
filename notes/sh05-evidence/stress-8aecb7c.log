@@ -1,0 +1,15 @@
+pelt 8aecb7c648d43c05a4e70b363e70f0f85205b214
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+difftest signal+exec+env+jobs native [free] x5: 0 failures      
+session native [free] x2: 0 failures   
+difftest signal+exec+env+jobs native [taskset -c 0-3] x5: 0 failures      
+session native [taskset -c 0-3] x2: 0 failures   
+difftest signal+exec+env+jobs native [taskset -c 0] x5: 0 failures      
+session native [taskset -c 0] x2: 0 failures   
+difftest signal+exec+env+jobs release [free] x5: 0 failures      
+session release [free] x2: 0 failures   
+difftest signal+exec+env+jobs release [taskset -c 0-3] x5: 0 failures      
+session release [taskset -c 0-3] x2: 0 failures   
+difftest signal+exec+env+jobs release [taskset -c 0] x5: 0 failures      
+session release [taskset -c 0] x2: 0 failures   

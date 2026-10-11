@@ -1,0 +1,103 @@
+== pin-9312eae at 9312eae8c9539dec5d75401ead475928f226f976 dirty=0 2026-10-11T04:32:26Z
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+-- fetch
+fetch-toolchain: https://github.com/wolffe-lang/wolf-lang/releases/download/v0.2.27/wolf-0.2.27-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 5e17eebed7ffbb3ee10bc669c653145903db7f591f250a096f791e4e6f377001 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-interp/releases/download/v0.1.50/lupin-0.1.50-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 e2867a3515d4691f073f9ef30f4fe3e0fc6201f280bf24e87a42ce66562f1d93 OK
+fetch-toolchain: the archive bundles std 87ba16208da8ea642dd463fa89ff3a1ec80ceba1; staging the pin instead
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at 87ba16208da8ea642dd463fa89ff3a1ec80ceba1
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+-- fetch exit 0
+wolf 0.2.27 (wolfgang, pin 0ddda6b)
+paired with lupin 0.1.50 (reference interpreter), pin 294d626
+lupin 0.1.50 (wolf-interp, reference interpreter at pin 294d626)
+87ba16208da8ea642dd463fa89ff3a1ec80ceba1
+-- fmt
+-- fmt exit 0
+-- build
+build: target/native/pelt
+build: target/release/pelt
+-- build exit 0
+-- wolftest
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+-- wolftest exit 0
+-- glob-rss-native
+glob-rss: target/native/pelt n=2000 cwd=    empty  peak_kb    12604  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/native/pelt n=2000 cwd= 64 files  peak_kb    12604  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (12604 KB with 64 files, 12604 KB empty, bound 15912)
+-- glob-rss-native exit 0
+-- loop-rss-native
+loop-rss: target/native/pelt turns=  10000  peak_kb     3540  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/native/pelt turns=  20000  peak_kb     4088  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 548 KB, about 56 B a turn; bound 2000 KB)
+-- loop-rss-native exit 0
+-- difftest-native exit 0
+difftest: stdin          4     0     0 (0)
+difftest: tilde          4     0     1 (0)
+difftest: total        350     0     4 (1)
+PEND-ok   pending/pid (waits on getpid)
+PEND-fail pending/signal_status (waits on signal number)
+PEND-fail pending/unset_env (waits on env unset)
+PEND-fail tilde/user (waits on user database)
+-- session-native exit 0
+ok   trap_exit_exit
+session: pass 71  fail 0  pending 2 (0)
+PEND-fail ctrl_c_child (waits on interrupt)
+PEND-fail ctrl_c_prompt (waits on interrupt)
+size native: 13251336 bytes, stripped 1475648, sha256 3f013105277a79d2…
+rss native loop 20000: 3912 KB
+rss native loop 20000: 3732 KB
+rss native loop 20000: 3876 KB
+rss native loop 40000: 4580 KB
+rss native loop 40000: 4232 KB
+rss native loop 40000: 3976 KB
+spawn2000 native: 0.65 s  3292 KB
+spawn2000 native: 0.70 s  3200 KB
+spawn2000 native: 0.70 s  3204 KB
+-- glob-rss-release
+glob-rss: target/release/pelt n=2000 cwd=    empty  peak_kb    12604  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/release/pelt n=2000 cwd= 64 files  peak_kb    12560  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (12560 KB with 64 files, 12604 KB empty, bound 15912)
+-- glob-rss-release exit 0
+-- loop-rss-release
+loop-rss: target/release/pelt turns=  10000  peak_kb     2844  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/release/pelt turns=  20000  peak_kb     3080  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 236 KB, about 24 B a turn; bound 2000 KB)
+-- loop-rss-release exit 0
+-- difftest-release exit 0
+difftest: stdin          4     0     0 (0)
+difftest: tilde          4     0     1 (0)
+difftest: total        350     0     4 (1)
+PEND-ok   pending/pid (waits on getpid)
+PEND-fail pending/signal_status (waits on signal number)
+PEND-fail pending/unset_env (waits on env unset)
+PEND-fail tilde/user (waits on user database)
+-- session-release exit 0
+ok   trap_exit_exit
+session: pass 71  fail 0  pending 2 (0)
+PEND-fail ctrl_c_child (waits on interrupt)
+PEND-fail ctrl_c_prompt (waits on interrupt)
+size release: 12423816 bytes, stripped 733792, sha256 898654b4fa602e3d…
+rss release loop 20000: 3420 KB
+rss release loop 20000: 3384 KB
+rss release loop 20000: 3156 KB
+rss release loop 40000: 3784 KB
+rss release loop 40000: 3896 KB
+rss release loop 40000: 3776 KB
+spawn2000 release: 0.68 s  2632 KB
+spawn2000 release: 0.71 s  2632 KB
+spawn2000 release: 0.70 s  2688 KB
+-- difftest-selftest
+difftest-selftest: right exits 0 as it must
+difftest-selftest: wrong exits 1 as it must
+difftest-selftest: unlisted exits 1 as it must
+-- difftest-selftest exit 0
+-- session-selftest
+session-selftest: right exits 0 as it must
+session-selftest: wrong exits 1 as it must
+session-selftest: unlisted exits 1 as it must
+-- session-selftest exit 0
+== pin-9312eae done rc=0

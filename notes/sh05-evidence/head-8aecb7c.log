@@ -1,0 +1,189 @@
+== head-8aecb7c at 8aecb7c648d43c05a4e70b363e70f0f85205b214 dirty=1 2026-10-11T05:20:39Z
+SigBlk:	0000000000000000
+SigIgn:	0000000000000000
+-- fetch
+fetch-toolchain: .wolf-bin/ already holds the pin (x86_64-unknown-linux-gnu)
+-- fetch exit 0
+wolf 0.2.27 (wolfgang, pin 0ddda6b)
+paired with lupin 0.1.50 (reference interpreter), pin 294d626
+lupin 0.1.50 (wolf-interp, reference interpreter at pin 294d626)
+87ba16208da8ea642dd463fa89ff3a1ec80ceba1
+-- fmt
+-- fmt exit 0
+-- build
+build: target/native/pelt
+build: target/release/pelt
+-- build exit 0
+-- wolftest
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+-- wolftest exit 0
+-- glob-rss-native
+glob-rss: target/native/pelt n=2000 cwd=    empty  peak_kb    12608  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/native/pelt n=2000 cwd= 64 files  peak_kb    12604  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (12604 KB with 64 files, 12608 KB empty, bound 15916)
+-- glob-rss-native exit 0
+-- loop-rss-native
+loop-rss: target/native/pelt turns=  10000  peak_kb     3812  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/native/pelt turns=  20000  peak_kb     4136  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 324 KB, about 33 B a turn; bound 2000 KB)
+-- loop-rss-native exit 0
+-- difftest-native exit 0
+difftest: stdin          4     0     0 (0)
+difftest: tilde          4     0     1 (0)
+difftest: total        443     0     7 (2)
+PEND-ok   pending/exec_pid (waits on getpid)
+PEND-ok   pending/pid (waits on getpid)
+PEND-fail pending/subshell_signal (waits on fork)
+PEND-fail pending/trap_ignore_usr1 (waits on signal meaning)
+PEND-fail pending/trap_usr1 (waits on signal meaning)
+PEND-fail pending/wait_interrupted (waits on interruptible wait)
+PEND-fail tilde/user (waits on user database)
+-- session-native exit 0
+ok   unset_env
+session: pass 85  fail 0  pending 0 (0)
+size native: 13534336 bytes, stripped 1709576, sha256 1dd4caac88edee65…
+rss native loop 20000: 4012 KB
+rss native loop 20000: 4104 KB
+rss native loop 20000: 3812 KB
+rss native loop 40000: 4720 KB
+rss native loop 40000: 4640 KB
+rss native loop 40000: 4564 KB
+spawn2000 native: 0.57 s  3480 KB
+spawn2000 native: 0.59 s  3528 KB
+spawn2000 native: 0.59 s  3512 KB
+-- glob-rss-release
+glob-rss: target/release/pelt n=2000 cwd=    empty  peak_kb    12632  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/release/pelt n=2000 cwd= 64 files  peak_kb    12488  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (12488 KB with 64 files, 12632 KB empty, bound 15943)
+-- glob-rss-release exit 0
+-- loop-rss-release
+loop-rss: target/release/pelt turns=  10000  peak_kb     3168  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/release/pelt turns=  20000  peak_kb     3356  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 188 KB, about 19 B a turn; bound 2000 KB)
+-- loop-rss-release exit 0
+-- difftest-release exit 0
+difftest: stdin          4     0     0 (0)
+difftest: tilde          4     0     1 (0)
+difftest: total        443     0     7 (2)
+PEND-ok   pending/exec_pid (waits on getpid)
+PEND-ok   pending/pid (waits on getpid)
+PEND-fail pending/subshell_signal (waits on fork)
+PEND-fail pending/trap_ignore_usr1 (waits on signal meaning)
+PEND-fail pending/trap_usr1 (waits on signal meaning)
+PEND-fail pending/wait_interrupted (waits on interruptible wait)
+PEND-fail tilde/user (waits on user database)
+-- session-release exit 0
+ok   unset_env
+session: pass 85  fail 0  pending 0 (0)
+size release: 12578528 bytes, stripped 846400, sha256 ecc8a97329b7a167…
+rss release loop 20000: 3504 KB
+rss release loop 20000: 3512 KB
+rss release loop 20000: 3360 KB
+rss release loop 40000: 4208 KB
+rss release loop 40000: 4192 KB
+rss release loop 40000: 4112 KB
+spawn2000 release: 0.50 s  2824 KB
+spawn2000 release: 0.47 s  2796 KB
+spawn2000 release: 0.47 s  2760 KB
+-- difftest-selftest
+difftest-selftest: right exits 0 as it must
+difftest-selftest: wrong exits 1 as it must
+difftest-selftest: unlisted exits 1 as it must
+-- difftest-selftest exit 0
+-- session-selftest
+session-selftest: right exits 0 as it must
+session-selftest: wrong exits 1 as it must
+session-selftest: unlisted exits 1 as it must
+-- session-selftest exit 0
+== head-8aecb7c done rc=0
+measure exit 0
+exec-witness: pid     ok   pid 1367529 is 'sleep' with 0 children
+exec-witness: env     ok   ['HOME=/', 'KEPT=1', 'LC_ALL=C', 'MINE=3', 'PATH=/usr/bin:/bin']
+exec-witness: fds     ok   descriptor 3 wrote 'through\n' (exit 0, stderr '')
+exec-witness: status  ok   returncode -15 (want -15), stderr ''
+-- exec-witness-native exit 0
+exec-witness: pid     ok   pid 1367536 is 'sleep' with 0 children
+exec-witness: env     ok   ['HOME=/', 'KEPT=1', 'LC_ALL=C', 'MINE=3', 'PATH=/usr/bin:/bin']
+exec-witness: fds     ok   descriptor 3 wrote 'through\n' (exit 0, stderr '')
+exec-witness: status  ok   returncode -15 (want -15), stderr ''
+-- exec-witness-native taskset exit 0
+-- difftest-native taskset -c 0-3 exit 0
+difftest: total        443     0     7 (2)
+-- session-native taskset -c 0-3 exit 0
+session: pass 85  fail 0  pending 0 (0)
+exec-witness: pid     ok   pid 1375746 is 'sleep' with 0 children
+exec-witness: env     ok   ['HOME=/', 'KEPT=1', 'LC_ALL=C', 'MINE=3', 'PATH=/usr/bin:/bin']
+exec-witness: fds     ok   descriptor 3 wrote 'through\n' (exit 0, stderr '')
+exec-witness: status  ok   returncode -15 (want -15), stderr ''
+-- exec-witness-release exit 0
+exec-witness: pid     ok   pid 1375754 is 'sleep' with 0 children
+exec-witness: env     ok   ['HOME=/', 'KEPT=1', 'LC_ALL=C', 'MINE=3', 'PATH=/usr/bin:/bin']
+exec-witness: fds     ok   descriptor 3 wrote 'through\n' (exit 0, stderr '')
+exec-witness: status  ok   returncode -15 (want -15), stderr ''
+-- exec-witness-release taskset exit 0
+-- difftest-release taskset -c 0-3 exit 0
+difftest: total        443     0     7 (2)
+-- session-release taskset -c 0-3 exit 0
+session: pass 85  fail 0  pending 0 (0)
+-- the witness against trunk's code at the pin (red) and dash
+exec-witness: pid     FAIL pid 1382123 is 'pelt' with 1 children
+exec-witness: env     FAIL ['GONE=x', 'HOME=/', 'KEPT=1', 'LC_ALL=C', 'PATH=/usr/bin:/bin']
+exec-witness: fds     ok   descriptor 3 wrote 'through\n' (exit 0, stderr '')
+exec-witness: status  FAIL returncode 128 (want -15), stderr ''
+-- exec-witness pin-9312eae exit 1
+exec-witness: pid     ok   pid 1386331 is 'sleep' with 0 children
+exec-witness: env     ok   ['HOME=/', 'KEPT=1', 'LC_ALL=C', 'MINE=3', 'PATH=/usr/bin:/bin']
+exec-witness: fds     ok   descriptor 3 wrote 'through\n' (exit 0, stderr '')
+exec-witness: status  ok   returncode -15 (want -15), stderr ''
+-- exec-witness dash exit 0
+build: target/static/pelt
+-- static build exit 0
+static head: 13762928 bytes sha256 906c2a7a7ba7ca49…
+syscall-census: difftest under strace exit 0: difftest: total        443     0     7 (2)
+syscall-census: session under strace exit 0: session: pass 85  fail 0  pending 0 (0)
+syscall-census: 41 distinct system calls, 66116 calls, 961 processes and threads -> /home/mfwolffe/lanes/sh05/census/head-8aecb7c/census.txt
+-- census exit 0
+== new against trunk at 0.2.26
+clone3 futex getpid kill madvise mmap munmap prctl readlink rt_sigreturn 
+      535 arch_prctl
+     4086 brk
+       36 chdir
+      306 clone
+      116 clone3
+     3760 close
+     1011 dup2
+      866 execve
+      514 exit_group
+     2384 fcntl
+       43 fstat
+      999 futex
+      531 getcwd
+       86 getdents64
+       60 getpid
+     1074 getrandom
+       10 ioctl
+       60 kill
+      116 madvise
+      232 mmap
+      651 mprotect
+      229 munmap
+      604 openat
+      297 pipe2
+      116 prctl
+      535 prlimit64
+    36481 read
+        1 readlink
+      535 readlinkat
+      314 recvfrom
+      651 rseq
+      936 rt_sigaction
+     1785 rt_sigprocmask
+       99 rt_sigreturn
+      957 set_robust_list
+      535 set_tid_address
+      306 socketpair
+      734 statx
+        4 unlink
+      380 wait4
+     3141 write
