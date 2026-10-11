@@ -1,0 +1,217 @@
+#!/usr/bin/env python3
+"""clause-census — the POSIX clause table, counted.
+
+`tests/census/clauses.tsv` lists the testable statements of XCU
+chapter 2 (POSIX.1-2024) and of the built-in utilities' pages, one a
+line: an id (the clause, then a serial), a kind, the statement in this
+project's own words, and the cases that show it. This tool reads the
+table and the cases' metas and answers, for every statement, where it
+stands:
+
+  met        every case that covers it passes (a non-pending case
+             passes or CI is red: tools/difftest, tools/session)
+  pending    a case that covers it is marked `pending=`: pelt does not
+             do this yet, and the case says what it waits on
+  gap        an interactive statement no session case can type yet
+  untestable the corpus cannot show it; the note says why
+
+Kinds: T a differential case (tests/diff), S a typed session
+(tests/session, named `session:<case>`), U untestable, X recorded but
+not counted (POSIX leaves it unspecified or optional; the case pins
+what dash does because scripts lean on it).
+
+It also checks the table against the tree: every case a statement
+names exists, every `c_*` case is named by a statement, and every T or
+S statement names a case. Exit 0 when the table is sound, 1 when it is
+not, 2 when it cannot be read.
+
+usage: tools/clause-census [--markdown]
+  --markdown  write the whole table as markdown (docs/CENSUS.md's body)
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_cases as lc  # noqa: E402
+import lib_session as ls  # noqa: E402
+
+TABLE = os.path.join(lc.ROOT, "tests", "census", "clauses.tsv")
+
+GROUPS = [
+    ("2.1", "2.1 Introduction"), ("2.2", "2.2 Quoting"),
+    ("2.3", "2.3 Token recognition and aliases"), ("2.4", "2.4 Reserved words"),
+    ("2.5", "2.5 Parameters and variables"), ("2.6", "2.6 Word expansions"),
+    ("2.7", "2.7 Redirection"), ("2.8", "2.8 Exit status and errors"),
+    ("2.9", "2.9 Shell commands"), ("2.10", "2.10 Grammar"),
+    ("2.11", "2.11 Job control"), ("2.12", "2.12 Signals"),
+    ("2.13", "2.13 Execution environment"), ("2.14", "2.14 Pattern matching"),
+    ("2.15", "2.15 Special built-ins"),
+]
+SPECIAL = ("break", "colon", "continue", "dot", "eval", "exec", "exit", "export",
+           "readonly", "return", "set", "shift", "times", "trap", "unset")
+
+
+def group_of(ident):
+    clause = ident.split("/")[0]
+    if clause in SPECIAL:
+        return "2.15 Special built-ins"
+    if clause == "ed":
+        return "Line editing beyond POSIX (not counted)"
+    if clause[0].isdigit():
+        parts = clause.split(".")
+        key = ".".join(parts[:2])
+        for k, name in GROUPS:
+            if k == key:
+                return name
+        return clause
+    return f"`{clause}` (utility page)"
+
+
+def read_table():
+    rows = []
+    with open(TABLE, encoding="utf-8") as fh:
+        head = fh.readline().rstrip("\n").split("\t")
+        if head != ["id", "kind", "statement", "cases", "note"]:
+            print("clause-census: unexpected header", file=sys.stderr)
+            sys.exit(2)
+        for line in fh:
+            f = line.rstrip("\n").split("\t")
+            while len(f) < 5:
+                f.append("")
+            rows.append({"id": f[0], "kind": f[1], "text": f[2],
+                         "cases": f[3].split(), "note": f[4]})
+    return rows
+
+
+def case_state(name, problems):
+    """'pass', 'pending:<what>' or 'missing'; and whether the case was
+    written by the census (`c_*`)."""
+    if name.startswith("session:"):
+        n = name[8:]
+        mp = os.path.join(ls.SESS, n + ".meta")
+        if not os.path.exists(os.path.join(ls.SESS, n + ".keys")):
+            problems.append(f"no session case {n}")
+            return "missing", n.startswith("c_")
+        meta = ls.read_meta(mp)
+    else:
+        area, n = name.split("/")
+        sp = os.path.join(lc.DIFF, area, n + ".sh")
+        if not os.path.exists(sp):
+            problems.append(f"no case {name}")
+            return "missing", n.startswith("c_")
+        meta = lc.read_meta(sp[:-3] + ".meta")
+    if "pending" in meta:
+        return "pending:" + meta["pending"], n.startswith("c_")
+    return "pass", n.startswith("c_")
+
+
+def main(argv):
+    md = argv[:1] == ["--markdown"]
+    rows = read_table()
+    problems = []
+    named = set()
+    counts = {}
+    order = []
+    out = []
+    for r in rows:
+        g = group_of(r["id"])
+        if g not in counts:
+            counts[g] = {"met": 0, "pending": 0, "gap": 0, "untestable": 0,
+                         "extra": 0, "old": 0}
+            order.append(g)
+        c = counts[g]
+        states = []
+        old_only = True
+        any_old_pass = False
+        for name in r["cases"]:
+            named.add(name)
+            st, census = case_state(name, problems)
+            states.append((name, st))
+            if not census and st == "pass":
+                any_old_pass = True
+        if r["kind"] == "U":
+            verdict = "untestable"
+        elif r["kind"] == "X":
+            verdict = "extra"
+        elif not r["cases"]:
+            if r["kind"] == "S":
+                verdict = "gap"
+            else:
+                problems.append(f"{r['id']}: no case")
+                verdict = "gap"
+        elif any(st == "missing" for _, st in states):
+            verdict = "gap"
+        elif any(st.startswith("pending:") for _, st in states):
+            # `getpid` cases pass on linux and wait on macOS only
+            waits = {st[8:] for _, st in states if st.startswith("pending:")}
+            verdict = "pending"
+            r["waits"] = ", ".join(sorted(waits))
+        else:
+            verdict = "met"
+        c[verdict] += 1
+        if any_old_pass and verdict in ("met", "pending"):
+            c["old"] += 1
+        r["verdict"] = verdict
+    # every census case is named by a statement
+    for area, n, _ in lc.cases():
+        if n.startswith("c_") and f"{area}/{n}" not in named:
+            problems.append(f"case {area}/{n} is named by no statement")
+    for n, _ in ls.cases():
+        if n.startswith("c_") and f"session:{n}" not in named:
+            problems.append(f"session case {n} is named by no statement")
+
+    tot = {"met": 0, "pending": 0, "gap": 0, "untestable": 0, "extra": 0, "old": 0}
+    if md:
+        print("| part | statements | met | pending | gap | untestable | met, of the testable | had a case before the census |")
+        print("|---|---:|---:|---:|---:|---:|---:|---:|")
+    else:
+        print(f"clause-census: {'part':<34} {'stmts':>5} {'met':>4} {'pend':>4} {'gap':>4} {'untest':>6}  share")
+    for g in order:
+        c = counts[g]
+        for k in tot:
+            tot[k] += c[k]
+        n = c["met"] + c["pending"] + c["gap"] + c["untestable"]
+        if n == 0:
+            continue
+        testable = c["met"] + c["pending"] + c["gap"]
+        share = f"{100 * c['met'] / testable:.0f}%" if testable else "—"
+        if md:
+            print(f"| {g} | {n} | {c['met']} | {c['pending']} | {c['gap']} | {c['untestable']} | {share} | {c['old']} |")
+        else:
+            print(f"clause-census: {g:<34} {n:>5} {c['met']:>4} {c['pending']:>4} {c['gap']:>4} {c['untestable']:>6}  {share}")
+    n = tot["met"] + tot["pending"] + tot["gap"] + tot["untestable"]
+    testable = tot["met"] + tot["pending"] + tot["gap"]
+    share = f"{100 * tot['met'] / testable:.1f}%"
+    if md:
+        print(f"| **total** | **{n}** | **{tot['met']}** | **{tot['pending']}** | **{tot['gap']}** | **{tot['untestable']}** | **{share}** | **{tot['old']}** |")
+        print()
+        print(f"Not counted: {tot['extra']} statements recorded for what dash does where POSIX leaves the behaviour unspecified or optional (kind X).")
+        print()
+        cur = None
+        for r in rows:
+            g = group_of(r["id"])
+            if g != cur:
+                cur = g
+                print(f"\n### {g}\n")
+                print("| id | statement | verdict | cases | note |")
+                print("|---|---|---|---|---|")
+            v = r["verdict"]
+            if v == "pending":
+                v = f"pending ({r['waits']})"
+            if v == "extra":
+                v = "not counted"
+            cases = ", ".join(f"`{x}`" for x in r["cases"])
+            text = r["text"].replace("|", "\\|")
+            note = r["note"].replace("|", "\\|")
+            print(f"| {r['id']} | {text} | {v} | {cases} | {note} |")
+    else:
+        print(f"clause-census: {'total':<34} {n:>5} {tot['met']:>4} {tot['pending']:>4} {tot['gap']:>4} {tot['untestable']:>6}  {share}")
+        print(f"clause-census: not counted (kind X): {tot['extra']}; statements with a passing case older than the census: {tot['old']}")
+    for p in problems:
+        print(f"clause-census: PROBLEM {p}", file=sys.stderr)
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

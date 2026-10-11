@@ -1,0 +1,543 @@
+id	kind	statement	cases	note
+2.1/1	T	Operands become positional parameters 1..n and the command name special parameter 0	exec/argv0 func/args	
+2.1/2	U	A first line starting with #! gives unspecified results		unspecified by the standard; pelt treats it as a comment (exec/script_no_shebang covers the kernel-refused case)
+2.2.1/1	T	An unquoted backslash preserves the literal value of the next character	quote/backslash quote/c_backslash_each	
+2.2.1/2	T	Backslash-newline is a line continuation, removed before tokens are split, and is not a token separator	quote/continuation quote/c_continuation_joins	
+2.2.2/1	T	Single quotes preserve the literal value of every character within them	quote/single quote/c_single_all	
+2.2.3/1	T	Within double quotes $ keeps its meaning for parameter, command and arithmetic expansion	quote/double quote/c_dq_dollar	
+2.2.3/2	T	Within double quotes $' does not introduce dollar-single-quotes	quote/c_dq_no_dollar_single	
+2.2.3/3	T	Characters between "$(" and its matching ")" inside double quotes are not affected by the double quotes	quote/c_dq_cmdsub_inner_quotes	
+2.2.3/4	T	Inside double quotes, in ${x#pattern} forms the outer double quotes do not quote the pattern's special characters	param/trim_quoted quote/c_dq_trim_pattern	
+2.2.3/5	T	Inside double quotes, in ${x:-word} forms the word keeps literal value except for " ` $ and backslash; backslash also escapes }	quote/dq_in_param quote/c_dq_default_word	
+2.2.3/6	T	Inside double quotes a backquote introduces command substitution, ended by the next unescaped backquote	quote/c_dq_backquote	
+2.2.3/7	T	Inside double quotes backslash is an escape only before $ ` " backslash and newline	quote/special_chars quote/c_dq_backslash	
+2.2.3/8	T	The literal value of the result of an expansion in double quotes is preserved (no splitting, no globbing)	split/quoted quote/c_dq_result_literal	
+2.2.4/1	T	$'...' preserves characters literally up to the terminating unescaped single quote	quote/dollar_single quote/c_ds_plain	dash 0.5.13.4 has no dollar-single-quotes; POSIX.1-2024 requires them, so bash --posix is the oracle
+2.2.4/2	T	$'...' escapes \" \' \\ \a \b \e \f \n \r \t \v yield their characters	quote/c_ds_escapes	
+2.2.4/3	T	$'\cX' yields the control character for X	quote/c_ds_control	
+2.2.4/4	T	$'\xXX' yields the byte with that hexadecimal value, ended by the first non-hex character	quote/c_ds_hex	
+2.2.4/5	T	$'\ddd' yields the byte with that octal value, one to three digits	quote/c_ds_octal	
+2.2.4/6	T	An escaped single quote does not end a $'...' sequence, and the sequence joins with adjacent word parts	quote/c_ds_embedded	
+2.2.4/7	T	$'...' escapes are processed before word expansion: the result is quoted (not split, not globbed)	quote/c_ds_quoted	
+2.3/1	T	Operators are formed greedily from unquoted characters (&& || ;; ;& << >> <& >& <> <<- >|)	parse/redirs_ok parse/compound_ok parse/c_operators_adjacent	
+2.3/2	T	A quote does not delimit a token: adjacent quoted and unquoted parts form one word	quote/mixed parse/c_quotes_join	
+2.3/3	T	An unquoted blank delimits a token and is discarded	parse/c_blanks	
+2.3/4	T	A # at the start of a word begins a comment up to but excluding the newline; inside a word it is literal	parse/comments_ok parse/c_comment_word	
+2.3/5	T	Expansions nested in a word are found recursively and included unmodified in the token	parse/cmdsub_nested_ok cmdsub/nested parse/c_nested_units	
+2.3/6	T	A here-document body starts after the next newline token; tokens after the operator on the same line are kept	parse/heredoc_ok redir/heredoc parse/c_heredoc_rest_of_line	
+2.3/7	T	Each complete command is executed before the next is tokenized and parsed	parse/c_exec_before_parse parse/c_exec_before_parse_cd	
+2.3/8	T	The token at end of input is delimited (a last line with no newline runs)	parse/c_no_final_newline	
+2.3.1/1	T	An unquoted command-name token that names an alias is replaced by the alias value	alias/c_basic	dash and bash --posix agree; alias takes effect for the next complete command
+2.3.1/2	T	A token with any quoting character is not subject to alias substitution	alias/c_quoted_not	
+2.3.1/3	T	Only a token in command-name position is substituted, not an argument	alias/c_position	
+2.3.1/4	T	An alias is not expanded again inside its own expansion (no recursion on the same name)	alias/c_no_self_recursion	
+2.3.1/5	T	An alias value ending in a blank makes the next token subject to alias substitution	alias/c_trailing_blank	
+2.3.1/6	T	The alias value is tokenized as input: it may hold several tokens, operators and reserved words	alias/c_value_tokens	
+2.3.1/7	T	A change to an alias takes effect no later than the end of the complete command that made it	alias/c_takes_effect_next	
+2.3.1/8	T	Aliases are not inherited by a separately invoked shell	alias/c_not_inherited	
+2.3.1/10	S	At the prompt an alias defined on one line is in effect on the next	session:c_alias_interactive	
+2.3.1/9	T	Aliases are part of the environment a subshell duplicates	alias/c_subshell	
+2.4/1	T	Reserved words are recognized only unquoted and in command position	parse/compound_ok parse/c_reserved_quoted	
+2.4/2	T	Reserved words are recognized after another reserved word (if/then/else/do/{/!)	parse/c_reserved_after_reserved	
+2.4/3	T	In is the only reserved word recognized as the third word of case and for	parse/c_in_third_word	
+2.4/4	X	A word ending in a colon in command position is a plain command name when it is not otherwise special	parse/c_colon_word	results are unspecified by POSIX; recorded because dash and bash agree
+2.5/1	T	A set parameter may be null, and a variable once set stays set until unset	param/unset_var param/c_set_null	
+2.5.1/1	T	Positional parameter digits are read as decimal even with a leading zero; more than one digit needs braces	param/ten param/positional param/c_positional_digits	
+2.5.2/1	T	"$@" produces one field per positional parameter, joined to the surrounding word at each end	param/at_in_word param/at_star param/c_at_fields	
+2.5.2/2	T	"$@" with no positional parameters produces zero fields	param/at_empty param/c_at_zero	
+2.5.2/3	T	Unquoted $@ and $* produce the parameters, each then split into fields	param/c_at_unquoted	
+2.5.2/4	T	"$*" joins the parameters with the first character of IFS, a space if IFS is unset, nothing if IFS is null	param/ifs_star param/c_star_join	
+2.5.2/5	T	$* in an assignment or other non-splitting context joins as "$*" does	param/c_star_assign	
+2.5.2/6	T	"$@" inside ${x:-"$@"} keeps separate fields	param/c_at_in_default	
+2.5.2/7	T	$# is the decimal count of positional parameters, not counting $0	param/positional param/c_hash	
+2.5.2/8	T	$? is the exit status of the most recent pipeline, and is 0 at start	param/status param/c_status	
+2.5.2/9	T	A subshell starts with the invoking shell's $?	param/c_status_into_subshell	
+2.5.2/10	T	x=$(cmd) leaves the command substitution's status in $?	simple/assign_status param/c_status_assign_cmdsub	
+2.5.2/11	T	$- holds the current single-letter option flags	option/dollar_dash param/c_dash_flags	
+2.5.2/12	T	$$ is the process ID of the invoked shell, the same value in a subshell	pending/pid param/c_pid_subshell	
+2.5.2/13	T	$$ is the shell's real process ID (what its child sees as its parent)	param/c_pid_is_real	
+2.5.2/14	T	$! is the process ID of the most recent asynchronous list	jobs/bang signal/bang_is_a_process param/c_bang	
+2.5.2/15	T	$0 is the script's name as given; in a function it is unchanged	exec/argv0 param/c_zero	
+2.5.3/1	T	Variables are initialized from the environment and marked for export at once	env/reexport env/c_init_exported	
+2.5.3/2	T	Environment entries whose names are not valid names do not become shell variables	env/c_invalid_names	
+2.5.3/3	S	ENV is parameter-expanded and the file it names is run before an interactive shell reads commands	session:env_file session:env_missing	
+2.5.3/4	T	ENV is not read by a non-interactive shell	env/c_env_not_read	
+2.5.3/5	T	IFS is set to space, tab, newline when the shell is invoked, whatever the environment held	env/c_ifs_reset	
+2.5.3/6	T	With IFS unset, splitting and read behave as if it were space, tab, newline	split/unset_ifs split/c_unset_ifs_read	
+2.5.3/7	T	LINENO is the current line number within the script or function	param/lineno param/c_lineno	dash 0.5.13.4 counts from the function's first line inside a function; bash --posix and pelt count lines of the script. The standard's words allow either; the script's line is what a diagnostic needs, so bash is the oracle
+2.5.3/8	T	PPID is the parent's process ID, the same in a subshell	env/c_ppid	
+2.5.3/9	S	PS1 is parameter-expanded and written to standard error before each command is read; default "$ "	session:echo_hi session:ps1_param	
+2.5.3/10	S	In PS1 each ! is replaced by the history number of the next command, and !! by one !	session:c_ps1_bang	
+2.5.3/11	S	PS2 is expanded and written to standard error when a command continues onto another line; default "> "	session:ps2_if	
+2.5.3/12	T	PS4 is parameter-expanded and written before each line of a set -x trace; default "+ "	option/xtrace option/c_ps4	
+2.5.3/13	T	PWD is set from the environment when that is an absolute pathname of the current directory with no dot components	cd/c_pwd_from_env	
+2.5.3/14	T	HOME is used by tilde expansion	tilde/home	
+2.5.3/15	U	LANG, LC_ALL, LC_COLLATE, LC_CTYPE, LC_MESSAGES select the locale for patterns, characters and messages		needs a non-C locale present on every CI host; measured by hand on kasumi (docs/CENSUS.md, locale rows)
+2.5.3/16	T	The shell processes values as characters where the standard speaks of characters (${#x} counts characters)	param/c_length_bytes_in_c	the corpus runs in the C locale, where a character is a byte; the UTF-8 answer is measured by hand (docs/CENSUS.md, locale rows)
+2.6/1	T	Tilde, parameter, command and arithmetic expansion happen first, beginning to end; then field splitting, pathname expansion, quote removal	param/c_expansion_order	
+2.6/2	T	Expansions within one word give one field unless split, globbed or "$@"	split/c_one_field	
+2.6/3	T	A $ followed by a blank, newline or end of word is literal	param/dollar_alone param/c_dollar_literal	
+2.6/4	T	Results of expansion are not rescanned for further expansion	param/c_no_rescan	
+2.6.1/1	T	A leading unquoted ~ up to the first slash is a tilde-prefix; alone it is replaced by HOME	tilde/home tilde/middle tilde/c_basic	
+2.6.1/2	T	In an assignment a tilde-prefix is recognized after = and after each unquoted colon	tilde/assign tilde/c_assign_colon	
+2.6.1/3	T	Tilde in a word that is not an assignment is expanded only at the start of the word	tilde/c_not_assign	
+2.6.1/4	T	The tilde replacement is not split or globbed, and a null HOME gives one empty field	tilde/c_quoted_result	
+2.6.1/5	T	~login is replaced by that user's home directory from the user database	tilde/user tilde/c_user_root	
+2.6.1/6	T	Tilde expansion applies to the word after a redirection operator and to case words and patterns	tilde/c_redirect_case	
+2.6.1/7	T	A quoted character in the tilde-prefix prevents tilde expansion	tilde/c_quoted_prefix	
+2.6.2/1	T	${parameter} substitutes the value; braces delimit the name	param/simple param/concat param/c_braces	
+2.6.2/2	T	An unbraced name uses the longest valid name	param/underscore_names param/c_longest_name	
+2.6.2/3	T	The matching } skips quoted strings, escaped braces and embedded expansions	param/nested param/c_matching_brace	
+2.6.2/4	T	${x:-word} substitutes word when x is unset or null; ${x-word} only when unset	param/default param/c_use_default	
+2.6.2/5	T	${x:=word} assigns word when x is unset or null and substitutes the final value; ${x=word} only when unset	param/assign param/c_assign_default	
+2.6.2/6	T	${N:=word} on a positional or special parameter is an error	param/assign_positional_error	
+2.6.2/7	T	${x:?word} writes word to standard error and a non-interactive shell exits non-zero when x is unset or null	param/error_unset param/error_null param/c_error_exit	
+2.6.2/8	T	${x:+word} substitutes word when x is set and not null; ${x+word} when set	param/alternative param/c_alternative	
+2.6.2/9	T	The word is expanded only when it is needed	param/c_word_lazy	
+2.6.2/10	T	The word undergoes tilde, parameter, command and arithmetic expansion	param/c_word_expanded	
+2.6.2/11	T	An unquoted ${x:-word} result is split into fields, with quoted parts of word kept together	param/default_split param/c_default_fields	
+2.6.2/12	T	${#x} is the length of the value in characters	param/length param/c_length	
+2.6.2/13	T	${#x} of an unset parameter fails under set -u	param/c_length_nounset	
+2.6.2/14	T	${x%pattern} removes the smallest matching suffix and ${x%%pattern} the largest	param/trim_suffix param/c_trim_suffix	
+2.6.2/15	T	${x#pattern} removes the smallest matching prefix and ${x##pattern} the largest	param/trim_prefix param/c_trim_prefix	
+2.6.2/16	T	Quoting characters within the braces makes pattern characters literal	param/trim_quoted param/c_trim_literal	
+2.6.2/17	T	The pattern word is itself expanded (variables, command substitution) before matching	param/trim_var_pattern param/c_trim_expanded_pattern	
+2.6.2/18	T	Trim forms of an unset parameter fail under set -u	param/c_trim_nounset	
+2.6.2/19	T	A bad substitution operator is an expansion error: a non-interactive shell exits	param/bad_substitution	
+2.6.2/20	T	Parameter expansion applies to special parameters ($?, $#, $-, $!, $0, $$) in the modifier forms	param/c_special_modifiers	
+2.6.3/1	T	$(commands) runs in a subshell and is replaced by its standard output	cmdsub/basic cmdsub/isolation cmdsub/external cmdsub/c_subshell_env	
+2.6.3/2	T	Trailing newlines of the output are removed, all of them; others are kept	cmdsub/trailing_newlines cmdsub/program_newlines cmdsub/c_newlines	
+2.6.3/3	T	Unquoted command substitution output is split and globbed; quoted is not	cmdsub/in_dquotes cmdsub/c_split_glob	
+2.6.3/4	T	In `...` a backslash is literal except before $ ` and backslash	cmdsub/backquote cmdsub/program_backquote cmdsub/c_backquote_backslash	
+2.6.3/5	T	Backquotes nest by escaping the inner ones	cmdsub/c_backquote_nested	
+2.6.3/6	T	$(...) may hold any program: quotes, comments, case with unbalanced ), here-documents	cmdsub/case_inside cmdsub/c_any_program	
+2.6.3/7	T	The result of a command substitution is not expanded again	cmdsub/c_not_rescanned	
+2.6.3/8	T	$(( is arithmetic when it parses as such; $( ( starts a subshell in a command substitution	cmdsub/c_arith_ambiguity	
+2.6.3/9	T	The exit status of the last command substitution is the status of a command with no name	cmdsub/status cmdsub/program_status	
+2.6.3/10	T	An exit in a command substitution ends only the substitution	cmdsub/exit_inside	
+2.6.3/11	T	A command substitution's commands see standard input and standard error of the shell	cmdsub/program_stderr cmdsub/c_stdin_inherited	
+2.6.4/1	T	$((expression)) is replaced by the value of the expression	arith/basic	
+2.6.4/2	T	The expression is treated as if double-quoted: parameter expansion and command substitution apply, and a double quote is not special	arith/variables arith/nested arith/c_expand_first	
+2.6.4/3	T	Decimal, octal (leading 0) and hexadecimal (0x) constants are recognized	arith/hex_octal arith/c_constants	
+2.6.4/4	T	The C operators apply with C precedence: unary + - ~ !, * / %, + -, << >>, relational, equality, & ^ |, && ||, ?:, assignment	arith/precedence arith/unary arith/shifts_bits arith/logical arith/compare arith/ternary arith/short_circuit arith/c_operators	
+2.6.4/5	T	Assignment operators change the variable, and the change is in effect after the expansion	arith/assign_ops arith/assign_var arith/c_assign	
+2.6.4/6	T	A variable name in an expression is read as its value: $((x)) equals $(($x)) for an integer value, signs included	arith/c_variable_value	
+2.6.4/7	T	Arithmetic is signed long, at least; wrap-around does not stop the shell	arith/overflow arith/c_long	
+2.6.4/8	T	An invalid expression fails with a diagnostic; a non-interactive shell exits	arith/syntax_error arith/illegal_value arith/divzero arith/c_invalid	
+2.6.4/9	T	White space and newlines are allowed in an expression	arith/spaces_newlines	
+2.6.4/10	T	An arithmetic expansion's result is subject to field splitting when unquoted	split/ifs_digits arith/c_result_split	
+2.6.4/11	X	A variable whose value is itself an expression or name is evaluated (extension recorded: dash refuses, bash recurses)	arith/c_value_not_constant	not required by POSIX (only integer-constant values are); recorded from dash
+2.6.4/12	X	Comma is not required; ++ and -- are not required (recorded from dash)	arith/c_incr_optional	optional operators; dash refuses ++x as written (reads +(+x)), bash implements them
+2.6.5/1	T	Fields from expansions not in double quotes are split at IFS characters	split/default split/literal_not_split split/c_basic	
+2.6.5/2	T	With IFS null no splitting occurs, and an expansion that is wholly empty is removed	split/empty_ifs split/empty_unquoted split/c_null_ifs	
+2.6.5/3	T	IFS white space at the start and end of an expansion is ignored, and runs of it delimit once	split/c_whitespace_runs	
+2.6.5/4	T	Each non-white-space IFS character delimits a field; adjacent ones give empty fields	split/colon split/leading_colon split/c_nonwhite	
+2.6.5/5	T	A non-white-space IFS character with adjacent IFS white space is one delimiter	split/mixed_ifs split/c_mixed	
+2.6.5/6	T	A trailing non-white-space IFS delimiter does not produce a trailing empty field	split/c_trailing_delim	
+2.6.5/7	T	An expansion that is empty or all IFS white space produces zero fields	split/c_zero_fields	
+2.6.5/8	T	Only the parts of a word that came from an expansion are split; literal parts join their neighbours	split/joined_word split/c_literal_parts	
+2.6.5/9	T	Splitting applies to command substitution and arithmetic results as to parameters	split/cmdsub	
+2.6.5/10	T	IFS is used at the time of the split, including an assignment earlier in the same list	split/c_ifs_changes	
+2.6.5/11	T	Assignment values and case words are not split	split/c_not_in_assign	
+2.6.6/1	T	After splitting, each field with unquoted pattern characters is matched against file names unless set -f	glob/star glob/noglob option/noglob	
+2.6.6/2	T	A pattern produced by an expansion is used for pathname expansion	glob/edge_var glob/c_from_expansion	
+2.6.7/1	T	Quote characters present in the original word are removed unless themselves quoted	quote/mixed quote/empty_args quote/c_removal	
+2.6.7/2	T	Quote characters that result from an expansion are not removed	quote/c_removal_not_expanded	
+2.7/1	T	[n]redir-op word: the number must immediately precede the operator; a quoted number or operator is not a redirection	redir/redirect_out redir/redirect_err redir/c_number_forms	
+2.7/2	T	The redirection is removed from the arguments wherever it appears in the command	redir/c_anywhere	
+2.7/3	T	File descriptors 0 through 9 can be used	redir/exec_fd exec/redirect_fd3 redir/c_fd_range	
+2.7/4	T	The target word undergoes tilde, parameter, command and arithmetic expansion and quote removal	redir/target_expansion redir/c_target_expansions	
+2.7/5	T	A non-interactive shell does not apply pathname expansion to the target word	redir/c_target_no_glob	
+2.7/6	T	A target word that splits into several fields is not split (recorded from dash)	redir/c_target_not_split	POSIX names no field splitting for the redirection word; dash and pelt take it as one word, bash --posix refuses it as ambiguous
+2.7/7	T	Several redirections on one command are evaluated in order from beginning to end	redir/order_matters redir/dup_err_to_out redir/c_order	
+2.7/8	T	A failure to open or create the file makes the redirection fail and the command is not run	redir/fail_status redir/c_open_fails	
+2.7.1/1	T	[n]<word opens the file for reading on descriptor n, default 0	redir/in_file redir/read_fd redir/c_in_fd	
+2.7.2/1	T	[n]>word creates or truncates the file for writing on descriptor n, default 1	redir/out_trunc redir/redirect_out redir/c_out_trunc	
+2.7.2/2	T	With set -C, > fails on an existing regular file and >| overrides it	redir/noclobber redir/c_noclobber	
+2.7.3/1	T	[n]>>word opens for append, creating the file if needed	redir/append redir/c_append	
+2.7.4/1	T	A here-document runs to a line holding only the delimiter	redir/heredoc redir/c_heredoc_delimiter	
+2.7.4/2	T	With an unquoted delimiter the body undergoes parameter, command and arithmetic expansion	redir/heredoc_expand redir/c_heredoc_expansions	
+2.7.4/3	T	With any part of the delimiter quoted, the body is not expanded and the delimiter is the word after quote removal	redir/heredoc_quoted redir/c_heredoc_quoted_forms	
+2.7.4/4	T	In an expanding here-document backslash acts as inside double quotes, and a double quote is literal	redir/c_heredoc_backslash	
+2.7.4/5	T	<<- strips leading tabs from body lines and the delimiter line	redir/heredoc_strip redir/c_heredoc_tabs	
+2.7.4/6	T	Several here-documents on one line are read in order	redir/heredoc_two parse/two_heredocs_ok redir/c_heredoc_order	
+2.7.4/7	T	A here-document for a command that is not executed is read without being expanded	redir/c_heredoc_skipped	
+2.7.4/8	T	A here-document can feed any descriptor ([n]<<) and any command, compound commands and functions included	redir/heredoc_function redir/heredoc_read redir/heredoc_large redir/c_heredoc_fd	
+2.7.4/9	T	The end of a -c command string ends an unterminated here-document's search as a newline would	redir/c_heredoc_end_of_string	
+2.7.4/10	T	A here-document inside a command substitution, and a command substitution inside a here-document	redir/c_heredoc_in_cmdsub	
+2.7.5/1	T	[n]<&m makes n a copy of m; [n]<&- closes n; closing a closed descriptor is not an error	redir/read_fd redir/c_dup_in	
+2.7.5/2	T	Duplicating from a descriptor that is not open is a redirection error	redir/bad_fd redir/c_dup_bad	
+2.7.6/1	T	[n]>&m makes n a copy of m; [n]>&- closes n	redir/dup_err_to_out redir/close_out redir/c_dup_out	
+2.7.6/2	T	The word after <& or >& is expanded: digits or - from a variable work	redir/c_dup_expanded	
+2.7.7/1	T	[n]<>word opens for reading and writing on n (default 0), creating the file, not truncating it	redir/readwrite redir/c_readwrite	
+2.8.1/1	T	A syntax error makes a non-interactive shell exit with a diagnostic and a non-zero status	parse/fi_unexpected option/bad_option stdin/syntax_error_ends parse/c_syntax_error_exits	
+2.8.1/2	T	A syntax error found later in a script does not stop commands already executed	parse/c_syntax_error_late	
+2.8.1/3	T	An error in a special built-in run directly makes a non-interactive shell exit	builtin/shift_error redir/special_fail_exits builtin/c_special_error_exits	
+2.8.1/4	T	A special built-in error under the command utility does not make the shell exit	builtin/command_bypass builtin/c_special_error_command	
+2.8.1/5	T	An error in another utility does not make the shell exit	builtin/c_regular_error_continues	
+2.8.1/6	T	A redirection error with a special built-in makes a non-interactive shell exit	redir/special_fail_exits redir/c_special_redirect_error	
+2.8.1/7	T	A redirection error with a compound command, a function or another utility does not make the shell exit	redir/fail_status exec/redirect_fails redir/c_other_redirect_error	
+2.8.1/8	T	A variable assignment error (assigning a readonly variable) makes a non-interactive shell exit	builtin/readonly_error simple/readonly_assign simple/c_assign_error_exits	
+2.8.1/9	T	An expansion error makes a non-interactive shell exit	param/bad_substitution param/error_unset param/c_expansion_error_exits	
+2.8.1/10	T	Command not found gives a diagnostic and status 127, and the shell goes on	simple/not_found exec/not_found_bare simple/c_not_found_continues	
+2.8.1/11	T	A shall-exit error in a subshell ends the subshell with a non-zero status and the invoking shell continues	parse/c_error_in_subshell	
+2.8.1/12	S	An interactive shell does not exit on any of these errors, and drops the rest of the command	session:syntax_error_continues session:special_builtin_error session:expansion_error session:c_redirect_error session:readonly_assign	
+2.8.1/13	T	A special built-in's own diagnostic goes to standard error and can be redirected like a utility's	builtin/c_special_diag_redirect	
+2.8.1/14	U	An unrecoverable read error while reading commands makes the shell exit 128 after any EXIT trap		needs a descriptor that fails mid-read (EIO); no portable way to make one in the corpus
+2.8.2/1	T	Not found is 127; found but not executable is 126	exec/not_found exec/not_executable exec/directory simple/slash_not_found simple/c_126_127	
+2.8.2/2	T	A command ended by a signal has a status above 128 that identifies the signal	signal/child_term signal/child_kill signal/child_hup signal/child_int	
+2.8.2/3	T	Otherwise the status is the low eight bits of what the command exited with	simple/c_exit_mod_256	
+2.9/1	T	The exit status of a command is that of the last simple command it executed, unless stated otherwise	control/loop_status control/if_status	
+2.9.1.1/1	T	The command name is the first field left after expanding the non-assignment words; empty expansions are passed over	simple/command_name_from_var simple/empty_command simple/c_name_after_empty	
+2.9.1.1/2	T	After export and readonly, words that look like assignments are expanded as assignments: no splitting, tilde after = and :	simple/c_declaration_utility	dash 0.5.13.4 splits the value (it has no declaration utilities); POSIX.1-2024 requires assignment context, so bash --posix is the oracle
+2.9.1.1/3	T	For other commands, name=value arguments are ordinary words: split, and tilde only at the start	simple/c_not_declaration	
+2.9.1.1/4	T	Redirections are performed, then assignments are expanded and made	simple/assign_expansion simple/c_assign_expansions	
+2.9.1.2/1	T	With no command name, assignments affect the current environment	simple/assign_only simple/c_assign_current	
+2.9.1.2/2	T	Assignments before a utility are exported to it and do not affect the current environment	env/temp_assign_gone simple/external_env exec/assign_reaches simple/c_assign_temp	
+2.9.1.2/3	T	Assignments before a special built-in stay in effect after it completes	simple/persist_special simple/c_assign_special_persists	
+2.9.1.2/4	T	Assignments before a function call are in effect during the function	func/temp_assign simple/c_assign_function	
+2.9.1.2/5	T	Assignments before a regular built-in do not persist	simple/temp_builtin env/temp_assign_back simple/c_assign_regular_builtin	
+2.9.1.2/6	T	Assigning a readonly variable before any command is a variable assignment error	simple/readonly_assign	
+2.9.1.3/1	T	A command with only redirections performs them in a subshell: files are created, the shell's descriptors unchanged	redir/redir_only simple/c_redirect_only	
+2.9.1.3/2	T	With no command name the status is that of the last command substitution, else zero	simple/assign_status simple/c_status_no_name	
+2.9.1.4/1	T	Search order without a slash: special built-in, function, other built-in, then PATH	func/name_shadows_builtin simple/c_search_order	
+2.9.1.4/2	X	A function cannot shadow a special built-in	simple/c_special_not_shadowed	defining a function named after a special built-in is an error in dash and in bash --posix
+2.9.1.4/3	T	PATH is searched in order, and only executable files are taken	simple/path_search exec/path_assign_search simple/c_path_order	
+2.9.1.4/4	T	After PATH is assigned, a remembered location is not used	simple/c_path_rehash	
+2.9.1.4/5	T	An empty PATH component or an unset PATH names the current directory or the default	simple/c_path_empty_component	
+2.9.1.4/6	T	A name with a slash is executed directly, without a PATH search	simple/slash_not_found simple/c_slash_direct	
+2.9.1.6/1	T	The utility is run with arg0 the command name and the arguments as given	simple/external_args simple/c_arg0	
+2.9.1.6/2	T	A file the system refuses with ENOEXEC is run as a shell script by the shell	exec/script_no_shebang simple/script_no_shebang simple/c_enoexec	
+2.9.1.6/3	T	A file that cannot be a script (a NUL before a newline) is refused with status 126	simple/c_enoexec_binary	
+2.9.2/1	T	Each command's standard output is connected to the next command's standard input	pipe/three pipe/many_stages pipe/stdin_through	
+2.9.2/2	T	The pipe is assigned before the command's own redirections	pipe/c_redirect_overrides	
+2.9.2/3	T	The pipeline's status is the last command's	pipe/status_last pipe/pipeline_status pipe/c_status_last	
+2.9.2/4	T	! inverts the status of the pipeline	pipe/negation control/not pipe/c_bang	
+2.9.2/5	T	With set -o pipefail the status is the last non-zero status in the pipeline, zero if all succeed	pipe/c_pipefail	new in POSIX.1-2024; dash 0.5.13.4 has `set -o pipefail`? recorded from both, POSIX decides
+2.9.2/6	T	The pipefail setting used is the one in effect when the pipeline starts	pipe/c_pipefail_at_start	
+2.9.2/7	T	Each command of a multi-command pipeline runs in a subshell environment (or the current one, as an extension, for some)	pipe/stage_is_subshell pipe/cd_in_stage pipe/exit_in_stage pipe/c_stage_environment	
+2.9.2/8	T	The shell waits for the last command of a foreground pipeline; stages run concurrently	pipe/sigpipe_producer pipe/large_in_process pipe/c_concurrent_stages	
+2.9.2/9	T	A reader that exits early ends a producer written in the shell itself (SIGPIPE or EPIPE)	pipe/c_shell_producer_ends	
+2.9.2/10	T	A pipeline stage that is a compound command or function reads the previous stage as it arrives	pipe/compound_stage pipe/function_stage pipe/builtin_to_program pipe/program_to_builtin pipe/c_incremental_reader	
+2.9.3/1	T	&& and || have equal precedence and associate left	control/and_or control/c_andor_assoc	
+2.9.3/2	T	; and newline run lists in sequence; & runs the list asynchronously	control/async_list jobs/background control/c_separators	
+2.9.3.1/1	T	The shell does not wait for an asynchronous list; its status is zero	jobs/background jobs/two jobs/c_async_status	
+2.9.3.1/2	T	Without job control an asynchronous list's standard input is /dev/null unless redirected	jobs/stdin_null jobs/c_async_stdin	
+2.9.3.1/3	T	An asynchronous list runs in a subshell: its assignments and cd do not affect the shell	jobs/c_async_subshell	
+2.9.3.1/4	T	The shell does not wait for background children before exiting	jobs/c_exit_no_wait	
+2.9.3.1/5	T	The whole AND-OR list is run in the background, not only its last pipeline	jobs/c_async_andor	
+2.9.3.3/1	T	The second command of an AND list is expanded and run only if the first succeeds	control/c_and_lazy	
+2.9.3.4/1	T	The second command of an OR list runs only if the first fails; status is the last command run	control/c_or_lazy	
+2.9.4/1	T	A redirection on a compound command applies to every command in it that does not override it	redir/compound_out redir/while_in redir/exec_in_group control/c_compound_redirect	
+2.9.4.1/1	T	( list ) runs in a subshell: assignments, cd, options, functions and traps set there do not remain	control/subshell cd/cd_subshell cd/subshell_restores env/subshell_export env/subshell_unset control/c_subshell_isolation	
+2.9.4.1/2	T	{ list; } runs in the current environment	control/brace_group control/c_brace_current	
+2.9.4.1/3	T	The status of a grouping command is the status of its list	control/c_group_status	
+2.9.4.2/1	T	for runs the list once per item of the expanded words, setting the variable; it remains set afterwards	control/for_in control/for_var_after control/c_for_words	
+2.9.4.2/2	T	for without in iterates over "$@"; with an empty in list it runs nothing and returns zero	control/for_positional control/for_empty control/c_for_forms	
+2.9.4.2/3	T	for's status is that of the last list run	control/c_for_status	
+2.9.4.3/1	T	case runs the list of the first pattern that matches the expanded word; later patterns are not expanded	control/case_basic control/case_multi control/c_case_first_match	
+2.9.4.3/2	T	The case word undergoes tilde, parameter, command, arithmetic expansion and quote removal, but no splitting or globbing	control/c_case_word	
+2.9.4.3/3	T	Patterns are expanded; quoted parts of a pattern match literally	control/case_quoted_pattern control/c_case_pattern_quoting	
+2.9.4.3/4	T	An optional ( may precede the pattern list, and | separates patterns	control/c_case_syntax	
+2.9.4.3/5	T	;& falls through to the next clause's list without testing its pattern	control/case_fallthrough control/c_case_fallthrough_chain	new in POSIX.1-2024; dash 0.5.13.4 has no ;&, so bash --posix is the oracle
+2.9.4.3/5b	T	The last clause of a case may itself end with ;&	control/c_case_fallthrough_last	dash 0.5.13.4 refuses ;& before esac as a syntax error; the grammar allows it, so bash --posix is the oracle
+2.9.4.3/6	T	case's status is zero when nothing matches, else the status of the last list run; an empty list gives zero	control/case_status control/c_case_status_forms	
+2.9.4.4/1	T	if runs the then list when the condition list succeeds, else each elif in turn, else the else list	control/if_elif_else control/c_if_chain	
+2.9.4.4/2	T	if's status is that of the list run, or zero if none ran	control/if_status control/c_if_status_none	
+2.9.4.4/3	T	The condition's status is visible in $? at the start of the then or else list	control/c_if_status_visible	
+2.9.4.5/1	T	while repeats its body while the condition list succeeds; status is the last body status or zero	control/while control/while_break_value control/c_while_status	
+2.9.4.6/1	T	until repeats its body until the condition list succeeds	control/until control/c_until_status	
+2.9.5/1	T	fname() compound-command defines a function; any compound command can be the body	func/basic func/compound_body parse/func_simple_body func/c_bodies	
+2.9.5/2	T	Functions and variables have separate name spaces	func/c_namespaces	
+2.9.5/3	T	The body is expanded when called, not when defined	func/c_expanded_at_call	
+2.9.5/4	T	A redirection after the body applies each time the function is called	redir/func_body func/c_redirect_on_definition	
+2.9.5/5	T	During the call the operands are the positional parameters and $# changes; both are restored after; $0 is unchanged	func/positional_restore func/args func/c_positional_scope	
+2.9.5/6	T	return ends the function; execution resumes after the call	func/return_in_loop builtin/return_status func/c_return_resumes	
+2.9.5/7	T	The status of a definition is zero; the status of a call is that of the last command run	func/status_of_def func/c_call_status	
+2.9.5/8	T	A function can call itself and other functions, and can be redefined, including from inside itself	func/recursion func/redefine func/c_redefine_self	
+2.9.5/9	T	Variables assigned in a function are global; a function called in a subshell or pipeline does not change the caller	func/global_assign func/in_cmdsub	
+2.9.5/10	X	A function name that is not a valid name is refused or accepted as an extension (recorded from dash)	parse/bad_funcname	
+2.10/1	T	A newline may follow | && || and the reserved words that open a list; ; cannot begin a command	parse/newlines_ok parse/leading_semicolon parse/trailing_pipe parse/trailing_andand parse/c_newline_continues	
+2.10/2	T	Empty compound lists are syntax errors: { }, ( ), then with no list, do with no list	parse/empty_brace parse/then_empty parse/c_empty_lists parse/c_empty_do parse/c_empty_subshell	
+2.10/3	T	Missing or stray closing words are syntax errors	parse/missing_done parse/missing_esac parse/missing_fi parse/missing_then parse/done_late parse/stray_dsemi parse/stray_paren parse/fi_unexpected parse/case_no_in	
+2.10/4	T	Unterminated quotes and substitutions are syntax errors	parse/unterminated_backquote parse/unterminated_cmdsub parse/unterminated_dquote parse/unterminated_squote	
+2.10/5	T	A redirection needs a target word; a for needs a name	parse/redirect_no_target parse/for_bad_name	
+2.10.2/1	T	Rule 1: a reserved word is recognized only as the whole unquoted token	parse/c_rule1	
+2.10.2/2	T	Rule 4: the case terminator esac is recognized where a pattern could begin	parse/c_rule4	
+2.10.2/3	T	Rule 5: the for variable must be a name	parse/for_bad_name	
+2.10.2/4	T	Rule 6: in and do after the for name are recognized on the same or a following line	parse/c_rule6	
+2.10.2/5	T	Rule 7: a word with = after a valid name at the start of a command is an assignment; otherwise it is a command name	parse/c_rule7	
+2.10.2/6	T	Rule 8: name() begins a function definition; a reserved word cannot be a function name	parse/c_rule8	
+2.10.2/7	T	Rule 9: words in a function body are not expanded or assigned at definition	parse/c_rule9	
+2.10.2/8	T	An io number is digits immediately before < or >	parse/c_io_number	
+2.10.2/9	T	Comments and blank lines form no command; a script of only those exits zero	stdin/no_prompt parse/c_only_comments	
+2.10.2/10	T	A subshell and a brace group can be nested and combined with every list operator	parse/c_nesting	
+2.11/1	S	An interactive shell with a controlling terminal puts itself in its own process group and makes that the terminal's foreground group	session:c_jc_shell_is_leader	
+2.11/2	S	With job control on, each foreground pipeline runs in its own process group, which is made the terminal's foreground group	session:c_jc_foreground_group	
+2.11/3	S	With job control on, an asynchronous list becomes a background job with a job number, in its own process group	session:c_jc_background_job session:c_jc_background_group	
+2.11/4	S	When a foreground job ends or stops, the shell makes its own group the terminal's foreground group again	session:c_jc_terminal_back	
+2.11/5	S	A foreground job stopped by SIGTSTP becomes a suspended job with a job number, and the shell writes a message and prompts	session:c_jc_ctrl_z	
+2.11/6	S	$? after a foreground job is stopped is the status it would have had if the signal had ended it	session:c_jc_ctrl_z	
+2.11/7	S	fg continues a suspended job in the foreground: terminal first, then SIGCONT to its group	session:c_jc_fg session:c_jc_fg_number	
+2.11/8	S	bg continues a suspended job in the background	session:c_jc_bg	
+2.11/9	S	A background job that stops (SIGTTIN on reading the terminal) becomes a suspended job, reported before the next prompt	session:c_jc_bg_ttin	
+2.11/10	S	When a background job completes, an interactive shell writes a message before the next prompt	session:c_jc_done_message	
+2.11/11	S	With set -b the completion message is written at once		no session case: the harness types when the shell is quiet and cannot place a message that arrives between two keys; measured by hand under dash
+2.11/12	S	The interactive shell saves the terminal settings when a job is suspended and fg restores them		no session case: the harness does not read the terminal's settings
+2.11/15	S	The terminal's interrupt character reaches the foreground job and not the shell	session:c_jc_ctrl_c_job_only session:ctrl_c_child	
+2.11/13	T	set -m in a non-interactive shell puts each asynchronous list in its own process group	jobsctl/c_monitor_script_pgid	
+2.11/14	T	With job control off, a background command stays in the shell's process group	jobsctl/c_no_monitor_pgid	
+2.12/1	T	With job control off, commands of an asynchronous list start with SIGINT and SIGQUIT ignored	signal/background_ignores_int signal/c_async_ignores_quit	
+2.12/2	T	Otherwise commands inherit the signal actions the shell inherited, unless trap changed them	signal/trap_ignore_inherited signal/trap_caught_default_in_child signal/c_inherited_ignore	
+2.12/3	T	A trapped signal that arrives while a foreground command runs is acted on after that command completes	signal/trap_deferred_to_foreground_end	
+2.12/4	T	A trapped signal that arrives during wait makes wait return at once with a status above 128, then the trap runs	pending/wait_interrupted signal/c_wait_interrupted_term	
+2.12/5	T	Signals for every name in signal.h can be trapped (USR1, ALRM, PIPE, CHLD, CONT, WINCH and the rest)	pending/trap_usr1 pending/trap_ignore_usr1 signal/c_trap_alrm signal/c_trap_pipe signal/c_trap_usr1_self signal/c_trap_abrt_number signal/c_trap_ignore_pipe signal/c_trap_winch_cont	
+2.13/1	T	A utility is run with the shell's open files, working directory and file creation mask	redir/child_inherits_fd exec/fd3_inherited cd/child_sees_it env/c_utility_environment	
+2.13/2	T	A utility receives the exported variables and those assigned for the command, and no others	env/exact env/never_exported env/empty env/only_pwd env/c_exported_only	
+2.13/3	T	A utility cannot change the shell's environment	env/c_child_cannot_change	
+2.13/4	T	A shell script run as a utility starts with caught traps at default and ignored signals still ignored	signal/trap_caught_default_in_child signal/trap_ignore_inherited	
+2.13/5	T	A subshell is a duplicate of the shell environment: variables (exported or not), functions, options, positional parameters	control/subshell cmdsub/function env/c_subshell_duplicate	
+2.13/6	T	In a subshell, traps that are not ignored are reset to default	signal/trap_subshell_reset signal/trap_in_subshell signal/trap_subshell_ends_restores signal/c_subshell_trap_reset	
+2.13/7	T	A subshell killed by a signal does not take the parent with it, and the parent sees a status above 128	pending/subshell_signal	
+2.13/8	T	Changes made in a subshell do not affect the shell, for every subshell form: ( ), $( ), pipeline stage, &	pipe/stage_is_subshell cmdsub/isolation env/c_subshell_forms	
+2.13/9	T	exit in a subshell ends only the subshell, for every subshell form	cmdsub/exit_inside pipe/exit_in_stage env/c_exit_in_subshell_forms	
+2.13/10	T	A subshell has its own working directory and descriptors: cd and exec redirections there do not leak	env/c_subshell_cwd_fds	
+2.13/11	T	Subshells of one shell run concurrently as separate processes when asked to (& and pipeline stages)	env/c_subshell_concurrent	
+2.14.1/1	T	An ordinary character matches itself; a quoted or escaped special character matches itself	glob/quoted glob/edge_quoted glob/c_quoted_specials	
+2.14.1/2	T	? matches any one character	glob/question glob/c_question	
+2.14.1/3	T	[...] matches one character of the set; ranges, and ! for the complement	glob/bracket glob/edge_negate glob/c_bracket	
+2.14.1/4	T	Character classes [[:alpha:]] and the rest match by class	glob/class glob/edge_class glob/c_classes	
+2.14.1/5	T	A [ that does not open a valid bracket expression matches itself	glob/edge_lone_open glob/edge_open_a glob/c_lone_bracket	
+2.14.1/6	T	A backslash in a pattern that came from an expansion escapes the next character	glob/edge_backslash glob/c_backslash_from_expansion	
+2.14.1/7	T	Equivalence classes and collating symbols in a bracket expression ([[=a=]], [[.a.]])	glob/c_equiv_collating	
+2.14.2/1	T	* matches any string, the null string included; several * in one pattern each match as needed	glob/star glob/c_star	
+2.14.3/1	T	In pathname expansion a slash must be matched explicitly, by neither * nor ? nor a bracket expression	glob/path glob/edge_slash glob/c_slash_explicit	
+2.14.3/2	T	A leading period in a file name must be matched explicitly, at the start or after a slash	glob/hidden glob/c_leading_period	
+2.14.3/3	T	Matches are substituted in collating order; a pattern that matches nothing is left unchanged	glob/sorted glob/no_match glob/c_sorted_nomatch	
+2.14.3/4	T	Each pattern component is matched in its own directory; trailing slash selects directories	glob/dirs_only glob/c_components	
+2.14.3/5	T	A directory that cannot be read or searched is not an error: the pattern is left as is	glob/c_unreadable	
+2.14.3/6	T	A word with no unquoted pattern character is left unchanged without reading any directory	glob/edge_test_cmd glob/edge_lone_close glob/edge_a_close glob/edge_empty glob/edge_star_open	
+2.14.3/7	T	Pattern characters produced by quoting inside an otherwise unquoted word stay literal	glob/quoted glob/c_mixed_quoting	
+2.14.3/8	T	Matching in parameter expansion and case is not subject to the slash and period rules	glob/c_no_file_rules_in_case	
+2.15/1	T	An assignment before a special built-in affects the current environment; before a regular built-in it does not	simple/persist_special simple/temp_builtin	
+2.15/2	T	A special built-in is found before a function or PATH entry of the same name	builtin/c_special_first	
+break/1	T	break leaves the innermost loop; break n leaves n loops; more than the depth leaves the outermost	builtin/break_n builtin/c_break	
+break/2	T	break with an operand that is not a positive integer fails	builtin/c_break_bad	
+break/3	T	A loop encloses a break only in the same execution environment: not across a subshell or a function body defined in the loop	builtin/break_outside builtin/c_break_lexical	
+continue/1	T	continue resumes the next iteration of the innermost loop, continue n of the nth enclosing loop	builtin/continue_n builtin/c_continue	
+colon/1	T	: does nothing and returns zero; its arguments are expanded	builtin/colon_true_false builtin/c_colon	
+dot/1	T	. file runs the file's commands in the current environment	builtin/dot builtin/c_dot_current_env	
+dot/2	T	Without a slash, the file is searched for in PATH and need not be executable	builtin/c_dot_path	
+dot/3	T	When no readable file is found a non-interactive shell exits	builtin/c_dot_missing	
+dot/4	T	The status is that of the last command in the file, zero if there is none	builtin/c_dot_status	
+dot/5	T	return in a dot script ends the script, not the caller	builtin/c_dot_return	
+dot/6	T	A syntax error in a dot script is a special built-in error	builtin/c_dot_syntax_error	
+dot/7	T	Positional parameters of the caller are visible in the dot script	builtin/c_dot_positional	
+eval/1	T	eval joins its arguments with spaces and runs the result in the current environment	builtin/eval builtin/c_eval_join	
+eval/2	T	eval with no arguments or only null arguments returns zero	builtin/c_eval_empty	
+eval/3	T	eval's status is that of the command it ran; a syntax error is a special built-in error	builtin/eval_syntax_error builtin/c_eval_status	
+eval/4	T	return, break and continue inside eval act on the enclosing function or loop	builtin/c_eval_flow	
+exec/1	T	exec with no utility makes its redirections permanent in the current shell	redir/exec_fd redir/exec_stdout builtin/c_exec_redirects	
+exec/2	T	exec utility replaces the shell: nothing after it runs	builtin/exec redir/exec_command exec/status builtin/c_exec_replaces	
+exec/3	T	A failed exec ends a non-interactive shell with 126 or 127	exec/not_found exec/not_executable exec/exit_trap_when_it_fails builtin/c_exec_fails	
+exec/4	T	exec in a subshell replaces only the subshell	exec/subshell exec/cmdsub env/exec_subshell_exact builtin/c_exec_subshell	
+exec/5	T	exec -- utility is accepted (utility syntax guidelines)	builtin/c_exec_dashdash	
+exec/6	T	A redirection error on exec gives a status 1-125 and a non-interactive shell exits	redir/special_fail_exits	
+exit/1	T	exit n ends the shell with status n; without n, with the last status	builtin/exit_code builtin/exit_default builtin/c_exit_n	
+exit/2	T	The EXIT trap runs before the shell ends; exit inside it ends at once with that status	builtin/trap_exit builtin/trap_in_exit builtin/trap_exit_status signal/trap_exit_runs_exit_trap builtin/c_exit_trap	
+exit/3	T	exit in an EXIT or signal trap action with no operand uses the status from before the trap	signal/trap_exit_no_operand builtin/c_exit_in_trap_status	
+exit/4	T	exit in a function, loop, dot script or eval ends the whole shell	builtin/exit_in_function builtin/c_exit_everywhere	
+exit/5	X	exit with an operand above 256 that names a signal status ends the shell as if by that signal (new in 2024)	builtin/c_exit_signal_status	POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 --posix does it (both exit n mod 256); recorded, not counted
+export/1	T	export name gives the variable the export attribute: later commands see it	env/reexport env/export_no_value builtin/c_export	
+export/2	T	export -p writes export name=value lines suitable for reinput	builtin/export_p builtin/c_export_p	
+export/3	T	export of a readonly variable with a new value fails	builtin/c_export_readonly	
+export/4	T	export -- and invalid names	builtin/c_export_invalid	
+readonly/1	T	readonly name makes later assignment and unset fail	builtin/readonly_error builtin/unset_readonly builtin/c_readonly	
+readonly/2	T	readonly -p writes readonly name=value lines suitable for reinput	builtin/readonly_p builtin/c_readonly_p	
+readonly/3	T	A readonly variable cannot be changed by read, getopts, for, export, or an arithmetic assignment	builtin/c_readonly_everywhere	
+return/1	T	return n ends the function with status n; without n, with the last status	builtin/return_status builtin/c_return	
+return/2	T	return in a trap action with no operand uses the status from before the trap	builtin/c_return_in_trap	
+return/3	X	return outside a function or dot script (recorded from dash; unspecified by POSIX)	builtin/return_top	
+set/1	T	set with no arguments writes every variable as name=value, quoted for reinput, sorted	builtin/c_set_lists	
+set/2	T	set -- args sets the positional parameters, replacing all; set -- alone clears them	builtin/set_positional builtin/c_set_positional	
+set/3	T	set -a exports every variable assigned afterwards, however assigned	option/allexport option/c_allexport_forms	
+set/4	T	set -C prevents > from overwriting an existing regular file	redir/noclobber	
+set/5	T	set -e exits when a command fails	option/errexit option/c_errexit_basic	
+set/6	T	set -e ignores failures in the condition of if, while, until, in a ! pipeline, and in all but the last of an AND-OR list	option/errexit_if option/errexit_while option/errexit_not option/errexit_andor option/c_errexit_exempt	
+set/7	T	Under set -e only the pipeline's own status matters, not an earlier stage's or a command substitution's inside a word	pipe/set_e option/c_errexit_pipeline	
+set/8	T	Under set -e an assignment from a failing command substitution exits	option/c_errexit_assign_cmdsub	
+set/9	T	set -e is ignored inside a compound command or function that runs in an exempt context	option/errexit_function option/c_errexit_ignored_inside	
+set/10	T	set -e applies in each subshell separately; a failing subshell then fails in the parent	option/errexit_subshell option/c_errexit_subshell_forms	
+set/11	T	Under set -e the EXIT trap still runs, and the status is the failing command's	option/c_errexit_trap	
+set/12	T	A compound command whose status came from an ignored failure does not trigger -e	option/c_errexit_compound_status	
+set/13	T	set -f disables pathname expansion	option/noglob glob/noglob	
+set/14	T	set -n reads commands without executing them	option/c_noexec	
+set/15	T	set -u makes expanding an unset parameter an error, except $@ and $*	option/nounset option/nounset_positional option/c_nounset_forms	
+set/15b	T	set -u applies to an unset variable named in an arithmetic expansion	option/c_nounset_arith	POSIX.1-2024 names arithmetic expansion in -u; dash 0.5.13.4 reads the unset variable as 0, so bash --posix is the oracle
+set/16	T	set -v writes input lines to standard error as they are read	option/c_verbose option/c_verbose_stderr	pelt#6
+set/17	T	set -x writes each expanded command to standard error before running it	option/xtrace option/c_xtrace_forms	
+set/18	T	set -o name and set +o name are the long forms of the option letters	option/set_o option/c_long_names	
+set/19	T	set +o writes commands that restore the current option settings; set -o lists them	option/c_plus_o	
+set/20	T	set -o ignoreeof, nolog, vi are accepted	option/c_up_options	
+set/21	T	set -o pipefail is accepted and reported (new in 2024)	option/c_pipefail_option	
+set/22	T	set -h and set -b are accepted	option/c_h_b	dash 0.5.13.4 refuses -h; POSIX requires it be accepted, so bash --posix is the oracle
+set/23	T	An invalid option is an error: a non-interactive shell exits	option/bad_option	
+set/24	T	Options given on the sh command line are set, and appear in $-	sh/c_options_on_command_line	
+shift/1	T	shift n drops the first n positional parameters; default 1; shift 0 changes nothing	builtin/shift builtin/c_shift	
+shift/2	T	shift by more than $# fails with a message (a non-interactive shell may exit)	builtin/shift_error	
+times/1	T	times writes two lines of user and system times in the form NmN.NNs NmN.NNs	builtin/times builtin/c_times_format	
+times/2	T	times reports real accumulated times: after burning CPU the shell's user time is not zero	builtin/c_times_real	
+trap/1	T	trap action condition... sets the action; it runs via eval when the condition arises	signal/trap_int signal/trap_term signal/trap_hup signal/trap_quit signal/trap_usr2 signal/trap_eval signal/trap_two	
+trap/2	T	trap - condition resets to default; a first operand that is an unsigned integer resets all operands	signal/trap_reset signal/trap_reset_number builtin/trap_reset signal/c_trap_reset_forms	
+trap/3	T	trap '' condition ignores the signal	signal/trap_ignore signal/trap_ignore_int	
+trap/4	T	$? after a trap action is what it was before the action	signal/trap_status_kept signal/trap_action_status_dropped	
+trap/5	T	Conditions may be EXIT, 0, a name without SIG, or a number	signal/trap_number signal/c_trap_condition_names	
+trap/6	T	trap with no operands writes trap -- 'action' condition for each condition not at default, quoted for reinput	signal/trap_print builtin/trap_print signal/c_trap_print_reinput	
+trap/7	T	trap -p writes the action of each named condition, and of every condition with no operand (new in 2024)	signal/c_trap_p	POSIX.1-2024 addition; dash 0.5.13.4 has no -p, so bash --posix is the oracle
+trap/8	T	An invalid condition gives a warning and a non-zero status, and the shell does not exit	signal/trap_bad_condition signal/c_trap_invalid	
+trap/9	T	Traps stay in place until changed; an action can itself set or reset traps	signal/trap_replaced signal/trap_twice_same signal/c_trap_in_action	
+trap/10	T	$(trap) in a command substitution shows the parent's traps	signal/trap_in_cmdsub signal/c_trap_cmdsub_shows_parent	
+trap/11	T	The EXIT trap runs in the environment of the last command: variables and $? are visible; it runs once	builtin/trap_exit signal/trap_exit_in_action signal/c_exit_trap_env	
+trap/12	T	An EXIT trap set in a subshell runs when that subshell ends; the parent's EXIT trap does not run there	signal/trap_in_subshell signal/c_exit_trap_subshell	
+trap/13	T	A signal ignored on entry to a non-interactive shell cannot be trapped or reset	signal/c_ignored_on_entry	wolf-lang#681
+trap/14	T	A trap action runs between commands of a list, loop or function, not only at the end of the script	signal/trap_in_loop signal/trap_in_function signal/trap_breaks_loop signal/trap_action_runs_program signal/trap_action_sets_variable	
+trap/15	T	trap -- action condition is accepted	signal/c_trap_dashdash	
+trap/16	T	A signal with a default action of terminate ends the shell with that signal when not trapped; the EXIT trap may or may not run	signal/death_runs_no_exit_trap	
+unset/1	T	unset name removes the variable and its export attribute; unset -v the same	builtin/unset env/unset_var env/unset_exported builtin/c_unset_forms	
+unset/2	T	unset -f removes a function, and not a variable of that name	func/unset_f builtin/c_unset_f	
+unset/3	T	unset of a readonly variable fails with a non-zero status	builtin/unset_readonly	
+unset/4	T	Unsetting IFS, PATH and other shell variables works and has the specified effect	builtin/c_unset_shell_vars	
+sh/1	T	sh -c string runs the string; the next operand is $0 and the rest are positional parameters	sh/c_dash_c	
+sh/2	T	sh -c with an empty string exits zero	sh/c_dash_c_empty	
+sh/3	T	sh -c reads no commands from standard input, which stays available to the commands	sh/c_dash_c_stdin	
+sh/4	T	sh file args runs the file with $0 the file name and the operands as positional parameters; the file need not be executable	exec/argv0 sh/c_command_file	
+sh/5	T	A command file with no slash is looked for in the current directory first	sh/c_command_file_cwd	
+sh/6	T	A command file that cannot be found gives status 127	sh/c_command_file_missing	dash 0.5.13.4 exits 2; the sh page says 127, so bash --posix is the oracle
+sh/7	T	sh -s reads commands from standard input and takes operands as positional parameters; no operands and no -c means -s	stdin/program_takes_rest sh/c_dash_s	
+sh/8	T	The shell does not read ahead on standard input: a command it starts reads the bytes after its own line	stdin/read_takes_next_line stdin/program_takes_rest sh/c_no_read_ahead sh/c_no_read_ahead_file	
+sh/9	T	A script of only blank lines and comments exits zero; the status is otherwise that of the last command	parse/comments_ok sh/c_exit_status	
+sh/10	T	A syntax error in a non-interactive shell gives a status from 1 to 125	sh/c_syntax_status	
+sh/11	T	A shell given -i, or reading standard input with input and error on a terminal, is interactive; otherwise not	session:default_interactive stdin/no_prompt sh/c_not_interactive	
+sh/12	T	-c and -s combine with option letters in one argument and with -o	sh/c_combined_options	
+sh/13	T	Input lines may be of any length	sh/c_long_line	
+sh/14	T	The shell's own exit: the EXIT status is that of the last command when input ends	sh/c_eof_status	
+sh/15	S	An interactive shell ignores SIGQUIT and SIGTERM and survives SIGINT	session:ctrl_c_prompt session:term_at_prompt	
+sh/16	S	With -m an interactive shell ignores SIGTSTP, SIGTTIN and SIGTTOU	session:c_jc_shell_ignores_tstp	
+sh/17	S	set -o ignoreeof keeps an interactive shell alive at end-of-file	session:c_ignoreeof	
+sh/18	S	The command history list: commands typed are kept, at least 128 of them, HISTSIZE and HISTFILE honoured	session:c_hist_fc_list	HISTFILE across two sessions has no case: one session cannot show a file read at the next start
+sh/19	S	set -o vi: ESC enters command mode; motion, editing and history keys as the vi-mode sections list (about 60 commands)	session:c_vi_basic session:c_vi_motion session:c_vi_history	
+sh/20	S	In vi insert mode the erase, kill, ^V, ^W and end-of-file characters act as described	session:c_vi_insert session:c_vi_basic	
+sh/21	S	MAIL, MAILCHECK, MAILPATH: the shell tells the user before a prompt when a mailbox file changes	session:c_mail	
+sh/24	S	An interactive shell accepts an input line longer than the terminal's own line limit (input lines are of unlimited length)	session:c_long_line	
+sh/25	S	With no editing mode on, the terminal's erase, kill and word-erase characters edit the line before the shell sees it	session:c_tty_erase	
+sh/26	S	Lines that arrive together are run one after the other	session:c_paste_two_lines	
+sh/22	U	ENV is ignored when the real and effective user or group IDs differ		needs a set-user-ID shell; not built by the corpus (and wolf has no uid surface, wolf-lang#633)
+sh/23	U	A FIFO or terminal standard input set non-blocking is put back to blocking reads		needs a descriptor inherited with O_NONBLOCK; measured by hand (docs/CENSUS.md)
+alias/1	T	alias name=value defines an alias; alias name writes it as name=value quoted for reinput; alias alone writes all	alias/c_alias_print	
+alias/2	T	alias for a name with no definition fails with a message, and other operands are still processed	alias/c_alias_missing	
+alias/3	T	unalias name removes it; unalias -a removes all; removing a missing alias fails	alias/c_unalias	
+alias/4	T	An alias may name a reserved word position and aliases apply after reserved words that take a command	alias/c_after_reserved	
+alias/5	T	An alias defined in a function or compound command is not in effect for the rest of that already-parsed command	alias/c_parse_time	
+alias/6	T	Alias names may contain ! % , @ and the portable filename characters	alias/c_alias_names	
+command/1	T	command name runs the utility ignoring functions	builtin/command_bypass command/c_bypass_function	
+command/2	T	command -v name writes how the name would be run: a path, the name of a built-in or function, an alias definition, a reserved word	builtin/command_v command/c_v	
+command/3	T	command -V name writes a description in words for each kind	command/c_big_v	
+command/4	T	command -p uses a default PATH that finds the standard utilities	command/c_p	
+command/5	T	command before a special built-in removes its special properties: errors do not exit, assignments do not persist	builtin/command_bypass command/c_special_properties	
+command/6	T	The status of command is that of the utility; 127 not found, 126 not executable	command/c_status	
+command/7	T	command is not a declaration utility by itself, but command export keeps assignment context	command/c_declaration	
+type/1	T	type name writes how each name would be interpreted, and fails for a name that is not found	type/c_type	
+type/2	T	type's output names the path of a utility found in PATH	type/c_type_path	
+hash/1	T	hash name remembers the utility's location; hash alone lists; hash -r forgets; a missing utility fails	hash/c_hash	
+hash/2	T	A remembered location that stops working is searched for again	hash/c_stale	
+cd/1	T	cd with no operand goes to HOME; with HOME unset or empty it fails or does nothing as recorded	cd/home cd/c_home_forms	
+cd/2	T	cd - goes to OLDPWD and writes the new directory	cd/minus cd/oldpwd cd/c_minus	
+cd/3	T	cd sets PWD and OLDPWD, and they are what a later child sees when exported	cd/oldpwd cd/child_sees_it cd/c_pwd_oldpwd	
+cd/4	T	cd -L (default) keeps symbolic links in PWD and resolves dot-dot against it; cd -P uses the physical path	cd/symlink cd/dotdot cd/c_logical_physical	
+cd/5	T	CDPATH is searched for a relative operand that does not begin with dot or dot-dot, and the result is written when found there	cd/cdpath cd/cdpath_prints cd/c_cdpath_forms	
+cd/6	T	cd to a missing directory, a file, or with too many operands fails with a non-zero status and PWD unchanged	cd/fail cd/relative_file cd/c_failures	
+cd/7	T	cd -e with -P exits 1 when the new directory's name cannot be determined (new in 2024)	cd/c_dash_e	POSIX.1-2024 addition; dash 0.5.13.4 has no -e; bash --posix is the oracle
+cd/8	T	cd canonicalizes: dot components and repeated slashes are removed from PWD	cd/c_canonical	
+pwd/1	T	pwd writes the absolute pathname of the current directory; -L from PWD when valid, -P with no symbolic links	builtin/pwd pwd/c_pwd	
+pwd/2	T	pwd with a bad option fails	pwd/c_pwd_bad	
+echo/1	T	echo writes its arguments separated by spaces and a newline	builtin/echo_n builtin/echo_escapes echo/c_echo	
+echo/2	X	echo with XSI escapes (\c \n \t \\ \0nnn) — recorded from dash, which is XSI; bash --posix differs	builtin/echo_escapes	implementation-defined when the first operand is -n or any operand has a backslash; dash is the oracle because scripts under /bin/sh rely on it
+true/1	T	true returns zero and false non-zero, ignoring arguments	builtin/colon_true_false echo/c_true_false	
+test/1	T	test with no operands is false; one operand is true if not null	builtin/test_strings test/c_arity_0_1	
+test/2	T	Two operands: ! negates; a unary primary is applied	test/c_arity_2	
+test/3	T	Three operands: a binary primary is applied first; then ! with two; then ( x )	builtin/test_logic test/c_arity_3	
+test/4	T	Four operands: ! with three	test/c_arity_4	
+test/5	T	String primaries: = != -n -z, and < > by byte order (new in 2024)	builtin/test_strings builtin/test_string_order test/c_strings	
+test/6	T	Integer primaries: -eq -ne -gt -ge -lt -le, with signs and leading zeros and blanks	builtin/test_integers test/c_integers	
+test/7	T	An operand that is not an integer makes an integer primary an error: status above 1	builtin/test_errors test/c_integer_errors	
+test/8	T	File primaries: -e -f -d -r -w -x -s -L -h	builtin/test_files test/c_files	
+test/9	T	File type primaries: -b -c -p -S -g -u -k, and -t for a terminal	test/c_file_types	
+test/10	T	-ef -nt -ot compare two files (new in 2024)	test/c_file_compare	
+test/11	T	-O and -G test ownership by the effective user and group	test/c_owner	wolf-lang#633 (no uid surface)
+test/12	T	-a and -o and parentheses (obsolescent XSI forms scripts still use)	builtin/test_logic test/c_and_or	
+test/13	T	[ needs a closing ] and reports its absence	builtin/bracket	
+test/14	T	-r -w -x reflect the permissions that apply to the caller	test/c_permissions	
+printf/1	T	printf format with %s %d %c and literal text; the format is reused until operands run out	builtin/printf_formats builtin/printf_reuse printf/c_basic	
+printf/2	T	Escape sequences in the format: \\ \a \b \f \n \r \t \v \ddd	builtin/printf_escapes printf/c_format_escapes	
+printf/3	T	%b interprets backslash escapes in its operand, including \c which stops output and \0ddd	builtin/printf_b printf/c_b	
+printf/4	T	Integer conversions %d %i %o %u %x %X with flags, width and precision	builtin/printf_zero_pad builtin/printf_unsigned builtin/printf_width_star printf/c_integers	
+printf/5	T	String conversions with width and precision; %c takes the first character; %% is a percent sign	printf/c_strings	
+printf/6	T	A numeric operand starting with a quote is the character's code	builtin/printf_char_value printf/c_quote_value	
+printf/7	T	A bad numeric operand gives a diagnostic and a non-zero status, and output still happens	builtin/printf_bad_number printf/c_bad_operand	
+printf/8	T	Floating conversions %e %f %g %a (required when the system has them: recorded from dash)	printf/c_floats	
+printf/9	T	printf with no format operand fails; -- ends options	printf/c_usage	
+printf/10	X	Numbered argument conversions %n$ (new in 2024)	printf/c_numbered	POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 implements it; recorded, not counted
+read/1	T	read assigns fields split by IFS to the variables; the last gets the rest, trimmed of IFS white space	builtin/read builtin/read_ifs read/c_fields	
+read/2	T	Without -r a backslash escapes the next character and backslash-newline continues the line; with -r backslash is literal	builtin/read_raw read/c_backslash	
+read/3	T	read returns non-zero at end-of-file, having assigned what it read	read/c_eof	
+read/4	T	read reads exactly one line, leaving the rest of the input for the next reader	read/c_one_line	
+read/5	X	read with no variable name: REPLY as an extension, or an error (recorded from dash)	read/c_no_var	POSIX requires at least one var operand; behaviour without one is unspecified
+read/6	T	read -d delim reads up to the delimiter; -d '' reads up to a NUL (new in 2024)	read/c_delim	POSIX.1-2024 addition; dash 0.5.13.4 has no -d; bash --posix is the oracle
+read/7	T	read into a readonly variable or an invalid name fails	read/c_bad_target	
+read/8	T	read uses the shell's IFS when none is given for the command, and does not expand what it reads	read/c_no_expansion	
+read/9	T	read from a descriptor other than 0 through redirection, and from a here-document	redir/heredoc_read redir/read_fd	
+getopts/1	T	getopts walks options, setting the variable and OPTIND; returns non-zero at the end with the variable set to ?	builtin/getopts getopts/c_basic	dash 0.5.13.4 sets OPTARG to the empty string for an option with no argument, and restarts oddly after OPTIND=1; the page says unset, so bash --posix is the oracle for the getopts cases that show OPTARG
+getopts/2	T	Grouped options, an option-argument in the same word, and -- to end options	getopts/c_grouping	
+getopts/3	T	An unknown option: ? with a diagnostic and OPTARG unset; with a leading colon in optstring, ? with OPTARG the letter and no diagnostic	builtin/getopts_bad getopts/c_unknown	
+getopts/4	T	A missing option-argument: ? with a diagnostic, or : with OPTARG the letter when optstring starts with a colon	getopts/c_missing_arg	
+getopts/5	T	getopts parses explicit operands in place of the positional parameters	getopts/c_explicit_args	
+getopts/6	T	OPTIND starts at 1; setting OPTIND=1 restarts parsing; a first non-option operand ends it	getopts/c_optind	
+getopts/7	T	getopts in a function uses the function's parameters; OPTIND is a shell-wide variable	getopts/c_in_function	
+wait/1	T	wait with no operands waits for every child and returns zero	jobs/wait_all wait/c_all	
+wait/2	T	wait pid returns that child's status; several operands: the status of the last	jobs/wait_program_status jobs/wait_subshell_status signal/wait_two_jobs wait/c_pid	
+wait/3	T	wait for a pid that is not a child of this shell returns 127	jobs/wait_unknown wait/c_unknown	
+wait/4	T	wait reports a child ended by a signal with a status above 128	signal/child_bg_wait wait/c_signalled	
+wait/5	T	The status of a child that ended before wait is still collected, for any of the known process IDs	signal/wait_twice signal/child_bg_unwaited wait/c_already_ended	
+wait/6	T	wait with a job ID operand (%1, %%)	wait/c_job_id	
+wait/7	T	wait in a subshell cannot wait for the parent's children	wait/c_subshell	
+kill/1	T	kill pid sends SIGTERM; kill -s name and kill -name and kill -number send that signal; the status of a signalled child shows it	signal/child_bg_wait kill/c_send	
+kill/2	T	kill -l lists signal names; kill -l number names that signal; kill -l with an exit status names the signal that caused it	kill/c_list	
+kill/3	T	kill -0 pid tests for the process without sending; a missing process fails	kill/c_zero	
+kill/4	T	kill is built in: it signals by job ID (%1), and works on the shell's own children without a search of PATH	kill/c_job_id	
+kill/5	T	kill with a bad signal name or no operand fails	kill/c_bad	
+kill/6	T	kill accepts several pids, a negative pid for a process group, and -- before it	kill/c_multiple	
+umask/1	T	umask writes the mask as octal; umask -S symbolically; umask mode sets it for the shell and its children	umask/c_umask	
+umask/2	T	umask accepts a symbolic mode	umask/c_symbolic	
+umask/3	T	umask with an invalid mode fails	umask/c_bad	
+ulimit/1	T	ulimit -f reports or sets the file size limit in 512-byte blocks; unlimited is written as the word	ulimit/c_file_size	
+ulimit/2	T	A file-size limit applies to children: a write past it fails	ulimit/c_enforced	
+ulimit/3	T	ulimit -H and -S select hard and soft limits; -a reports all; -c -d -n -s -t -v name resources (new in 2024)	ulimit/c_resources	
+ulimit/4	T	Raising a hard limit without privilege, or a bad operand, fails	ulimit/c_bad	
+fc/1	S	fc -l lists the history; fc -l first last selects a range; -n omits numbers; -r reverses	session:c_hist_fc_list	
+fc/2	S	fc -s re-executes a command, optionally with old=new substituted	session:c_hist_fc_s	
+fc/3	S	fc first last edits the commands with FCEDIT or -e editor and then runs the result	session:c_hist_fc_edit	
+fc/4	T	fc in a non-interactive shell with no history fails without ending the shell	fc/c_noninteractive	
+jobs/1	S	jobs lists each job: [n], current (+) or previous (-), state, command; -l adds process IDs; -p writes only process group IDs	session:c_jc_jobs_list	
+jobs/2	T	jobs in a non-interactive shell lists background commands and jobs -p writes their process IDs	jobsctl/c_jobs_script	
+jobs/3	S	A job's state is reported as Running, Done, Done(n), Stopped (signal) as the page lists	session:c_jc_jobs_states	
+fg/1	S	fg with no operand runs the current job in the foreground; fg %n that job; its command is written first	session:c_jc_fg session:c_jc_fg_number	
+fg/2	T	fg and bg with job control off fail with a message	jobsctl/c_fg_bg_no_monitor	
+bg/1	S	bg resumes a suspended job in the background and writes [n] command	session:c_jc_bg	
+ed/1	X	Left and right arrows move the cursor; a character typed is inserted there	session:c_ed_left_insert	
+ed/2	X	Ctrl-A and Ctrl-E (Home and End) move to the ends of the line	session:c_ed_home_end	
+ed/3	X	Ctrl-K kills to the end of the line; Ctrl-D deletes the character under the cursor	session:c_ed_kill_to_end session:c_ed_delete_char	
+ed/4	X	Up and down arrows walk the history, and a recalled line can be edited	session:c_ed_up_arrow session:c_ed_up_down_edit	
+ed/5	X	Ctrl-R searches the history backwards as the pattern is typed	session:c_ed_search	
+ed/6	X	Tab completes a file name, and a command name in command position	session:c_ed_complete_file session:c_ed_complete_command	
+ed/7	X	Alt-B and Alt-F move by words	session:c_ed_word_motion	
+ed/8	X	In a UTF-8 locale backspace erases one character, and the cursor moves by characters, whatever their byte length or width	session:c_ed_utf8_erase session:c_ed_utf8_left	
