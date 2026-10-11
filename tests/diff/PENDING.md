@@ -56,8 +56,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **xtrace-assignment** | `set -x` does not trace a command that is only assignments | pelt (P10) | `option/c_xtrace_forms` |
 | **verbose** | `set -v` writes nothing | pelt#6 | `option/c_verbose`, `option/c_verbose_stderr` |
 | **notify-flag** | `set -o notify` does not put `b` in `$-` | pelt (P10) | `option/c_long_names` |
-| **dq-brace-escape** | `"${x:-a\}b}"` keeps the backslash (XCU 2.2.3) | pelt (P11) | `quote/c_dq_default_word` |
-| **bracket-slash** | `${x##*[/]}`: a bracket expression holding a slash is not one outside pathname expansion too (XCU 2.14.3 restricts that rule to file names) | pelt (P11) | `glob/c_no_file_rules_in_case`, `glob/c_s_bracket_slash_case` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
 | **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell` |
