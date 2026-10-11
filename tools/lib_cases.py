@@ -34,7 +34,7 @@ A case is three files in tests/diff/<area>/:
 Every case runs in a fresh scratch directory: the script is copied to
 <scratch>/s.sh and the shell runs with <scratch>/w as its working
 directory, so `../s.sh` is the same $0 on every host and a glob sees
-only what the case made. The environment is built from nothing:
+only what the case made; `../sh` is a link to the shell under test. The environment is built from nothing:
 PATH=/usr/bin:/bin, HOME=/home/pelt, LC_ALL=C.
 """
 
@@ -112,6 +112,11 @@ def run(shell, script, meta, timeout=10):
         shutil.copyfile(script, s)
         w = os.path.join(holder, "w")
         os.mkdir(w)
+        # `../sh` is the shell under test, for a case about how a shell
+        # starts (its environment, `-c`, `-s`, options): a symbolic link
+        # named `sh`, so bash takes its POSIX mode from the name.
+        real = shutil.which(shell[0]) or shell[0]
+        os.symlink(os.path.abspath(real), os.path.join(holder, "sh"))
         argv = list(shell)
         data = None
         if meta.get("mode") == "parse":
