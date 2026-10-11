@@ -1,0 +1,4 @@
+x=3
+y=3
+after a program: x=1 y=unset
+after a special built-in: x=3 y=3
