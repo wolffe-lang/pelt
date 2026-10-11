@@ -1,0 +1,9 @@
+-e:empty -e:full -e:dir -e:lnk 
+-f:empty -f:full -f:lnk 
+-d:dir 
+-s:full -s:lnk 
+-L:lnk -L:dangling 
+-h:lnk -h:dangling 
+-r:empty -r:full -r:dir -r:lnk 
+-w:empty -w:full -w:dir -w:lnk 
+-x:dir 
