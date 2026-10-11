@@ -57,6 +57,11 @@ const X_PWORD: int = 8
 /// an ordinary character and a backslash before it stays (XCU 2.7.4).
 const X_DOC: int = 16
 
+/// A word no field splitting follows (`expand_one`: an assignment's
+/// value, a `case` word, a redirection's word): `$@` and `$*` join with
+/// `IFS`'s first character (`emit_all`).
+const X_NOSPLIT: int = 32
+
 fn lit(mut o: Buf, b: int) {
     if b >= 1 && b <= 6 {
         putb(mut o, Q)
@@ -384,7 +389,7 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
                 continue
             }
             if c == '$' {
-                i = dollar(mut sh, w, i, to, true, mut o)
+                i = dollar(mut sh, w, i, to, true, flags & X_NOSPLIT != 0, mut o)
                 continue
             }
             if c == '`' {
@@ -439,7 +444,7 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
             continue
         }
         if c == '$' {
-            i = dollar(mut sh, w, i, to, false, mut o)
+            i = dollar(mut sh, w, i, to, false, flags & X_NOSPLIT != 0, mut o)
             continue
         }
         if c == '`' {
@@ -555,13 +560,13 @@ fn shell_pid() -> str {
 }
 
 /// `$@` / `$*` in place, keeping the parameters apart (XCU 2.5.2).
-/// Where no field splitting is done (`sh.nosplit`: the right side of
+/// Where no field splitting is done (`ns`, from `X_NOSPLIT`: the right side of
 /// an assignment, a `case` word, a redirection's word) there are no
 /// fields to keep apart, and both join with the first character of
 /// `IFS`, quoted or not, as `"$*"` does (2.5.2; dash, black-box, joins
 /// `$@` and `"$@"` the same way, which POSIX leaves unspecified).
-fn emit_all(sh: Sh, star: bool, dq: bool, mut o: Buf) {
-    if sh.nosplit {
+fn emit_all(sh: Sh, star: bool, dq: bool, ns: bool, mut o: Buf) {
+    if ns {
         let f = ifs(sh)
         if !dq {
             putb(mut o, RB)
@@ -638,7 +643,7 @@ fn unset_error(mut sh: Sh, name: str) {
 }
 
 /// A `$` at `i`. Returns where to resume.
-fn dollar(mut sh: Sh, w: str, i: int, to: int, dq: bool, mut o: Buf) -> int {
+fn dollar(mut sh: Sh, w: str, i: int, to: int, dq: bool, ns: bool, mut o: Buf) -> int {
     let n = ch(w, i + 1)
     if n == '(' {
         if ch(w, i + 2) == '(' {
@@ -666,7 +671,7 @@ fn dollar(mut sh: Sh, w: str, i: int, to: int, dq: bool, mut o: Buf) -> int {
     }
     if n == '{' {
         let e = brace_end(w, i)
-        brace_param(mut sh, w[i + 2..e - 1], dq, mut o)
+        brace_param(mut sh, w[i + 2..e - 1], dq, ns, mut o)
         return e
     }
     if is_alpha(n) {
@@ -686,7 +691,7 @@ fn dollar(mut sh: Sh, w: str, i: int, to: int, dq: bool, mut o: Buf) -> int {
     if is_digit(n) || is_special(n) {
         let name = w[i + 1..i + 2]
         if name == "@" || name == "*" {
-            emit_all(sh, name == "*", dq, mut o)
+            emit_all(sh, name == "*", dq, ns, mut o)
             return i + 2
         }
         let (v, set) = param(sh, name)
@@ -798,7 +803,7 @@ fn special_name_len(inner: str, at: int) -> int {
 }
 
 /// `${…}` with `inner` the text between the braces (XCU 2.6.2).
-fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
+fn brace_param(mut sh: Sh, inner: str, dq: bool, ns: bool, mut o: Buf) {
     if inner == "#" {
         emit_val(mut o, "{sh.pos.len}", dq)
         return
@@ -825,7 +830,7 @@ fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
     let rest = inner[nl..inner.len]
     if rest.len == 0 {
         if name == "@" || name == "*" {
-            emit_all(sh, name == "*", dq, mut o)
+            emit_all(sh, name == "*", dq, ns, mut o)
             return
         }
         let (v, set) = param(sh, name)
@@ -879,24 +884,24 @@ fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
     if op == '-' {
         if usable {
             if name == "@" || name == "*" {
-                emit_all(sh, name == "*", dq, mut o)
+                emit_all(sh, name == "*", dq, ns, mut o)
             } else {
                 emit_val(mut o, v, dq)
             }
             return
         }
-        word_in(mut sh, word, dq, mut o)
+        word_in(mut sh, word, dq, ns, mut o)
         return
     }
     if op == '+' {
         if usable {
-            word_in(mut sh, word, dq, mut o)
+            word_in(mut sh, word, dq, ns, mut o)
         }
         return
     }
     if usable {
         if name == "@" || name == "*" {
-            emit_all(sh, name == "*", dq, mut o)
+            emit_all(sh, name == "*", dq, ns, mut o)
         } else {
             emit_val(mut o, v, dq)
         }
@@ -930,13 +935,14 @@ fn brace_param(mut sh: Sh, inner: str, dq: bool, mut o: Buf) {
 
 /// The word of `${x-word}`/`${x+word}` in place: under double quotes it
 /// is quoted text; unquoted, its literal bytes may be split as well.
-fn word_in(mut sh: Sh, word: str, dq: bool, mut o: Buf) {
+fn word_in(mut sh: Sh, word: str, dq: bool, ns: bool, mut o: Buf) {
+    let more = if ns then X_NOSPLIT else 0
     if dq {
-        xw(mut sh, word, 0, word.len, X_DQ | X_PWORD, mut o)
+        xw(mut sh, word, 0, word.len, X_DQ | X_PWORD | more, mut o)
         return
     }
     putb(mut o, RB)
-    xw(mut sh, word, 0, word.len, X_TILDE, mut o)
+    xw(mut sh, word, 0, word.len, X_TILDE | more, mut o)
     putb(mut o, RE)
 }
 
@@ -1083,13 +1089,10 @@ fn split_marked(sh: Sh, m: str) -> List[str] {
 /// steps), as for a simple command's words or a `for` list.
 fn expand_words(mut sh: Sh, words: List[str]) -> List[str] {
     var out = List[str]()
-    let was = sh.nosplit
-    sh.nosplit = false
     for w in words {
         var o = buf()
         xw(mut sh, w, 0, w.len, X_TILDE, mut o)
         if sh.flow != F_NONE {
-            sh.nosplit = was
             return out
         }
         for f in split_marked(sh, text(o)) {
@@ -1105,7 +1108,6 @@ fn expand_words(mut sh: Sh, words: List[str]) -> List[str] {
             (mut out).push(unmark(f))
         }
     }
-    sh.nosplit = was
     out
 }
 
@@ -1183,10 +1185,7 @@ fn declares(fields: List[str]) -> bool {
 /// word, a here-document delimiter's sibling, an assignment's value.
 fn expand_one(mut sh: Sh, w: str, flags: int) -> str {
     var o = buf()
-    let was = sh.nosplit
-    sh.nosplit = true
-    xw(mut sh, w, 0, w.len, flags, mut o)
-    sh.nosplit = was
+    xw(mut sh, w, 0, w.len, flags | X_NOSPLIT, mut o)
     unmark(text(o))
 }
 

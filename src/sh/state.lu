@@ -180,9 +180,6 @@ struct Sh {
     euid: int,
     egid: int,
     groups: str,
-    /// Expanding a word that is not split into fields (`sh.expand`'s
-    /// `expand_one`): `$@` and `$*` join with `IFS`'s first character.
-    nosplit: bool,
 }
 
 struct Snap {
@@ -288,7 +285,6 @@ fn new_sh(name: str) -> Sh {
         euid: -1,
         egid: -1,
         groups: "",
-        nosplit: false,
     }
 }
 
