@@ -25,7 +25,7 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
-| **test-file-primaries** | `test -x` is false for an executable regular file and `-r`/`-w` ignore the permission bits; no `-L`/`-h`; `-b`, `-p`, `-S` answer true for any file; `-u`, `-g`, `-ef` missing; `-nt`/`-ot` with a missing file | pelt (sh06 issue P01); permission bits come from `fs_stat` (wolf 0.2.27), the caller's identity from wolf-lang#633 | `test/c_file_compare`, `test/c_file_types`, `test/c_files`, `test/c_permissions` |
+| **test-file-primaries** | `test -x` is false for an executable regular file and `-r`/`-w` ignore the permission bits; no `-L`/`-h`; `-b`, `-p`, `-S` answer true for any file; `-u`, `-g`, `-ef` missing; `-nt`/`-ot` with a missing file | pelt (sh06 issue P01); permission bits come from `fs_stat` (wolf 0.2.27), the caller's identity from wolf-lang#633 | `test/c_file_compare`, `test/c_file_types`, `test/c_files`, `test/c_permissions`, `test/c_s_test_access` |
 | **sh-option-parsing** | `sh -ec 'cmd'` (option letters joined with `c`), `--`, and `-s -` | pelt (P02) | `sh/c_combined_options`, `sh/c_dash_s` |
 | **alias** | `alias`, `unalias`, alias substitution (XCU 2.3.1), and `command -v` of an alias or of a file that is not executable | pelt (P03) | `alias/c_after_reserved`, `alias/c_alias_missing`, `alias/c_alias_names`, `alias/c_alias_print`, `alias/c_basic`, `alias/c_no_self_recursion`, `alias/c_not_inherited`, `alias/c_parse_time`, `alias/c_position`, `alias/c_quoted_not`, `alias/c_subshell`, `alias/c_takes_effect_next`, `alias/c_trailing_blank`, `alias/c_unalias`, `alias/c_value_tokens`, `command/c_v` |
 | **type** | `type` | pelt (P04) | `type/c_type`, `type/c_type_path` |
@@ -34,7 +34,7 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **dollar-single-quote** | `$'…'` (XCU 2.2.4, new in POSIX.1-2024) | pelt (P05) | `quote/c_ds_control`, `quote/c_ds_embedded`, `quote/c_ds_escapes`, `quote/c_ds_hex`, `quote/c_ds_octal`, `quote/c_ds_plain`, `quote/c_ds_quoted` |
 | **pipefail** | `set -o pipefail` is accepted and does nothing (XCU 2.9.2) | pelt (P06) | `option/c_pipefail_option`, `pipe/c_pipefail` |
 | **assignment-order** | `x=3 y=$x` on one command: the second assignment does not see the first (XCU 2.9.1.1) | pelt (P07) | `simple/c_assign_current` |
-| **star-in-assignment** | `x=$*` does not join with the first character of IFS (XCU 2.5.2) | pelt (P07) | `param/c_star_assign` |
+| **star-in-assignment** | `x=$*` does not join with the first character of IFS (XCU 2.5.2) | pelt (P07) | `param/c_s_star_assign_ifs`, `param/c_star_assign` |
 | **declaration-utility** | `export x=$y` and `readonly x=$y` split and do not tilde-expand after `=` (declaration utilities, XCU 2.9.1.1; new in POSIX.1-2024) | pelt (P07) | `command/c_declaration`, `simple/c_declaration_utility` |
 | **read-trailing-delimiter** | `IFS=: read a b c` on `a:b:c:` leaves the trailing delimiter in the last variable | pelt (P08) | `read/c_fields` |
 | **readonly-read-getopts** | `read` and `getopts` into a readonly variable, and `read` into an invalid name, answer 0 | pelt (P08) | `builtin/c_readonly_everywhere`, `read/c_bad_target` |
@@ -57,12 +57,12 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **verbose** | `set -v` writes nothing | pelt#6 | `option/c_verbose`, `option/c_verbose_stderr` |
 | **notify-flag** | `set -o notify` does not put `b` in `$-` | pelt (P10) | `option/c_long_names` |
 | **dq-brace-escape** | `"${x:-a\}b}"` keeps the backslash (XCU 2.2.3) | pelt (P11) | `quote/c_dq_default_word` |
-| **bracket-slash** | `${x##*[/]}`: a bracket expression holding a slash is not one outside pathname expansion too (XCU 2.14.3 restricts that rule to file names) | pelt (P11) | `glob/c_no_file_rules_in_case` |
+| **bracket-slash** | `${x##*[/]}`: a bracket expression holding a slash is not one outside pathname expansion too (XCU 2.14.3 restricts that rule to file names) | pelt (P11) | `glob/c_no_file_rules_in_case`, `glob/c_s_bracket_slash_case` |
 | **path-skips-non-executable** | a PATH search stops at a file that is not executable instead of going on to the next directory | pelt (P11) | `simple/c_path_order` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
-| **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `signal/c_subshell_trap_reset`, `wait/c_subshell` |
-| **umask** | `umask` | wolf-lang `os_umask` (s230, merged for the release after 0.2.27), then pelt | `umask/c_bad`, `umask/c_symbolic`, `umask/c_umask` |
+| **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell` |
+| **umask** | `umask` | wolf-lang `os_umask` (s230, merged for the release after 0.2.27), then pelt | `umask/c_bad`, `umask/c_s_umask_set`, `umask/c_symbolic`, `umask/c_umask` |
 | **ulimit** | `ulimit` | wolf-lang: no `getrlimit`/`setrlimit` surface (W02) | `ulimit/c_bad`, `ulimit/c_enforced`, `ulimit/c_file_size`, `ulimit/c_resources` |
 | **kill** | `kill` as a built-in: `kill -l`, exit statuses, a signal to the shell's own pid | wolf-lang#141 (a signal to any pid), then pelt | `kill/c_bad`, `kill/c_job_id`, `kill/c_list`, `kill/c_send` |
 | **job-ids** | `wait %1`, `kill %1` | pelt once `kill` is a built-in (wolf-lang#141) | `wait/c_job_id` |
@@ -72,6 +72,9 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **ignored-on-entry** | a signal ignored when the shell started can be trapped | wolf-lang#681 | `signal/c_ignored_on_entry` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
 | **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
+| **trap-number** | `trap ACTION 13`: a signal number with no wolf meaning is refused, though `trap ACTION PIPE` and `trap '' 14` are taken; recording the action is pelt's (seven real scripts write `trap … 1 2 13 15`), catching it is wolf-lang#679's | pelt (P15), then wolf-lang#679 | `signal/c_s_trap_by_number` |
+| **high-bytes** | every byte above 0x7f in a word becomes `?` when it leaves pelt (a program's argument, a file name, `read`, a here-document), even valid UTF-8 written in the script; a byte that is not UTF-8 cannot be an argument at all, since a wolf `str` is UTF-8 | pelt (P14: the UTF-8 half), wolf-lang W06 (bytes that are not UTF-8) | `quote/c_s_high_bytes` |
+| **dot-special-file** | `.` of `/dev/null` or a FIFO is "not found" | pelt (P16) | `builtin/c_s_dot_special_file` |
 | **history** | `fc` (the case passes today only because a shell with no history and a shell with no `fc` both fail) | pelt (sh08) | `fc/c_noninteractive` |
 | **getpid** | `$$` off linux (the cases pass on linux) | wolf-lang#141 | `param/c_pid_is_real`, `param/c_pid_subshell` |
 | **signal meaning** | a trap for `USR1`, `ALRM`, `PIPE`, `ABRT`, `WINCH`, `CONT`: the shell dies or ignores where the action must run | wolf-lang#679, #423 | `signal/c_trap_abrt_number`, `signal/c_trap_alrm`, `signal/c_trap_ignore_pipe`, `signal/c_trap_pipe`, `signal/c_trap_usr1_self`, `signal/c_trap_winch_cont` |

@@ -1,0 +1,9 @@
+set: 0
+ignore: 0
+trap -- '' ALRM
+trap -- 'echo caught' HUP
+trap -- 'echo caught' INT
+trap -- 'echo caught' PIPE
+trap -- 'echo caught' TERM
+reset: 0
+bye

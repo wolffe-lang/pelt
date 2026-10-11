@@ -1,0 +1,9 @@
+/abs: absolute
+rel: plain
+./rel: has a separator
+a\b: has a separator
+$var/x: absolute
+c:/dos: absolute
+bracket matches slash
+negated bracket matches slash
+local/bin usr/local bin usr
