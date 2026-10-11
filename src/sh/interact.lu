@@ -31,6 +31,12 @@
 //! shell and do not end an interactive one. `fatal` marks such an exit
 //! (`Sh.abort`); here an interactive shell abandons the rest of the
 //! command it was running, keeps the status (2), and prompts again.
+//!
+//! **Ctrl-C.** An interactive shell listens for `SIGINT` (`sh.signal`):
+//! it lives, a program it is waiting for dies of the terminal's signal
+//! and answers 130, a loop pelt is running itself is abandoned at its
+//! next command, and the prompt comes back. `SIGQUIT` and `SIGTERM` do
+//! nothing to it, as to `dash -i`.
 
 /// Whether descriptors 0 and 2 are both terminals (XCU `sh`).
 fn on_terminal() -> bool {
@@ -229,8 +235,17 @@ fn run_stdin(mut sh: Sh) -> int {
             }
             break
         }
+        // a signal that came while the line was being typed: its trap
+        // runs now, before the line does (dash, black-box); Ctrl-C with
+        // no trap abandons nothing, there being no command yet
+        sh.at_prompt = true
+        poll_traps(mut sh)
+        sh.at_prompt = false
         var fast = false
-        if sh.interactive && !sh.opt_n && !sh.opt_v && fast_ok(sh) {
+        if sh.flow != F_NONE {
+            fast = true
+        }
+        if !fast && sh.interactive && !sh.opt_n && !sh.opt_v && fast_ok(sh) {
             // a typed simple command runs inside the region, its parse
             // tree included (`sh.exec`'s `run_turn_fast`)
             flush(mut sh)
@@ -241,6 +256,7 @@ fn run_stdin(mut sh: Sh) -> int {
                 sh.line = line
                 let st = commit_fast(mut sh, r)
                 check_e(mut sh, st)
+                poll_traps(mut sh)
                 fast = true
             }
         }
@@ -251,6 +267,12 @@ fn run_stdin(mut sh: Sh) -> int {
         if sh.flow == F_EXIT && sh.interactive && sh.abort {
             sh.flow = F_NONE
             sh.abort = false
+            if sh.intr {
+                // Ctrl-C abandoned the command: the terminal echoed
+                // `^C` and left the cursor there
+                sh.intr = false
+                write_fd(mut sh, 2, "\n")
+            }
         } else if sh.flow == F_EXIT {
             return sh.status
         } else if sh.flow != F_NONE {
