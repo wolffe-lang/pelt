@@ -417,7 +417,33 @@ fn bi_eval(mut sh: Sh, args: List[str]) -> int {
     st
 }
 
-/// `.` (XCU 2.15): a name without `/` is looked for in `PATH`.
+/// Everything a file holds, read to its end through one handle: a
+/// regular file, `/dev/null` (nothing), a FIFO (whatever its writer
+/// sends until it closes; the open waits for a writer, as dash's does),
+/// a terminal. The `utf8` row for a file that is not UTF-8 (W06).
+fn read_all(path: str) -> str ! {io, utf8} {
+    let h = fs_open(path) else |_| { return io }
+    var bytes = List[byte]()
+    loop {
+        let c = fs_read_chunk(h, 65536) else |e| match e {
+            eof => { break },
+            io => {
+                fs_close(h) else |_| {}
+                return io
+            },
+        }
+        for x in c {
+            (mut bytes).push(x)
+        }
+    }
+    fs_close(h) else |_| {}
+    str_from_utf8(bytes) else |_| { return utf8 }
+}
+
+/// `.` (XCU 2.15): a name without `/` is looked for in `PATH`. Any file
+/// that is not a directory is read: `. /dev/null` is an empty script
+/// (pfetch writes `. "${PF_SOURCE:-/dev/null}"`), and a FIFO is read
+/// until its writer closes it.
 fn bi_dot(mut sh: Sh, args: List[str]) -> int {
     if args.len == 0 {
         fatal(mut sh, ".: a file name is required", 2)
@@ -427,11 +453,16 @@ fn bi_dot(mut sh: Sh, args: List[str]) -> int {
     if (path.find("/") else -1) < 0 {
         path = find_readable_in_path(sh, path)
     }
-    if path.len == 0 || !fs_is_file(path) {
+    let st = stat_of(path, false)
+    if st.len == 0 {
         fatal(mut sh, ".: {args[0]}: not found", 2)
         return 2
     }
-    let src = fs_read_text(path) else |_| {
+    if st[0] == K_DIR {
+        fatal(mut sh, ".: {args[0]}: is a directory", 2)
+        return 2
+    }
+    let src = read_all(path) else |_| {
         fatal(mut sh, ".: {args[0]}: cannot read", 2)
         return 2
     }
