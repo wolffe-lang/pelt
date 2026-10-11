@@ -475,11 +475,26 @@ fn trap_name(c: str) -> str {
     if c == "3" || c == "QUIT" {
         return "QUIT"
     }
+    if c == "4" || c == "ILL" {
+        return "ILL"
+    }
+    if c == "5" || c == "TRAP" {
+        return "TRAP"
+    }
     if c == "6" || c == "ABRT" {
         return "ABRT"
     }
+    if c == "8" || c == "FPE" {
+        return "FPE"
+    }
     if c == "9" || c == "KILL" {
         return "KILL"
+    }
+    if c == "11" || c == "SEGV" {
+        return "SEGV"
+    }
+    if c == "13" || c == "PIPE" {
+        return "PIPE"
     }
     if c == "14" || c == "ALRM" {
         return "ALRM"
@@ -487,11 +502,22 @@ fn trap_name(c: str) -> str {
     if c == "15" || c == "TERM" {
         return "TERM"
     }
-    if c == "USR1" || c == "USR2" || c == "CHLD" || c == "PIPE" || c == "CONT" || c == "TSTP" {
+    if c == "USR1" || c == "USR2" || c == "CHLD" || c == "CONT" || c == "TSTP" {
         return c
     }
     ""
 }
+
+// A condition is taken by number for every number XCU `trap` names (0,
+// 1, 2, 3, 6, 9, 14, 15) and for the others whose number is the same on
+// every host pelt runs on (4 ILL, 5 TRAP, 8 FPE, 11 SEGV, 13 PIPE: linux,
+// macOS and the BSDs agree), so `trap … 1 2 13 15`, which configure and
+// automake's helpers write, is taken as dash takes it. Numbers that
+// differ between hosts (USR1 is 10 on linux and 30 on macOS) are taken
+// by name only. A condition wolf 0.2.27 has no meaning for (PIPE, ALRM,
+// USR1, ILL, …) is recorded and listed, and that is all: the signal
+// keeps its default, so a SIGPIPE still ends pelt where dash would run
+// the action or, under `trap '' PIPE`, go on (wolf-lang#679, #423).
 
 /// `trap`: every condition is recorded and printed back. `EXIT` runs
 /// as the shell ends; `HUP`, `INT`, `QUIT`, `TERM` and `USR2` are
