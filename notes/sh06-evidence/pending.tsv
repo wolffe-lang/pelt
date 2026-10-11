@@ -100,3 +100,11 @@ jobsctl/c_fg_bg_no_monitor	job-control
 fc/c_noninteractive	history
 simple/c_enoexec_binary	enoexec
 kill/c_send	kill
+test/c_s_test_access	test-file-primaries
+umask/c_s_umask_set	umask
+signal/c_s_trap_by_number	trap-number
+glob/c_s_bracket_slash_case	bracket-slash
+redir/c_s_cmdsub_fd_pipeline	fork
+param/c_s_star_assign_ifs	star-in-assignment
+quote/c_s_high_bytes	high-bytes
+builtin/c_s_dot_special_file	dot-special-file

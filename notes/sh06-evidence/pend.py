@@ -58,6 +58,9 @@ DESC = [
  ("ignored-on-entry", "a signal ignored when the shell started can be trapped", "wolf-lang#681"),
  ("uid", "`test -O`, `test -G`", "wolf-lang#633"),
  ("enoexec", "a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126", "wolf-lang#682"),
+ ("trap-number", "`trap ACTION 13`: a signal number with no wolf meaning is refused, though `trap ACTION PIPE` and `trap '' 14` are taken; recording the action is pelt's (seven real scripts write `trap … 1 2 13 15`), catching it is wolf-lang#679's", "pelt (P15), then wolf-lang#679"),
+ ("high-bytes", "every byte above 0x7f in a word becomes `?` when it leaves pelt (a program's argument, a file name, `read`, a here-document), even valid UTF-8 written in the script; a byte that is not UTF-8 cannot be an argument at all, since a wolf `str` is UTF-8", "pelt (P14: the UTF-8 half), wolf-lang W06 (bytes that are not UTF-8)"),
+ ("dot-special-file", "`.` of `/dev/null` or a FIFO is \"not found\"", "pelt (P16)"),
  ("history", "`fc` (the case passes today only because a shell with no history and a shell with no `fc` both fail)", "pelt (sh08)"),
 ]
 known = {d[0] for d in DESC} | {"getpid", "signal meaning", "interruptible wait", "user database"}

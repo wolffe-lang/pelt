@@ -1,0 +1,160 @@
+@test/1b | T | test -r, -w and -x answer for this process's access (a mode-000 file is unreadable to a user, an executable is executable), -L/-h for a link, -ef for two names of one file
+! from the script census: `test -x` is false for an executable regular file, `-w` true for a read-only one, `-r` true for a mode-000 one, `-L`/`-h` false for a symbolic link, `-ef` false for two links to one file (XCU test). The most-counted gap: git's test-lib, ltmain.sh, debconf's confmodule, every init script, `service`, `which`.
+--- test/c_s_test_access
+# test -r/-w/-x ask whether THIS process may read, write or execute or
+# search the file (XCU test), and -L/-h whether it is a symbolic link;
+# -ef whether two names are one file (POSIX.1-2024).
+: >plain
+chmod 644 plain
+cp /bin/sh prog 2>/dev/null || : >prog
+chmod 755 prog
+: >secret
+chmod 000 secret
+: >ro
+chmod 444 ro
+mkdir dir
+ln -s plain link
+ln plain hard
+for f in plain prog secret ro dir link /usr/bin/env /nonexistent; do
+    r=n w=n x=n l=n
+    test -r "$f" && r=y
+    test -w "$f" && w=y
+    test -x "$f" && x=y
+    test -L "$f" && l=y
+    [ -h "$f" ] || l="$l-"
+    echo "$f r=$r w=$w x=$x L=$l"
+done
+test plain -ef hard && echo "ef: same file"
+test plain -ef prog || echo "ef: different files"
+test -f /usr/bin/env && test -x /usr/bin/env && echo "env is a program"
+chmod 600 secret
+@umask/4 | T | umask sets the mask that files made by the shell and its children receive, and reports it in octal and with -S
+! from the script census: `umask` is not implemented ("not supported yet", status 2) (XCU umask). install-sh, mkinstalldirs, config.guess, lesspipe and two Debian postinst scripts stop or misbehave on it.
+--- umask/c_s_umask_set
+# umask (XCU umask): set, report in octal and with -S, and reach the
+# files the shell and its children create.
+umask 027
+umask
+umask -S
+: >f1
+mkdir d1
+(umask 077 && : >f2)
+: >f3
+ls -ld f1 d1 f2 f3 | cut -c1-10
+umask u=rwx,g=rx,o=
+umask
+umask a+r
+umask -S
+@trap/17 | T | trap takes a condition as a signal number for every signal it takes by name (1 2 13 15, 14), and lists it by name
+! from the script census: `trap action 13` (a signal number with no wolf meaning) is refused with "no such condition" and status 1 where dash and bash record it (XCU 2.15 trap, XSI numbers). `trap action PIPE` by name is accepted. Seen in config.guess, test-driver, tap-driver.sh, ylwrap, configure.
+--- signal/c_s_trap_by_number
+# `trap` takes a condition as a signal number as well as a name (XCU
+# 2.15 trap; XSI for the numbers other than 0, and every script from
+# automake's helpers to configure writes `trap … 1 2 13 15`). Setting
+# an action for 13 (PIPE) or 14 (ALRM) is not an error, and `trap`
+# lists it by name.
+trap 'echo caught' 1 2 13 15
+echo "set: $?"
+trap '' 14
+echo "ignore: $?"
+trap >listed
+sort listed
+trap - 13 14
+echo "reset: $?"
+trap 'echo bye' 0
+@2.14.1/8 | T | A bracket expression holding a slash matches a slash in a case pattern and in the four trim forms (the explicit-slash rule is for file names only)
+! from the script census: `case` and ${x#pat}: a bracket expression that contains `/` matches a slash (XCU 2.14.1; the explicit-slash rule of 2.14.3 is for pathname expansion only). Stops every autoconf configure at its directory check; also ylwrap.
+--- glob/c_s_bracket_slash_case
+# A slash inside a bracket expression is an ordinary member in a `case`
+# pattern and in ${x#pattern}: XCU 2.14.3's rule that a slash must be
+# matched explicitly is for pathname expansion only (2.14.1, 2.6.2).
+for w in /abs rel ./rel 'a\b' '$var/x' c:/dos; do
+    case $w in
+    [\\/$]* | ?:[\\/]*) printf '%s: absolute\n' "$w" ;;
+    *[\\/]*) printf '%s: has a separator\n' "$w" ;;
+    *) printf '%s: plain\n' "$w" ;;
+    esac
+done
+case a/b in a[/]b) echo "bracket matches slash" ;; *) echo "no match" ;; esac
+case a/b in a[!x]b) echo "negated bracket matches slash" ;; *) echo "no match" ;; esac
+x=usr/local/bin
+echo "${x#*[/]}" "${x%[/]*}" "${x##*[/]}" "${x%%[/]*}"
+@2.13/12 | T | A pipeline stage inside a command substitution writes to a descriptor the substitution duplicated (exec 4>&1), not to the shell's own output
+! from the script census: In `$( exec 4>&1; { echo x >&4; } | cmd >&3 )` the stage's write to descriptor 4 does not reach the substitution (it is empty) (XCU 2.7.5, 2.12). zdiff, zgrep and xzgrep read a decompressor's exit status this way and fail.
+--- redir/c_s_cmdsub_fd_pipeline
+# Inside a command substitution, `exec 4>&1` makes descriptor 4 the
+# substitution's own output; a pipeline stage that writes to 4 writes
+# there, while its standard output goes down the pipe (XCU 2.7.5,
+# 2.12: a subshell inherits open files). The gzip family's wrappers
+# carry an exit status out of a pipeline this way.
+exec 3>&1
+status=$(
+    exec 4>&1
+    (false 4>&-; echo $? >&4) 3>&- | cat >&3
+)
+echo "status=[$status]"
+status=$(exec 4>&1; { echo seven >&4; } | cat >&3)
+echo "status=[$status]"
+status=$(exec 4>&1; echo data | { cat; echo eight >&4; } >&3)
+echo "status=[$status]"
+@2.5.2/16 | T | Unquoted $* on the right of an assignment or as a case word joins with the first character of IFS
+! from the script census: Unquoted `$*` on the right of an assignment (and as a `case` word) joins with nothing instead of the first character of IFS (XCU 2.5.2). configure computes host_os as `linuxgnu`, so every `*-gnu*` host check takes its default arm (two checks answer "guessing no", two extra checks run).
+--- param/c_s_star_assign_ifs
+# Where no field splitting is done — the right side of an assignment,
+# a `case` word — an unquoted $* joins the positional parameters with
+# the first character of IFS, as "$*" does (XCU 2.5.2). autoconf's
+# configure splits the host triplet with IFS=- and rebuilds the OS
+# part with `host_os=$*`.
+ac_save_IFS=$IFS
+triplet=x86_64-pc-linux-gnu
+IFS=-
+set x $triplet
+shift
+cpu=$1 vendor=$2
+shift; shift
+os=$*
+IFS=$ac_save_IFS
+echo "[$cpu] [$vendor] [$os]"
+IFS=:
+set a b c
+x="$*"
+y=$*
+IFS=' '
+echo "[$x] [$y]"
+IFS=,
+set p q
+case $* in p,q) echo "case word joined" ;; *) echo "case word not joined" ;; esac
+@2.2/1 | T | Any byte but NUL is data: bytes above 0x7f pass unchanged to a program's arguments, file names, read, command substitution and here-documents
+! from the script census: Every byte above 0x7f becomes `?` when a word is handed to a program as an argument or a file name, when `read` reads it, and in a here-document (XCU 2.2: only NUL is excluded). update-ca-certificates loses a certificate whose file name is not ASCII.
+--- quote/c_s_high_bytes
+# Bytes above 0x7f are data: in an argument to a program, in a file
+# name, in what `read` reads, in a command substitution and in a
+# here-document (XCU 2.2, 2.6.3, 2.7.4, read; a shell passes on any
+# byte but NUL). The hex dumps are the proof; the script itself is
+# ASCII.
+e=$(printf '\303\251')
+printf '%s' "$e" | od -An -tx1 | tr -d '[:space:]'; echo
+/usr/bin/env printf '%s' "caf$e" | od -An -tx1 | tr -d '[:space:]'; echo
+printf 'F\305\221t\n' | while read -r w; do printf '%s' "$w" | od -An -tx1 | tr -d '[:space:]'; echo; done
+printf 'F\305\221t\n' | while read -r w; do /usr/bin/env printf '%s' "$w" | od -An -tx1 | tr -d '[:space:]'; echo; done
+cat <<E | od -An -tx1 | tr -d '[:space:]'
+x${e}y
+E
+echo
+: >"n$e"
+ls | od -An -tx1 | tr -d '[:space:]'; echo
+for f in n*; do /usr/bin/env printf '%s' "$f" | od -An -tx1 | tr -d '[:space:]'; echo; done
+l=$(printf 'a\377b')
+/usr/bin/env printf '%s' "$l" | od -An -tx1 | tr -d '[:space:]'; echo
+echo "${#e}"
+@dot/8 | T | . reads any readable file, not only a regular one: /dev/null is an empty script, a FIFO is read
+! from the script census: `. /dev/null` (and a FIFO, /dev/stdin) is "not found", which ends a non-interactive shell with status 2 (XCU 2.15 dot). pfetch does `. "${PF_SOURCE:-/dev/null}"` and prints nothing.
+--- builtin/c_s_dot_special_file
+# `.` reads commands from any readable file the name resolves to, not
+# only a regular one (XCU 2.15 dot): /dev/null is an empty script.
+. /dev/null
+echo "dev null: $?"
+mkfifo pipe
+(echo 'echo "from the fifo"' >pipe &)
+. ./pipe
+echo "fifo: $?"
