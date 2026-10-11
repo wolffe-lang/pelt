@@ -1,0 +1,24 @@
+step 0
+err no
+prompt "$ "
+step 1 "cat &"
+err no
+prompt "$ "
+step 2 "echo next"
+out "next\n"
+err yes
+prompt "$ "
+step 3 "jobs"
+out "[1] + Stopped (tty input)        cat\n"
+err no
+prompt "$ "
+step 4 "kill -9 %1"
+err no
+prompt "$ "
+step 5 "exit"
+err yes
+prompt "$ "
+step 6 "exit"
+err no
+prompt ""
+exit 0 at step 6

@@ -1,0 +1,5 @@
+PS1='$ '
+echo one
+echo two
+\k \e[A\e[A\e[B\x7f\x7f\x7fTWO\r
+exit

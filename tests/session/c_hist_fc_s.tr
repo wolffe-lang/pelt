@@ -1,0 +1,18 @@
+step 0
+err no
+prompt "bash-5.3$ "
+step 1 "PS1='$ '"
+err yes
+prompt "$ "
+step 2 "echo first"
+out "first\n"
+err yes
+prompt "$ "
+step 3 "fc -s first=second"
+out "second\n"
+err yes
+prompt "$ "
+step 4 "exit"
+err yes
+prompt ""
+exit 0 at step 4

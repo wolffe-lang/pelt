@@ -1,0 +1,4 @@
+PS1='$ '
+echo first
+\k \e[A\r
+exit

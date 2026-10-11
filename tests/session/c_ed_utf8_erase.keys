@@ -1,0 +1,3 @@
+PS1='$ '
+\k echo a\xc3\xa9\x7fb\r
+exit

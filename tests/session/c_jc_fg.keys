@@ -1,0 +1,7 @@
+cat
+^Z
+fg
+typed after fg
+^D
+echo st=$?
+exit

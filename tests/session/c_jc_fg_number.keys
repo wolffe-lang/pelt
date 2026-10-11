@@ -1,0 +1,6 @@
+sleep 30 &
+sleep 1 &
+fg %2
+echo st=$?
+kill %1
+exit

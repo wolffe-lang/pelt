@@ -1,0 +1,5 @@
+alias hi='echo hello'
+hi there
+unalias hi
+hi
+exit

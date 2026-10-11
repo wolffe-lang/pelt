@@ -1,0 +1,2 @@
+[ "$(ps -o pid= -p $$ | tr -d ' ')" = "$(ps -o pgid= -p $$ | tr -d ' ')" ] && echo leader
+exit

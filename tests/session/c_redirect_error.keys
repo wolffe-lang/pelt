@@ -1,0 +1,5 @@
+echo x > /nonexistent/f
+echo alive
+: < /nonexistent
+echo alive2
+exit

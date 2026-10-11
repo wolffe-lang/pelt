@@ -1,0 +1,7 @@
+sleep 30 &
+sleep 31 &
+jobs
+jobs -l | wc -l
+jobs -p | wc -l
+kill %1 %2
+exit

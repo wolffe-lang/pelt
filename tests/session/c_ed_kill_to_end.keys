@@ -1,0 +1,3 @@
+PS1='$ '
+\k echo keepXXX\e[D\e[D\e[D\x0b\r
+exit

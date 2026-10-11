@@ -1,0 +1,3 @@
+PS1='$ '
+\k echo abXc\e[D\e[D\x04\r
+exit

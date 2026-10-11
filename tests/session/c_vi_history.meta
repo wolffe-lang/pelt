@@ -1,0 +1,4 @@
+oracle=bash
+compare=stdout
+dash=differs
+pending=vi mode

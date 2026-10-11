@@ -1,0 +1,3 @@
+PS1='$ '
+\k echo one three\ebtwo \r
+exit

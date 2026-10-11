@@ -1,0 +1,3 @@
+PS1='$ '
+\k echo \xc3\xa9\xe4\xb8\xad\e[Dx\r
+exit

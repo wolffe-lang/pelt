@@ -1,0 +1,5 @@
+PS1='$ '
+echo one
+echo two
+fc -ln -2 -1
+exit

@@ -1,0 +1,11 @@
+step 0
+err no
+prompt "$ "
+step 1 "sh -c 'a=$(ps -o pgid= -p $$ | tr -d \" \"); b=$(ps -o tpgid= -p $$ | tr -d \" \"); [ \"$a\" = \"$b\" ] && echo foreground; [ \"$a\" != \"$(ps -o pgid= -p $PPID | tr -d \" \")\" ] && echo own-group'"
+out "foreground\nown-group\n"
+err no
+prompt "$ "
+step 2 "exit"
+err no
+prompt ""
+exit 0 at step 2

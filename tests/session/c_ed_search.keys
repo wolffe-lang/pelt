@@ -1,0 +1,5 @@
+PS1='$ '
+echo findme
+echo other
+\k \x12find\r
+exit

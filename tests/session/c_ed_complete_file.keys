@@ -1,0 +1,4 @@
+PS1='$ '
+touch unique_file_name
+\k echo uniq\t\r
+exit

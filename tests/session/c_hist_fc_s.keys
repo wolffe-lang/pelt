@@ -1,0 +1,4 @@
+PS1='$ '
+echo first
+fc -s first=second
+exit

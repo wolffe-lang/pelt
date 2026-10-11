@@ -1,0 +1,3 @@
+PS1='$ '
+\k unam\t -s >/dev/null && echo completed\r
+exit

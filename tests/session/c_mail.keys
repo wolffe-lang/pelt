@@ -1,0 +1,4 @@
+MAIL=$HOME/mbox MAILCHECK=0
+echo x > $HOME/mbox
+echo next
+exit

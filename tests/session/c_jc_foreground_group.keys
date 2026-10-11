@@ -1,0 +1,2 @@
+sh -c 'a=$(ps -o pgid= -p $$ | tr -d " "); b=$(ps -o tpgid= -p $$ | tr -d " "); [ "$a" = "$b" ] && echo foreground; [ "$a" != "$(ps -o pgid= -p $PPID | tr -d " ")" ] && echo own-group'
+exit

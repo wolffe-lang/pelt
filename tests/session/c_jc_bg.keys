@@ -1,0 +1,7 @@
+sleep 1
+^Z
+bg
+wait
+echo st=$?
+jobs
+exit

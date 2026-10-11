@@ -1,0 +1,4 @@
+\k echo abX\x7fc\r
+\k echo one two\x17three\r
+\k echo gone\x15echo kept\r
+exit

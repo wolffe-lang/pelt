@@ -1,0 +1,4 @@
+sh -c 'a=$(ps -o pgid= -p $$ | tr -d " "); [ "$a" = "$$" ] && echo leader > out' &
+wait
+cat out
+exit
