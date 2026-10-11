@@ -181,3 +181,179 @@ group to "the next job-control lane". The sessions are recorded from
   `futex`) from the first listen, and **`wait4`/`waitid`** unchanged.
   **Not** `tcsetpgrp`/`ioctl(TIOCSPGRP)`, `setpgid` or `tcsetattr`: no
   job control and no line editing here.
+
+## 4. Evidence index
+
+Every log named here is in `notes/sh05-evidence/` (kasumi, linux x86-64
+7.2.8, 16 cpus; every job started with SigBlk 0 and SigIgn 0, printed at
+the top of its log, except the baseline's, which says SigIgn 7 and
+runs no signal case that passes). Digests are sha256, first 16 hex.
+
+**Archive digests.** §2's table, from the release API; all six archives
+this repo pins re-hashed after download on kasumi and equal to
+`wolf-toolchain.toml` (`5e17eebe…`, `c475e5dc…`, `ea461a76…` for wolf;
+`e2867a35…`, `a0c0c707…`, `2cbd192d…` for lupin). The archive's
+`std/STD-REV` is `87ba16208da8ea642dd463fa89ff3a1ec80ceba1`, the std
+pin.
+
+**The prediction commit:** `d7c4a72`, before `baaa022` (the fetch) and
+`9312eae` (the pin), the first commits that unpack an archive.
+
+**The move table** (`base-3e7516c.log` `c648190f…`, `pin-alone-9312eae.log`
+`d22e59ec…`, `head-8aecb7c.log` `20d91072…`):
+
+| | trunk `3e7516c` at 0.2.26 | trunk's code at 0.2.27 (`9312eae`) | head `8aecb7c` |
+|---|---|---|---|
+| corpus, both tiers (pass/fail/pending, PEND-ok) | 350/0/4 (1) | 350/0/4 (1) | **443/0/7 (2)** |
+| sessions, both tiers | 71/0/2 (0) | 71/0/2 (0) | **85/0/0** |
+| stripped size, native | 1,467,856 | 1,475,648 (+0.5%) | 1,709,576 (+16.5%) |
+| stripped size, release | 723,000 | 733,792 (+1.5%) | 846,400 (+17.1%) |
+| static release (`cc -static`, glibc) | 12,784,624 | 13,480,456 | 13,762,928 |
+| loop, 20,000 turns, release, median of 3 (KB) | 3,276 | 3,384 | 3,504 |
+| loop, 20,000 turns, native, median of 3 (KB) | 3,804 | 3,876 | 4,012 |
+| `loop-rss` growth over 10,000 more turns, release / native | 384 / 408 KB | 236 / 548 KB | 188 / 324 KB (bound 2,000) |
+| 2,000 spawns, release, interleaved on a quiet host (s) | 0.47 | 0.47 | 0.47–0.48 (`spawn-and-gaps-aab5b78.log`) |
+
+Rows that moved, by name: `pending/unset_env` → `env/unset_var` (pass),
+`pending/signal_status` → `signal/child_term` (pass), `ctrl_c_prompt`
+and `ctrl_c_child` (pass, no longer pending); 91 new differential cases
+pass (25 `exec/`, 15 `env/`, 50 `signal/`, `simple/script_no_shebang`);
+12 new session cases pass; 5 new pending cases, each named in
+`tests/diff/PENDING.md` (`pending/exec_pid`, `pending/trap_usr1`,
+`pending/trap_ignore_usr1`, `pending/wait_interrupted`,
+`pending/subshell_signal`). `pending/pid` and `tilde/user` stay.
+
+**Strict evidence (#571).** Every count above is a tool's exit status
+read bare, with the per-case log kept
+(`difftest-head-8aecb7c-release.log` `9b0c1923…`,
+`session-head-8aecb7c-release.log` `f654da48…`); a pending case runs
+and is printed `PEND-ok` or `PEND-fail`, never skipped. The spawning
+rows also ran under `taskset -c 0-3` (`head-8aecb7c.log`: corpus
+443/0/7 and sessions 85/0/0 on both tiers, pinned), and
+`stress-8aecb7c.log` (`4a315d22…`) repeats the `signal`, `exec`, `env`
+and `jobs` areas five times and the sessions twice, free, on 4 cpus and
+on 1 cpu, both tiers: 0 failures in 30 corpus passes and 12 session
+passes.
+
+**Red before green.**
+
+- *The pid witness.* `tools/exec-witness` against trunk's code at the
+  pin: `pid FAIL … is 'pelt' with 1 children`, `env FAIL` (`GONE=x`
+  still there, `MINE` missing), `status FAIL returncode 128`; against
+  the head, and against dash: four rows ok, the pid the same before
+  and after (`head-8aecb7c.log`, both tiers, free and pinned).
+- *The poll race.* At `aab5b78` (the head before the barrier), pinned
+  to 4 cpus: corpus native `436 7 7` — `signal/trap_eval`,
+  `trap_exit_no_operand`, `trap_in_function`, `trap_in_subshell`,
+  `trap_quit`, `trap_replaced`, `trap_usr2`, each "stdout" with the
+  action never run — and session release `84 1 0` (`ctrl_c_trap_child`)
+  (`head-aab5b78-before-the-barrier.log` `ce6c38ff…`,
+  `difftest-head-aab5b78-native-taskset-red.log` `b526b6cf…`,
+  `session-head-aab5b78-release-taskset-red.log` `616cde63…`); the same
+  commit unpinned was green, which is why the pinned run is in the
+  rule. The cause in a 15-line wolf program: `os_signal_poll` straight
+  after `os_signal_raise` answers 0 in 2000 rounds of 2000
+  (`poll-race-wolf-0.2.27.log` `adef7361…`, wolf-lang#691). Green at
+  `8aecb7c` with the barrier (`sh.signal`'s `settle`).
+- *The planted break in CI.* `c6ba091` (exec never replaces the shell;
+  no variable is removed from the environment): run **38113174561**,
+  linux job 114392768223, red at exactly four steps — "exec replaces
+  the shell (same pid)" on both tiers and "the differential corpus" on
+  both tiers — with `wolf test`, the memory gates and every earlier
+  step green. Locally first: `plant-c6ba091-release.log` `b7822bbc…`
+  (the witness's three FAIL rows; corpus `439 4 7`: `env/empty`,
+  `env/only_pwd`, `env/subshell_export`, `env/unset_var`). Reverted in
+  the next commit.
+- *macOS.* Run **38112926258** at `a35afda`: linux x86-64 and linux
+  aarch64 green; macOS green through the exec witness and the corpus
+  on both tiers and red at "the session corpus, native tier" on one of
+  this lane's own new cases, `ctrl_c_pipeline`, which named
+  `/usr/bin/cat` (macOS has `/bin/cat`). Fixed in `aab5b78`.
+
+**The syscall list of the static build** (`tools/build --static`,
+`tools/syscall-census`: the whole corpus and every session under
+`strace -f -ff`, counting only calls made in pelt's own image — the
+shell, its threads, and each forked child up to its `execve`;
+`census-head-8aecb7c.txt` `59e8ccf7…` against
+`census-trunk-3e7516c-at-0.2.26.txt` `d6b75225…`; under strace the head
+is still 443/0/7 and 85/0/0). Trunk at 0.2.26 makes 31 distinct calls
+and the head 41. **New at the head:**
+
+| call | why | when |
+|---|---|---|
+| `execve` in the shell's own process, no `clone` before it | `exec cmd` (`os_exec`) | each top-level `exec cmd` |
+| `clone3` with `CLONE_VM\|CLONE_FS\|CLONE_FILES\|CLONE_SIGHAND\|CLONE_THREAD\|CLONE_SYSVSEM\|CLONE_SETTLS\|CLONE_PARENT_SETTID\|CLONE_CHILD_CLEARTID` | the runtime's signal thread (`wolf-signal`) | the first listen: any `trap` of a signal, and **every interactive start** |
+| `mmap` (`PROT_NONE` then `MAP_STACK`), `mprotect`, `madvise(MADV_GUARD_INSTALL)`, `munmap` | that thread's stack and guard (glibc) | with the thread |
+| `prctl(PR_SET_NAME, "wolf-signal")` | the thread's name | with the thread |
+| `futex` (`FUTEX_WAIT_BITSET_PRIVATE`, `FUTEX_WAKE_PRIVATE`) | the queue between that thread and the shell | every poll that waits, every barrier |
+| `rt_sigreturn` | a handler returning | every caught signal |
+| `kill(getpid(), SIGTTIN)` and `getpid` | pelt's barrier (`os_signal_raise` of `BG_READ`) | after each child is reaped while a signal is listened for |
+| `readlink` (`/proc/self/exe`) | `os_exe`, to run a script with no `#!` line through `exec` | that case only |
+
+Already made by trunk and made MORE at the head: `rt_sigaction` (now
+with a handler and `SA_RESTART` for HUP, INT, QUIT, TERM, USR2 and
+TTIN, with `SIG_IGN` and `SIG_DFL`; trunk's are the spawn's own in the
+child), `rt_sigprocmask` (`SIG_UNBLOCK` of each listened signal),
+`pipe2(O_CLOEXEC)` (the self-pipe), `read`/`write` on it. **Not
+asked for:** `setpgid`, `tcsetpgrp` (`ioctl(TIOCSPGRP)`), `tcsetattr`,
+`sigaltstack`, `waitid`, `tgkill`; `ioctl` is still only `TCGETS` (10
+calls, `os_isatty`), `wait4` is unchanged in kind. The list is glibc's
+on kasumi (CachyOS): a PAX build links another libc and should re-take
+it with the same tool.
+
+**Gaps filed, each with its witness** (`spawn-and-gaps-aab5b78.log`
+`e20903f9…` holds the dash and pelt runs): wolf-lang#679 (no meaning for
+USR1, ALRM and the rest; and `os_signal_listen(512)` answers `ok`),
+#680 (no non-blocking or interruptible child wait), #681 (no read of a
+disposition), #682 (`os_spawn_fds` hands a file with no `#!` line to
+`/bin/sh` where `os_exec` answers `io`), #691 (the poll race).
+
+## 5. Prediction against result
+
+| predicted (§3) | result |
+|---|---|
+| the pin alone moves no verdict | **right**: 350/0/4 and 71/0/2 on both tiers, the same PEND rows |
+| the archive's `std/STD-REV` is the std pin | **right** |
+| stripped size at the pin moves < 5% | **right**: +0.5% native, +1.5% release |
+| the 20,000-turn peak at the pin moves < 25%, `loop-rss` green | **right**: +3% release, +2% native |
+| `exec cmd` keeps the pid, on both tiers, linux and macOS | **right** on linux (kasumi, CI) and on macOS (run 38112926258's two witness steps) |
+| no `EXIT` trap after `exec` | **half wrong**: none when the program runs; when the exec FAILS dash runs the `EXIT` trap as the shell ends, which the first build did not (`exec/exit_trap_when_it_fails`) |
+| 126 and 127; the shell ends even when interactive | **right** (`exec/not_found`, `not_executable`, `directory`; session `exec_missing`) |
+| a file with no `#!` is run by pelt itself | **right for `exec`**; for a plain command it never reaches pelt: `os_spawn_fds` hands the file to `/bin/sh` itself (wolf-lang#682, not predicted) |
+| `pending/unset_env` passes; an empty environment is exact | **right** (`env/empty` prints nothing; a name dash drops, `a.b=1`, is dropped: by hand, `spawn-and-gaps-aab5b78.log`) |
+| `pending/signal_status`, `ctrl_c_prompt`, `ctrl_c_child` pass | **right**, on linux; on macOS in CI |
+| corpus pending at the head: `pid`, `tilde/user` and at most three gap cases | **wrong**: seven. The USR1 gap took two cases (caught, ignored), and two were not predicted at all: `pending/exec_pid` (the corpus cannot see a pid without `$$`) and `pending/subshell_signal` (a signal sent to a subshell's process reaches the shell: no fork) |
+| `trap` catches HUP, INT, QUIT, TERM, USR2; ignore inherited; reset; a caught signal default in a child | **right**, with one thing not predicted: two signals that arrive together run in the order of their NUMBERS under dash, and wolf's queue had them in the order their handlers finished (`signal/trap_two` red on the first build); pelt polls by number |
+| `$!` a process id; a background child ignores INT and QUIT | **right** (`signal/bang_is_a_process`, `background_ignores_int`) |
+| gaps (a) no meaning, (b) uninterruptible `wait`, (c) ignored-at-entry | **right**, filed #679, #680, #681 |
+| — | **not predicted: the poll race** (wolf-lang#691). Every trap case passed on 16 free cpus and seven failed on four; found only because the contract demands the pinned run |
+| — | **not predicted:** the harness itself decided signal cases: a corpus started under `nohup` or from a background job inherits HUP, INT and QUIT ignored, and dash then refuses to trap them. `tools/lib_cases.py` now starts every case with the defaults, and the whole corpus re-recorded with 0 drift |
+| — | **not predicted:** at an empty prompt, dash 0.5.13.4 loses the newline of the line typed after Ctrl-C (`^C`, `echo after`, `exit` runs `echo afterexit`). Not copied; no case |
+| `loop-rss` green at the head; 2,000 spawns at most 15% slower | **right**: 188 KB over 10,000 turns (release); 0.47 s against 0.47 s. With a trap set the barrier adds nothing measurable (0.64–0.68 s against 0.56–0.67 s on a loaded host) |
+| new syscalls: `execve` without a fork, `rt_sigaction`, `rt_sigreturn`, `rt_sigprocmask`, `pipe2`, a thread and `futex`; not `tcsetpgrp`, `setpgid`, `tcsetattr` | **right as far as it went**; `rt_sigaction`, `rt_sigprocmask` and `pipe2` were already in trunk's list (the spawn's), so they are more, not new; **not predicted:** the thread's `mmap`/`mprotect`/`madvise`/`munmap` and `prctl`, `readlink`, and `kill` + `getpid` from the barrier |
+| — | **not predicted:** the head's binary is 15–17% larger stripped than the pin's code (the signal thread, the task park behind `os_signal_wait`, the exec module) |
+
+**What was not verified.** The `exec-witness` rows and the session
+cases on macOS are CI's, not a local run (no build on nomad-1). The
+syscall list is from a glibc static build on kasumi, not from the
+binary PAX builds. The checked machine and lupin run no pelt (pelt
+builds on the native and release tiers only). Gap (c), a signal
+ignored at entry, has a hand witness and no corpus case. Whether dash's
+order for simultaneous signals is by number in general, or only for
+the pair measured (HUP and TERM), was not explored further.
+
+## Done-when
+
+Branch `sh05`, one pull request, unmerged; the commit list, the test
+checklist and the CI run at the head are in its body. Nothing is
+closed by this lane. To close at merge: nothing in pelt (pelt#6 is
+untouched). wolf-lang#679, #680, #681, #682 and #691 stay open for a
+compiler lane.
+
+**For sh06.** Job control (`fg`, `bg`, `jobs`, Ctrl-Z) waits on stop
+reporting, `SIGCONT` and a signal to a group (`[os.term.note]`), and on
+#680 for a `wait` a trap can interrupt and for reaping without
+blocking. Line editing can start now: `os_term_mode` and
+`os_term_set_mode` are in 0.2.27 and unused. `settle` retires when
+#691 is fixed. `$$` waits on #141. `kill` as a built-in (job ids)
+waits on #141 too.
