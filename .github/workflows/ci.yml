@@ -59,6 +59,13 @@ jobs:
       - name: wolf fmt --check
         run: tools/check-fmt
 
+      # sh06: tests/census/clauses.tsv lists POSIX.1-2024's testable
+      # statements and the cases that show each. The table must agree
+      # with the tree (every case it names exists, every census case is
+      # named); it needs no built pelt, so every host checks it.
+      - name: the clause table agrees with the corpus
+        run: tools/clause-census
+
       - name: build, both tiers
         if: matrix.builds
         run: tools/build --all
