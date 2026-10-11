@@ -1,0 +1,493 @@
+@2.15/1 | T | An assignment before a special built-in affects the current environment; before a regular built-in it does not
+> simple/persist_special simple/temp_builtin
+@2.15/2 | T | A special built-in is found before a function or PATH entry of the same name
+--- builtin/c_special_first
+mkdir bin; printf '#!/bin/sh\necho path-colon\n' > bin/:; chmod +x bin/:
+PATH=$PWD/bin:$PATH; : ; echo "st=$?"
+@break/1 | T | break leaves the innermost loop; break n leaves n loops; more than the depth leaves the outermost
+> builtin/break_n
+--- builtin/c_break
+for i in 1 2 3; do for j in a b; do [ $j = b ] && break; echo $i$j; done; done
+for i in 1 2 3; do for j in a b; do break 2; done; done; echo "i=$i"
+for i in 1 2; do while :; do break 5; done; echo no; done; echo out
+while :; do break; done; echo $?
+@break/2 | T | break with an operand that is not a positive integer fails
+--- builtin/c_break_bad
+(for i in 1; do break 0; echo after; done; echo end) 2>/dev/null; echo "st=$?"
+(for i in 1; do break x; echo after; done; echo end) 2>/dev/null; echo "st=$?"
+@break/3 | T | A loop encloses a break only in the same execution environment: not across a subshell or a function body defined in the loop
+> builtin/break_outside
+--- builtin/c_break_lexical
+for i in 1 2; do (break; echo in-sub); echo "after-sub $i"; done 2>/dev/null
+@continue/1 | T | continue resumes the next iteration of the innermost loop, continue n of the nth enclosing loop
+> builtin/continue_n
+--- builtin/c_continue
+for i in 1 2 3; do [ $i = 2 ] && continue; echo $i; done
+for i in 1 2; do for j in a b; do continue 2; echo no; done; echo no; done; echo done
+i=0; while [ $i -lt 3 ]; do i=$((i+1)); continue; echo no; done; echo $i
+i=0; until [ $i -ge 2 ]; do i=$((i+1)); continue 9; done; echo $i
+@colon/1 | T | : does nothing and returns zero; its arguments are expanded
+> builtin/colon_true_false
+--- builtin/c_colon
+false; : ; echo $?
+: ${x:=set-by-colon} $(echo side >&2) 2>&1; echo $x
+: -- -x --help; echo $?
+@dot/1 | T | . file runs the file's commands in the current environment
+> builtin/dot
+--- builtin/c_dot_current_env
+echo 'x=from-file; f() { echo func-from-file; }; cd /' > lib
+. ./lib; echo "$x $PWD"; f
+@dot/2 | T | Without a slash, the file is searched for in PATH and need not be executable
+--- builtin/c_dot_path
+mkdir d; echo 'echo found-in-path' > d/lib
+PATH=$PWD/d:$PATH; . lib
+echo 'echo in-cwd' > lib2; (. lib2) 2>/dev/null; echo "st=$?"
+@dot/3 | T | When no readable file is found a non-interactive shell exits
+--- builtin/c_dot_missing
+(. ./nonexistent; echo no) 2>/dev/null; echo "st=$?"
+(. nonexistent-in-path; echo no) 2>/dev/null; echo "st=$?"
+@dot/4 | T | The status is that of the last command in the file, zero if there is none
+--- builtin/c_dot_status
+echo '(exit 3)' > a; : > b; echo '# only a comment' > c
+. ./a; echo $?
+false; . ./b; echo $?
+false; . ./c; echo $?
+@dot/5 | T | return in a dot script ends the script, not the caller
+--- builtin/c_dot_return
+printf 'echo in\nreturn 4\necho not-reached\n' > lib
+. ./lib; echo "st=$?"
+f() { . ./lib; echo "func-continues $?"; }; f
+@dot/6 | T | A syntax error in a dot script is a special built-in error
+--- builtin/c_dot_syntax_error
+echo 'if then' > bad
+(. ./bad; echo no) 2>/dev/null; echo "st=$?"
+@dot/7 | T | Positional parameters of the caller are visible in the dot script
+--- builtin/c_dot_positional
+echo 'echo "$# $1"' > lib
+set -- a b; . ./lib
+@eval/1 | T | eval joins its arguments with spaces and runs the result in the current environment
+> builtin/eval
+--- builtin/c_eval_join
+eval echo a 'b;' echo c
+eval 'x=1' 'y=2'; echo "$x $y"
+eval "f() { echo defined; }"; f
+cmd='echo "$z"'; z=late; eval $cmd
+@eval/2 | T | eval with no arguments or only null arguments returns zero
+--- builtin/c_eval_empty
+false; eval; echo $?
+false; eval '' ""; echo $?
+false; eval ' '; echo $?
+@eval/3 | T | eval's status is that of the command it ran; a syntax error is a special built-in error
+> builtin/eval_syntax_error
+--- builtin/c_eval_status
+eval '(exit 3)'; echo $?
+eval 'false; true'; echo $?
+(eval 'fi'; echo no) 2>/dev/null; echo "st=$?"
+@eval/4 | T | return, break and continue inside eval act on the enclosing function or loop
+--- builtin/c_eval_flow
+for i in 1 2 3; do eval 'continue'; echo no; done; echo loop-done
+for i in 1 2 3; do eval 'break'; done; echo "i=$i"
+f() { eval 'return 5'; echo no; }; f; echo $?
+@exec/1 | T | exec with no utility makes its redirections permanent in the current shell
+> redir/exec_fd redir/exec_stdout
+--- builtin/c_exec_redirects
+exec 3>f; echo a >&3; exec 3>&-; cat f
+exec > out; echo to-out; exec >&2; cat out >&2
+@exec/2 | T | exec utility replaces the shell: nothing after it runs
+> builtin/exec redir/exec_command exec/status
+--- builtin/c_exec_replaces
+exec sh -c 'echo replaced; exit 3'
+echo not-reached
+@exec/3 | T | A failed exec ends a non-interactive shell with 126 or 127
+> exec/not_found exec/not_executable exec/exit_trap_when_it_fails
+--- builtin/c_exec_fails
+(exec nonexistent-xyz; echo no) 2>/dev/null; echo "st=$?"
+: > noexec; (exec ./noexec; echo no) 2>/dev/null; echo "st=$?"
+@exec/4 | T | exec in a subshell replaces only the subshell
+> exec/subshell exec/cmdsub env/exec_subshell_exact
+--- builtin/c_exec_subshell
+(exec sh -c 'exit 4'); echo "st=$?"
+x=$(exec echo from-exec); echo "$x"
+echo survived
+@exec/5 | T | exec -- utility is accepted (utility syntax guidelines)
+--- builtin/c_exec_dashdash
+exec -- sh -c 'echo ran'
+@exec/6 | T | A redirection error on exec gives a status 1-125 and a non-interactive shell exits
+> redir/special_fail_exits
+@exit/1 | T | exit n ends the shell with status n; without n, with the last status
+> builtin/exit_code builtin/exit_default
+--- builtin/c_exit_n
+(exit 0); echo $?
+(exit 255); echo $?
+(false; exit); echo $?
+(true; exit); echo $?
+@exit/2 | T | The EXIT trap runs before the shell ends; exit inside it ends at once with that status
+> builtin/trap_exit builtin/trap_in_exit builtin/trap_exit_status signal/trap_exit_runs_exit_trap
+--- builtin/c_exit_trap
+(trap 'echo bye' EXIT; exit 3); echo $?
+(trap 'echo bye; exit 9; echo no' EXIT; exit 3); echo $?
+(trap 'echo status-in-trap=$?' EXIT; (exit 6)); echo $?
+(trap 'echo at-eof' EXIT)
+@exit/3 | T | exit in an EXIT or signal trap action with no operand uses the status from before the trap
+> signal/trap_exit_no_operand
+--- builtin/c_exit_in_trap_status
+(trap 'true; exit' EXIT; exit 7); echo $?
+@exit/4 | T | exit in a function, loop, dot script or eval ends the whole shell
+> builtin/exit_in_function
+--- builtin/c_exit_everywhere
+(f() { exit 2; }; f; echo no); echo $?
+(for i in 1; do exit 3; done; echo no); echo $?
+(eval 'exit 4'; echo no); echo $?
+(echo 'exit 5' > x; . ./x; echo no); echo $?
+@exit/5 | X | exit with an operand above 256 that names a signal status ends the shell as if by that signal (new in 2024)
+! POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 --posix does it (both exit n mod 256); recorded, not counted
+--- builtin/c_exit_signal_status
+../sh -c 'exit 271'; echo $?
+@export/1 | T | export name gives the variable the export attribute: later commands see it
+> env/reexport env/export_no_value
+--- builtin/c_export
+x=1; export x; sh -c 'echo $x'
+export y=2 z=3; sh -c 'echo $y $z'
+w=4; export w; w=5; sh -c 'echo $w'
+export u; sh -c 'echo ${u-unset}'; u=6; sh -c 'echo $u'
+@export/2 | T | export -p writes export name=value lines suitable for reinput
+> builtin/export_p
+--- builtin/c_export_p
+export a='x y' b="it's" c; d=notexported
+export -p | grep -E ' (a|b|c|d)(=|$)' | sort
+saved=$(export -p | grep -E ' (a|b)='); unset a b; eval "$saved"; sh -c 'echo "$a $b"'
+@export/3 | T | export of a readonly variable with a new value fails
+--- builtin/c_export_readonly
+readonly r=1
+(export r=2; echo no) 2>/dev/null; echo "st=$?"
+export r; sh -c 'echo $r'
+@export/4 | T | export -- and invalid names
+--- builtin/c_export_invalid
+(export 1bad=x; echo "continued $?") 2>/dev/null; echo "st=$?"
+export -- ok=1; sh -c 'echo $ok'
+@readonly/1 | T | readonly name makes later assignment and unset fail
+> builtin/readonly_error builtin/unset_readonly
+--- builtin/c_readonly
+readonly a=1; b=2; readonly b
+(a=3; echo no) 2>/dev/null; echo "st=$?"
+(unset b; echo "continued $?") 2>/dev/null; echo "st=$?"
+echo "$a $b"
+@readonly/2 | T | readonly -p writes readonly name=value lines suitable for reinput
+> builtin/readonly_p
+--- builtin/c_readonly_p
+readonly a='x y' b
+readonly -p | grep -E ' (a|b)(=|$)' | sort
+@readonly/3 | T | A readonly variable cannot be changed by read, getopts, for, export, or an arithmetic assignment
+--- builtin/c_readonly_everywhere
+readonly r=1
+(echo x | { read r; echo "read-st=$?"; }) 2>/dev/null
+(for r in a b; do echo no; done; echo no) 2>/dev/null; echo "for=$?"
+(: $((r=5)); echo no) 2>/dev/null; echo "arith=$?"
+(: ${r:=5}; echo "default-kept $r") 2>/dev/null
+(getopts a r -a; echo "getopts-st=$?") 2>/dev/null; echo "getopts=$?"
+echo "$r"
+@return/1 | T | return n ends the function with status n; without n, with the last status
+> builtin/return_status
+--- builtin/c_return
+f() { return 3; }; f; echo $?
+g() { false; return; }; g; echo $?
+h() { true; return; }; h; echo $?
+k() { return 255; }; k; echo $?
+@return/2 | T | return in a trap action with no operand uses the status from before the trap
+--- builtin/c_return_in_trap
+f() { trap 'true; return' USR2; (exit 7); /bin/sh -c 'kill -USR2 $PPID'; echo not-reached; }
+f; echo "st=$?"
+@return/3 | X | return outside a function or dot script (recorded from dash; unspecified by POSIX)
+> builtin/return_top
+@set/1 | T | set with no arguments writes every variable as name=value, quoted for reinput, sorted
+--- builtin/c_set_lists
+a='x y'; b="it's"; c=plain; d=
+set | grep -E '^[abcd]='
+@set/2 | T | set -- args sets the positional parameters, replacing all; set -- alone clears them
+> builtin/set_positional
+--- builtin/c_set_positional
+set -- a b c; set -- x; echo "$# $1"
+set --; echo $#
+set -- -x; echo "$1"
+set a -b; echo "$# $2"
+set -- a b; set -f; echo $#
+@set/3 | T | set -a exports every variable assigned afterwards, however assigned
+> option/allexport
+--- option/c_allexport_forms
+set -a
+x=1; : ${y:=2}; : $((z=3)); read r <<E
+4
+E
+for f in 5; do :; done
+sh -c 'echo "${x-u} ${y-u} ${z-u} ${r-u} ${f-u}"'
+set +a; n=6; sh -c 'echo ${n-unset}'
+@set/4 | T | set -C prevents > from overwriting an existing regular file
+> redir/noclobber
+@set/5 | T | set -e exits when a command fails
+> option/errexit
+--- option/c_errexit_basic
+set -e
+true; echo before
+false
+echo not-reached
+@set/6 | T | set -e ignores failures in the condition of if, while, until, in a ! pipeline, and in all but the last of an AND-OR list
+> option/errexit_if option/errexit_while option/errexit_not option/errexit_andor
+--- option/c_errexit_exempt
+set -e
+if false; then :; fi
+while false; do :; done
+until true; do :; done
+! true
+false && true
+false || true
+! false
+echo survived
+@set/7 | T | Under set -e only the pipeline's own status matters, not an earlier stage's or a command substitution's inside a word
+> pipe/set_e
+--- option/c_errexit_pipeline
+set -e
+false | true
+echo $(false) ok
+x=$(false; echo y) || true
+echo reached
+false | false
+echo not-reached
+@set/8 | T | Under set -e an assignment from a failing command substitution exits
+--- option/c_errexit_assign_cmdsub
+set -e
+x=$(false)
+echo not-reached
+@set/9 | T | set -e is ignored inside a compound command or function that runs in an exempt context
+> option/errexit_function
+--- option/c_errexit_ignored_inside
+set -e
+f() { false; echo f-continues; }
+if f; then echo then; fi
+f || echo no
+{ false; echo brace-continues; } && echo and
+! { false; echo bang-continues; }
+echo end
+@set/10 | T | set -e applies in each subshell separately; a failing subshell then fails in the parent
+> option/errexit_subshell
+--- option/c_errexit_subshell_forms
+set -e
+(false; echo no) || echo sub-failed
+x=$(false; echo no); echo "not-reached [$x]"
+@set/11 | T | Under set -e the EXIT trap still runs, and the status is the failing command's
+--- option/c_errexit_trap
+set -e
+trap 'echo exit-trap $?' EXIT
+(exit 3)
+echo not-reached
+@set/12 | T | A compound command whose status came from an ignored failure does not trigger -e
+--- option/c_errexit_compound_status
+set -e
+if false; then :; fi
+for i in 1; do false && true; done
+case x in x) false || false;; esac && true
+echo after-ignored
+{ false && true; }
+echo after-brace
+@set/13 | T | set -f disables pathname expansion
+> option/noglob glob/noglob
+@set/14 | T | set -n reads commands without executing them
+--- option/c_noexec
+echo before
+set -n
+echo not-run
+if then
+@set/15 | T | set -u makes expanding an unset parameter an error, except $@ and $*
+> option/nounset option/nounset_positional
+--- option/c_nounset_forms
+set -u
+set --
+echo "$@" "$*" $# ${u-default} ${u:+x} "${1-none}"
+(echo $1; echo no) 2>/dev/null; echo "st=$?"
+(echo ${u}; echo no) 2>/dev/null; echo "st=$?"
+e=; echo "[$e]"
+@set/15b | T | set -u applies to an unset variable named in an arithmetic expansion
+! POSIX.1-2024 names arithmetic expansion in -u; dash 0.5.13.4 reads the unset variable as 0, so bash --posix is the oracle
+--- option/c_nounset_arith oracle=bash
+set -u
+(echo $((u + 1)); echo no) 2>/dev/null; [ $? -ne 0 ] && echo failed
+@set/16 | T | set -v writes input lines to standard error as they are read
+! pelt#6
+--- option/c_verbose
+set -v
+echo one 2>/dev/null
+echo two
+set +v
+--- option/c_verbose_stderr
+../sh -v -c 'echo x' 2>&1 >/dev/null | wc -l | tr -d ' '
+printf 'echo a\necho b\n' > s; ../sh -v s 2>&1
+@set/17 | T | set -x writes each expanded command to standard error before running it
+> option/xtrace
+--- option/c_xtrace_forms
+x='a b'
+set -x
+echo $x "$x" 2>&1
+y=1 2>&1
+y=2 true
+for i in 1; do :; done
+set +x
+( set -x; : "$x"; z=$x; [ a = a ]; ) 2>&1 | sed 's/^+* *//'
+@set/18 | T | set -o name and set +o name are the long forms of the option letters
+> option/set_o
+--- option/c_long_names
+set -o noglob; case $- in *f*) echo f;; esac; set +o noglob
+set -o errexit -o nounset; case $- in *e*) case $- in *u*) echo eu;; esac;; esac; set +o errexit +o nounset
+set -o allexport; case $- in *a*) echo a;; esac; set +o allexport
+set -o noclobber; case $- in *C*) echo C;; esac; set +o noclobber
+set -o verbose 2>/dev/null; case $- in *v*) echo v;; esac; set +o verbose 2>/dev/null
+set -o xtrace 2>/dev/null; case $- in *x*) set +o xtrace 2>/dev/null; echo x;; esac
+set -o notify; case $- in *b*) echo b;; esac; set +o notify
+@set/19 | T | set +o writes commands that restore the current option settings; set -o lists them
+--- option/c_plus_o
+set -f -u
+saved=$(set +o)
+set +f +u
+eval "$saved"
+case $- in *f*) case $- in *u*) echo restored;; esac;; esac
+set -o | grep -c . | sed 's/[0-9][0-9]*/some-lines/'
+set +o | grep -E 'noglob|nounset|errexit' | sort
+@set/20 | T | set -o ignoreeof, nolog, vi are accepted
+--- option/c_up_options
+set -o ignoreeof; echo "ignoreeof=$?"; set +o ignoreeof
+set -o nolog; echo "nolog=$?"
+set -o vi; echo "vi=$?"
+@set/21 | T | set -o pipefail is accepted and reported (new in 2024)
+--- option/c_pipefail_option
+set -o pipefail; echo "st=$?"
+set +o | grep pipefail
+set +o pipefail; set +o | grep pipefail
+@set/22 | T | set -h and set -b are accepted
+! dash 0.5.13.4 refuses -h; POSIX requires it be accepted, so bash --posix is the oracle
+--- option/c_h_b oracle=bash
+set -h; echo "h=$?"; set +h
+set -b; echo "b=$?"; set +b
+@set/23 | T | An invalid option is an error: a non-interactive shell exits
+> option/bad_option
+@set/24 | T | Options given on the sh command line are set, and appear in $-
+--- sh/c_options_on_command_line
+../sh -e -c 'false; echo no'; echo "e=$?"
+../sh -u -c 'echo $nope; echo no' 2>/dev/null; echo "u=$?"
+../sh -f -c 'echo *'
+../sh -ef -c 'case $- in *e*) case $- in *f*) echo ef;; esac;; esac'
+../sh -o noglob -c 'echo *'
+../sh +e -c 'false; echo plus-e'
+../sh -C -c 'echo a > f; echo b > f' 2>/dev/null; cat f
+../sh -a -c 'x=1; sh -c "echo \${x-unset}"'
+../sh -x -c ': traced' 2>&1 | sed 's/^+* *//'
+../sh -n -c 'echo not-run'; echo "n=$?"
+@shift/1 | T | shift n drops the first n positional parameters; default 1; shift 0 changes nothing
+> builtin/shift
+--- builtin/c_shift
+set -- a b c d e
+shift; echo "$# $1"; shift 2; echo "$# $1"; shift 0; echo "$# $1"; shift 2; echo $#
+@shift/2 | T | shift by more than $# fails with a message (a non-interactive shell may exit)
+> builtin/shift_error
+@times/1 | T | times writes two lines of user and system times in the form NmN.NNs NmN.NNs
+> builtin/times
+--- builtin/c_times_format
+times | sed 's/[0-9][0-9]*m[0-9][0-9]*[.,][0-9]*s/T/g'
+times >/dev/null; echo $?
+@times/2 | T | times reports real accumulated times: after burning CPU the shell's user time is not zero
+--- builtin/c_times_real
+i=0; while [ $i -lt 300000 ]; do i=$((i+1)); done
+times | sed -n 1p | grep -q '^0m0[.,]0*s ' && echo zero || echo nonzero
+@trap/1 | T | trap action condition... sets the action; it runs via eval when the condition arises
+> signal/trap_int signal/trap_term signal/trap_hup signal/trap_quit signal/trap_usr2 signal/trap_eval signal/trap_two
+@trap/2 | T | trap - condition resets to default; a first operand that is an unsigned integer resets all operands
+> signal/trap_reset signal/trap_reset_number builtin/trap_reset
+--- signal/c_trap_reset_forms
+trap 'echo a' INT TERM; trap - INT; trap | sed 's/SIG//'
+trap 2 15; trap | wc -l | tr -d ' '
+trap 'echo e' EXIT; trap 0; echo no-exit-trap
+@trap/3 | T | trap '' condition ignores the signal
+> signal/trap_ignore signal/trap_ignore_int
+@trap/4 | T | $? after a trap action is what it was before the action
+> signal/trap_status_kept signal/trap_action_status_dropped
+@trap/5 | T | Conditions may be EXIT, 0, a name without SIG, or a number
+> signal/trap_number
+--- signal/c_trap_condition_names
+trap 'echo x' 0; trap | sed 's/SIG//'; trap - 0
+trap ':' HUP 2 QUIT 15; trap | sed 's/SIG//' | sort; trap - 1 INT 3 TERM
+trap ':' KILL 2>/dev/null; echo "kill=$?"
+@trap/6 | T | trap with no operands writes trap -- 'action' condition for each condition not at default, quoted for reinput
+> signal/trap_print builtin/trap_print
+--- signal/c_trap_print_reinput
+trap "echo 'it'\\''s'" INT; trap '' TERM
+saved=$(trap); trap - INT TERM
+eval "$saved"; trap | sed 's/SIG//' | sort
+@trap/7 | T | trap -p writes the action of each named condition, and of every condition with no operand (new in 2024)
+! POSIX.1-2024 addition; dash 0.5.13.4 has no -p, so bash --posix is the oracle
+--- signal/c_trap_p oracle=bash
+trap 'echo i' INT
+trap -p INT | sed 's/SIG//'
+trap -p TERM | sed 's/SIG//'
+trap -p | grep -c -E 'INT|TERM' | tr -d ' '
+@trap/8 | T | An invalid condition gives a warning and a non-zero status, and the shell does not exit
+> signal/trap_bad_condition
+--- signal/c_trap_invalid
+trap ':' NOSUCHSIG 2>/dev/null; echo "st=$?"
+trap ':' 999 2>/dev/null; echo "st=$?"
+echo survived
+@trap/9 | T | Traps stay in place until changed; an action can itself set or reset traps
+> signal/trap_replaced signal/trap_twice_same
+--- signal/c_trap_in_action
+trap 'echo first; trap "echo second" USR2' USR2
+/bin/sh -c 'kill -USR2 $PPID'; /bin/sh -c 'kill -USR2 $PPID'; echo end
+@trap/10 | T | $(trap) in a command substitution shows the parent's traps
+> signal/trap_in_cmdsub
+--- signal/c_trap_cmdsub_shows_parent
+trap 'echo x' INT
+x=$(trap); echo "$x" | sed 's/SIG//'
+(trap) | sed 's/SIG//'
+@trap/11 | T | The EXIT trap runs in the environment of the last command: variables and $? are visible; it runs once
+> builtin/trap_exit signal/trap_exit_in_action
+--- signal/c_exit_trap_env
+trap 'echo "x=$x st=$?"' EXIT
+x=1; (exit 4)
+@trap/12 | T | An EXIT trap set in a subshell runs when that subshell ends; the parent's EXIT trap does not run there
+> signal/trap_in_subshell
+--- signal/c_exit_trap_subshell
+trap 'echo parent' EXIT
+( echo in-sub )
+( trap 'echo child' EXIT; echo in-sub2 )
+echo "$(trap 'echo cmdsub-exit' EXIT; echo body)"
+echo end
+@trap/13 | T | A signal ignored on entry to a non-interactive shell cannot be trapped or reset
+! wolf-lang#681
+--- signal/c_ignored_on_entry
+trap '' TERM
+../sh -c 'trap "echo trapped" TERM; kill -TERM $$; echo not-trapped'
+../sh -c 'trap - TERM; kill -TERM $$; echo still-ignored'
+@trap/14 | T | A trap action runs between commands of a list, loop or function, not only at the end of the script
+> signal/trap_in_loop signal/trap_in_function signal/trap_breaks_loop signal/trap_action_runs_program signal/trap_action_sets_variable
+@trap/15 | T | trap -- action condition is accepted
+--- signal/c_trap_dashdash
+trap -- 'echo x' INT; trap | sed 's/SIG//'
+trap -- - INT; trap | wc -l | tr -d ' '
+@trap/16 | T | A signal with a default action of terminate ends the shell with that signal when not trapped; the EXIT trap may or may not run
+> signal/death_runs_no_exit_trap
+@unset/1 | T | unset name removes the variable and its export attribute; unset -v the same
+> builtin/unset env/unset_var env/unset_exported
+--- builtin/c_unset_forms
+x=1; export x; unset x; echo "${x-unset}"; x=2; sh -c 'echo ${x-not-exported}'
+y=1; unset -v y; echo "${y-unset}"
+a=1 b=2; unset a b; echo "${a-u}${b-u}"
+unset never_set_xyz; echo "st=$?"
+@unset/2 | T | unset -f removes a function, and not a variable of that name
+> func/unset_f
+--- builtin/c_unset_f
+f=var; f() { echo func; }
+unset -f f; echo "$f"; f 2>/dev/null; echo "st=$?"
+g() { :; }; g=var; unset g; echo "${g-var-unset}"; g; echo "func-st=$?"
+@unset/3 | T | unset of a readonly variable fails with a non-zero status
+> builtin/unset_readonly
+@unset/4 | T | Unsetting IFS, PATH and other shell variables works and has the specified effect
+--- builtin/c_unset_shell_vars
+unset IFS; x='a b'; set -- $x; echo $#
+(unset PATH; echo builtin-still-works; ls >/dev/null 2>&1; echo "ls=$?") | sed 's/ls=0/ls=found-by-default-path/'
+unset HOME; echo "${HOME-unset}"
+unset LINENO PPID 2>/dev/null; echo survived

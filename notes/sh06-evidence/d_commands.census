@@ -1,0 +1,469 @@
+@2.9/1 | T | The exit status of a command is that of the last simple command it executed, unless stated otherwise
+> control/loop_status control/if_status
+@2.9.1.1/1 | T | The command name is the first field left after expanding the non-assignment words; empty expansions are passed over
+> simple/command_name_from_var simple/empty_command
+--- simple/c_name_after_empty
+e=
+$e echo first-field
+$e $e
+echo "st=$?"
+x='echo split name'; $x
+@2.9.1.1/2 | T | After export and readonly, words that look like assignments are expanded as assignments: no splitting, tilde after = and :
+! dash 0.5.13.4 splits the value (it has no declaration utilities); POSIX.1-2024 requires assignment context, so bash --posix is the oracle
+--- simple/c_declaration_utility oracle=bash
+x='a b'; HOME=/h
+export y=$x; echo "[$y]"
+readonly z=$x; echo "[$z]"
+export p=~/q:~; echo "$p"
+@2.9.1.1/3 | T | For other commands, name=value arguments are ordinary words: split, and tilde only at the start
+--- simple/c_not_declaration
+x='a b'; HOME=/h
+set -- y=$x; echo $#
+echo p=~ q=~/r
+@2.9.1.1/4 | T | Redirections are performed, then assignments are expanded and made
+> simple/assign_expansion
+--- simple/c_assign_expansions
+HOME=/h; a=1
+x=~ y=$a z=$(echo c) w=$((a+1)) v='q r' u=$a$a; echo "$x $y $z $w $v $u"
+p=a* ; echo "$p"
+@2.9.1.2/1 | T | With no command name, assignments affect the current environment
+> simple/assign_only
+--- simple/c_assign_current
+x=1 y=2; echo $x $y
+x=3 y=$x; echo $y
+@2.9.1.2/2 | T | Assignments before a utility are exported to it and do not affect the current environment
+> env/temp_assign_gone simple/external_env exec/assign_reaches
+--- simple/c_assign_temp
+x=outer
+x=inner sh -c 'echo $x'; echo $x
+unset n; n=1 env | grep '^n='; echo "${n-unset}"
+@2.9.1.2/3 | T | Assignments before a special built-in stay in effect after it completes
+> simple/persist_special
+--- simple/c_assign_special_persists
+x=1 :; echo "$x"
+y=2 eval 'echo $y'; echo "$y"
+z=3 export w=4; echo "$z $w"
+@2.9.1.2/4 | T | Assignments before a function call are in effect during the function
+> func/temp_assign
+--- simple/c_assign_function
+f() { echo "in:$x"; }
+x=1 f
+@2.9.1.2/5 | T | Assignments before a regular built-in do not persist
+> simple/temp_builtin env/temp_assign_back
+--- simple/c_assign_regular_builtin
+x=outer
+x=inner echo hi; echo $x
+x=inner command eval 'echo $x'; echo $x
+IFS=: read a b <<E
+p:q
+E
+echo "$a $b"; printf '%s' "$IFS" | od -An -tx1 | tr -d '[:space:]'; echo
+@2.9.1.2/6 | T | Assigning a readonly variable before any command is a variable assignment error
+> simple/readonly_assign
+@2.9.1.3/1 | T | A command with only redirections performs them in a subshell: files are created, the shell's descriptors unchanged
+> redir/redir_only
+--- simple/c_redirect_only
+> created; ls
+< created; echo "st=$?"
+< /nonexistent; echo "st=$?"
+echo still-stdout
+@2.9.1.3/2 | T | With no command name the status is that of the last command substitution, else zero
+> simple/assign_status
+--- simple/c_status_no_name
+x=$(exit 3) y=$(exit 5); echo $?
+false; x=1; echo $?
+false; $(exit 0); echo $?
+$(exit 9); echo $?
+@2.9.1.4/1 | T | Search order without a slash: special built-in, function, other built-in, then PATH
+> func/name_shadows_builtin
+--- simple/c_search_order
+echo() { command echo "function echo: $*"; }
+echo a
+cat() { command echo function-cat; }; cat /dev/null
+unset -f echo cat
+mkdir bin; printf '#!/bin/sh\necho path-true\n' > bin/true; chmod +x bin/true
+PATH=$PWD/bin:$PATH; true; echo "st=$?"
+@2.9.1.4/2 | X | A function cannot shadow a special built-in
+! defining a function named after a special built-in is an error in dash and in bash --posix
+--- simple/c_special_not_shadowed
+eval 'export() { echo function; }' 2>/dev/null; echo "st=$?"
+echo survived
+@2.9.1.4/3 | T | PATH is searched in order, and only executable files are taken
+> simple/path_search exec/path_assign_search
+--- simple/c_path_order
+mkdir a b; printf '#!/bin/sh\necho from-a\n' > a/prog; printf '#!/bin/sh\necho from-b\n' > b/prog
+chmod +x b/prog
+PATH=$PWD/a:$PWD/b:$PATH prog
+chmod +x a/prog; PATH=$PWD/a:$PWD/b:$PATH; prog
+@2.9.1.4/4 | T | After PATH is assigned, a remembered location is not used
+--- simple/c_path_rehash
+mkdir a b; printf '#!/bin/sh\necho from-a\n' > a/prog; printf '#!/bin/sh\necho from-b\n' > b/prog
+chmod +x a/prog b/prog
+OLD=$PATH
+PATH=$PWD/a:$OLD; prog
+PATH=$PWD/b:$OLD; prog
+rm b/prog; PATH=$PWD/b:$PWD/a:$OLD; prog
+@2.9.1.4/5 | T | An empty PATH component or an unset PATH names the current directory or the default
+--- simple/c_path_empty_component
+printf '#!/bin/sh\necho here\n' > prog; chmod +x prog
+PATH=:/usr/bin:/bin; prog
+PATH=/usr/bin:/bin:; prog
+PATH=/usr/bin::/bin; prog
+@2.9.1.4/6 | T | A name with a slash is executed directly, without a PATH search
+> simple/slash_not_found
+--- simple/c_slash_direct
+mkdir d; printf '#!/bin/sh\necho direct\n' > d/prog; chmod +x d/prog
+d/prog; ./d/prog; PATH=$PWD/d:$PATH; d/prog
+@2.9.1.6/1 | T | The utility is run with arg0 the command name and the arguments as given
+> simple/external_args
+--- simple/c_arg0
+printf '#!/bin/sh\necho "${0##*/} $# $1"\n' > prog; chmod +x prog
+PATH=$PWD:$PATH; prog 'a b' c
+./prog ''
+@2.9.1.6/2 | T | A file the system refuses with ENOEXEC is run as a shell script by the shell
+> exec/script_no_shebang simple/script_no_shebang
+--- simple/c_enoexec
+printf 'echo "script $# $1"\n' > noshebang; chmod +x noshebang
+./noshebang a b; PATH=$PWD:$PATH; noshebang c
+@2.9.1.6/3 | T | A file that cannot be a script (a NUL before a newline) is refused with status 126
+--- simple/c_enoexec_binary
+printf '\0\0\0\0binary\n' > bin; chmod +x bin
+./bin 2>/dev/null; echo "st=$?"
+@2.9.2/1 | T | Each command's standard output is connected to the next command's standard input
+> pipe/three pipe/many_stages pipe/stdin_through
+@2.9.2/2 | T | The pipe is assigned before the command's own redirections
+--- pipe/c_redirect_overrides
+echo to-file | cat > f; cat f
+echo hidden > g | cat; echo "[$(cat g)]"
+echo a | cat < /dev/null; echo "st=$?"
+@2.9.2/3 | T | The pipeline's status is the last command's
+> pipe/status_last pipe/pipeline_status
+--- pipe/c_status_last
+false | true; echo $?
+true | false; echo $?
+(exit 3) | (exit 4); echo $?
+@2.9.2/4 | T | ! inverts the status of the pipeline
+> pipe/negation control/not
+--- pipe/c_bang
+! true; echo $?
+! false; echo $?
+! (exit 7) | false; echo $?
+! true | true; echo $?
+@2.9.2/5 | T | With set -o pipefail the status is the last non-zero status in the pipeline, zero if all succeed
+! new in POSIX.1-2024; dash 0.5.13.4 has `set -o pipefail`? recorded from both, POSIX decides
+--- pipe/c_pipefail
+set -o pipefail
+false | true; echo $?
+(exit 3) | (exit 4) | true; echo $?
+true | true; echo $?
+! false | true; echo $?
+set +o pipefail
+false | true; echo $?
+@2.9.2/6 | T | The pipefail setting used is the one in effect when the pipeline starts
+--- pipe/c_pipefail_at_start
+false | set -o pipefail; echo $?
+@2.9.2/7 | T | Each command of a multi-command pipeline runs in a subshell environment (or the current one, as an extension, for some)
+> pipe/stage_is_subshell pipe/cd_in_stage pipe/exit_in_stage
+--- pipe/c_stage_environment
+x=0
+echo a | x=1; echo $x
+x=2 | cat; echo $x
+echo b | { read y; x=3; }; echo "$x[${y-}]"
+exit 5 | cat; echo "still=$?"
+@2.9.2/8 | T | The shell waits for the last command of a foreground pipeline; stages run concurrently
+> pipe/sigpipe_producer pipe/large_in_process
+--- pipe/c_concurrent_stages
+yes | head -n 3
+{ echo first; sleep 1; [ -f got ] && : > concurrent; } | { read a; : > got; }
+ls
+@2.9.2/9 | T | A reader that exits early ends a producer written in the shell itself (SIGPIPE or EPIPE)
+--- pipe/c_shell_producer_ends
+{ i=0; while [ $i -lt 30000 ]; do echo $i; i=$((i+1)); done; : > finished; } | head -n 1
+ls
+f() { i=0; while [ $i -lt 30000 ]; do printf '%s\n' line; i=$((i+1)); done; : > finished2; }; f | sed -n 2q
+ls; echo after
+@2.9.2/10 | T | A pipeline stage that is a compound command or function reads the previous stage as it arrives
+> pipe/compound_stage pipe/function_stage pipe/builtin_to_program pipe/program_to_builtin
+--- pipe/c_incremental_reader
+{ echo 1; echo 2; echo 3; } | while read n; do echo "n=$n"; done | sed 's/^/>/'
+@2.9.3/1 | T | && and || have equal precedence and associate left
+> control/and_or
+--- control/c_andor_assoc
+false && echo foo || echo bar
+true || echo foo && echo bar
+false || false && echo no; echo $?
+true && false || true && echo yes
+@2.9.3/2 | T | ; and newline run lists in sequence; & runs the list asynchronously
+> control/async_list jobs/background
+--- control/c_separators
+echo a; echo b
+echo c & wait; echo d
+{ sleep 0; echo e; } & wait
+@2.9.3.1/1 | T | The shell does not wait for an asynchronous list; its status is zero
+> jobs/background jobs/two
+--- jobs/c_async_status
+false & echo "st=$?"; wait
+(exit 3) & wait $!; echo "waited=$?"
+@2.9.3.1/2 | T | Without job control an asynchronous list's standard input is /dev/null unless redirected
+> jobs/stdin_null
+--- jobs/c_async_stdin
+echo data | { cat & wait; echo "[done]"; }
+echo data > f; cat < f & wait
+@2.9.3.1/3 | T | An asynchronous list runs in a subshell: its assignments and cd do not affect the shell
+--- jobs/c_async_subshell
+x=1; { x=2; cd /; } & wait; echo "$x"; [ "$PWD" != / ] && echo cwd-kept
+@2.9.3.1/4 | T | The shell does not wait for background children before exiting
+--- jobs/c_exit_no_wait
+(sleep 1; echo late > late) &
+echo exiting
+@2.9.3.1/5 | T | The whole AND-OR list is run in the background, not only its last pipeline
+--- jobs/c_async_andor
+true && { sleep 0; echo bg; } & wait
+false || echo alt & wait
+false && echo no & wait; echo "st=$?"
+@2.9.3.3/1 | T | The second command of an AND list is expanded and run only if the first succeeds
+--- control/c_and_lazy
+false && echo $(echo evaluated >&2) 2>&1
+true && echo ran
+i=0; false && : $((i=1)); echo $i
+@2.9.3.4/1 | T | The second command of an OR list runs only if the first fails; status is the last command run
+--- control/c_or_lazy
+true || echo no; echo $?
+false || (exit 4); echo $?
+false || false || echo third
+@2.9.4/1 | T | A redirection on a compound command applies to every command in it that does not override it
+> redir/compound_out redir/while_in redir/exec_in_group
+--- control/c_compound_redirect
+{ echo a; echo b >&2; echo c > f2; } > f1 2>&1; cat f1 f2
+for i in 1 2; do echo $i; done > f3; cat f3
+if true; then cat; fi < f3
+( echo sub ) > f4; cat f4
+case x in x) echo in-case;; esac > f5; cat f5
+@2.9.4.1/1 | T | ( list ) runs in a subshell: assignments, cd, options, functions and traps set there do not remain
+> control/subshell cd/cd_subshell cd/subshell_restores env/subshell_export env/subshell_unset
+--- control/c_subshell_isolation
+x=1; f() { echo outer; }
+( x=2; cd /; set -f; f() { echo inner; }; exit 3 ); echo "$? $x"; f
+case $- in *f*) echo f-leaked;; *) echo f-kept;; esac
+[ "$PWD" != / ] && echo cwd-kept
+@2.9.4.1/2 | T | { list; } runs in the current environment
+> control/brace_group
+--- control/c_brace_current
+x=1; { x=2; cd /; }; echo "$x $PWD"
+{ echo a; } ; { echo b
+}
+@2.9.4.1/3 | T | The status of a grouping command is the status of its list
+--- control/c_group_status
+( exit 4 ); echo $?
+{ (exit 5); }; echo $?
+( false; true ); echo $?
+@2.9.4.2/1 | T | for runs the list once per item of the expanded words, setting the variable; it remains set afterwards
+> control/for_in control/for_var_after
+--- control/c_for_words
+touch f1 f2
+x='a b'
+for i in $x "$x" f* $(echo c d) ; do echo "[$i]"; done; echo "last=$i"
+@2.9.4.2/2 | T | for without in iterates over "$@"; with an empty in list it runs nothing and returns zero
+> control/for_positional control/for_empty
+--- control/c_for_forms
+set -- 'a b' c
+for i do echo "[$i]"; done
+for i
+do echo "<$i>"; done
+for i; do echo "{$i}"; done
+false; for i in; do echo no; done; echo "st=$?"
+@2.9.4.2/3 | T | for's status is that of the last list run
+--- control/c_for_status
+for i in 1 2; do (exit $i); done; echo $?
+for i in 1; do true; done; echo $?
+@2.9.4.3/1 | T | case runs the list of the first pattern that matches the expanded word; later patterns are not expanded
+> control/case_basic control/case_multi
+--- control/c_case_first_match
+x=abc
+case $x in a*) echo first;; abc) echo second;; esac
+case $x in z) echo no;; $(echo evaluated >&2; echo q)) echo no;; a?c) echo third;; $(echo never >&2)) ;; esac 2>&1
+@2.9.4.3/2 | T | The case word undergoes tilde, parameter, command, arithmetic expansion and quote removal, but no splitting or globbing
+--- control/c_case_word
+touch f1
+x='a b'; HOME=/h
+case $x in 'a b') echo unsplit;; esac
+case f* in f1) echo globbed;; 'f*') echo literal;; esac
+case ~ in /h) echo tilde;; esac
+case $((1+1))$(echo x) in 2x) echo expanded;; esac
+@2.9.4.3/3 | T | Patterns are expanded; quoted parts of a pattern match literally
+> control/case_quoted_pattern
+--- control/c_case_pattern_quoting
+p='a*'; s='a*'
+case abc in $p) echo var-is-pattern;; esac
+case abc in "$p") echo no;; *) echo quoted-var-literal;; esac
+case 'a*' in "$s") echo literal-match;; esac
+case 'a*' in a\*) echo escaped;; esac
+case abc in 'a'*) echo mixed;; esac
+@2.9.4.3/4 | T | An optional ( may precede the pattern list, and | separates patterns
+--- control/c_case_syntax
+case b in (a|b|c) echo paren;; esac
+case b in a | b ) echo spaces;; esac
+case x in
+  (y) echo no ;;
+  x) echo newline-form
+esac
+@2.9.4.3/5 | T | ;& falls through to the next clause's list without testing its pattern
+! new in POSIX.1-2024; dash 0.5.13.4 has no ;&, so bash --posix is the oracle
+> control/case_fallthrough
+--- control/c_case_fallthrough_chain oracle=bash
+case a in a) echo one;& b) echo two;& c) echo three;; d) echo four;; esac
+@2.9.4.3/5b | T | The last clause of a case may itself end with ;&
+! dash 0.5.13.4 refuses ;& before esac as a syntax error; the grammar allows it, so bash --posix is the oracle
+--- control/c_case_fallthrough_last oracle=bash
+case a in a) echo last;& esac
+@2.9.4.3/6 | T | case's status is zero when nothing matches, else the status of the last list run; an empty list gives zero
+> control/case_status
+--- control/c_case_status_forms
+false; case x in y) ;; esac; echo $?
+case x in x) (exit 3);; esac; echo $?
+false; case x in x) ;; esac; echo $?
+@2.9.4.4/1 | T | if runs the then list when the condition list succeeds, else each elif in turn, else the else list
+> control/if_elif_else
+--- control/c_if_chain
+if false; then echo 1; elif false; then echo 2; elif true; then echo 3; else echo 4; fi
+if false; true; then echo last-decides; fi
+@2.9.4.4/2 | T | if's status is that of the list run, or zero if none ran
+> control/if_status
+--- control/c_if_status_none
+if false; then :; fi; echo $?
+if (exit 3); then :; elif (exit 4); then :; fi; echo $?
+if true; then (exit 5); fi; echo $?
+@2.9.4.4/3 | T | The condition's status is visible in $? at the start of the then or else list
+--- control/c_if_status_visible
+if (exit 3); then :; else echo $?; fi
+if true; then echo $?; fi
+@2.9.4.5/1 | T | while repeats its body while the condition list succeeds; status is the last body status or zero
+> control/while control/while_break_value
+--- control/c_while_status
+i=0; while [ $i -lt 3 ]; do i=$((i+1)); done; echo "$i $?"
+while false; do :; done; echo $?
+i=0; while [ $i -lt 2 ]; do i=$((i+1)); (exit $i); done; echo $?
+@2.9.4.6/1 | T | until repeats its body until the condition list succeeds
+> control/until
+--- control/c_until_status
+i=0; until [ $i -ge 3 ]; do i=$((i+1)); done; echo "$i $?"
+until true; do :; done; echo $?
+@2.9.5/1 | T | fname() compound-command defines a function; any compound command can be the body
+> func/basic func/compound_body parse/func_simple_body
+--- func/c_bodies
+f() { echo brace; }; g() ( echo subshell; exit 3 ); h() if true; then echo if-body; fi
+i() for x in 1; do echo for-body; done; j() while :; do echo while-body; break; done; k() case x in x) echo case-body;; esac
+f; g; echo $?; h; i; j; k
+@2.9.5/2 | T | Functions and variables have separate name spaces
+--- func/c_namespaces
+x=var; x() { echo func; }
+echo $x; x
+unset x; x; unset -f x; x 2>/dev/null; echo "st=$?"
+@2.9.5/3 | T | The body is expanded when called, not when defined
+--- func/c_expanded_at_call
+v=define; f() { echo $v; }; v=call; f
+@2.9.5/4 | T | A redirection after the body applies each time the function is called
+> redir/func_body
+--- func/c_redirect_on_definition
+f() { echo to-file; } > out
+ls; f; f; cat out
+n=1; g() { echo x; } > "g$n"; n=2; g; ls
+@2.9.5/5 | T | During the call the operands are the positional parameters and $# changes; both are restored after; $0 is unchanged
+> func/positional_restore func/args
+--- func/c_positional_scope
+set -- a b c
+f() { echo "$# $1 $0"; set -- x; shift; }
+f p q; echo "$# $1"
+@2.9.5/6 | T | return ends the function; execution resumes after the call
+> func/return_in_loop builtin/return_status
+--- func/c_return_resumes
+f() { echo before; return 3; echo not-reached; }
+f; echo "after $?"
+g() { while :; do return; done; }; false; g; echo $?
+@2.9.5/7 | T | The status of a definition is zero; the status of a call is that of the last command run
+> func/status_of_def
+--- func/c_call_status
+false; f() { (exit 7); }; echo $?
+f; echo $?
+g() { :; }; false; g; echo $?
+@2.9.5/8 | T | A function can call itself and other functions, and can be redefined, including from inside itself
+> func/recursion func/redefine
+--- func/c_redefine_self
+f() { f() { echo second; }; echo first; }
+f; f
+@2.9.5/9 | T | Variables assigned in a function are global; a function called in a subshell or pipeline does not change the caller
+> func/global_assign func/in_cmdsub
+@2.9.5/10 | X | A function name that is not a valid name is refused or accepted as an extension (recorded from dash)
+> parse/bad_funcname
+@2.10/1 | T | A newline may follow | && || and the reserved words that open a list; ; cannot begin a command
+> parse/newlines_ok parse/leading_semicolon parse/trailing_pipe parse/trailing_andand
+--- parse/c_newline_continues
+true &&
+echo and
+false ||
+echo or
+echo a |
+cat
+@2.10/2 | T | Empty compound lists are syntax errors: { }, ( ), then with no list, do with no list
+> parse/empty_brace parse/then_empty
+--- parse/c_empty_lists mode=parse
+if true; then fi
+--- parse/c_empty_do mode=parse
+while true; do done
+--- parse/c_empty_subshell mode=parse
+( )
+@2.10/3 | T | Missing or stray closing words are syntax errors
+> parse/missing_done parse/missing_esac parse/missing_fi parse/missing_then parse/done_late parse/stray_dsemi parse/stray_paren parse/fi_unexpected parse/case_no_in
+@2.10/4 | T | Unterminated quotes and substitutions are syntax errors
+> parse/unterminated_backquote parse/unterminated_cmdsub parse/unterminated_dquote parse/unterminated_squote
+@2.10/5 | T | A redirection needs a target word; a for needs a name
+> parse/redirect_no_target parse/for_bad_name
+@2.10.2/1 | T | Rule 1: a reserved word is recognized only as the whole unquoted token
+--- parse/c_rule1
+iff() { echo not-if; }; iff
+'while' 2>/dev/null; echo $?
+@2.10.2/2 | T | Rule 4: the case terminator esac is recognized where a pattern could begin
+--- parse/c_rule4
+case x in esac
+case esac in (esac) echo matched;; esac
+@2.10.2/3 | T | Rule 5: the for variable must be a name
+> parse/for_bad_name
+@2.10.2/4 | T | Rule 6: in and do after the for name are recognized on the same or a following line
+--- parse/c_rule6
+for i
+in 1 2
+do echo $i
+done
+@2.10.2/5 | T | Rule 7: a word with = after a valid name at the start of a command is an assignment; otherwise it is a command name
+--- parse/c_rule7
+a=1 b=2 echo ok
+=x 2>/dev/null; echo "st=$?"
+1a=2 2>/dev/null; echo "st=$?"
+echo a=1
+'a'=3 2>/dev/null; echo "st=$?"
+a\=4 2>/dev/null; echo "st=$?"
+@2.10.2/6 | T | Rule 8: name() begins a function definition; a reserved word cannot be a function name
+--- parse/c_rule8
+f ( ) { echo spaced; }; f
+g()
+{
+echo newline-before-body
+}
+g
+@2.10.2/7 | T | Rule 9: words in a function body are not expanded or assigned at definition
+--- parse/c_rule9
+f() { x=inside; }; echo "${x-unset}"; f; echo "$x"
+@2.10.2/8 | T | An io number is digits immediately before < or >
+--- parse/c_io_number
+echo a 1>f; cat f
+echo a1>g; cat g
+echo 12 >h; cat h
+@2.10.2/9 | T | Comments and blank lines form no command; a script of only those exits zero
+> stdin/no_prompt
+--- parse/c_only_comments
+# nothing
+
+   # more nothing
+@2.10.2/10 | T | A subshell and a brace group can be nested and combined with every list operator
+--- parse/c_nesting
+( ( echo a ) ; { echo b; } ) | { ( cat ) ; } && { ! ( false ) ; } && echo c

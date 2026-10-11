@@ -1,0 +1,359 @@
+@2.1/1 | T | Operands become positional parameters 1..n and the command name special parameter 0
+> exec/argv0 func/args
+@2.1/2 | U | A first line starting with #! gives unspecified results
+! unspecified by the standard; pelt treats it as a comment (exec/script_no_shebang covers the kernel-refused case)
+@2.2.1/1 | T | An unquoted backslash preserves the literal value of the next character
+> quote/backslash
+--- quote/c_backslash_each
+echo \$x \`y\` \"z\" \'q\' \\ \a \| \& \; \< \> \( \) \*
+@2.2.1/2 | T | Backslash-newline is a line continuation, removed before tokens are split, and is not a token separator
+> quote/continuation
+--- quote/c_continuation_joins
+ec\
+ho a\
+b
+x=1\
+2; echo $x
+@2.2.2/1 | T | Single quotes preserve the literal value of every character within them
+> quote/single
+--- quote/c_single_all
+echo '$HOME `date` \n "dq" * ? [a] ~ #no'
+echo 'a
+b'
+@2.2.3/1 | T | Within double quotes $ keeps its meaning for parameter, command and arithmetic expansion
+> quote/double
+--- quote/c_dq_dollar
+x=5
+echo "$x ${x} $(echo c) $((x+1)) `echo b`"
+@2.2.3/2 | T | Within double quotes $' does not introduce dollar-single-quotes
+--- quote/c_dq_no_dollar_single
+echo "$'a\tb'"
+@2.2.3/3 | T | Characters between "$(" and its matching ")" inside double quotes are not affected by the double quotes
+--- quote/c_dq_cmdsub_inner_quotes
+echo "$(echo "a  b" 'c  d')"
+echo "x $(echo ")") y"
+@2.2.3/4 | T | Inside double quotes, in ${x#pattern} forms the outer double quotes do not quote the pattern's special characters
+> param/trim_quoted
+--- quote/c_dq_trim_pattern
+x=abcabc
+echo "${x#*b}" "${x##*b}" "${x%b*}" "${x%%b*}"
+echo "${x#"*"b}"
+@2.2.3/5 | T | Inside double quotes, in ${x:-word} forms the word keeps literal value except for " ` $ and backslash; backslash also escapes }
+> quote/dq_in_param
+--- quote/c_dq_default_word
+unset u
+echo "${u:-a  'b'  *}"
+echo "${u:-a\}b}"
+echo "${u:-$HOME}"
+@2.2.3/6 | T | Inside double quotes a backquote introduces command substitution, ended by the next unescaped backquote
+--- quote/c_dq_backquote
+echo "a `echo b` c `echo \`echo d\``"
+@2.2.3/7 | T | Inside double quotes backslash is an escape only before $ ` " backslash and newline
+> quote/special_chars
+--- quote/c_dq_backslash
+echo "\$ \` \" \\ \a \n \' \*"
+echo "a\
+b"
+@2.2.3/8 | T | The literal value of the result of an expansion in double quotes is preserved (no splitting, no globbing)
+> split/quoted
+--- quote/c_dq_result_literal
+x='a   b  *'
+echo "$x"
+set -- "$x"; echo $#
+@2.2.4/1 | T | $'...' preserves characters literally up to the terminating unescaped single quote
+> quote/dollar_single
+! dash 0.5.13.4 has no dollar-single-quotes; POSIX.1-2024 requires them, so bash --posix is the oracle
+--- quote/c_ds_plain oracle=bash
+echo $'a b' $'$HOME' $'"q"' $'*'
+@2.2.4/2 | T | $'...' escapes \" \' \\ \a \b \e \f \n \r \t \v yield their characters
+--- quote/c_ds_escapes oracle=bash
+printf '%s' $'\"\'\\' | od -An -tx1 | tr -d '[:space:]'; echo
+printf '%s' $'\a\b\e\f\n\r\t\v' | od -An -tx1 | tr -d '[:space:]'; echo
+@2.2.4/3 | T | $'\cX' yields the control character for X
+--- quote/c_ds_control oracle=bash
+printf '%s' $'\cA\cZ\c[' | od -An -tx1 | tr -d '[:space:]'; echo
+@2.2.4/4 | T | $'\xXX' yields the byte with that hexadecimal value, ended by the first non-hex character
+--- quote/c_ds_hex oracle=bash
+printf '%s' $'\x41\x7aZ\x9' | od -An -tx1 | tr -d '[:space:]'; echo
+@2.2.4/5 | T | $'\ddd' yields the byte with that octal value, one to three digits
+--- quote/c_ds_octal oracle=bash
+printf '%s' $'\101\1012\7x' | od -An -tx1 | tr -d '[:space:]'; echo
+@2.2.4/6 | T | An escaped single quote does not end a $'...' sequence, and the sequence joins with adjacent word parts
+--- quote/c_ds_embedded oracle=bash
+x=$'it\'s'; echo "$x"
+echo a$'\t'b"c"$'d'
+@2.2.4/7 | T | $'...' escapes are processed before word expansion: the result is quoted (not split, not globbed)
+--- quote/c_ds_quoted oracle=bash
+set -- $'a b\tc *'; echo $#
+case $'*' in '*') echo literal;; esac
+@2.3/1 | T | Operators are formed greedily from unquoted characters (&& || ;; ;& << >> <& >& <> <<- >|)
+> parse/redirs_ok parse/compound_ok
+--- parse/c_operators_adjacent
+true&&echo a||echo b;echo c
+(echo d)|cat;{ echo e;}>/dev/null
+@2.3/2 | T | A quote does not delimit a token: adjacent quoted and unquoted parts form one word
+> quote/mixed
+--- parse/c_quotes_join
+echo a"b"'c'\d"$(echo e)"f
+set -- a"b c"d; echo $#
+@2.3/3 | T | An unquoted blank delimits a token and is discarded
+--- parse/c_blanks
+echo    a		b	c
+@2.3/4 | T | A # at the start of a word begins a comment up to but excluding the newline; inside a word it is literal
+> parse/comments_ok
+--- parse/c_comment_word
+echo a#b # c
+echo a #b
+echo 'a' # '
+@2.3/5 | T | Expansions nested in a word are found recursively and included unmodified in the token
+> parse/cmdsub_nested_ok cmdsub/nested
+--- parse/c_nested_units
+echo "$(echo "$(echo "${x:-$(echo deep)}")")"
+echo $(( $(echo 1) + ${y:-2} ))
+@2.3/6 | T | A here-document body starts after the next newline token; tokens after the operator on the same line are kept
+> parse/heredoc_ok redir/heredoc
+--- parse/c_heredoc_rest_of_line
+cat <<E | tr a-z A-Z; echo after
+body
+E
+@2.3/7 | T | Each complete command is executed before the next is tokenized and parsed
+--- parse/c_exec_before_parse
+echo one
+alias_free_marker=1
+echo two; if
+--- parse/c_exec_before_parse_cd
+mkdir d; cd d
+pwd | sed 's,.*/,,'
+@2.3/8 | T | The token at end of input is delimited (a last line with no newline runs)
+--- parse/c_no_final_newline
+../sh -c 'echo last'
+printf 'echo from-file' > f; ../sh f
+@2.3.1/1 | T | An unquoted command-name token that names an alias is replaced by the alias value
+! dash and bash --posix agree; alias takes effect for the next complete command
+--- alias/c_basic
+alias hi='echo hello'
+hi there
+@2.3.1/2 | T | A token with any quoting character is not subject to alias substitution
+--- alias/c_quoted_not
+alias hi='echo hello'
+\hi 2>/dev/null || echo no1
+'hi' 2>/dev/null || echo no2
+"hi" 2>/dev/null || echo no3
+@2.3.1/3 | T | Only a token in command-name position is substituted, not an argument
+--- alias/c_position
+alias hi='echo hello'
+echo hi
+hi hi
+@2.3.1/4 | T | An alias is not expanded again inside its own expansion (no recursion on the same name)
+--- alias/c_no_self_recursion
+alias echo='echo x'
+echo y
+alias a=b b=a
+a 2>/dev/null; echo "st=$?"
+@2.3.1/5 | T | An alias value ending in a blank makes the next token subject to alias substitution
+--- alias/c_trailing_blank
+alias run='echo ' word='substituted'
+run word
+alias run2='echo'
+run2 word
+@2.3.1/6 | T | The alias value is tokenized as input: it may hold several tokens, operators and reserved words
+--- alias/c_value_tokens
+alias both='echo a; echo'
+both b
+alias loop='for i in 1 2; do'
+loop echo $i; done
+@2.3.1/7 | T | A change to an alias takes effect no later than the end of the complete command that made it
+--- alias/c_takes_effect_next
+alias x='echo one'
+x
+alias x='echo two'; x
+x
+@2.3.1/8 | T | Aliases are not inherited by a separately invoked shell
+--- alias/c_not_inherited
+alias hi='echo hello'
+printf 'hi 2>/dev/null || echo not-found\n' > s2
+../sh ./s2
+@2.3.1/10 | S | At the prompt an alias defined on one line is in effect on the next
+> session:c_alias_interactive
+@2.3.1/9 | T | Aliases are part of the environment a subshell duplicates
+--- alias/c_subshell
+alias hi='echo hello'
+(hi sub)
+echo "$(hi cmdsub)"
+@2.4/1 | T | Reserved words are recognized only unquoted and in command position
+> parse/compound_ok
+--- parse/c_reserved_quoted
+echo if then else fi for do done case esac while until { } !
+"if" 2>/dev/null; echo $?
+@2.4/2 | T | Reserved words are recognized after another reserved word (if/then/else/do/{/!)
+--- parse/c_reserved_after_reserved
+if if true; then true; fi; then { ! false; } && echo ok; fi
+@2.4/3 | T | In is the only reserved word recognized as the third word of case and for
+--- parse/c_in_third_word
+for in in in; do echo $in; done
+case in in in) echo matched;; esac
+@2.4/4 | X | A word ending in a colon in command position is a plain command name when it is not otherwise special
+! results are unspecified by POSIX; recorded because dash and bash agree
+--- parse/c_colon_word
+foo: 2>/dev/null; echo $?
+@2.5/1 | T | A set parameter may be null, and a variable once set stays set until unset
+> param/unset_var
+--- param/c_set_null
+x=; echo "${x+set}"; unset x; echo "${x-unset}"
+@2.5.1/1 | T | Positional parameter digits are read as decimal even with a leading zero; more than one digit needs braces
+> param/ten param/positional
+--- param/c_positional_digits
+set -- a b c d e f g h i j k
+echo "$8 ${8} ${08} ${008} ${10} $10 ${11}"
+@2.5.2/1 | T | "$@" produces one field per positional parameter, joined to the surrounding word at each end
+> param/at_in_word param/at_star
+--- param/c_at_fields
+set -- 'a b' c ''
+for i in "$@"; do echo "[$i]"; done
+for i in "x$@y"; do echo "[$i]"; done
+@2.5.2/2 | T | "$@" with no positional parameters produces zero fields
+> param/at_empty
+--- param/c_at_zero
+set --
+for i in "$@"; do echo never; done
+set -- "$@"; echo $#
+set -- x"$@"; echo $#
+@2.5.2/3 | T | Unquoted $@ and $* produce the parameters, each then split into fields
+--- param/c_at_unquoted
+set -- 'a b' 'c  d'
+for i in $@; do echo "[$i]"; done
+for i in $*; do echo "[$i]"; done
+@2.5.2/4 | T | "$*" joins the parameters with the first character of IFS, a space if IFS is unset, nothing if IFS is null
+> param/ifs_star
+--- param/c_star_join
+set -- a b c
+IFS=:-; echo "$*"
+IFS=; echo "$*"
+unset IFS; echo "$*"
+@2.5.2/5 | T | $* in an assignment or other non-splitting context joins as "$*" does
+--- param/c_star_assign
+set -- a b c
+IFS=,; x=$*; echo "$x"
+@2.5.2/6 | T | "$@" inside ${x:-"$@"} keeps separate fields
+--- param/c_at_in_default
+set -- 'a b' c
+unset u
+for i in ${u:-"$@"}; do echo "[$i]"; done
+for i in "${u:-$@}"; do echo "[$i]"; done
+@2.5.2/7 | T | $# is the decimal count of positional parameters, not counting $0
+> param/positional
+--- param/c_hash
+set -- a b c; echo $#
+set --; echo $#
+f() { echo $#; }; f 1 2 3 4 5 6 7 8 9 10 11
+@2.5.2/8 | T | $? is the exit status of the most recent pipeline, and is 0 at start
+> param/status
+--- param/c_status
+echo $?
+false; echo $?
+(exit 7); echo $?
+true | (exit 3); echo $?
+@2.5.2/9 | T | A subshell starts with the invoking shell's $?
+--- param/c_status_into_subshell
+(exit 5); (echo $?)
+false; echo "$(echo $?)"
+@2.5.2/10 | T | x=$(cmd) leaves the command substitution's status in $?
+> simple/assign_status
+--- param/c_status_assign_cmdsub
+x=$(exit 4); echo $?
+x=$(true); echo $?
+@2.5.2/11 | T | $- holds the current single-letter option flags
+> option/dollar_dash
+--- param/c_dash_flags
+set -f; case $- in *f*) echo f-on;; esac
+set +f; case $- in *f*) echo f-still;; *) echo f-off;; esac
+set -eu; case $- in *e*) case $- in *u*) echo eu;; esac;; esac
+@2.5.2/12 | T | $$ is the process ID of the invoked shell, the same value in a subshell
+> pending/pid
+--- param/c_pid_subshell
+a=$$; b=$(echo $$); ( [ "$a" = "$$" ] && echo same1 ); [ "$a" = "$b" ] && echo same2
+case $$ in *[!0-9]*|'') echo bad;; *) echo numeric;; esac
+@2.5.2/13 | T | $$ is the shell's real process ID (what its child sees as its parent)
+--- param/c_pid_is_real
+[ "$$" = "$(sh -c 'echo $PPID')" ] && echo real
+@2.5.2/14 | T | $! is the process ID of the most recent asynchronous list
+> jobs/bang signal/bang_is_a_process
+--- param/c_bang
+sleep 0 & a=$!
+sleep 0 & b=$!
+[ "$a" != "$b" ] && echo differ
+kill -0 $b 2>/dev/null; wait; echo done
+@2.5.2/15 | T | $0 is the script's name as given; in a function it is unchanged
+> exec/argv0
+--- param/c_zero
+echo "$0"
+f() { echo "$0"; }; f x
+@2.5.3/1 | T | Variables are initialized from the environment and marked for export at once
+> env/reexport
+--- env/c_init_exported
+FOO=bar ../sh -c 'echo "$FOO"; FOO=baz; env | grep "^FOO="'
+@2.5.3/2 | T | Environment entries whose names are not valid names do not become shell variables
+--- env/c_invalid_names
+env 'a.b=1' 'ok_1=2' ../sh -c 'echo "${ok_1}"; set | grep -c "^a\.b="'
+@2.5.3/3 | S | ENV is parameter-expanded and the file it names is run before an interactive shell reads commands
+> session:env_file session:env_missing
+@2.5.3/4 | T | ENV is not read by a non-interactive shell
+--- env/c_env_not_read
+echo 'echo from-env' > envf
+ENV=$PWD/envf ../sh -c 'echo cmd'
+@2.5.3/5 | T | IFS is set to space, tab, newline when the shell is invoked, whatever the environment held
+--- env/c_ifs_reset
+IFS=: ../sh -c 'printf "%s" "$IFS" | od -An -tx1 | tr -d "[:space:]"; echo; x="a:b c"; set -- $x; echo $#'
+@2.5.3/6 | T | With IFS unset, splitting and read behave as if it were space, tab, newline
+> split/unset_ifs
+--- split/c_unset_ifs_read
+unset IFS
+x='a	b
+c d'; set -- $x; echo $#
+echo ' p  q ' | { read a b; echo "[$a][$b]"; }
+@2.5.3/7 | T | LINENO is the current line number within the script or function
+> param/lineno
+! dash 0.5.13.4 counts from the function's first line inside a function; bash --posix and pelt count lines of the script. The standard's words allow either; the script's line is what a diagnostic needs, so bash is the oracle
+--- param/c_lineno oracle=bash
+
+echo $LINENO
+f() {
+  echo $LINENO
+}
+f
+echo $LINENO
+@2.5.3/8 | T | PPID is the parent's process ID, the same in a subshell
+--- env/c_ppid
+case $PPID in *[!0-9]*|'') echo bad;; *) echo numeric;; esac
+a=$PPID; (echo $PPID) | { read b; [ "$a" = "$b" ] && echo same; }
+[ "$(sh -c 'echo $PPID')" != "$PPID" ] && echo child-differs
+@2.5.3/9 | S | PS1 is parameter-expanded and written to standard error before each command is read; default "$ "
+> session:echo_hi session:ps1_param
+@2.5.3/10 | S | In PS1 each ! is replaced by the history number of the next command, and !! by one !
+> session:c_ps1_bang
+@2.5.3/11 | S | PS2 is expanded and written to standard error when a command continues onto another line; default "> "
+> session:ps2_if
+@2.5.3/12 | T | PS4 is parameter-expanded and written before each line of a set -x trace; default "+ "
+> option/xtrace
+--- option/c_ps4
+x=tag
+PS4='$x> '
+set -x
+echo traced 2>&1
+set +x
+( set -x; : word ) 2>&1 | sed 's/[0-9]//g'
+@2.5.3/13 | T | PWD is set from the environment when that is an absolute pathname of the current directory with no dot components
+--- cd/c_pwd_from_env
+SH=$PWD/../sh
+mkdir real; ln -s real link; cd link
+$SH -c 'echo "$PWD"' | sed 's,.*/,,'
+PWD=/nonsense $SH -c 'echo "$PWD"' | sed 's,.*/,,'
+@2.5.3/14 | T | HOME is used by tilde expansion
+> tilde/home
+@2.5.3/15 | U | LANG, LC_ALL, LC_COLLATE, LC_CTYPE, LC_MESSAGES select the locale for patterns, characters and messages
+! needs a non-C locale present on every CI host; measured by hand on kasumi (docs/CENSUS.md, locale rows)
+@2.5.3/16 | T | The shell processes values as characters where the standard speaks of characters (${#x} counts characters)
+! the corpus runs in the C locale, where a character is a byte; the UTF-8 answer is measured by hand (docs/CENSUS.md, locale rows)
+--- param/c_length_bytes_in_c
+x=$(printf '\303\251\303\250')
+echo ${#x}

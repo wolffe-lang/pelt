@@ -1,0 +1,16 @@
+@ed/1 | X | Left and right arrows move the cursor; a character typed is inserted there
+> session:c_ed_left_insert
+@ed/2 | X | Ctrl-A and Ctrl-E (Home and End) move to the ends of the line
+> session:c_ed_home_end
+@ed/3 | X | Ctrl-K kills to the end of the line; Ctrl-D deletes the character under the cursor
+> session:c_ed_kill_to_end session:c_ed_delete_char
+@ed/4 | X | Up and down arrows walk the history, and a recalled line can be edited
+> session:c_ed_up_arrow session:c_ed_up_down_edit
+@ed/5 | X | Ctrl-R searches the history backwards as the pattern is typed
+> session:c_ed_search
+@ed/6 | X | Tab completes a file name, and a command name in command position
+> session:c_ed_complete_file session:c_ed_complete_command
+@ed/7 | X | Alt-B and Alt-F move by words
+> session:c_ed_word_motion
+@ed/8 | X | In a UTF-8 locale backspace erases one character, and the cursor moves by characters, whatever their byte length or width
+> session:c_ed_utf8_erase session:c_ed_utf8_left

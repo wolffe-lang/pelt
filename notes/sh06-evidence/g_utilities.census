@@ -1,0 +1,600 @@
+@sh/1 | T | sh -c string runs the string; the next operand is $0 and the rest are positional parameters
+--- sh/c_dash_c
+../sh -c 'echo "$0 $# $1 $2"' name a b
+../sh -c 'echo "$#"'
+../sh -c 'echo first; echo second'
+@sh/2 | T | sh -c with an empty string exits zero
+--- sh/c_dash_c_empty
+../sh -c ''; echo $?
+../sh -c '   '; echo $?
+../sh -c '# comment'; echo $?
+@sh/3 | T | sh -c reads no commands from standard input, which stays available to the commands
+--- sh/c_dash_c_stdin
+echo 'echo from-stdin' | ../sh -c 'echo cmd; cat'
+@sh/4 | T | sh file args runs the file with $0 the file name and the operands as positional parameters; the file need not be executable
+> exec/argv0
+--- sh/c_command_file
+echo 'echo "$0 $# $1"' > script
+../sh script a b; ../sh ./script 'x y'
+@sh/5 | T | A command file with no slash is looked for in the current directory first
+--- sh/c_command_file_cwd
+mkdir d; echo 'echo in-path' > d/script; chmod +x d/script; echo 'echo in-cwd' > script
+PATH=$PWD/d:$PATH ../sh script
+@sh/6 | T | A command file that cannot be found gives status 127
+! dash 0.5.13.4 exits 2; the sh page says 127, so bash --posix is the oracle
+--- sh/c_command_file_missing oracle=bash
+../sh ./nonexistent 2>/dev/null; echo $?
+../sh nonexistent-xyz 2>/dev/null; echo $?
+@sh/7 | T | sh -s reads commands from standard input and takes operands as positional parameters; no operands and no -c means -s
+> stdin/program_takes_rest
+--- sh/c_dash_s
+echo 'echo "$# $1 $2"' | ../sh -s a b
+echo 'echo "implied $#"' | ../sh
+echo 'echo dash-operand $1' | ../sh -s - x
+@sh/8 | T | The shell does not read ahead on standard input: a command it starts reads the bytes after its own line
+> stdin/read_takes_next_line stdin/program_takes_rest
+--- sh/c_no_read_ahead
+printf 'head -n 1\nconsumed by head\necho back-in-shell\ncat\nrest 1\nrest 2\n' | ../sh
+--- sh/c_no_read_ahead_file
+printf 'read x\nthis-line-is-data\necho "[$x]"\n' > in
+../sh < in
+@sh/9 | T | A script of only blank lines and comments exits zero; the status is otherwise that of the last command
+> parse/comments_ok
+--- sh/c_exit_status
+printf '\n# c\n\n' > empty; ../sh empty; echo $?
+echo '(exit 9)' > nine; ../sh nine; echo $?
+echo 'exit 4; echo no' > four; ../sh four; echo $?
+@sh/10 | T | A syntax error in a non-interactive shell gives a status from 1 to 125
+--- sh/c_syntax_status
+../sh -c 'if then' 2>/dev/null; s=$?; [ $s -ge 1 ] && [ $s -le 125 ] && echo in-range
+echo 'echo ok
+)' > bad; ../sh bad 2>/dev/null; s=$?; [ $s -ge 1 ] && [ $s -le 125 ] && echo in-range
+@sh/11 | T | A shell given -i, or reading standard input with input and error on a terminal, is interactive; otherwise not
+> session:default_interactive stdin/no_prompt
+--- sh/c_not_interactive
+echo 'case $- in *i*) echo interactive;; *) echo not;; esac' | ../sh
+../sh -c 'case $- in *i*) echo interactive;; *) echo not;; esac'
+@sh/12 | T | -c and -s combine with option letters in one argument and with -o
+--- sh/c_combined_options
+../sh -ec 'false; echo no'; echo "st=$?"
+../sh -uc 'echo ${x-ok}'
+../sh -c -e 'false; echo no' 2>/dev/null; echo "st=$?"
+../sh -o errexit -c 'false; echo no'; echo "st=$?"
+../sh -- -c 2>/dev/null; echo "dashdash=$?"
+@sh/13 | T | Input lines may be of any length
+--- sh/c_long_line
+x=$(printf '%05000d' 0)
+y=$(printf 'echo %s' "$x$x$x$x$x$x$x$x")
+../sh -c "$y" | wc -c | tr -d ' '
+@sh/14 | T | The shell's own exit: the EXIT status is that of the last command when input ends
+--- sh/c_eof_status
+printf 'false\n' | ../sh; echo $?
+printf 'true\n(exit 5)' | ../sh; echo $?
+@sh/15 | S | An interactive shell ignores SIGQUIT and SIGTERM and survives SIGINT
+> session:ctrl_c_prompt session:term_at_prompt
+@sh/16 | S | With -m an interactive shell ignores SIGTSTP, SIGTTIN and SIGTTOU
+> session:c_jc_shell_ignores_tstp
+@sh/17 | S | set -o ignoreeof keeps an interactive shell alive at end-of-file
+> session:c_ignoreeof
+@sh/18 | S | The command history list: commands typed are kept, at least 128 of them, HISTSIZE and HISTFILE honoured
+! HISTFILE across two sessions has no case: one session cannot show a file read at the next start
+> session:c_hist_fc_list
+@sh/19 | S | set -o vi: ESC enters command mode; motion, editing and history keys as the vi-mode sections list (about 60 commands)
+> session:c_vi_basic session:c_vi_motion session:c_vi_history
+@sh/20 | S | In vi insert mode the erase, kill, ^V, ^W and end-of-file characters act as described
+> session:c_vi_insert session:c_vi_basic
+@sh/21 | S | MAIL, MAILCHECK, MAILPATH: the shell tells the user before a prompt when a mailbox file changes
+> session:c_mail
+@sh/24 | S | An interactive shell accepts an input line longer than the terminal's own line limit (input lines are of unlimited length)
+> session:c_long_line
+@sh/25 | S | With no editing mode on, the terminal's erase, kill and word-erase characters edit the line before the shell sees it
+> session:c_tty_erase
+@sh/26 | S | Lines that arrive together are run one after the other
+> session:c_paste_two_lines
+@sh/22 | U | ENV is ignored when the real and effective user or group IDs differ
+! needs a set-user-ID shell; not built by the corpus (and wolf has no uid surface, wolf-lang#633)
+@sh/23 | U | A FIFO or terminal standard input set non-blocking is put back to blocking reads
+! needs a descriptor inherited with O_NONBLOCK; measured by hand (docs/CENSUS.md)
+@alias/1 | T | alias name=value defines an alias; alias name writes it as name=value quoted for reinput; alias alone writes all
+--- alias/c_alias_print
+alias b='echo two words' a="it's"
+alias a
+alias | sort
+alias b a
+@alias/2 | T | alias for a name with no definition fails with a message, and other operands are still processed
+--- alias/c_alias_missing
+alias nope 2>/dev/null; echo "st=$?"
+alias ok=1 nope 2>/dev/null; echo "st=$?"; alias ok
+@alias/3 | T | unalias name removes it; unalias -a removes all; removing a missing alias fails
+--- alias/c_unalias
+alias a=1 b=2 c=3
+unalias a; alias a 2>/dev/null; echo "st=$?"
+unalias nope 2>/dev/null; echo "st=$?"
+unalias -a; alias | wc -l | tr -d ' '
+@alias/4 | T | An alias may name a reserved word position and aliases apply after reserved words that take a command
+--- alias/c_after_reserved
+alias say='echo said'
+if true; then say a; fi
+{ say b; }
+! say c >/dev/null; echo $?
+(say d); true && say e; true | say f
+@alias/5 | T | An alias defined in a function or compound command is not in effect for the rest of that already-parsed command
+--- alias/c_parse_time
+alias x='echo old'
+{ alias x='echo new'; x; }
+x
+@alias/6 | T | Alias names may contain ! % , @ and the portable filename characters
+--- alias/c_alias_names
+alias a.b='echo dot' a-b='echo dash' a_b='echo under' 'a@b=echo at'
+a.b; a-b; a_b; a@b
+@command/1 | T | command name runs the utility ignoring functions
+> builtin/command_bypass
+--- command/c_bypass_function
+ls() { echo function-ls; }; touch f
+ls; command ls
+echo() { printf 'function-echo\n'; }; command echo real
+@command/2 | T | command -v name writes how the name would be run: a path, the name of a built-in or function, an alias definition, a reserved word
+> builtin/command_v
+--- command/c_v
+f() { :; }; alias a='echo x'
+command -v ls | sed 's,.*/,/,'
+command -v f; command -v cd; command -v :; command -v if; command -v a
+command -v nonexistent-xyz; echo "st=$?"
+command -v ./nonexistent; echo "st=$?"
+: > plain; command -v ./plain; echo "st=$?"
+chmod +x plain; command -v ./plain
+@command/3 | T | command -V name writes a description in words for each kind
+--- command/c_big_v
+f() { :; }
+command -V ls >/dev/null; echo "ls=$?"
+command -V f >/dev/null; echo "f=$?"
+command -V cd >/dev/null; echo "cd=$?"
+command -V if >/dev/null; echo "if=$?"
+command -V nonexistent-xyz >/dev/null 2>&1; echo "missing=$?"
+@command/4 | T | command -p uses a default PATH that finds the standard utilities
+--- command/c_p
+PATH=/nonexistent
+command -p ls / >/dev/null; echo "st=$?"
+command -p -v ls | sed 's,.*/,/,'
+ls / >/dev/null 2>&1; echo "plain=$?"
+@command/5 | T | command before a special built-in removes its special properties: errors do not exit, assignments do not persist
+> builtin/command_bypass
+--- command/c_special_properties
+x=1; x=2 command eval 'true'; echo $x
+command export y=3; echo $y
+command break 2>/dev/null; echo survived
+@command/6 | T | The status of command is that of the utility; 127 not found, 126 not executable
+--- command/c_status
+command sh -c 'exit 5'; echo $?
+command nonexistent-xyz 2>/dev/null; echo $?
+: > noexec; command ./noexec 2>/dev/null; echo $?
+command -- echo dashdash
+@command/7 | T | command is not a declaration utility by itself, but command export keeps assignment context
+--- command/c_declaration oracle=bash
+x='a b'; command export y=$x; echo "[$y]"
+@type/1 | T | type name writes how each name would be interpreted, and fails for a name that is not found
+--- type/c_type
+f() { :; }; alias a='echo x'
+type f >/dev/null; echo "f=$?"
+type cd >/dev/null; echo "cd=$?"
+type ls >/dev/null; echo "ls=$?"
+type if >/dev/null; echo "if=$?"
+type a >/dev/null; echo "a=$?"
+type nonexistent-xyz >/dev/null 2>&1; echo "missing=$?"
+type ls f nonexistent-xyz 2>/dev/null | wc -l | tr -d ' '
+@type/2 | T | type's output names the path of a utility found in PATH
+--- type/c_type_path
+mkdir bin; printf '#!/bin/sh\n' > bin/myprog; chmod +x bin/myprog
+PATH=$PWD/bin:$PATH
+type myprog | grep -c "bin/myprog"
+@hash/1 | T | hash name remembers the utility's location; hash alone lists; hash -r forgets; a missing utility fails
+--- hash/c_hash
+hash ls; echo "st=$?"
+hash | grep -c ls
+hash -r; hash | grep -c ls
+hash nonexistent-xyz 2>/dev/null; echo "missing=$?"
+@hash/2 | T | A remembered location that stops working is searched for again
+--- hash/c_stale
+mkdir a b; printf '#!/bin/sh\necho a\n' > a/prog; printf '#!/bin/sh\necho b\n' > b/prog; chmod +x a/prog b/prog
+PATH=$PWD/a:$PWD/b:$PATH; prog; rm a/prog; prog
+@cd/1 | T | cd with no operand goes to HOME; with HOME unset or empty it fails or does nothing as recorded
+> cd/home
+--- cd/c_home_forms
+HOME=/; cd; pwd
+(unset HOME; cd 2>/dev/null; echo "unset=$?")
+@cd/2 | T | cd - goes to OLDPWD and writes the new directory
+> cd/minus cd/oldpwd
+--- cd/c_minus
+mkdir a b; cd a; cd ../b; cd - | sed 's,.*/,,'; cd - >/dev/null; pwd | sed 's,.*/,,'
+@cd/3 | T | cd sets PWD and OLDPWD, and they are what a later child sees when exported
+> cd/oldpwd cd/child_sees_it
+--- cd/c_pwd_oldpwd
+mkdir a; start=$PWD; cd a
+[ "$OLDPWD" = "$start" ] && echo oldpwd; [ "$PWD" = "$start/a" ] && echo pwd
+@cd/4 | T | cd -L (default) keeps symbolic links in PWD and resolves dot-dot against it; cd -P uses the physical path
+> cd/symlink cd/dotdot
+--- cd/c_logical_physical
+mkdir -p real/sub; ln -s real/sub link; top=$PWD
+cd link; pwd | sed "s,$top,TOP,"; pwd -P | sed "s,$(cd "$top" && pwd -P),TOP,"
+cd ..; pwd | sed "s,$top,TOP,"
+cd "$top"; cd -P link; pwd | sed "s,$(cd "$top" && pwd -P),TOP,"; cd ..; pwd | sed 's,.*/,,'
+cd "$top"; cd -L link; pwd | sed 's,.*/,,'
+@cd/5 | T | CDPATH is searched for a relative operand that does not begin with dot or dot-dot, and the result is written when found there
+> cd/cdpath cd/cdpath_prints
+--- cd/c_cdpath_forms
+mkdir -p base/target target; top=$PWD
+CDPATH=$top/base; cd target | sed "s,$top,TOP,"; cd target >/dev/null; pwd | sed "s,$top,TOP,"
+cd "$top"; cd ./target; pwd | sed "s,$top,TOP,"
+cd "$top"; CDPATH=:$top/base; cd target; pwd | sed "s,$top,TOP,"
+@cd/6 | T | cd to a missing directory, a file, or with too many operands fails with a non-zero status and PWD unchanged
+> cd/fail cd/relative_file
+--- cd/c_failures
+: > file; before=$PWD
+cd nonexistent 2>/dev/null; echo "st=$?"
+cd file 2>/dev/null; echo "st=$?"
+cd a b 2>/dev/null; echo "st=$?"
+[ "$PWD" = "$before" ] && echo unchanged
+@cd/7 | T | cd -e with -P exits 1 when the new directory's name cannot be determined (new in 2024)
+! POSIX.1-2024 addition; dash 0.5.13.4 has no -e; bash --posix is the oracle
+--- cd/c_dash_e oracle=bash
+mkdir d; cd -P -e d; echo "st=$?"
+@cd/8 | T | cd canonicalizes: dot components and repeated slashes are removed from PWD
+--- cd/c_canonical
+mkdir -p a/b; top=$PWD
+cd a/./b//; pwd | sed "s,$top,TOP,"
+cd ../../a/b/..; pwd | sed "s,$top,TOP,"
+cd //; pwd | sed 's,^//*$,/,'
+@pwd/1 | T | pwd writes the absolute pathname of the current directory; -L from PWD when valid, -P with no symbolic links
+> builtin/pwd
+--- pwd/c_pwd
+mkdir real; ln -s real link; top=$PWD; cd link
+pwd | sed "s,$top,TOP,"; pwd -L | sed "s,$top,TOP,"; pwd -P | sed "s,.*/,,"
+pwd -L -P | sed 's,.*/,,'; pwd -P -L | sed 's,.*/,,'
+@pwd/2 | T | pwd with a bad option fails
+--- pwd/c_pwd_bad
+pwd -x >/dev/null 2>&1; echo "st=$?"
+@echo/1 | T | echo writes its arguments separated by spaces and a newline
+> builtin/echo_n builtin/echo_escapes
+--- echo/c_echo
+echo; echo a b  c; echo '' ''; echo -- x; echo - y; echo -e z | wc -c | tr -d ' '
+@echo/2 | X | echo with XSI escapes (\c \n \t \\ \0nnn) — recorded from dash, which is XSI; bash --posix differs
+> builtin/echo_escapes
+! implementation-defined when the first operand is -n or any operand has a backslash; dash is the oracle because scripts under /bin/sh rely on it
+@true/1 | T | true returns zero and false non-zero, ignoring arguments
+> builtin/colon_true_false
+--- echo/c_true_false
+true a b; echo $?; false a b; echo $?; true --help; echo $?
+@test/1 | T | test with no operands is false; one operand is true if not null
+> builtin/test_strings
+--- test/c_arity_0_1
+test; echo $?; test ''; echo $?; test x; echo $?; [ ]; echo $?; [ -n ]; echo $?; [ ! ]; echo $?; [ = ]; echo $?
+@test/2 | T | Two operands: ! negates; a unary primary is applied
+--- test/c_arity_2
+[ ! '' ]; echo $?; [ ! x ]; echo $?; [ -n x ]; echo $?; [ -z x ]; echo $?; [ -z '' ]; echo $?; [ -n '' ]; echo $?
+@test/3 | T | Three operands: a binary primary is applied first; then ! with two; then ( x )
+> builtin/test_logic
+--- test/c_arity_3
+[ a = a ]; echo $?; [ a != a ]; echo $?; [ ! = ! ]; echo $?; [ ! a = ]; echo $?
+[ '(' = ')' ]; echo $?; [ -n = -n ]; echo $?; [ ! -z x ]; echo $?
+@test/4 | T | Four operands: ! with three
+--- test/c_arity_4
+[ ! a = b ]; echo $?; [ ! a = a ]; echo $?; [ ! -n = x ]; echo $?
+@test/5 | T | String primaries: = != -n -z, and < > by byte order (new in 2024)
+> builtin/test_strings builtin/test_string_order
+--- test/c_strings
+[ abc = abc ]; echo $?; [ abc = abd ]; echo $?; [ abc != abd ]; echo $?
+[ a \< b ]; echo $?; [ b \< a ]; echo $?; [ b \> a ]; echo $?; [ a \> a ]; echo $?
+[ '' = '' ]; echo $?; [ ' a' = a ]; echo $?
+@test/6 | T | Integer primaries: -eq -ne -gt -ge -lt -le, with signs and leading zeros and blanks
+> builtin/test_integers
+--- test/c_integers
+[ 1 -eq 1 ]; echo $?; [ 1 -ne 1 ]; echo $?; [ 2 -gt 1 ]; echo $?; [ 1 -ge 1 ]; echo $?; [ 1 -lt 1 ]; echo $?; [ 1 -le 1 ]; echo $?
+[ -1 -lt 0 ]; echo $?; [ 010 -eq 10 ]; echo $?; [ +5 -eq 5 ]; echo $?
+@test/7 | T | An operand that is not an integer makes an integer primary an error: status above 1
+> builtin/test_errors
+--- test/c_integer_errors
+[ a -eq 1 ] 2>/dev/null; echo $?; [ 1 -eq '' ] 2>/dev/null; echo $?; [ 1.5 -lt 2 ] 2>/dev/null; echo $?
+[ a b c d e ] 2>/dev/null; echo $?; [ 1 -eq 1 2>/dev/null; echo $?
+@test/8 | T | File primaries: -e -f -d -r -w -x -s -L -h
+> builtin/test_files
+--- test/c_files
+: > empty; echo x > full; mkdir dir; ln -s full lnk; ln -s nowhere dangling; chmod 644 full
+for p in -e -f -d -s -L -h -r -w -x; do
+  for f in empty full dir lnk dangling missing; do [ $p $f ] && printf '%s:%s ' $p $f; done; echo
+done
+@test/9 | T | File type primaries: -b -c -p -S -g -u -k, and -t for a terminal
+--- test/c_file_types
+[ -c /dev/null ]; echo "c=$?"; [ -b /dev/null ]; echo "b=$?"; [ -p /dev/null ]; echo "p=$?"; [ -S /dev/null ]; echo "S=$?"
+: > f; chmod u+s f; [ -u f ]; echo "u=$?"; chmod 2755 f 2>/dev/null; [ -g f ]; echo "g=$?"
+[ -t 0 ] </dev/null; echo "t=$?"; [ -t 9 ]; echo "t9=$?"
+@test/10 | T | -ef -nt -ot compare two files (new in 2024)
+--- test/c_file_compare
+: > old; sleep 1; : > new; ln old same
+[ old -ef same ]; echo "ef=$?"; [ old -ef new ]; echo "ef2=$?"
+[ new -nt old ]; echo "nt=$?"; [ old -nt new ]; echo "nt2=$?"; [ old -ot new ]; echo "ot=$?"
+[ new -nt missing ]; echo "nt-missing=$?"; [ missing -ot new ]; echo "ot-missing=$?"
+@test/11 | T | -O and -G test ownership by the effective user and group
+! wolf-lang#633 (no uid surface)
+--- test/c_owner
+: > mine; [ -O mine ]; echo "O=$?"; [ -G mine ]; echo "G=$?"
+[ -O /nonexistent ]; echo "O-missing=$?"
+@test/12 | T | -a and -o and parentheses (obsolescent XSI forms scripts still use)
+> builtin/test_logic
+--- test/c_and_or
+[ a = a -a b = b ]; echo $?; [ a = a -a b = c ]; echo $?; [ a = b -o b = b ]; echo $?
+[ \( a = a \) ]; echo $?; [ \( a = b \) -o \( c = c \) ]; echo $?; [ ! \( a = b \) ]; echo $?
+@test/13 | T | [ needs a closing ] and reports its absence
+> builtin/bracket
+@test/14 | T | -r -w -x reflect the permissions that apply to the caller
+--- test/c_permissions
+: > f; chmod 000 f
+[ -r f ]; echo "r=$?"; [ -w f ]; echo "w=$?"; [ -x f ]; echo "x=$?"
+chmod 700 f; [ -r f ] && [ -w f ] && [ -x f ] && echo all
+@printf/1 | T | printf format with %s %d %c and literal text; the format is reused until operands run out
+> builtin/printf_formats builtin/printf_reuse
+--- printf/c_basic
+printf '%s-%s\n' a b c d e
+printf '%d %c|\n' 42 xyz
+printf 'no operands %s %d|\n'
+printf 'literal\n' ignored extra
+@printf/2 | T | Escape sequences in the format: \\ \a \b \f \n \r \t \v \ddd
+> builtin/printf_escapes
+--- printf/c_format_escapes
+printf 'a\tb\\c\101\n\0007|\r\v\f\a\b' | od -An -tx1 | tr -d '[:space:]'; echo
+@printf/3 | T | %b interprets backslash escapes in its operand, including \c which stops output and \0ddd
+> builtin/printf_b
+--- printf/c_b
+printf '%b|' 'a\tb' 'c\0101d' 'e\\f' | od -An -tx1 | tr -d '[:space:]'; echo
+printf '%b' 'stop\chere' 'and this'; echo
+printf '%5b|%-5b|%.2b|\n' ab cd efgh
+@printf/4 | T | Integer conversions %d %i %o %u %x %X with flags, width and precision
+> builtin/printf_zero_pad builtin/printf_unsigned builtin/printf_width_star
+--- printf/c_integers
+printf '%d %i %o %u %x %X\n' 255 255 255 255 255 255
+printf '[%5d][%-5d][%05d][%+d][% d][%.3d][%5.3d]\n' 42 42 42 42 42 42 42
+printf '[%#o][%#x][%#X]\n' 8 255 255
+printf '%d %d %d\n' 0x1f 010 -5
+printf '[%*d][%-*d][%.*d]\n' 5 42 5 42 3 7
+@printf/5 | T | String conversions with width and precision; %c takes the first character; %% is a percent sign
+--- printf/c_strings
+printf '[%5s][%-5s][%.2s][%5.1s][%c][%%]\n' ab cd efgh ijk lmn
+printf '[%s][%d]\n'
+@printf/6 | T | A numeric operand starting with a quote is the character's code
+> builtin/printf_char_value
+--- printf/c_quote_value
+printf '%d %d %d\n' "'A" '"a' "'0"
+@printf/7 | T | A bad numeric operand gives a diagnostic and a non-zero status, and output still happens
+> builtin/printf_bad_number
+--- printf/c_bad_operand
+printf '%d\n' abc 2>/dev/null; echo "st=$?"
+printf '%d\n' 12x 2>/dev/null; echo "st=$?"
+printf '%d\n' '' 2>/dev/null; echo "st=$?"
+@printf/8 | T | Floating conversions %e %f %g %a (required when the system has them: recorded from dash)
+--- printf/c_floats
+printf '%f %.2f %e %g %G %5.1f|\n' 1.5 2.345 12345.678 0.0001 1e10 3.14159
+printf '%.0f %f\n' 2.5 -0.5
+@printf/9 | T | printf with no format operand fails; -- ends options
+--- printf/c_usage
+printf 2>/dev/null; echo "st=$?"
+printf -- '%s\n' dashdash
+printf '%s\n' -n
+@printf/10 | X | Numbered argument conversions %n$ (new in 2024)
+! POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 implements it; recorded, not counted
+--- printf/c_numbered
+printf '%2$s %1$s\n' a b 2>/dev/null; echo "st=$?"
+@read/1 | T | read assigns fields split by IFS to the variables; the last gets the rest, trimmed of IFS white space
+> builtin/read builtin/read_ifs
+--- read/c_fields
+echo ' a  b   c d  ' | { read x y z; echo "[$x][$y][$z]"; }
+echo 'only' | { read x y; echo "[$x][$y]"; }
+echo '' | { read x y; echo "[$x][$y] $?"; }
+echo 'a:b::c:' | { IFS=: read x y z; echo "[$x][$y][$z]"; }
+echo 'a:b:c:' | { IFS=: read x y z; echo "[$x][$y][$z]"; }
+echo ' a : b ' | { IFS=' :' read x y; echo "[$x][$y]"; }
+@read/2 | T | Without -r a backslash escapes the next character and backslash-newline continues the line; with -r backslash is literal
+> builtin/read_raw
+--- read/c_backslash
+printf 'a\\ b c\\\nd\n' | { read x y; echo "[$x][$y]"; }
+printf 'a\\ b c\\\nd\n' | { read -r x y; echo "[$x][$y]"; read -r z; echo "[$z]"; }
+printf 'a\\tb\n' | { read x; echo "[$x]"; }
+@read/3 | T | read returns non-zero at end-of-file, having assigned what it read
+--- read/c_eof
+printf 'no-newline' | { read x; echo "$? [$x]"; }
+printf '' | { read x; echo "$? [$x]"; }
+printf 'a\nb\n' | { while read l; do echo "<$l>"; done; echo "end=$?"; }
+@read/4 | T | read reads exactly one line, leaving the rest of the input for the next reader
+--- read/c_one_line
+printf 'one\ntwo\nthree\n' > f
+{ read a; read b; cat; } < f; echo "$a $b"
+{ read a; head -n 1; } < f
+@read/5 | X | read with no variable name: REPLY as an extension, or an error (recorded from dash)
+! POSIX requires at least one var operand; behaviour without one is unspecified
+--- read/c_no_var
+echo x | { read 2>/dev/null; echo "st=$?"; }
+@read/6 | T | read -d delim reads up to the delimiter; -d '' reads up to a NUL (new in 2024)
+! POSIX.1-2024 addition; dash 0.5.13.4 has no -d; bash --posix is the oracle
+--- read/c_delim oracle=bash
+printf 'a,b,c' | { read -d , x; echo "[$x]"; read -d , y; echo "[$y]"; }
+printf 'one\ntwo\0rest' | { read -r -d '' x; echo "[$x]"; }
+@read/7 | T | read into a readonly variable or an invalid name fails
+--- read/c_bad_target
+readonly r=1
+echo x | { read r 2>/dev/null; echo "st=$?"; } 2>/dev/null
+echo x | { read 1bad 2>/dev/null; echo "st=$?"; } 2>/dev/null
+@read/8 | T | read uses the shell's IFS when none is given for the command, and does not expand what it reads
+--- read/c_no_expansion
+echo '$HOME * ~ $(echo x)' | { read -r x; echo "$x"; }
+IFS=,; echo 'a,b c' | { read x y; echo "[$x][$y]"; }
+@read/9 | T | read from a descriptor other than 0 through redirection, and from a here-document
+> redir/heredoc_read redir/read_fd
+@getopts/1 | T | getopts walks options, setting the variable and OPTIND; returns non-zero at the end with the variable set to ?
+> builtin/getopts
+! dash 0.5.13.4 sets OPTARG to the empty string for an option with no argument, and restarts oddly after OPTIND=1; the page says unset, so bash --posix is the oracle for the getopts cases that show OPTARG
+--- getopts/c_basic oracle=bash
+set -- -a -b arg -c rest
+while getopts ab:c o; do echo "$o ${OPTARG-none} $OPTIND"; done
+echo "end: $o $OPTIND"; shift $((OPTIND-1)); echo "$@"
+@getopts/2 | T | Grouped options, an option-argument in the same word, and -- to end options
+--- getopts/c_grouping oracle=bash
+set -- -ab -cvalue -- -d
+while getopts abc:d o; do echo "$o ${OPTARG-none}"; done; shift $((OPTIND-1)); echo "$@"
+@getopts/3 | T | An unknown option: ? with a diagnostic and OPTARG unset; with a leading colon in optstring, ? with OPTARG the letter and no diagnostic
+> builtin/getopts_bad
+--- getopts/c_unknown oracle=bash
+set -- -x
+getopts a o 2>/dev/null; echo "$o ${OPTARG-unset}"
+OPTIND=1; getopts :a o; echo "$o ${OPTARG-unset}"
+OPTIND=1; getopts a o 2>&1 | wc -l | tr -d ' '
+@getopts/4 | T | A missing option-argument: ? with a diagnostic, or : with OPTARG the letter when optstring starts with a colon
+--- getopts/c_missing_arg oracle=bash
+set -- -a
+getopts a: o 2>/dev/null; echo "$o ${OPTARG-unset}"
+OPTIND=1; getopts :a: o; echo "$o ${OPTARG-unset}"
+@getopts/5 | T | getopts parses explicit operands in place of the positional parameters
+--- getopts/c_explicit_args oracle=bash
+set -- -z
+while getopts ab: o -a -b val; do echo "$o ${OPTARG-none}"; done
+@getopts/6 | T | OPTIND starts at 1; setting OPTIND=1 restarts parsing; a first non-option operand ends it
+--- getopts/c_optind oracle=bash
+echo "$OPTIND"
+set -- -a x -b
+getopts ab o; echo "$o $OPTIND"; getopts ab o; echo "st=$? $OPTIND"
+OPTIND=1; getopts ab o; echo "$o $OPTIND"
+set -- - -a; OPTIND=1; getopts a o; echo "st=$? $OPTIND"
+@getopts/7 | T | getopts in a function uses the function's parameters; OPTIND is a shell-wide variable
+--- getopts/c_in_function
+f() { OPTIND=1; while getopts xy: o; do echo "f:$o ${OPTARG-}"; done; }
+f -x -y v; set -- -q; OPTIND=1; getopts q o; echo "main:$o"
+@wait/1 | T | wait with no operands waits for every child and returns zero
+> jobs/wait_all
+--- wait/c_all
+(sleep 1; : > a) & (sleep 1; : > b) & (exit 3) &
+wait; echo "st=$?"; ls
+@wait/2 | T | wait pid returns that child's status; several operands: the status of the last
+> jobs/wait_program_status jobs/wait_subshell_status signal/wait_two_jobs
+--- wait/c_pid
+(exit 3) & a=$!; (exit 4) & b=$!
+wait $a; echo $?; wait $b; echo $?
+(exit 5) & a=$!; (exit 6) & b=$!; wait $a $b; echo $?
+@wait/3 | T | wait for a pid that is not a child of this shell returns 127
+> jobs/wait_unknown
+--- wait/c_unknown
+wait 1; echo $?
+(exit 3) & p=$!; wait $p; wait $p; echo "second=$?"
+@wait/4 | T | wait reports a child ended by a signal with a status above 128
+> signal/child_bg_wait
+--- wait/c_signalled
+sleep 5 & p=$!; kill -TERM $p; wait $p; echo $?
+sleep 5 & p=$!; kill -KILL $p; wait $p; echo $?
+@wait/5 | T | The status of a child that ended before wait is still collected, for any of the known process IDs
+> signal/wait_twice signal/child_bg_unwaited
+--- wait/c_already_ended
+(exit 7) & p=$!; (exit 8) & q=$!; sleep 1; wait $q; echo $?; wait $p; echo $?
+@wait/6 | T | wait with a job ID operand (%1, %%)
+--- wait/c_job_id
+(exit 3) &
+wait %1; echo "st=$?"
+(exit 4) & wait %%; echo "st=$?"
+wait %9 2>/dev/null; echo "missing=$?"
+@wait/7 | T | wait in a subshell cannot wait for the parent's children
+--- wait/c_subshell
+sleep 1 & p=$!
+(wait $p; echo "sub=$?") 2>/dev/null
+wait $p; echo "parent=$?"
+@kill/1 | T | kill pid sends SIGTERM; kill -s name and kill -name and kill -number send that signal; the status of a signalled child shows it
+> signal/child_bg_wait
+--- kill/c_send
+for how in '' '-s HUP' '-HUP' '-9' '-s KILL' '-TERM' '-15' '-s 15'; do
+  sleep 5 & p=$!; kill $how $p; wait $p; echo "[$how] $?"
+done
+@kill/2 | T | kill -l lists signal names; kill -l number names that signal; kill -l with an exit status names the signal that caused it
+--- kill/c_list
+kill -l 1 2 3 9 15
+kill -l 130 143 137
+kill -l | tr ' ' '\n' | grep -c -E '^(HUP|INT|QUIT|KILL|TERM|USR1|USR2|PIPE|ALRM|CHLD|CONT|STOP|TSTP)$'
+kill -l 999 2>/dev/null; echo "st=$?"
+@kill/3 | T | kill -0 pid tests for the process without sending; a missing process fails
+--- kill/c_zero
+sleep 2 & p=$!
+kill -0 $p; echo "alive=$?"
+kill $p; wait $p 2>/dev/null
+kill -0 $p 2>/dev/null; echo "dead=$?"
+@kill/4 | T | kill is built in: it signals by job ID (%1), and works on the shell's own children without a search of PATH
+--- kill/c_job_id
+sleep 5 &
+kill %1; wait; echo "st=$?"
+PATH=/nonexistent; kill -0 $$; echo "builtin=$?"
+@kill/5 | T | kill with a bad signal name or no operand fails
+--- kill/c_bad
+kill -s NOSUCH $$ 2>/dev/null; echo "st=$?"
+kill 2>/dev/null; echo "st=$?"
+kill -l NOSUCH 2>/dev/null; echo "st=$?"
+@kill/6 | T | kill accepts several pids, a negative pid for a process group, and -- before it
+--- kill/c_multiple
+sleep 5 & a=$!; sleep 5 & b=$!
+kill $a $b; wait $a; echo $?; wait $b; echo $?
+sleep 5 & c=$!; kill -s TERM -- $c; wait $c; echo $?
+@umask/1 | T | umask writes the mask as octal; umask -S symbolically; umask mode sets it for the shell and its children
+--- umask/c_umask
+umask 022; umask; umask -S
+umask 077; : > f; ls -l f | cut -c1-10
+umask 027; sh -c umask
+(umask 000; umask); umask
+@umask/2 | T | umask accepts a symbolic mode
+--- umask/c_symbolic
+umask 022; umask u=rwx,g=rx,o=; umask; umask -S
+umask g+w; umask; umask a-x; umask; umask u=rwx,go=rx; umask
+@umask/3 | T | umask with an invalid mode fails
+--- umask/c_bad
+umask 999 2>/dev/null; echo "st=$?"
+umask u=q 2>/dev/null; echo "st=$?"
+@ulimit/1 | T | ulimit -f reports or sets the file size limit in 512-byte blocks; unlimited is written as the word
+--- ulimit/c_file_size
+ulimit -f unlimited 2>/dev/null; ulimit -f
+(ulimit -f 100; ulimit -f; ulimit)
+@ulimit/2 | T | A file-size limit applies to children: a write past it fails
+--- ulimit/c_enforced
+(ulimit -f 1; trap '' XFSZ 2>/dev/null; dd if=/dev/zero of=big bs=1024 count=8 2>/dev/null; echo "dd=$?" | sed 's/dd=[1-9][0-9]*/dd=failed/')
+ls -l big 2>/dev/null | wc -l | tr -d ' '
+@ulimit/3 | T | ulimit -H and -S select hard and soft limits; -a reports all; -c -d -n -s -t -v name resources (new in 2024)
+--- ulimit/c_resources
+ulimit -S -n 64; ulimit -n; ulimit -S -n
+ulimit -H -n >/dev/null; echo "H=$?"
+ulimit -c 0; ulimit -c
+ulimit -a >/dev/null; echo "a=$?"
+ulimit -s >/dev/null; echo "s=$?"; ulimit -t >/dev/null; echo "t=$?"; ulimit -d >/dev/null; echo "d=$?"; ulimit -v >/dev/null; echo "v=$?"
+@ulimit/4 | T | Raising a hard limit without privilege, or a bad operand, fails
+--- ulimit/c_bad
+(ulimit -H -n 32; ulimit -H -n 64 2>/dev/null; echo "raise=$?") | sed 's/raise=[1-9][0-9]*/raise=failed/'
+ulimit -n abc 2>/dev/null; echo "st=$?"
+@fc/1 | S | fc -l lists the history; fc -l first last selects a range; -n omits numbers; -r reverses
+> session:c_hist_fc_list
+@fc/2 | S | fc -s re-executes a command, optionally with old=new substituted
+> session:c_hist_fc_s
+@fc/3 | S | fc first last edits the commands with FCEDIT or -e editor and then runs the result
+> session:c_hist_fc_edit
+@fc/4 | T | fc in a non-interactive shell with no history fails without ending the shell
+--- fc/c_noninteractive
+fc -l >/dev/null 2>&1; echo "st=$?" | sed 's/st=[1-9][0-9]*/st=fails/;s/st=0/st=ok-or-empty/'
+echo survived
+@jobs/1 | S | jobs lists each job: [n], current (+) or previous (-), state, command; -l adds process IDs; -p writes only process group IDs
+> session:c_jc_jobs_list
+@jobs/2 | T | jobs in a non-interactive shell lists background commands and jobs -p writes their process IDs
+--- jobsctl/c_jobs_script
+sleep 2 & p=$!
+jobs | grep -c sleep
+[ "$(jobs -p)" = "$p" ] && echo pid-matches
+kill $p; wait
+jobs | wc -l | tr -d ' '
+@jobs/3 | S | A job's state is reported as Running, Done, Done(n), Stopped (signal) as the page lists
+> session:c_jc_jobs_states
+@fg/1 | S | fg with no operand runs the current job in the foreground; fg %n that job; its command is written first
+> session:c_jc_fg session:c_jc_fg_number
+@fg/2 | T | fg and bg with job control off fail with a message
+--- jobsctl/c_fg_bg_no_monitor
+sleep 1 &
+fg 2>/dev/null; echo "fg=$?" | sed 's/fg=[1-9][0-9]*/fg=fails/'
+bg 2>/dev/null; echo "bg=$?" | sed 's/bg=[1-9][0-9]*/bg=fails/'
+wait
+@bg/1 | S | bg resumes a suspended job in the background and writes [n] command
+> session:c_jc_bg

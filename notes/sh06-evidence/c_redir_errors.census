@@ -1,0 +1,284 @@
+@2.7/1 | T | [n]redir-op word: the number must immediately precede the operator; a quoted number or operator is not a redirection
+> redir/redirect_out redir/redirect_err
+--- redir/c_number_forms
+echo \2>a; cat a
+echo 2\>b
+echo 2 >c; cat c
+echo x 2>d; cat d
+@2.7/2 | T | The redirection is removed from the arguments wherever it appears in the command
+--- redir/c_anywhere
+>e echo a b
+echo c >f d; cat e f
+<e cat
+@2.7/3 | T | File descriptors 0 through 9 can be used
+> redir/exec_fd exec/redirect_fd3
+--- redir/c_fd_range
+exec 3>f3 4>f4 5>f5 6>f6 7>f7 8>f8 9>f9
+for n in 3 4 5 6 7 8 9; do eval "echo fd$n >&$n"; done
+exec 3>&- 4>&- 5>&- 6>&- 7>&- 8>&- 9>&-
+cat f3 f4 f5 f6 f7 f8 f9
+@2.7/4 | T | The target word undergoes tilde, parameter, command and arithmetic expansion and quote removal
+> redir/target_expansion
+--- redir/c_target_expansions
+HOME=$PWD; n=1
+echo a > ~/t$n; echo b > "t $((n+1))"; echo c > $(echo t3)
+cat t1 't 2' t3
+@2.7/5 | T | A non-interactive shell does not apply pathname expansion to the target word
+--- redir/c_target_no_glob
+touch g1
+echo x > g*; ls
+@2.7/6 | T | A target word that splits into several fields is not split (recorded from dash)
+! POSIX names no field splitting for the redirection word; dash and pelt take it as one word, bash --posix refuses it as ambiguous
+--- redir/c_target_not_split
+x='a b'
+echo hi > $x; ls
+@2.7/7 | T | Several redirections on one command are evaluated in order from beginning to end
+> redir/order_matters redir/dup_err_to_out
+--- redir/c_order
+{ echo out; echo err >&2; } >o 2>&1; cat o
+{ echo out; echo err >&2; } 2>&1 >o2 | cat; cat o2
+@2.7/8 | T | A failure to open or create the file makes the redirection fail and the command is not run
+> redir/fail_status
+--- redir/c_open_fails
+echo x > /nonexistent-dir/f; echo "st=$?"
+cat < /nonexistent-file; echo "st=$?"
+mkdir d; echo y > d; echo "st=$?"
+@2.7.1/1 | T | [n]<word opens the file for reading on descriptor n, default 0
+> redir/in_file redir/read_fd
+--- redir/c_in_fd
+echo data > f
+cat <f; cat 0<f; exec 5<f; cat <&5; exec 5<&-
+@2.7.2/1 | T | [n]>word creates or truncates the file for writing on descriptor n, default 1
+> redir/out_trunc redir/redirect_out
+--- redir/c_out_trunc
+echo long-content > f; echo s > f; cat f
+: > f; wc -c < f | tr -d ' '
+echo e 2>g 1>&2; cat g
+@2.7.2/2 | T | With set -C, > fails on an existing regular file and >| overrides it
+> redir/noclobber
+--- redir/c_noclobber
+set -C
+echo a > f; echo b > f; echo "st=$?"; cat f
+echo c >| f; cat f
+echo d > /dev/null; echo "devnull=$?"
+ln -s f lnk; echo e > lnk; echo "link=$?"; cat f
+set +C; echo g > f; cat f
+@2.7.3/1 | T | [n]>>word opens for append, creating the file if needed
+> redir/append
+--- redir/c_append
+echo a >> f; echo b >> f; echo c 1>>f; cat f
+exec 3>>f; echo d >&3; echo e >> f; echo f2 >&3; exec 3>&-; cat f
+@2.7.4/1 | T | A here-document runs to a line holding only the delimiter
+> redir/heredoc
+--- redir/c_heredoc_delimiter
+cat <<EOF
+ EOF
+EOF x
+EOFx
+EOF
+echo after
+@2.7.4/2 | T | With an unquoted delimiter the body undergoes parameter, command and arithmetic expansion
+> redir/heredoc_expand
+--- redir/c_heredoc_expansions
+x=val
+cat <<E
+$x ${x} $(echo cmd) `echo bq` $((1+2)) ~ * 'q' "dq"
+E
+@2.7.4/3 | T | With any part of the delimiter quoted, the body is not expanded and the delimiter is the word after quote removal
+> redir/heredoc_quoted
+--- redir/c_heredoc_quoted_forms
+x=val
+cat <<'E'
+$x 1
+E
+cat <<"E"
+$x 2
+E
+cat <<\E
+$x 3
+E
+cat <<E"O"F
+$x 4
+EOF
+@2.7.4/4 | T | In an expanding here-document backslash acts as inside double quotes, and a double quote is literal
+--- redir/c_heredoc_backslash
+x=val
+cat <<E
+\$x \\ \` \" "$x" \a
+con\
+tinued
+E
+@2.7.4/5 | T | <<- strips leading tabs from body lines and the delimiter line
+> redir/heredoc_strip
+--- redir/c_heredoc_tabs
+cat <<-E
+	one
+		two
+  three (spaces kept)
+	E
+x='	tab-from-expansion'
+cat <<-E
+	$x
+	E
+@2.7.4/6 | T | Several here-documents on one line are read in order
+> redir/heredoc_two parse/two_heredocs_ok
+--- redir/c_heredoc_order
+cat <<A; cat <<B
+a
+A
+b
+B
+cat <<A <<B
+ignored
+A
+used
+B
+@2.7.4/7 | T | A here-document for a command that is not executed is read without being expanded
+--- redir/c_heredoc_skipped
+false && cat <<E
+$(echo ran >&2)
+E
+echo after
+@2.7.4/8 | T | A here-document can feed any descriptor ([n]<<) and any command, compound commands and functions included
+> redir/heredoc_function redir/heredoc_read redir/heredoc_large
+--- redir/c_heredoc_fd
+cat <&3 3<<E
+on three
+E
+while read l; do echo "[$l]"; done <<E
+a
+b
+E
+@2.7.4/9 | T | The end of a -c command string ends an unterminated here-document's search as a newline would
+--- redir/c_heredoc_end_of_string
+../sh -c 'cat <<E
+body
+E'
+@2.7.4/10 | T | A here-document inside a command substitution, and a command substitution inside a here-document
+--- redir/c_heredoc_in_cmdsub
+x=$(cat <<E
+inner $(echo "nested )")
+E
+)
+echo "$x"
+@2.7.5/1 | T | [n]<&m makes n a copy of m; [n]<&- closes n; closing a closed descriptor is not an error
+> redir/read_fd
+--- redir/c_dup_in
+echo data > f
+exec 4<f; cat <&4; exec 4<&-; exec 4<&-; echo "st=$?"
+exec 5<f; read a 0<&5; echo "$a"
+@2.7.5/2 | T | Duplicating from a descriptor that is not open is a redirection error
+> redir/bad_fd
+--- redir/c_dup_bad
+cat <&7; echo "st=$?"
+echo x >&8; echo "st=$?"
+@2.7.6/1 | T | [n]>&m makes n a copy of m; [n]>&- closes n
+> redir/dup_err_to_out redir/close_out
+--- redir/c_dup_out
+exec 3>f; echo a >&3; echo b 1>&3; exec 3>&-; cat f
+(echo to-err >&2) 2>&1 | cat
+echo closed >&- 2>/dev/null; echo "st=$?"
+@2.7.6/2 | T | The word after <& or >& is expanded: digits or - from a variable work
+--- redir/c_dup_expanded
+n=2; d=-
+(echo via-var >&$n) 2>&1
+exec 3>f; exec 3>&$d; (echo x >&3) 2>/dev/null; echo "st=$?"
+@2.7.7/1 | T | [n]<>word opens for reading and writing on n (default 0), creating the file, not truncating it
+> redir/readwrite
+--- redir/c_readwrite
+echo 0123456789 > f
+exec 3<>f; read -r x <&3; echo "$x"; echo abc >&3; exec 3>&-
+printf 'ab' 1<>f; cat f
+: <>newf; ls newf
+@2.8.1/1 | T | A syntax error makes a non-interactive shell exit with a diagnostic and a non-zero status
+> parse/fi_unexpected option/bad_option stdin/syntax_error_ends
+--- parse/c_syntax_error_exits
+echo before
+if then
+echo not-reached
+@2.8.1/2 | T | A syntax error found later in a script does not stop commands already executed
+--- parse/c_syntax_error_late
+echo one
+echo two
+)
+@2.8.1/3 | T | An error in a special built-in run directly makes a non-interactive shell exit
+> builtin/shift_error redir/special_fail_exits
+--- builtin/c_special_error_exits
+(set -o nosuchoption; echo not-reached) 2>/dev/null; echo "st=$?"
+(. /nonexistent/file; echo not-reached) 2>/dev/null; echo "st=$?"
+(readonly r=1; r=2; echo not-reached) 2>/dev/null; echo "st=$?"
+(break 0; echo not-reached-or-reached) 2>/dev/null; echo "st=$?"
+@2.8.1/4 | T | A special built-in error under the command utility does not make the shell exit
+> builtin/command_bypass
+--- builtin/c_special_error_command
+command . /nonexistent/file 2>/dev/null; echo "st=$?"
+command set -o nosuchoption 2>/dev/null; echo "st=$?"
+command exec 3</nonexistent 2>/dev/null; echo "st=$?"
+echo survived
+@2.8.1/5 | T | An error in another utility does not make the shell exit
+--- builtin/c_regular_error_continues
+cd /nonexistent 2>/dev/null; echo "st=$?"
+read x </dev/null; echo "st=$?"
+test 1 -eq x 2>/dev/null; echo "st=$?"
+echo survived
+@2.8.1/6 | T | A redirection error with a special built-in makes a non-interactive shell exit
+> redir/special_fail_exits
+--- redir/c_special_redirect_error
+(: < /nonexistent; echo not-reached) 2>/dev/null; echo "st=$?"
+(exec < /nonexistent; echo not-reached) 2>/dev/null; echo "st=$?"
+(export X=1 > /nonexistent/x; echo not-reached) 2>/dev/null; echo "st=$?"
+@2.8.1/7 | T | A redirection error with a compound command, a function or another utility does not make the shell exit
+> redir/fail_status exec/redirect_fails
+--- redir/c_other_redirect_error
+{ echo no; } < /nonexistent; echo "st=$?"
+if true; then echo no; fi > /nonexistent/x; echo "st=$?"
+f() { echo no; }; f < /nonexistent; echo "st=$?"
+echo no > /nonexistent/x; echo "st=$?"
+while false; do :; done < /nonexistent; echo "st=$?"
+echo survived
+@2.8.1/8 | T | A variable assignment error (assigning a readonly variable) makes a non-interactive shell exit
+> builtin/readonly_error simple/readonly_assign
+--- simple/c_assign_error_exits
+readonly r=1
+(r=2; echo not-reached) 2>/dev/null; echo "st=$?"
+(r=2 true; echo not-reached-or-reached) 2>/dev/null; echo "st=$?"
+(for r in a; do echo not-reached; done; echo not-reached) 2>/dev/null; echo "st=$?"
+@2.8.1/9 | T | An expansion error makes a non-interactive shell exit
+> param/bad_substitution param/error_unset
+--- param/c_expansion_error_exits
+(echo ${x!y}; echo not-reached) 2>/dev/null; echo "st=$?"
+(set -u; echo $nope; echo not-reached) 2>/dev/null; echo "st=$?"
+(echo $((1+)); echo not-reached) 2>/dev/null; echo "st=$?"
+@2.8.1/10 | T | Command not found gives a diagnostic and status 127, and the shell goes on
+> simple/not_found exec/not_found_bare
+--- simple/c_not_found_continues
+nonexistent-command-xyz 2>/dev/null; echo "st=$?"
+nonexistent-command-xyz 2>&1 | wc -l | tr -d ' '
+@2.8.1/11 | T | A shall-exit error in a subshell ends the subshell with a non-zero status and the invoking shell continues
+--- parse/c_error_in_subshell
+(eval 'if then'; echo no) 2>/dev/null; echo "st=$?"
+x=$(: ${u?unset} 2>/dev/null; echo no); echo "st=$? [$x]"
+echo survived
+@2.8.1/12 | S | An interactive shell does not exit on any of these errors, and drops the rest of the command
+> session:syntax_error_continues session:special_builtin_error session:expansion_error session:c_redirect_error session:readonly_assign
+@2.8.1/13 | T | A special built-in's own diagnostic goes to standard error and can be redirected like a utility's
+--- builtin/c_special_diag_redirect
+(set -o nosuchoption 2>/dev/null; echo no) ; echo "st=$?"
+(. /nonexistent/file 2>/dev/null; echo no); echo "st=$?"
+@2.8.1/14 | U | An unrecoverable read error while reading commands makes the shell exit 128 after any EXIT trap
+! needs a descriptor that fails mid-read (EIO); no portable way to make one in the corpus
+@2.8.2/1 | T | Not found is 127; found but not executable is 126
+> exec/not_found exec/not_executable exec/directory simple/slash_not_found
+--- simple/c_126_127
+nonexistent-xyz 2>/dev/null; echo $?
+./nonexistent 2>/dev/null; echo $?
+: > noexec; ./noexec 2>/dev/null; echo $?
+mkdir dir; ./dir 2>/dev/null; echo $?
+@2.8.2/2 | T | A command ended by a signal has a status above 128 that identifies the signal
+> signal/child_term signal/child_kill signal/child_hup signal/child_int
+@2.8.2/3 | T | Otherwise the status is the low eight bits of what the command exited with
+--- simple/c_exit_mod_256
+sh -c 'exit 3'; echo $?
+sh -c 'exit 255'; echo $?
+(exit 256); echo $?
+(exit 257); echo $?
