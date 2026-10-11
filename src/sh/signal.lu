@@ -41,6 +41,10 @@ const M_INT: int = 16
 /// Every meaning `trap` can set.
 const M_TRAPS: int = 31
 
+/// The meaning pelt raises on itself as a barrier (`settle`): `BG_READ`,
+/// which no trap names and nothing else here listens for.
+const M_SYNC: int = 64
+
 /// The meaning behind a trap condition's name, or 0 for one wolf has no
 /// meaning for.
 fn meaning_of(cond: str) -> int {
@@ -143,9 +147,38 @@ fn sig_apply(mut sh: Sh) {
             }
         }
     }
+    // the barrier's meaning is listened for exactly while any other is
+    if listen != 0 && !sh.sig_sync {
+        os_signal_listen(M_SYNC) else |_| {}
+        sh.sig_sync = true
+    } else if listen == 0 && sh.sig_sync {
+        os_signal_default(M_SYNC) else |_| {}
+        sh.sig_sync = false
+    }
     sh.sig_listen = listen
     sh.sig_ignore = ignore
     sh.sig_mine = mine
+}
+
+/// Wait until every signal already delivered to this process is on the
+/// queue `os_signal_poll` reads. wolf's trampoline writes a signal's
+/// meaning to a pipe and another thread moves it to the queue, so a
+/// poll made right after a child is reaped can answer "none" for a
+/// signal that arrived while the child ran (wolf-lang#691: on kasumi a
+/// poll straight after `os_signal_raise` answers 0 in 2000 rounds of
+/// 2000). The pipe keeps order, so pelt raises one more meaning on
+/// itself and waits for THAT: when it has come through, everything
+/// before it has. A few microseconds, and only after a child was
+/// waited for while something is listened for.
+fn settle() {
+    loop {
+        let stale = os_signal_poll(M_SYNC) else 0
+        if stale == 0 {
+            break
+        }
+    }
+    os_signal_raise(M_SYNC) else |_| { return }
+    let _came = os_signal_wait(M_SYNC) else 0
 }
 
 fn has_trap(sh: Sh, cond: str) -> bool {

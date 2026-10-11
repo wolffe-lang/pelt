@@ -111,11 +111,13 @@ struct Sh {
     last_bg: int,
     /// Signals (`sh.signal`): the meanings the process now listens for
     /// and ignores, the ones this shell (not an enclosing one) polls,
+    /// whether the barrier's meaning is listened for (`settle`),
     /// whether a trap action is running and `$?` when it began, and an
     /// interactive Ctrl-C on its way back to the prompt.
     sig_listen: int,
     sig_ignore: int,
     sig_mine: int,
+    sig_sync: bool,
     in_trap: bool,
     trap_status: int,
     intr: bool,
@@ -235,6 +237,7 @@ fn new_sh(name: str) -> Sh {
         sig_listen: 0,
         sig_ignore: 0,
         sig_mine: 0,
+        sig_sync: false,
         in_trap: false,
         trap_status: 0,
         intr: false,
