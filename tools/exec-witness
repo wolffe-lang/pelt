@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+"""exec-witness — does `exec cmd` replace the shell, measured from outside?
+
+The differential corpus can only see what a script prints, and `$$` is
+not available on every host (wolf-lang#141). This asks the host
+instead. For SHELL:
+
+  pid     SHELL -c 'exec sleep 30' is started; the process with THAT pid
+          must become `sleep` (`ps -o comm=`), and no child of it may
+          exist: the program replaced the shell rather than running
+          under it.
+  env     SHELL -c 'unset GONE; export KEPT=1; PLAIN=2; MINE=3 exec env'
+          prints exactly KEPT, MINE and what the shell was started with
+          less GONE (and PWD, which a shell sets): the environment
+          handed over is the exported variables and the command's own
+          assignments, nothing else.
+  fds     SHELL -c 'exec 3>FILE; exec sh -c "echo through >&3"' leaves
+          `through` in FILE: a descriptor the shell opened is the new
+          program's.
+  status  SHELL -c 'exec sh -c "kill -TERM \\$\\$"' ends by SIGTERM as
+          seen by ITS parent (this program): there is no shell left in
+          between to turn the signal into an exit status.
+
+usage: tools/exec-witness SHELL
+Exits 1 when any row fails.
+"""
+
+import os
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+
+
+def _defaults():
+    for s in (signal.SIGHUP, signal.SIGINT, signal.SIGQUIT, signal.SIGTERM):
+        signal.signal(s, signal.SIG_DFL)
+    signal.pthread_sigmask(signal.SIG_SETMASK, [])
+
+
+def comm(pid):
+    r = subprocess.run(["ps", "-o", "comm=", "-p", str(pid)],
+                       capture_output=True, text=True)
+    return os.path.basename(r.stdout.strip())
+
+
+def children(pid):
+    r = subprocess.run(["ps", "-A", "-o", "pid=,ppid="],
+                       capture_output=True, text=True)
+    return [int(a) for a, b in (ln.split() for ln in r.stdout.splitlines()
+                                if len(ln.split()) == 2) if int(b) == pid]
+
+
+def main(argv):
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    shell = os.path.abspath(argv[0])
+    base = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C", "GONE": "x"}
+    ok = True
+    with tempfile.TemporaryDirectory(prefix="exec-witness.") as cwd:
+        # pid
+        p = subprocess.Popen([shell, "-c", "exec sleep 30"], cwd=cwd, env=base,
+                             stdin=subprocess.DEVNULL, preexec_fn=_defaults)
+        name, kids = "", []
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            name = comm(p.pid)
+            if name == "sleep" or p.poll() is not None:
+                break
+            time.sleep(0.05)
+        kids = children(p.pid)
+        good = name == "sleep" and not kids and p.poll() is None
+        print(f"exec-witness: pid     {'ok  ' if good else 'FAIL'} pid {p.pid} is "
+              f"{name!r} with {len(kids)} children")
+        ok = ok and good
+        p.kill()
+        p.wait()
+
+        # env
+        r = subprocess.run(
+            [shell, "-c", "unset GONE; export KEPT=1; PLAIN=2; MINE=3 exec env"],
+            cwd=cwd, env=base, capture_output=True, text=True,
+            stdin=subprocess.DEVNULL, preexec_fn=_defaults)
+        got = sorted(ln for ln in r.stdout.splitlines() if not ln.startswith("PWD="))
+        want = sorted(["PATH=/usr/bin:/bin", "HOME=/", "LC_ALL=C", "KEPT=1", "MINE=3"])
+        good = got == want and r.returncode == 0
+        print(f"exec-witness: env     {'ok  ' if good else 'FAIL'} {got}")
+        ok = ok and good
+
+        # fds
+        f = os.path.join(cwd, "three")
+        r = subprocess.run(
+            [shell, "-c", f'exec 3>{f}; exec sh -c "echo through >&3"'],
+            cwd=cwd, env=base, capture_output=True, text=True,
+            stdin=subprocess.DEVNULL, preexec_fn=_defaults)
+        got = open(f).read() if os.path.exists(f) else None
+        good = got == "through\n" and r.returncode == 0
+        print(f"exec-witness: fds     {'ok  ' if good else 'FAIL'} descriptor 3 wrote {got!r}"
+              f" (exit {r.returncode}, stderr {r.stderr!r})")
+        ok = ok and good
+
+        # status
+        r = subprocess.run([shell, "-c", 'exec sh -c "kill -TERM \\$\\$"'],
+                           cwd=cwd, env=base, capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, preexec_fn=_defaults)
+        good = r.returncode == -signal.SIGTERM and r.stderr == ""
+        print(f"exec-witness: status  {'ok  ' if good else 'FAIL'} returncode {r.returncode}"
+              f" (want {-signal.SIGTERM}), stderr {r.stderr!r}")
+        ok = ok and good
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
