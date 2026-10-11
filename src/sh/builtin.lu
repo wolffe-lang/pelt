@@ -103,6 +103,11 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
 
 fn bi_exit(mut sh: Sh, args: List[str]) -> int {
     var code = sh.status
+    if sh.in_trap {
+        // in a trap action, `exit` with no operand leaves with the
+        // status the action began with (XCU `exit`)
+        code = sh.trap_status
+    }
     if args.len > 0 {
         code = to_int(args[0]) else |_| {
             fatal(mut sh, "exit: {args[0]}: not a number", 2)
@@ -442,20 +447,19 @@ fn bi_dot(mut sh: Sh, args: List[str]) -> int {
     st
 }
 
-/// `exec` with a command: wolf cannot replace the process
-/// (wolf-lang#534), so pelt runs it, its redirections applied, and then
-/// exits with its status, without running the `EXIT` trap, as a real
-/// exec would not. `exec` with redirections alone is `sh.exec`'s.
+/// `exec` reached through `command`: the simple-command path
+/// (`sh.exec`'s `run_slow`) takes `exec` itself before it gets here,
+/// with its redirections and assignments.
 fn bi_exec(mut sh: Sh, args: List[str]) -> int {
     if args.len == 0 {
         return 0
     }
-    let st = run_external(mut sh, args, List[str](), List[str](), false)
-    sh.traps = Map[str, str]()
-    sh.status = st
-    sh.flow = F_EXIT
-    sh.abort = false
-    st
+    var fields = List[str]()
+    (mut fields).push("exec")
+    for a in args {
+        (mut fields).push(a)
+    }
+    run_exec(mut sh, fields, List[str](), List[str](), List[Rd]())
 }
 
 fn trap_name(c: str) -> str {
@@ -489,8 +493,10 @@ fn trap_name(c: str) -> str {
     ""
 }
 
-/// `trap`: every condition is recorded and printed back; only `EXIT`
-/// runs (catching signals waits on a later wolf lane).
+/// `trap`: every condition is recorded and printed back. `EXIT` runs
+/// as the shell ends; `HUP`, `INT`, `QUIT`, `TERM` and `USR2` are
+/// caught, ignored or put back to the default (`sh.signal`); a
+/// condition wolf has no meaning for is recorded only.
 fn bi_trap(mut sh: Sh, args: List[str]) -> int {
     if args.len == 0 {
         for k in sort_strs(sh.traps.keys()) {
@@ -527,6 +533,7 @@ fn bi_trap(mut sh: Sh, args: List[str]) -> int {
             sh.traps[n] = action
         }
     }
+    sig_apply(mut sh)
     st
 }
 
@@ -1000,10 +1007,11 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
 
 // ---------------------------------------------------------------- wait
 
-/// `wait [job…]` (XCU `wait`): with no operand, wait for every job and
+/// `wait [pid…]` (XCU `wait`): with no operand, wait for every job and
 /// answer 0; otherwise each operand's status, 127 for one pelt does not
 /// know. A job is named by the number `$!` gave (`sh.exec`'s
-/// `run_async`).
+/// `run_async`). A trapped signal does not cut the wait short: no child
+/// wait in wolf 0.2.27 is interruptible (wolf-lang#680, PENDING).
 fn bi_wait(mut sh: Sh, args: List[str]) -> int {
     flush(mut sh)
     if args.len == 0 {
@@ -1017,11 +1025,12 @@ fn bi_wait(mut sh: Sh, args: List[str]) -> int {
     var st = 0
     for a in args {
         let id = to_int(a) else -1
-        if id < 1 || id > sh.jobs.len {
+        let j = job_of(sh, id)
+        if j < 0 {
             st = 127
             continue
         }
-        st = wait_job(mut sh, id - 1)
+        st = wait_job(mut sh, j)
     }
     st
 }
