@@ -1,3 +1,8 @@
 set: 0
+trap -- 'echo t' FPE
+trap -- 'echo t' ILL
+trap -- 'echo t' PIPE
+trap -- 'echo t' SEGV
+trap -- 'echo t' TRAP
 reset: 0
 done
