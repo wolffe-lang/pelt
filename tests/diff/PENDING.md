@@ -66,7 +66,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **ignored-on-entry** | a signal ignored when the shell started can be trapped | wolf-lang#681 | `signal/c_ignored_on_entry` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
 | **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
-| **trap-number** | `trap ACTION 13`: a signal number with no wolf meaning is refused, though `trap ACTION PIPE` and `trap '' 14` are taken; recording the action is pelt's (seven real scripts write `trap … 1 2 13 15`), catching it is wolf-lang#679's | pelt (P15), then wolf-lang#679 | `signal/c_s_trap_by_number` |
 | **non-utf8-bytes** | a byte that is not UTF-8 (`a\377b` from a command substitution) cannot be a program's argument, since a wolf `str` is UTF-8: it reaches the program as `?`. Valid UTF-8 passes unchanged everywhere since sh07 (`quote/utf8_bytes`); this case's other lines pass | wolf-lang W06 (byte strings) | `quote/c_s_high_bytes` |
 | **dot-special-file** | `.` of `/dev/null` or a FIFO is "not found" | pelt (P16) | `builtin/c_s_dot_special_file` |
 | **history** | `fc` (the case passes today only because a shell with no history and a shell with no `fc` both fail) | pelt (sh08) | `fc/c_noninteractive` |
