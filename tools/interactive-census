@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""interactive-census — what a person meets at the prompt, measured.
+
+Three numbers the session corpus does not give, for SHELL against
+dash (and bash --posix, for the record):
+
+  startup  wall time of `SHELL -c :` and of an interactive start to
+           the first prompt through a pseudo-terminal, median of N
+  memory   peak resident size after 10,000 commands typed at the
+           prompt (`echo $i` with `i=$((i+1))`), read from
+           /proc/PID/status (VmHWM) on linux; flat or not
+  slow     a short session typed one byte at a time with a gap per
+           byte, as a serial console at a low rate delivers them
+           (PAX's console): the output must match the fast run
+
+usage: tools/interactive-census SHELL [N]
+Linux only for `memory` (it reads /proc). Prints a table; exits 0.
+"""
+
+import os
+import pty
+import select
+import statistics
+import subprocess
+import sys
+import time
+
+ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C", "PS1": "$ ", "PS2": "> "}
+
+
+def startup_c(argv, n):
+    t = []
+    for _ in range(n):
+        a = time.perf_counter()
+        subprocess.run(argv + ["-c", ":"], env=ENV, check=False)
+        t.append(time.perf_counter() - a)
+    return statistics.median(t), min(t)
+
+
+def _spawn(argv):
+    master, slave = pty.openpty()
+    p = subprocess.Popen(argv, stdin=slave, stdout=slave, stderr=slave, env=ENV,
+                         start_new_session=True, close_fds=True)
+    os.close(slave)
+    return p, master
+
+
+def _until(master, want, limit=10.0):
+    buf = b""
+    end = time.time() + limit
+    while time.time() < end:
+        r, _, _ = select.select([master], [], [], 0.01)
+        if r:
+            try:
+                d = os.read(master, 65536)
+            except OSError:
+                break
+            if not d:
+                break
+            buf += d
+            if buf.endswith(want):
+                return buf
+    return buf
+
+
+def startup_i(argv, n):
+    t = []
+    for _ in range(n):
+        a = time.perf_counter()
+        p, m = _spawn(argv)
+        _until(m, b"$ ")
+        t.append(time.perf_counter() - a)
+        os.write(m, b"exit\n")
+        p.wait(timeout=5)
+        os.close(m)
+    return statistics.median(t), min(t)
+
+
+def hwm(pid):
+    try:
+        with open(f"/proc/{pid}/status") as fh:
+            for ln in fh:
+                if ln.startswith("VmHWM:"):
+                    return int(ln.split()[1])
+    except OSError:
+        return None
+    return None
+
+
+def memory(argv, turns):
+    p, m = _spawn(argv)
+    _until(m, b"$ ")
+    marks = {}
+    for i in range(1, turns + 1):
+        os.write(m, f"i=$((i+1)); echo $i\n".encode())
+        _until(m, b"$ ")
+        if i in (100, 1000, 5000, turns):
+            marks[i] = hwm(p.pid)
+    os.write(m, b"exit\n")
+    p.wait(timeout=10)
+    os.close(m)
+    return marks
+
+
+SLOW_KEYS = [b"x=hello\n", b"echo \"$x world\" | tr a-z A-Z\n",
+             b"for i in 1 2 3; do printf '%s,' $i; done; echo\n",
+             b"if true\n", b"then echo continued\n", b"fi\n", b"exit\n"]
+
+
+def session(argv, gap):
+    p, m = _spawn(argv)
+    out = _until(m, b"$ ")
+    for k in SLOW_KEYS:
+        for i in range(len(k)):
+            os.write(m, k[i:i + 1])
+            if gap:
+                time.sleep(gap)
+        out += _until(m, b"$ " if k != b"if true\n" and k != b"then echo continued\n" else b"> ", 15)
+    p.wait(timeout=10)
+    os.close(m)
+    # what the commands printed, without the echo of what was typed
+    lines = [ln for ln in out.replace(b"\r", b"").split(b"\n")
+             if ln and not ln.startswith((b"$ ", b"> "))]
+    return lines
+
+
+def main(argv):
+    if not argv:
+        print(__doc__, file=sys.stderr)
+        return 2
+    n = int(argv[1]) if len(argv) > 1 else 21
+    rows = [("pelt", [os.path.abspath(argv[0])]), ("dash", ["dash"]),
+            ("bash --posix", ["bash", "--posix", "--noediting"])]
+    print("interactive-census: startup, median and min of", n)
+    for name, sh in rows:
+        mc, lc = startup_c(sh, n)
+        mi, li = startup_i(sh + ["-i"], n)
+        print(f"  {name:<13} -c :  {mc * 1000:7.2f} ms (min {lc * 1000:6.2f})   to the first prompt  {mi * 1000:7.2f} ms (min {li * 1000:6.2f})")
+    if os.path.exists("/proc/self/status"):
+        print("interactive-census: peak RSS (VmHWM, KB) after N typed commands")
+        for name, sh in rows:
+            marks = memory(sh + ["-i"], 10000)
+            print(f"  {name:<13} " + "  ".join(f"{k}: {v}" for k, v in marks.items()))
+    print("interactive-census: a session typed a byte at a time (20 ms a byte, ~500 baud) against at once")
+    for name, sh in rows[:2]:
+        fast = session(sh + ["-i"], 0)
+        slow = session(sh + ["-i"], 0.02)
+        print(f"  {name:<13} same output: {fast == slow}  ({len(fast)} lines: {[l.decode() for l in fast]})")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
