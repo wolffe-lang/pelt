@@ -172,6 +172,13 @@ struct Sh {
     /// table checks read (pelt#3: a word that is not a pattern reads
     /// none).
     dir_reads: int,
+    /// Who the shell runs as (`sh.util`'s `load_ident`): whether that is
+    /// known yet, the effective user and group ids, the supplementary
+    /// groups.
+    id_state: int,
+    euid: int,
+    egid: int,
+    groups: List[int],
 }
 
 struct Snap {
@@ -273,6 +280,10 @@ fn new_sh(name: str) -> Sh {
         from_stdin: false,
         abort: false,
         dir_reads: 0,
+        id_state: 0,
+        euid: -1,
+        egid: -1,
+        groups: List[int](),
     }
 }
 
