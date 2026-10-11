@@ -649,7 +649,7 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
         }
         i += 1
     }
-    let fields = expand_words(mut t, rest)
+    let fields = expand_command(mut t, rest)
     if t.bail || t.flow != F_NONE {
         return slow()
     }
@@ -678,6 +678,9 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
         if is_ronly(sh, name) {
             return slow()
         }
+        // the next assignment's expansion sees this one (XCU 2.9.1.1:
+        // in order, left to right); the shadow keeps nothing
+        t.vals[name] = v
         put(mut enc, name)
         putb(mut enc, 0)
         put(mut enc, v)
@@ -817,7 +820,7 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
         }
         i += 1
     }
-    let fields = expand_words(mut sh, rest)
+    let fields = expand_command(mut sh, rest)
     if sh.flow != F_NONE {
         return sh.status
     }
@@ -850,20 +853,32 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
         sh.status = st
         return st
     }
-    // the assignments' values, expanded in order (XCU 2.9.1 step 4)
+    // the assignments' values, expanded in order (XCU 2.9.1 step 4),
+    // each seeing the ones before it (`x=3 y=$x cmd` hands `cmd` y=3,
+    // as dash): made for the expansion and put back after, since what
+    // they do to the shell depends on the command
     var names = List[str]()
     var values = List[str]()
     var shown = List[str]()
+    var had = List[bool]()
+    var old = List[str]()
     for a in assigns {
         let (name, raw) = split_assign(a)
         let v = expand_one(mut sh, raw, X_TILDE | X_ASSIGN)
         if sh.flow != F_NONE {
+            unassign(mut sh, names, had, old)
             return sh.status
         }
         (mut names).push(name)
         (mut values).push(v)
         (mut shown).push("{name}={v}")
+        (mut had).push(has_var(sh, name))
+        (mut old).push(value_of(sh, name))
+        if !is_ronly(sh, name) {
+            sh.vals[name] = v
+        }
     }
+    unassign(mut sh, names, had, old)
     xtrace(mut sh, shown, fields)
     let cmd = fields[0]
     if cmd == "exec" && fields.len == 1 {
@@ -935,6 +950,22 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
     }
     end_redirs(mut sh)
     st
+}
+
+/// Put back what `run_slow` assigned for its expansion: each name's old
+/// value, or no value, last first. Read-only names were never written.
+fn unassign(mut sh: Sh, names: List[str], had: List[bool], old: List[str]) {
+    var k = names.len - 1
+    while k >= 0 {
+        if !is_ronly(sh, names[k]) {
+            if had[k] {
+                sh.vals[names[k]] = old[k]
+            } else {
+                let _v = (mut sh.vals).remove(names[k]) else ""
+            }
+        }
+        k -= 1
+    }
 }
 
 /// A special built-in's redirection failed: reported already; it ends a
