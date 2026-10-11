@@ -1,0 +1,14 @@
+bench: 9 runs each, unpinned; load ['6.08', '7.03', '6.04']
+script           shell    median s   min s  user s   sys s  ratio
+fork             dash        0.329   0.325   0.270   0.056   1.00
+fork             pelt        0.505   0.480   0.355   0.162   1.54
+fork             native      0.521   0.509   0.380   0.159   1.58
+pipeline         dash        0.336   0.334   0.436   0.192   1.00
+pipeline         pelt        0.568   0.550   0.442   0.296   1.69
+pipeline         native      0.569   0.564   0.453   0.268   1.70
+param            dash        0.369   0.366   0.368   0.000   1.00
+param            pelt        1.446   1.434   1.421   0.023   3.92
+param            native      3.772   3.666   3.744   0.024  10.24
+configure-shaped dash        0.337   0.336   0.299   0.115   1.00
+configure-shaped pelt        0.506   0.495   0.291   0.277   1.50
+configure-shaped native      0.561   0.555   0.349   0.276   1.66
