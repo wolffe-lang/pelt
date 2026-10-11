@@ -41,6 +41,7 @@ PATH=/usr/bin:/bin, HOME=/home/pelt, LC_ALL=C.
 import os
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 
@@ -88,6 +89,19 @@ def cases(areas=None):
 LINE = re.compile(rb"(?:: |line )(\d+):")
 
 
+def _default_signals():
+    """Start the shell as a login would: the signals a case traps or
+    sends at their defaults and nothing blocked. A harness started in
+    the background of a non-interactive shell, or under `nohup`,
+    inherits SIGINT, SIGQUIT or SIGHUP IGNORED, and a shell may not trap
+    a signal that was ignored when it started (XCU `trap`): the oracle
+    and pelt would both answer for the harness's parent, not the case."""
+    for s in (signal.SIGHUP, signal.SIGINT, signal.SIGQUIT, signal.SIGTERM,
+              signal.SIGPIPE, signal.SIGUSR1, signal.SIGUSR2, signal.SIGALRM):
+        signal.signal(s, signal.SIG_DFL)
+    signal.pthread_sigmask(signal.SIG_SETMASK, [])
+
+
 def run(shell, script, meta, timeout=10):
     """Run one case under `shell` (an argv prefix). Answers a dict with
     stdout, exit, stderr (bool), line (parse rows), or None on a
@@ -112,7 +126,8 @@ def run(shell, script, meta, timeout=10):
             p = subprocess.run(argv, cwd=w, env=dict(ENV), input=data,
                                stdin=None if data is not None
                                else subprocess.DEVNULL,
-                               capture_output=True, timeout=timeout)
+                               capture_output=True, timeout=timeout,
+                               preexec_fn=_default_signals)
         except subprocess.TimeoutExpired:
             return None
         code = p.returncode if p.returncode >= 0 else 128 - p.returncode
