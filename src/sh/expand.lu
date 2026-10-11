@@ -22,6 +22,15 @@
 //! | `BRK` 0x04 | a field ends here whatever follows (between the parameters of `$@`) |
 //! | `EQ` 0x06 | an empty quoted string: a field exists here even if no byte does |
 //!
+//! **A byte above 0x7f is never marked.** It is no pattern character
+//! and no default `IFS` character, so quoting changes nothing for it,
+//! and a `Q` between the bytes of one UTF-8 character would make the
+//! marked string invalid UTF-8, which `text` turns into `?` per byte
+//! (sh06's P14: `é` reached programs as `??`). Left bare, a marked
+//! string of UTF-8 text stays UTF-8 through every step. The one thing
+//! given up: with a non-ASCII byte in `IFS`, a quoted occurrence of it
+//! would split too (no script in the census sets one).
+//!
 //! Command substitution runs IN-PROCESS (see `sh.state`), so it can
 //! capture what built-ins and functions write; a program it runs writes
 //! into a pipe pelt reads to its end (`sh.exec`'s `start_child`).
@@ -56,13 +65,17 @@ fn lit(mut o: Buf, b: int) {
 }
 
 fn qlit(mut o: Buf, b: int) {
-    putb(mut o, Q)
+    if b < 128 {
+        putb(mut o, Q)
+    }
     putb(mut o, b)
 }
 
 fn qstr(mut o: Buf, s: str) {
     for x in s.bytes() {
-        putb(mut o, Q)
+        if x as int < 128 {
+            putb(mut o, Q)
+        }
         (mut o.b).push(x)
     }
 }
