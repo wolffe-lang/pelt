@@ -16,11 +16,15 @@ filed.
   and shell commands meet 91–100% of their POSIX statements
   (CENSUS.md §1). The special built-ins meet 87%.
 - **Three in four POSIX statements are met**: 400 of 527 testable
-  statements of XCU chapter 2 and the built-ins' pages.
+  statements of XCU chapter 2 and the built-ins' pages; 414 since
+  sh07 (S1, below).
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
-  gaps fixed it would be 72 of 80.
+  gaps fixed it would be 72 of 80. **Since sh07: 66 of 80**, one more
+  (pfetch) differing only where dash differs from itself; the other 13
+  stop at `umask` (10, S4) or need a process per pipeline stage (3,
+  gap 7).
 - **Interactive pelt is a prompt, not yet a place to work.** `PS1`,
   `PS2`, `ENV`, Ctrl-C and Ctrl-D behave as dash's do. There is no line
   editor, no history, no completion, no job control and no aliases.
@@ -41,14 +45,14 @@ counts the 80 in `tools/script-census`.
 
 | # | gap | breaks | whose |
 |---|---|---|---|
-| 1 | `test -r/-w/-x/-L/-h/-ef` answer wrongly | 14 scripts (libtool, git's tests, debconf and so four Debian postinsts, init scripts, `service`, `which`) | pelt; exact access as the caller wants a wolf call (to be filed: W07) |
+| 1 | **done in sh07**: `test -r/-w/-x/-L/-h/-ef` answer wrongly | 14 scripts (libtool, git's tests, debconf and so four Debian postinsts, init scripts, `service`, `which`) | pelt; exact access as the caller wants a wolf call (to be filed: W07) |
 | 2 | `umask` missing | 9 scripts (install-sh, config.guess, every configure through it) | wolf-lang s230 (`os_umask`, merged for the release after 0.2.27), then pelt |
 | 3 | memory kept per pipeline, substitution, function call and script line | any long script or session; not a script failure in the census, which runs each script once | pelt |
-| 4 | `trap ACTION 13` (a signal number with no wolf meaning) refused | 7 scripts | pelt records it; catching it is #679 |
-| 5 | a bracket expression holding `/` never matches outside file names | 4 scripts, the first wall of every autoconf configure | pelt |
-| 6 | unquoted `$*` in an assignment joins with nothing: **a silent wrong answer** (`host_os=linuxgnu`) | 3 scripts | pelt |
+| 4 | **done in sh07** (recorded; catching it is #679): `trap ACTION 13` (a signal number with no wolf meaning) refused | 7 scripts | pelt records it; catching it is #679 |
+| 5 | **done in sh07**: a bracket expression holding `/` never matches outside file names | 4 scripts, the first wall of every autoconf configure | pelt |
+| 6 | **done in sh07**: unquoted `$*` in an assignment joins with nothing: **a silent wrong answer** (`host_os=linuxgnu`) | 3 scripts | pelt |
 | 7 | no process for a subshell or an in-process pipeline stage: stages run one after another, a descriptor written from a stage is lost, an endless producer never ends | 3 scripts, 7 statements | wolf-lang or pelt, by ruling R1 (to be filed: W01) |
-| 8 | bytes above 0x7f become `?` on their way out: **a silent wrong answer** (a certificate with a non-ASCII name is left out of the bundle) | 1 script; every non-ASCII file name | pelt; bytes that are not UTF-8 need wolf byte strings (to be filed: W06) |
+| 8 | **UTF-8 half done in sh07**: bytes above 0x7f become `?` on their way out: **a silent wrong answer** (a certificate with a non-ASCII name is left out of the bundle) | 1 script; every non-ASCII file name | pelt; bytes that are not UTF-8 need wolf byte strings (to be filed: W06) |
 | 9 | aliases | 17 statements; daily use | pelt |
 | 10 | job control | 14 statements; daily use | wolf-lang (to be filed: W03; #680, #141), then pelt; PAX for PAX |
 | 11 | line editing and history | daily use; 7 statements (`fc`, vi mode, `!` in `PS1`) | pelt; window size (to be filed: W05) |
@@ -73,7 +77,9 @@ needs the least from upstream.
 
 - **S1, the script walls:** gaps 1, 4, 5, 6 and 8 (the UTF-8 half),
   plus `.` of a FIFO. Done when `tools/script-census` reports 72 or
-  more of 80 without `--aided`.
+  more of 80 without `--aided`. **Landed in sh07 at 66 of 80**: the
+  72 counted `umask` as routed around, and `umask` is S4's; after S4
+  at most 76 of 80 can run as under dash, the last 3 being gap 7 (`notes/sh07-the-script-walls.md`).
 - **S2, memory:** gap 3. Done when `tools/loop-rss` also holds flat a
   loop of `true | true`, `x=$(true)`, a function call and a 20,000-line
   script.
