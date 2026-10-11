@@ -1,0 +1,3 @@
+{ echo listed; } &
+wait $!
+echo $?
