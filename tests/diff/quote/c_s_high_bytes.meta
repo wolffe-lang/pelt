@@ -1,4 +1,4 @@
 exit=0
 stderr=no
 bash=agree
-pending=high-bytes
+pending=non-utf8-bytes
