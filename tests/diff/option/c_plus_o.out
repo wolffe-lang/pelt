@@ -1,0 +1,5 @@
+restored
+some-lines
+set +o errexit
+set -o noglob
+set -o nounset
