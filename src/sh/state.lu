@@ -174,11 +174,12 @@ struct Sh {
     dir_reads: int,
     /// Who the shell runs as (`sh.util`'s `load_ident`): whether that is
     /// known yet, the effective user and group ids, the supplementary
-    /// groups.
+    /// groups as decimal numbers between spaces (a `str`, so the copy
+    /// every fast-path command makes of the state allocates nothing).
     id_state: int,
     euid: int,
     egid: int,
-    groups: List[int],
+    groups: str,
     /// Expanding a word that is not split into fields (`sh.expand`'s
     /// `expand_one`): `$@` and `$*` join with `IFS`'s first character.
     nosplit: bool,
@@ -286,7 +287,7 @@ fn new_sh(name: str) -> Sh {
         id_state: 0,
         euid: -1,
         egid: -1,
-        groups: List[int](),
+        groups: "",
         nosplit: false,
     }
 }

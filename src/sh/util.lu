@@ -661,7 +661,7 @@ fn load_ident(mut sh: Sh) -> bool {
         if u.len >= 2 && g.len >= 2 {
             sh.euid = u[1]
             sh.egid = g[1]
-            sh.groups = status_numbers(status, "Groups:")
+            sh.groups = numbers_text(status_numbers(status, "Groups:"))
             sh.id_state = ID_KNOWN
             return true
         }
@@ -687,7 +687,7 @@ fn load_ident(mut sh: Sh) -> bool {
         if u >= 0 && gs.len > 0 {
             sh.euid = u
             sh.egid = gs[0]
-            sh.groups = gs
+            sh.groups = numbers_text(gs)
             sh.id_state = ID_KNOWN
             return true
         }
@@ -696,12 +696,24 @@ fn load_ident(mut sh: Sh) -> bool {
     false
 }
 
+/// Numbers as decimal text between spaces.
+fn numbers_text(ns: List[int]) -> str {
+    var o = buf()
+    for n in ns {
+        if o.b.len > 0 {
+            putc(mut o, ' ')
+        }
+        put(mut o, "{n}")
+    }
+    text(o)
+}
+
 fn in_groups(sh: Sh, gid: int) -> bool {
     if gid == sh.egid {
         return true
     }
-    for g in sh.groups {
-        if g == gid {
+    for w in sh.groups.words() {
+        if (to_int(w) else -1) == gid {
             return true
         }
     }
