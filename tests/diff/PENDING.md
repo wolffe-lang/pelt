@@ -64,13 +64,14 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `signal/c_subshell_trap_reset`, `wait/c_subshell` |
 | **umask** | `umask` | wolf-lang `os_umask` (s230, merged for the release after 0.2.27), then pelt | `umask/c_bad`, `umask/c_symbolic`, `umask/c_umask` |
 | **ulimit** | `ulimit` | wolf-lang: no `getrlimit`/`setrlimit` surface (W02) | `ulimit/c_bad`, `ulimit/c_enforced`, `ulimit/c_file_size`, `ulimit/c_resources` |
-| **kill** | `kill` as a built-in: `kill -l`, exit statuses, a signal to the shell's own pid | wolf-lang#141 (a signal to any pid), then pelt | `kill/c_bad`, `kill/c_job_id`, `kill/c_list` |
+| **kill** | `kill` as a built-in: `kill -l`, exit statuses, a signal to the shell's own pid | wolf-lang#141 (a signal to any pid), then pelt | `kill/c_bad`, `kill/c_job_id`, `kill/c_list`, `kill/c_send` |
 | **job-ids** | `wait %1`, `kill %1` | pelt once `kill` is a built-in (wolf-lang#141) | `wait/c_job_id` |
 | **jobs** | `jobs`, `jobs -p` | pelt (P12); job states need wolf-lang W03 | `jobsctl/c_jobs_script` |
 | **job-control** | `set -m`: a process group per job | wolf-lang: stop reporting, `SIGCONT`, a signal to a group, an interruptible wait (W03, wolf-lang#680) | `jobsctl/c_fg_bg_no_monitor`, `jobsctl/c_monitor_script_pgid` |
 | **getppid** | `PPID` | wolf-lang#141 (it asks for getpid; getppid is the same lane) | `env/c_ppid` |
 | **ignored-on-entry** | a signal ignored when the shell started can be trapped | wolf-lang#681 | `signal/c_ignored_on_entry` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
+| **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
 | **history** | `fc` (the case passes today only because a shell with no history and a shell with no `fc` both fail) | pelt (sh08) | `fc/c_noninteractive` |
 | **getpid** | `$$` off linux (the cases pass on linux) | wolf-lang#141 | `param/c_pid_is_real`, `param/c_pid_subshell` |
 | **signal meaning** | a trap for `USR1`, `ALRM`, `PIPE`, `ABRT`, `WINCH`, `CONT`: the shell dies or ignores where the action must run | wolf-lang#679, #423 | `signal/c_trap_abrt_number`, `signal/c_trap_alrm`, `signal/c_trap_ignore_pipe`, `signal/c_trap_pipe`, `signal/c_trap_usr1_self`, `signal/c_trap_winch_cont` |

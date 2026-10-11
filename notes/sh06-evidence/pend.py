@@ -57,6 +57,7 @@ DESC = [
  ("getppid", "`PPID`", "wolf-lang#141 (it asks for getpid; getppid is the same lane)"),
  ("ignored-on-entry", "a signal ignored when the shell started can be trapped", "wolf-lang#681"),
  ("uid", "`test -O`, `test -G`", "wolf-lang#633"),
+ ("enoexec", "a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126", "wolf-lang#682"),
  ("history", "`fc` (the case passes today only because a shell with no history and a shell with no `fc` both fail)", "pelt (sh08)"),
 ]
 known = {d[0] for d in DESC} | {"getpid", "signal meaning", "interruptible wait", "user database"}

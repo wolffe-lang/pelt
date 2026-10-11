@@ -98,3 +98,5 @@ wait/c_subshell	fork
 umask/c_bad	umask
 jobsctl/c_fg_bg_no_monitor	job-control
 fc/c_noninteractive	history
+simple/c_enoexec_binary	enoexec
+kill/c_send	kill
