@@ -1,0 +1,3 @@
+function echo: a
+function-cat
+st=0
