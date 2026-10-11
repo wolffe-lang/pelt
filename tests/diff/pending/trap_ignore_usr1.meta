@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+bash=agree
+pending=signal meaning
+why=wolf 0.2.27 has no meaning for SIGUSR1: it cannot be ignored
