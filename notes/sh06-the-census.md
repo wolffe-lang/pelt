@@ -21,9 +21,18 @@ attribution trailers. Strict evidence; concurrency rows under
 `taskset -c 0-3`. Scratch under `~/lanes/sh06/` (`TMPDIR` points there
 for every tool run).
 
-## 2. Inputs, verified
+## 2. Inputs, verified (2026-10-11, after `4437c81`)
 
-Filled in after §3 is committed (the corpus is not run before then).
+| input | contract says | measured | drift |
+|---|---|---|---|
+| pelt trunk | `b32bebc`, wolf 0.2.27 / lupin 0.1.50, corpus 443/0/7, sessions 85/0/0 | `origin/trunk` = `b32bebc23fa6f7b6…`; built both tiers on kasumi from the pinned archives; corpus **443/0/7** on both tiers (`logs/diff-release-base.log`), sessions **85/0/0** (`logs/sess-release-base.log`); the seven pending: `pending/exec_pid`, `pending/pid` (PEND-ok on linux), `pending/subshell_signal`, `pending/trap_ignore_usr1`, `pending/trap_usr1`, `pending/wait_interrupted`, `tilde/user`; pelt#6 open (`set -v`) | none |
+| the archives | 0.2.27 / 0.1.50 by digest | release 409367590: wolf linux x86-64 `5e17eebed7ffbb3e…`, macOS arm64 `ea461a7668d98604…`; release 409303515: lupin linux x86-64 `e2867a3515d4691f…`, macOS arm64 `2cbd192d2f4fa8b9…` (the release API's digests); `tools/fetch-toolchain` accepted them on kasumi; `wolf --version` line 1 `wolf 0.2.27 (wolfgang, pin 0ddda6b)` | none |
+| the oracle | dash 0.5.13.4 on kasumi | `dash 0.5.13.4-1.1` (sha256 `c6221703b6197ce2…`), `bash 5.3.20-2` (`a8ce2b3c38c81853…`): `tests/diff/ORACLE`'s | none |
+| waits upstream | #141, #679, #680, #681, #682, #691, #633 | all seven OPEN (`gh issue view`); also #423 and #614 OPEN | none |
+| PAX | pax `5afb903`: threads, signals, Ctrl-C to "every process"; no groups, sessions, `tcsetpgrp`, stopped processes; px27 a writable tree | pax trunk is now **`1af462d`**: px27's notes are on trunk (the writable tree has landed since the contract was written); px24, px28, px29, px30 open | px27 landed |
+| wolf's terminal surface | `os_term_mode` and the rest of spec chapter 11 | `spec/11-os.md` at `v0.2.27`, §8: `os_pgid`, `os_term_foreground`, `os_term_set_foreground`, `os_term_mode`, `os_term_set_mode` (canonical, echo, signals, `VMIN`, `VTIME`); nothing for the window size, no `SIGWINCH` meaning, no read woken by a signal; measured by four witnesses (§4) | as named |
+| POSIX | POSIX.1-2024, cite clauses | fetched from `pubs.opengroup.org/onlinepubs/9799919799/` (XCU chapter 2 and 23 utility pages) on 2026-10-11 | none |
+| how the corpus was built | which clauses by design, which by accident | 283 of the 532 statements had a passing case before this lane (sh01–sh05 built the corpus by area: grammar, expansions, redirection, special built-ins); nothing covered aliases, `$'…'`, `umask`, `ulimit`, `type`, `hash`, `fc`, `jobs`, `fg`, `bg`, job control or `test`'s file primaries beyond `-e -f -d -s` | — |
 
 ## 3. Prediction (committed before the first measurement)
 
@@ -173,6 +182,73 @@ it" they rank first.
 8. After POSIX: completion, history expansion, `local` and the other
    extensions scripts assume — each a ruling.
 
+## 3.8 The result against the prediction
+
+| predicted | measured | verdict |
+|---|---|---|
+| 450–650 statements | 532 (+18 not counted) | held |
+| 74% met (65–83%) | **75.9%** (400 of 527 testable) | held |
+| 2.2–2.7, 2.9–2.10 above 90% | 2.6 99%, 2.7 100%, 2.9 91%, 2.10 100%, but **2.2 56%** (`$'…'`) and **2.3 44%** (aliases) | falsified for 2.2 and 2.3 |
+| 2.11–2.15 between 60% and 80% | 2.12 60%, 2.13 73%; **2.11 20%**, **2.15 87%** | falsified for 2.11, 2.15 |
+| the utility pages for `fc`, `jobs`, `fg`, `bg`, `kill`, `alias`, `unalias`, `type`, `umask`, `ulimit`, `hash` near 0% | 0% for `alias`, `type`, `umask`, `ulimit`, `fc`, `jobs`, `fg`, `bg`; `kill` and `hash` 50% | mostly held |
+| `sh`'s page about 70% | 67% | held |
+| under half covered before the census | 283 of 532, 53% | falsified (slightly over half) |
+| more than 150 new cases, 60–120 pending | 471 new (110 pending) and 42 sessions (35 pending) | held |
+| dash and bash disagree on 15–40 new cases | **96** (mostly message and listing formats); POSIX took bash's side in 24 | falsified |
+| the five largest gaps: fork, missing built-ins, signals with no meaning, `$$`/`wait`, expansion corners | by scripts: **`test`'s file primaries (14)** — not predicted at all; `umask` (9); `trap 13` (7); a bracket with `/` (4); fork-shaped (3); `$*` in an assignment (3) | the largest gap was missed |
+| 25–40 scripts, 35% same (15–60%) | 80 scripts, **62.5%** same | falsified (more pass) |
+| no autoconf configure completes identically | none of the three autoconf configures did; zlib's hand-written one did | held |
+| install-sh passes; config.guess passes or fails on a pipeline shape | both fail on `umask` | falsified |
+| git's test library fails on `local` | it fails on `test -x` | right verdict, wrong cause |
+| at least two hangs | **none** | falsified |
+| startup within 3× of dash | pelt is as fast or faster (1.35 ms against 2.32, loaded; 0.34 against 0.36, native, quiet) | held |
+| under 6 MB and flat after 10,000 typed commands | **33 MB and growing** (pipelines, `&&`, groups and substitutions keep 3–10 KB each) | falsified |
+| fork-heavy 0.8–1.5× | 1.54× | falsified (just above) |
+| pipeline-heavy 1.5–4× | 1.69× | held |
+| expansion loop 5–20×, the worst, the time in allocation | **3.9×** release, 10.2× native; the worst; ~29% in the runtime's allocation, the rest pelt's interpreter | the ratio falsified on release, held on native; the cause held |
+| configure-shaped 2–6× | **1.5×** | falsified |
+| the order: the fork ruling first | the plan starts with pelt's own script walls (they break 4× the scripts fork does), then memory, then the small built-ins; the fork ruling sits with job control | changed by the measurement |
+
 ## 4. Evidence index
 
-Filled in as the work lands.
+- **The prediction:** `4437c81`, pushed before any build or run.
+- **The clause table:** `tests/census/clauses.tsv` (532 statements, 18
+  more not counted), counted by `tools/clause-census` (a CI step on
+  every host); per statement in `docs/CENSUS.md` §5. Source:
+  `notes/sh06-evidence/*.census`, turned into cases by `gen.py`,
+  pending tags by `pend.py`, sessions by `sess.py`.
+- **The corpus and sessions at the head, on kasumi:**
+  `logs/g1-*` and the final `g2` run: corpus **804/0/117** on both
+  tiers and under `taskset -c 0-3`; `tools/oracle-record --check` 0
+  drifted (the first `--check`, `logs/g1-oracle-check.log`, found one
+  case recorded under load, `signal/c_wait_interrupted_term`, fixed in
+  `a6af687`); sessions **92/0/35** on both tiers and under `taskset`
+  (`logs/g1-sess-*`).
+- **CI:** run 38162244145 red on two host-dependent cases (ubuntu's
+  `/bin/sh` is dash: `simple/c_enoexec_binary`; macOS's `kill -s 15`:
+  `kill/c_send`), fixed in `6e59043`; run 38163737691 green on all
+  three jobs at `6e59043`.
+- **The script set:** `notes/sh06-evidence/scripts/scripts.tsv` (80 rows:
+  package, version, sha256, licence, exits, verdict) and
+  `scripts-aided.tsv`; `constructs.md` (the three shells' answers);
+  pins `tools/script-census.pins`; the static pelt `906c2a7a7ba7ca49…`
+  built from `4437c81`; images `sh06-arch` `f24bfd32dfb4`,
+  `sh06-debian` `419c2b42b659`, `sh06-alpine` `434f3bd249e0` on
+  kasumi's lane-private store; logs `scripts/final-*.log`.
+- **The sessions:** `tests/session/c_*` (42), recorded from `dash -i +m`,
+  `dash -i -m` and `bash --posix -i`; `tools/interactive-census` →
+  `logs/icensus-*.log`.
+- **Memory:** `loopmem.sh` → `logs/loopmem-release.log`; `leak.py` →
+  `logs/leak-release.log`, `logs/leak2-*.log` (dash flat, 0 B a line).
+- **Speed:** `tools/bench/` → `scripts/speed.md`, `scripts/speed-*.txt`.
+- **Witnesses for what wolf lacks:** `witness/term_keys`, `winch`,
+  `stop_report`, `read_vs_signal` (driver `witness/drive.py`, output
+  `witness/drive.log`), `witness/argv_bytes` (`argv_bytes.log`); built
+  with the pinned wolf 0.2.27 on kasumi, linux 7.2.8.
+
+## 5. Done-when
+
+- Branch `sh06`, PR wolffe-lang/pelt#8, open and unmerged.
+- No change under `src/`.
+- `wolf/tools/lane-audit.sh pelt sh06 8` run from the org directory;
+  its exit status is in the PR's last comment.
