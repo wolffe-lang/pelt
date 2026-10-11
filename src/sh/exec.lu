@@ -13,8 +13,14 @@
 //! map built from its descriptor table: the programs of a pipeline run
 //! together, a stage pelt runs itself runs to the end before the next
 //! starts (`run_pipeline` says why), and `&` starts a program without
-//! waiting. `$!` names a job, not a process: wolf gives no process id
-//! (wolf-lang#141).
+//! waiting; `$!` is that program's process id (`os_proc_pid`).
+//!
+//! **`exec cmd`** at the top level replaces the shell (`os_exec`,
+//! `[os.proc.exec]`): the same process, its descriptor table handed over
+//! as the map and the exported variables as the whole environment.
+//! Inside anything pelt runs in-process as a subshell there is no
+//! process of its own to replace, so the program is started, waited
+//! for, and the subshell ends with its status.
 //!
 //! **Memory.** A simple command runs inside `copy region`
 //! (`[mem.region.copyout]`) with the state read only and copies out
@@ -117,6 +123,14 @@ fn run_node(mut sh: Sh, n: int, k: int) -> int {
             return sh.status
         }
         sh.status = st
+    }
+    if sh.sig_mine != 0 && (k == K_SIMPLE || k == K_PIPE || k == K_SUBSHELL) {
+        // a trap's action runs after the command the signal came
+        // during (XCU 2.12)
+        poll_traps(mut sh)
+        if sh.flow == F_EXIT {
+            return sh.status
+        }
     }
     st
 }
@@ -369,6 +383,7 @@ fn run_subshell(mut sh: Sh, body: int) -> int {
     let saved_traps = copy sh.traps
     sh.traps = subshell_traps(saved_traps)
     sh.sub += 1
+    sh.sig_mine = interactive_set(sh)
     var st = run(mut sh, body)
     if sh.flow == F_EXIT {
         st = sh.status
@@ -377,7 +392,9 @@ fn run_subshell(mut sh: Sh, body: int) -> int {
     st = run_exit_trap(mut sh, st)
     sh.sub -= 1
     restore(mut sh, saved)
+    sig_apply(mut sh)
     sh.status = st
+    pass_interrupt(mut sh)
     st
 }
 
@@ -403,6 +420,7 @@ fn run_cmdsub(mut sh: Sh, node: int) -> str {
     sh.traps = subshell_traps(saved_traps)
     let saved_status = sh.status
     sh.sub += 1
+    sh.sig_mine = interactive_set(sh)
     cap_begin(mut sh)
     var st = 0
     if node >= 0 {
@@ -416,9 +434,11 @@ fn run_cmdsub(mut sh: Sh, node: int) -> str {
     let out = cap_end(mut sh)
     sh.sub -= 1
     restore(mut sh, saved)
+    sig_apply(mut sh)
     sh.status = saved_status
     sh.cs_status = st
     sh.cs_ran = true
+    pass_interrupt(mut sh)
     var end = out.len
     while end > 0 && ch(out, end - 1) == '\n' {
         end -= 1
@@ -553,10 +573,13 @@ struct Fast {
     /// R_ASSIGN: `name` NUL `value` NUL, for each assignment in order.
     enc: str,
     reads: int,
+    /// The signal that ended the program, or 0: said by the real state
+    /// (`commit_fast`), since the shadow writes no diagnostic.
+    sig: int,
 }
 
 fn slow() -> Fast {
-    Fast { kind: R_SLOW, status: 0, enc: "", reads: 0 }
+    Fast { kind: R_SLOW, status: 0, enc: "", reads: 0, sig: 0 }
 }
 
 fn fast_ok(sh: Sh) -> bool {
@@ -668,9 +691,9 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
     if fields.len == 0 {
         close_opened(t)
         if assigns.len == 0 {
-            return Fast { kind: R_DONE, status: 0, enc: "", reads: t.dir_reads }
+            return Fast { kind: R_DONE, status: 0, enc: "", reads: t.dir_reads, sig: 0 }
         }
-        return Fast { kind: R_ASSIGN, status: 0, enc: text(enc), reads: t.dir_reads }
+        return Fast { kind: R_ASSIGN, status: 0, enc: text(enc), reads: t.dir_reads, sig: 0 }
     }
     if pure {
         let st = builtin(mut t, fields)
@@ -683,7 +706,7 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
             fs_write_chunk(h, t.out) else |_| {}
         }
         close_opened(t)
-        return Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads }
+        return Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads, sig: 0 }
     }
     // a program: found, and given no capture, or the ordinary path runs it
     let cmd = fields[0]
@@ -709,21 +732,18 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
     }
     let hd = os_spawn_fds(path, fields[1..fields.len], child_map(t)) else -1
     var st = 0
+    var sig = 0
     if hd >= 0 {
-        st = wait_child(hd)
+        let (code, n) = wait_child(hd)
+        st = code
+        sig = n
     }
-    k = 0
-    while k < names.len {
-        if is_exported(t, names[k]) {
-            env_set(names[k], value_of(t, names[k])) else |_| {}
-        }
-        k += 1
-    }
+    env_back(t, names)
     close_opened(t)
     if hd < 0 {
         return slow()
     }
-    Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads }
+    Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads, sig: sig }
 }
 
 /// A line typed at the prompt, parsed and run inside the region when it
@@ -757,6 +777,9 @@ fn nul_at(s: str, from: int) -> int {
 /// Write a fast result into the state: its assignments and status.
 fn commit_fast(mut sh: Sh, r: Fast) -> int {
     sh.dir_reads += r.reads
+    if r.sig != 0 {
+        report_signal(mut sh, r.sig)
+    }
     if r.kind == R_ASSIGN {
         var at = 0
         while at < r.enc.len {
@@ -849,6 +872,9 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
         }
         sh.status = 0
         return 0
+    }
+    if cmd == "exec" {
+        return run_exec(mut sh, fields, names, values, rds)
     }
     if is_special_builtin(cmd) {
         if !assign_all(mut sh, names, values) {
@@ -997,17 +1023,66 @@ fn find_in_path(sh: Sh, name: str) -> str {
     ""
 }
 
-/// Hand the exported variables to the process environment, which is
-/// the only environment a child can be given. A variable that is unset
-/// or unexported in pelt but was in the environment pelt started with
-/// still reaches the child: wolf cannot remove one (wolf-lang#534).
+/// Whether a child is handed variable `k`: exported, and set (XCU
+/// 2.5.3; `export A` with no value hands nothing until `A` is assigned).
+fn env_wants(sh: Sh, k: str) -> bool {
+    (sh.exported[k] else false) && has_var(sh, k)
+}
+
+/// Make the process environment, which is what a spawned child is
+/// given, exactly the exported variables that are set: every other
+/// name in it is removed (`env_unset`, `[os.env.unset]`) — one `unset`
+/// or never exported, a command's own assignment left from an earlier
+/// spawn, a name the shell cannot hold (`a.b=1`, which dash drops too).
+/// The lists it reads die with the region.
 fn sync_env(sh: Sh) {
-    for k in sh.exported.keys() {
-        if sh.exported[k] else false {
-            let v = sh.vals[k] else ""
-            env_set(k, v) else |_| {}
+    region scratch {
+        for kv in env_vars() {
+            let eq = kv.find("=") else -1
+            if eq > 0 {
+                let k = kv[0..eq]
+                if !env_wants(sh, k) {
+                    env_unset(k) else |_| {}
+                }
+            }
+        }
+        for k in sh.exported.keys() {
+            if env_wants(sh, k) {
+                env_set(k, sh.vals[k] else "") else |_| {}
+            }
         }
     }
+}
+
+/// After a command's own assignments `names` were handed to its child:
+/// each is put back to the shell's exported value, or removed.
+fn env_back(sh: Sh, names: List[str]) {
+    for n in names {
+        if env_wants(sh, n) {
+            env_set(n, value_of(sh, n)) else |_| {}
+        } else {
+            env_unset(n) else |_| {}
+        }
+    }
+}
+
+/// The environment handed to a program that replaces the shell
+/// (`os_exec` takes the whole list): the exported variables that are
+/// set, and the `exec` command's own assignments `extra`.
+fn exec_env(sh: Sh, extra: List[str]) -> List[str] {
+    var out = List[str]()
+    for k in sort_strs(sh.vals.keys()) {
+        var want = env_wants(sh, k)
+        for x in extra {
+            if x == k {
+                want = true
+            }
+        }
+        if want {
+            (mut out).push("{k}={sh.vals[k] else ""}")
+        }
+    }
+    out
 }
 
 /// A child's descriptor map (`[os.proc.fds]`) for a table with no
@@ -1032,13 +1107,19 @@ fn child_map(sh: Sh) -> List[int] {
     map
 }
 
-/// A child's status: its exit code, or 128 when a signal ended it
-/// (`os_wait` does not say which, wolf-lang#534).
-fn wait_child(h: int) -> int {
-    os_wait(h) else |e| match e {
-        signal => { 128 },
-        io => { 1 },
-    }
+/// Wait for child `h`: its status (`128 + N` when signal N ended it)
+/// and N, or 0 (`os_wait_status`, `sh.signal`'s `status_of`).
+fn wait_child(h: int) -> (int, int) {
+    let raw = os_wait_status(h) else 1
+    status_of(raw)
+}
+
+/// `wait_child`, and the shell's word on standard error when a signal
+/// ended the child.
+fn reap(mut sh: Sh, h: int) -> int {
+    let (st, sig) = wait_child(h)
+    report_signal(mut sh, sig)
+    st
 }
 
 /// Everything readable from `r` into the open capture; `r` is closed.
@@ -1120,12 +1201,21 @@ fn start_child(mut sh: Sh, cmd: str, path: str, args: List[str], nowait: bool) -
         }
         k += 1
     }
-    let hd = os_spawn_fds(path, args, map) else |e| match e {
+    var hd = os_spawn_fds(path, args, map) else |e| match e {
         not_found => { -127 },
         denied => { -126 },
         invalid => { -126 },
-        io => { -126 },
+        io => { -125 },
         unsupported => { -126 },
+    }
+    if hd == -125 {
+        // the kernel would not run it: a script with no `#!` line is
+        // the shell's to run (XCU 2.9.1.4)
+        hd = -126
+        if is_script(path) {
+            let me = os_exe() else ""
+            hd = os_spawn_fds(me, script_args(path, args), map) else -126
+        }
     }
     if cap_w >= 0 {
         fs_close(cap_w) else |_| {}
@@ -1140,7 +1230,7 @@ fn start_child(mut sh: Sh, cmd: str, path: str, args: List[str], nowait: bool) -
         if hd == -127 {
             diag(mut sh, "{cmd}: not found")
         } else {
-            diag(mut sh, "{cmd}: cannot run: {why_failed()}")
+            diag(mut sh, "{cmd}: cannot be run")
         }
         return (-1, -hd)
     }
@@ -1159,6 +1249,7 @@ fn run_external(
 ) -> int {
     let cmd = fields[0]
     var path = cmd
+    sh.started = false
     if (cmd.find("/") else -1) < 0 {
         path = find_in_path(sh, cmd)
         if path.len == 0 {
@@ -1169,8 +1260,8 @@ fn run_external(
     }
     flush(mut sh)
     sync_env(sh)
-    // the command's own assignments, exported to it alone; set back
-    // after (to the old value where there was one, wolf-lang#534)
+    // the command's own assignments, exported to it alone; put back
+    // after
     var k = 0
     while k < names.len {
         env_set(names[k], values[k]) else |_| {}
@@ -1179,21 +1270,153 @@ fn run_external(
     let (h, failed) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait)
     var st = failed
     if h >= 0 {
+        sh.started = true
         if nowait {
             sh.stage_child = h
             st = 0
         } else {
-            st = wait_child(h)
+            st = reap(mut sh, h)
         }
     }
-    k = 0
-    while k < names.len {
-        if is_exported(sh, names[k]) {
-            env_set(names[k], value_of(sh, names[k])) else |_| {}
-        }
-        k += 1
-    }
+    env_back(sh, names)
     sh.status = st
+    st
+}
+
+/// Whether the file at `path` is one the shell runs itself when the
+/// kernel will not: text with no `#!` line. A file that starts like a
+/// program (a NUL in its first bytes) is not. A guess from the file,
+/// because `os_exec`'s `io` does not say `ENOEXEC` (wolf-lang#682; and
+/// `os_spawn_fds` at 0.2.27 hands such a file to `/bin/sh` itself
+/// before pelt is asked).
+fn is_script(path: str) -> bool {
+    let h = fs_open(path) else -1
+    if h < 0 {
+        return false
+    }
+    let head = fs_read_chunk(h, 256) else |_| List[byte]()
+    fs_close(h) else |_| {}
+    if head.len >= 2 && head[0] as int == 35 && head[1] as int == 33 {
+        return false
+    }
+    for b in head {
+        if b as int == 0 {
+            return false
+        }
+    }
+    true
+}
+
+/// The operands for pelt run on script `path` with `args`.
+fn script_args(path: str, args: List[str]) -> List[str] {
+    var out = List[str]()
+    (mut out).push(path)
+    for a in args {
+        (mut out).push(a)
+    }
+    out
+}
+
+// ------------------------------------------------------------------ exec
+
+/// `os_exec`'s answer as a status: it returns only when it failed —
+/// 127 when there is no such program, 125 when the kernel refused the
+/// file's format, 126 for every other reason.
+fn try_exec(path: str, argv: List[str], env: List[str], map: List[int]) -> int {
+    os_exec(path, argv, env, map) else |e| match e {
+        not_found => { return 127 },
+        denied => { return 126 },
+        invalid => { return 126 },
+        io => { return 125 },
+        unsupported => { return 126 },
+    }
+    126
+}
+
+/// `exec cmd arg…` (XCU `exec`): the assignments are made and the
+/// redirections applied, and then the program replaces the shell — the
+/// same process (`os_exec`), with the descriptor table as its
+/// descriptors and the exported variables, plus the assignments, as its
+/// environment. No `EXIT` trap runs. When the program cannot be run
+/// the shell ends, interactive or not, with 127 (not found) or 126,
+/// and that ending does run the `EXIT` trap (dash, black-box).
+/// Inside a subshell pelt runs in-process, or with a capture open,
+/// there is no process to replace: the program is started and waited
+/// for, and the subshell ends with its status.
+fn run_exec(
+    mut sh: Sh,
+    fields: List[str],
+    names: List[str],
+    values: List[str],
+    rds: List[Rd],
+) -> int {
+    if !assign_all(mut sh, names, values) {
+        return 2
+    }
+    if !apply_redirs(mut sh, rds) {
+        end_redirs(mut sh)
+        return special_redir_failed(mut sh)
+    }
+    let args = args_of(fields)
+    var here = sh.sub > 0 || sh.caps.len > 0
+    for h in sh.fds {
+        if is_cap(h) {
+            here = true
+        }
+    }
+    var st = 0
+    if here {
+        st = run_external(mut sh, args, names, values, false)
+        if sh.started {
+            // the program ran in the subshell's place: no `EXIT` trap
+            sh.traps = Map[str, str]()
+        }
+    } else {
+        st = replace_shell(mut sh, args, names)
+    }
+    end_redirs(mut sh)
+    sh.status = st
+    sh.flow = F_EXIT
+    sh.abort = false
+    st
+}
+
+/// Replace the shell with `args`; answers only when that failed, with
+/// the status the shell ends with.
+fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
+    let cmd = args[0]
+    var path = cmd
+    if (cmd.find("/") else -1) < 0 {
+        path = find_in_path(sh, cmd)
+        if path.len == 0 {
+            diag(mut sh, "exec: {cmd}: not found")
+            return 127
+        }
+    }
+    flush(mut sh)
+    let env = exec_env(sh, names)
+    let map = child_map(sh)
+    var st = try_exec(path, args, env, map)
+    if st == 125 {
+        st = 126
+        if is_script(path) {
+            let me = os_exe() else ""
+            var argv = List[str]()
+            (mut argv).push("pelt")
+            for a in script_args(path, args[1..args.len]) {
+                (mut argv).push(a)
+            }
+            st = try_exec(me, argv, env, map)
+            if st == 125 {
+                st = 126
+            }
+        }
+    }
+    if st == 127 {
+        diag(mut sh, "exec: {cmd}: not found")
+    } else {
+        diag(mut sh, "exec: {cmd}: cannot be run")
+    }
     st
 }
 
@@ -1203,7 +1426,11 @@ fn run_external(
 /// list's own redirections. A simple command that runs a program is
 /// started and not waited for; anything else pelt runs itself, to the
 /// end, as a subshell (no fork), and records as a finished job. `$!` is
-/// the job's number in pelt's table, not a process id (wolf-lang#141).
+/// the program's process id (`os_proc_pid`), or for a list pelt ran
+/// itself a number no process has. With job control off the program
+/// starts with `SIGINT` and `SIGQUIT` ignored (XCU 2.11): the two are
+/// ignored in pelt across the spawn, which is what a child inherits,
+/// and put back after.
 fn run_async(mut sh: Sh, node: int) -> int {
     flush(mut sh)
     let saved_in = fd_get(sh, 0)
@@ -1211,17 +1438,28 @@ fn run_async(mut sh: Sh, node: int) -> int {
     fd_set(mut sh, 0, null)
     sh.stage_child = -1
     sh.nowait = sh.ast.nodes[node].kind == K_SIMPLE && sh.caps.len == 0
+    if sh.nowait {
+        os_signal_ignore(M_INT | M_QUIT) else |_| {}
+        sh.sig_listen = sh.sig_listen & M_TRAPS - (M_INT | M_QUIT)
+        sh.sig_ignore = sh.sig_ignore | M_INT | M_QUIT
+    }
     let st = run_subshell(mut sh, node)
     sh.nowait = false
     let child = sh.stage_child
     sh.stage_child = -1
+    sig_apply(mut sh)
     fd_set(mut sh, 0, saved_in)
     if null >= 3 && !names_handle(sh.fds, null) {
         fs_close(null) else |_| {}
     }
+    var id = NO_PID_BASE + sh.jobs.len
+    if child >= 0 {
+        id = os_proc_pid(child) else id
+    }
     (mut sh.jobs).push(child)
     (mut sh.job_st).push(if child >= 0 then -1 else st)
-    sh.last_bg = sh.jobs.len
+    (mut sh.job_id).push(id)
+    sh.last_bg = id
     sh.status = 0
     0
 }
@@ -1231,9 +1469,21 @@ fn wait_job(mut sh: Sh, i: int) -> int {
     if sh.job_st[i] >= 0 {
         return sh.job_st[i]
     }
-    let st = wait_child(sh.jobs[i])
+    let st = reap(mut sh, sh.jobs[i])
     sh.job_st[i] = st
     st
+}
+
+/// The job `$!` named `id`, or -1.
+fn job_of(sh: Sh, id: int) -> int {
+    var i = sh.jobs.len - 1
+    while i >= 0 {
+        if sh.job_id[i] == id {
+            return i
+        }
+        i -= 1
+    }
+    -1
 }
 
 // ------------------------------------------------------------ pipelines
@@ -1295,7 +1545,7 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         i += 1
     }
     for h in kids {
-        let _s = wait_child(h)
+        let _s = reap(mut sh, h)
     }
     read_pending_caps(mut sh)
     st
