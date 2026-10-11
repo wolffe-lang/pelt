@@ -1,4 +1,4 @@
 exit=0
 stderr=no
 bash=agree
-pending=test-file-primaries
+pending=host-dir-size

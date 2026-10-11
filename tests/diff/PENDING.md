@@ -25,7 +25,7 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
-| **test-file-primaries** | `test -x` is false for an executable regular file and `-r`/`-w` ignore the permission bits; no `-L`/`-h`; `-b`, `-p`, `-S` answer true for any file; `-u`, `-g`, `-ef` missing; `-nt`/`-ot` with a missing file | pelt (sh06 issue P01); permission bits come from `fs_stat` (wolf 0.2.27), the caller's identity from wolf-lang#633 | `test/c_file_compare`, `test/c_file_types`, `test/c_files`, `test/c_permissions`, `test/c_s_test_access` |
+| **host-dir-size** | nothing pelt lacks: the case's `-s` row asks whether an empty directory has a size, and the oracle was recorded on kasumi's btrfs, where it has none; on ext4 (the linux runners) and APFS (macOS) an empty directory has a size, so dash there answers `-s` true for it as pelt does (sh07). PEND-ok on btrfs | the oracle's host | `test/c_files` |
 | **sh-option-parsing** | `sh -ec 'cmd'` (option letters joined with `c`), `--`, and `-s -` | pelt (P02) | `sh/c_combined_options`, `sh/c_dash_s` |
 | **alias** | `alias`, `unalias`, alias substitution (XCU 2.3.1), and `command -v` of an alias or of a file that is not executable | pelt (P03) | `alias/c_after_reserved`, `alias/c_alias_missing`, `alias/c_alias_names`, `alias/c_alias_print`, `alias/c_basic`, `alias/c_no_self_recursion`, `alias/c_not_inherited`, `alias/c_parse_time`, `alias/c_position`, `alias/c_quoted_not`, `alias/c_subshell`, `alias/c_takes_effect_next`, `alias/c_trailing_blank`, `alias/c_unalias`, `alias/c_value_tokens`, `command/c_v` |
 | **type** | `type` | pelt (P04) | `type/c_type`, `type/c_type_path` |
@@ -58,7 +58,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **notify-flag** | `set -o notify` does not put `b` in `$-` | pelt (P10) | `option/c_long_names` |
 | **dq-brace-escape** | `"${x:-a\}b}"` keeps the backslash (XCU 2.2.3) | pelt (P11) | `quote/c_dq_default_word` |
 | **bracket-slash** | `${x##*[/]}`: a bracket expression holding a slash is not one outside pathname expansion too (XCU 2.14.3 restricts that rule to file names) | pelt (P11) | `glob/c_no_file_rules_in_case`, `glob/c_s_bracket_slash_case` |
-| **path-skips-non-executable** | a PATH search stops at a file that is not executable instead of going on to the next directory | pelt (P11) | `simple/c_path_order` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
 | **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell` |
