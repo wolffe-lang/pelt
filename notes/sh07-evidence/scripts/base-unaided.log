@@ -1,0 +1,165 @@
+build: target/static/pelt
+906c2a7a7ba7ca49b840c0240d5f091e369ac9dc2a89c8c0885104b021cd6e6d  ../sc/pelt-base
+script-census: building sh06-arch
+warning: zlib-1:1.3.2-3 is up to date -- skipping
+warning: openssl-3.6.5-1 is up to date -- skipping
+3a7ebb603e9f24e61f9edac4b13b3d8fcba75f0f73a82ed9e809e1e5bd662127
+script-census: building sh06-debian
+07f90a70fd6e927e06f3ace957dd37b4f9a500db059349501bb5ed268ebab29b
+script-census: building sh06-alpine
+*
+* If you need ICU with non-English locales and legacy charset support, install
+* package icu-data-full.
+*
+9d54aefd413b1c198507528ae58baa3ea4f5551b53ca90331eaa62c031f04c00
+script-census: pelt = /home/mfwolffe/lanes/sh07/sc/pelt-base sha256 906c2a7a7ba7ca49b840c0240d5f091e369ac9dc2a89c8c0885104b021cd6e6d
+script-census: https://ftp.gnu.org/gnu/hello/hello-2.12.2.tar.gz
+differs  configure-hello  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout, stderr present, files
+script-census: https://ftp.gnu.org/gnu/sed/sed-4.9.tar.xz
+differs  configure-sed  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout, stderr present, files
+script-census: https://ftp.gnu.org/gnu/gzip/gzip-1.14.tar.xz
+differs  configure-gzip  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout, stderr present, files
+script-census: https://zlib.net/fossils/zlib-1.3.1.tar.gz
+same     configure-zlib  dash 0  pelt 0
+script-census: https://ftp.gnu.org/gnu/automake/automake-1.18.1.tar.xz
+differs  install-sh  dash 0,0,0,0,1  pelt 1,1,1,0,1
+         run 0 [-d a/b/c]: exit 1 (dash 0), stderr present, files
+         run 1 [-m 644 f1 f2 dest]: exit 1 (dash 0), stderr present, files
+         run 2 [-c -m 755 f1 out/f1]: exit 1 (dash 0), stderr present, files
+differs  config.guess  dash 0,0  pelt 1,0
+         run 0 []: exit 1 (dash 0), stdout, stderr present
+same     config.sub  dash 0,0,0,0,0,1,1  pelt 0,0,0,0,0,1,1
+same     missing  dash 0,0,0,127,1  pelt 0,0,0,127,1
+same     compile  dash 0,0,0,1  pelt 0,0,0,1
+same     depcomp  dash 0,0,0,0,1  pelt 0,0,0,0,1
+differs  mkinstalldirs  dash 0,0,0,0  pelt 0,0,0,0
+         run 1 [-m 700 p/q]: stderr present
+same     mdate-sh  dash 0,0,1  pelt 0,0,1
+differs  test-driver  dash 0,0,0,0  pelt 0,0,0,0
+         run 0 [--test-name t1 --log-file t1.log --trs-file t1.trs -- true]: stderr present
+         run 1 [--test-name t2 --log-file t2.log --trs-file t2.trs --color-tests no --expect-failure no -- false]: stderr present
+         run 2 [--test-name t3 --log-file t3.log --trs-file t3.trs -- sh -c 'exit 77']: stderr present
+differs  ylwrap  dash 0,0,1  pelt 0,127,1
+         run 1 [p.y y.tab.c p.c y.tab.h p.h -- ./fakeyacc -d]: exit 127 (dash 0), stdout, stderr present, files
+same     ar-lib  dash 0,1,1  pelt 0,1,1
+differs  tap-driver.sh  dash 0,0  pelt 0,0
+         run 0 [--test-name t --log-file t.log --trs-file t.trs -- ./t.sh]: stderr present
+script-census: https://ftp.gnu.org/gnu/libtool/libtool-2.5.4.tar.xz
+differs  ltmain.sh  dash 0,0,0,63,63,63  pelt 1,1,1,1,1,1
+         run 0 [--version]: exit 1 (dash 0), stdout, stderr present, files
+         run 1 [--help]: exit 1 (dash 0), stdout, stderr present, files
+         run 2 [--features]: exit 1 (dash 0), stdout, stderr present, files
+         run 3 [--mode=compile gcc -c x.c]: exit 1 (dash 63), files
+         run 4 [--mode=nonsense]: exit 1 (dash 63), files
+         run 5 []: exit 1 (dash 63), files
+script-census: https://www.kernel.org/pub/software/scm/git/git-2.56.0.tar.xz
+script-census: preparing git in sh06-arch (network off)
+differs  git-test-lib  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout
+differs  git-t0000-basic  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout
+same     deb-cron.postinst  dash 0,0,0  pelt 0,0,0
+same     deb-cron-daemon-common.postinst  dash 0,0  pelt 0,0
+same     deb-rsync.postinst  dash 0,0  pelt 0,0
+differs  deb-openssh-server.postinst  dash 1,1  pelt 127,127
+         run 0 [configure]: exit 127 (dash 1), files
+         run 1 [configure 1:8.0p1-1]: exit 127 (dash 1), files
+same     deb-openssh-server.prerm  dash 1,1  pelt 1,1
+differs  deb-openssh-client.postinst  dash 1,1  pelt 2,2
+         run 0 [configure]: exit 2 (dash 1)
+         run 1 [configure 1:8.0p1-1]: exit 2 (dash 1)
+same     deb-procps.postinst  dash 1,1  pelt 1,1
+differs  deb-ca-certificates.postinst  dash 0,0  pelt 127,0
+         run 0 [configure]: exit 127 (dash 0), files
+differs  deb-base-files.postinst  dash 0,0  pelt 1,0
+         run 0 [configure]: exit 1 (dash 0), stderr present, files
+same     deb-base-passwd.preinst  dash 0,0  pelt 0,0
+differs  deb-libc6.postinst  dash 0,0  pelt 127,127
+         run 0 [configure]: exit 127 (dash 0), files
+         run 1 [configure 2.30-1]: exit 127 (dash 0), files
+differs  deb-libc6.preinst  dash 2,2  pelt 127,127
+         run 0 [install]: exit 127 (dash 2), files
+         run 1 [upgrade 2.30-1]: exit 127 (dash 2), files
+same     deb-util-linux.postinst  dash 0,0  pelt 0,0
+same     deb-adduser.preinst  dash 0,0  pelt 0,0
+same     deb-dpkg.postinst  dash 0,0  pelt 0,0
+differs  deb-tzdata.postinst  dash 0  pelt 2
+         run 0 [configure]: exit 2 (dash 0), files
+same     dpkg-maintscript-helper  dash 1,1,0,0,1  pelt 1,1,0,0,1
+same     init-cron  dash 3,2,2  pelt 3,2,2
+differs  init-rsync  dash 3,0,1,1  pelt 0,0,0,0
+         run 0 [status]: exit 0 (dash 3), stdout
+         run 2 [nonsense]: exit 0 (dash 1), stdout
+         run 3 []: exit 0 (dash 1), stdout
+differs  init-ssh  dash 3,1,1  pelt 0,0,0
+         run 0 [status]: exit 0 (dash 3), stdout
+         run 1 [nonsense]: exit 0 (dash 1), stdout
+         run 2 []: exit 0 (dash 1), stdout
+differs  init-procps  dash 0,3,3  pelt 0,0,0
+         run 1 [nonsense]: exit 0 (dash 3), stderr absent
+         run 2 []: exit 0 (dash 3), stderr absent
+differs  service  dash 0,0,3,1,1  pelt 0,0,1,1,1
+         run 0 [--status-all]: stdout
+         run 2 [cron status]: exit 1 (dash 3), stdout, stderr present
+same     invoke-rc.d  dash 0,101,4,0,103  pelt 0,101,4,0,103
+differs  update-ca-certificates  dash 0,0,0,0  pelt 0,0,0,0
+         run 0 []: stderr present, files
+         run 1 [--fresh]: stdout, files
+         run 3 [--verbose]: stderr present, files
+same     apk-nginx.pre-install  dash 0  pelt 0
+same     apk-nginx.post-install  dash 0  pelt 0
+same     apk-nginx.post-upgrade  dash 0  pelt 0
+same     apk-dbus.pre-install  dash 0  pelt 0
+same     apk-dbus.post-install  dash 0  pelt 0
+same     apk-alpine-baselayout.pre-install  dash 0  pelt 0
+same     apk-alpine-baselayout.post-install  dash 0  pelt 0
+same     apk-chrony.pre-install  dash 0  pelt 0
+same     apk-postfix.pre-install  dash 0  pelt 0
+same     apk-openrc.post-install  dash 0  pelt 0
+same     apk-openssh-server.post-upgrade  dash 0  pelt 0
+same     setup-hostname  dash 0,0,1  pelt 0,0,1
+same     setup-timezone  dash 0,1,1  pelt 0,1,1
+same     setup-dns  dash 0,0  pelt 0,0
+same     update-conf  dash 0,0,0  pelt 0,0,0
+same     lbu  dash 0,0,0,1  pelt 0,0,0,1
+same     gunzip  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     zcat  dash 0,0,1  pelt 0,0,1
+same     zcmp  dash 1,0,0  pelt 1,0,0
+same     zforce  dash 0,0,0  pelt 0,0,0
+same     uncompress  dash 0,0  pelt 0,0
+same     ssh-copy-id  dash 1,1,1,1  pelt 1,1,1,1
+same     ssh-argv0  dash 1,1  pelt 1,1
+same     select-editor  dash 1,1,1  pelt 1,1,1
+same     sensible-editor  dash 0,1,1,1  pelt 0,1,1,1
+same     sensible-pager  dash 0,0,0  pelt 0,0,0
+script-census: https://github.com/dylanaraps/pfetch/archive/refs/tags/0.6.0.tar.gz
+differs  pfetch  dash 0,0,0  pelt 2,2,2
+         run 0 []: exit 2 (dash 0), stdout
+         run 1 []: exit 2 (dash 0), stdout
+         run 2 []: exit 2 (dash 0)
+differs  which.debianutils  dash 1,0,1,2  pelt 1,1,1,2
+         run 0 [sh ls nosuch]: stdout
+         run 1 [-a sh]: exit 1 (dash 0), stdout
+same     savelog  dash 0,0,0,1  pelt 0,0,0,1
+same     add-shell  dash 0,1  pelt 0,1
+same     gettext.sh  dash 0,0,1  pelt 0,0,1
+differs  xzgrep  dash 0,0,1,0,2  pelt 2,2,2,0,2
+         run 0 [b f.xz]: exit 2 (dash 0)
+         run 1 [-c . f.xz g.xz]: exit 2 (dash 0), stdout
+         run 2 [zzz f.xz]: exit 2 (dash 1)
+same     xzdiff  dash 1,0,0  pelt 1,0,0
+differs  zgrep  dash 0,0,1,0  pelt 0,0,1,0
+         run 0 [b f.gz]: stderr present
+         run 1 [-n -e a -e c f.gz g.gz]: stderr present
+         run 2 [zzz f.gz]: stderr present
+differs  zdiff  dash 1,0,0  pelt 1,2,0
+         run 1 [f.gz]: exit 2 (dash 0), stdout, stderr present
+differs  lesspipe  dash 0,0,0  pelt 0,0,0
+         run 1 [f.gz]: stderr present
+         run 2 [f.tar]: stderr present
+same     xdg-mime  dash 0,0,0,0,1  pelt 0,0,0,0,1
+script-census: differs 30  same 50  of 80  (../sc/base-unaided.tsv)
+census=0
