@@ -1041,8 +1041,7 @@ fn sync_env(sh: Sh) {
             let eq = kv.find("=") else -1
             if eq > 0 {
                 let k = kv[0..eq]
-                // PLANT (to be reverted): nothing is removed
-                if !env_wants(sh, k) && k.len == 0 {
+                if !env_wants(sh, k) {
                     env_unset(k) else |_| {}
                 }
             }
@@ -1359,8 +1358,7 @@ fn run_exec(
         return special_redir_failed(mut sh)
     }
     let args = args_of(fields)
-    // PLANT (to be reverted): never replace the shell
-    var here = true || sh.sub > 0 || sh.caps.len > 0
+    var here = sh.sub > 0 || sh.caps.len > 0
     for h in sh.fds {
         if is_cap(h) {
             here = true
