@@ -1,0 +1,80 @@
+difftest: pelt = /home/mfwolffe/lanes/sh07/basebin/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+FAIL builtin/dot_fifo_program: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'dev null: 0\nfrom the fifo\nfifo: 0 v=set\n'
+     pelt stderr: b'pelt: ../s.sh: line 5: .: /dev/null: not found\n'
+FAIL command/c_declaration: stdout
+     pelt stdout: b'[a]\n'
+     want stdout: b'[a b]\n'
+FAIL glob/c_no_file_rules_in_case: stdout
+     pelt stdout: b'dot-matched\nslash-matched\nb/c a a/b/c\n'
+     want stdout: b'dot-matched\nslash-matched\nb/c a c\n'
+FAIL glob/c_s_bracket_slash_case: stdout
+     pelt stdout: b'/abs: plain\nrel: plain\n./rel: plain\na\\b: plain\n$var/x: plain\nc:/dos: plain\nno match\nnegated bracket matches slash\nusr/local/bin usr/local/bin usr/local/bin usr/local/bin\n'
+     want stdout: b'/abs: absolute\nrel: plain\n./rel: has a separator\na\\b: has a separator\n$var/x: absolute\nc:/dos: absolute\nbracket matches slash\nnegated bracket matches slash\nlocal/bin usr/local bin usr\n'
+FAIL param/at_star_nosplit: stdout
+     pelt stdout: b'[abc]\n[abc]\napart\n[abc]\n'
+     want stdout: b'[a,b,c]\n[a,b,c]\njoined\n[abc]\n'
+FAIL param/c_s_star_assign_ifs: stdout
+     pelt stdout: b'[x86_64] [pc] [linuxgnu]\n[a:b:c] [abc]\ncase word not joined\n'
+     want stdout: b'[x86_64] [pc] [linux-gnu]\n[a:b:c] [a:b:c]\ncase word joined\n'
+FAIL param/c_star_assign: stdout
+     pelt stdout: b'abc\n'
+     want stdout: b'a,b,c\n'
+FAIL quote/c_dq_default_word: stdout
+     pelt stdout: b"a  'b'  *\na\\}b\n/home/pelt\n"
+     want stdout: b"a  'b'  *\na}b\n/home/pelt\n"
+FAIL quote/utf8_bytes: stdout
+     pelt stdout: b'3f3f\n6361663f3f\n6361663f3f736361663f3f73\n463f3f74\n463f3f74\n783f3f790a\n6e3f3f0a\n6e3f3f\npattern: quoted\npattern: wildcard\n3f3f620a\n2\n'
+     want stdout: b'c3a9\n636166c3a9\n636166c3a973636166c3a973\n46c59174\n46c59174\n78c3a9790a\n6ec3a90a\n6ec3a9\npattern: quoted\npattern: wildcard\nc3a9620a\n2\n'
+FAIL signal/c_s_trap_by_number: stdout, stderr present
+     pelt stdout: b"set: 1\nignore: 0\ntrap -- '' ALRM\ntrap -- 'echo caught' HUP\ntrap -- 'echo caught' INT\ntrap -- 'echo caught' TERM\nreset: 1\nbye\n"
+     want stdout: b"set: 0\nignore: 0\ntrap -- '' ALRM\ntrap -- 'echo caught' HUP\ntrap -- 'echo caught' INT\ntrap -- 'echo caught' PIPE\ntrap -- 'echo caught' TERM\nreset: 0\nbye\n"
+     pelt stderr: b'pelt: ../s.sh: line 6: trap: 13: no such condition\npelt: ../s.sh: line 12: trap: 13: no such condition\n'
+FAIL signal/trap_numbers_common: stdout, stderr present
+     pelt stdout: b'set: 1\nreset: 1\ndone\n'
+     want stdout: b"set: 0\ntrap -- 'echo t' FPE\ntrap -- 'echo t' ILL\ntrap -- 'echo t' PIPE\ntrap -- 'echo t' SEGV\ntrap -- 'echo t' TRAP\nreset: 0\ndone\n"
+     pelt stderr: b'pelt: ../s.sh: line 4: trap: 4: no such condition\npelt: ../s.sh: line 4: trap: 5: no such condition\npelt: ../s.sh: line 4: trap: 8: no such condition\npelt: ../s.sh: line 4: trap: 11: no such condition\npelt: ../s.sh: line 4: trap: 13: no such condition\npelt: ../s.sh: line 8: trap: 4: no such conditio'
+FAIL simple/assign_order_program: stdout
+     pelt stdout: b'x=3\ny=1\nafter a program: x=1 y=unset\nafter a special built-in: x=3 y=1\n'
+     want stdout: b'x=3\ny=3\nafter a program: x=1 y=unset\nafter a special built-in: x=3 y=3\n'
+FAIL simple/c_assign_current: stdout
+     pelt stdout: b'1 2\n1\n'
+     want stdout: b'1 2\n3\n'
+FAIL simple/c_declaration_utility: stdout
+     pelt stdout: b'[a]\n[a]\n~/q:~\n'
+     want stdout: b'[a b]\n[a b]\n/h/q:/h\n'
+FAIL simple/c_path_order: stdout, stderr present
+     pelt stdout: b'from-a\n'
+     want stdout: b'from-b\nfrom-a\n'
+     pelt stderr: b'pelt: ../s.sh: line 3: prog: not found\n'
+FAIL simple/declaration_forms: stdout
+     pelt stdout: b'[p]\n[p]\n[p]\n[p q] [~/x]\n[*]\nexport j=p q\n'
+     want stdout: b'[p q]\n[p q]\n[p q]\n[p q] [/hh/x]\n[*]\nexport j=p q\n'
+FAIL test/c_file_compare: stdout
+     pelt stdout: b'ef=1\nef2=1\nnt=0\nnt2=1\not=0\nnt-missing=1\not-missing=1\n'
+     want stdout: b'ef=0\nef2=1\nnt=0\nnt2=1\not=0\nnt-missing=0\not-missing=0\n'
+FAIL test/c_file_types: stdout
+     pelt stdout: b'c=0\nb=0\np=0\nS=0\nu=1\ng=1\nt=1\nt9=1\n'
+     want stdout: b'c=0\nb=1\np=1\nS=1\nu=0\ng=0\nt=1\nt9=1\n'
+FAIL test/c_permissions: stdout, exit 1 (oracle 0)
+     pelt stdout: b'r=0\nw=0\nx=1\n'
+     want stdout: b'r=1\nw=1\nx=1\nall\n'
+FAIL test/c_s_test_access: stdout
+     pelt stdout: b'plain r=y w=y x=n L=n-\nprog r=y w=y x=n L=n-\nsecret r=y w=y x=n L=n-\nro r=y w=y x=n L=n-\ndir r=y w=y x=y L=n-\nlink r=y w=y x=n L=n-\n/usr/bin/env r=y w=y x=n L=n-\n/nonexistent r=n w=n x=n L=n-\nef: different files\n'
+     want stdout: b'plain r=y w=y x=n L=n-\nprog r=y w=y x=y L=n-\nsecret r=n w=n x=n L=n-\nro r=y w=n x=n L=n-\ndir r=y w=y x=y L=n-\nlink r=y w=y x=n L=y\n/usr/bin/env r=y w=n x=y L=n-\n/nonexistent r=n w=n x=n L=n-\nef: same file\nef: different files\nenv is a program\n'
+FAIL test/primaries_more: stdout, stderr present
+     pelt stdout: b'nt=0\not=0\nself=1\nk=2\nk-plain=2\nef-link=1\nh-missing=1\nt-alone=0\n'
+     want stdout: b'nt=0\not=0\nself=1\nk=0\nk-plain=1\nef-link=0\nh-missing=1\nt-alone=0\n'
+     pelt stderr: b'pelt: ../s.sh: line 10: test: -k: unknown operator\npelt: ../s.sh: line 11: test: -k: unknown operator\n'
+difftest: area        pass  fail  pending (of which pass)
+difftest: builtin        0     1     0 (0)
+difftest: command        0     1     0 (0)
+difftest: glob           0     2     0 (0)
+difftest: param          0     3     0 (0)
+difftest: quote          0     2     0 (0)
+difftest: signal         0     2     0 (0)
+difftest: simple         0     5     0 (0)
+difftest: test           0     5     0 (0)
+difftest: total          0    21     0 (0)

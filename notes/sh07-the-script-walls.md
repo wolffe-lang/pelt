@@ -109,3 +109,133 @@ short of root (W07).
 (no search); `pipeline` and `param` touch nothing changed;
 `configure-shaped`'s `command -v` search was one `stat`-like call per
 directory and stays one (`fs_stat` in place of `fs_is_file`).
+
+### 3.6 The result against the prediction
+
+Measured on kasumi (linux x86-64, dash 0.5.13.4 for the corpus; the
+census images' own dash for the scripts), at the end of each item
+(`notes/sh07-evidence/scripts/step*.tsv`, the 18 scripts that changed
+re-run with a static pelt built at that commit) and at the head.
+
+| after | predicted | measured | what differs from the prediction |
+|---|---:|---:|---|
+| (trunk `84a02dc`) | 50 | **50** | — (`base-unaided.tsv`: verdicts and digests identical to sh06's) |
+| 1 `test` (`f3f0d15`) | 63 | **61** | `ltmain.sh --help` also needed item 2; `init-ssh` passes `test -x` and then stops at `umask` (sh06's aided pass skipped `umask`, so nobody had seen that wall) |
+| 2 patterns (`df1a62e`) | 63 | **62** | `ltmain.sh` |
+| 3 assignments (`d5bd035`) | 63 | **62** | — |
+| 4 UTF-8 (`c130113`) | 64 | **63** | update-ca-certificates, as predicted |
+| 5 `trap … 13` (`b0d0814`) | 67 | **66** | test-driver, tap-driver.sh, ylwrap, as predicted |
+| 6 `.` (`644b48b`) | 68 | **66 + 1 unstable** | pfetch now runs to the end and matches dash's runs 0 and 1; its run 2 prints the memory in use, which moved between dash's own two runs (`unstable`: counted neither way; the same on a second try, `after-aided-and-pfetch.log`) |
+
+**66 of 80 unaided, the bottom of the predicted band (66–68): held.**
+The contract's 72 was not reachable, as §2 said; with `umask` routed
+around (`--aided`), 76 of 80 run as under dash (`after-aided.tsv`). The
+13 still differing, each with the construct it stops at (the first
+`pelt:` line of its runs, `after-unaided.log`, and the aided pass):
+
+| scripts | construct | waits on |
+|---|---|---|
+| configure-hello, configure-sed, configure-gzip (through `build-aux/config.guess`), install-sh, config.guess, mkinstalldirs, deb-openssh-client.postinst, deb-tzdata.postinst, init-ssh, lesspipe | `umask` is "not supported yet" (`umask/c_s_umask_set`) | wolf's release after 0.2.27 (s230's `os_umask`), then pelt (PLAN S4) |
+| xzgrep, zgrep, zdiff | a pipeline stage's write to descriptor 4 inside `$( … )` is lost (`redir/c_s_cmdsub_fd_pipeline`): the decompressor's status comes back empty | a process per pipeline stage (gap 7, W01 / ruling R1) |
+
+**The cases.** 14 moved from pending to passing, not 15: `test/c_files`
+stays pending, now on the oracle's host. Its `-s` row asks whether an
+empty directory has a size; the oracle was recorded on kasumi's btrfs,
+where it has none, and on the CI hosts' ext4 and APFS it has one, so
+dash there answers `-s` true as pelt does (the access witness's
+`dirsize` runs show dash itself answering both ways: true on a tmpfs,
+false on btrfs; CI run 38168369021, ubuntu: `PEND-fail test/c_files`,
+every other test case `ok`). 7 new cases from dash, all passing:
+`simple/assign_order_program`, `param/at_star_nosplit`,
+`simple/declaration_forms`, `test/primaries_more`, `quote/utf8_bytes`,
+`signal/trap_numbers_common`, `builtin/dot_fifo_program`. The corpus is
+**825/0/103** on both tiers and under `taskset -c 0-3` (predicted
+(804 + 15 + new)/0/102: one fewer moved, for `c_files`); sessions
+92/0/35; `tools/oracle-record --check` 0 drifted. Run against trunk's
+pelt (`84a02dc`, release tier), **all 21 moved and new cases fail**
+(`difftest: total 0 21 0`, `notes/sh07-evidence/logs/`
+`h3-cases-on-trunk-pelt.log`): each is a gate that has been seen red on
+the code it guards against.
+
+**Statements: 400 → 414 of 527 (78.6%)**, predicted 415: `test/8`
+stays pending behind `test/c_files`. 2.14 Pattern matching is now 100%,
+the `test` page 87%.
+
+**`test -r/-w/-x` without `access(2)`** (`notes/sh07-evidence/access/`,
+`witness-644b48b.log`): 13 files and directories, as root and as uid
+1000, in the census's Arch image (dash 0.5.13.4), every row the same as
+dash's but one: as root, `-w` of a file on a **read-only mount** is
+true under pelt (the mode bits allow it) and false under dash (access(2)
+answers `EROFS`). That is W07, as predicted; ACLs, `noexec` mounts and
+capabilities short of root were not measured. The identity comes from
+`/proc/self/status` on linux and from `id -u`/`id -G` on macOS (CI's
+macOS job runs every access case green), asked only when the mode bits
+give different answers to different askers.
+
+**Speed** (`notes/sh07-evidence/bench/`, head `9e4e78e` against trunk
+`84a02dc`, both tiers built on kasumi, load 2.4–3.2). Wall time,
+medians of 9 (unpinned / under `taskset -c 0-3`), release tier: fork
++0.4% / −1.7%, pipeline +1.9% / +2.8%, param +0.2% / +4.6%,
+configure-shaped +0.4% / +2.2%; native: fork +0.2% / +1.0%, pipeline
++1.6% / −0.9%, param +4.2% / +3.4%, configure-shaped +4.6% / +2.8%.
+User instructions (`perf stat -e instructions:u`, load-independent,
+`instructions.txt`): release fork +0.3%, pipeline +1.1%, param +2.2%,
+configure-shaped +1.8%; native +1.2%, +2.2%, +2.5%, +2.5%. **No row
+moves by more than 5%: held**, but only after two trims the first
+measurement asked for: at `644b48b` param cost +4.2% instructions on
+release, and at `f2202d8` param native measured +6.8% wall under
+load (the instruction count said +3.8%). `8ef1de3` takes the in-order
+bookkeeping off a lone assignment, `f2202d8` keeps the groups as a
+`str` so the fast path's copy of the state allocates nothing, and
+`9e4e78e` carries "no field splitting here" as a flag on the word
+instead of a field of the shell written and restored per expansion.
+
+## 4. Evidence index
+
+- **The prediction:** `ef03131`, pushed before the first change under
+  `src/` (`72038d8`).
+- **The census, before:** `notes/sh07-evidence/scripts/base-unaided.tsv`
+  and `.log` (static pelt of trunk, sha256 `906c2a7a7ba7ca49…`, the
+  same binary sh06 measured): 50 same, 30 differ.
+- **The census, after each item:** `step1-f3f0d15.tsv` …
+  `step5-b0d0814.tsv` and `steps.out` (each static pelt's digest).
+- **The census, at the head:** `after-unaided.tsv`/`.log` (static pelt
+  of `644b48b`, sha256 `adc24d9b18642061…`: 66 same, 13 differ, 1
+  unstable), `after-aided.tsv` (76 same, 3 differ, 1 unstable),
+  `final-unaided.tsv`/`.log` (static pelt of the final source head
+  `9e4e78e`, sha256 `8a498b238992c0cf…`: 66 same, 13 differ, 1
+  unstable, the same verdicts as at `644b48b`). Images: `sh06-arch`, `sh06-debian`, `sh06-alpine`,
+  built from `tools/script-census`'s pinned Containerfiles into
+  kasumi's lane-private store; every script's sha256 checked against
+  `tools/script-census.pins` (identical before and after).
+- **The corpus and sessions at the head:** `notes/sh07-evidence/logs/`
+  `h3-*` (gauntlet at `9e4e78e`: fmt, both builds, `wolf test`, the
+  clause census, difftest on both tiers and under `taskset`, sessions
+  on both tiers and under `taskset`, glob-rss, loop-rss, exec-witness,
+  oracle-record `--check`; every exit status 0, `h3.status`); `base-*` the same at trunk before any change.
+- **The access witness:** `notes/sh07-evidence/access/` (`witness.sh`,
+  `access.sh`, `dirsize.sh`, `witness-644b48b.log`).
+- **The bench:** `notes/sh07-evidence/bench/` (`speed-unpinned.txt`,
+  `speed-pinned.txt`, the loads, `instructions.txt`, the binaries'
+  digests in `heads`).
+- **The gates seen red:** the 21 moved and new cases against trunk's
+  pelt, `logs/h3-cases-on-trunk-pelt.log` (0 pass, 21 fail).
+- **CI:** PR wolffe-lang/pelt#9; run 38168369021 (at `f3f0d15`:
+  ubuntu `PEND-fail test/c_files`, the host-dir-size evidence), run
+  38176525398 green on all three jobs at `9e4e78e`.
+
+## 5. Done-when
+
+- Branch `sh07`, PR #9 open and unmerged, CI green at the head.
+- `wolf/tools/lane-audit.sh pelt sh07 9`, run from the org directory,
+  its exit status read directly (the report says it).
+- pelt issues this branch fixes (sh06's numbering; none is filed yet,
+  so nothing is closed): **P01** (`test/c_files` stays pending on the
+  oracle's host only; `-O`/`-G` stay on wolf-lang#633), **P07**,
+  **P11**, **P15** (recorded and listed; catching SIGPIPE stays
+  wolf-lang#679), and the UTF-8 half of **P14** and the `/dev/null` and
+  program-written-FIFO half of **P16**; P14's non-UTF-8 half waits on
+  W06 and P16's shell-written FIFO on fork (gap 7).
+- Ruling #69 (R1 B, R5 keep `local`, R6 arithmetic as dash, R7 A),
+  made while this lane ran, changes nothing here: `local` is kept and
+  treated as a declaration utility, as dash does.

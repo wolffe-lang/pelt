@@ -1,0 +1,106 @@
+script-census: pelt = /home/mfwolffe/lanes/sh07/sc/pelt-9e4e78e sha256 8a498b238992c0cffecfed9802961a662722d9bdc30fbc93359995f80d202c21
+differs  configure-hello  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout, stderr present, files
+differs  configure-sed  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout, stderr present, files
+differs  configure-gzip  dash 0  pelt 1
+         run 0 []: exit 1 (dash 0), stdout, stderr present, files
+same     configure-zlib  dash 0  pelt 0
+differs  install-sh  dash 0,0,0,0,1  pelt 1,1,1,0,1
+         run 0 [-d a/b/c]: exit 1 (dash 0), stderr present, files
+         run 1 [-m 644 f1 f2 dest]: exit 1 (dash 0), stderr present, files
+         run 2 [-c -m 755 f1 out/f1]: exit 1 (dash 0), stderr present, files
+differs  config.guess  dash 0,0  pelt 1,0
+         run 0 []: exit 1 (dash 0), stdout, stderr present
+same     config.sub  dash 0,0,0,0,0,1,1  pelt 0,0,0,0,0,1,1
+same     missing  dash 0,0,0,127,1  pelt 0,0,0,127,1
+same     compile  dash 0,0,0,1  pelt 0,0,0,1
+same     depcomp  dash 0,0,0,0,1  pelt 0,0,0,0,1
+differs  mkinstalldirs  dash 0,0,0,0  pelt 0,0,0,0
+         run 1 [-m 700 p/q]: stderr present
+same     mdate-sh  dash 0,0,1  pelt 0,0,1
+same     test-driver  dash 0,0,0,0  pelt 0,0,0,0
+same     ylwrap  dash 0,0,1  pelt 0,0,1
+same     ar-lib  dash 0,1,1  pelt 0,1,1
+same     tap-driver.sh  dash 0,0  pelt 0,0
+same     ltmain.sh  dash 0,0,0,63,63,63  pelt 0,0,0,63,63,63
+same     git-test-lib  dash 0  pelt 0
+same     git-t0000-basic  dash 0  pelt 0
+same     deb-cron.postinst  dash 0,0,0  pelt 0,0,0
+same     deb-cron-daemon-common.postinst  dash 0,0  pelt 0,0
+same     deb-rsync.postinst  dash 0,0  pelt 0,0
+same     deb-openssh-server.postinst  dash 1,1  pelt 1,1
+same     deb-openssh-server.prerm  dash 1,1  pelt 1,1
+differs  deb-openssh-client.postinst  dash 1,1  pelt 2,2
+         run 0 [configure]: exit 2 (dash 1)
+         run 1 [configure 1:8.0p1-1]: exit 2 (dash 1)
+same     deb-procps.postinst  dash 1,1  pelt 1,1
+same     deb-ca-certificates.postinst  dash 0,0  pelt 0,0
+same     deb-base-files.postinst  dash 0,0  pelt 0,0
+same     deb-base-passwd.preinst  dash 0,0  pelt 0,0
+same     deb-libc6.postinst  dash 0,0  pelt 0,0
+same     deb-libc6.preinst  dash 2,2  pelt 2,2
+same     deb-util-linux.postinst  dash 0,0  pelt 0,0
+same     deb-adduser.preinst  dash 0,0  pelt 0,0
+same     deb-dpkg.postinst  dash 0,0  pelt 0,0
+differs  deb-tzdata.postinst  dash 0  pelt 2
+         run 0 [configure]: exit 2 (dash 0), files
+same     dpkg-maintscript-helper  dash 1,1,0,0,1  pelt 1,1,0,0,1
+same     init-cron  dash 3,2,2  pelt 3,2,2
+same     init-rsync  dash 3,0,1,1  pelt 3,0,1,1
+differs  init-ssh  dash 3,1,1  pelt 2,2,2
+         run 0 [status]: exit 2 (dash 3), stdout, stderr present
+         run 1 [nonsense]: exit 2 (dash 1), stdout, stderr present
+         run 2 []: exit 2 (dash 1), stdout, stderr present
+same     init-procps  dash 0,3,3  pelt 0,3,3
+same     service  dash 0,0,3,1,1  pelt 0,0,3,1,1
+same     invoke-rc.d  dash 0,101,4,0,103  pelt 0,101,4,0,103
+same     update-ca-certificates  dash 0,0,0,0  pelt 0,0,0,0
+same     apk-nginx.pre-install  dash 0  pelt 0
+same     apk-nginx.post-install  dash 0  pelt 0
+same     apk-nginx.post-upgrade  dash 0  pelt 0
+same     apk-dbus.pre-install  dash 0  pelt 0
+same     apk-dbus.post-install  dash 0  pelt 0
+same     apk-alpine-baselayout.pre-install  dash 0  pelt 0
+same     apk-alpine-baselayout.post-install  dash 0  pelt 0
+same     apk-chrony.pre-install  dash 0  pelt 0
+same     apk-postfix.pre-install  dash 0  pelt 0
+same     apk-openrc.post-install  dash 0  pelt 0
+same     apk-openssh-server.post-upgrade  dash 0  pelt 0
+same     setup-hostname  dash 0,0,1  pelt 0,0,1
+same     setup-timezone  dash 0,1,1  pelt 0,1,1
+same     setup-dns  dash 0,0  pelt 0,0
+same     update-conf  dash 0,0,0  pelt 0,0,0
+same     lbu  dash 0,0,0,1  pelt 0,0,0,1
+same     gunzip  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     zcat  dash 0,0,1  pelt 0,0,1
+same     zcmp  dash 1,0,0  pelt 1,0,0
+same     zforce  dash 0,0,0  pelt 0,0,0
+same     uncompress  dash 0,0  pelt 0,0
+same     ssh-copy-id  dash 1,1,1,1  pelt 1,1,1,1
+same     ssh-argv0  dash 1,1  pelt 1,1
+same     select-editor  dash 1,1,1  pelt 1,1,1
+same     sensible-editor  dash 0,1,1,1  pelt 0,1,1,1
+same     sensible-pager  dash 0,0,0  pelt 0,0,0
+unstable pfetch  dash 0,0,0  pelt 0,0,0
+         run 2: dash disagrees with itself (out); exit and stderr only
+same     which.debianutils  dash 1,0,1,2  pelt 1,0,1,2
+same     savelog  dash 0,0,0,1  pelt 0,0,0,1
+same     add-shell  dash 0,1  pelt 0,1
+same     gettext.sh  dash 0,0,1  pelt 0,0,1
+differs  xzgrep  dash 0,0,1,0,2  pelt 2,2,2,0,2
+         run 0 [b f.xz]: exit 2 (dash 0)
+         run 1 [-c . f.xz g.xz]: exit 2 (dash 0), stdout
+         run 2 [zzz f.xz]: exit 2 (dash 1)
+same     xzdiff  dash 1,0,0  pelt 1,0,0
+differs  zgrep  dash 0,0,1,0  pelt 0,0,1,0
+         run 0 [b f.gz]: stderr present
+         run 1 [-n -e a -e c f.gz g.gz]: stderr present
+         run 2 [zzz f.gz]: stderr present
+differs  zdiff  dash 1,0,0  pelt 1,2,0
+         run 1 [f.gz]: exit 2 (dash 0), stdout, stderr present
+differs  lesspipe  dash 0,0,0  pelt 0,0,0
+         run 1 [f.gz]: stderr present
+         run 2 [f.tar]: stderr present
+same     xdg-mime  dash 0,0,0,0,1  pelt 0,0,0,0,1
+script-census: differs 13  same 66  unstable 1  of 80  (../sc/h3-unaided.tsv)
