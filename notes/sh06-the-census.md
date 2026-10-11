@@ -252,3 +252,35 @@ it" they rank first.
 - No change under `src/`.
 - `wolf/tools/lane-audit.sh pelt sh06 8` run from the org directory;
   its exit status is in the PR's last comment.
+
+## 6. Issues to file (texts in the lane's report; the orchestrator files)
+
+pelt (each with its pending case as the witness):
+
+- **P01** `test -r/-w/-x/-L/-h/-ef` answer wrongly — `test/c_s_test_access`, `test/c_files`, `test/c_permissions`, `test/c_file_types`, `test/c_file_compare`
+- **P02** `sh -ec`, `--` and `-s -` are misparsed — `sh/c_combined_options`, `sh/c_dash_s`
+- **P03** aliases (`alias`, `unalias`, XCU 2.3.1) — `alias/c_*`, `command/c_v`, session `c_alias_interactive`
+- **P04** `type`, `hash`, `command -p`; a `PATH` search per command — `type/c_*`, `hash/c_hash`, `command/c_p`
+- **P05** `$'…'` (XCU 2.2.4) — `quote/c_ds_*`
+- **P06** `set -o pipefail` does nothing — `pipe/c_pipefail`, `option/c_pipefail_option`
+- **P07** assignments: `x=3 y=$x`, `x=$*`, declaration utilities — `simple/c_assign_current`, `param/c_star_assign`, `param/c_s_star_assign_ifs`, `simple/c_declaration_utility`, `command/c_declaration`
+- **P08** `read`: trailing delimiter, readonly targets, `-d` — `read/c_fields`, `read/c_bad_target`, `read/c_delim`, `builtin/c_readonly_everywhere`
+- **P09** built-in corners — `builtin/c_special_error_command`, `builtin/c_export_invalid`, `printf/c_usage`, `builtin/c_exit_in_trap_status`, `builtin/c_readonly_p`, `pwd/c_pwd_bad`, `cd/c_dash_e`, `cd/c_pwd_from_env`, `printf/c_bad_operand`, `printf/c_floats`
+- **P10** `trap`, `set -x`, `PS4`, `-o notify`, `ignoreeof`, `MAIL` — `signal/c_trap_p`, `signal/c_trap_cmdsub_shows_parent`, `option/c_ps4`, `option/c_xtrace_forms`, `option/c_long_names`, sessions `c_ignoreeof`, `c_mail`
+- **P11** patterns and `PATH` — `glob/c_s_bracket_slash_case`, `glob/c_no_file_rules_in_case`, `quote/c_dq_default_word`, `simple/c_path_order`
+- **P12** `jobs` in a script — `jobsctl/c_jobs_script`
+- **P13** memory kept per pipeline, substitution, function call and script line — `notes/sh06-evidence/loopmem.sh`, `leak.py`
+- **P14** bytes above 0x7f become `?` — `quote/c_s_high_bytes`
+- **P15** `trap ACTION 13` refused where `trap ACTION PIPE` is taken — `signal/c_s_trap_by_number`
+- **P16** `.` of `/dev/null` or a FIFO is "not found" — `builtin/c_s_dot_special_file`
+
+wolf-lang (each with a witness under `notes/sh06-evidence/witness/` or a case):
+
+- **W01** no way to give a subshell a process of its own (fork)
+- **W02** no `getrlimit`/`setrlimit` (`ulimit`)
+- **W03** job control: no report of a stopped child, no `SIGCONT`, no signal to a process group — `witness/stop_report`
+- **W04** no user database (`~login`)
+- **W05** the terminal: no window size, no `SIGWINCH` meaning, a read is not woken by a signal, nothing restores the mode at a kill — `witness/winch`, `witness/read_vs_signal`, `witness/term_keys`
+- **W06** arguments, environment and paths are UTF-8 `str`: a byte that is not UTF-8 cannot be passed — `witness/argv_bytes`
+- **W07** no `access(2)` as the caller (`test -r/-w/-x`)
+- **W08** a spawn costs 57 system calls (a `socketpair`, a close sweep, a full `clone`) against `vfork`'s 34 — `notes/sh06-evidence/scripts/speed.md`
