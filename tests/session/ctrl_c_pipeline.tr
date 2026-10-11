@@ -1,7 +1,7 @@
 step 0
 err no
 prompt "$ "
-step 1 "sleep 5 | /usr/bin/cat"
+step 1 "sleep 5 | cat"
 err no
 prompt ""
 step 2 "^C"

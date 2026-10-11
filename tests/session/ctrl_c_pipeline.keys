@@ -1,4 +1,4 @@
-sleep 5 | /usr/bin/cat
+sleep 5 | cat
 ^C
 echo st=$?
 exit
