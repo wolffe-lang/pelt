@@ -1,0 +1,7 @@
+read-st=2
+for=2
+arith=2
+default-kept 1
+getopts-st=2
+getopts=0
+1

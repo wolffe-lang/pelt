@@ -1,0 +1,4 @@
+export a='x y'
+export b='it'"'"'s'
+export c
+x y it's
