@@ -1,0 +1,5 @@
+trap '' INT
+sleep 1
+^C
+echo st=$?
+exit

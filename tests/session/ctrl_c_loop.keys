@@ -1,0 +1,4 @@
+while :; do :; done
+^C
+echo st=$?
+exit

@@ -1,0 +1,4 @@
+trap 'echo caught' INT
+^C
+echo next
+exit

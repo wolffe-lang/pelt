@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "export A=1"
+err no
+prompt "$ "
+step 2 "unset A"
+err no
+prompt "$ "
+step 3 "/usr/bin/env | /usr/bin/grep -c '^A='"
+out "0\n"
+err no
+prompt "$ "
+step 4 "exit"
+err no
+prompt ""
+exit 1 at step 4

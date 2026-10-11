@@ -1,0 +1,5 @@
+trap 'echo caught' INT
+sleep 5
+^C
+echo st=$?
+exit

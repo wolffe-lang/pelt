@@ -1,0 +1,4 @@
+trap 'echo caught' TERM
+/bin/sh -c 'kill -TERM $PPID'
+echo st=$?
+exit

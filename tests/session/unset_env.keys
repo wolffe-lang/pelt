@@ -1,0 +1,4 @@
+export A=1
+unset A
+/usr/bin/env | /usr/bin/grep -c '^A='
+exit
