@@ -1,0 +1,756 @@
+#!/usr/bin/env python3
+"""script-census — real `sh` scripts under pelt and under dash, compared.
+
+The differential corpus (tests/diff/) asks whether pelt answers a
+clause as dash does. This asks the other question: do the scripts
+people actually run — autoconf `configure`, the automake and libtool
+helpers, Debian and Alpine package scripts, init scripts, git's test
+library, small `#!/bin/sh` utilities — run to the same output, the same
+exit status and the same files under pelt as under dash?
+
+NO THIRD-PARTY SCRIPT IS IN THIS REPOSITORY. Each is named below by
+package, version and the sha256 of the script file (the pins live in
+tools/script-census.pins), and comes from one of two places:
+
+  * a release tarball fetched by URL and REFUSED unless its sha256 is
+    the one written here;
+  * an image built here from a base image pinned by digest and a
+    package snapshot pinned by date (the Containerfiles are below).
+
+A script whose sha256 is not the pinned one is REFUSED, not run.
+
+HOW A SCRIPT RUNS. Every run is its own throwaway container:
+`podman run --rm --network none`, with nothing of the host mounted but
+one scratch directory (`/s`), made for that run under --dir and removed
+after it. The shell under test is `/s/bin/sh` in both runs — a copy of
+the image's own dash, or a static pelt — so a script that prints or
+records its shell's path prints the same. A small wrapper (ours, run by
+the image's own /bin/sh) verifies the script's digest, does the row's
+setup, runs `timeout T /s/bin/sh SCRIPT ARGS…` from an empty
+environment, and lists what the run made, changed or removed (a listing
+of directories, links and file digests taken before and after). Only the top-level script runs under the shell under test:
+whatever it starts through `#!/bin/sh` is the image's.
+
+THE VERDICT, per script, over all its runs:
+  same      stdout byte for byte, exit status, stderr by presence, and
+            the file listing all agree
+  differs   one of them does not
+  hang      pelt was killed by the timeout where dash finished
+  unstable  dash disagrees with a second run of itself (the script
+            prints a date, a pid, …): not counted either way
+
+THE AIDED PASS (--aided). A script that stops at its first missing
+piece says nothing about what lies behind it. With --aided the wrapper
+first rewrites the script (the same rewritten copy for both shells, by
+the sed program AIDED below) so that the gaps the first pass counted
+most go around the shell: `test -x` and its kin run the image's
+/usr/bin/test, `umask` is skipped, `trap … 13` names PIPE, and the
+three `case` arms autoconf writes with a `/` inside a bracket
+expression are spelled without one. The verdicts of that pass say what
+is left once those are fixed; they are never reported as pelt's.
+
+usage: tools/script-census --dir SCRATCH --pelt STATIC_PELT [options] [id …]
+  --dir D        scratch and cache (downloads, extracted trees, logs);
+                 nothing is written outside it
+  --pelt P       a statically linked pelt (tools/build --static)
+  --podman CMD   the podman command line (default `podman`; a private
+                 store is `podman --root D/store --runroot D/run`)
+  --build        build the three images first (needs the network)
+  --pin          write tools/script-census.pins from what is fetched
+                 instead of checking against it
+  --list         print the set and stop
+  --aided        the second pass (below)
+  --tsv FILE     write the verdict table there (default D/scripts.tsv)
+Exit 0 when every script ran (whatever the verdicts), 2 when the
+harness could not run or a digest was refused. With --strict, exit 1
+unless every verdict is `same`.
+"""
+
+import hashlib
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tarfile
+import time
+import urllib.request
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+PINS = os.path.join(HERE, "script-census.pins")
+
+# ---------------------------------------------------------------- images
+
+IMAGES = {
+    # dash 0.5.13.4, the corpus's oracle of record; gcc and make for
+    # the configure scripts and for building git's test helpers.
+    "arch": """\
+FROM docker.io/library/archlinux@sha256:996c3a1d6b0d87b01242f6fcd8cfa3ad3eece1a67ab5c8f108e20af1d7b97bdd
+RUN echo 'Server = https://archive.archlinux.org/repos/2026/10/10/$repo/os/$arch' > /etc/pacman.d/mirrorlist && \\
+    pacman -Syyuu --noconfirm --needed dash shellcheck git zlib openssl expat && \\
+    pacman -Scc --noconfirm
+""",
+    # Debian 13 at a dated snapshot: the maintainer scripts dpkg left in
+    # /var/lib/dpkg/info, the init scripts, and the small utilities.
+    # Its dash is 0.5.12-12 (Debian has no 0.5.13).
+    "debian": """\
+FROM docker.io/library/debian@sha256:918311b7b6c4c6f68b232ba516584925f6c78ad82b6fd534b98979df6438e483
+RUN rm -f /etc/apt/sources.list.d/* && \\
+    echo 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20261001T000000Z trixie main' > /etc/apt/sources.list && \\
+    apt-get -o Acquire::Check-Valid-Until=false update && \\
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \\
+      dash cron rsync openssh-server openssh-client procps ca-certificates \\
+      sysvinit-utils init-system-helpers debianutils gzip xz-utils bzip2 grep \\
+      less shellcheck gettext-base xdg-utils file libtool-bin autoconf automake \\
+      bash coreutils sed gawk tar && \\
+    rm -rf /var/lib/apt/lists/*
+""",
+    # Alpine 3.22: package scripts (unpacked from apk's database into
+    # /census) and alpine-conf's `#!/bin/sh` tools. Its dash is 0.5.12-r3.
+    "alpine": """\
+FROM docker.io/library/alpine@sha256:3e9b4b680bfc9fb5269227cffbd6d42be39fbf7c0b908123913864aa4447e764
+RUN apk add --no-cache dash alpine-conf nginx openssh-server postfix dbus chrony pax-utils musl-utils shadow ca-certificates && \\
+    mkdir /census.x /census && tar -xf /lib/apk/db/scripts.tar -C /census.x && \\
+    find /census.x -type f | while read -r p; do rel=${p#/census.x/}; \\
+      pkg=$(echo "$rel" | sed 's/-[0-9][^-]*-r[0-9]*\\.Q1.*//'); cp "$p" "/census/${pkg}__${p##*.}"; done; ls /census
+""",
+}
+
+# --------------------------------------------------------------- sources
+
+SOURCES = {
+    "hello": ("https://ftp.gnu.org/gnu/hello/hello-2.12.2.tar.gz",
+              "5a9a996dc292cc24dcf411cee87e92f6aae5b8d13bd9c6819b4c7a9dce0818ab", "hello-2.12.2"),
+    "sed": ("https://ftp.gnu.org/gnu/sed/sed-4.9.tar.xz",
+            "6e226b732e1cd739464ad6862bd1a1aba42d7982922da7a53519631d24975181", "sed-4.9"),
+    "zlib": ("https://zlib.net/fossils/zlib-1.3.1.tar.gz",
+             "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23", "zlib-1.3.1"),
+    "gzip": ("https://ftp.gnu.org/gnu/gzip/gzip-1.14.tar.xz",
+             "01a7b881bd220bfdf615f97b8718f80bdfd3f6add385b993dcf6efd14e8c0ac6", "gzip-1.14"),
+    "automake": ("https://ftp.gnu.org/gnu/automake/automake-1.18.1.tar.xz",
+                 "168aa363278351b89af56684448f525a5bce5079d0b6842bd910fdd3f1646887", "automake-1.18.1"),
+    "libtool": ("https://ftp.gnu.org/gnu/libtool/libtool-2.5.4.tar.xz",
+                "f81f5860666b0bc7d84baddefa60d1cb9fa6fceb2398cc3baca6afaa60266675", "libtool-2.5.4"),
+    "git": ("https://www.kernel.org/pub/software/scm/git/git-2.56.0.tar.xz",
+            "26c56c296b38c0695b26fa95f475f1d01704d2d38e73465ca30b0b2f5dc789d3", "git-2.56.0"),
+    "pfetch": ("https://github.com/dylanaraps/pfetch/archive/refs/tags/0.6.0.tar.gz",
+               "d1f611e61c1f8ae55bd14f8f6054d06fcb9a2d973095367c1626842db66b3182", "pfetch-0.6.0"),
+}
+
+# A tree that must be built once before its scripts can run (git's test
+# library refuses without the built helpers). The build runs in the
+# image, network off, under the image's own tools.
+PREP = {
+    "git": ("arch", "make -j8 NO_GETTEXT=1 NO_CURL=1 NO_EXPAT=1 NO_PERL=1 "
+                    "NO_PYTHON=1 NO_TCLTK=1 NO_OPENSSL=1 NO_RUST=1 all >/s/meta/build.log 2>&1"),
+}
+
+# ------------------------------------------------------------------- set
+
+
+def R(args="", setup="", env=None, stdin="", timeout=120, ignore="", mask=""):
+    """One run of a script: operands, a setup snippet (ours; run by the
+    image's /bin/sh in the working directory before the script), extra
+    environment, standard input, the timeout in seconds, a regular
+    expression (an awk ERE, matched against the path) of files the listing leaves out, and a
+    regular expression whose matches in standard output are masked
+    before the comparison (a date the script prints)."""
+    return {"args": args, "setup": setup, "env": env or {}, "stdin": stdin,
+            "timeout": timeout, "ignore": ignore, "mask": mask}
+
+
+# Version and licence of each package whose script comes from an image
+# (Debian's from /usr/share/doc/PKG/copyright, the most frequent
+# `License:` field; Alpine's from `apk info`). The package scripts of
+# an Alpine package carry the aports tree's licence (MIT) where the
+# upstream names none for them; the package's own is given.
+PKGS = {
+    "cron": ("3.0pl1-197", "GPL-2+ (packaging), Paul-Vixie's-license"),
+    "cron-daemon-common": ("3.0pl1-197", "GPL-2+ (packaging), Paul-Vixie's-license"),
+    "rsync": ("3.4.1+ds1-5+deb13u4", "GPL-3+"),
+    "openssh-server": ("1:10.0p1-7+deb13u4", "OpenSSH (BSD-style)"),
+    "openssh-client": ("1:10.0p1-7+deb13u4", "OpenSSH (BSD-style)"),
+    "procps": ("2:4.0.4-9", "GPL-2.0+"),
+    "ca-certificates": ("20250419", "GPL-2+"),
+    "base-files": ("13.8+deb13u7", "GPL-2+"),
+    "base-passwd": ("3.6.7", "GPL-2"),
+    "libc6": ("2.41-12+deb13u4", "GPL-2+ (packaging)"),
+    "util-linux": ("2.41.5-0+deb13u1", "GPL-2+"),
+    "adduser": ("3.152", "GPL-2+"),
+    "dpkg": ("1.22.22", "GPL-2+"),
+    "tzdata": ("2026c-0+deb13u1", "public-domain"),
+    "init-system-helpers": ("1.69~deb13u1", "GPL-2+ / BSD-3-clause"),
+    "gzip": ("1.13-1+deb13u1", "GPL-3+"),
+    "sensible-utils": ("0.0.25", "GPL-2+"),
+    "debianutils": ("5.23.2", "GPL-2+"),
+    "gettext-base": ("0.23.1-2", "LGPL-2.1+ / GPL-3+"),
+    "xz-utils": ("5.8.1-1+deb13u1", "0BSD / GPL-2+ (scripts)"),
+    "less": ("668-1", "GPL-3+ (packaging)"),
+    "xdg-utils": ("1.2.1-2", "Expat"),
+    "nginx": ("1.28.3-r7 (Alpine 3.22)", "BSD-2-Clause"),
+    "dbus": ("1.16.2-r1 (Alpine 3.22)", "AFL-2.1 OR GPL-2.0-or-later"),
+    "openrc": ("0.62.6-r0 (Alpine 3.22)", "BSD-2-Clause"),
+    "alpine-conf": ("3.20.0-r2 (Alpine 3.22)", "MIT"),
+    "alpine-baselayout": ("3.7.0-r0 (Alpine 3.22)", "GPL-2.0-only"),
+    "chrony": ("4.6.1-r1 (Alpine 3.22)", "GPL-2.0-or-later"),
+    "postfix": ("3.10.13-r0 (Alpine 3.22)", "IPL-1.0 EPL-2.0"),
+}
+APK = {"openssh-server": ("10.0_p1-r10 (Alpine 3.22)", "SSH-OpenSSH")}
+
+
+def S(sid, group, image, pkg, version, licence, src, path, runs, cwd="/s/w", also=""):
+    """`also` names the other shell files the script sources or runs
+    under its own shell (a glob list); only the aided pass uses it."""
+    if not version:
+        version, licence = (APK if image == "alpine" and pkg in APK else PKGS)[pkg]
+    return {"id": sid, "group": group, "image": image, "pkg": pkg,
+            "version": version, "licence": licence, "src": src, "path": path,
+            "runs": runs, "cwd": cwd, "also": also}
+
+
+CC_SETUP = "printf 'int main(void){return 0;}\\n' >x.c; "
+CONF_IGNORE = r"config\.log$|conftest|\.o$|autom4te"
+
+SET = [
+    # ---- autoconf `configure`, from release tarballs
+    S("configure-hello", "configure", "arch", "GNU hello", "2.12.2", "GPL-3.0-or-later",
+      "hello", "./configure", [R(env={"CONFIG_SHELL": "/s/bin/sh"}, timeout=600, ignore=CONF_IGNORE)], cwd="/s/t",
+      also="build-aux/config.guess build-aux/config.sub build-aux/install-sh build-aux/missing build-aux/compile build-aux/depcomp"),
+    S("configure-sed", "configure", "arch", "GNU sed", "4.9", "GPL-3.0-or-later",
+      "sed", "./configure", [R(env={"CONFIG_SHELL": "/s/bin/sh"}, timeout=900, ignore=CONF_IGNORE)], cwd="/s/t",
+      also="build-aux/config.guess build-aux/config.sub build-aux/install-sh build-aux/missing build-aux/compile build-aux/depcomp"),
+    S("configure-gzip", "configure", "arch", "GNU gzip", "1.14", "GPL-3.0-or-later",
+      "gzip", "./configure", [R(env={"CONFIG_SHELL": "/s/bin/sh"}, timeout=900, ignore=CONF_IGNORE)], cwd="/s/t",
+      also="build-aux/config.guess build-aux/config.sub build-aux/install-sh build-aux/missing build-aux/compile build-aux/depcomp"),
+    S("configure-zlib", "configure", "arch", "zlib", "1.3.1", "Zlib",
+      "zlib", "./configure", [R(timeout=300, ignore=r"configure\.log$|\.o$|ztest")], cwd="/s/t"),
+
+    # ---- automake's and libtool's helper scripts
+    S("install-sh", "helper", "arch", "automake", "1.18.1", "X11",
+      "automake", "/s/t/lib/install-sh",
+      [R("-d a/b/c"), R("-m 644 f1 f2 dest", setup="echo one >f1; echo two >f2; mkdir dest"),
+       R("-c -m 755 f1 out/f1", setup="echo one >f1; mkdir out"), R("--version"), R("")]),
+    S("config.guess", "helper", "arch", "automake", "1.18.1", "GPL-3.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/config.guess", [R(""), R("--version")]),
+    S("config.sub", "helper", "arch", "automake", "1.18.1", "GPL-3.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/config.sub",
+      [R("x86_64-linux"), R("aarch64-apple-darwin"), R("i686-pc-mingw32"), R("riscv64-unknown-elf"),
+       R("amd64"), R("nonsense-nothing-none"), R("")]),
+    S("missing", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/missing",
+      [R("--help"), R("--version"), R("true"), R("no-such-program-xyz --flag"), R("")]),
+    S("compile", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/compile",
+      [R("--help"), R("gcc -c x.c -o sub/x.o", setup=CC_SETUP + "mkdir sub"), R("gcc -c x.c", setup=CC_SETUP), R("")]),
+    S("depcomp", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/depcomp",
+      [R("--help"),
+       R("gcc -c x.c -o x.o", setup=CC_SETUP + "mkdir .deps",
+         env={"depmode": "gcc3", "source": "x.c", "object": "x.o", "libtool": "no",
+              "depfile": ".deps/x.Po", "tmpdepfile": ".deps/x.TPo"}, ignore=r"\.o$"),
+       R("gcc -c x.c -o x.o", setup=CC_SETUP + "mkdir .deps",
+         env={"depmode": "gcc", "source": "x.c", "object": "x.o", "libtool": "no",
+              "depfile": ".deps/x.Po", "tmpdepfile": ".deps/x.TPo"}, ignore=r"\.o$"),
+       R("gcc -c x.c -o x.o", setup=CC_SETUP + "mkdir .deps",
+         env={"depmode": "dashmstdout", "source": "x.c", "object": "x.o", "libtool": "no",
+              "depfile": ".deps/x.Po", "tmpdepfile": ".deps/x.TPo"}, ignore=r"\.o$"),
+       R("")]),
+    S("mkinstalldirs", "helper", "arch", "automake", "1.18.1", "public-domain",
+      "automake", "/s/t/lib/mkinstalldirs", [R("a/b/c d"), R("-m 700 p/q"), R("--help"), R("")]),
+    S("mdate-sh", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/mdate-sh",
+      [R("f", setup="echo x >f; touch -d '2020-02-03 04:05:06' f"), R("--help"), R("")]),
+    S("test-driver", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/test-driver",
+      [R("--test-name t1 --log-file t1.log --trs-file t1.trs -- true"),
+       R("--test-name t2 --log-file t2.log --trs-file t2.trs --color-tests no --expect-failure no -- false"),
+       R("--test-name t3 --log-file t3.log --trs-file t3.trs -- sh -c 'exit 77'"),
+       R("--help")]),
+    S("ylwrap", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/ylwrap",
+      [R("--help"),
+       R("p.y y.tab.c p.c y.tab.h p.h -- ./fakeyacc -d",
+         setup="echo '%%' >p.y; printf '#!/bin/sh\\necho \"/* c y.tab.c */\" >y.tab.c\\necho \"/* h y.tab.h */\" >y.tab.h\\n' >fakeyacc; chmod +x fakeyacc"),
+       R("")]),
+    S("ar-lib", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/ar-lib", [R("--help"), R("ar cr lib.a x.o", setup=CC_SETUP + "gcc -c x.c"), R("")]),
+    S("tap-driver.sh", "helper", "arch", "automake", "1.18.1", "GPL-2.0-or-later WITH Autoconf-exception",
+      "automake", "/s/t/lib/tap-driver.sh",
+      [R("--test-name t --log-file t.log --trs-file t.trs -- ./t.sh",
+         setup="printf '#!/bin/sh\\necho 1..3\\necho ok 1\\necho not ok 2 - bad\\necho ok 3 \\\\# SKIP x\\n' >t.sh; chmod +x t.sh"),
+       R("--help")]),
+    S("ltmain.sh", "helper", "arch", "libtool", "2.5.4", "GPL-2.0-or-later WITH Libtool-exception",
+      "libtool", "/s/t/build-aux/ltmain.sh",
+      [R("--version"), R("--help"), R("--features"), R("--mode=compile gcc -c x.c", setup=CC_SETUP),
+       R("--mode=nonsense"), R("")]),
+
+    # ---- git's shell test library, with a test file of our own
+    S("git-test-lib", "git", "arch", "git (t/test-lib.sh)", "2.56.0", "GPL-2.0-only",
+      "git", "./t9999-sh06.sh",
+      [R("", setup=("printf '%s\\n' \"test_description='sh06 trivial'\" '. ./test-lib.sh' "
+                    "\"test_expect_success 'true is true' 'true'\" "
+                    "\"test_expect_success 'a file' 'echo hi >f && test_path_is_file f && test hi = \\\"\\$(cat f)\\\"'\" "
+                    "\"test_expect_failure 'known breakage' 'false'\" "
+                    "\"test_expect_success 'a commit' 'git init r && test_commit -C r one && git -C r log --oneline >log && test_line_count = 1 log'\" "
+                    "test_done >t9999-sh06.sh"),
+         timeout=300, ignore=r"trash|test-results|\.git/")],
+      cwd="/s/t/t", also="test-lib.sh test-lib-functions.sh"),
+    S("git-t0000-basic", "git", "arch", "git (t/t0000-basic.sh)", "2.56.0", "GPL-2.0-only",
+      "git", "./t0000-basic.sh", [R("", timeout=600, ignore=r"trash|test-results|\.git/")], cwd="/s/t/t",
+      also="test-lib.sh test-lib-functions.sh"),
+
+    # ---- Debian 13 maintainer scripts, as dpkg calls them
+    S("deb-cron.postinst", "debian-maint", "debian", "cron", "", "", None,
+      "/var/lib/dpkg/info/cron.postinst", [R("configure"), R("configure 3.0pl1-100"), R("abort-upgrade 1")]),
+    S("deb-cron-daemon-common.postinst", "debian-maint", "debian", "cron-daemon-common", "", "", None,
+      "/var/lib/dpkg/info/cron-daemon-common.postinst", [R("configure"), R("configure 3.0pl1-100")]),
+    S("deb-rsync.postinst", "debian-maint", "debian", "rsync", "", "", None,
+      "/var/lib/dpkg/info/rsync.postinst", [R("configure"), R("configure 3.2.0-1")]),
+    S("deb-openssh-server.postinst", "debian-maint", "debian", "openssh-server", "", "", None,
+      "/var/lib/dpkg/info/openssh-server.postinst", [R("configure"), R("configure 1:8.0p1-1")], also="/usr/share/debconf/confmodule"),
+    S("deb-openssh-server.prerm", "debian-maint", "debian", "openssh-server", "", "", None,
+      "/var/lib/dpkg/info/openssh-server.prerm", [R("remove"), R("upgrade 1:99")]),
+    S("deb-openssh-client.postinst", "debian-maint", "debian", "openssh-client", "", "", None,
+      "/var/lib/dpkg/info/openssh-client.postinst", [R("configure"), R("configure 1:8.0p1-1")]),
+    S("deb-procps.postinst", "debian-maint", "debian", "procps", "", "", None,
+      "/var/lib/dpkg/info/procps.postinst", [R("configure"), R("configure 2:3.3.0-1")]),
+    S("deb-ca-certificates.postinst", "debian-maint", "debian", "ca-certificates", "", "", None,
+      "/var/lib/dpkg/info/ca-certificates.postinst", [R("configure"), R("triggered update-ca-certificates")], also="/usr/share/debconf/confmodule"),
+    S("deb-base-files.postinst", "debian-maint", "debian", "base-files", "", "", None,
+      "/var/lib/dpkg/info/base-files.postinst", [R("configure"), R("configure 11")]),
+    S("deb-base-passwd.preinst", "debian-maint", "debian", "base-passwd", "", "", None,
+      "/var/lib/dpkg/info/base-passwd.preinst", [R("install"), R("upgrade 3.5.0")]),
+    S("deb-libc6.postinst", "debian-maint", "debian", "libc6", "", "", None,
+      "/var/lib/dpkg/info/libc6:amd64.postinst", [R("configure"), R("configure 2.30-1")], also="/usr/share/debconf/confmodule"),
+    S("deb-libc6.preinst", "debian-maint", "debian", "libc6", "", "", None,
+      "/var/lib/dpkg/info/libc6:amd64.preinst", [R("install"), R("upgrade 2.30-1")], also="/usr/share/debconf/confmodule"),
+    S("deb-util-linux.postinst", "debian-maint", "debian", "util-linux", "", "", None,
+      "/var/lib/dpkg/info/util-linux.postinst",
+      [R("configure", ignore=r"alternatives\.log"), R("configure 2.30-1", ignore=r"alternatives\.log")]),
+    S("deb-adduser.preinst", "debian-maint", "debian", "adduser", "", "", None,
+      "/var/lib/dpkg/info/adduser.preinst", [R("install"), R("upgrade 3.100")]),
+    S("deb-dpkg.postinst", "debian-maint", "debian", "dpkg", "", "", None,
+      "/var/lib/dpkg/info/dpkg.postinst", [R("configure"), R("configure 1.19.0")]),
+    S("deb-tzdata.postinst", "debian-maint", "debian", "tzdata", "", "", None,
+      "/var/lib/dpkg/info/tzdata.postinst", [R("configure", env={"DEBIAN_FRONTEND": "noninteractive"})], also="/usr/share/debconf/confmodule"),
+    S("dpkg-maintscript-helper", "debian-maint", "debian", "dpkg", "", "", None,
+      "/usr/bin/dpkg-maintscript-helper",
+      [R("supports rm_conffile"), R("supports nonsense"), R("--help"),
+       R("rm_conffile /etc/sh06-old.conf 1.0 sh06 -- configure 0.5",
+         setup="echo old >/etc/sh06-old.conf", env={"DPKG_MAINTSCRIPT_NAME": "postinst", "DPKG_MAINTSCRIPT_PACKAGE": "cron"}),
+       R("")]),
+
+    # ---- Debian init scripts and the tools that drive them
+    S("init-cron", "debian-init", "debian", "cron", "", "", None,
+      "/etc/init.d/cron", [R("status"), R("nonsense"), R("")], also="/lib/init/init-d-script /lib/lsb/init-functions /lib/init/vars.sh"),
+    S("init-rsync", "debian-init", "debian", "rsync", "", "", None,
+      "/etc/init.d/rsync", [R("status"), R("start"), R("nonsense"), R("")], also="/lib/init/init-d-script /lib/lsb/init-functions /lib/init/vars.sh"),
+    S("init-ssh", "debian-init", "debian", "openssh-server", "", "", None,
+      "/etc/init.d/ssh", [R("status"), R("nonsense"), R("")], also="/lib/init/init-d-script /lib/lsb/init-functions /lib/init/vars.sh"),
+    S("init-procps", "debian-init", "debian", "procps", "", "", None,
+      "/etc/init.d/procps", [R("status"), R("nonsense"), R("")], also="/lib/init/init-d-script /lib/lsb/init-functions /lib/init/vars.sh"),
+    S("service", "debian-init", "debian", "init-system-helpers", "", "", None,
+      "/usr/sbin/service", [R("--status-all"), R("--help"), R("cron status"), R("nosuch status"), R("")]),
+    S("invoke-rc.d", "debian-init", "debian", "init-system-helpers", "", "", None,
+      "/usr/sbin/invoke-rc.d", [R("--help"), R("--query cron start"), R("cron status"), R("--quiet nosuch start"), R("")]),
+    S("update-ca-certificates", "debian-init", "debian", "ca-certificates", "", "", None,
+      "/usr/sbin/update-ca-certificates", [R(""), R("--fresh"), R("--help"), R("--verbose")]),
+
+    # ---- Alpine 3.22 package scripts and alpine-conf tools
+    S("apk-nginx.pre-install", "alpine", "alpine", "nginx", "", "", None, "/census/nginx__pre-install", [R("")]),
+    S("apk-nginx.post-install", "alpine", "alpine", "nginx", "", "", None, "/census/nginx__post-install", [R("")]),
+    S("apk-nginx.post-upgrade", "alpine", "alpine", "nginx", "", "", None, "/census/nginx__post-upgrade",
+      [R("1.28.3-r7 1.20.0-r0")]),
+    S("apk-dbus.pre-install", "alpine", "alpine", "dbus", "", "", None, "/census/dbus__pre-install", [R("")]),
+    S("apk-dbus.post-install", "alpine", "alpine", "dbus", "", "", None, "/census/dbus__post-install", [R("")]),
+    S("apk-alpine-baselayout.pre-install", "alpine", "alpine", "alpine-baselayout", "", "", None,
+      "/census/alpine-baselayout__pre-install", [R("")]),
+    S("apk-alpine-baselayout.post-install", "alpine", "alpine", "alpine-baselayout", "", "", None,
+      "/census/alpine-baselayout__post-install", [R("")]),
+    S("apk-chrony.pre-install", "alpine", "alpine", "chrony", "", "", None, "/census/chrony__pre-install", [R("")]),
+    S("apk-postfix.pre-install", "alpine", "alpine", "postfix", "", "", None, "/census/postfix__pre-install", [R("")]),
+    S("apk-openrc.post-install", "alpine", "alpine", "openrc", "", "", None, "/census/openrc__post-install", [R("")]),
+    S("apk-openssh-server.post-upgrade", "alpine", "alpine", "openssh-server", "", "", None,
+      "/census/openssh-server__post-upgrade", [R("10.0_p1-r10 9.0_p1-r0")]),
+    S("setup-hostname", "alpine", "alpine", "alpine-conf", "", "", None,
+      "/usr/sbin/setup-hostname", [R("-h"), R("census-box"), R("bad_host!")]),
+    S("setup-timezone", "alpine", "alpine", "alpine-conf", "", "", None,
+      "/usr/sbin/setup-timezone", [R("-h"), R("-z UTC"), R("-z No/Such")]),
+    S("setup-dns", "alpine", "alpine", "alpine-conf", "", "", None,
+      "/usr/sbin/setup-dns", [R("-h"), R("-d example.org 192.0.2.1 192.0.2.2")]),
+    S("update-conf", "alpine", "alpine", "alpine-conf", "", "", None,
+      "/usr/sbin/update-conf", [R("-h"), R("-l"), R("-a -l")]),
+    S("lbu", "alpine", "alpine", "alpine-conf", "", "", None,
+      "/usr/sbin/lbu", [R("-h"), R("status"), R("include /etc/hostname"), R("nonsense")]),
+
+    # ---- small utilities `shellcheck -s sh` passes clean
+    S("gunzip", "utility", "debian", "gzip", "", "", None, "/usr/bin/gunzip",
+      [R("-c f.gz", setup="echo hello | gzip >f.gz"), R("f.gz", setup="echo hello | gzip >f.gz"), R("--help"), R("--version"), R("nosuch.gz")]),
+    S("zcat", "utility", "debian", "gzip", "", "", None, "/usr/bin/zcat",
+      [R("f.gz g.gz", setup="echo a | gzip >f.gz; echo b | gzip >g.gz"), R("--help"), R("nosuch")]),
+    S("zcmp", "utility", "debian", "gzip", "", "", None, "/usr/bin/zcmp",
+      [R("f.gz g.gz", setup="echo a | gzip >f.gz; echo b | gzip >g.gz"),
+       R("f.gz f2.gz", setup="echo a | gzip >f.gz; cp f.gz f2.gz"), R("--help")]),
+    S("zforce", "utility", "debian", "gzip", "", "", None, "/usr/bin/zforce",
+      [R("f g", setup="echo a | gzip >f; echo plain >g"), R("--help"), R("--version")]),
+    S("uncompress", "utility", "debian", "gzip", "", "", None, "/usr/bin/uncompress",
+      [R("-c f.gz", setup="echo a | gzip >f.gz"), R("--help")]),
+    S("ssh-copy-id", "utility", "debian", "openssh-client", "", "", None, "/usr/bin/ssh-copy-id",
+      [R("-h"), R(""), R("-n -i /root/.ssh/k.pub user@host.invalid",
+                         setup="mkdir -p /root/.ssh; echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGq sh06' >/root/.ssh/k.pub"),
+       R("-i /nonexistent user@host.invalid")]),
+    S("ssh-argv0", "utility", "debian", "openssh-client", "", "", None, "/usr/bin/ssh-argv0", [R(""), R("-V")]),
+    S("select-editor", "utility", "debian", "sensible-utils", "", "", None, "/usr/bin/select-editor",
+      [R("", stdin="1\n"), R("--help"), R("", stdin="")]),
+    S("sensible-editor", "utility", "debian", "sensible-utils", "", "", None, "/usr/bin/sensible-editor",
+      [R("f", env={"EDITOR": "true"}), R("f", env={"VISUAL": "false", "EDITOR": "true"}), R("f"), R("--help")]),
+    S("sensible-pager", "utility", "debian", "sensible-utils", "", "", None, "/usr/bin/sensible-pager",
+      [R("f", setup="echo text >f", env={"PAGER": "cat"}), R("f", setup="echo text >f"), R("--version")]),
+    S("pfetch", "utility", "debian", "pfetch", "0.6.0", "MIT", "pfetch", "/s/t/pfetch",
+      [R("", env={"PF_INFO": "ascii title os host kernel shell editor palette", "USER": "root", "PF_COLOR": "0"}),
+       R("", env={"PF_INFO": "title os kernel pkgs", "USER": "root", "HOSTNAME": "h"}),
+       R("", env={"PF_ASCII": "openbsd", "USER": "root"})]),
+    S("which.debianutils", "utility", "debian", "debianutils", "", "", None, "/usr/bin/which.debianutils",
+      [R("sh ls nosuch"), R("-a sh"), R(""), R("-z")]),
+    S("savelog", "utility", "debian", "debianutils", "", "", None, "/usr/bin/savelog",
+      [R("-n -c 3 a.log", setup="echo one >a.log", mask=r" at .* 20[0-9][0-9]\."),
+       R("-l -c 2 a.log", setup="echo one >a.log; echo zero >a.log.0", mask=r" at .* 20[0-9][0-9]\."),
+       R(""), R("-x")]),
+    S("add-shell", "utility", "debian", "debianutils", "", "", None, "/usr/sbin/add-shell",
+      [R("/bin/sh06sh"), R("")]),
+    S("gettext.sh", "utility", "debian", "gettext-base", "", "", None, "/usr/bin/gettext.sh",
+      [R("--help"), R("--version"), R("")]),
+    S("xzgrep", "utility", "debian", "xz-utils", "", "", None, "/usr/bin/xzgrep",
+      [R("b f.xz", setup="printf 'a\\nb\\nc\\n' | xz >f.xz"), R("-c . f.xz g.xz", setup="echo a | xz >f.xz; echo b | xz >g.xz"),
+       R("zzz f.xz", setup="echo a | xz >f.xz"), R("--help"), R("")]),
+    S("xzdiff", "utility", "debian", "xz-utils", "", "", None, "/usr/bin/xzdiff",
+      [R("f.xz g.xz", setup="echo a | xz >f.xz; echo b | xz >g.xz"), R("f.xz f.xz", setup="echo a | xz >f.xz"), R("--help")]),
+    S("zgrep", "utility", "debian", "gzip", "", "", None, "/usr/bin/zgrep",
+      [R("b f.gz", setup="printf 'a\\nb\\nc\\n' | gzip >f.gz"), R("-n -e a -e c f.gz g.gz", setup="printf 'a\\nb\\nc\\n' | gzip >f.gz; echo c | gzip >g.gz"),
+       R("zzz f.gz", setup="echo a | gzip >f.gz"), R("--help")]),
+    S("zdiff", "utility", "debian", "gzip", "", "", None, "/usr/bin/zdiff",
+      [R("f.gz g.gz", setup="echo a | gzip >f.gz; echo b | gzip >g.gz"), R("f.gz", setup="echo a | gzip >f.gz; echo a >f"), R("--help")]),
+    S("lesspipe", "utility", "debian", "less", "", "", None, "/usr/bin/lesspipe",
+      [R(""), R("f.gz", setup="echo a | gzip >f.gz"), R("f.tar", setup="echo a >a; touch -d 2020-01-01 a; tar cf f.tar a")]),
+    S("xdg-mime", "utility", "debian", "xdg-utils", "", "", None, "/usr/bin/xdg-mime",
+      [R("--help"), R("--version"), R("query filetype f.txt", setup="echo text >f.txt"), R("query default text/plain"), R("")]),
+]
+
+# The aided pass's rewrites (sed -E), one gap each; see the header.
+AIDED = r"""
+s#(^|[^/[:alnum:]_.-])test (! )?-([xwrLh]) #\1/usr/bin/test \2-\3 #g
+s#(^|[^[:alnum:]_/"'.[-])\[ (! )?-([xwrLh]) #\1/usr/bin/[ \2-\3 #g
+s#^([[:space:]]*)umask #\1: umask #
+s#\(umask #(: umask #g
+/^[[:space:]]*trap /s# 13( |$)# PIPE\1#
+s#for ac_signal in 1 2 13 15#for ac_signal in 1 2 PIPE 15#
+s#^([[:space:]]*)\[\\\\/\$\]\* \| \?:\[\\\\/\]\* ?\)#\1/* | \\\\* | '$'* | ?:/* | ?:\\\\* )#
+s#^([[:space:]]*)\[\\\\/\]\* \| \?:\[\\\\/\]\* ?\)#\1/* | \\\\* | ?:/* | ?:\\\\* )#
+s#^([[:space:]]*)\*\[\\\\/\]\* ?\)#\1*/* | *\\\\* )#
+"""
+
+# ---------------------------------------------------------------- engine
+
+
+def die(msg):
+    print(f"script-census: {msg}", file=sys.stderr)
+    sys.exit(2)
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for b in iter(lambda: fh.read(1 << 20), b""):
+            h.update(b)
+    return h.hexdigest()
+
+
+class Census:
+    def __init__(self, root, pelt, podman, pin, aided=False):
+        self.aided = aided
+        self.root = os.path.abspath(root)
+        self.pelt = pelt
+        self.podman = shlex.split(podman)
+        self.pin = pin
+        self.pins = {}
+        if os.path.exists(PINS):
+            for line in open(PINS, encoding="utf-8"):
+                if line.strip() and not line.startswith("#"):
+                    k, v = line.split()
+                    self.pins[k] = v
+        self.seen = {}
+        for d in ("dl", "tree", "run", "logs", "logs-aided"):
+            os.makedirs(os.path.join(self.root, d), exist_ok=True)
+
+    # -- inputs
+    def build(self):
+        for name, text in IMAGES.items():
+            d = os.path.join(self.root, "img", name)
+            os.makedirs(d, exist_ok=True)
+            with open(os.path.join(d, "Containerfile"), "w", encoding="utf-8") as fh:
+                fh.write(text)
+            print(f"script-census: building sh06-{name}", flush=True)
+            r = subprocess.run(self.podman + ["build", "-q", "-t", f"sh06-{name}", d])
+            if r.returncode:
+                die(f"image {name} did not build")
+
+    def tree(self, key):
+        """The extracted (and, for PREP rows, built) tree for a source."""
+        url, want, top = SOURCES[key]
+        dest = os.path.join(self.root, "tree", key)
+        if os.path.exists(os.path.join(dest, ".ready")):
+            return dest
+        arc = os.path.join(self.root, "dl", os.path.basename(url) if key != "pfetch" else "pfetch-0.6.0.tar.gz")
+        if not os.path.exists(arc):
+            print(f"script-census: {url}", flush=True)
+            urllib.request.urlretrieve(url, arc)
+        have = sha256(arc)
+        if have != want:
+            die(f"REFUSED — {os.path.basename(arc)} sha256 {have}, pin wants {want}")
+        tmp = dest + ".x"
+        shutil.rmtree(tmp, ignore_errors=True)
+        with tarfile.open(arc) as tf:
+            tf.extractall(tmp, filter="tar")
+        shutil.rmtree(dest, ignore_errors=True)
+        os.rename(os.path.join(tmp, top), dest)
+        shutil.rmtree(tmp)
+        if key in PREP:
+            image, cmd = PREP[key]
+            hold = os.path.join(self.root, "run", f"prep-{key}")
+            shutil.rmtree(hold, ignore_errors=True)
+            os.makedirs(os.path.join(hold, "meta"))
+            os.rename(dest, os.path.join(hold, "t"))
+            print(f"script-census: preparing {key} in sh06-{image} (network off)", flush=True)
+            r = subprocess.run(self.podman + ["run", "--rm", "--network", "none",
+                                              "-v", f"{hold}:/s", "-w", "/s/t",
+                                              f"sh06-{image}", "sh", "-c", cmd])
+            os.rename(os.path.join(hold, "t"), dest)
+            shutil.copy(os.path.join(hold, "meta", "build.log"),
+                        os.path.join(self.root, "logs", f"prep-{key}.log"))
+            shutil.rmtree(hold)
+            if r.returncode:
+                die(f"preparing {key} failed (logs/prep-{key}.log)")
+        open(os.path.join(dest, ".ready"), "w").close()
+        return dest
+
+    # -- one run
+    def run(self, s, n, r, shell, tag=None):
+        """Run `s`'s n-th row under `shell` (dash|pelt) in a fresh
+        container. Answers a dict: exit, out, err (bytes), files (text),
+        sha (the script's digest), hung."""
+        name = f"sh06-{s['id']}-{n}-{tag or shell}".replace(":", "_")
+        hold = os.path.join(self.root, "run", name)
+        shutil.rmtree(hold, ignore_errors=True)
+        for d in ("bin", "meta", "w"):
+            os.makedirs(os.path.join(hold, d))
+        if s["src"]:
+            subprocess.run(["cp", "-a", "--reflink=auto", self.tree(s["src"]),
+                            os.path.join(hold, "t")], check=True)
+        if shell == "pelt":
+            shutil.copy(self.pelt, os.path.join(hold, "bin", "sh"))
+        with open(os.path.join(hold, "meta", "in"), "w", encoding="utf-8") as fh:
+            fh.write(r["stdin"])
+        env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "HOME": "/root",
+               "LC_ALL": "C", "TERM": "dumb"}
+        env.update(r["env"])
+        envs = " ".join(f"{k}={shlex.quote(v)}" for k, v in env.items())
+        ignore = r["ignore"] or "^$"
+        aid = ""
+        if self.aided:
+            with open(os.path.join(hold, "meta", "aided.sed"), "w", encoding="utf-8") as fh:
+                fh.write(AIDED)
+            aid = (f"case {shlex.quote(s['path'])} in /*|./*) "
+                   f"sed -E -i -f /s/meta/aided.sed {shlex.quote(s['path'])} {s['also']} ;; esac")
+        wrap = f"""#!/bin/sh
+# The wrapper: ours, run by the image's own /bin/sh.
+if [ {shell} = dash ]; then cp "$(command -v dash)" /s/bin/sh; fi
+cd {shlex.quote(s['cwd'])} || exit 99
+{r['setup']}
+case {shlex.quote(s['path'])} in
+/*|./*) sha256sum {shlex.quote(s['path'])} | cut -d' ' -f1 >/s/meta/sha ;;
+esac
+{aid}
+# Every directory, link and file (by digest) in the places a script may
+# write, before and after: what the run made, changed or removed.
+snap() {{
+    D="/s/w /s/t /etc /var /run /root /home /usr/local /srv /opt /tmp"
+    {{
+        find $D -xdev -type d 2>/dev/null | sed 's/^/d /'
+        find $D -xdev -type l -exec sh -c 'for f; do echo "l $f -> $(readlink "$f")"; done' _ {{}} + 2>/dev/null
+        find $D -xdev -type f -print0 2>/dev/null | xargs -0 sha256sum 2>/dev/null |
+            sed 's/^\\([0-9a-f]*\\)  \\(.*\\)$/f \\2 \\1/'
+    }} | re={shlex.quote(ignore)} awk '$2 !~ ENVIRON["re"]' | LC_ALL=C sort
+}}
+snap >/s/meta/before
+env -i {envs} timeout -s KILL {r['timeout']} /s/bin/sh {shlex.quote(s['path'])} {r['args']} \
+    >/s/meta/out 2>/s/meta/err </s/meta/in
+echo $? >/s/meta/exit
+cd /
+snap >/s/meta/after
+{{
+    LC_ALL=C comm -13 /s/meta/before /s/meta/after | sed 's/^/+ /'
+    LC_ALL=C comm -23 /s/meta/before /s/meta/after | sed 's/^/- /'
+}} >/s/meta/files
+chmod -R a+rwX /s 2>/dev/null
+exit 0
+"""
+        with open(os.path.join(hold, "meta", "wrap.sh"), "w", encoding="utf-8") as fh:
+            fh.write(wrap)
+        t0 = time.time()
+        try:
+            subprocess.run(self.podman + ["run", "--rm", "--network", "none",
+                                          "--hostname", "census", "--name", name,
+                                          "-v", f"{hold}:/s", f"sh06-{s['image']}",
+                                          "sh", "/s/meta/wrap.sh"],
+                           timeout=r["timeout"] + 120, capture_output=True)
+        except subprocess.TimeoutExpired:
+            subprocess.run(self.podman + ["kill", name], capture_output=True)
+            subprocess.run(self.podman + ["rm", "-f", name], capture_output=True)
+        took = time.time() - t0
+
+        def rd(f, mode="rb"):
+            p = os.path.join(hold, "meta", f)
+            if not os.path.exists(p):
+                return b"" if mode == "rb" else ""
+            with open(p, mode) as fh:
+                return fh.read()
+        ex = rd("exit", "r").strip()
+        res = {"exit": int(ex) if ex else -1, "out": rd("out"), "err": rd("err"),
+               "files": rd("files", "r"), "sha": rd("sha", "r").strip(),
+               "took": took}
+        if r["mask"]:
+            res["out"] = re.sub(r["mask"].encode(), b"~", res["out"])
+        res["hung"] = res["exit"] in (137, -1) and took >= r["timeout"]
+        log = os.path.join(self.root, "logs-aided" if self.aided else "logs", name)
+        os.makedirs(log, exist_ok=True)
+        for f in ("out", "err", "files", "exit", "wrap.sh"):
+            p = os.path.join(hold, "meta", f)
+            if os.path.exists(p):
+                shutil.copy(p, os.path.join(log, f))
+        subprocess.run(["chmod", "-R", "u+rwX", hold], capture_output=True)
+        shutil.rmtree(hold, ignore_errors=True)
+        return res
+
+    def check_pin(self, s, sha):
+        if not sha or self.aided and not self.pin and s["id"] not in self.pins:
+            return
+        if self.pin:
+            self.seen[s["id"]] = sha
+        elif self.pins.get(s["id"]) != sha:
+            die(f"REFUSED — {s['id']} ({s['path']}) sha256 {sha}, pin wants "
+                f"{self.pins.get(s['id'], '(none)')}")
+
+    def script(self, s):
+        """Answers (verdict, dash exits, pelt exits, notes)."""
+        notes = []
+        verdict = "same"
+        de, pe = [], []
+        for n, r in enumerate(s["runs"]):
+            d = self.run(s, n, r, "dash")
+            self.check_pin(s, d["sha"])
+            d2 = self.run(s, n, r, "dash", "dash2")
+            p = self.run(s, n, r, "pelt")
+            de.append(str(d["exit"]))
+            pe.append("hang" if p["hung"] else str(p["exit"]))
+            if d["hung"]:
+                notes.append(f"run {n}: dash itself timed out")
+                verdict = "unstable"
+                continue
+            stable = (d["out"] == d2["out"] and d["exit"] == d2["exit"]
+                      and d["files"] == d2["files"])
+            if p["hung"]:
+                notes.append(f"run {n} [{r['args']}]: pelt killed at {r['timeout']} s")
+                verdict = "hang"
+                continue
+            why = []
+            if p["exit"] != d["exit"]:
+                why.append(f"exit {p['exit']} (dash {d['exit']})")
+            if stable and p["out"] != d["out"]:
+                why.append("stdout")
+            if bool(p["err"].strip()) != bool(d["err"].strip()):
+                why.append("stderr " + ("present" if p["err"].strip() else "absent"))
+            if stable and p["files"] != d["files"]:
+                why.append("files")
+            if why:
+                notes.append(f"run {n} [{r['args']}]: " + ", ".join(why))
+                if verdict == "same" or verdict == "unstable":
+                    verdict = "differs"
+            elif not stable:
+                what = [k for k in ("out", "exit", "files") if d[k] != d2[k]]
+                notes.append(f"run {n}: dash disagrees with itself ({', '.join(what)}); "
+                             "exit and stderr only")
+                if verdict == "same":
+                    verdict = "unstable"
+        return verdict, de, pe, notes
+
+
+def main(argv):
+    opt = {"dir": None, "pelt": None, "podman": "podman", "tsv": None}
+    flags = set()
+    ids = []
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a in ("--dir", "--pelt", "--podman", "--tsv"):
+            if i + 1 >= len(argv):
+                die(f"{a} needs a value")
+            opt[a[2:]] = argv[i + 1]
+            i += 2
+        elif a in ("--build", "--pin", "--list", "--strict", "--aided"):
+            flags.add(a)
+            i += 1
+        elif a.startswith("-"):
+            die(f"unknown option {a}")
+        else:
+            ids.append(a)
+            i += 1
+    todo = [s for s in SET if not ids or s["id"] in ids or s["group"] in ids]
+    if "--list" in flags:
+        for s in todo:
+            print(f"{s['id']}\t{s['group']}\t{s['image']}\t{s['pkg']} {s['version']}\t{len(s['runs'])} runs")
+        return 0
+    if not opt["dir"] or not opt["pelt"]:
+        die("--dir and --pelt are required (see the header)")
+    if not os.access(opt["pelt"], os.X_OK):
+        die(f"no pelt at {opt['pelt']} (tools/build --static)")
+    if "--aided" in flags and "--pin" in flags:
+        die("--aided checks the pins; it does not write them")
+    c = Census(opt["dir"], os.path.abspath(opt["pelt"]), opt["podman"], "--pin" in flags,
+               "--aided" in flags)
+    if "--build" in flags:
+        c.build()
+    print(f"script-census: pelt = {c.pelt} sha256 {sha256(c.pelt)}", flush=True)
+    rows = []
+    count = {}
+    for s in todo:
+        verdict, de, pe, notes = c.script(s)
+        count[verdict] = count.get(verdict, 0) + 1
+        sha = c.seen.get(s["id"]) or c.pins.get(s["id"], "")
+        print(f"{verdict:<8} {s['id']}  dash {','.join(de)}  pelt {','.join(pe)}", flush=True)
+        for nt in notes:
+            print(f"         {nt}", flush=True)
+        rows.append([s["id"], s["group"], s["pkg"], s["version"], sha, s["licence"],
+                     ",".join(de), ",".join(pe), verdict, "; ".join(notes)])
+    tsv = opt["tsv"] or os.path.join(c.root, "scripts-aided.tsv" if c.aided else "scripts.tsv")
+    with open(tsv, "w", encoding="utf-8") as fh:
+        fh.write("id\tgroup\tpackage\tversion\tsha256\tlicence\tdash_exit\tpelt_exit\tverdict\tnotes\n")
+        for row in rows:
+            fh.write("\t".join(row) + "\n")
+    if c.pin:
+        merged = dict(c.pins)
+        merged.update(c.seen)
+        with open(PINS, "w", encoding="utf-8") as fh:
+            fh.write("# script-census pins: id, sha256 of the script file. Written by --pin.\n")
+            for k in sorted(merged):
+                fh.write(f"{k} {merged[k]}\n")
+    total = sum(count.values())
+    print("script-census: " + "  ".join(f"{k} {v}" for k, v in sorted(count.items()))
+          + f"  of {total}  ({tsv})")
+    if "--strict" in flags and count.get("same", 0) != total:
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
