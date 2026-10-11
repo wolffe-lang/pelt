@@ -1,6 +1,6 @@
 trap 'echo trapped' TERM
-sleep 3 &
+sleep 5 & p=$!
 ( sleep 1; kill -TERM $$ ) &
-wait $!; s=$?
+wait $p; s=$?
 [ $s -gt 128 ] && echo "wait-above-128"
-kill $! 2>/dev/null
+kill $p
