@@ -1,0 +1,70 @@
+== uid:gid 0:0, /usr/bin/dash
+plain r=y w=y x=n
+prog r=y w=y x=y
+secret r=y w=y x=n
+ro r=y w=y x=n
+gx r=y w=y x=y
+ox r=y w=y x=y
+xonly r=y w=y x=y
+dir r=y w=y x=y
+shut r=y w=y x=y
+link r=y w=y x=n
+/usr/bin/env r=y w=y x=y
+/etc/shadow r=y w=y x=n
+/s/access.sh r=y w=n x=n
+bin2
+exit 0
+== uid:gid 0:0, /p/pelt
+plain r=y w=y x=n
+prog r=y w=y x=y
+secret r=y w=y x=n
+ro r=y w=y x=n
+gx r=y w=y x=y
+ox r=y w=y x=y
+xonly r=y w=y x=y
+dir r=y w=y x=y
+shut r=y w=y x=y
+link r=y w=y x=n
+/usr/bin/env r=y w=y x=y
+/etc/shadow r=y w=y x=n
+/s/access.sh r=y w=y x=n
+bin2
+exit 0
+== uid:gid 1000:1000, /usr/bin/dash
+plain r=y w=y x=n
+prog r=y w=y x=y
+secret r=n w=n x=n
+ro r=y w=n x=n
+gx r=y w=y x=n
+ox r=y w=y x=n
+xonly r=n w=n x=y
+dir r=y w=y x=y
+shut r=n w=n x=n
+link r=y w=y x=n
+/usr/bin/env r=y w=n x=y
+/etc/shadow r=n w=n x=n
+/s/access.sh r=y w=n x=n
+bin2
+exit 0
+== uid:gid 1000:1000, /p/pelt
+plain r=y w=y x=n
+prog r=y w=y x=y
+secret r=n w=n x=n
+ro r=y w=n x=n
+gx r=y w=y x=n
+ox r=y w=y x=n
+xonly r=n w=n x=y
+dir r=y w=y x=y
+shut r=n w=n x=n
+link r=y w=y x=n
+/usr/bin/env r=y w=n x=y
+/etc/shadow r=n w=n x=n
+/s/access.sh r=y w=n x=n
+bin2
+exit 0
+== dirsize, tmpfs
+-s empty dir: true
+40 bytes, directory
+== dirsize, the container's filesystem
+-s empty dir: false
+0 bytes, directory
