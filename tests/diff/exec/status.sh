@@ -1,0 +1,1 @@
+exec /bin/sh -c 'exit 7'
