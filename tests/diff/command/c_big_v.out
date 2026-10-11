@@ -1,0 +1,5 @@
+ls=0
+f=0
+cd=0
+if=0
+missing=127

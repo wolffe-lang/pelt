@@ -1,0 +1,4 @@
+exit=0
+stderr=yes
+bash=differs
+pending=command-p
