@@ -74,14 +74,16 @@ def write_meta(path, meta):
 
 
 def cases(areas=None):
-    """Every case as (area, name, script path), sorted."""
+    """Every case as (area, name, script path), sorted. `areas` names
+    areas, or single cases as `area/name`."""
     out = []
     for area in sorted(os.listdir(DIFF)):
         d = os.path.join(DIFF, area)
-        if not os.path.isdir(d) or (areas and area not in areas):
+        whole = not areas or area in areas
+        if not os.path.isdir(d) or not (whole or any(a.startswith(area + "/") for a in areas)):
             continue
         for f in sorted(os.listdir(d)):
-            if f.endswith(".sh"):
+            if f.endswith(".sh") and (whole or f"{area}/{f[:-3]}" in areas):
                 out.append((area, f[:-3], os.path.join(d, f)))
     return out
 
