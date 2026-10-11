@@ -108,8 +108,11 @@ def main(argv):
     os.makedirs(wdir, exist_ok=True)
     wrap = os.path.join(wdir, "pelt")
     with open(wrap, "w") as fh:
+        # bash exports SHLVL, `_` and OLDPWD to what it runs; pelt must
+        # start with the environment the case built, no more
         fh.write("#!/bin/bash\n"
-                 f'exec strace -f -ff -qq -o "{tdir}/r$$-$RANDOM$RANDOM" "{real}" "$@"\n')
+                 f'exec env -u SHLVL -u _ -u OLDPWD strace -f -ff -qq '
+                 f'-o "{tdir}/r$$-$RANDOM$RANDOM" "{real}" "$@"\n')
     os.chmod(wrap, 0o755)
     runs = [("difftest", [os.path.join(ROOT, "tools", "difftest"), "--bin", wdir])]
     if with_session:
