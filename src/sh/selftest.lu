@@ -208,6 +208,96 @@ fn enc1(name: str, value: str) -> str {
     text(o)
 }
 
+/// A child's raw `os_wait_status` answer as a shell status, and
+/// whether the shell says anything about it.
+fn want_status(mut bad: List[str], raw: int, want: int, want_sig: int, spoken: bool) {
+    let (st, sig) = status_of(raw)
+    if st != want || sig != want_sig || signal_spoken(sig) != spoken {
+        (mut bad).push(
+            "status_of({raw}) = {st} sig {sig} spoken {signal_spoken(sig)}, want {want} sig {want_sig} spoken {spoken}",
+        )
+    }
+}
+
+fn joined_env(xs: List[str]) -> str {
+    var o = buf()
+    for x in xs {
+        putc(mut o, '[')
+        put(mut o, x)
+        putc(mut o, ']')
+    }
+    text(o)
+}
+
+/// What a program that replaces the shell is handed: the exported
+/// variables that are set, and the `exec` command's own assignments.
+fn want_exec_env(mut bad: List[str]) {
+    var sh = new_sh("selftest")
+    sh.vals["KEPT"] = "1"
+    sh.exported["KEPT"] = true
+    sh.vals["PLAIN"] = "2"
+    sh.vals["MINE"] = "a=b c"
+    sh.exported["NOVALUE"] = true
+    var extra = List[str]()
+    (mut extra).push("MINE")
+    let got = joined_env(exec_env(sh, extra))
+    if got != "[KEPT=1][MINE=a=b c]" {
+        (mut bad).push("exec_env = {got}")
+    }
+    if env_wants(sh, "PLAIN") || env_wants(sh, "NOVALUE") || !env_wants(sh, "KEPT") {
+        (mut bad).push("env_wants: PLAIN, NOVALUE or KEPT is wrong")
+    }
+}
+
+/// The trap table to dispositions: what the shell polls for itself,
+/// with nothing applied to the host (the masks are read back only when
+/// the table is empty, so no signal's disposition moves in the test).
+fn want_conditions(mut bad: List[str]) {
+    for c in ["HUP", "INT", "QUIT", "TERM", "USR2"] {
+        let m = meaning_of(c)
+        if m == 0 || cond_of(m) != c {
+            (mut bad).push("meaning_of({c}) = {m}, cond_of = {cond_of(m)}")
+        }
+    }
+    for c in ["USR1", "ALRM", "PIPE", "EXIT", "KILL", ""] {
+        if meaning_of(c) != 0 {
+            (mut bad).push("meaning_of({c}) = {meaning_of(c)}, want 0")
+        }
+    }
+    var sh = new_sh("selftest")
+    if interactive_set(sh) != 0 {
+        (mut bad).push("a script listens for nothing by itself")
+    }
+    sh.interactive = true
+    if interactive_set(sh) != M_INT | M_QUIT | M_TERM {
+        (mut bad).push("interactive_set = {interactive_set(sh)}")
+    }
+    var order = buf()
+    for m in by_number() {
+        put(mut order, cond_of(m))
+        putc(mut order, ' ')
+    }
+    if text(order) != "HUP INT QUIT TERM USR2 " {
+        (mut bad).push("by_number = {text(order)}")
+    }
+}
+
+/// `$!` and `wait`: a job is found by the id it was given, the newest
+/// first, and an id no job has is -1.
+fn want_jobs(mut bad: List[str]) {
+    var sh = new_sh("selftest")
+    for id in [4242, NO_PID_BASE + 1, 4242] {
+        (mut sh.jobs).push(-1)
+        (mut sh.job_st).push(0)
+        (mut sh.job_id).push(id)
+    }
+    if job_of(sh, 4242) != 2 || job_of(sh, NO_PID_BASE + 1) != 1 || job_of(sh, 7) != -1 {
+        (mut bad).push(
+            "job_of: {job_of(sh, 4242)} {job_of(sh, NO_PID_BASE + 1)} {job_of(sh, 7)}, want 2 1 -1",
+        )
+    }
+}
+
 /// Run every table check; answers one line per check that failed,
 /// empty when all pass.
 pub fn self_test() -> List[str] {
@@ -340,5 +430,21 @@ pub fn self_test() -> List[str] {
     want_route(mut bad, "echo $nope\n", true, R_SLOW, "")
     want_route(mut bad, "true; true\n", false, R_SLOW, "")
     want_route(mut bad, "true | true\n", false, R_SLOW, "")
+    // a child's ending: an exit code, or 128 + N for signal N; the
+    // shell is silent about SIGINT and SIGPIPE
+    want_status(mut bad, 0, 0, 0, false)
+    want_status(mut bad, 7, 7, 0, false)
+    want_status(mut bad, 255, 255, 0, false)
+    want_status(mut bad, -15, 143, 15, true)
+    want_status(mut bad, -9, 137, 9, true)
+    want_status(mut bad, -1, 129, 1, true)
+    want_status(mut bad, -2, 130, 2, false)
+    want_status(mut bad, -13, 141, 13, false)
+    if signal_words(15) != "ended by signal 15 (TERM)" || signal_words(31) != "ended by signal 31" {
+        (mut bad).push("signal_words: {signal_words(15)} / {signal_words(31)}")
+    }
+    want_exec_env(mut bad)
+    want_conditions(mut bad)
+    want_jobs(mut bad)
     bad
 }
