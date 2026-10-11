@@ -1,0 +1,29 @@
+//! witness (sh06): a read is not cut short by a signal the program
+//! listens for.
+//!
+//! The program listens for INTERRUPT and blocks reading a line from
+//! the terminal. The driver sends SIGINT one second later; the read
+//! does not come back. Only when a key arrives does it return, and
+//! only then does `os_signal_poll` say the signal came
+//! (`[os.term.note]`: "a delivered signal never tears a read"). An
+//! editor waiting for a key therefore cannot wake for a child that
+//! ended, a window that changed, or a trap that must run now.
+
+fn main() -> int {
+    os_signal_listen(16) else |_| {
+        print("read_vs_signal: cannot listen")
+        return 2
+    }
+    print("ready")
+    let before = os_signal_poll(16) else 0
+    let c = fs_read_chunk(0, 1) else |_| List[byte]()
+    let after = os_signal_poll(16) else 0
+    var got = -1
+    if c.len > 0 {
+        got = c[0] as int
+    }
+    print("poll before the read: {before}")
+    print("the read returned byte {got}")
+    print("poll after the read: {after}")
+    0
+}

@@ -1,0 +1,26 @@
+//! witness (sh06): a stopped child is not reported, and cannot be
+//! continued.
+//!
+//! The child stops itself (`kill -STOP $$`). `os_wait_status`
+//! (`[os.proc.status]`) is the only wait there is: it blocks until the
+//! child ENDS. So a shell that put a job in the foreground never
+//! learns that Ctrl-Z stopped it, and has no call that sends SIGCONT.
+//! The driver watches the child reach state T while this program is
+//! still inside the wait, then continues the child itself.
+
+fn main() -> int {
+    var args = List[str]()
+    (mut args).push("-c")
+    (mut args).push("kill -STOP $$; echo resumed-by-someone-else; exit 7")
+    var map = List[int]()
+    let h = os_spawn_job("/bin/sh", args, map, 0, -1, 0) else |_| -1
+    if h < 0 {
+        print("stop_report: cannot spawn")
+        return 2
+    }
+    let pid = os_proc_pid(h) else -1
+    print("child {pid}")
+    let st = os_wait_status(h) else -999
+    print("wait answered {st} only after the child ended")
+    0
+}

@@ -1,0 +1,38 @@
+//! witness (sh06): a resized window cannot be heard.
+//!
+//! `[os.signal.set]` has nine meanings and none is SIGWINCH. The
+//! program listens for all nine, then waits four seconds in timed
+//! reads, polling; the driver resizes the terminal meanwhile (the
+//! kernel sends SIGWINCH to the foreground group). Nothing arrives.
+//! It also asks to listen for bit 512, which no meaning has.
+
+fn main() -> int {
+    let old = os_term_mode(0) else |_| -1
+    if old < 0 {
+        print("winch: standard input is not a terminal")
+        return 2
+    }
+    var all_ok = true
+    os_signal_listen(511) else |_| {
+        all_ok = false
+    }
+    var beyond = "ok"
+    os_signal_listen(512) else |_| {
+        beyond = "refused"
+    }
+    os_term_set_mode(0, old & 4 | 2 << 16) else |_| {}
+    print("ready")
+    var heard = 0
+    var turns = 0
+    while turns < 20 {
+        let _c = fs_read_chunk(0, 1) else |_| List[byte]()
+        let got = os_signal_poll(511) else 0
+        heard = heard | got
+        turns += 1
+    }
+    os_term_set_mode(0, old) else |_| {}
+    print("listen for the nine meanings: {all_ok}")
+    print("listen for bit 512 (no meaning): {beyond}")
+    print("signals heard while the window was resized: {heard}")
+    0
+}

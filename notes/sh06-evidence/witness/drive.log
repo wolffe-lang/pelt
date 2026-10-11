@@ -1,0 +1,23 @@
+== term_keys
+   '<ESC>[999;999H<ESC>[6n<ESC>[H'
+   'size (rows;cols) by cursor report: 24;80'
+   'three keys, as bytes: 97 27 91'
+   'a timed read with nothing typed: -1'
+   'mode restored: true'
+== winch (resized to 30x100, then 40x120)
+   'ready'
+   'listen for the nine meanings: true'
+   'listen for bit 512 (no meaning): ok'
+   'signals heard while the window was resized: 0'
+== stop_report
+   after 2 s: child 2351384 state 'T<', witness state 'S<s+', witness has printed 'child 2351384' only
+== stop_report, after the driver sent SIGCONT
+   'resumed-by-someone-else'
+   'wait answered 7 only after the child ended'
+== read_vs_signal
+   2 s after SIGINT: witness still in its read: True; printed so far 'ready'
+== read_vs_signal, after a key
+   'x'
+   'poll before the read: 0'
+   'the read returned byte 120'
+   'poll after the read: 16'

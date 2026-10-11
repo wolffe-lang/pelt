@@ -1,0 +1,85 @@
+//! witness (sh06): what wolf 0.2.27 already gives a line editor.
+//!
+//! Standard input must be a terminal. The program puts it in a raw
+//! mode through `os_term_set_mode` (`[os.term.mode]`: canonical and
+//! echo off, the signal characters kept), asks the terminal where the
+//! cursor is after sending it to the far corner (the size of the
+//! window, with no ioctl), reads three keys a byte at a time, shows
+//! that a read with `VMIN` 0 and `VTIME` 2 comes back empty after two
+//! tenths of a second, and puts the mode back.
+
+fn put(text: str) {
+    var b = List[byte]()
+    for c in text.bytes() {
+        (mut b).push(c)
+    }
+    fs_write_chunk(1, b) else |_| {}
+}
+
+fn esc(rest: str) {
+    var b = List[byte]()
+    (mut b).push(27 as byte)
+    for c in rest.bytes() {
+        (mut b).push(c)
+    }
+    fs_write_chunk(1, b) else |_| {}
+}
+
+/// One byte of standard input, or -1 when the read came back empty.
+fn key() -> int {
+    let c = fs_read_chunk(0, 1) else |_| List[byte]()
+    if c.len == 0 {
+        return -1
+    }
+    c[0] as int
+}
+
+fn main() -> int {
+    let old = os_term_mode(0) else |_| -1
+    if old < 0 {
+        print("term_keys: standard input is not a terminal")
+        return 2
+    }
+    // canonical (1) and echo (2) off; signals (4) as found; VMIN 0, VTIME 5
+    let timed = old & 4 | 5 << 16
+    os_term_set_mode(0, timed) else |_| {
+        print("term_keys: cannot set the mode")
+        return 2
+    }
+    esc("[999;999H")
+    esc("[6n")
+    var reply = ""
+    loop {
+        let k = key()
+        if k < 0 {
+            break
+        }
+        if k == 82 {
+            break
+        }
+        if k >= 48 && k <= 57 || k == 59 {
+            reply += k as char
+        }
+    }
+    esc("[H")
+    // VMIN 1: block for each key
+    os_term_set_mode(0, old & 4 | 1 << 8) else |_| {}
+    var seen = ""
+    var n = 0
+    while n < 3 {
+        let k = key()
+        seen += " {k}"
+        n += 1
+    }
+    // VMIN 0, VTIME 2: an empty read after 0.2 s
+    os_term_set_mode(0, old & 4 | 2 << 16) else |_| {}
+    let idle = key()
+    os_term_set_mode(0, old) else |_| {}
+    put("\n")
+    print("size (rows;cols) by cursor report: {reply}")
+    print("three keys, as bytes:{seen}")
+    print("a timed read with nothing typed: {idle}")
+    let back = os_term_mode(0) else |_| -1
+    print("mode restored: {back == old}")
+    0
+}
