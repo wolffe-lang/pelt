@@ -198,6 +198,8 @@ fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int 
     sh.pos = copy rest
     sh.from_stdin = true
     sh.interactive = force_i || on_terminal()
+    // an interactive shell edits its lines in emacs mode (ruling #69 R2)
+    sh.opt_emacs = sh.interactive
     sig_apply(mut sh)
     if opts.len > 0 {
         let _st = bi_set(mut sh, opts)

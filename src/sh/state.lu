@@ -79,6 +79,11 @@ struct Sh {
     opt_v: bool,
     opt_a: bool,
     opt_bigc: bool,
+    /// The editing modes (`sh.edit`): at most one is on.
+    opt_vi: bool,
+    opt_emacs: bool,
+    /// The line editor's history and what outlives a line.
+    ed: EdKeep,
     no_e: int,
     loops: int,
     fdepth: int,
@@ -223,6 +228,9 @@ fn new_sh(name: str) -> Sh {
         opt_v: false,
         opt_a: false,
         opt_bigc: false,
+        opt_vi: false,
+        opt_emacs: false,
+        ed: new_edkeep(),
         no_e: 0,
         loops: 0,
         fdepth: 0,
@@ -307,6 +315,8 @@ fn opts_list(sh: Sh) -> List[bool] {
     (mut o).push(sh.opt_v)
     (mut o).push(sh.opt_a)
     (mut o).push(sh.opt_bigc)
+    (mut o).push(sh.opt_vi)
+    (mut o).push(sh.opt_emacs)
     o
 }
 
@@ -348,6 +358,8 @@ fn restore(mut sh: Sh, s: Snap) {
     sh.opt_v = s.opts[5]
     sh.opt_a = s.opts[6]
     sh.opt_bigc = s.opts[7]
+    sh.opt_vi = s.opts[8]
+    sh.opt_emacs = s.opts[9]
     sh.traps = copy s.traps
     sh.loops = s.loops
     sh.fdepth = s.fdepth
