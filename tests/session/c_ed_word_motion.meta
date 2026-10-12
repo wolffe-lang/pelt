@@ -1,3 +1,4 @@
+env=PS1=$\s
 oracle=bash
 compare=stdout
 dash=differs
