@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""edit-witness — the line editor gives the terminal back, asked from
+outside.
+
+pelt runs interactively on a fresh pseudo-terminal (tools/lib_session.py's
+arrangement); a second hold on the terminal reads its modes (ICANON,
+ECHO, ISIG) before pelt starts, while it edits, and after. Each scenario
+types part of a line, so the editor is in the middle of one, and then:
+
+  hup       SIGHUP from outside: pelt dies of SIGHUP (as dash does), and
+            the terminal's modes are back as they were
+  term      SIGTERM: an interactive shell ignores it; the line goes on
+            being edited, and the modes are restored when it exits
+  int       SIGINT from outside (not the key): the line is abandoned, a
+            new prompt comes, `$?` is 130 (XCU sh, ASYNCHRONOUS EVENTS)
+  hangup    the terminal goes away (the other side closed): pelt sees the
+            end of input and exits
+  editing   while a line is edited the modes ARE changed (or the other
+            scenarios prove nothing)
+  kill      SIGKILL: nothing can restore the modes. Reported, never a
+            failure: it is what no handler can do (wolf runs none, and
+            the runtime restores nothing, [os.term.mode])
+
+Exit 0 when every scenario but `kill` holds, 1 when one does not, 2 when
+the harness cannot run.
+
+usage: tools/edit-witness PELT
+"""
+
+import os
+import pty
+import select
+import signal
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+
+
+class Shell:
+    def __init__(self, pelt, home):
+        self.master, slave = pty.openpty()
+        self.hold = os.dup(slave)
+        self.before = ls._lmode(slave)
+        rout, wout = os.pipe()
+        rerr, werr = os.pipe()
+        env = {"PATH": "/usr/bin:/bin", "HOME": home, "LC_ALL": "C", "PS1": "$ "}
+        self.p = subprocess.Popen([pelt, "-i"], stdin=slave, stdout=wout, stderr=werr,
+                                  env=env, cwd=home, start_new_session=True,
+                                  preexec_fn=ls._ctty, close_fds=True)
+        os.close(slave)
+        os.close(wout)
+        os.close(werr)
+        self.fds = {rout: "out", rerr: "err", self.master: "tty"}
+        self.out = b""
+        self.err = b""
+
+    def pump(self, secs):
+        end = time.time() + secs
+        while time.time() < end:
+            live = [fd for fd in self.fds]
+            if not live:
+                time.sleep(0.05)
+                continue
+            r, _, _ = select.select(live, [], [], 0.05)
+            for fd in r:
+                try:
+                    d = os.read(fd, 65536)
+                except OSError:
+                    d = b""
+                if not d:
+                    del self.fds[fd]
+                    continue
+                if self.fds[fd] == "out":
+                    self.out += d
+                elif self.fds[fd] == "err":
+                    self.err += d
+
+    def wait_prompt(self, n, secs=8):
+        end = time.time() + secs
+        while time.time() < end:
+            self.pump(0.1)
+            if self.err.count(b"$ ") >= n:
+                return True
+        return False
+
+    def type(self, b):
+        os.write(self.master, b)
+
+    def mode(self):
+        return ls._lmode(self.hold)
+
+    def done(self, secs=3):
+        try:
+            return self.p.wait(timeout=secs)
+        except subprocess.TimeoutExpired:
+            return None
+
+    def close(self):
+        if self.p.poll() is None:
+            os.kill(self.p.pid, signal.SIGKILL)
+            self.p.wait()
+        for fd in list(self.fds):
+            os.close(fd)
+        try:
+            os.close(self.master)
+        except OSError:
+            pass
+        os.close(self.hold)
+
+
+def scenario(pelt, home, name):
+    sh = Shell(pelt, home)
+    try:
+        if not sh.wait_prompt(1):
+            return False, "no first prompt"
+        sh.type(b"echo par")
+        sh.pump(0.5)
+        editing = sh.mode()
+        if name == "editing":
+            ok = editing != sh.before
+            sh.type(b"\x15exit\r")
+            sh.done()
+            return ok, f"modes before {sh.before:#x}, while editing {editing:#x}"
+        if name == "hup":
+            os.kill(sh.p.pid, signal.SIGHUP)
+            rc = sh.done()
+            after = sh.mode()
+            ok = rc == -signal.SIGHUP and after == sh.before
+            return ok, f"status {rc}, modes after {after:#x} (before {sh.before:#x})"
+        if name == "term":
+            os.kill(sh.p.pid, signal.SIGTERM)
+            sh.pump(0.5)
+            alive = sh.p.poll() is None
+            sh.type(b"t\r")
+            sh.wait_prompt(2)
+            sh.type(b"exit\r")
+            rc = sh.done()
+            after = sh.mode()
+            ok = alive and sh.out == b"part\n" and rc == 0 and after == sh.before
+            return ok, f"alive after TERM {alive}, output {sh.out!r}, status {rc}, modes restored {after == sh.before}"
+        if name == "int":
+            os.kill(sh.p.pid, signal.SIGINT)
+            got = sh.wait_prompt(2, 3)
+            sh.type(b"echo st=$?\r")
+            sh.wait_prompt(3)
+            sh.type(b"exit\r")
+            rc = sh.done()
+            after = sh.mode()
+            ok = got and sh.out == b"st=130\n" and rc == 0 and after == sh.before
+            return ok, f"new prompt {got}, output {sh.out!r}, status {rc}, modes restored {after == sh.before}"
+        if name == "hangup":
+            os.close(sh.master)
+            del sh.fds[sh.master]
+            rc = sh.done(5)
+            return rc is not None, f"status {rc}"
+        if name == "kill":
+            os.kill(sh.p.pid, signal.SIGKILL)
+            rc = sh.done()
+            after = sh.mode()
+            return True, f"status {rc}, modes restored {after == sh.before} (nothing can restore them)"
+        return False, "unknown scenario"
+    finally:
+        sh.close()
+
+
+def main(argv):
+    sys.stdout.reconfigure(line_buffering=True)
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    pelt = os.path.abspath(argv[0])
+    if not os.access(pelt, os.X_OK):
+        print(f"edit-witness: no pelt at {pelt}", file=sys.stderr)
+        return 2
+    import tempfile
+    home = tempfile.mkdtemp(prefix="pelt-edit-witness.")
+    bad = 0
+    try:
+        for name in ("editing", "hup", "term", "int", "hangup", "kill"):
+            ok, why = scenario(pelt, home, name)
+            print(f"{'ok  ' if ok else 'FAIL'} {name}: {why}")
+            bad += not ok
+    finally:
+        import shutil
+        shutil.rmtree(home, ignore_errors=True)
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
