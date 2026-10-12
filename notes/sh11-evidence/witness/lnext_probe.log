@@ -1,0 +1,6 @@
+== macOS arm64 (nomad-1, Darwin 25.4.0)
+IEXTEN on: True IXON on: True
+slave read: [1, 98, 99, 100, 101]
+== linux x86-64 (kasumi)
+IEXTEN on: True IXON on: True
+slave read: [22, 1, 98, 15, 99, 100, 101]
