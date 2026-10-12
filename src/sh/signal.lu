@@ -244,28 +244,34 @@ fn run_trap_action(mut sh: Sh, action: str) {
 /// then TERM, whichever the kernel delivered first), not in the order
 /// their handlers happened to finish.
 fn next_signal(set: int) -> int {
-    for m in by_number() {
+    var k = 0
+    while k < 5 {
+        let m = by_number(k)
         if set & m != 0 {
             let got = os_signal_poll(m) else 0
             if got != 0 {
                 return got
             }
         }
+        k += 1
     }
     0
 }
 
 /// The trappable meanings in the order of their signal numbers: HUP 1,
 /// INT 2, QUIT 3, TERM 15, then USR2 (12 on linux, 31 on macOS: last
-/// here on both, a named simplification).
-fn by_number() -> List[int] {
-    var o = List[int]()
-    (mut o).push(M_HUP)
-    (mut o).push(M_INT)
-    (mut o).push(M_QUIT)
-    (mut o).push(M_TERM)
-    (mut o).push(M_USR2)
-    o
+/// here on both, a named simplification); the `k`th of the five. A
+/// `match`, not a list: this runs after every command an interactive
+/// shell runs, and a list would be built in the root each time
+/// (pelt#19).
+fn by_number(k: int) -> int {
+    match k {
+        0 => M_HUP,
+        1 => M_INT,
+        2 => M_QUIT,
+        3 => M_TERM,
+        _ => M_USR2,
+    }
 }
 
 /// Ctrl-C with no trap, in an interactive shell: the command is
