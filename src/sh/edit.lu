@@ -253,6 +253,79 @@ fn read1_in() -> int {
     c[0] as int
 }
 
+// ------------------------------------------- what crosses a line's region
+
+/// `xs` as decimal numbers, each followed by `,`.
+fn ints_txt(xs: List[int]) -> str {
+    if xs.len == 0 {
+        return ""
+    }
+    var o = buf()
+    for x in xs {
+        put(mut o, "{x},")
+    }
+    text(o)
+}
+
+/// The numbers `ints_txt` wrote.
+fn txt_ints(t: str) -> List[int] {
+    var o = List[int]()
+    var n = 0
+    var neg = false
+    for b in t.bytes() {
+        let c = b as int
+        if c == 44 {
+            (mut o).push(if neg then 0 - n else n)
+            n = 0
+            neg = false
+        } else if c == 45 {
+            neg = true
+        } else {
+            n = n * 10 + (c - 48)
+        }
+    }
+    o
+}
+
+/// What outlives a line as one `str`: the kill and `.`'s keys, then the
+/// numbers, then the search pattern (last: it may hold anything).
+fn mem_txt(m: EdMem) -> str {
+    "{ints_txt(m.kill)};{ints_txt(m.dot)};{m.dot_count};{m.find_kind};{m.find_c};{m.pat_dir};{m.pat}"
+}
+
+fn txt_mem(t: str) -> EdMem {
+    var m = new_edmem()
+    var parts = List[str]()
+    var from = 0
+    var i = 0
+    while i < t.len && parts.len < 6 {
+        if byte_at(t, i) == 59 {
+            (mut parts).push(t[from..i])
+            from = i + 1
+        }
+        i += 1
+    }
+    if parts.len < 6 {
+        return m
+    }
+    m.kill = txt_ints(parts[0])
+    m.dot = txt_ints(parts[1])
+    m.dot_count = to_int(parts[2]) else 0
+    m.find_kind = to_int(parts[3]) else 0
+    m.find_c = to_int(parts[4]) else 0
+    m.pat_dir = txt_num(parts[5])
+    m.pat = t[from..t.len]
+    m
+}
+
+/// A decimal that may be negative.
+fn txt_num(t: str) -> int {
+    if byte_at(t, 0) == 45 {
+        return 0 - (to_int(t[1..t.len]) else 0)
+    }
+    to_int(t) else 0
+}
+
 // ---------------------------------------------------------- the terminal
 
 /// What `ed_query` learned: the width, the column the prompt will start
@@ -262,7 +335,9 @@ struct Query {
     cols: int,
     col0: int,
     cpr: int,
-    pend: List[int],
+    /// Bytes typed while the editor waited for the report, as decimal
+    /// numbers each followed by `,` ("" for none: nothing to allocate).
+    pend: str,
 }
 
 /// `COLUMNS` as a width, or 0.
@@ -281,7 +356,8 @@ fn columns_var(sh: Sh) -> int {
 /// what is known of the terminal: 0 never asked, 1 answers, -1 never did.
 fn ed_query(sh: Sh, cpr: int) -> Query {
     let cv = columns_var(sh)
-    var q = Query { cols: if cv > 0 then cv else 80, col0: 0, cpr: cpr, pend: List[int]() }
+    var q = Query { cols: if cv > 0 then cv else 80, col0: 0, cpr: cpr, pend: "" }
+    var pend = List[int]()
     if cv > 0 || cpr < 0 {
         return q
     }
@@ -317,14 +393,14 @@ fn ed_query(sh: Sh, cpr: int) -> Query {
                 held = List[int]()
                 (mut held).push(b)
             } else {
-                (mut q.pend).push(b)
+                (mut pend).push(b)
             }
         } else if st == 1 {
             (mut held).push(b)
             st = if b == 91 then 2 else 0
             if st == 0 {
                 for x in held {
-                    (mut q.pend).push(x)
+                    (mut pend).push(x)
                 }
             }
         } else {
@@ -343,7 +419,7 @@ fn ed_query(sh: Sh, cpr: int) -> Query {
             } else {
                 // a sequence that is not a report: the user's key
                 for x in held {
-                    (mut q.pend).push(x)
+                    (mut pend).push(x)
                 }
                 num = 0
                 st = 0
@@ -351,6 +427,7 @@ fn ed_query(sh: Sh, cpr: int) -> Query {
         }
     }
     os_term_set_mode(0, old) else |_| {}
+    q.pend = ints_txt(pend)
     if cols_seen.len == 2 && cols_seen[1] >= 2 {
         q.cols = cols_seen[1]
         q.col0 = if cols_seen[0] >= 1 then cols_seen[0] - 1 else 0
@@ -430,7 +507,9 @@ struct Ed {
 struct EdOut {
     line: str,
     how: int,
-    mem: EdMem,
+    /// `mem_txt` of what outlives the line, when the line changed it
+    /// ("" when not: nothing to copy out of the line's region).
+    mem: str,
     mem_set: bool,
 }
 
@@ -439,7 +518,7 @@ struct EdOut {
 /// how it ended (`ED_OK`, `ED_EOF`, `ED_INTR`).
 fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
     let old = os_term_mode(0) else |_| {
-        return EdOut { line: "", how: ED_EOF, mem: new_edmem(), mem_set: false }
+        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false }
     }
     var hist = List[str]()
     var i = 0
@@ -462,7 +541,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         er: 0,
         ec: 0,
         out: List[byte](),
-        pend: copy q.pend,
+        pend: txt_ints(q.pend),
         pi: 0,
         inj: List[int](),
         ii: 0,
@@ -508,7 +587,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         if e.poll_hup {
             os_signal_default(M_HUP) else |_| {}
         }
-        return EdOut { line: "", how: ED_EOF, mem: new_edmem(), mem_set: false }
+        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false }
     }
     start_line(mut e)
     flush_out(mut e)
@@ -524,7 +603,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         os_signal_default(M_HUP) else |_| {}
         os_signal_raise(M_HUP) else |_| {}
         settle_hup()
-        return EdOut { line: "", how: ED_EOF, mem: e.mem, mem_set: false }
+        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false }
     }
     if e.poll_hup {
         os_signal_default(M_HUP) else |_| {}
@@ -536,7 +615,12 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         (mut o).push(10 as byte)
         line = text(Buf { b: o })
     }
-    EdOut { line: line, how: e.done, mem: e.mem, mem_set: e.mem_set }
+    EdOut {
+        line: line,
+        how: e.done,
+        mem: if e.mem_set then mem_txt(e.mem) else "",
+        mem_set: e.mem_set,
+    }
 }
 
 /// A raised SIGHUP at its default ends the process; give it a moment.
