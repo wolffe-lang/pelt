@@ -1,0 +1,48 @@
+== loop [g a b]
+heapprof: /home/mfwolffe/lanes/sh08/bin/base-native l2.sh: 292 chunk grabs after the first 20 (~18688 KiB)
+-- innermost wolf frame
+   152  52.1%  [list_push]
+   109  37.3%  [list_new]
+    16   5.5%  [list_copy]
+    15   5.1%  [str_repeat]
+-- innermost four frames
+    45  15.4%  [list_push] < split_marked < expand_words < expand_command
+    32  11.0%  [list_new] < run_slow < run_simple < run_node
+    30  10.3%  [list_new] < buf < split_marked < expand_words
+    30  10.3%  [list_push] < args_of < builtin < run_slow
+    30  10.3%  [list_push] < expand_words < expand_command < run_slow
+    16   5.5%  [list_push] < run_slow < run_simple < run_node
+    16   5.5%  [list_copy] < run_slow < run_simple < run_node
+    16   5.5%  [list_new] < redirs_of < run_slow < run_simple
+    16   5.5%  [list_new] < buf < unmark < expand_words
+    16   5.5%  [list_push] < expand_command < run_slow < run_simple
+    15   5.1%  [list_push] < putb < lit < xw
+    15   5.1%  [str_repeat] < run_simple < run_node < run
+    15   5.1%  [list_new] < buf < expand_words < expand_command
+-- on the stack at all
+   292 100.0%  run_simple
+   292 100.0%  run_list
+   292 100.0%  run_node
+   292 100.0%  run
+   292 100.0%  run_slow
+   277  94.9%  run_loop
+   200  68.5%  call_function
+   167  57.2%  expand_command
+   152  52.1%  [list_push]
+   151  51.7%  expand_words
+   109  37.3%  [list_new]
+   107  36.6%  eval_from
+    92  31.5%  eval_string
+    92  31.5%  run_main
+    92  31.5%  run_source
+    75  25.7%  split_marked
+    61  20.9%  buf
+    30  10.3%  args_of
+    30  10.3%  builtin
+    16   5.5%  [list_copy]
+    16   5.5%  redirs_of
+    16   5.5%  unmark
+    15   5.1%  xw
+    15   5.1%  lit
+    15   5.1%  putb
+    15   5.1%  [str_repeat]

@@ -1,0 +1,129 @@
+== /usr/bin/dash
+loop 5000 [true]: kb 3040 out=5000  err=0
+loop 20000 [true]: kb 3100 out=20000  err=0
+loop 5000 [true | true]: kb 3020 out=5000  err=0
+loop 20000 [true | true]: kb 3020 out=20000  err=0
+loop 5000 [echo x | cat >/dev/null]: kb 3076 out=5000  err=0
+loop 20000 [echo x | cat >/dev/null]: kb 3012 out=20000  err=0
+loop 5000 [x=$(true)]: kb 2996 out=5000  err=0
+loop 20000 [x=$(true)]: kb 3084 out=20000  err=0
+loop 5000 [x=$(echo y)]: kb 3132 out=5000  err=0
+loop 20000 [x=$(echo y)]: kb 3060 out=20000  err=0
+loop 5000 [x=`true`]: kb 3020 out=5000  err=0
+loop 20000 [x=`true`]: kb 3072 out=20000  err=0
+loop 5000 [f]: kb 3100 out=5000  err=0
+loop 20000 [f]: kb 3040 out=20000  err=0
+loop 5000 [g a b]: kb 3044 out=5000  err=0
+loop 20000 [g a b]: kb 3064 out=20000  err=0
+loop 5000 [( true )]: kb 3100 out=5000  err=0
+loop 20000 [( true )]: kb 3104 out=20000  err=0
+loop 5000 [{ true; }]: kb 2832 out=5000  err=0
+loop 20000 [{ true; }]: kb 3040 out=20000  err=0
+loop 5000 [true && true]: kb 3084 out=5000  err=0
+loop 20000 [true && true]: kb 3060 out=20000  err=0
+loop 5000 [if true; then :; fi]: kb 3044 out=5000  err=0
+loop 20000 [if true; then :; fi]: kb 3028 out=20000  err=0
+loop 5000 [case a in a) :;; esac]: kb 3116 out=5000  err=0
+loop 20000 [case a in a) :;; esac]: kb 3108 out=20000  err=0
+loop 5000 [x=$(echo a | cat)]: kb 3124 out=5000  err=0
+loop 20000 [x=$(echo a | cat)]: kb 3064 out=20000  err=0
+loop 5000 [for j in 1; do :; done]: kb 3128 out=5000  err=0
+loop 20000 [for j in 1; do :; done]: kb 3132 out=20000  err=0
+loop 5000 [true &]: kb 2980 out= err=38
+loop 20000 [true &]: kb 2988 out= err=38
+script 5000 [true]: kb 2996 out=done  err=0
+script 20000 [true]: kb 2948 out=done  err=0
+script 5000 [true | true]: kb 2996 out=done  err=0
+script 20000 [true | true]: kb 3028 out=done  err=0
+script 5000 [x=$(true)]: kb 2996 out=done  err=0
+script 20000 [x=$(true)]: kb 3012 out=done  err=0
+script 5000 [f]: kb 2948 out=done  err=0
+script 20000 [f]: kb 2924 out=done  err=0
+script 5000 [: $((i=i+1))]: kb 3096 out=done  err=0
+script 20000 [: $((i=i+1))]: kb 3064 out=done  err=0
+== /home/mfwolffe/lanes/sh08/bin/base-release
+loop 5000 [true]: kb 3228 out=5000  err=0
+loop 20000 [true]: kb 3752 out=20000  err=0
+loop 5000 [true | true]: kb 53048 out=5000  err=0
+loop 20000 [true | true]: kb 203340 out=20000  err=0
+loop 5000 [echo x | cat >/dev/null]: kb 56272 out=5000  err=0
+loop 20000 [echo x | cat >/dev/null]: kb 216720 out=20000  err=0
+loop 5000 [x=$(true)]: kb 34576 out=5000  err=0
+loop 20000 [x=$(true)]: kb 129016 out=20000  err=0
+loop 5000 [x=$(echo y)]: kb 37364 out=5000  err=0
+loop 20000 [x=$(echo y)]: kb 142384 out=20000  err=0
+loop 5000 [x=`true`]: kb 34796 out=5000  err=0
+loop 20000 [x=`true`]: kb 131064 out=20000  err=0
+loop 5000 [f]: kb 9808 out=5000  err=0
+loop 20000 [f]: kb 30840 out=20000  err=0
+loop 5000 [g a b]: kb 36144 out=5000  err=0
+loop 20000 [g a b]: kb 135980 out=20000  err=0
+loop 5000 [( true )]: kb 24552 out=5000  err=0
+loop 20000 [( true )]: kb 89496 out=20000  err=0
+loop 5000 [{ true; }]: kb 3168 out=5000  err=0
+loop 20000 [{ true; }]: kb 3832 out=20000  err=0
+loop 5000 [true && true]: kb 3264 out=5000  err=0
+loop 20000 [true && true]: kb 4072 out=20000  err=0
+loop 5000 [if true; then :; fi]: kb 3136 out=5000  err=0
+loop 20000 [if true; then :; fi]: kb 4232 out=20000  err=0
+loop 5000 [case a in a) :;; esac]: kb 4764 out=5000  err=0
+loop 20000 [case a in a) :;; esac]: kb 10076 out=20000  err=0
+loop 5000 [x=$(echo a | cat)]: kb 93688 out=5000  err=0
+loop 20000 [x=$(echo a | cat)]: kb 365952 out=20000  err=0
+loop 5000 [for j in 1; do :; done]: kb 6656 out=5000  err=0
+loop 20000 [for j in 1; do :; done]: kb 17664 out=20000  err=0
+loop 5000 [true &]: kb 2816 out= err=49
+loop 20000 [true &]: kb 3028 out= err=49
+script 5000 [true]: kb 11164 out=done  err=0
+script 20000 [true]: kb 35976 out=done  err=0
+script 5000 [true | true]: kb 67440 out=done  err=0
+script 20000 [true | true]: kb 261412 out=done  err=0
+script 5000 [x=$(true)]: kb 49292 out=done  err=0
+script 20000 [x=$(true)]: kb 189144 out=done  err=0
+script 5000 [f]: kb 17824 out=done  err=0
+script 20000 [f]: kb 62936 out=done  err=0
+script 5000 [: $((i=i+1))]: kb 30596 out=done  err=0
+script 20000 [: $((i=i+1))]: kb 114860 out=done  err=0
+== /home/mfwolffe/lanes/sh08/bin/base-native
+loop 5000 [true]: kb 3848 out=5000  err=0
+loop 20000 [true]: kb 4720 out=20000  err=0
+loop 5000 [true | true]: kb 53648 out=5000  err=0
+loop 20000 [true | true]: kb 204320 out=20000  err=0
+loop 5000 [echo x | cat >/dev/null]: kb 56664 out=5000  err=0
+loop 20000 [echo x | cat >/dev/null]: kb 217436 out=20000  err=0
+loop 5000 [x=$(true)]: kb 35452 out=5000  err=0
+loop 20000 [x=$(true)]: kb 130024 out=20000  err=0
+loop 5000 [x=$(echo y)]: kb 38668 out=5000  err=0
+loop 20000 [x=$(echo y)]: kb 143440 out=20000  err=0
+loop 5000 [x=`true`]: kb 35960 out=5000  err=0
+loop 20000 [x=`true`]: kb 131972 out=20000  err=0
+loop 5000 [f]: kb 10708 out=5000  err=0
+loop 20000 [f]: kb 31668 out=20000  err=0
+loop 5000 [g a b]: kb 37092 out=5000  err=0
+loop 20000 [g a b]: kb 136592 out=20000  err=0
+loop 5000 [( true )]: kb 25416 out=5000  err=0
+loop 20000 [( true )]: kb 90412 out=20000  err=0
+loop 5000 [{ true; }]: kb 4092 out=5000  err=0
+loop 20000 [{ true; }]: kb 4748 out=20000  err=0
+loop 5000 [true && true]: kb 4112 out=5000  err=0
+loop 20000 [true && true]: kb 5024 out=20000  err=0
+loop 5000 [if true; then :; fi]: kb 4140 out=5000  err=0
+loop 20000 [if true; then :; fi]: kb 5180 out=20000  err=0
+loop 5000 [case a in a) :;; esac]: kb 5596 out=5000  err=0
+loop 20000 [case a in a) :;; esac]: kb 10920 out=20000  err=0
+loop 5000 [x=$(echo a | cat)]: kb 94336 out=5000  err=0
+loop 20000 [x=$(echo a | cat)]: kb 367068 out=20000  err=0
+loop 5000 [for j in 1; do :; done]: kb 7420 out=5000  err=0
+loop 20000 [for j in 1; do :; done]: kb 18412 out=20000  err=0
+loop 5000 [true &]: kb 3628 out= err=49
+loop 20000 [true &]: kb 3620 out= err=49
+script 5000 [true]: kb 11764 out=done  err=0
+script 20000 [true]: kb 37696 out=done  err=0
+script 5000 [true | true]: kb 68348 out=done  err=0
+script 20000 [true | true]: kb 262980 out=done  err=0
+script 5000 [x=$(true)]: kb 50088 out=done  err=0
+script 20000 [x=$(true)]: kb 189904 out=done  err=0
+script 5000 [f]: kb 18612 out=done  err=0
+script 20000 [f]: kb 63892 out=done  err=0
+script 5000 [: $((i=i+1))]: kb 31680 out=done  err=0
+script 20000 [: $((i=i+1))]: kb 115492 out=done  err=0

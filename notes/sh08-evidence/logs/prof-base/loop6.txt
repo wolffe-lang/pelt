@@ -1,0 +1,19 @@
+== loop [for j in 1; do :; done]
+heapprof: /home/mfwolffe/lanes/sh08/bin/base-native l6.sh: 15 chunk grabs after the first 20 (~960 KiB)
+-- innermost wolf frame
+    15 100.0%  [list_push]
+-- innermost four frames
+    15 100.0%  [list_push] < split_marked < expand_words < run_for
+-- on the stack at all
+    15 100.0%  run_loop
+    15 100.0%  eval_from
+    15 100.0%  run
+    15 100.0%  run_for
+    15 100.0%  run_list
+    15 100.0%  eval_string
+    15 100.0%  [list_push]
+    15 100.0%  run_source
+    15 100.0%  run_node
+    15 100.0%  run_main
+    15 100.0%  split_marked
+    15 100.0%  expand_words
