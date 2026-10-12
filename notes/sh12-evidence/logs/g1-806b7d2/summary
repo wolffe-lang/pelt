@@ -1,0 +1,23 @@
+fmt EXIT=0
+census EXIT=0
+gen-width EXIT=0
+build EXIT=0
+test EXIT=0
+glob-rss-native EXIT=0
+loop-rss-native EXIT=0
+exec-witness-native EXIT=0
+diff-native EXIT=0
+session-native EXIT=1
+edit-witness-native EXIT=0
+hist-witness-native EXIT=0
+glob-rss-release EXIT=0
+loop-rss-release EXIT=0
+exec-witness-release EXIT=0
+diff-release EXIT=0
+session-release EXIT=1
+edit-witness-release EXIT=0
+hist-witness-release EXIT=0
+difftest-selftest EXIT=0
+session-selftest EXIT=0
+session-release-taskset EXIT=0
+DONE

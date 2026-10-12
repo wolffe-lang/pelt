@@ -1,0 +1,3 @@
+glob-rss: target/native/pelt n=2000 cwd=    empty  peak_kb    12528  exit 0  out '2000'  stderr_bytes 0
+glob-rss: target/native/pelt n=2000 cwd= 64 files  peak_kb    12552  exit 0  out '2000'  stderr_bytes 0
+glob-rss: ok (12552 KB with 64 files, 12528 KB empty, bound 15828)
