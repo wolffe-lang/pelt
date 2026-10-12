@@ -957,7 +957,9 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
         return slow()
     }
     var enc = buf()
-    take_deferred(mut t, mut enc)
+    if t.sstk.len > 0 {
+        take_deferred(mut t, mut enc)
+    }
     var bk = B_NONE
     if fields.len > 0 {
         let cmd = fields[0]
@@ -996,7 +998,9 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
         if is_ronly(sh, name) {
             return slow()
         }
-        take_deferred(mut t, mut enc)
+        if t.sstk.len > 0 {
+            take_deferred(mut t, mut enc)
+        }
         // the next assignment's expansion sees this one (XCU 2.9.1.1:
         // in order, left to right); the shadow keeps nothing, and the
         // last one has nobody after it to see it
@@ -1016,7 +1020,9 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
             close_opened(t)
             return slow()
         }
-        take_deferred(mut t, mut enc)
+        if t.sstk.len > 0 {
+            take_deferred(mut t, mut enc)
+        }
     }
     var r = slow()
     r.kind = R_DONE

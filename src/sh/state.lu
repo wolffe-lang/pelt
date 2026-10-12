@@ -502,12 +502,21 @@ fn frame_close(mut sh: Sh) {
 /// children (`istk`); a frame's record, a call's saved `$@`, a `for`
 /// loop's items (`sstk`).
 fn cut_istk(mut sh: Sh, n: int) {
+    if n == 0 {
+        // the commonest cut, a frame or a call at the top: one store
+        (mut sh.istk).clear()
+        return
+    }
     while sh.istk.len > n {
         let _i = (mut sh.istk).pop() else 0
     }
 }
 
 fn cut_sstk(mut sh: Sh, n: int) {
+    if n == 0 {
+        (mut sh.sstk).clear()
+        return
+    }
     while sh.sstk.len > n {
         let _s = (mut sh.sstk).pop() else ""
     }
