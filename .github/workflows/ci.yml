@@ -165,15 +165,16 @@ jobs:
       # `dash -i +m` (tests/session/, tools/lib_session.py).
       # A session step that stops making progress is a failure, not a
       # 45-minute job timeout (trunk's push run 37953346374 hung here on
-      # macOS and was cancelled with no verdict).
+      # macOS and was cancelled with no verdict). 15 since sh11: the
+      # corpus grew from 127 cases to 197 (macOS took 3 minutes for 127).
       - name: the session corpus, native tier
         if: matrix.builds
-        timeout-minutes: 10
+        timeout-minutes: 15
         run: tools/session --bin target/native
 
       - name: the session corpus, release tier
         if: matrix.builds
-        timeout-minutes: 10
+        timeout-minutes: 15
         run: tools/session --bin target/release
 
       # sh11: the editor gives the terminal back, asked from outside: the
@@ -183,10 +184,12 @@ jobs:
       # ICANON, ECHO or ISIG changed.
       - name: the editor restores the terminal, native tier
         if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
         run: tools/edit-witness target/native/pelt
 
       - name: the editor restores the terminal, release tier
         if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
         run: tools/edit-witness target/release/pelt
 
       - name: the session harness sees a difference (the planted red)
