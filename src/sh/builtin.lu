@@ -173,7 +173,17 @@ fn bi_shift(mut sh: Sh, args: List[str]) -> int {
         fatal(mut sh, "shift: {n}: more than the {sh.pos.len} positional parameters", 2)
         return 2
     }
-    sh.pos = sh.pos[n..sh.pos.len]
+    // in place: the list the state keeps, not a fresh one
+    var k = 0
+    while k + n < sh.pos.len {
+        sh.pos[k] = sh.pos[k + n]
+        k += 1
+    }
+    k = 0
+    while k < n {
+        let _p = (mut sh.pos).pop() else ""
+        k += 1
+    }
     0
 }
 
@@ -300,7 +310,7 @@ fn bi_set(mut sh: Sh, args: List[str]) -> int {
         let a = args[i]
         if a == "--" {
             i += 1
-            sh.pos = args[i..args.len]
+            set_pos(mut sh, args, i)
             return 0
         }
         if a == "-" {
@@ -339,9 +349,19 @@ fn bi_set(mut sh: Sh, args: List[str]) -> int {
         break
     }
     if i < args.len {
-        sh.pos = args[i..args.len]
+        set_pos(mut sh, args, i)
     }
     0
+}
+
+/// `$@` becomes `args[from..]`, written into the list the state keeps.
+fn set_pos(mut sh: Sh, args: List[str], from: int) {
+    (mut sh.pos).clear()
+    var k = from
+    while k < args.len {
+        (mut sh.pos).push(args[k])
+        k += 1
+    }
 }
 
 /// `export` and `readonly`, including `-p`.
@@ -377,9 +397,9 @@ fn bi_export(mut sh: Sh, name: str, args: List[str]) -> int {
             }
         }
         if ro {
-            sh.ronly[vname] = true
+            rset(mut sh, vname)
         } else {
-            sh.exported[vname] = true
+            xset(mut sh, vname, true)
         }
     }
     0
@@ -405,7 +425,7 @@ fn bi_unset(mut sh: Sh, args: List[str]) -> int {
     while i < args.len {
         let n = args[i]
         if funcs {
-            let _f = (mut sh.funcs).remove(n) else 0
+            fndel(mut sh, n)
         } else if !unset_var(mut sh, n) {
             fatal(mut sh, "unset: {n}: is read-only", 2)
             return 2
@@ -606,9 +626,9 @@ fn bi_trap(mut sh: Sh, args: List[str]) -> int {
             continue
         }
         if reset {
-            let _t = (mut sh.traps).remove(n) else ""
+            tdel(mut sh, n)
         } else {
-            sh.traps[n] = action
+            tset(mut sh, n, action)
         }
     }
     sig_apply(mut sh)
@@ -1074,7 +1094,7 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
     let now = if physical then sh.phys else target
     if old.len > 0 {
         let _o = set_var(mut sh, "OLDPWD", old)
-        sh.exported["OLDPWD"] = true
+        xset(mut sh, "OLDPWD", true)
     }
     let _p = set_var(mut sh, "PWD", now)
     if show {

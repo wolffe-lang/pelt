@@ -17,10 +17,10 @@
 //! makes a call.
 //!
 //! **Subshells run in-process**, so a subshell's `umask` would outlive
-//! it: `snap` records `sh.mask` and `restore` (`sh.state`) calls
-//! `restore_mask`, which sets the process's mask back when it differs.
-//! A snapshot taken before any `umask` ran records -1, which means the
-//! mask the shell started with, `sh.mask0`.
+//! it: a subshell's frame records `sh.mask` and `frame_close`
+//! (`sh.state`) calls `restore_mask`, which sets the process's mask back
+//! when it differs. A frame opened before any `umask` ran records -1,
+//! which means the mask the shell started with, `sh.mask0`.
 //!
 //! **Where the mask cannot be set** — lupin, which refuses `os_umask`
 //! by name (ruling #67 R10), and windows, which has none — `os_umask`
@@ -187,7 +187,7 @@ fn mask_now(mut sh: Sh) -> int ! {unsupported} {
     was
 }
 
-/// A subshell ends: put back the mask snapshot `want` recorded (-1:
+/// A subshell ends: put back the mask its frame recorded, `want` (-1:
 /// the mask the shell started with). Nothing to do until a `umask`
 /// has run.
 fn restore_mask(mut sh: Sh, want: int) {

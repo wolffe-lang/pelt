@@ -115,7 +115,7 @@ fn run_node(mut sh: Sh, n: int, k: int) -> int {
     } else if k == K_CASE {
         st = run_case(mut sh, n)
     } else if k == K_FUNC {
-        sh.funcs[sh.ast.nodes[n].text] = sh.ast.nodes[n].kids[0]
+        fnset(mut sh, sh.ast.nodes[n].text, sh.ast.nodes[n].kids[0])
         st = 0
     }
     if sh.flow == F_NONE || sh.flow == F_EXIT {
@@ -377,11 +377,11 @@ fn run_case(mut sh: Sh, n: int) -> int {
     0
 }
 
-/// `( list )` in-process: the environment copied, run, put back.
+/// `( list )` in-process: run in a frame (`sh.state`), which puts the
+/// environment back.
 fn run_subshell(mut sh: Sh, body: int) -> int {
-    let saved = snap(sh)
-    let saved_traps = copy sh.traps
-    sh.traps = subshell_traps(saved_traps)
+    frame_open(mut sh)
+    traps_reset(mut sh)
     sh.sub += 1
     sh.sig_mine = interactive_set(sh)
     var st = run(mut sh, body)
@@ -391,33 +391,19 @@ fn run_subshell(mut sh: Sh, body: int) -> int {
     sh.flow = F_NONE
     st = run_exit_trap(mut sh, st)
     sh.sub -= 1
-    restore(mut sh, saved)
+    frame_close(mut sh)
     sig_apply(mut sh)
     sh.status = st
     pass_interrupt(mut sh)
     st
 }
 
-/// Traps a subshell starts with (XCU 2.12): an ignored one stays
-/// ignored; the rest are reset.
-fn subshell_traps(t: Map[str, str]) -> Map[str, str] {
-    var out = Map[str, str]()
-    for k in t.keys() {
-        let v = t[k] else ""
-        if v.len == 0 {
-            out[k] = ""
-        }
-    }
-    out
-}
-
 /// A command substitution: run `node` in-process with its standard
 /// output captured, the trailing newlines cut (XCU 2.6.3). Its status
 /// becomes `$?` of a command with no command name.
 fn run_cmdsub(mut sh: Sh, node: int) -> str {
-    let saved = snap(sh)
-    let saved_traps = copy sh.traps
-    sh.traps = subshell_traps(saved_traps)
+    frame_open(mut sh)
+    traps_reset(mut sh)
     let saved_status = sh.status
     sh.sub += 1
     sh.sig_mine = interactive_set(sh)
@@ -433,7 +419,7 @@ fn run_cmdsub(mut sh: Sh, node: int) -> str {
     st = run_exit_trap(mut sh, st)
     let out = cap_end(mut sh)
     sh.sub -= 1
-    restore(mut sh, saved)
+    frame_close(mut sh)
     sig_apply(mut sh)
     sh.status = saved_status
     sh.cs_status = st
@@ -453,7 +439,7 @@ fn run_exit_trap(mut sh: Sh, st: int) -> int {
     if action.len == 0 {
         return st
     }
-    let _gone = (mut sh.traps).remove("EXIT") else ""
+    tdel(mut sh, "EXIT")
     sh.status = st
     let saved_flow = sh.flow
     sh.flow = F_NONE
@@ -882,7 +868,7 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
             (mut had).push(has_var(sh, name))
             (mut old).push(value_of(sh, name))
             if !is_ronly(sh, name) {
-                sh.vals[name] = v
+                vset(mut sh, name, v)
             }
         }
     }
@@ -967,9 +953,9 @@ fn unassign(mut sh: Sh, names: List[str], had: List[bool], old: List[str]) {
     while k >= 0 {
         if !is_ronly(sh, names[k]) {
             if had[k] {
-                sh.vals[names[k]] = old[k]
+                vset(mut sh, names[k], old[k])
             } else {
-                let _v = (mut sh.vals).remove(names[k]) else ""
+                vdel(mut sh, names[k])
             }
         }
         k -= 1
@@ -1037,17 +1023,17 @@ fn pop_locals(mut sh: Sh) {
         let v = (mut sh.lvals).pop() else ""
         let was = (mut sh.lset).pop() else false
         let exp = (mut sh.lexp).pop() else false
-        let _r = (mut sh.ronly).remove(name) else false
+        rdel(mut sh, name)
         if was {
-            sh.vals[name] = v
+            vset(mut sh, name, v)
             if exp {
-                sh.exported[name] = true
+                xset(mut sh, name, true)
             } else {
-                let _e = (mut sh.exported).remove(name) else false
+                xdel(mut sh, name)
             }
         } else {
-            let _v = (mut sh.vals).remove(name) else ""
-            let _e = (mut sh.exported).remove(name) else false
+            vdel(mut sh, name)
+            xdel(mut sh, name)
         }
     }
 }
@@ -1460,7 +1446,7 @@ fn run_exec(
         st = run_external(mut sh, args, names, values, false)
         if sh.started {
             // the program ran in the subshell's place: no `EXIT` trap
-            sh.traps = Map[str, str]()
+            traps_clear(mut sh)
         }
     } else {
         st = replace_shell(mut sh, args, names)
