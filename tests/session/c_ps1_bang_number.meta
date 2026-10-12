@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=!>\s
+oracle=bash
+dash=differs
+why=XCU 2.5.3: each ! in PS1 is the next command's number and !! one !; exec true ends both shells without bash's exit message

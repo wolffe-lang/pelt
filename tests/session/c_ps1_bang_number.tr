@@ -1,0 +1,18 @@
+step 0
+err no
+prompt "1> "
+step 1 "echo a"
+out "a\n"
+err no
+prompt "2> "
+step 2 "PS1='[!!!]'"
+err no
+prompt "[!3]"
+step 3 "echo b"
+out "b\n"
+err no
+prompt "[!4]"
+step 4 "exec true"
+err no
+prompt ""
+exit 0 at step 4

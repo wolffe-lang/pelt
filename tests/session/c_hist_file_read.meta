@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=!>\s
+oracle=bash
+dash=differs
+why=XCU sh HISTFILE: the history file is read when the shell starts and numbers continue after it ($HOME/.sh_history for pelt, .bash_history for bash: the same lines in each); exec true ends both shells without bash's exit message

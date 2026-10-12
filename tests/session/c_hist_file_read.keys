@@ -1,0 +1,4 @@
+fc -l
+echo new
+fc -l
+exec true

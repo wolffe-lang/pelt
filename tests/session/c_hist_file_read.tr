@@ -1,0 +1,19 @@
+step 0
+err no
+prompt "4> "
+step 1 "fc -l"
+out "1\techo old1\n2\techo old2\n3\techo old3\n"
+err no
+prompt "5> "
+step 2 "echo new"
+out "new\n"
+err no
+prompt "6> "
+step 3 "fc -l"
+out "1\techo old1\n2\techo old2\n3\techo old3\n4\tfc -l\n5\techo new\n"
+err no
+prompt "7> "
+step 4 "exec true"
+err no
+prompt ""
+exit 0 at step 4

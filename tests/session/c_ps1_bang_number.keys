@@ -1,0 +1,4 @@
+echo a
+PS1='[!!!]'
+echo b
+exec true
