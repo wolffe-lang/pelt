@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=a key that is not part of the search ends it and acts on the line found

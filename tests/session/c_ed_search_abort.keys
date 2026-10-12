@@ -1,0 +1,4 @@
+PS1='$ '
+echo findme
+\k echo kept\x12find\x07\r
+exit

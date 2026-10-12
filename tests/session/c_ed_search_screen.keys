@@ -1,0 +1,5 @@
+PS1='$ '
+echo findme
+\k \x12fi
+\k x
+\k \x07\x15exit\r

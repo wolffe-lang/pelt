@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=Ctrl-R again: the next older line holding the pattern

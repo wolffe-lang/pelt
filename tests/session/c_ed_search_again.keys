@@ -1,0 +1,6 @@
+PS1='$ '
+echo findme 1
+echo findme 2
+echo other
+\k \x12find\x12\r
+exit

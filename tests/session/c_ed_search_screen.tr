@@ -1,0 +1,20 @@
+step 0
+err no
+prompt "\u001b[?2004h$ "
+step 1 "PS1='$ '"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 2 "echo findme"
+out "findme\n"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 3 "\\k \\x12fi"
+err no
+prompt "\r(reverse-i-search)`': \b\b\bf': echo \u001b[7mf\u001b[27mindme\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u001b[1@i': echo \u001b[7mfi\u001b[27m\b\b"
+step 4 "\\k x"
+err no
+prompt "\u0007\r(\u001b[8@failed reverse-i-search)`fix': echo fi\b\b"
+step 5 "\\k \\x07\\x15exit\\r"
+err yes
+prompt ""
+exit 0 at step 5

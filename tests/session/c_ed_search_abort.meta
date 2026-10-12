@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=Ctrl-G ends the search and puts back the line as it was

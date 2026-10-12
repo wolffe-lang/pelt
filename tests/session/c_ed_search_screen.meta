@@ -1,0 +1,7 @@
+env=TERM=xterm PS1=$\s
+oracle=bash
+compare=stdout
+dash=agree
+why=the Ctrl-R screen is pelt's own: (search 'pat') before the line matched, the cursor on the match; a pattern no line holds shows (failed search 'pat') and the line last matched, the cursor at its end. Written by hand from that design (bash draws its own prompt); its transcript is bash's
+screen=3-4
+screen_by=hand

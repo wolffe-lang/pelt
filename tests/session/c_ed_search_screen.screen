@@ -1,0 +1,6 @@
+step 3
+| $ (search 'fi') echo findme
+cursor 0 21
+step 4
+| $ (failed search 'fix') echo findme
+cursor 0 35

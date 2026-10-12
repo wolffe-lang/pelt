@@ -1,0 +1,4 @@
+PS1='$ '
+echo findme
+\k \x12find\x05 extra\r
+exit
