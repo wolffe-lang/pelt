@@ -329,8 +329,9 @@ Not in the prediction, found: a key typed before the editor has set
 its mode (just after the prompt is written) is the line discipline's,
 and Ctrl-R there is the terminal's REPRINT (the bench met it; a person
 cannot type that fast, but type-ahead during a command is always the
-line discipline's); dash 0.5.13.4 has `fc` when interactive (sh06
-recorded it as having no editing; its history is libedit's).
+line discipline's); dash 0.5.13.4 has `fc` and a history when
+interactive (probes p01, d06–d09), with no `HISTFILE` and no `!` in
+`PS1`.
 
 ## 6. Not verified
 
