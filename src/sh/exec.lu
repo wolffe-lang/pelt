@@ -418,7 +418,7 @@ fn run_cmdsub(mut sh: Sh, node: int) -> str {
     }
     sh.flow = F_NONE
     st = run_exit_trap(mut sh, st)
-    let out = cap_end(mut sh)
+    let out = cap_end(mut sh, true)
     sh.sub -= 1
     frame_close(mut sh)
     sig_apply(mut sh)
@@ -426,11 +426,7 @@ fn run_cmdsub(mut sh: Sh, node: int) -> str {
     sh.cs_status = st
     sh.cs_ran = true
     pass_interrupt(mut sh)
-    var end = out.len
-    while end > 0 && ch(out, end - 1) == '\n' {
-        end -= 1
-    }
-    out[0..end]
+    out
 }
 
 /// The `EXIT` trap, if one is set, run once as the shell (or subshell)
@@ -1579,7 +1575,8 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
     let count = sh.ast.nodes[n].kids.len
     var input = fd_get(sh, 0)
     var own_in = false
-    var kids = List[int]()
+    // the children started, on the state's own stack (pelt#19)
+    let kbase = sh.pipe_kids.len
     var st = 0
     var i = 0
     while i < count {
@@ -1607,23 +1604,35 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         sh.stage_child = -1
         sh.stage_w = -1
         sh.stage_cap = 0
-        let caught = cap_end_bytes(mut sh)
+        var fed = FD_CLOSED
+        if child >= 0 {
+            let start = cap_close(mut sh)
+            cap_cut(mut sh, start)
+        } else {
+            fed = cap_feed(mut sh)
+        }
         fs_close(w) else |_| {}
         if own_in {
             fs_close(input) else |_| {}
         }
         if child >= 0 {
-            (mut kids).push(child)
+            (mut sh.pipe_kids).push(child)
             input = r
         } else {
             fs_close(r) else |_| {}
-            input = input_from(mut sh, caught)
+            input = fed
         }
         own_in = true
         i += 1
     }
-    for h in kids {
+    var k = kbase
+    while k < sh.pipe_kids.len {
+        let h = sh.pipe_kids[k]
         let _s = reap(mut sh, h)
+        k += 1
+    }
+    while sh.pipe_kids.len > kbase {
+        let _h = (mut sh.pipe_kids).pop() else 0
     }
     read_pending_caps(mut sh)
     st

@@ -77,23 +77,33 @@ fn why_failed() -> str {
 
 /// A read handle that yields `data` and then end of file.
 fn input_from(mut sh: Sh, data: List[byte]) -> int {
-    if data.len <= 4096 {
-        let (r, w) = os_pipe() else |_| { return temp_input(mut sh, data) }
-        if data.len > 0 {
-            fs_write_chunk(w, data) else |_| {}
-        }
-        fs_close(w) else |_| {}
-        return r
-    }
-    temp_input(mut sh, data)
+    feed_said(mut sh, feed(sh, data))
 }
 
-/// `data` in a fresh temporary file, opened for reading and unlinked.
-fn temp_input(mut sh: Sh, data: List[byte]) -> int {
+/// `feed`'s failures.
+const FEED_NO_TEMP: int = -2
+
+const FEED_NO_READ: int = -3
+
+/// A read handle that yields `data` and then end of file: a pipe
+/// holding it when it fits (4 KiB or less), else a fresh temporary
+/// file, opened for reading and unlinked; or `FEED_NO_TEMP` or
+/// `FEED_NO_READ`. Writes nothing to the state, so it can run inside a
+/// region; `feed_said` reports a failure.
+fn feed(sh: Sh, data: List[byte]) -> int {
+    if data.len <= 4096 {
+        let (r, w) = os_pipe() else (-1, -1)
+        if r >= 0 {
+            if data.len > 0 {
+                fs_write_chunk(w, data) else |_| {}
+            }
+            fs_close(w) else |_| {}
+            return r
+        }
+    }
     let (w, path) = temp_create(sh)
     if w < 0 {
-        diag(mut sh, "cannot make a temporary file in {temp_dir(sh)}")
-        return FD_CLOSED
+        return FEED_NO_TEMP
     }
     if data.len > 0 {
         fs_write_chunk(w, data) else |_| {}
@@ -102,10 +112,23 @@ fn temp_input(mut sh: Sh, data: List[byte]) -> int {
     fs_remove(path) else |_| {}
     fs_close(w) else |_| {}
     if r < 0 {
+        return FEED_NO_READ
+    }
+    r
+}
+
+/// `feed`'s answer as a handle, a failure said on standard error and
+/// answered as `FD_CLOSED`.
+fn feed_said(mut sh: Sh, h: int) -> int {
+    if h == FEED_NO_TEMP {
+        diag(mut sh, "cannot make a temporary file in {temp_dir(sh)}")
+        return FD_CLOSED
+    }
+    if h == FEED_NO_READ {
         diag(mut sh, "cannot read back a temporary file")
         return FD_CLOSED
     }
-    r
+    h
 }
 
 fn temp_dir(sh: Sh) -> str {
