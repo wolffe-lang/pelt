@@ -318,10 +318,13 @@ fn arith_end(w: str, i: int) -> int {
 /// The `$(…)` at `i`: its parsed body (or -1 for an empty one) and the
 /// index past its `)`. Parsed once per (text, offset) and remembered.
 fn cmdsub_at(mut sh: Sh, w: str, i: int) -> (int, int) {
-    let key = "{i}:{w}"
-    let known = sh.cs_end[key] else -1
-    if known >= 0 {
-        return (sh.cs_node[key] else -1, known)
+    let head = sh.cs_word[w] else -1
+    var at = head
+    while at >= 0 {
+        if sh.cs_off[at] == i {
+            return (sh.cs_nd[at], sh.cs_e[at])
+        }
+        at = sh.cs_next[at]
     }
     var j = i + 2
     while j < w.len && (ch(w, j) == ' ' || ch(w, j) == '\t' || ch(w, j) == '\n') {
@@ -340,8 +343,11 @@ fn cmdsub_at(mut sh: Sh, w: str, i: int) -> (int, int) {
         }
         end = p.pos
     }
-    sh.cs_node[key] = node
-    sh.cs_end[key] = end
+    (mut sh.cs_off).push(i)
+    (mut sh.cs_nd).push(node)
+    (mut sh.cs_e).push(end)
+    (mut sh.cs_next).push(head)
+    sh.cs_word[w] = sh.cs_off.len - 1
     (node, end)
 }
 
@@ -724,13 +730,34 @@ fn arith_text(mut sh: Sh, inner: str) -> str {
 /// `` `…` `` at `i` (XCU 2.6.3): inside, a backslash quotes only `$`,
 /// `` ` ``, `\` (and `"` within double quotes); the rest is a script.
 fn backquote(mut sh: Sh, w: str, i: int, dq: bool, mut o: Buf) -> int {
-    let e = bq_end(w, i)
     if sh.shadow {
         sh.bail = true
         sh.flow = F_EXIT
-        return e
+        return bq_end(w, i)
     }
+    let (node, e) = bq_node_of(mut sh, w, i, dq)
+    if sh.flow != F_NONE {
+        return w.len
+    }
+    let out = run_cmdsub(mut sh, node)
+    emit_val(mut o, out, dq)
+    e
+}
+
+/// The parsed body of the `` `…` `` at `i` and the index past it,
+/// parsed once per text (and quoting) and remembered.
+fn bq_node_of(mut sh: Sh, w: str, i: int, dq: bool) -> (int, int) {
+    let e = bq_end(w, i)
     let raw = w[i + 1..e - 1]
+    var node = -2
+    if dq {
+        node = sh.bq_rawq[raw] else -2
+    } else {
+        node = sh.bq_raw[raw] else -2
+    }
+    if node != -2 {
+        return (node, e)
+    }
     var t = buf()
     var k = 0
     while k < raw.len {
@@ -747,17 +774,16 @@ fn backquote(mut sh: Sh, w: str, i: int, dq: bool, mut o: Buf) -> int {
         k += 1
     }
     let src = text(t)
-    var node = sh.bq_node[src] else -2
-    if node == -2 {
-        node = parse_script_list(mut sh, src)
-        if sh.flow != F_NONE {
-            return w.len
-        }
-        sh.bq_node[src] = node
+    node = parse_script_list(mut sh, src)
+    if sh.flow != F_NONE {
+        return (-1, w.len)
     }
-    let out = run_cmdsub(mut sh, node)
-    emit_val(mut o, out, dq)
-    e
+    if dq {
+        sh.bq_rawq[raw] = node
+    } else {
+        sh.bq_raw[raw] = node
+    }
+    (node, e)
 }
 
 /// A whole script parsed at once into one LIST whose kids are its
