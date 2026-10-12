@@ -1,0 +1,5 @@
+# the oracles the probes ran under (kasumi)
+dash 0.5.13.4-1.1
+bash 5.3.20-2
+c6221703b6197ce2ad79dad071b0ee0d3ec1355762fb9883e5ae0105e954e855  /usr/bin/dash
+a8ce2b3c38c818534d093009d08df58977878b86a0497d3f207eff57fec595f5  /usr/bin/bash

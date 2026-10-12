@@ -1,0 +1,26 @@
+copy-current 0007
+X-orig 0677
+u=gw st=0 0027
+u=gu st=0 0027
+u=rg st=0 0227
+o=u st=0 0020
+o+u-x st=0 0021
+dd -w st=0 0227
+u=rwx,g=rx,o=
+-SS st=0
+-S- st=2
+huge st=0 0777
+01000 st=0 0000
+0 1 st=0 0000
+S st=0
+lone-dash st=0 0027
+x st=2 0027
+r st=2 0027
+semi st=2 0027
+space st=2 0027
+trailsp st=2 0027
+a+rwx,= st=0 0777
+fromzero 0400 u=wx,g=rwx,o=rwx
+after-bad
+0022
+exit=0
