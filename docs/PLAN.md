@@ -17,14 +17,15 @@ filed.
   (CENSUS.md §1). The special built-ins meet 87%.
 - **Three in four POSIX statements are met**: 400 of 527 testable
   statements of XCU chapter 2 and the built-ins' pages; 414 since
-  sh07 (S1, below).
+  sh07 (S1, below); since sh11 the table has 544 statements, and
+  since sh13 (S4) 431 of them are met.
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
   gaps fixed it would be 72 of 80. **Since sh07: 66 of 80**, one more
   (pfetch) differing only where dash differs from itself; the other 13
   stop at `umask` (10, S4) or need a process per pipeline stage (3,
-  gap 7).
+  gap 7). **Since sh13: 76 of 80**; the 3 left are gap 7.
 - **Interactive pelt is a prompt, not yet a place to work.** `PS1`,
   `PS2`, `ENV`, Ctrl-C and Ctrl-D behave as dash's do. There is no line
   editor, no history, no completion, no job control and no aliases.
@@ -88,7 +89,10 @@ needs the least from upstream.
   `$'…'` (gap 12). Done when those cases leave `PENDING.md`.
 - **S4, when the release carrying s230 lands:** `umask` (gap 2). Done
   when the census is 80 of 80, or each script left is named with what
-  it waits on.
+  it waits on. **Landed in sh13 on wolf 0.2.28 at 76 of 80**: the ten
+  `umask` scripts run as under dash; xzgrep, zgrep and zdiff wait on
+  gap 7, and pfetch's output moves between dash's own runs
+  (`notes/sh13-the-umask.md`).
 
 ### H3, split
 
@@ -168,7 +172,7 @@ Each of these is a ruling first. None is started before POSIX is met.
 | piece | wolf-lang | PAX |
 |---|---|---|
 | S1, S2, S3 | nothing (W07 for exact `test -r/-w/-x`; mode bits and uid are close without it) | — |
-| S4 `umask` | the release carrying s230 (`os_umask`) | `umask(2)` on PAX (px27 lists it) |
+| S4 `umask` | done: wolf 0.2.28's `os_umask` (sh13) | `umask(2)` on PAX (px27 lists it) |
 | H3a editor | W05 for resize and for restoring the terminal | a console that answers `TIOCGWINSZ` (px19's framebuffer does) |
 | H3b history | — | px27 (a writable tree) for `HISTFILE` |
 | H3e job control | W03, #680, #141, #681, #691 | process groups, sessions, `tcsetpgrp`, stopped processes (a pax lane) |
