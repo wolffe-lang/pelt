@@ -8,7 +8,7 @@ step 2 "echo edit-me"
 out "edit-me\n"
 err yes
 prompt "$ "
-step 3 "fc -e 'sed -i s/me/done/'"
+step 3 "fc -e ./ed1"
 out "edit-done\n"
 err yes
 prompt "$ "

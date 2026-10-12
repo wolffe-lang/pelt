@@ -5,7 +5,7 @@ step 1 "echo x"
 out "x\n"
 err no
 prompt "!>"
-step 2 "exit"
-err yes
+step 2 "exec true"
+err no
 prompt ""
 exit 0 at step 2

@@ -1,4 +1,4 @@
 PS1='$ '
 echo edit-me
-fc -e 'sed -i s/me/done/'
+fc -e ./ed1
 exit

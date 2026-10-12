@@ -1,4 +1,3 @@
 oracle=bash
 compare=stdout
 dash=differs
-pending=history

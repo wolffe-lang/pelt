@@ -16,14 +16,16 @@ The census cases (sh06, `c_*`; `docs/CENSUS.md`), by what they wait on.
 |---|---|---|---|
 | **alias** | `alias` and alias substitution | pelt (P03) | `c_alias_interactive` |
 | **completion** | no completion: Tab is inserted as itself (shown `^I`), so a command or file name is not completed. Recorded from `bash --posix -i`; only standard output and the exit are compared | pelt, after ruling R3 (files, commands, variables) | `c_ed_complete_command`, `c_ed_complete_file` |
-| **history search** | the line editor (sh11) keeps the lines typed in memory and Up/Down walk them, but Ctrl-R (incremental search) is not there | pelt (sh12, history) | `c_ed_search` |
 | **lnext** | Ctrl-V (insert the next key as itself) passes on linux; on macOS the terminal keeps Ctrl-V for itself even with canonical input off (IEXTEN, which `[os.term.mode]` cannot turn off), so the editor sees only the key after it. Measured: `notes/sh11-evidence/witness/lnext_probe.log` | wolf-lang W05 (the special characters and the other flags) | `c_ed_ctrl_v`, `c_ed_tab_literal`, `c_vi_insert_ctrl_v` |
-| **history** | no command history beyond the line editor's in-memory list (sh11): `fc`, the history number in `PS1`'s `!`, and vi mode's `v` (edit the line with vi, which goes through `fc`) | pelt (sh12) | `c_hist_fc_edit`, `c_hist_fc_list`, `c_hist_fc_s`, `c_ps1_bang`, `c_vi_v` |
 | **ignoreeof** | `set -o ignoreeof` is accepted and Ctrl-D still ends the shell | pelt (P10) | `c_ignoreeof` |
 | **mail** | `MAIL`, `MAILCHECK`, `MAILPATH`: no notice before the prompt | pelt (P10); the file's time is `fs_stat` | `c_mail` |
 | **job control** | no job control: `set -m` is accepted and does nothing — no process group per job, no terminal handoff, Ctrl-Z stops nothing the shell can report, no `jobs`, `fg`, `bg`, no job numbers or completion notices. Recorded from `dash -i -m` | wolf-lang W03 (stop reporting, `SIGCONT`, a signal to a group) and #680 (a wait that a signal or a second child can end), #141 (`kill` built in); then pelt (sh12, sh13) | `c_jc_background_group`, `c_jc_background_job`, `c_jc_bg`, `c_jc_bg_ttin`, `c_jc_ctrl_z`, `c_jc_done_message`, `c_jc_fg`, `c_jc_fg_number`, `c_jc_foreground_group`, `c_jc_jobs_list`, `c_jc_jobs_states` |
 | **getpid** | `$$` off linux (passes on linux) | wolf-lang#141 | `c_jc_shell_is_leader` |
 <!-- census:end -->
+
+**Cleared by sh12 (the history):** `c_ed_search` (Ctrl-R),
+`c_hist_fc_edit`, `c_hist_fc_list`, `c_hist_fc_s`, `c_ps1_bang`,
+`c_vi_v`; and the differential case `fc/c_noninteractive`.
 
 **Cleared by sh11 (the line editor):** `c_ed_delete_char`,
 `c_ed_home_end`, `c_ed_kill_to_end`, `c_ed_left_insert`, `c_ed_up_arrow`,
@@ -45,10 +47,10 @@ polls for it after the line is read and after the child is reaped).
   not yet a stopped child's report, `SIGCONT` or a signal to a group
   (`[os.term.note]`), so the sessions stay `dash -i +m` (pelt H3). `&`
   and `wait` work (`background`, `background_status`).
-- **line editing and history** — none yet (`os_term_set_mode` arrived
-  in wolf 0.2.27 and is not used; the terminal's own line discipline
-  does the editing: backspace, Ctrl-U, Ctrl-W work because the
-  terminal is in canonical mode).
+- **the history file across shells** — a session is one shell, so
+  `HISTFILE` written by one shell and read by the next, two shells
+  sharing one file at once, and the file cut to `HISTSIZE` are asked
+  from outside by `tools/hist-witness` (sh12), in CI on both tiers.
 - **a command typed right after Ctrl-C at an empty prompt** — dash
   0.5.13.4 loses that line's newline (typed `^C`, `echo after`,
   `exit`, it runs `echo afterexit`); pelt runs each line as typed. Not

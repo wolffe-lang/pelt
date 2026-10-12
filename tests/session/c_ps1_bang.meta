@@ -2,4 +2,3 @@ oracle_args=--noediting -i +m
 env=PS1=!!>
 oracle=bash
 dash=differs
-pending=history

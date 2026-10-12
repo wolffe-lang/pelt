@@ -1,2 +1,2 @@
 echo x
-exit
+exec true
