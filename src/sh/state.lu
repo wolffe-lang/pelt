@@ -181,9 +181,20 @@ struct Sh {
     line: int,
     cs_status: int,
     cs_ran: bool,
-    cs_node: Map[str, int],
-    cs_end: Map[str, int],
-    bq_node: Map[str, int],
+    /// The command substitutions parsed so far (`sh.expand`'s
+    /// `cmdsub_at`): a word → its latest entry; per entry the offset of
+    /// the `$(` in the word, the body, the index past the `)`, and the
+    /// word's previous entry. Keyed by the word itself, a view of the
+    /// tree, so a lookup builds nothing.
+    cs_word: Map[str, int],
+    cs_off: List[int],
+    cs_nd: List[int],
+    cs_e: List[int],
+    cs_next: List[int],
+    /// Backquoted command substitutions parsed so far, keyed by the
+    /// text between the backquotes, outside and inside double quotes.
+    bq_raw: Map[str, int],
+    bq_rawq: Map[str, int],
     sub: int,
     lnames: List[str],
     lvals: List[str],
@@ -224,6 +235,11 @@ struct Sh {
     /// A name's latest journal entry: a write finds it here and records
     /// nothing when it is in the open frame already.
     jseen: Map[str, int],
+    /// The positional parameters of the calls under the running one
+    /// (`pos_push`).
+    pos_save: List[str],
+    /// The items of the `for` loops running now, innermost last.
+    items: List[str],
     /// Per open frame: where its journal starts, and where its record
     /// starts on `fr_int` and `fr_str`.
     jframes: List[int],
@@ -302,9 +318,13 @@ fn new_sh(name: str) -> Sh {
         line: 0,
         cs_status: 0,
         cs_ran: false,
-        cs_node: Map[str, int](),
-        cs_end: Map[str, int](),
-        bq_node: Map[str, int](),
+        cs_word: Map[str, int](),
+        cs_off: List[int](),
+        cs_nd: List[int](),
+        cs_e: List[int](),
+        cs_next: List[int](),
+        bq_raw: Map[str, int](),
+        bq_rawq: Map[str, int](),
         sub: 0,
         lnames: List[str](),
         lvals: List[str](),
@@ -330,6 +350,8 @@ fn new_sh(name: str) -> Sh {
         jint: List[int](),
         jhad: List[bool](),
         jseen: Map[str, int](),
+        pos_save: List[str](),
+        items: List[str](),
         jframes: List[int](),
         fr_ibase: List[int](),
         fr_sbase: List[int](),
@@ -536,6 +558,32 @@ fn frame_names(sh: Sh, at: int, n: int, h: int) -> bool {
         k += 1
     }
     false
+}
+
+/// A function call begins: `$@` moves onto `pos_save` and is emptied,
+/// in place. Answers where it begins there, for `pos_pop`.
+fn pos_push(mut sh: Sh) -> int {
+    let base = sh.pos_save.len
+    var k = 0
+    while k < sh.pos.len {
+        (mut sh.pos_save).push(sh.pos[k])
+        k += 1
+    }
+    (mut sh.pos).clear()
+    base
+}
+
+/// A function call ends: `$@` is the caller's again.
+fn pos_pop(mut sh: Sh, base: int) {
+    (mut sh.pos).clear()
+    var k = base
+    while k < sh.pos_save.len {
+        (mut sh.pos).push(sh.pos_save[k])
+        k += 1
+    }
+    while sh.pos_save.len > base {
+        let _p = (mut sh.pos_save).pop() else ""
+    }
 }
 
 /// Before a write to table `tab` at `name` inside a frame: record what

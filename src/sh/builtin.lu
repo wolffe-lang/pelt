@@ -90,7 +90,7 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
     }
     if sh.out.len > 0 && fd_get(sh, 1) == FD_CLOSED {
         // output to a closed descriptor is a write error (dash: status 1)
-        sh.out = List[byte]()
+        (mut sh.out).clear()
         diag(mut sh, "{name}: write error: bad file descriptor")
         st = 1
     }
@@ -175,7 +175,13 @@ fn bi_shift(mut sh: Sh, args: List[str]) -> int {
         fatal(mut sh, "shift: {n}: more than the {sh.pos.len} positional parameters", 2)
         return 2
     }
-    // in place: the list the state keeps, not a fresh one
+    shift_pos(mut sh, n)
+    0
+}
+
+/// `$@` loses its first `n`, in place: the list the state keeps, not a
+/// fresh one.
+fn shift_pos(mut sh: Sh, n: int) {
     var k = 0
     while k + n < sh.pos.len {
         sh.pos[k] = sh.pos[k + n]
@@ -186,7 +192,6 @@ fn bi_shift(mut sh: Sh, args: List[str]) -> int {
         let _p = (mut sh.pos).pop() else ""
         k += 1
     }
-    0
 }
 
 /// `set` with no operands: every variable, sorted, quoted for reinput.
@@ -727,6 +732,15 @@ fn is_reserved(w: str) -> bool {
         w == "!"
 }
 
+/// `local name`: what `name` is now goes on the function's stack, to
+/// come back when the function returns (`sh.exec`'s `pop_locals`).
+fn local_push(mut sh: Sh, name: str) {
+    (mut sh.lnames).push(name)
+    (mut sh.lvals).push(value_of(sh, name))
+    (mut sh.lset).push(has_var(sh, name))
+    (mut sh.lexp).push(is_exported(sh, name))
+}
+
 fn bi_local(mut sh: Sh, args: List[str]) -> int {
     if sh.fdepth == 0 {
         diag(mut sh, "local: not in a function")
@@ -739,10 +753,7 @@ fn bi_local(mut sh: Sh, args: List[str]) -> int {
             diag(mut sh, "local: {name}: not a valid name")
             return 2
         }
-        (mut sh.lnames).push(name)
-        (mut sh.lvals).push(value_of(sh, name))
-        (mut sh.lset).push(has_var(sh, name))
-        (mut sh.lexp).push(is_exported(sh, name))
+        local_push(mut sh, name)
         if eq >= 0 {
             if !set_var(mut sh, name, a[eq + 1..a.len]) {
                 diag(mut sh, "{name}: is read-only")

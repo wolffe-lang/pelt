@@ -302,22 +302,48 @@ fn run_loop(mut sh: Sh, n: int, until: bool) -> int {
     st
 }
 
+/// `for name [in word…]; do …; done`. The items, expanded once (inside
+/// a region when that writes nothing), wait on the state's own stack
+/// (`Sh.items`) and each turn reads its own in place (pelt#19).
 fn run_for(mut sh: Sh, n: int) -> int {
     let name = sh.ast.nodes[n].text
     let body = sh.ast.nodes[n].kids[0]
     sh.line = sh.ast.nodes[n].line
-    var items = List[str]()
+    let base = sh.items.len
     if sh.ast.nodes[n].ints[0] == 1 {
-        items = expand_words(mut sh, copy sh.ast.nodes[n].words)
-        if sh.flow != F_NONE {
-            return sh.status
+        let pre = copy region fe {
+            pre_words(sh, sh.ast, n)
+        }
+        if pre.ok {
+            sh.dir_reads += pre.reads
+            var at = 0
+            while at < pre.enc.len {
+                let z = nul_at(pre.enc, at)
+                (mut sh.items).push(pre.enc[at..z])
+                at = z + 1
+            }
+        } else {
+            let got = expand_words(mut sh, copy sh.ast.nodes[n].words)
+            if sh.flow != F_NONE {
+                return sh.status
+            }
+            for g in got {
+                (mut sh.items).push(g)
+            }
         }
     } else {
-        items = copy sh.pos
+        var k = 0
+        while k < sh.pos.len {
+            (mut sh.items).push(sh.pos[k])
+            k += 1
+        }
     }
+    let top = sh.items.len
     var st = 0
     sh.loops += 1
-    for item in items {
+    var k = base
+    while k < top {
+        let item = sh.items[k]
         if !set_var(mut sh, name, item) {
             fatal(mut sh, "{name}: is read-only", 2)
             break
@@ -328,54 +354,106 @@ fn run_for(mut sh: Sh, n: int) -> int {
                 break
             }
         }
+        k += 1
     }
     sh.loops -= 1
+    while sh.items.len > base {
+        let _i = (mut sh.items).pop() else ""
+    }
     st
 }
 
+/// `case`: which item matches is found inside a region when expanding
+/// the word and the patterns writes nothing (pelt#19), else here.
 fn run_case(mut sh: Sh, n: int) -> int {
     sh.line = sh.ast.nodes[n].line
-    let word = expand_one(mut sh, sh.ast.nodes[n].text, X_TILDE)
-    if sh.flow != F_NONE {
-        return sh.status
+    var i = copy region cm {
+        case_pick(sh, sh.ast, n)
+    }
+    if i == CASE_BAIL {
+        i = case_pick_here(mut sh, n)
+        if sh.flow != F_NONE {
+            return sh.status
+        }
+    }
+    if i < 0 {
+        return 0
     }
     let count = sh.ast.nodes[n].kids.len
+    var st = 0
+    var at = i
+    loop {
+        let it = sh.ast.nodes[n].kids[at]
+        let body = sh.ast.nodes[it].kids[0]
+        st = if body >= 0 then run(mut sh, body) else 0
+        if sh.flow != F_NONE {
+            return st
+        }
+        if sh.ast.nodes[it].ints[0] == 1 && at + 1 < count {
+            at += 1
+            continue
+        }
+        break
+    }
+    st
+}
+
+/// `case_pick`'s answer when the expansion would write the state.
+const CASE_BAIL: int = -2
+
+/// The first item of `case` node `n` whose pattern matches its word, or
+/// -1; the word and the patterns expanded in the shadow, in order, as
+/// far as the first match.
+fn case_pick(sh: Sh, a: Ast, n: int) -> int {
+    var t = shadow_of(sh)
+    t.defer_ok = false
+    t.line = a.nodes[n].line
+    let word = expand_one(mut t, a.nodes[n].text, X_TILDE)
+    if t.bail || t.flow != F_NONE {
+        return CASE_BAIL
+    }
     var i = 0
-    while i < count {
-        let item = sh.ast.nodes[n].kids[i]
-        var hit = false
+    while i < a.nodes[n].kids.len {
+        let item = a.nodes[n].kids[i]
         var j = 0
-        while !hit && j < sh.ast.nodes[item].words.len {
-            let pat = expand_pattern(mut sh, sh.ast.nodes[item].words[j])
-            if sh.flow != F_NONE {
-                return sh.status
+        while j < a.nodes[item].words.len {
+            let pat = expand_pattern(mut t, a.nodes[item].words[j])
+            if t.bail || t.flow != F_NONE {
+                return CASE_BAIL
             }
             if pmatch(pat, word) {
-                hit = true
+                return i
             }
             j += 1
         }
-        if hit {
-            var st = 0
-            var at = i
-            loop {
-                let it = sh.ast.nodes[n].kids[at]
-                let body = sh.ast.nodes[it].kids[0]
-                st = if body >= 0 then run(mut sh, body) else 0
-                if sh.flow != F_NONE {
-                    return st
-                }
-                if sh.ast.nodes[it].ints[0] == 1 && at + 1 < count {
-                    at += 1
-                    continue
-                }
-                break
+        i += 1
+    }
+    -1
+}
+
+/// `case_pick` with the state written as it goes.
+fn case_pick_here(mut sh: Sh, n: int) -> int {
+    let word = expand_one(mut sh, sh.ast.nodes[n].text, X_TILDE)
+    if sh.flow != F_NONE {
+        return -1
+    }
+    var i = 0
+    while i < sh.ast.nodes[n].kids.len {
+        let item = sh.ast.nodes[n].kids[i]
+        var j = 0
+        while j < sh.ast.nodes[item].words.len {
+            let pat = expand_pattern(mut sh, sh.ast.nodes[item].words[j])
+            if sh.flow != F_NONE {
+                return -1
             }
-            return st
+            if pmatch(pat, word) {
+                return i
+            }
+            j += 1
         }
         i += 1
     }
-    0
+    -1
 }
 
 /// `( list )` in-process: run in a frame (`sh.state`), which puts the
@@ -485,7 +563,7 @@ fn eval_from(mut sh: Sh, src: str, line: int) -> int {
 
 // ------------------------------------------------------- simple commands
 
-fn xtrace(mut sh: Sh, assigns: List[str], fields: List[str]) {
+fn xtrace(mut sh: Sh, names: List[str], values: List[str], fields: List[str]) {
     if !sh.opt_x {
         return
     }
@@ -493,11 +571,13 @@ fn xtrace(mut sh: Sh, assigns: List[str], fields: List[str]) {
     let ps4 = sh.vals["PS4"] else "+ "
     put(mut o, ps4)
     var k = 0
-    for a in assigns {
+    while k < names.len {
         if k > 0 {
             putc(mut o, ' ')
         }
-        put(mut o, a)
+        put(mut o, names[k])
+        putc(mut o, '=')
+        put(mut o, values[k])
         k += 1
     }
     for f in fields {
@@ -552,16 +632,20 @@ const R_STAGE: int = 2
 const R_FEED: int = 3
 
 /// What a simple command run in the shadow state leaves for the real
-/// one: only scalars and two `str`s, so that copying it out of the
+/// one: only scalars and one `str`, so that copying it out of the
 /// region costs nothing per command but what is kept
 /// (`[mem.region.copyout]`: every `List` in the copied value would be a
-/// fresh buffer in the root region, which frees nothing).
+/// fresh buffer in the root region, which frees nothing; and every
+/// `str`, even an empty one, is made there anew: 16 bytes).
 struct Fast {
     kind: int,
     status: int,
-    /// The writes the state must make, `name` NUL `value` NUL each, in
-    /// order: an assignment-only command's assignments, and any an
-    /// expansion made (`$((j=j+1))`, `${x=…}`).
+    /// The writes the state must make (`put_op`), in order: an
+    /// assignment-only command's assignments, `local`'s, and any an
+    /// expansion made (`$((j=j+1))`, `${x=…}`). From `out_at` on, what
+    /// the command wrote to the open capture (a substitution's body):
+    /// its text, or when the bytes are not UTF-8 (`raw`) the bytes in
+    /// hex.
     enc: str,
     reads: int,
     /// The signal that ended the program, or 0: said by the real state
@@ -569,15 +653,31 @@ struct Fast {
     sig: int,
     /// R_STAGE and R_FEED: the handle.
     child: int,
-    /// What the command wrote to the open capture (a substitution's
-    /// body): its text, or when the bytes are not UTF-8 (`raw`) the
-    /// bytes in hex.
-    out: str,
+    out_at: int,
     raw: bool,
+    /// `return`, `break`, `continue`, `exit`: the flow they left, and
+    /// `shift`'s count.
+    flow: int,
+    flow_n: int,
+    abort: bool,
+    shift: int,
 }
 
 fn slow() -> Fast {
-    Fast { kind: R_SLOW, status: 0, enc: "", reads: 0, sig: 0, child: -1, out: "", raw: false }
+    Fast {
+        kind: R_SLOW,
+        status: 0,
+        enc: "",
+        reads: 0,
+        sig: 0,
+        child: -1,
+        out_at: -1,
+        raw: false,
+        flow: F_NONE,
+        flow_n: 0,
+        abort: false,
+        shift: 0,
+    }
 }
 
 fn fast_ok(sh: Sh) -> bool {
@@ -607,6 +707,25 @@ fn caps_fast(sh: Sh) -> bool {
 fn stage_fast(sh: Sh) -> bool {
     sh.stage_w >= 0 && sh.stage_cap == sh.caps.len
 }
+
+/// The built-ins whose only effect is the flow they leave (a `return`,
+/// `break`, `continue` or `exit`) and the status: the fast path hands
+/// both back (`Fast.flow`).
+fn is_flow_builtin(name: str) -> bool {
+    name == "return" || name == "break" || name == "continue" || name == "exit"
+}
+
+/// What kind of built-in the fast path runs: none (a program), a pure
+/// one, a flow one, `local` (inside a function) or `shift`.
+const B_NONE: int = 0
+
+const B_PURE: int = 1
+
+const B_FLOW: int = 2
+
+const B_LOCAL: int = 3
+
+const B_SHIFT: int = 4
 
 /// The built-ins that change nothing but their output and status.
 fn is_pure_builtin(name: str) -> bool {
@@ -652,6 +771,11 @@ fn shadow_of(sh: Sh) -> Sh {
     t.euid = sh.euid
     t.egid = sh.egid
     t.groups = sh.groups
+    t.loops = sh.loops
+    t.fdepth = sh.fdepth
+    t.dots = sh.dots
+    t.in_trap = sh.in_trap
+    t.trap_status = sh.trap_status
     t.shadow = true
     t.defer_ok = true
     t
@@ -662,13 +786,29 @@ fn shadow_of(sh: Sh) -> Sh {
 fn take_deferred(mut t: Sh, mut enc: Buf) {
     var k = 0
     while k + 1 < t.deferred.len {
-        put(mut enc, t.deferred[k])
-        putb(mut enc, 0)
-        put(mut enc, t.deferred[k + 1])
-        putb(mut enc, 0)
+        put_op(mut enc, '=', t.deferred[k], t.deferred[k + 1])
         k += 2
     }
     (mut t.deferred).clear()
+}
+
+/// `enc` as the `str` a `Fast` carries: the empty literal when there is
+/// nothing, so the copy out of the region has nothing to make.
+fn enc_text(enc: Buf) -> str {
+    if enc.b.len == 0 {
+        return ""
+    }
+    text(enc)
+}
+
+/// One write for the real state onto `enc`: `op` (`=` assign, `L` a
+/// `local` declaration), the name, NUL, the value, NUL.
+fn put_op(mut enc: Buf, op: char, name: str, value: str) {
+    putc(mut enc, op)
+    put(mut enc, name)
+    putb(mut enc, 0)
+    put(mut enc, value)
+    putb(mut enc, 0)
 }
 
 /// The simple command `n` with the state read only: expanded,
@@ -697,17 +837,27 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     }
     var enc = buf()
     take_deferred(mut t, mut enc)
-    var pure = false
+    var bk = B_NONE
     if fields.len > 0 {
         let cmd = fields[0]
         if sh.funcs.has(cmd) {
             return slow()
         }
         if is_special_builtin(cmd) || is_regular_builtin(cmd) {
-            if !is_pure_builtin(cmd) || assigns.len > 0 {
+            if assigns.len > 0 {
                 return slow()
             }
-            pure = true
+            if is_pure_builtin(cmd) {
+                bk = B_PURE
+            } else if is_flow_builtin(cmd) {
+                bk = B_FLOW
+            } else if cmd == "local" && sh.fdepth > 0 {
+                bk = B_LOCAL
+            } else if cmd == "shift" {
+                bk = B_SHIFT
+            } else {
+                return slow()
+            }
         }
     }
     var names = List[str]()
@@ -731,10 +881,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
             t.vals[name] = v
         }
         if fields.len == 0 {
-            put(mut enc, name)
-            putb(mut enc, 0)
-            put(mut enc, v)
-            putb(mut enc, 0)
+            put_op(mut enc, '=', name, v)
         }
         (mut names).push(name)
         (mut values).push(v)
@@ -749,13 +896,51 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     }
     var r = slow()
     r.kind = R_DONE
-    r.enc = text(enc)
+    r.enc = enc_text(enc)
     if fields.len == 0 {
         close_opened(t)
         r.reads = t.dir_reads
         return r
     }
-    if pure {
+    if bk == B_FLOW || bk == B_SHIFT {
+        let st = builtin(mut t, fields)
+        close_opened(t)
+        if t.bail || t.out.len > 0 {
+            return slow()
+        }
+        r.status = st
+        r.reads = t.dir_reads
+        r.flow = t.flow
+        r.flow_n = t.flow_n
+        r.abort = t.abort
+        r.shift = sh.pos.len - t.pos.len
+        return r
+    }
+    if bk == B_LOCAL {
+        // `local name[=value]…` (`bi_local`): each name declared, then
+        // assigned, in order; anything it would refuse goes the
+        // ordinary way and is said there
+        var k = 1
+        while k < fields.len {
+            let f = fields[k]
+            let eq = f.find("=") else -1
+            let name = if eq >= 0 then f[0..eq] else f
+            if !is_name(name) || eq >= 0 && is_ronly(sh, name) {
+                close_opened(t)
+                return slow()
+            }
+            put_op(mut enc, 'L', name, "")
+            if eq >= 0 {
+                put_op(mut enc, '=', name, f[eq + 1..f.len])
+            }
+            k += 1
+        }
+        close_opened(t)
+        r.enc = enc_text(enc)
+        r.reads = t.dir_reads
+        return r
+    }
+    if bk == B_PURE {
         let st = builtin(mut t, fields)
         if t.bail || t.flow != F_NONE {
             close_opened(t)
@@ -907,12 +1092,13 @@ fn drain_to(r: int, mut got: List[byte]) {
 /// The capture's bytes into the result: as text when they are UTF-8,
 /// else as hex (`raw`), so that the real state gets the very bytes.
 fn set_out(mut r: Fast, b: List[byte]) {
+    r.out_at = r.enc.len
     let s = str_from_utf8(b) else |_| {
-        r.out = hex_of(b)
+        r.enc = r.enc + hex_of(b)
         r.raw = true
         return
     }
-    r.out = s
+    r.enc = r.enc + s
 }
 
 fn hex_of(b: List[byte]) -> str {
@@ -966,21 +1152,24 @@ fn nul_at(s: str, from: int) -> int {
 /// handle, and its status.
 fn commit_fast(mut sh: Sh, r: Fast) -> int {
     sh.dir_reads += r.reads
-    if r.out.len > 0 {
+    var ops_end = r.enc.len
+    if r.out_at >= 0 {
+        ops_end = r.out_at
         // straight into the innermost capture, the only one the command
         // could name (`caps_fast`): its own redirections, which may have
         // aimed descriptor 1 elsewhere, were the shadow's
         flush(mut sh)
+        var k = r.out_at
         if r.raw {
-            var at = 0
-            while at + 1 < r.out.len {
-                let v = hex_val(byte_at(r.out, at)) * 16 + hex_val(byte_at(r.out, at + 1))
+            while k + 1 < r.enc.len {
+                let v = hex_val(byte_at(r.enc, k)) * 16 + hex_val(byte_at(r.enc, k + 1))
                 (mut sh.cap_data).push(v as byte)
-                at += 2
+                k += 2
             }
         } else {
-            for x in r.out.bytes() {
-                (mut sh.cap_data).push(x)
+            while k < r.enc.len {
+                (mut sh.cap_data).push(byte_at(r.enc, k) as byte)
+                k += 1
             }
         }
     }
@@ -988,15 +1177,21 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
         report_signal(mut sh, r.sig)
     }
     var at = 0
-    while at < r.enc.len {
-        let z = nul_at(r.enc, at)
+    while at < ops_end {
+        let op = byte_at(r.enc, at)
+        let z = nul_at(r.enc, at + 1)
         let z2 = nul_at(r.enc, z + 1)
-        let name = r.enc[at..z]
-        if !set_var(mut sh, name, r.enc[z + 1..z2]) {
+        let name = r.enc[at + 1..z]
+        if op == 76 {
+            local_push(mut sh, name)
+        } else if !set_var(mut sh, name, r.enc[z + 1..z2]) {
             fatal(mut sh, "{name}: is read-only", 2)
             return 2
         }
         at = z2 + 1
+    }
+    if r.shift > 0 {
+        shift_pos(mut sh, r.shift)
     }
     if r.kind == R_STAGE {
         sh.stage_child = r.child
@@ -1005,78 +1200,80 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
         sh.stage_in = r.child
     }
     sh.status = r.status
+    if r.flow != F_NONE {
+        sh.flow = r.flow
+        sh.flow_n = r.flow_n
+        sh.abort = r.abort
+    }
     r.status
 }
 
 // ---------------------------------------------------- the ordinary path
 
 fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
-    let words = copy sh.ast.nodes[n].words
     let na = sh.ast.nodes[n].ints[0]
-    var assigns = List[str]()
-    var rest = List[str]()
-    var i = 0
-    for w in words {
-        if i < na {
-            (mut assigns).push(w)
-        } else {
-            (mut rest).push(w)
+    let nw = sh.ast.nodes[n].words.len
+    if na == nw {
+        return run_assign_only(mut sh, n, na)
+    }
+    // the words after the assignments, expanded inside a region when
+    // that writes nothing (pelt#19), else here
+    let pre = copy region pe {
+        pre_expand(sh, sh.ast, n, na)
+    }
+    if pre.ok {
+        sh.dir_reads += pre.reads
+        if pre.count == 0 {
+            return run_assign_only(mut sh, n, na)
         }
+        if na == 0 && !sh.opt_x && sh.ast.nodes[n].redirs.len == 0 {
+            // a function called with no assignment or redirection: its
+            // operands become `$@` in place, no list built
+            let fnode = sh.funcs[pre.enc[0..nul_at(pre.enc, 0)]] else -1
+            if fnode >= 0 {
+                return call_enc(mut sh, fnode, pre.enc)
+            }
+        }
+        return run_fields(mut sh, n, na, enc_fields(pre.enc), nowait)
+    }
+    var rest = List[str]()
+    var i = na
+    while i < nw {
+        (mut rest).push(sh.ast.nodes[n].words[i])
         i += 1
     }
     let fields = expand_command(mut sh, rest)
     if sh.flow != F_NONE {
         return sh.status
     }
-    let rds = redirs_of(sh.ast, n)
     if fields.len == 0 {
-        // redirections alone are performed and undone (XCU 2.9.1); when
-        // one fails the assignments are not made
-        if rds.len > 0 {
-            let ok = apply_redirs(mut sh, rds)
-            end_redirs(mut sh)
-            if !ok {
-                if sh.flow == F_NONE {
-                    sh.status = 2
-                }
-                return sh.status
-            }
-        }
-        for a in assigns {
-            let (name, raw) = split_assign(a)
-            let v = expand_one(mut sh, raw, X_TILDE | X_ASSIGN)
-            if sh.flow != F_NONE {
-                return sh.status
-            }
-            if !set_var(mut sh, name, v) {
-                fatal(mut sh, "{name}: is read-only", 2)
-                return 2
-            }
-        }
-        let st = if sh.cs_ran then sh.cs_status else 0
-        sh.status = st
-        return st
+        return run_assign_only(mut sh, n, na)
     }
+    run_fields(mut sh, n, na, fields, nowait)
+}
+
+/// The rest of `run_slow`, once the words are `fields` (at least one).
+fn run_fields(mut sh: Sh, n: int, na: int, fields: List[str], nowait: bool) -> int {
+    let rds = redirs_of(sh.ast, n)
     // the assignments' values, expanded in order (XCU 2.9.1 step 4),
     // each seeing the ones before it (`x=3 y=$x cmd` hands `cmd` y=3,
     // as dash): made for the expansion and put back after, since what
     // they do to the shell depends on the command
     var names = List[str]()
     var values = List[str]()
-    var shown = List[str]()
     var had = List[bool]()
     var old = List[str]()
-    let many = assigns.len > 1
-    for a in assigns {
-        let (name, raw) = split_assign(a)
-        let v = expand_one(mut sh, raw, X_TILDE | X_ASSIGN)
+    let many = na > 1
+    var ai = 0
+    while ai < na {
+        let (name, raw) = split_assign(sh.ast.nodes[n].words[ai])
+        let v = assign_value(mut sh, raw)
         if sh.flow != F_NONE {
             unassign(mut sh, names, had, old)
             return sh.status
         }
         (mut names).push(name)
         (mut values).push(v)
-        (mut shown).push("{name}={v}")
         if many {
             (mut had).push(has_var(sh, name))
             (mut old).push(value_of(sh, name))
@@ -1084,9 +1281,10 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
                 vset(mut sh, name, v)
             }
         }
+        ai += 1
     }
     unassign(mut sh, names, had, old)
-    xtrace(mut sh, shown, fields)
+    xtrace(mut sh, names, values, fields)
     let cmd = fields[0]
     if cmd == "exec" && fields.len == 1 {
         // `exec` with redirections only: they outlive the command
@@ -1159,6 +1357,137 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
     st
 }
 
+/// A simple command whose words, once expanded, name no command (XCU
+/// 2.9.1): its redirections performed and undone, then its assignments
+/// made; when a redirection fails the assignments are not made. The
+/// status is the last command substitution's, or 0.
+fn run_assign_only(mut sh: Sh, n: int, na: int) -> int {
+    if sh.ast.nodes[n].redirs.len > 0 {
+        let rds = redirs_of(sh.ast, n)
+        let ok = apply_redirs(mut sh, rds)
+        end_redirs(mut sh)
+        if !ok {
+            if sh.flow == F_NONE {
+                sh.status = 2
+            }
+            return sh.status
+        }
+    }
+    var ai = 0
+    while ai < na {
+        let (name, raw) = split_assign(sh.ast.nodes[n].words[ai])
+        let v = assign_value(mut sh, raw)
+        if sh.flow != F_NONE {
+            return sh.status
+        }
+        if !set_var(mut sh, name, v) {
+            fatal(mut sh, "{name}: is read-only", 2)
+            return 2
+        }
+        ai += 1
+    }
+    let st = if sh.cs_ran then sh.cs_status else 0
+    sh.status = st
+    st
+}
+
+/// An assignment's value (XCU 2.9.1.1 step 4). A value that is one
+/// command substitution and nothing else — `$(…)`, `` `…` ``, or either
+/// in double quotes, the commonest shape — is the substitution's text
+/// as it stands (an assignment is neither split nor globbed), taken
+/// without building the word again (pelt#19).
+fn assign_value(mut sh: Sh, raw: str) -> str {
+    var q = 0
+    if raw.len >= 2 && ch(raw, 0) == '"' && ch(raw, raw.len - 1) == '"' {
+        q = 1
+    }
+    let end = raw.len - q
+    let c0 = ch(raw, q)
+    if c0 == '$' && ch(raw, q + 1) == '(' {
+        let arith = ch(raw, q + 2) == '(' && arith_end(raw, q) > 0
+        if !arith {
+            let (node, e) = cmdsub_at(mut sh, raw, q)
+            if sh.flow != F_NONE {
+                return ""
+            }
+            if e == end {
+                return run_cmdsub(mut sh, node)
+            }
+        }
+    } else if c0 == '`' && bq_end(raw, q) == end {
+        let (node, _e) = bq_node_of(mut sh, raw, q, q == 1)
+        if sh.flow != F_NONE {
+            return ""
+        }
+        return run_cmdsub(mut sh, node)
+    }
+    expand_one(mut sh, raw, X_TILDE | X_ASSIGN)
+}
+
+/// The words of simple command `n` after its `na` assignments, expanded
+/// (`run_fast`'s shadow) so that only the fields are kept, NUL after
+/// each: not `ok` when the expansion would write the state (a command
+/// substitution, an assignment, a diagnostic) or a field holds a NUL.
+struct Pre {
+    ok: bool,
+    enc: str,
+    count: int,
+    reads: int,
+}
+
+fn pre_expand(sh: Sh, a: Ast, n: int, na: int) -> Pre {
+    var t = shadow_of(sh)
+    t.defer_ok = false
+    t.line = a.nodes[n].line
+    var rest = List[str]()
+    var i = na
+    while i < a.nodes[n].words.len {
+        (mut rest).push(a.nodes[n].words[i])
+        i += 1
+    }
+    let fields = expand_command(mut t, rest)
+    pre_of(t, fields)
+}
+
+/// `for` node `n`'s word list, expanded as `pre_expand` expands.
+fn pre_words(sh: Sh, a: Ast, n: int) -> Pre {
+    var t = shadow_of(sh)
+    t.defer_ok = false
+    t.line = a.nodes[n].line
+    let fields = expand_words(mut t, copy a.nodes[n].words)
+    pre_of(t, fields)
+}
+
+fn pre_of(t: Sh, fields: List[str]) -> Pre {
+    var no = Pre { ok: false, enc: "", count: 0, reads: 0 }
+    if t.bail || t.flow != F_NONE {
+        return no
+    }
+    var o = buf()
+    for f in fields {
+        for b in f.bytes() {
+            if b as int == 0 {
+                return no
+            }
+        }
+        put(mut o, f)
+        putb(mut o, 0)
+    }
+    Pre { ok: true, enc: text(o), count: fields.len, reads: t.dir_reads }
+}
+
+/// `pre_expand`'s fields as a list (views of `enc`).
+fn enc_fields(enc: str) -> List[str] {
+    var out = List[str]()
+    var at = 0
+    while at < enc.len {
+        let z = nul_at(enc, at)
+        (mut out).push(enc[at..z])
+        at = z + 1
+    }
+    out
+}
+
 /// Put back what `run_slow` assigned for its expansion: each name's old
 /// value, or no value, last first. Read-only names were never written.
 fn unassign(mut sh: Sh, names: List[str], had: List[bool], old: List[str]) {
@@ -1200,15 +1529,32 @@ fn assign_all(mut sh: Sh, names: List[str], values: List[str]) -> bool {
     true
 }
 
+/// Call the function whose body is `body` with `fields[1..]` as `$@`.
+/// The caller's parameters wait on a stack and come back in place
+/// (`pos_push`, `pos_pop`): a call builds no list (pelt#19).
 fn call_function(mut sh: Sh, body: int, fields: List[str]) -> int {
-    let saved_pos = copy sh.pos
-    var args = List[str]()
+    let base = pos_push(mut sh)
     var i = 1
     while i < fields.len {
-        (mut args).push(fields[i])
+        (mut sh.pos).push(fields[i])
         i += 1
     }
-    sh.pos = args
+    call_body(mut sh, body, base)
+}
+
+/// `call_function` with the fields NUL-joined in `enc` (`pre_expand`).
+fn call_enc(mut sh: Sh, body: int, enc: str) -> int {
+    let base = pos_push(mut sh)
+    var at = nul_at(enc, 0) + 1
+    while at < enc.len {
+        let z = nul_at(enc, at)
+        (mut sh.pos).push(enc[at..z])
+        at = z + 1
+    }
+    call_body(mut sh, body, base)
+}
+
+fn call_body(mut sh: Sh, body: int, base: int) -> int {
     sh.fdepth += 1
     (mut sh.lframes).push(sh.lnames.len)
     let saved_loops = sh.loops
@@ -1221,7 +1567,7 @@ fn call_function(mut sh: Sh, body: int, fields: List[str]) -> int {
     }
     pop_locals(mut sh)
     sh.fdepth -= 1
-    sh.pos = saved_pos
+    pos_pop(mut sh, base)
     if sh.flow == F_NONE {
         sh.status = st
     }

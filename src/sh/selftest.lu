@@ -200,9 +200,10 @@ fn want_route(mut bad: List[str], src: str, nounset: bool, want: int, want_enc: 
     }
 }
 
-/// `name` NUL `value` NUL, as the fast path encodes an assignment.
+/// `=` `name` NUL `value` NUL, as the fast path encodes an assignment.
 fn enc1(name: str, value: str) -> str {
     var o = buf()
+    putc(mut o, '=')
     put(mut o, name)
     putb(mut o, 0)
     put(mut o, value)
