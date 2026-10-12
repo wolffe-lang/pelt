@@ -136,7 +136,8 @@ jobs:
       # assignment, `case` and `for`, a script of 10,000 and 20,000
       # lines, and lines typed at the prompt — each at 10,000 and 20,000
       # turns under loop-rss's bound (100 B a turn + 1 MiB). Before sh08
-      # every one of the 22 grew 1.7 to 13.5 KB a turn (tools/shape-rss).
+      # 21 of the 22 rows failed, growing 0.35 to 13.5 KB a turn; the
+      # 22nd is the bare loop, for scale (tools/shape-rss).
       - name: memory flat over every shape, native tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 20
