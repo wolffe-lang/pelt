@@ -90,7 +90,7 @@ class Shell:
         os.write(self.master, b)
 
     def mode(self):
-        return ls._lmode(self.hold)
+        return ls.term_lmode(self.master, self.hold)
 
     def done(self, secs=3):
         try:
@@ -123,13 +123,13 @@ def scenario(pelt, home, name):
             ok = editing != sh.before
             sh.type(b"\x15exit\r")
             sh.done()
-            return ok, f"modes before {sh.before:#x}, while editing {editing:#x}"
+            return ok, f"modes before {sh.before:#x}, while editing {editing}"
         if name == "hup":
             os.kill(sh.p.pid, signal.SIGHUP)
             rc = sh.done()
             after = sh.mode()
             ok = rc == -signal.SIGHUP and after == sh.before
-            return ok, f"status {rc}, modes after {after:#x} (before {sh.before:#x})"
+            return ok, f"status {rc}, modes after {after} (before {sh.before})"
         if name == "term":
             os.kill(sh.p.pid, signal.SIGTERM)
             sh.pump(0.5)
@@ -166,6 +166,10 @@ def scenario(pelt, home, name):
         sh.close()
 
 
+def timed_out(_sig, _frame):
+    raise TimeoutError()
+
+
 def main(argv):
     sys.stdout.reconfigure(line_buffering=True)
     if len(argv) != 1:
@@ -180,7 +184,15 @@ def main(argv):
     bad = 0
     try:
         for name in ("editing", "hup", "term", "int", "hangup", "kill"):
-            ok, why = scenario(pelt, home, name)
+            # a scenario that hangs is a failure with a name, not a job
+            # timeout with none
+            signal.signal(signal.SIGALRM, timed_out)
+            signal.alarm(60)
+            try:
+                ok, why = scenario(pelt, home, name)
+            except TimeoutError:
+                ok, why = False, "no answer in 60 s"
+            signal.alarm(0)
             print(f"{'ok  ' if ok else 'FAIL'} {name}: {why}")
             bad += not ok
     finally:
