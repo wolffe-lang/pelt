@@ -3,7 +3,8 @@
 //! splitting, prefix and suffix trimming, unsigned digits, the parser's
 //! tree, the descriptor table's redirection frames, `cd`'s logical
 //! path, which simple commands run inside the region (`sh.exec`'s
-//! fast path), and `umask`'s operand reader. `src/sh_test.lu` runs
+//! fast path), `umask`'s operand reader, and the history (`sh.hist`):
+//! `fc`'s operands, its list format and the history file's lines. `src/sh_test.lu` runs
 //! them under `wolf test`.
 //!
 //! References consulted: POSIX.1-2024 XCU 2.6.4, 2.6.5, 2.14; every
@@ -491,5 +492,117 @@ pub fn self_test() -> List[str] {
     want_mask(mut bad, 0o027, "u+s", 0o027)
     want_mask(mut bad, 0o027, "-", 0o027)
     want_mask_texts(mut bad)
+    want_hist(mut bad)
     bad
+}
+
+// --------------------------------------------------------- the history
+
+/// An interactive shell whose history holds `lines`, the last one the
+/// command being run (as when `fc` is typed); no file.
+fn hist_sh(lines: List[str]) -> Sh {
+    var sh = new_sh("selftest")
+    sh.interactive = true
+    sh.ed.h.state = H_MEM
+    for l in lines {
+        ring_push(mut sh.ed.h, 128, l)
+    }
+    sh.ed.h.cur = true
+    sh
+}
+
+fn want_fc_number(mut bad: List[str], h: Hist, op: str, first: bool, want: int) {
+    let got = fc_number(h, op, first)
+    if got != want {
+        (mut bad).push("fc_number({op}, first={first}) = {got}, want {want}")
+    }
+}
+
+/// `fc args` in `hist_sh(lines)`: what it writes to standard output.
+fn want_fc_out(mut bad: List[str], lines: List[str], args: List[str], want: str) {
+    var sh = hist_sh(lines)
+    let st = bi_fc(mut sh, args)
+    let got = text(Buf { b: sh.out })
+    if st != 0 || got != want {
+        (mut bad).push("fc {args}: status {st}, {escaped(got)}, want {escaped(want)}")
+    }
+}
+
+/// Every expected value here is XCU `fc`'s words, or a black-box run
+/// of bash --posix 5.3 or dash 0.5.13.4 (`notes/sh12-evidence/probe/`).
+fn want_hist(mut bad: List[str]) {
+    var five = List[str]()
+    (mut five).push("echo a")
+    (mut five).push("echo b")
+    (mut five).push("printf x")
+    (mut five).push("echo c")
+    (mut five).push("fc -l")
+    let sh = hist_sh(five)
+    let h = copy sh.ed.h
+    // -1 is the command before the fc line; [+]n is n (POSIX; bash
+    // refuses +n); 0 the previous and -0 the fc line (bash)
+    want_fc_number(mut bad, h, "-1", true, 4)
+    want_fc_number(mut bad, h, "1", true, 1)
+    want_fc_number(mut bad, h, "+2", true, 2)
+    want_fc_number(mut bad, h, "0", true, 4)
+    want_fc_number(mut bad, h, "-0", true, 5)
+    // beyond either end: a first is the oldest (bash and dash); a last
+    // beyond the newest is the previous command
+    want_fc_number(mut bad, h, "99", true, 1)
+    want_fc_number(mut bad, h, "-99", true, 1)
+    want_fc_number(mut bad, h, "99", false, 4)
+    want_fc_number(mut bad, h, "-99", false, 1)
+    want_fc_number(mut bad, h, "9999999999999", false, 4)
+    // a string: the newest before the fc line that starts with it
+    want_fc_number(mut bad, h, "ec", true, 4)
+    want_fc_number(mut bad, h, "pri", true, 3)
+    want_fc_number(mut bad, h, "fc", true, -1)
+    want_fc_number(mut bad, h, "zz", false, -1)
+    // the list: %d\t%s\n; -n \t%s\n
+    want_fc_out(mut bad, five, ["-l"], "1\techo a\n2\techo b\n3\tprintf x\n4\techo c\n")
+    want_fc_out(mut bad, five, ["-ln", "-2", "-1"], "\tprintf x\n\techo c\n")
+    want_fc_out(mut bad, five, ["-l", "3", "1"], "3\tprintf x\n2\techo b\n1\techo a\n")
+    // -r with first newer than last: the two cancel (XCU fc's example,
+    // `fc -r 40 30` is `fc 30 40`; dash does; bash does not)
+    want_fc_out(mut bad, five, ["-lr", "3", "1"], "1\techo a\n2\techo b\n3\tprintf x\n")
+    want_fc_out(mut bad, five, ["-lr", "1", "2"], "2\techo b\n1\techo a\n")
+    // -0 alone: from the fc line back to the previous (dash; bash
+    // lists only the fc line)
+    want_fc_out(mut bad, five, ["-l", "-0"], "5\tfc -l\n4\techo c\n")
+    // a multi-line entry keeps its lines: continuation lines \t%s
+    var multi = List[str]()
+    (mut multi).push("for i in 1 2\ndo echo $i\ndone")
+    (mut multi).push("fc -l")
+    want_fc_out(mut bad, multi, ["-l"], "1\tfor i in 1 2\n\tdo echo $i\n\tdone\n")
+    want_fc_out(mut bad, multi, ["-ln"], "\tfor i in 1 2\n\tdo echo $i\n\tdone\n")
+    // only the fc line: -l lists it (bash and dash)
+    var lone = List[str]()
+    (mut lone).push("fc -l")
+    want_fc_out(mut bad, lone, ["-l"], "1\tfc -l\n")
+    // the file's lines: a backslash doubled, a newline as \n; plain
+    // lines from elsewhere read as written
+    var o = buf()
+    encode_entry(mut o, "a\\b\nc")
+    if text(o) != "a\\\\b\\nc\n" {
+        (mut bad).push("encode_entry = {escaped(text(o))}")
+    }
+    if decode_entry("a\\\\b\\nc") != "a\\b\nc" || decode_entry("x\\y") != "x\\y" {
+        (mut bad).push("decode_entry: {escaped(decode_entry("a\\\\b\\nc"))}")
+    }
+    var bs = List[byte]()
+    for b in "one\ntwo\nthree".bytes() {
+        (mut bs).push(b)
+    }
+    let r = hist_parse(bs, 0, 2)
+    if !r.ok || r.count != 3 || r.entries.len != 2 || r.entries[0] != "two" || !r.need_nl {
+        (mut bad).push("hist_parse: ok {r.ok} count {r.count} {r.entries} need_nl {r.need_nl}")
+    }
+    (mut bs).push(0 as byte)
+    if hist_parse(bs, 0, 2).ok {
+        (mut bad).push("hist_parse took a file with a NUL byte")
+    }
+    // PS1: each ! the next number, !! one ! (XCU 2.5.3)
+    if ps1_bang("a!b!!c!", 7) != "a7b!c7" || ps1_bang("$ ", 7) != "$ " {
+        (mut bad).push("ps1_bang: {ps1_bang("a!b!!c!", 7)}")
+    }
 }
