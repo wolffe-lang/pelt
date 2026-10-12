@@ -1,0 +1,22 @@
+bench: 9 runs each, taskset -c 0-3; load ['2.81', '3.52', '3.19']
+script           shell    median s   min s  user s   sys s  ratio
+fork             dash        0.320   0.317   0.264   0.055   1.00
+fork             base        0.471   0.460   0.342   0.141   1.47
+fork             head        0.468   0.458   0.337   0.141   1.46
+fork             base-native    0.487   0.472   0.357   0.148   1.52
+fork             head-native    0.515   0.487   0.369   0.157   1.61
+pipeline         dash        0.332   0.328   0.421   0.191   1.00
+pipeline         base        0.535   0.531   0.424   0.260   1.61
+pipeline         head        0.409   0.400   0.382   0.174   1.23
+pipeline         base-native    0.554   0.545   0.442   0.261   1.67
+pipeline         head-native    0.430   0.423   0.406   0.172   1.29
+param            dash        0.348   0.346   0.347   0.000   1.00
+param            base        1.491   1.484   1.467   0.022   4.29
+param            head        1.423   1.414   1.414   0.006   4.09
+param            base-native    4.380   4.318   4.344   0.026  12.58
+param            head-native    4.658   4.626   4.642   0.006  13.38
+configure-shaped dash        0.329   0.328   0.292   0.113   1.00
+configure-shaped base        0.487   0.470   0.286   0.261   1.48
+configure-shaped head        0.321   0.315   0.253   0.132   0.98
+configure-shaped base-native    0.567   0.553   0.354   0.281   1.72
+configure-shaped head-native    0.405   0.401   0.325   0.142   1.23

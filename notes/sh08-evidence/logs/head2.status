@@ -1,0 +1,28 @@
+head=70c51dd2369b5c442ab740c268d3e0de5dd7bc74 dirty=0 start=2026-10-12T11:34:24Z
+fetch=0
+fmt=0
+build=0
+test=0
+clause=0
+diff-native=0
+diff-release=0
+diff-taskset=0
+diff-selftest=0
+sess-native=0
+sess-release=0
+sess-taskset=0
+sess-selftest=0
+glob-native=0
+loop-native=0
+shape-native=0
+exec-native=0
+edit-native=0
+glob-release=0
+loop-release=0
+shape-release=0
+exec-release=0
+edit-release=0
+oracle-check=0
+static=0
+43ad3149c0a4e1e12c867b2aa896d4849a62725c6102a9bc8f0c8cf1b23f0d21  /home/mfwolffe/lanes/sh08/sc/pelt-head2
+done end=2026-10-12T11:53:55Z

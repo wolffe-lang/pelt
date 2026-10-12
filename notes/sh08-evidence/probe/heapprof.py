@@ -10,11 +10,14 @@ This runs SHELL on SCRIPT under gdb with a breakpoint on such mallocs,
 records the backtrace's pelt frames (`sh.…`, from the DWARF) and the
 runtime entry they called, and prints, per innermost
 pelt frame chain, the share of chunk grabs.
-usage: heapprof.py SHELL SCRIPT [skip]
+usage: heapprof.py SHELL SCRIPT [skip [RUNARGS]]
+RUNARGS replaces `SCRIPT` on gdb's `run` line (e.g. "-i < lines"), so
+a shell reading its standard input can be profiled.
 """
 import collections, re, subprocess, sys, os
 shell, script = sys.argv[1], sys.argv[2]
 skip = int(sys.argv[3]) if len(sys.argv) > 3 else 20
+runargs = sys.argv[4] if len(sys.argv) > 4 else script
 gdbcmds = f"""set pagination off
 set confirm off
 set breakpoint pending on
@@ -26,7 +29,7 @@ printf "HIT %d\\n", $rdi
 bt 40
 continue
 end
-run {script} > /dev/null
+run {runargs} > /dev/null
 quit
 """
 cf = os.path.join(os.environ.get("TMPDIR", "."), f"heapprof.{os.getpid()}.gdb")

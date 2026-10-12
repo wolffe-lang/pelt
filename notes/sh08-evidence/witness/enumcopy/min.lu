@@ -1,0 +1,19 @@
+//! member: false
+//!
+//! The smallest shape: a payload-less variant of an enum whose other
+//! variant carries a `str`, chosen by an `if` expression.
+
+enum T {
+    Nothing,
+    Text(str),
+}
+
+fn main() -> int {
+    let i = env_args().len
+    let t = if i == 1 then T.Text("x") else T.Nothing
+    match t {
+        T.Nothing => print("nothing"),
+        T.Text(s) => print(s),
+    }
+    0
+}

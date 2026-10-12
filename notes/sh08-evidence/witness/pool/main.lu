@@ -1,0 +1,45 @@
+//! member: false
+//!
+//! pool — lane-local witness (sh08): can a `List[str]` be lent out of
+//! a pool kept in a struct and put back, turn after turn, without the
+//! root growing? usage: pool SHAPE N
+//!   pool   pop a list from the pool, refill it, read it, push it back
+//!   fresh  a fresh list each turn (the control)
+
+struct St {
+    pool: List[List[str]],
+    total: int,
+}
+
+fn use_args(mut st: St, args: List[str]) {
+    st.total += args.len
+}
+
+fn main() -> int {
+    let argv = env_args()
+    let shape = if argv.len > 0 then argv[0] else "pool"
+    var n = 0
+    if argv.len > 1 {
+        n = argv[1].to_int() else 0
+    }
+    var st = St { pool: List[List[str]](), total: 0 }
+    var i = 0
+    while i < n {
+        if shape == "pool" {
+            var a = (mut st.pool).pop() else List[str]()
+            (mut a).clear()
+            (mut a).push("a")
+            (mut a).push("b")
+            use_args(mut st, a)
+            (mut st.pool).push(a)
+        } else {
+            var a = List[str]()
+            (mut a).push("a")
+            (mut a).push("b")
+            use_args(mut st, a)
+        }
+        i += 1
+    }
+    print("{shape} {n} {st.total} {st.pool.len}")
+    0
+}

@@ -171,3 +171,137 @@ twice), **fork and param within 3%** (their commands are already on the
 fast path; the journal costs one length check per write outside a
 subshell). Falsified if any row is more than 3% slower on user
 instructions or, pinned to four cpus, on the median wall time.
+
+### 3.6 The result against the prediction
+
+Measured on kasumi (linux x86-64) at the head `a09a162` (`logs/head3.*`)
+against trunk `96828ac` (`logs/base.*`); per-turn numbers are
+`tools/shape-rss`'s, 10,000 → 20,000 turns, and include the loop's own
+cost (the `baseline` row: 46 B release, 49 B native).
+
+| prediction | predicted | measured | held? |
+|---|---|---|---|
+| 3.3 every gated shape within the bound, both tiers | 22 of 22 | **22 of 22 on both tiers** (trunk: 21 of 22 fail, `logs/shape-base-*`) | held |
+| 3.3 `true \| true` | under 0.1 KB a turn | 56 B release, 55 native (trunk 7,124 B) | held |
+| 3.3 `echo x \| cat` | under 0.1 | 110 B release, 60 native (trunk 7,795) | held net of the loop (64 B); the raw row is over 0.1 |
+| 3.3 `x=$(true)`, `$(echo y)`, backquote | under 0.1 | 74 / 81 / 79 B release, 85 / 102 / 90 native (trunk 4.9–5.6 KB) | held net of the loop |
+| 3.3 `x=$(echo a \| cat)` | under 0.1 | 147 B release, 139 native (trunk 13,479) | **missed** by about 0.05 KB (about 100 B net of the loop); under the falsifier's 0.2 KB |
+| 3.3 `( true )` | under 0.1 | 60 / 34 B (trunk 2,848) | held |
+| 3.3 `f a b` | under 0.1 | 60 / 95 B (trunk 2,430) | held |
+| 3.3 `g a b` (`local`, assignment, `return`) | under 0.2 | 117 / 96 B (trunk 6,800) | held |
+| 3.3 `: $((j=j+1))` | under 0.1 | 55 / 33 B (trunk 3,959) | held |
+| 3.3 scripts of N `true`, `true \| true`, `x=$(true)`, `f` | under 0.1 a line | 9 / 16 / 13 / 35 B release, 8 / 32 / 27 / 87 native (trunk 1,690–10,050); the 20,000-line `true \| true` script peaks at **3,484 KB** release (trunk 200,996; dash 2,588) | held |
+| 3.3 typed lines (pty, the editor on) | under 0.2 | 112–144 B a line on both tiers (trunk 4,404–11,670) | held |
+| 3.3 `case`, `for` (not predicted gated) | under 0.1 | 48 / 72 B release (trunk 360 / 749); gated after all | held |
+| 3.4 corpus, sessions, gates | unchanged | corpus **835/0/99** on both tiers and under `taskset -c 0-3`; sessions **171/0/26** likewise; `wolf test`, fmt, clauses (431 of 544), glob-rss, loop-rss (33 / 32 B a turn), exec-witness, edit-witness, oracle check, static build: all exit 0 (`logs/head3.status`) | held |
+| 3.4 the script census | as trunk | unaided and aided **76 same, 3 differ, 1 unstable**; every verdict and exit status identical to trunk's (`scripts/*-unaided.tsv`, `*-aided.tsv`, compared column by column) | held |
+| 3.5 pipeline, configure-shaped faster | 3–15% | wall time, medians of 9 pinned to cpus 0-3: pipeline **−24% release, −22% native**; configure-shaped **−34% release, −29% native** (system time halved: fewer pages to fault in). Unpinned the same within 3 points (`bench/`) | direction held; the band was too timid |
+| 3.5 fork, param within 3% | no row more than 3% slower | release: fork −0.6%, param **−4.6%** wall, +0.4% / −3.3% instructions. **Native: fork +5.7%, param +6.3% wall (pinned), +3.1% / +3.3% instructions**; unpinned +2.1% / +3.1% | **held on release, falsified on native** (below) |
+
+**Why the native tier is slower on fork and param.** Every fast-path
+command builds a shadow state (`new_sh`) inside its region; the state
+now has six more lists (the journal's two, two stacks, the
+substitution cache and its word map, where trunk had three maps), and
+a pipeline stage or substitution body that trunk ran on the ordinary
+path now runs on the fast one. On the release tier that costs about
+7% instructions per fast command and is repaid by everything the root
+no longer has to grow; on the native tier, which does not optimise,
+it is about 11% per fast command (`logs/instructions-per-command.txt`).
+Two speed commits (`303956b`, `a09a162`) took the cost per command
+from +36% to +7% release and folded `case` onto a plain path that is
+faster than trunk's; what is left would need a shadow that is not a
+whole `Sh`, which is a larger change than this lane's.
+
+**Seen red.** `tools/shape-rss` failed 21 of 22 rows on trunk's
+binaries on both tiers before any change (`logs/shape-base-*`). The new
+table checks were planted red once on kasumi (the journal's replay
+removed and the tree's recycling made unconditional: `want_journal`
+and `want_recycle` failed by name, `logs/plant-selftest.log`) and put
+back. In CI the plant is branch `sh08-plant` (`0337d7f`: a subshell
+keeps a copy of the variables again), dispatched as run 38243184319.
+
+## 4. Evidence index
+
+Under `notes/sh08-evidence/`:
+
+- `logs/base.status`, `logs/head3.status` (and `head1`, `head2` for the
+  intermediate heads `224441a` and `70c51dd`): every gauntlet step's
+  exit status; the logs beside them for the corpus, sessions, gates
+  and the two tiers at the head.
+- `logs/shape-base-*.log`, `logs/shape-base-extra-*.log`: the new gate
+  on trunk; `logs/head3-shape-*.log`: on the head.
+- `logs/base-shapes.log`, `logs/prof-base/`: the measurement and heap
+  profile §3.1 rests on; `probe/shapes.sh`, `probe/heapprof.py`,
+  `probe/profall.sh` made them.
+- `logs/instructions-per-command.txt`: instruction counts per command
+  and per commit (`probe/kasumi/icount.sh`, `icommits.sh`).
+- `scripts/`: the script census at trunk and at the head, both passes.
+- `bench/`: `tools/bench` pinned and unpinned, load before and after,
+  instruction counts, the binaries' digests.
+- `logs/plant-selftest.log`: the table checks seen red.
+- `witness/`: lane-local wolf programs: `emptystr` (what `copy region`
+  keeps for a `str` in its value), `pool` (a `List` pushed into a
+  `List` is copied, so lists cannot be pooled), `enumcopy` (the
+  compiler refusal below).
+- `probe/kasumi/`: the scripts that ran all of it on kasumi.
+
+### 4.1 A wolf finding, for wolf-lang (not filed; text below)
+
+**Title:** `cannot compile this yet — a zero value of this type` for a
+payload-less variant of an enum whose other variant carries a `str`,
+chosen by an `if` expression; the checked machine and lupin run it.
+
+**Body:** On wolf 0.2.28 (`f71ece8`), linux x86-64, `witness/enumcopy/min.lu`:
+
+```
+enum T { Nothing, Text(str) }
+fn main() -> int {
+    let i = env_args().len
+    let t = if i == 1 then T.Text("x") else T.Nothing
+    match t { T.Nothing => print("nothing"), T.Text(s) => print(s) }
+    0
+}
+```
+
+`wolf build` and `wolf build --release` both stop with "cannot compile
+this yet — a zero value of this type @282..291" (the span is
+`T.Nothing`), exit 4. `wolf conform-run --checked` answers
+`exit(0)`, stdout `nothing`; `lupin run` prints `nothing`, exit 0. The
+same refusal comes when the value is a struct field built in a
+`copy region` block (`witness/enumcopy/main.lu`, `plain.lu`), which
+is how pelt met it: an optional `str` in the fast path's result could
+not be spelled as an enum. A tier disagreement, though an honest one
+(the conservatism ledger).
+
+Not a finding, measured and set aside: an empty `str` in a
+`copy region` block's value costs about 16 bytes of root per copy
+inside pelt, but under 2 bytes in every witness built to show it
+(`witness/emptystr`); pelt's fast-path result carries one `str`, as
+trunk's did, and that is where it was left.
+
+## 5. Done-when
+
+- PR open with the five sections, the commits as bullets and the test
+  checklist: wolffe-lang/pelt#25.
+- CI green at the head on linux x86-64 and macOS arm64 (and the
+  aarch64 refusal job): recorded in the PR.
+- The planted break red in CI: run 38243184319 on `sh08-plant`.
+- `wolf/tools/lane-audit.sh pelt sh08 25` run from the org directory,
+  its exit status read directly: in the lane's report.
+
+## 6. Not verified
+
+- macOS arm64's numbers for the new gate are CI's only; nothing was
+  run on nomad-1 (no builds there).
+- linux aarch64 builds no tier (wolf-lang#614), so no shape is measured
+  there.
+- What a turn still keeps (a superseded variable value, about 16–36 B;
+  the editor's history line at the prompt) is bounded only by the
+  gate's per-turn allowance, not freed.
+- The journal's dedup scans the open frame's entries: a subshell that
+  writes thousands of distinct names would pay quadratic time; no case
+  or script in the corpus does, and it was not measured.
+- pelt under lupin: still stops at `env_vars` (wolf-interp#240), so the
+  checked tier of this work is the compiler's only.
+- sh12 (the history) touches `sh.interact`; whichever lands second
+  rebases, and the gates are to be re-run then.

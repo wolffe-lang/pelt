@@ -1,0 +1,34 @@
+//! member: false
+//!
+//! enumcopy — lane-local witness (sh08): `copy region`'s value is a
+//! struct holding an enum one of whose variants carries a `str`.
+
+enum T {
+    Nothing,
+    Text(str),
+}
+
+struct C {
+    k: int,
+    t: T,
+}
+
+fn main() -> int {
+    var sum = 0
+    var i = 0
+    while i < 3 {
+        let r = {
+            C { k: i, t: if i == 1 then T.Text("x{i}") else T.Nothing }
+        }
+        sum += r.k
+        match r.t {
+            T.Nothing => {},
+            T.Text(s) => {
+                sum += s.len
+            },
+        }
+        i += 1
+    }
+    print("{sum}")
+    0
+}

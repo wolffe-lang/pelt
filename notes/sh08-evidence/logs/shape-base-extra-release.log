@@ -1,0 +1,4 @@
+shape-rss: ok   baseline                 loop    10000     3504 KB   20000     3848 KB  grew     344 KB (35 B a turn)  [:]
+shape-rss: FAIL case                     loop    10000     6592 KB   20000    10116 KB  grew    3524 KB (360 B a turn)  [case a in a) :;; esac]
+shape-rss: FAIL for                      loop    10000    10304 KB   20000    17620 KB  grew    7316 KB (749 B a turn)  [for j in 1; do :; done]
+shape-rss: FAIL 2: case, for (bound 2000 KB: 100 B a turn + 1 MiB)

@@ -1,0 +1,90 @@
+script-census: pelt = /home/mfwolffe/lanes/sh08/sc/pelt-base sha256 c16bd143ec3218859647bdfad297c69358cf621b41bcd23bbdfd63bc4cf20efc
+same     configure-hello  dash 0  pelt 0
+same     configure-sed  dash 0  pelt 0
+same     configure-gzip  dash 0  pelt 0
+same     configure-zlib  dash 0  pelt 0
+same     install-sh  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     config.guess  dash 0,0  pelt 0,0
+same     config.sub  dash 0,0,0,0,0,1,1  pelt 0,0,0,0,0,1,1
+same     missing  dash 0,0,0,127,1  pelt 0,0,0,127,1
+same     compile  dash 0,0,0,1  pelt 0,0,0,1
+same     depcomp  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     mkinstalldirs  dash 0,0,0,0  pelt 0,0,0,0
+same     mdate-sh  dash 0,0,1  pelt 0,0,1
+same     test-driver  dash 0,0,0,0  pelt 0,0,0,0
+same     ylwrap  dash 0,0,1  pelt 0,0,1
+same     ar-lib  dash 0,1,1  pelt 0,1,1
+same     tap-driver.sh  dash 0,0  pelt 0,0
+same     ltmain.sh  dash 0,0,0,63,63,63  pelt 0,0,0,63,63,63
+same     git-test-lib  dash 0  pelt 0
+same     git-t0000-basic  dash 0  pelt 0
+same     deb-cron.postinst  dash 0,0,0  pelt 0,0,0
+same     deb-cron-daemon-common.postinst  dash 0,0  pelt 0,0
+same     deb-rsync.postinst  dash 0,0  pelt 0,0
+same     deb-openssh-server.postinst  dash 1,1  pelt 1,1
+same     deb-openssh-server.prerm  dash 1,1  pelt 1,1
+same     deb-openssh-client.postinst  dash 1,1  pelt 1,1
+same     deb-procps.postinst  dash 1,1  pelt 1,1
+same     deb-ca-certificates.postinst  dash 0,0  pelt 0,0
+same     deb-base-files.postinst  dash 0,0  pelt 0,0
+same     deb-base-passwd.preinst  dash 0,0  pelt 0,0
+same     deb-libc6.postinst  dash 0,0  pelt 0,0
+same     deb-libc6.preinst  dash 2,2  pelt 2,2
+same     deb-util-linux.postinst  dash 0,0  pelt 0,0
+same     deb-adduser.preinst  dash 0,0  pelt 0,0
+same     deb-dpkg.postinst  dash 0,0  pelt 0,0
+same     deb-tzdata.postinst  dash 0  pelt 0
+same     dpkg-maintscript-helper  dash 1,1,0,0,1  pelt 1,1,0,0,1
+same     init-cron  dash 3,2,2  pelt 3,2,2
+same     init-rsync  dash 3,0,1,1  pelt 3,0,1,1
+same     init-ssh  dash 3,1,1  pelt 3,1,1
+same     init-procps  dash 0,3,3  pelt 0,3,3
+same     service  dash 0,0,3,1,1  pelt 0,0,3,1,1
+same     invoke-rc.d  dash 0,101,4,0,103  pelt 0,101,4,0,103
+same     update-ca-certificates  dash 0,0,0,0  pelt 0,0,0,0
+same     apk-nginx.pre-install  dash 0  pelt 0
+same     apk-nginx.post-install  dash 0  pelt 0
+same     apk-nginx.post-upgrade  dash 0  pelt 0
+same     apk-dbus.pre-install  dash 0  pelt 0
+same     apk-dbus.post-install  dash 0  pelt 0
+same     apk-alpine-baselayout.pre-install  dash 0  pelt 0
+same     apk-alpine-baselayout.post-install  dash 0  pelt 0
+same     apk-chrony.pre-install  dash 0  pelt 0
+same     apk-postfix.pre-install  dash 0  pelt 0
+same     apk-openrc.post-install  dash 0  pelt 0
+same     apk-openssh-server.post-upgrade  dash 0  pelt 0
+same     setup-hostname  dash 0,0,1  pelt 0,0,1
+same     setup-timezone  dash 0,1,1  pelt 0,1,1
+same     setup-dns  dash 0,0  pelt 0,0
+same     update-conf  dash 0,0,0  pelt 0,0,0
+same     lbu  dash 0,0,0,1  pelt 0,0,0,1
+same     gunzip  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     zcat  dash 0,0,1  pelt 0,0,1
+same     zcmp  dash 1,0,0  pelt 1,0,0
+same     zforce  dash 0,0,0  pelt 0,0,0
+same     uncompress  dash 0,0  pelt 0,0
+same     ssh-copy-id  dash 1,1,1,1  pelt 1,1,1,1
+same     ssh-argv0  dash 1,1  pelt 1,1
+same     select-editor  dash 1,1,1  pelt 1,1,1
+same     sensible-editor  dash 0,1,1,1  pelt 0,1,1,1
+same     sensible-pager  dash 0,0,0  pelt 0,0,0
+unstable pfetch  dash 0,0,0  pelt 0,0,0
+         run 2: dash disagrees with itself (out); exit and stderr only
+same     which.debianutils  dash 1,0,1,2  pelt 1,0,1,2
+same     savelog  dash 0,0,0,1  pelt 0,0,0,1
+same     add-shell  dash 0,1  pelt 0,1
+same     gettext.sh  dash 0,0,1  pelt 0,0,1
+differs  xzgrep  dash 0,0,1,0,2  pelt 2,2,2,0,2
+         run 0 [b f.xz]: exit 2 (dash 0)
+         run 1 [-c . f.xz g.xz]: exit 2 (dash 0), stdout
+         run 2 [zzz f.xz]: exit 2 (dash 1)
+same     xzdiff  dash 1,0,0  pelt 1,0,0
+differs  zgrep  dash 0,0,1,0  pelt 0,0,1,0
+         run 0 [b f.gz]: stderr present
+         run 1 [-n -e a -e c f.gz g.gz]: stderr present
+         run 2 [zzz f.gz]: stderr present
+differs  zdiff  dash 1,0,0  pelt 1,2,0
+         run 1 [f.gz]: exit 2 (dash 0), stdout, stderr present
+same     lesspipe  dash 0,0,0  pelt 0,0,0
+same     xdg-mime  dash 0,0,0,0,1  pelt 0,0,0,0,1
+script-census: differs 3  same 76  unstable 1  of 80  (/home/mfwolffe/lanes/sh08/sc/base-aided.tsv)

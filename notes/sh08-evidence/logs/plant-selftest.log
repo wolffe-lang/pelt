@@ -1,0 +1,9 @@
+test ./sh_test.lu::main ... FAILED (trap(assert) [native])
+  stderr: frame: before a=1 keep=k | x: a=true | r: keep | f: f=3 | t: EXIT=[echo bye] INT=[] | @: p1 p2 | - | locals 0
+  stderr:        after  a=4 b=new c=inner keep=k | x: b=true | r: b keep | f: g=7 | t: HUP=[echo hup] INT=[echo int] | @: p1 p2 | - | locals 0
+  stderr: frame: left journal 14 frames 0 ints 0 strs 0 fdepth 0
+  stderr: frame: a write outside a frame was journaled
+  stderr: recycle: second command at 4 (first 0), 8 slots for 4
+  stderr: wolf-trap: assert
+  stderr:   at ./sh_test.lu:11:5
+wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out

@@ -1,0 +1,19 @@
+# probe/kasumi/icount.sh and icommits.sh output, kasumi, user instructions
+# (perf stat -e instructions:u) a turn of a 100,000-turn loop, the bare
+# loop subtracted. Copied verbatim from the runs.
+## per commit, release, body `:` (icommits.sh)
+96828ac (trunk)  6746 a turn (bare loop 33418)
+7934490 (M1)     7365 (35005)
+57958b8 (M2)     7423 (35068)
+fcc3cba (M3)     8439 (36521)
+b2ffffe (M4)     8593 (37695)
+e0bdbb6 (M5)     9165 (39517)
+## after the speed commits 303956b and a09a162, against trunk
+release [:]                      trunk 6746   head 7221   (bare loop 33418 / 34024)
+native  [:]                      trunk 16252  head 18075  (bare loop 86825 / 93407)
+release [case a in a) :;; esac]  trunk 8758   head 8059   (at 303956b)
+release [f a b]                  trunk 22501  head 27028  (at 303956b)
+release [true | true]            trunk 20159  head 21176  (working tree with the cut by clear, before the take_deferred guard; both in a09a162)
+native  [true | true]            trunk 67057  head 92176
+release [x=$(true)]              trunk 15741  head 17351
+native  [x=$(true)]              trunk 50353  head 68275
