@@ -597,7 +597,10 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         emacs_loop(mut e)
     }
     flush_out(mut e)
-    os_term_set_mode(0, old) else |_| {}
+    // PLANTED BREAK (sh11): the mode not restored after Ctrl-C
+    if e.done != ED_INTR {
+        os_term_set_mode(0, old) else |_| {}
+    }
     if e.done == K_HUP {
         // the default ends the shell, with the terminal as it was
         os_signal_default(M_HUP) else |_| {}
@@ -798,7 +801,12 @@ fn cells(v: int) -> int {
     if v >= 128 && v < 160 {
         return 1
     }
-    cp_width(v)
+    // PLANTED BREAK (sh11): a wide character counted as one cell
+    if cp_width(v) == 2 {
+        1
+    } else {
+        cp_width(v)
+    }
 }
 
 /// The next cluster boundary after `i`.
