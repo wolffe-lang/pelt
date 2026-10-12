@@ -66,7 +66,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
 | **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
 | **non-utf8-bytes** | a byte that is not UTF-8 (`a\377b` from a command substitution) cannot be a program's argument, since a wolf `str` is UTF-8: it reaches the program as `?`. Valid UTF-8 passes unchanged everywhere since sh07 (`quote/utf8_bytes`); this case's other lines pass | wolf-lang W06 (byte strings) | `quote/c_s_high_bytes` |
-| **history** | `fc` (the case passes today only because a shell with no history and a shell with no `fc` both fail) | pelt (sh08) | `fc/c_noninteractive` |
 | **getpid** | `$$` off linux (the cases pass on linux) | wolf-lang#141 | `param/c_pid_is_real`, `param/c_pid_subshell` |
 | **signal meaning** | a trap for `USR1`, `ALRM`, `PIPE`, `ABRT`, `WINCH`, `CONT`: the shell dies or ignores where the action must run | wolf-lang#679, #423 | `signal/c_trap_abrt_number`, `signal/c_trap_alrm`, `signal/c_trap_ignore_pipe`, `signal/c_trap_pipe`, `signal/c_trap_usr1_self`, `signal/c_trap_winch_cont` |
 | **interruptible wait** | `wait` cut short by a trapped signal | wolf-lang#680 | `signal/c_wait_interrupted_term` |
