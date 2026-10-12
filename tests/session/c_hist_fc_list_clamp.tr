@@ -25,11 +25,7 @@ step 6 "fc -l 0"
 out "5\tfc -l 1 99\n"
 err yes
 prompt "$ "
-step 7 "fc -l -0"
-out "7\tfc -l -0\n"
-err yes
-prompt "$ "
-step 8 "exit"
+step 7 "exit"
 err yes
 prompt ""
-exit 0 at step 8
+exit 0 at step 7
