@@ -408,16 +408,18 @@ struct Ed {
     mem: EdMem,
     mem_set: bool,
     hist: List[str],
-    /// The history line shown (`hist.len` is the edit line), and the edit
-    /// line kept while another is shown.
+    /// The history line shown (`hist.len` is the edit line), and each
+    /// line as it was left when another was shown.
     h: int,
-    saved: List[int],
+    mods: List[List[int]],
+    modded: List[bool],
     last_kill: bool,
     /// vi: the undo snapshot, the line as it became the edit line, the
     /// keys of the command being read, and whether they are recorded.
     undo: List[int],
     undo_cur: int,
     orig: List[int],
+    orig_set: bool,
     rec: List[int],
     recording: bool,
     cmd_count: int,
@@ -475,17 +477,25 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         mem_set: false,
         hist: hist,
         h: 0,
-        saved: List[int](),
+        mods: List[List[int]](),
+        modded: List[bool](),
         last_kill: false,
         undo: List[int](),
         undo_cur: 0,
         orig: List[int](),
+        orig_set: false,
         rec: List[int](),
         recording: false,
         cmd_count: 0,
         prev_line: prev,
     }
     e.h = e.hist.len
+    var k = 0
+    while k <= e.hist.len {
+        (mut e.mods).push(List[int]())
+        (mut e.modded).push(false)
+        k += 1
+    }
     if e.cols < 2 {
         e.cols = 2
     }
@@ -983,12 +993,13 @@ fn slice_of(buf: List[int], a: int, b: int) -> List[int] {
     o
 }
 
-/// A change is about to be made: a history line shown becomes the edit
-/// line (XCU `sh`, vi-mode; both modes here).
+/// A change is about to be made. In vi mode a history line shown
+/// becomes the edit line (XCU `sh`, vi-mode). In emacs mode the line
+/// stays where it is in the history, changed until the line is accepted
+/// (bash, as a user sees it; POSIX has no emacs mode).
 fn touch(mut e: Ed) {
-    if e.h < e.hist.len {
+    if e.vi && e.h < e.hist.len {
         e.h = e.hist.len
-        e.saved = List[int]()
         e.orig = copy e.buf
     }
 }
@@ -1045,18 +1056,20 @@ fn kill_text(mut e: Ed, xs: List[int], before: bool) {
     e.mem_set = true
 }
 
+/// Show history line `h` (`hist.len`: the edit line). The line left is
+/// kept as it stands, so coming back finds it as it was left.
 fn show_hist(mut e: Ed, h: int, at_end: bool) {
-    if e.h == e.hist.len {
-        e.saved = copy e.buf
-    }
+    e.mods[e.h] = copy e.buf
+    e.modded[e.h] = true
     e.h = h
     var nb = List[int]()
-    if h == e.hist.len {
-        nb = copy e.saved
+    if e.modded[h] {
+        nb = copy e.mods[h]
     } else {
         nb = cps_of(e.hist[h])
     }
     e.orig = copy nb
+    e.orig_set = true
     set_line(mut e, nb, if at_end then nb.len else 0)
 }
 
@@ -1311,13 +1324,26 @@ fn ss3(mut e: Ed) -> int {
 // ----------------------------------------------------- ending the line
 
 fn finish(mut e: Ed, how: int) {
-    if how == ED_OK || how == ED_INTR {
-        let (r, c) = pos_at(e, e.buf.len)
-        move_to(mut e, r, c)
-        if how == ED_INTR {
+    if how == ED_INTR {
+        // `^C` where the cursor is, as the terminal echoes it for dash
+        // and bash, then a new line below the whole line
+        if e.tc + 2 < e.cols {
+            put_s(mut e, "^C")
+            e.tc += 2
+            let (r, _c) = pos_at(e, e.buf.len)
+            if r > e.tr {
+                move_to(mut e, r, 0)
+            }
+        } else {
+            let (r, c) = pos_at(e, e.buf.len)
+            move_to(mut e, r, c)
             put_s(mut e, "^C")
         }
-        if !(how == ED_OK && c == 0 && r > e.r0) || how == ED_INTR {
+        put_s(mut e, "\r\n")
+    } else if how == ED_OK {
+        let (r, c) = pos_at(e, e.buf.len)
+        move_to(mut e, r, c)
+        if !(c == 0 && r > e.r0) {
             put_s(mut e, "\r\n")
         }
     }
@@ -1607,6 +1633,14 @@ fn vi_insert(mut e: Ed, replace: bool) {
             e.vi_ins = false
             if e.cur > 0 {
                 e.cur = prv(e, e.cur)
+            }
+            place(mut e)
+            // `U` goes back to the line as command mode first found it
+            // (bash, as a user sees it: POSIX's "all changes made to the
+            // edit line" would include the typing itself)
+            if !e.orig_set {
+                e.orig = copy e.buf
+                e.orig_set = true
             }
             if e.recording {
                 save_dot(mut e)
