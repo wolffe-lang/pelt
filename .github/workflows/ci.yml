@@ -192,6 +192,21 @@ jobs:
         timeout-minutes: 8
         run: tools/edit-witness target/release/pelt
 
+      # sh12: the history file, asked from outside (one session is one
+      # shell): written as typed and read by the next shell, two shells
+      # sharing one file, the file kept to HISTSIZE, a path that cannot
+      # be made and a file that is not text left alone, $HOME/.sh_history
+      # made 0600 (tools/hist-witness).
+      - name: the history file across shells, native tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
+        run: tools/hist-witness target/native/pelt
+
+      - name: the history file across shells, release tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
+        run: tools/hist-witness target/release/pelt
+
       - name: the session harness sees a difference (the planted red)
         if: matrix.builds
         run: tools/session-selftest target/release
