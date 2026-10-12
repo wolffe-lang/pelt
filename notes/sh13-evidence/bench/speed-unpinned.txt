@@ -1,0 +1,30 @@
+bench: 9 runs each, unpinned; load ['1.27', '2.20', '2.40']
+script           shell    median s   min s  user s   sys s  ratio
+fork             dash        0.327   0.326   0.273   0.053   1.00
+fork             base        0.486   0.481   0.356   0.147   1.49
+fork             pin         0.485   0.483   0.358   0.140   1.48
+fork             head        0.486   0.481   0.355   0.146   1.49
+fork             base-native    0.507   0.506   0.371   0.151   1.55
+fork             pin-native    0.507   0.505   0.375   0.150   1.55
+fork             head-native    0.508   0.506   0.375   0.150   1.55
+pipeline         dash        0.323   0.321   0.427   0.181   1.00
+pipeline         base        0.541   0.538   0.432   0.261   1.68
+pipeline         pin         0.541   0.538   0.432   0.257   1.67
+pipeline         head        0.541   0.537   0.432   0.260   1.67
+pipeline         base-native    0.569   0.566   0.455   0.266   1.76
+pipeline         pin-native    0.566   0.562   0.446   0.268   1.75
+pipeline         head-native    0.565   0.562   0.453   0.262   1.75
+param            dash        0.342   0.339   0.342   0.000   1.00
+param            base        1.464   1.452   1.439   0.021   4.28
+param            pin         1.427   1.421   1.405   0.021   4.18
+param            head        1.471   1.465   1.448   0.025   4.30
+param            base-native    4.170   4.120   4.141   0.024  12.20
+param            pin-native    4.112   4.071   4.078   0.027  12.03
+param            head-native    4.359   4.195   4.330   0.026  12.75
+configure-shaped dash        0.352   0.335   0.302   0.124   1.00
+configure-shaped base        0.538   0.536   0.305   0.301   1.53
+configure-shaped pin         0.504   0.500   0.295   0.276   1.43
+configure-shaped head        0.533   0.504   0.311   0.293   1.52
+configure-shaped base-native    0.601   0.569   0.358   0.306   1.71
+configure-shaped pin-native    0.611   0.607   0.368   0.310   1.74
+configure-shaped head-native    0.580   0.564   0.370   0.280   1.65

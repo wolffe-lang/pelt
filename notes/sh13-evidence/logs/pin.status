@@ -1,0 +1,24 @@
+head=975056b79bc147825ffad315f5d53ea47780917b dirty=0
+fetch=0
+fmt=0
+build=0
+test=0
+clause=0
+diff-native=0
+diff-release=0
+diff-taskset=0
+diff-selftest=0
+sess-native=0
+sess-release=0
+sess-taskset=0
+sess-selftest=0
+glob-native=0
+loop-native=0
+exec-native=0
+glob-release=0
+loop-release=0
+exec-release=0
+oracle-check=0
+static=0
+b5c25c84b75640bb23fcdece6f25bb265e8e6354d0cffd93b07102bb16628e3a  /home/mfwolffe/lanes/sh13/sc/pelt-pin
+done

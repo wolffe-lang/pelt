@@ -1,0 +1,14 @@
+$ echo umask | lupin run --std-root .wolf-bin/std src/pelt.lu   # lupin 0.1.51
+pelt.lu: unsupported: `env_vars` does not resolve
+exit 4
+
+$ lupin run os_umask_probe.lu   # lupin 0.1.51
+main.lu: unsupported: `os_umask` sets the process's file mode creation mask, which is the host's `umask` call; the standard library has none and this machine has no `unsafe` to make one, so the call is refused by name ([os.fs.umask], [os.fs.change.note] R10)
+exit 4
+
+$ wolf run os_umask_probe.lu   # wolf 0.2.28, native, umask 022 before
+was 18 now 23
+exit 0
+
+$ wolf conform-run --checked --json os_umask_probe.lu
+"stdout_inline":"was 18 now 23\n", "verdict":"exit(0)"

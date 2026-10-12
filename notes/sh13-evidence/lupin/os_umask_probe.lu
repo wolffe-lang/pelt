@@ -1,0 +1,11 @@
+fn main() {
+    let was = os_umask(0o027) else |e| {
+        print("row {e}")
+        return
+    }
+    let now = os_umask(was) else |e| {
+        print("row {e}")
+        return
+    }
+    print("was {was} now {now}")
+}

@@ -1,0 +1,5 @@
+test ./sh_test.lu::main ... FAILED (trap(assert) [native])
+  stderr: mask_from(0027, =r) = 219, want 220
+  stderr: wolf-trap: assert
+  stderr:   at ./sh_test.lu:11:5
+wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out

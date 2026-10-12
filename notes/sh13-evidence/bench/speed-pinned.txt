@@ -1,0 +1,30 @@
+bench: 9 runs each, taskset -c 0-3; load ['1.79', '1.82', '2.18']
+script           shell    median s   min s  user s   sys s  ratio
+fork             dash        0.323   0.318   0.264   0.055   1.00
+fork             base        0.474   0.468   0.342   0.147   1.47
+fork             pin         0.470   0.465   0.341   0.141   1.45
+fork             head        0.474   0.467   0.344   0.145   1.47
+fork             base-native    0.511   0.486   0.369   0.154   1.58
+fork             pin-native    0.508   0.495   0.361   0.157   1.57
+fork             head-native    0.491   0.483   0.360   0.145   1.52
+pipeline         dash        0.345   0.330   0.431   0.193   1.00
+pipeline         base        0.542   0.531   0.426   0.264   1.57
+pipeline         pin         0.547   0.545   0.427   0.269   1.59
+pipeline         head        0.548   0.534   0.427   0.272   1.59
+pipeline         base-native    0.554   0.546   0.433   0.265   1.61
+pipeline         pin-native    0.565   0.548   0.444   0.267   1.64
+pipeline         head-native    0.554   0.543   0.438   0.257   1.61
+param            dash        0.353   0.352   0.353   0.000   1.00
+param            base        1.549   1.523   1.511   0.032   4.38
+param            pin         1.485   1.473   1.456   0.028   4.20
+param            head        1.517   1.507   1.490   0.020   4.29
+param            base-native    4.339   4.303   4.304   0.029  12.28
+param            pin-native    4.308   4.285   4.278   0.024  12.19
+param            head-native    4.434   4.384   4.402   0.026  12.55
+configure-shaped dash        0.341   0.329   0.296   0.118   1.00
+configure-shaped base        0.490   0.478   0.290   0.261   1.44
+configure-shaped pin         0.480   0.471   0.285   0.257   1.41
+configure-shaped head        0.479   0.470   0.284   0.257   1.41
+configure-shaped base-native    0.546   0.536   0.346   0.262   1.60
+configure-shaped pin-native    0.540   0.535   0.344   0.265   1.58
+configure-shaped head-native    0.547   0.541   0.351   0.257   1.61

@@ -1,0 +1,81 @@
+id	group	package	version	sha256	licence	dash_exit	pelt_exit	verdict	notes
+configure-hello	configure	GNU hello	2.12.2		GPL-3.0-or-later	0	0	same	
+configure-sed	configure	GNU sed	4.9		GPL-3.0-or-later	0	0	same	
+configure-gzip	configure	GNU gzip	1.14		GPL-3.0-or-later	0	0	same	
+configure-zlib	configure	zlib	1.3.1		Zlib	0	0	same	
+install-sh	helper	automake	1.18.1		X11	0,0,0,0,1	0,0,0,0,1	same	
+config.guess	helper	automake	1.18.1		GPL-3.0-or-later WITH Autoconf-exception	0,0	0,0	same	
+config.sub	helper	automake	1.18.1		GPL-3.0-or-later WITH Autoconf-exception	0,0,0,0,0,1,1	0,0,0,0,0,1,1	same	
+missing	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,0,0,127,1	0,0,0,127,1	same	
+compile	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,0,0,1	0,0,0,1	same	
+depcomp	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,0,0,0,1	0,0,0,0,1	same	
+mkinstalldirs	helper	automake	1.18.1		public-domain	0,0,0,0	0,0,0,0	same	
+mdate-sh	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,0,1	0,0,1	same	
+test-driver	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,0,0,0	0,0,0,0	same	
+ylwrap	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,0,1	0,0,1	same	
+ar-lib	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,1,1	0,1,1	same	
+tap-driver.sh	helper	automake	1.18.1		GPL-2.0-or-later WITH Autoconf-exception	0,0	0,0	same	
+ltmain.sh	helper	libtool	2.5.4		GPL-2.0-or-later WITH Libtool-exception	0,0,0,63,63,63	0,0,0,63,63,63	same	
+git-test-lib	git	git (t/test-lib.sh)	2.56.0		GPL-2.0-only	0	0	same	
+git-t0000-basic	git	git (t/t0000-basic.sh)	2.56.0		GPL-2.0-only	0	0	same	
+deb-cron.postinst	debian-maint	cron	3.0pl1-197		GPL-2+ (packaging), Paul-Vixie's-license	0,0,0	0,0,0	same	
+deb-cron-daemon-common.postinst	debian-maint	cron-daemon-common	3.0pl1-197		GPL-2+ (packaging), Paul-Vixie's-license	0,0	0,0	same	
+deb-rsync.postinst	debian-maint	rsync	3.4.1+ds1-5+deb13u4		GPL-3+	0,0	0,0	same	
+deb-openssh-server.postinst	debian-maint	openssh-server	1:10.0p1-7+deb13u4		OpenSSH (BSD-style)	1,1	1,1	same	
+deb-openssh-server.prerm	debian-maint	openssh-server	1:10.0p1-7+deb13u4		OpenSSH (BSD-style)	1,1	1,1	same	
+deb-openssh-client.postinst	debian-maint	openssh-client	1:10.0p1-7+deb13u4		OpenSSH (BSD-style)	1,1	1,1	same	
+deb-procps.postinst	debian-maint	procps	2:4.0.4-9		GPL-2.0+	1,1	1,1	same	
+deb-ca-certificates.postinst	debian-maint	ca-certificates	20250419		GPL-2+	0,0	0,0	same	
+deb-base-files.postinst	debian-maint	base-files	13.8+deb13u7		GPL-2+	0,0	0,0	same	
+deb-base-passwd.preinst	debian-maint	base-passwd	3.6.7		GPL-2	0,0	0,0	same	
+deb-libc6.postinst	debian-maint	libc6	2.41-12+deb13u4		GPL-2+ (packaging)	0,0	0,0	same	
+deb-libc6.preinst	debian-maint	libc6	2.41-12+deb13u4		GPL-2+ (packaging)	2,2	2,2	same	
+deb-util-linux.postinst	debian-maint	util-linux	2.41.5-0+deb13u1		GPL-2+	0,0	0,0	same	
+deb-adduser.preinst	debian-maint	adduser	3.152		GPL-2+	0,0	0,0	same	
+deb-dpkg.postinst	debian-maint	dpkg	1.22.22		GPL-2+	0,0	0,0	same	
+deb-tzdata.postinst	debian-maint	tzdata	2026c-0+deb13u1		public-domain	0	0	same	
+dpkg-maintscript-helper	debian-maint	dpkg	1.22.22		GPL-2+	1,1,0,0,1	1,1,0,0,1	same	
+init-cron	debian-init	cron	3.0pl1-197		GPL-2+ (packaging), Paul-Vixie's-license	3,2,2	3,2,2	same	
+init-rsync	debian-init	rsync	3.4.1+ds1-5+deb13u4		GPL-3+	3,0,1,1	3,0,1,1	same	
+init-ssh	debian-init	openssh-server	1:10.0p1-7+deb13u4		OpenSSH (BSD-style)	3,1,1	3,1,1	same	
+init-procps	debian-init	procps	2:4.0.4-9		GPL-2.0+	0,3,3	0,3,3	same	
+service	debian-init	init-system-helpers	1.69~deb13u1		GPL-2+ / BSD-3-clause	0,0,3,1,1	0,0,3,1,1	same	
+invoke-rc.d	debian-init	init-system-helpers	1.69~deb13u1		GPL-2+ / BSD-3-clause	0,101,4,0,103	0,101,4,0,103	same	
+update-ca-certificates	debian-init	ca-certificates	20250419		GPL-2+	0,0,0,0	0,0,0,0	same	
+apk-nginx.pre-install	alpine	nginx	1.28.3-r7 (Alpine 3.22)		BSD-2-Clause	0	0	same	
+apk-nginx.post-install	alpine	nginx	1.28.3-r7 (Alpine 3.22)		BSD-2-Clause	0	0	same	
+apk-nginx.post-upgrade	alpine	nginx	1.28.3-r7 (Alpine 3.22)		BSD-2-Clause	0	0	same	
+apk-dbus.pre-install	alpine	dbus	1.16.2-r1 (Alpine 3.22)		AFL-2.1 OR GPL-2.0-or-later	0	0	same	
+apk-dbus.post-install	alpine	dbus	1.16.2-r1 (Alpine 3.22)		AFL-2.1 OR GPL-2.0-or-later	0	0	same	
+apk-alpine-baselayout.pre-install	alpine	alpine-baselayout	3.7.0-r0 (Alpine 3.22)		GPL-2.0-only	0	0	same	
+apk-alpine-baselayout.post-install	alpine	alpine-baselayout	3.7.0-r0 (Alpine 3.22)		GPL-2.0-only	0	0	same	
+apk-chrony.pre-install	alpine	chrony	4.6.1-r1 (Alpine 3.22)		GPL-2.0-or-later	0	0	same	
+apk-postfix.pre-install	alpine	postfix	3.10.13-r0 (Alpine 3.22)		IPL-1.0 EPL-2.0	0	0	same	
+apk-openrc.post-install	alpine	openrc	0.62.6-r0 (Alpine 3.22)		BSD-2-Clause	0	0	same	
+apk-openssh-server.post-upgrade	alpine	openssh-server	10.0_p1-r10 (Alpine 3.22)		SSH-OpenSSH	0	0	same	
+setup-hostname	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)		MIT	0,0,1	0,0,1	same	
+setup-timezone	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)		MIT	0,1,1	0,1,1	same	
+setup-dns	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)		MIT	0,0	0,0	same	
+update-conf	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)		MIT	0,0,0	0,0,0	same	
+lbu	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)		MIT	0,0,0,1	0,0,0,1	same	
+gunzip	utility	gzip	1.13-1+deb13u1		GPL-3+	0,0,0,0,1	0,0,0,0,1	same	
+zcat	utility	gzip	1.13-1+deb13u1		GPL-3+	0,0,1	0,0,1	same	
+zcmp	utility	gzip	1.13-1+deb13u1		GPL-3+	1,0,0	1,0,0	same	
+zforce	utility	gzip	1.13-1+deb13u1		GPL-3+	0,0,0	0,0,0	same	
+uncompress	utility	gzip	1.13-1+deb13u1		GPL-3+	0,0	0,0	same	
+ssh-copy-id	utility	openssh-client	1:10.0p1-7+deb13u4		OpenSSH (BSD-style)	1,1,1,1	1,1,1,1	same	
+ssh-argv0	utility	openssh-client	1:10.0p1-7+deb13u4		OpenSSH (BSD-style)	1,1	1,1	same	
+select-editor	utility	sensible-utils	0.0.25		GPL-2+	1,1,1	1,1,1	same	
+sensible-editor	utility	sensible-utils	0.0.25		GPL-2+	0,1,1,1	0,1,1,1	same	
+sensible-pager	utility	sensible-utils	0.0.25		GPL-2+	0,0,0	0,0,0	same	
+pfetch	utility	pfetch	0.6.0		MIT	0,0,0	0,0,0	unstable	run 2: dash disagrees with itself (out); exit and stderr only
+which.debianutils	utility	debianutils	5.23.2		GPL-2+	1,0,1,2	1,0,1,2	same	
+savelog	utility	debianutils	5.23.2		GPL-2+	0,0,0,1	0,0,0,1	same	
+add-shell	utility	debianutils	5.23.2		GPL-2+	0,1	0,1	same	
+gettext.sh	utility	gettext-base	0.23.1-2		LGPL-2.1+ / GPL-3+	0,0,1	0,0,1	same	
+xzgrep	utility	xz-utils	5.8.1-1+deb13u1		0BSD / GPL-2+ (scripts)	0,0,1,0,2	2,2,2,0,2	differs	run 0 [b f.xz]: exit 2 (dash 0); run 1 [-c . f.xz g.xz]: exit 2 (dash 0), stdout; run 2 [zzz f.xz]: exit 2 (dash 1)
+xzdiff	utility	xz-utils	5.8.1-1+deb13u1		0BSD / GPL-2+ (scripts)	1,0,0	1,0,0	same	
+zgrep	utility	gzip	1.13-1+deb13u1		GPL-3+	0,0,1,0	0,0,1,0	differs	run 0 [b f.gz]: stderr present; run 1 [-n -e a -e c f.gz g.gz]: stderr present; run 2 [zzz f.gz]: stderr present
+zdiff	utility	gzip	1.13-1+deb13u1		GPL-3+	1,0,0	1,2,0	differs	run 1 [f.gz]: exit 2 (dash 0), stdout, stderr present
+lesspipe	utility	less	668-1		GPL-3+ (packaging)	0,0,0	0,0,0	same	
+xdg-mime	utility	xdg-utils	1.2.1-2		Expat	0,0,0,0,1	0,0,0,0,1	same	

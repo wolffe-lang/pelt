@@ -1,0 +1,39 @@
+difftest: pelt = /home/mfwolffe/lanes/sh13/pinbin/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   umask/c_bad
+FAIL umask/c_s_umask_set: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b'drwxr-xr-x\n-rw-r--r--\n-rw-r--r--\n'
+     want stdout: b'0027\nu=rwx,g=rx,o=\ndrwxr-x---\n-rw-r-----\n-rw-------\n-rw-r-----\n0027\nu=rwx,g=rx,o=r\n'
+     pelt stderr: b'pelt: ../s.sh: line 3: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 4: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 5: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 8: umask: not supported yet (no um'
+FAIL umask/c_symbolic: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'0027\nu=rwx,g=rx,o=\n0007\n0117\n0022\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 1: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 1: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 1: umask: not supported yet (no um'
+FAIL umask/c_umask: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b'-rw-r--r--\n0022\n'
+     want stdout: b'0022\nu=rwx,g=rx,o=rx\n-rw-------\n0027\n0000\n0027\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 1: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 1: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 2: umask: not supported yet (no um'
+FAIL umask/children: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b'-rw-r--r--\n-rw-r--r--\ndrwxr-xr-x\n-rw-r--r--\n-rw-r--r--\n\n'
+     want stdout: b'-rw-------\n-rw-------\ndrwx------\n-rw-------\n-rw-------\n0027\n0027\n0077\n0002\n0027\n'
+     pelt stderr: b'pelt: ../s.sh: line 5: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 8: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: pelt: line 1: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: pelt: line 1: umask: not supported yet (no umask bu'
+FAIL umask/options: stdout, stderr present
+     pelt stdout: b'st=2\n'
+     want stdout: b'st=0\n0027\n0027\n0027\nu=rwx,g=rx,o=\nu=rwx,g=rx,o=\n0027\nu=rwx,g=rx,o=\n'
+     pelt stderr: b'pelt: ../s.sh: line 4: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 4: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 4: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 5: umask: not supported yet (no um'
+FAIL umask/refused: stdout, stderr present
+     pelt stdout: b'[u+t] st=2 \n[o=t] st=2 \n[,] st=2 \n[u=rwx,,o=r] st=2 \n[,u=rwx] st=2 \n[u] st=2 \n[a] st=2 \n[x] st=2 \n[8] st=2 \n[0o22] st=2 \n[22x] st=2 \n[+022] st=2 \n[u=r g=r] st=2 \n[U=r] st=2 \n[u=rwxXst] st=2 \n-x st=2\n-S- st=2\n-w st=2 \nstill here\n'
+     want stdout: b'[u+t] st=2 0027\n[o=t] st=2 0027\n[,] st=2 0027\n[u=rwx,,o=r] st=2 0027\n[,u=rwx] st=2 0027\n[u] st=2 0027\n[a] st=2 0027\n[x] st=2 0027\n[8] st=2 0027\n[0o22] st=2 0027\n[22x] st=2 0027\n[+022] st=2 0027\n[u=r g=r] st=2 0027\n[U=r] st=2 0027\n[u=rwxXst] st=2 0027\n-x st=2\n-S- st=2\n-w st=2 0027\nstill here\n'
+     pelt stderr: b'pelt: ../s.sh: line 4: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 7: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 7: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 7: umask: not supported yet (no um'
+FAIL umask/subshells: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b'\n'
+     want stdout: b'0022\n0077\n0022\n0022\n0022\n0022\n0027\n0022\n0077\n0066\n'
+     pelt stderr: b'pelt: ../s.sh: line 4: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 5: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 5: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 6: umask: not supported yet (no um'
+FAIL umask/symbolic_forms: stdout, exit 2 (oracle 0), stderr present
+     pelt stdout: b''
+     want stdout: b'0005\n0333\n0227\n0027\n0026\n0677\n0000\n0007\n0027\n0127\n0227\n0327\n0027\n0027\n0027\n0227\nu=rw,g=rw,o=rw\nu=,g=,o=\n0777\n0000\n0022\n'
+     pelt stderr: b'pelt: ../s.sh: line 6: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 6: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 6: umask: not supported yet (no umask builtin in wolf 0.2.24)\npelt: ../s.sh: line 7: umask: not supported yet (no um'
+difftest: area        pass  fail  pending (of which pass)
+difftest: umask          1     8     0 (0)
+difftest: total          1     8     0 (0)
+on-pin=1
