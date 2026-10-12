@@ -265,8 +265,10 @@ fn run_stdin(mut sh: Sh) -> int {
 
 fn run_lines(mut sh: Sh) -> int {
     var line = 1
-    // one buffer for every line, emptied in place (pelt#19)
+    // one buffer and one parser for every line, emptied in place
+    // (pelt#19)
     var o = buf()
+    var lp = new_parser("", line)
     loop {
         // a one-line command is kept as read; only a continued one is
         // joined in a buffer
@@ -392,7 +394,7 @@ fn run_lines(mut sh: Sh) -> int {
             }
         }
         if !fast {
-            let _st = eval_from(mut sh, src, line)
+            let _st = eval_top(mut sh, mut lp, src, line)
         }
         line += count_lines(src)
         sh.ed.h.cur = false

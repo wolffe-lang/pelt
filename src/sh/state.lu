@@ -157,8 +157,6 @@ struct Sh {
     /// handle and the capture level each belongs to.
     pend_cap: List[int],
     pend_level: List[int],
-    /// The children of the pipelines running now, innermost last.
-    pipe_kids: List[int],
     /// The working directory as `os_cwd` last answered it ("" until
     /// asked): what a subshell puts back.
     phys: str,
@@ -170,10 +168,9 @@ struct Sh {
     shadow: bool,
     bail: bool,
     /// In the shadow: an assignment an expansion makes is kept in the
-    /// shadow and recorded here (name, value, …) for the real state,
-    /// instead of bailing (`sh.exec`'s `take_deferred`).
+    /// shadow and recorded on its `sstk` (name, value, …) for the real
+    /// state, instead of bailing (`sh.exec`'s `take_deferred`).
     defer_ok: bool,
-    deferred: List[str],
     /// End of file seen on descriptor 0 (a terminal's Ctrl-D is one
     /// zero-byte read; the next read would wait for more typing).
     eof0: bool,
@@ -182,19 +179,15 @@ struct Sh {
     cs_status: int,
     cs_ran: bool,
     /// The command substitutions parsed so far (`sh.expand`'s
-    /// `cmdsub_at`): a word → its latest entry; per entry the offset of
-    /// the `$(` in the word, the body, the index past the `)`, and the
-    /// word's previous entry. Keyed by the word itself, a view of the
-    /// tree, so a lookup builds nothing.
+    /// `cmdsub_at`): a word → its latest entry `e`; `cs[4e..4e+4]` is
+    /// the offset of the `$(` in the word, the body, the index past the
+    /// `)`, and the word's previous entry. Keyed by the word itself, a
+    /// view of the tree, so a lookup builds nothing.
     cs_word: Map[str, int],
-    cs_off: List[int],
-    cs_nd: List[int],
-    cs_e: List[int],
-    cs_next: List[int],
-    /// Backquoted command substitutions parsed so far, keyed by the
-    /// text between the backquotes, outside and inside double quotes.
-    bq_raw: Map[str, int],
-    bq_rawq: Map[str, int],
+    cs: List[int],
+    /// Backquoted command substitutions share it: keyed by the text
+    /// between the backquotes, at offset -1 (outside double quotes) or
+    /// -2 (inside).
     sub: int,
     lnames: List[str],
     lvals: List[str],
@@ -224,33 +217,16 @@ struct Sh {
     /// until a `umask` has run.
     mask: int,
     mask0: int,
-    /// The journal (module doc): per entry, the table (`J_VAL` …), the
-    /// name, the value it replaced (a `str` for variables and traps, an
-    /// `int` for functions and marks) and whether there was one.
-    jtab: List[int],
-    jname: List[str],
-    jstr: List[str],
-    jint: List[int],
-    jhad: List[bool],
-    /// A name's latest journal entry: a write finds it here and records
-    /// nothing when it is in the open frame already.
-    jseen: Map[str, int],
-    /// The positional parameters of the calls under the running one
-    /// (`pos_push`).
-    pos_save: List[str],
-    /// The items of the `for` loops running now, innermost last.
-    items: List[str],
-    /// The parser of the outermost text (`sh.exec`'s `eval_top`), and
-    /// whether it is in use.
-    lp: P,
-    lp_busy: bool,
-    /// Per open frame: where its journal starts, and where its record
-    /// starts on `fr_int` and `fr_str`.
-    jframes: List[int],
-    fr_ibase: List[int],
-    fr_sbase: List[int],
-    fr_int: List[int],
-    fr_str: List[str],
+    /// The journal (module doc, `jot`).
+    ji: List[int],
+    jn: List[str],
+    /// Where the innermost frame's record starts on `istk`, or -1.
+    fr_top: int,
+    /// Two stacks the state keeps and reuses (`cut_istk`): frames'
+    /// records and pipelines' children; frames' records, calls' saved
+    /// `$@` and `for` loops' items.
+    istk: List[int],
+    sstk: List[str],
 }
 
 fn new_sh(name: str) -> Sh {
@@ -311,24 +287,17 @@ fn new_sh(name: str) -> Sh {
         stage_cap: 0,
         pend_cap: List[int](),
         pend_level: List[int](),
-        pipe_kids: List[int](),
         phys: "",
         shadow: false,
         bail: false,
         defer_ok: false,
-        deferred: List[str](),
         eof0: false,
         name: name,
         line: 0,
         cs_status: 0,
         cs_ran: false,
         cs_word: Map[str, int](),
-        cs_off: List[int](),
-        cs_nd: List[int](),
-        cs_e: List[int](),
-        cs_next: List[int](),
-        bq_raw: Map[str, int](),
-        bq_rawq: Map[str, int](),
+        cs: List[int](),
         sub: 0,
         lnames: List[str](),
         lvals: List[str](),
@@ -348,21 +317,11 @@ fn new_sh(name: str) -> Sh {
         groups: "",
         mask: -1,
         mask0: -1,
-        jtab: List[int](),
-        jname: List[str](),
-        jstr: List[str](),
-        jint: List[int](),
-        jhad: List[bool](),
-        jseen: Map[str, int](),
-        pos_save: List[str](),
-        items: List[str](),
-        lp: new_parser("", 0),
-        lp_busy: false,
-        jframes: List[int](),
-        fr_ibase: List[int](),
-        fr_sbase: List[int](),
-        fr_int: List[int](),
-        fr_str: List[str](),
+        ji: List[int](),
+        jn: List[str](),
+        fr_top: -1,
+        istk: List[int](),
+        sstk: List[str](),
     }
 }
 
@@ -436,103 +395,126 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_emacs = b & 512 != 0
 }
 
-/// Where a frame's record keeps its fixed fields on `fr_int`.
-const FR_OPTS: int = 0
+/// Where a frame's record keeps its fields on `istk`, from the record's
+/// start (`fr_top`): the enclosing frame's start, where its journal and
+/// its part of `sstk` begin, then what it puts back.
+const FR_PREV: int = 0
 
-const FR_LOOPS: int = 1
+const FR_JBASE: int = 1
 
-const FR_FDEPTH: int = 2
+const FR_SBASE: int = 2
 
-const FR_DOTS: int = 3
+const FR_OPTS: int = 3
 
-const FR_MASK: int = 4
+const FR_LOOPS: int = 4
 
-const FR_LOCALS: int = 5
+const FR_FDEPTH: int = 5
 
-const FR_LFRAMES: int = 6
+const FR_DOTS: int = 6
 
-const FR_NPOS: int = 7
+const FR_MASK: int = 7
 
-const FR_NFDS: int = 8
+const FR_LOCALS: int = 8
+
+const FR_LFRAMES: int = 9
+
+const FR_NPOS: int = 10
+
+const FR_NFDS: int = 11
 
 /// The descriptor table follows the fixed fields.
-const FR_FDS: int = 9
+const FR_FDS: int = 12
 
-/// Start a subshell's frame: everything `frame_close` puts back.
+/// Start a subshell's frame: everything `frame_close` puts back. On
+/// `sstk`: `$0`, the working directory, then `$@`.
 fn frame_open(mut sh: Sh) {
-    (mut sh.jframes).push(sh.jtab.len)
-    (mut sh.fr_ibase).push(sh.fr_int.len)
-    (mut sh.fr_sbase).push(sh.fr_str.len)
-    (mut sh.fr_int).push(opts_bits(sh))
-    (mut sh.fr_int).push(sh.loops)
-    (mut sh.fr_int).push(sh.fdepth)
-    (mut sh.fr_int).push(sh.dots)
-    (mut sh.fr_int).push(sh.mask)
-    (mut sh.fr_int).push(sh.lnames.len)
-    (mut sh.fr_int).push(sh.lframes.len)
-    (mut sh.fr_int).push(sh.pos.len)
-    (mut sh.fr_int).push(sh.fds.len)
+    let b = sh.istk.len
+    (mut sh.istk).push(sh.fr_top)
+    (mut sh.istk).push(sh.ji.len / 3)
+    (mut sh.istk).push(sh.sstk.len)
+    (mut sh.istk).push(opts_bits(sh))
+    (mut sh.istk).push(sh.loops)
+    (mut sh.istk).push(sh.fdepth)
+    (mut sh.istk).push(sh.dots)
+    (mut sh.istk).push(sh.mask)
+    (mut sh.istk).push(sh.lnames.len)
+    (mut sh.istk).push(sh.lframes.len)
+    (mut sh.istk).push(sh.pos.len)
+    (mut sh.istk).push(sh.fds.len)
     var k = 0
     while k < sh.fds.len {
-        (mut sh.fr_int).push(sh.fds[k])
+        (mut sh.istk).push(sh.fds[k])
         k += 1
     }
-    (mut sh.fr_str).push(sh.arg0)
-    (mut sh.fr_str).push(sh.phys)
+    (mut sh.sstk).push(sh.arg0)
+    (mut sh.sstk).push(sh.phys)
     k = 0
     while k < sh.pos.len {
-        (mut sh.fr_str).push(sh.pos[k])
+        (mut sh.sstk).push(sh.pos[k])
         k += 1
     }
+    sh.fr_top = b
 }
 
 /// End the innermost frame: the journal played back, the record put
 /// back, the stacks cut to where the frame began.
 fn frame_close(mut sh: Sh) {
-    let jb = (mut sh.jframes).pop() else 0
-    journal_back(mut sh, jb)
-    let ib = (mut sh.fr_ibase).pop() else 0
-    let sb = (mut sh.fr_sbase).pop() else 0
-    set_opts_bits(mut sh, sh.fr_int[ib + FR_OPTS])
-    sh.loops = sh.fr_int[ib + FR_LOOPS]
-    sh.fdepth = sh.fr_int[ib + FR_FDEPTH]
-    sh.dots = sh.fr_int[ib + FR_DOTS]
-    let nl = sh.fr_int[ib + FR_LOCALS]
+    let b = sh.fr_top
+    journal_back(mut sh, sh.istk[b + FR_JBASE])
+    let sb = sh.istk[b + FR_SBASE]
+    set_opts_bits(mut sh, sh.istk[b + FR_OPTS])
+    sh.loops = sh.istk[b + FR_LOOPS]
+    sh.fdepth = sh.istk[b + FR_FDEPTH]
+    sh.dots = sh.istk[b + FR_DOTS]
+    let nl = sh.istk[b + FR_LOCALS]
     while sh.lnames.len > nl {
         let _n = (mut sh.lnames).pop() else ""
         let _v = (mut sh.lvals).pop() else ""
         let _s = (mut sh.lset).pop() else false
         let _e = (mut sh.lexp).pop() else false
     }
-    let nf = sh.fr_int[ib + FR_LFRAMES]
+    let nf = sh.istk[b + FR_LFRAMES]
     while sh.lframes.len > nf {
         let _f = (mut sh.lframes).pop() else 0
     }
-    sh.arg0 = sh.fr_str[sb]
-    let np = sh.fr_int[ib + FR_NPOS]
+    sh.arg0 = sh.sstk[sb]
+    let np = sh.istk[b + FR_NPOS]
     (mut sh.pos).clear()
     var k = 0
     while k < np {
-        (mut sh.pos).push(sh.fr_str[sb + 2 + k])
+        (mut sh.pos).push(sh.sstk[sb + 2 + k])
         k += 1
     }
-    restore_fds(mut sh, ib + FR_FDS, sh.fr_int[ib + FR_NFDS])
-    let phys = sh.fr_str[sb + 1]
+    restore_fds(mut sh, b + FR_FDS, sh.istk[b + FR_NFDS])
+    let phys = sh.sstk[sb + 1]
     if phys.len > 0 && phys != sh.phys {
         os_chdir(phys) else |_| {}
         sh.phys = phys
     }
-    restore_mask(mut sh, sh.fr_int[ib + FR_MASK])
-    while sh.fr_int.len > ib {
-        let _i = (mut sh.fr_int).pop() else 0
+    restore_mask(mut sh, sh.istk[b + FR_MASK])
+    sh.fr_top = sh.istk[b + FR_PREV]
+    cut_istk(mut sh, b)
+    cut_sstk(mut sh, sb)
+}
+
+/// The two stacks back to `n` entries, in place. Everything on them is
+/// pushed and taken off in nested order: a frame's record, a pipeline's
+/// children (`istk`); a frame's record, a call's saved `$@`, a `for`
+/// loop's items (`sstk`).
+fn cut_istk(mut sh: Sh, n: int) {
+    while sh.istk.len > n {
+        let _i = (mut sh.istk).pop() else 0
     }
-    while sh.fr_str.len > sb {
-        let _s = (mut sh.fr_str).pop() else ""
+}
+
+fn cut_sstk(mut sh: Sh, n: int) {
+    while sh.sstk.len > n {
+        let _s = (mut sh.sstk).pop() else ""
     }
 }
 
 /// Put the descriptor table back to the `n` handles a frame recorded at
-/// `fr_int[at..]`, closing every handle pelt opened that the table no
+/// `istk[at..]`, closing every handle pelt opened that the table no
 /// longer names. Written in place.
 fn restore_fds(mut sh: Sh, at: int, n: int) {
     flush(mut sh)
@@ -547,9 +529,9 @@ fn restore_fds(mut sh: Sh, at: int, n: int) {
     var k = 0
     while k < n {
         if k < sh.fds.len {
-            sh.fds[k] = sh.fr_int[at + k]
+            sh.fds[k] = sh.istk[at + k]
         } else {
-            (mut sh.fds).push(sh.fr_int[at + k])
+            (mut sh.fds).push(sh.istk[at + k])
         }
         k += 1
     }
@@ -558,7 +540,7 @@ fn restore_fds(mut sh: Sh, at: int, n: int) {
 fn frame_names(sh: Sh, at: int, n: int, h: int) -> bool {
     var k = 0
     while k < n {
-        if sh.fr_int[at + k] == h {
+        if sh.istk[at + k] == h {
             return true
         }
         k += 1
@@ -566,13 +548,13 @@ fn frame_names(sh: Sh, at: int, n: int, h: int) -> bool {
     false
 }
 
-/// A function call begins: `$@` moves onto `pos_save` and is emptied,
-/// in place. Answers where it begins there, for `pos_pop`.
+/// A function call begins: `$@` moves onto `sstk` and is emptied, in
+/// place. Answers where it begins there, for `pos_pop`.
 fn pos_push(mut sh: Sh) -> int {
-    let base = sh.pos_save.len
+    let base = sh.sstk.len
     var k = 0
     while k < sh.pos.len {
-        (mut sh.pos_save).push(sh.pos[k])
+        (mut sh.sstk).push(sh.pos[k])
         k += 1
     }
     (mut sh.pos).clear()
@@ -583,25 +565,32 @@ fn pos_push(mut sh: Sh) -> int {
 fn pos_pop(mut sh: Sh, base: int) {
     (mut sh.pos).clear()
     var k = base
-    while k < sh.pos_save.len {
-        (mut sh.pos).push(sh.pos_save[k])
+    while k < sh.sstk.len {
+        (mut sh.pos).push(sh.sstk[k])
         k += 1
     }
-    while sh.pos_save.len > base {
-        let _p = (mut sh.pos_save).pop() else ""
-    }
+    cut_sstk(mut sh, base)
 }
 
 /// Before a write to table `tab` at `name` inside a frame: record what
-/// is there, unless this frame recorded it already.
+/// is there, unless this frame recorded it already. Entry `e` is
+/// `ji[3e..3e+3]` (the table, the int it replaced, whether there was
+/// one) and `jn[2e..2e+2]` (the name, the `str` it replaced).
 fn jot(mut sh: Sh, tab: int, name: str) {
-    if sh.jframes.len == 0 {
+    if sh.fr_top < 0 {
         return
     }
-    let base = sh.jframes[sh.jframes.len - 1]
-    let at = sh.jseen[name] else -1
-    if at >= base && at < sh.jtab.len && sh.jtab[at] == tab && sh.jname[at] == name {
-        return
+    // recorded once per frame: a frame's writes are few names, most
+    // often the same one again, so the newest entries are looked at
+    // first
+    let base = sh.istk[sh.fr_top + FR_JBASE]
+    let count = sh.ji.len / 3
+    var e = count - 1
+    while e >= base {
+        if sh.ji[3 * e] == tab && sh.jn[2 * e] == name {
+            return
+        }
+        e -= 1
     }
     var had = false
     var s = ""
@@ -625,12 +614,11 @@ fn jot(mut sh: Sh, tab: int, name: str) {
         let r = sh.ronly[name] else false
         i = if r then 1 else 0
     }
-    (mut sh.jtab).push(tab)
-    (mut sh.jname).push(name)
-    (mut sh.jstr).push(s)
-    (mut sh.jint).push(i)
-    (mut sh.jhad).push(had)
-    sh.jseen[name] = sh.jtab.len - 1
+    (mut sh.ji).push(tab)
+    (mut sh.ji).push(i)
+    (mut sh.ji).push(if had then 1 else 0)
+    (mut sh.jn).push(name)
+    (mut sh.jn).push(s)
 }
 
 /// Whether the mark map `m` has an entry for `name` (true or false).
@@ -650,37 +638,37 @@ fn trap_set(sh: Sh, name: str) -> bool {
 
 /// Play the journal back to entry `base`, newest first.
 fn journal_back(mut sh: Sh, base: int) {
-    while sh.jtab.len > base {
-        let tab = (mut sh.jtab).pop() else 0
-        let name = (mut sh.jname).pop() else ""
-        let s = (mut sh.jstr).pop() else ""
-        let i = (mut sh.jint).pop() else 0
-        let had = (mut sh.jhad).pop() else false
+    while sh.ji.len > 3 * base {
+        let had = (mut sh.ji).pop() else 0
+        let i = (mut sh.ji).pop() else 0
+        let tab = (mut sh.ji).pop() else 0
+        let s = (mut sh.jn).pop() else ""
+        let name = (mut sh.jn).pop() else ""
         if tab == J_VAL {
-            if had {
+            if had == 1 {
                 sh.vals[name] = s
             } else {
                 let _v = (mut sh.vals).remove(name) else ""
             }
         } else if tab == J_TRAP {
-            if had {
+            if had == 1 {
                 sh.traps[name] = s
             } else {
                 let _t = (mut sh.traps).remove(name) else ""
             }
         } else if tab == J_FN {
-            if had {
+            if had == 1 {
                 sh.funcs[name] = i
             } else {
                 let _f = (mut sh.funcs).remove(name) else 0
             }
         } else if tab == J_EXP {
-            if had {
+            if had == 1 {
                 sh.exported[name] = i == 1
             } else {
                 let _e = (mut sh.exported).remove(name) else false
             }
-        } else if had {
+        } else if had == 1 {
             sh.ronly[name] = i == 1
         } else {
             let _r = (mut sh.ronly).remove(name) else false
@@ -869,8 +857,8 @@ fn set_var(mut sh: Sh, name: str, value: str) -> bool {
         xset(mut sh, name, true)
     }
     if sh.shadow && sh.defer_ok {
-        (mut sh.deferred).push(name)
-        (mut sh.deferred).push(value)
+        (mut sh.sstk).push(name)
+        (mut sh.sstk).push(value)
     }
     true
 }

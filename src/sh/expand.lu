@@ -318,13 +318,9 @@ fn arith_end(w: str, i: int) -> int {
 /// The `$(…)` at `i`: its parsed body (or -1 for an empty one) and the
 /// index past its `)`. Parsed once per (text, offset) and remembered.
 fn cmdsub_at(mut sh: Sh, w: str, i: int) -> (int, int) {
-    let head = sh.cs_word[w] else -1
-    var at = head
-    while at >= 0 {
-        if sh.cs_off[at] == i {
-            return (sh.cs_nd[at], sh.cs_e[at])
-        }
-        at = sh.cs_next[at]
+    let at = cs_find(sh, w, i)
+    if at >= 0 {
+        return (sh.cs[4 * at + 1], sh.cs[4 * at + 2])
     }
     var j = i + 2
     while j < w.len && (ch(w, j) == ' ' || ch(w, j) == '\t' || ch(w, j) == '\n') {
@@ -343,13 +339,32 @@ fn cmdsub_at(mut sh: Sh, w: str, i: int) -> (int, int) {
         }
         end = p.pos
     }
-    keep(mut sh.ast)
-    (mut sh.cs_off).push(i)
-    (mut sh.cs_nd).push(node)
-    (mut sh.cs_e).push(end)
-    (mut sh.cs_next).push(head)
-    sh.cs_word[w] = sh.cs_off.len - 1
+    cs_put(mut sh, w, i, node, end)
     (node, end)
+}
+
+/// The parse cache's entry for the substitution at offset `i` of word
+/// `w` (`Sh.cs`), or -1.
+fn cs_find(sh: Sh, w: str, i: int) -> int {
+    var at = sh.cs_word[w] else -1
+    while at >= 0 {
+        if sh.cs[4 * at] == i {
+            return at
+        }
+        at = sh.cs[4 * at + 3]
+    }
+    -1
+}
+
+/// Remember a parsed substitution; its nodes are kept (`sh.ast`).
+fn cs_put(mut sh: Sh, w: str, i: int, node: int, end: int) {
+    keep(mut sh.ast)
+    let head = sh.cs_word[w] else -1
+    (mut sh.cs).push(i)
+    (mut sh.cs).push(node)
+    (mut sh.cs).push(end)
+    (mut sh.cs).push(head)
+    sh.cs_word[w] = sh.cs.len / 4 - 1
 }
 
 // ------------------------------------------------------------ the walk
@@ -750,14 +765,10 @@ fn backquote(mut sh: Sh, w: str, i: int, dq: bool, mut o: Buf) -> int {
 fn bq_node_of(mut sh: Sh, w: str, i: int, dq: bool) -> (int, int) {
     let e = bq_end(w, i)
     let raw = w[i + 1..e - 1]
-    var node = -2
-    if dq {
-        node = sh.bq_rawq[raw] else -2
-    } else {
-        node = sh.bq_raw[raw] else -2
-    }
-    if node != -2 {
-        return (node, e)
+    let tag = if dq then -2 else -1
+    let at = cs_find(sh, raw, tag)
+    if at >= 0 {
+        return (sh.cs[4 * at + 1], e)
     }
     var t = buf()
     var k = 0
@@ -775,16 +786,11 @@ fn bq_node_of(mut sh: Sh, w: str, i: int, dq: bool) -> (int, int) {
         k += 1
     }
     let src = text(t)
-    node = parse_script_list(mut sh, src)
+    let node = parse_script_list(mut sh, src)
     if sh.flow != F_NONE {
         return (-1, w.len)
     }
-    keep(mut sh.ast)
-    if dq {
-        sh.bq_rawq[raw] = node
-    } else {
-        sh.bq_raw[raw] = node
-    }
+    cs_put(mut sh, raw, tag, node, e)
     (node, e)
 }
 
