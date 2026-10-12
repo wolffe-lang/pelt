@@ -1,0 +1,323 @@
+#!/usr/bin/env python3
+"""hist-witness — the history file, asked from outside.
+
+A session case is one shell, so what the history file is FOR — the next
+shell reading what this one wrote, two shells sharing one file, the file
+kept to HISTSIZE — cannot be a case. This tool runs pelt interactively
+on fresh pseudo-terminals (tools/lib_session.py's arrangement, the line
+editor on) with HOME and HISTFILE in a scratch directory, and checks:
+
+  write     what is typed is written as typed: one line an entry, a
+            backslash doubled, a multi-line command one line with `\\n`;
+            a new file is made with mode 0600
+  read      the next shell reads it: `fc -l` numbers it from 1, and Up
+            walks it (the multi-line command runs again)
+  shared    two shells on one file at once: a command typed in one is in
+            the other's `fc -l` and Up at the other's next prompt, both
+            ways
+  truncate  a 40-entry file with HISTSIZE=5 holds the newest 5 once the
+            shell has read it, numbered 1 to 5; during the session it is
+            cut back to the newest 5 when it reaches twice HISTSIZE
+  foreign   a path that cannot be created, and a file that is not text
+            (a NUL byte): the history works in memory, the file is
+            untouched, nothing is said
+  default   HISTFILE unset: $HOME/.sh_history, mode 0600
+
+Exit 0 when every scenario holds, 1 when one does not, 2 when the
+harness cannot run.
+
+usage: tools/hist-witness PELT
+"""
+
+import os
+import pty
+import select
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+
+UP = b"\x1b[A"
+
+
+class Shell:
+    def __init__(self, pelt, home, extra):
+        self.master, slave = pty.openpty()
+        rout, wout = os.pipe()
+        rerr, werr = os.pipe()
+        env = {"PATH": "/usr/bin:/bin", "HOME": home, "LC_ALL": "C", "PS1": "$ ",
+               "PS2": "> ", "COLUMNS": "200"}
+        env.update(extra)
+        self.p = subprocess.Popen([pelt, "-i"], stdin=slave, stdout=wout, stderr=werr,
+                                  env=env, cwd=home, start_new_session=True,
+                                  preexec_fn=ls._ctty, close_fds=True)
+        os.close(slave)
+        os.close(wout)
+        os.close(werr)
+        self.fds = {rout: "out", rerr: "err", self.master: "tty"}
+        self.out = b""
+        self.err = b""
+        self.prompts = 0
+
+    def pump(self, secs):
+        end = time.time() + secs
+        while time.time() < end:
+            live = list(self.fds)
+            if not live:
+                time.sleep(0.05)
+                continue
+            r, _, _ = select.select(live, [], [], 0.05)
+            for fd in r:
+                try:
+                    d = os.read(fd, 65536)
+                except OSError:
+                    d = b""
+                if not d:
+                    del self.fds[fd]
+                    continue
+                if self.fds[fd] == "out":
+                    self.out += d
+                elif self.fds[fd] == "err":
+                    self.err += d
+
+    def wait_prompt(self, secs=8):
+        """Wait for one more `$ ` prompt than has been seen."""
+        want = self.prompts + 1
+        end = time.time() + secs
+        while time.time() < end:
+            self.pump(0.05)
+            if self.err.count(b"$ ") >= want:
+                self.prompts = want
+                return True
+        return False
+
+    def run(self, line):
+        """Type `line` and Enter; wait for the next prompt; answer what
+        standard output got meanwhile."""
+        before = len(self.out)
+        os.write(self.master, line + b"\r")
+        self.wait_prompt()
+        return self.out[before:]
+
+    def cont(self, line):
+        """Type a line that continues a command (a `PS2` prompt follows)."""
+        os.write(self.master, line + b"\r")
+        self.pump(0.3)
+
+    def quit(self):
+        os.write(self.master, b"exit\r")
+        end = time.time() + 5
+        while self.p.poll() is None and time.time() < end:
+            self.pump(0.05)
+        return self.p.poll()
+
+    def said(self):
+        """Standard error less the prompts: what pelt said."""
+        return self.err.replace(b"$ ", b"").replace(b"> ", b"").strip()
+
+    def close(self):
+        if self.p.poll() is None:
+            os.kill(self.p.pid, signal.SIGKILL)
+            self.p.wait()
+        for fd in list(self.fds):
+            os.close(fd)
+        try:
+            os.close(self.master)
+        except OSError:
+            pass
+
+
+def start(pelt, home, extra):
+    sh = Shell(pelt, home, extra)
+    if not sh.wait_prompt():
+        sh.close()
+        raise RuntimeError("no first prompt")
+    return sh
+
+
+def read(path):
+    with open(path, "rb") as fh:
+        return fh.read()
+
+
+def mode_of(path):
+    return os.stat(path).st_mode & 0o777
+
+
+WRITTEN = (b"echo one\n"
+           b"printf '%s\\\\n' 'a\\\\b'\n"
+           b"for i in 1 2\\ndo echo $i\\ndone\n"
+           b"exit\n")
+
+
+def s_write(pelt, d):
+    f = os.path.join(d, "h1")
+    sh = start(pelt, d, {"HISTFILE": f})
+    try:
+        sh.run(b"echo one")
+        sh.run(b"printf '%s\\n' 'a\\b'")
+        sh.cont(b"for i in 1 2")
+        sh.cont(b"do echo $i")
+        sh.run(b"done")
+        rc = sh.quit()
+    finally:
+        sh.close()
+    got = read(f)
+    ok = got == WRITTEN and mode_of(f) == 0o600 and rc == 0
+    return ok, f"file {got!r}, mode {mode_of(f):o}, status {rc}"
+
+
+def s_read(pelt, d):
+    f = os.path.join(d, "h1")
+    sh = start(pelt, d, {"HISTFILE": f})
+    try:
+        listed = sh.run(b"fc -l")
+        # Up: fc -l, exit, then the for loop
+        again = sh.run(UP + UP + UP)
+        rc = sh.quit()
+        said = sh.said()
+    finally:
+        sh.close()
+    want = (b"1\techo one\n2\tprintf '%s\\n' 'a\\b'\n"
+            b"3\tfor i in 1 2\n\tdo echo $i\n\tdone\n4\texit\n")
+    ok = listed == want and again == b"1\n2\n" and rc == 0 and said == b""
+    return ok, f"fc -l {listed!r}, Up x3 ran {again!r}, said {said!r}"
+
+
+def s_shared(pelt, d):
+    f = os.path.join(d, "h2")
+    a = start(pelt, d, {"HISTFILE": f})
+    b = start(pelt, d, {"HISTFILE": f})
+    try:
+        a.run(b"echo from-a")
+        # the entry is written before a's next prompt; b reads it at its own
+        a.run(b"")
+        b.run(b"")
+        b_sees = b.run(b"fc -ln -1")
+        b_up = b.run(UP + UP)
+        b.run(b"")
+        a.run(b"")
+        a_sees = a.run(b"fc -ln -2 -1")
+        ra = a.quit()
+        rb = b.quit()
+    finally:
+        a.close()
+        b.close()
+    ok = (b_sees == b"\techo from-a\n" and b_up == b"from-a\n"
+          and a_sees == b"\tfc -ln -1\n\techo from-a\n" and ra == 0 and rb == 0)
+    return ok, f"b: fc -ln -1 {b_sees!r}, Up x2 ran {b_up!r}; a: fc -ln -2 -1 {a_sees!r}"
+
+
+def s_truncate(pelt, d):
+    f = os.path.join(d, "h3")
+    with open(f, "wb") as fh:
+        for i in range(1, 41):
+            fh.write(b"echo n%d\n" % i)
+    sh = start(pelt, d, {"HISTFILE": f, "HISTSIZE": "5"})
+    try:
+        at_start = read(f)
+        listed = sh.run(b"fc -l")
+        for i in range(1, 5):
+            sh.run(b"echo x%d" % i)
+        mid = read(f)
+        rc = sh.quit()
+    finally:
+        sh.close()
+    end = read(f)
+    want_start = b"".join(b"echo n%d\n" % i for i in range(36, 41))
+    # the fc line is one of the five kept (bash: c_hist_histsize), so
+    # the oldest read (n36, number 1) is gone by the time it lists
+    want_list = b"".join(b"%d\techo n%d\n" % (i - 35, i) for i in range(37, 41))
+    want_mid = b"fc -l\n" + b"".join(b"echo x%d\n" % i for i in range(1, 5))
+    ok = at_start == want_start and listed == want_list and mid == want_mid and end == want_mid + b"exit\n"
+    return ok, f"at start {at_start!r}, fc -l {listed!r}, after 10 entries {mid!r}, at the end {end!r}"
+
+
+def s_foreign(pelt, d):
+    nodir = os.path.join(d, "no-such-dir", "h")
+    sh = start(pelt, d, {"HISTFILE": nodir})
+    try:
+        sh.run(b"echo a")
+        mem = sh.run(b"fc -ln -1")
+        rc1 = sh.quit()
+        said1 = sh.said()
+    finally:
+        sh.close()
+    binf = os.path.join(d, "bin")
+    blob = b"\x00\x01not a history\n"
+    with open(binf, "wb") as fh:
+        fh.write(blob)
+    sh = start(pelt, d, {"HISTFILE": binf})
+    try:
+        sh.run(b"echo b")
+        listed = sh.run(b"fc -l")
+        rc2 = sh.quit()
+        said2 = sh.said()
+    finally:
+        sh.close()
+    ok = (mem == b"\techo a\n" and not os.path.exists(nodir) and said1 == b""
+          and listed == b"1\techo b\n" and read(binf) == blob and said2 == b""
+          and rc1 == 0 and rc2 == 0)
+    return ok, (f"no directory: fc {mem!r}, said {said1!r}; binary file: fc -l {listed!r}, "
+                f"file kept {read(binf) == blob}, said {said2!r}")
+
+
+def s_default(pelt, d):
+    home = os.path.join(d, "home")
+    os.makedirs(home)
+    sh = start(pelt, home, {})
+    try:
+        sh.run(b"echo z")
+        rc = sh.quit()
+    finally:
+        sh.close()
+    f = os.path.join(home, ".sh_history")
+    got = read(f) if os.path.exists(f) else None
+    ok = got == b"echo z\nexit\n" and mode_of(f) == 0o600 and rc == 0
+    return ok, f"$HOME/.sh_history {got!r}, mode {mode_of(f) if got is not None else 0:o}"
+
+
+def timed_out(_sig, _frame):
+    import faulthandler
+    faulthandler.dump_traceback(sys.stdout)
+    raise TimeoutError()
+
+
+def main(argv):
+    sys.stdout.reconfigure(line_buffering=True)
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    pelt = os.path.abspath(argv[0])
+    if not os.access(pelt, os.X_OK):
+        print(f"hist-witness: no pelt at {pelt}", file=sys.stderr)
+        return 2
+    d = tempfile.mkdtemp(prefix="pelt-hist-witness.")
+    bad = 0
+    try:
+        for name, fn in (("write", s_write), ("read", s_read), ("shared", s_shared),
+                         ("truncate", s_truncate), ("foreign", s_foreign),
+                         ("default", s_default)):
+            signal.signal(signal.SIGALRM, timed_out)
+            signal.alarm(90)
+            try:
+                ok, why = fn(pelt, d)
+            except (TimeoutError, RuntimeError, OSError) as e:
+                ok, why = False, f"{type(e).__name__}: {e}"
+            finally:
+                signal.alarm(0)
+            print(f"hist-witness: {name:<9}{'ok  ' if ok else 'FAIL'} {why}")
+            bad += not ok
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    print(f"hist-witness: {6 - bad} of 6 hold")
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
