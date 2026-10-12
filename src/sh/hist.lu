@@ -439,7 +439,8 @@ fn hist_sync(mut sh: Sh, read: bool) {
             }
         }
     }
-    if sh.ed.h.unsaved.len > 0 {
+    // PLANT (sh12, never merged): the append is skipped
+    if sh.ed.h.unsaved.len > 0 && sh.ed.h.state == 99 {
         let before = sh.ed.h.size
         let wrote = copy region hw {
             hist_append(path, sh.ed.h.unsaved, sh.ed.h.need_nl)
@@ -591,7 +592,8 @@ fn fc_raw(h: Hist, op: str) -> int {
         // past nine digits every number is beyond either end
         let v = if digits.len > 9 then 999999999 else (to_int(digits) else 0)
         if neg {
-            return fc_newest(h) - v
+            // PLANT (sh12, never merged): `-n` one command too far back
+            return fc_newest(h) - v - 1
         }
         if v == 0 {
             return prev
