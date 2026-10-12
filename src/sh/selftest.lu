@@ -2,8 +2,9 @@
 //! corpus: the pattern matcher, the arithmetic evaluator, field
 //! splitting, prefix and suffix trimming, unsigned digits, the parser's
 //! tree, the descriptor table's redirection frames, `cd`'s logical
-//! path, and which simple commands run inside the region (`sh.exec`'s
-//! fast path). `src/sh_test.lu` runs them under `wolf test`.
+//! path, which simple commands run inside the region (`sh.exec`'s
+//! fast path), and `umask`'s operand reader. `src/sh_test.lu` runs
+//! them under `wolf test`.
 //!
 //! References consulted: POSIX.1-2024 XCU 2.6.4, 2.6.5, 2.14; every
 //! expected value here was read off a black-box run of `dash` 0.5.13.4
@@ -298,6 +299,32 @@ fn want_jobs(mut bad: List[str]) {
     }
 }
 
+/// `umask`'s operand reader and its two answers (`sh.umask`); -1 for a
+/// refused operand. Each expected mask was read off dash 0.5.13.4.
+fn want_mask(mut bad: List[str], cur: int, operand: str, want: int) {
+    let got = mask_from(cur, operand) else -1
+    if got != want {
+        (mut bad).push("mask_from({mask_octal(cur)}, {operand}) = {got}, want {want}")
+    }
+}
+
+/// The table check that a subshell's mask is put back is the corpus's
+/// (`umask/subshells`): it needs the process's own mask.
+fn want_mask_texts(mut bad: List[str]) {
+    let pairs = [
+        (0o022, "0022 u=rwx,g=rx,o=rx"),
+        (0o777, "0777 u=,g=,o="),
+        (0, "0000 u=rwx,g=rwx,o=rwx"),
+        (0o137, "0137 u=rw,g=r,o="),
+    ]
+    for (m, want) in pairs {
+        let got = "{mask_octal(m)} {mask_symbolic(m)}"
+        if got != want {
+            (mut bad).push("mask texts of {m}: {got}, want {want}")
+        }
+    }
+}
+
 /// Run every table check; answers one line per check that failed,
 /// empty when all pass.
 pub fn self_test() -> List[str] {
@@ -446,5 +473,23 @@ pub fn self_test() -> List[str] {
     want_exec_env(mut bad)
     want_conditions(mut bad)
     want_jobs(mut bad)
+    want_mask(mut bad, 0o027, "022", 0o022)
+    want_mask(mut bad, 0o027, "7777", 0o777)
+    want_mask(mut bad, 0o027, "", 0o027)
+    want_mask(mut bad, 0o027, "8", -1)
+    want_mask(mut bad, 0o027, "+w", 0o005)
+    want_mask(mut bad, 0o027, "=r", 0o333)
+    want_mask(mut bad, 0o027, "u=g", 0o227)
+    want_mask(mut bad, 0o027, "g=u-w", 0o027)
+    want_mask(mut bad, 0o777, "u+x,o+X", 0o677)
+    want_mask(mut bad, 0o077, "g=rwx,o=g", 0o007)
+    want_mask(mut bad, 0o027, "u=rwx,", 0o027)
+    want_mask(mut bad, 0o027, "u=rwx,,o=r", -1)
+    want_mask(mut bad, 0o027, ",", -1)
+    want_mask(mut bad, 0o027, "u", -1)
+    want_mask(mut bad, 0o027, "u+t", -1)
+    want_mask(mut bad, 0o027, "u+s", 0o027)
+    want_mask(mut bad, 0o027, "-", 0o027)
+    want_mask_texts(mut bad)
     bad
 }
