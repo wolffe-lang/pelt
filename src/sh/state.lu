@@ -154,6 +154,8 @@ struct Sh {
     /// handle and the capture level each belongs to.
     pend_cap: List[int],
     pend_level: List[int],
+    /// The children of the pipelines running now, innermost last.
+    pipe_kids: List[int],
     /// The working directory as `os_cwd` last answered it ("" until
     /// asked): what a subshell puts back.
     phys: str,
@@ -280,6 +282,7 @@ fn new_sh(name: str) -> Sh {
         stage_cap: 0,
         pend_cap: List[int](),
         pend_level: List[int](),
+        pipe_kids: List[int](),
         phys: "",
         shadow: false,
         bail: false,
@@ -892,7 +895,8 @@ fn flush(mut sh: Sh) {
     } else if h >= 0 {
         fs_write_chunk(h, sh.out) else |_| {}
     }
-    sh.out = List[byte]()
+    // emptied in place: the state's own list, not a fresh one (pelt#19)
+    (mut sh.out).clear()
 }
 
 /// Bytes for shell descriptor `fd` other than 1 (a diagnostic, a prompt,
@@ -927,20 +931,58 @@ fn cap_begin(mut sh: Sh) {
     fd_set(mut sh, 1, cap_mark(sh.caps.len))
 }
 
-/// Close the innermost capture and answer what it caught, as bytes.
-fn cap_end_bytes(mut sh: Sh) -> List[byte] {
+/// Close the innermost capture: descriptor 1 is what it was before.
+/// Answers where its bytes begin in `cap_data`; they stay there until
+/// `cap_cut`.
+fn cap_close(mut sh: Sh) -> int {
     flush(mut sh)
     let start = (mut sh.caps).pop() else 0
     let was = (mut sh.cap_was).pop() else 1
-    let part = sh.cap_data[start..sh.cap_data.len]
-    sh.cap_data = sh.cap_data[0..start]
     fd_set(mut sh, 1, was)
-    part
+    start
 }
 
-fn cap_end(mut sh: Sh) -> str {
-    let part = cap_end_bytes(mut sh)
-    text(Buf { b: part })
+/// Drop `cap_data` from `start` on, in place (pelt#19: cutting by a
+/// slice made a fresh list in the root each time).
+fn cap_cut(mut sh: Sh, start: int) {
+    let zero = 0 as byte
+    while sh.cap_data.len > start {
+        let _b = (mut sh.cap_data).pop() else zero
+    }
+}
+
+/// Close the innermost capture and answer what it caught as text, the
+/// trailing newlines cut when `trim` (a command substitution, XCU
+/// 2.6.3). The text is made inside a region, so only it is kept.
+fn cap_end(mut sh: Sh, trim: bool) -> str {
+    let start = cap_close(mut sh)
+    let s = copy region ct {
+        cap_text(sh, start, trim)
+    }
+    cap_cut(mut sh, start)
+    s
+}
+
+fn cap_text(sh: Sh, start: int, trim: bool) -> str {
+    var end = sh.cap_data.len
+    if trim {
+        while end > start && sh.cap_data[end - 1] as int == 10 {
+            end -= 1
+        }
+    }
+    text(Buf { b: sh.cap_data[start..end] })
+}
+
+/// Close the innermost capture and hand what it caught to a reader
+/// (`sh.redir`'s `feed`), made inside a region: the read handle, or
+/// `FD_CLOSED` when no pipe or file could be made (said).
+fn cap_feed(mut sh: Sh) -> int {
+    let start = cap_close(mut sh)
+    let h = copy region cf {
+        feed(sh, sh.cap_data[start..sh.cap_data.len])
+    }
+    cap_cut(mut sh, start)
+    feed_said(mut sh, h)
 }
 
 /// A diagnostic: pelt's own words, on descriptor 2, after whatever

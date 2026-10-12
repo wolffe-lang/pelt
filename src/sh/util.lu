@@ -305,7 +305,7 @@ fn bi_printf(mut sh: Sh, args: List[str]) -> int {
                 ai += 1
                 cap_begin(mut sh)
                 let cut = escapes(mut sh, a, true)
-                var s = cap_end(mut sh)
+                var s = cap_end(mut sh, false)
                 if prec >= 0 && prec < s.len {
                     s = s.get(0..prec) else s
                 }
