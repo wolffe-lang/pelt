@@ -1,1 +1,3 @@
+pelt_args=-i +o emacs
 bash=differs
+why=the terminal's own line discipline at the prompt, as dash has it: pelt with no editing mode (sh11); the editor's Ctrl-C is c_ed_ctrl_c and c_ed_ctrl_c_trap
