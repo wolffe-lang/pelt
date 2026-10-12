@@ -26,8 +26,8 @@ A session case is a set of files in tests/session/:
                                 for itself too (`oracle_args=+m`)
                   env=K=V …     extra environment, split on blanks; a
                                 `$HOME` in a value is left for the shell,
-                                and `\s` in a value is a space
-                                (`PS1=$\s`: bash's first prompt is then
+                                and `\\s` in a value is a space
+                                (`PS1=$\\s`: bash's first prompt is then
                                 pelt's, so a bash-recorded case paces
                                 pelt from its first step)
                   bash=agree|differs  the second opinion (`bash --posix
