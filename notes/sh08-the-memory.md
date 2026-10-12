@@ -337,7 +337,8 @@ only, in the typed rows of `tools/shape-rss`: after `exit` the harness
 stopped reading the pty and waited 10 s, and pelt, putting the
 terminal's mode back, waited for the pty's output to be read (every
 loop and script row passed there, 11–113 B a turn). The tool now keeps
-reading until the shell is gone (`ac6891d`'s parent). The planted
+reading until the shell is gone (`ac6891d`, the head before
+these notes). The planted
 break (run 38243184319, `0337d7f`) is red where it should be: on linux
 x86-64 the shape steps of both tiers fail on six rows (`pipeline`
 1,713 B a turn, `subshell` 871, `script-pipeline` 1,550,
