@@ -44,10 +44,11 @@ piece says nothing about what lies behind it. With --aided the wrapper
 first rewrites the script (the same rewritten copy for both shells, by
 the sed program AIDED below) so that the gaps the first pass counted
 most go around the shell: `test -x` and its kin run the image's
-/usr/bin/test, `umask` is skipped, `trap … 13` names PIPE, and the
-three `case` arms autoconf writes with a `/` inside a bracket
-expression are spelled without one. The verdicts of that pass say what
-is left once those are fixed; they are never reported as pelt's.
+/usr/bin/test, `trap … 13` names PIPE, and the three `case` arms
+autoconf writes with a `/` inside a bracket expression are spelled
+without one. The verdicts of that pass say what is left once those are
+fixed; they are never reported as pelt's. (`umask` was skipped too
+until pelt had the built-in, sh13.)
 
 usage: tools/script-census --dir SCRATCH --pelt STATIC_PELT [options] [id …]
   --dir D        scratch and cache (downloads, extracted trees, logs);
@@ -441,8 +442,6 @@ SET = [
 AIDED = r"""
 s#(^|[^/[:alnum:]_.-])test (! )?-([xwrLh]) #\1/usr/bin/test \2-\3 #g
 s#(^|[^[:alnum:]_/"'.[-])\[ (! )?-([xwrLh]) #\1/usr/bin/[ \2-\3 #g
-s#^([[:space:]]*)umask #\1: umask #
-s#\(umask #(: umask #g
 /^[[:space:]]*trap /s# 13( |$)# PIPE\1#
 s#for ac_signal in 1 2 13 15#for ac_signal in 1 2 PIPE 15#
 s#^([[:space:]]*)\[\\\\/\$\]\* \| \?:\[\\\\/\]\* ?\)#\1/* | \\\\* | '$'* | ?:/* | ?:\\\\* )#
