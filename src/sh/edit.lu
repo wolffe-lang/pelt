@@ -50,10 +50,14 @@
 //! prompt starts in, and the width), 0.3 s at most; a terminal that never
 //! answers is not asked again, and the width is 80.
 //!
-//! **History** is the seam sh12 needs, no more: the lines accepted, in
-//! memory (`HISTSIZE`, 128 when unset), walked by Up and Down and by
-//! vi's `k j - + G / ? n N`. Editing a recalled line makes it the edit
-//! line (XCU `sh`, vi-mode).
+//! **History** is `sh.hist`'s list (the file, numbers and `fc` live
+//! there): walked by Up and Down and by vi's `k j - + G / ? n N`, and
+//! searched by Ctrl-R in emacs mode (`isearch`: a plain substring, the
+//! newest match first, shown as pelt's own `(search 'pat') ` before the
+//! matched line). vi `G` with a count goes to that history number, and
+//! `[number]v` ends the line for `sh.hist`'s `hist_visual` (vi on the
+//! line through `fc`'s editing path). Editing a recalled line makes it
+//! the edit line in vi mode (XCU `sh`, vi-mode).
 
 // ------------------------------------------------------------ constants
 
@@ -63,6 +67,9 @@ const ED_OK: int = 0
 const ED_EOF: int = 2
 
 const ED_INTR: int = 3
+
+/// vi `v`: the line goes to vi through `fc` (`hist_visual`).
+const ED_VISUAL: int = 4
 
 /// Keys that are not characters. A character key is its code point; a
 /// byte that is not UTF-8 is `K_RAW + b`; Alt (ESC first) is `K_ALT + c`.
@@ -115,17 +122,19 @@ struct EdMem {
     find_c: int,
     pat: str,
     pat_dir: int,
+    /// The last Ctrl-R pattern (Ctrl-R on an empty one searches it again).
+    rpat: List[int],
 }
 
-/// The editor's part of the shell state: the history ring, what a line
-/// leaves behind, and what is known of the terminal.
+/// The editor's part of the shell state: the history (`sh.hist`), what
+/// a line leaves behind, and what is known of the terminal.
 struct EdKeep {
-    hist: List[str],
-    hist_head: int,
-    hist_n: int,
+    h: Hist,
     mem: EdMem,
     /// 0 never asked, 1 answers the cursor-position report, -1 never did.
     cpr: int,
+    /// The count before vi's `v` when a line ended with it (0: none).
+    vnum: int,
 }
 
 fn new_edmem() -> EdMem {
@@ -137,68 +146,16 @@ fn new_edmem() -> EdMem {
         find_c: 0,
         pat: "",
         pat_dir: 0,
+        rpat: List[int](),
     }
 }
 
 fn new_edkeep() -> EdKeep {
     EdKeep {
-        hist: List[str](),
-        hist_head: 0,
-        hist_n: 0,
+        h: new_hist(),
         mem: new_edmem(),
         cpr: 0,
-    }
-}
-
-/// The history size: `HISTSIZE` when it is a positive number (at most
-/// 32767), else 128 (XCU `sh` asks for at least 128).
-fn hist_cap(sh: Sh) -> int {
-    let v = sh.vals["HISTSIZE"] else ""
-    if v.len > 0 && is_digits(v) && v.len < 6 {
-        let n = to_int(v) else 128
-        if n > 0 {
-            return if n > 32767 then 32767 else n
-        }
-    }
-    128
-}
-
-/// History entry `i`, 0 the oldest.
-fn hist_at(k: EdKeep, i: int) -> str {
-    k.hist[(k.hist_head + i) % k.hist.len]
-}
-
-/// Keep a line accepted at the prompt (its newline already gone).
-fn hist_add(mut sh: Sh, line: str) {
-    if line.len == 0 {
-        return
-    }
-    let cap = hist_cap(sh)
-    if sh.ed.hist.len != cap {
-        // a new size: the newest `cap` lines are kept, in order
-        var keep = List[str]()
-        var i = 0
-        let n = sh.ed.hist_n
-        let from = if n > cap then n - cap else 0
-        while i < n {
-            if i >= from {
-                (mut keep).push(hist_at(sh.ed, i))
-            }
-            i += 1
-        }
-        while keep.len < cap {
-            (mut keep).push("")
-        }
-        sh.ed.hist = keep
-        sh.ed.hist_head = 0
-        sh.ed.hist_n = if n > cap then cap else n
-    }
-    if sh.ed.hist_n < cap {
-        sh.ed.hist[(sh.ed.hist_head + sh.ed.hist_n) % cap] = line
-        sh.ed.hist_n += 1
-    } else {
-        sh.ed.hist[sh.ed.hist_head] = line
-        sh.ed.hist_head = (sh.ed.hist_head + 1) % cap
+        vnum: 0,
     }
 }
 
@@ -288,9 +245,10 @@ fn txt_ints(t: str) -> List[int] {
 }
 
 /// What outlives a line as one `str`: the kill and `.`'s keys, then the
-/// numbers, then the search pattern (last: it may hold anything).
+/// numbers, Ctrl-R's pattern, then vi's search pattern (last: it may
+/// hold anything).
 fn mem_txt(m: EdMem) -> str {
-    "{ints_txt(m.kill)};{ints_txt(m.dot)};{m.dot_count};{m.find_kind};{m.find_c};{m.pat_dir};{m.pat}"
+    "{ints_txt(m.kill)};{ints_txt(m.dot)};{m.dot_count};{m.find_kind};{m.find_c};{m.pat_dir};{ints_txt(m.rpat)};{m.pat}"
 }
 
 fn txt_mem(t: str) -> EdMem {
@@ -298,14 +256,14 @@ fn txt_mem(t: str) -> EdMem {
     var parts = List[str]()
     var from = 0
     var i = 0
-    while i < t.len && parts.len < 6 {
+    while i < t.len && parts.len < 7 {
         if byte_at(t, i) == 59 {
             (mut parts).push(t[from..i])
             from = i + 1
         }
         i += 1
     }
-    if parts.len < 6 {
+    if parts.len < 7 {
         return m
     }
     m.kill = txt_ints(parts[0])
@@ -314,6 +272,7 @@ fn txt_mem(t: str) -> EdMem {
     m.find_kind = to_int(parts[3]) else 0
     m.find_c = to_int(parts[4]) else 0
     m.pat_dir = txt_num(parts[5])
+    m.rpat = txt_ints(parts[6])
     m.pat = t[from..t.len]
     m
 }
@@ -485,6 +444,8 @@ struct Ed {
     mem: EdMem,
     mem_set: bool,
     hist: List[str],
+    /// The number of `hist[0]` (vi `G` with a count).
+    hnum0: int,
     /// The history line shown (`hist.len` is the edit line), and each
     /// line as it was left when another was shown.
     h: int,
@@ -501,6 +462,8 @@ struct Ed {
     recording: bool,
     cmd_count: int,
     prev_line: str,
+    /// vi `v`'s count.
+    vnum: int,
 }
 
 /// What a line hands back (`copy region`'s value).
@@ -511,6 +474,8 @@ struct EdOut {
     /// ("" when not: nothing to copy out of the line's region).
     mem: str,
     mem_set: bool,
+    /// vi `v`'s count when the line ended with it.
+    num: int,
 }
 
 /// Edit one line at the terminal. `shown` is the prompt as written,
@@ -518,12 +483,12 @@ struct EdOut {
 /// how it ended (`ED_OK`, `ED_EOF`, `ED_INTR`).
 fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
     let old = os_term_mode(0) else |_| {
-        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false }
+        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     var hist = List[str]()
     var i = 0
-    while i < sh.ed.hist_n {
-        (mut hist).push(hist_at(sh.ed, i))
+    while i < sh.ed.h.n {
+        (mut hist).push(hist_at(sh.ed.h, i))
         i += 1
     }
     let prev = if hist.len > 0 then hist[hist.len - 1] else ""
@@ -555,6 +520,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         mem: copy sh.ed.mem,
         mem_set: false,
         hist: hist,
+        hnum0: hist_num(sh.ed.h, 0),
         h: 0,
         mods: List[List[int]](),
         modded: List[bool](),
@@ -567,6 +533,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         recording: false,
         cmd_count: 0,
         prev_line: prev,
+        vnum: 0,
     }
     e.h = e.hist.len
     var k = 0
@@ -587,7 +554,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         if e.poll_hup {
             os_signal_default(M_HUP) else |_| {}
         }
-        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false }
+        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     start_line(mut e)
     flush_out(mut e)
@@ -603,13 +570,13 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         os_signal_default(M_HUP) else |_| {}
         os_signal_raise(M_HUP) else |_| {}
         settle_hup()
-        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false }
+        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     if e.poll_hup {
         os_signal_default(M_HUP) else |_| {}
     }
     var line = ""
-    if e.done == ED_OK {
+    if e.done == ED_OK || e.done == ED_VISUAL {
         var o = List[byte]()
         encode_into(mut o, e.buf, 0, e.buf.len)
         (mut o).push(10 as byte)
@@ -620,6 +587,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         how: e.done,
         mem: if e.mem_set then mem_txt(e.mem) else "",
         mem_set: e.mem_set,
+        num: e.vnum,
     }
 }
 
@@ -1424,7 +1392,7 @@ fn finish(mut e: Ed, how: int) {
             put_s(mut e, "^C")
         }
         put_s(mut e, "\r\n")
-    } else if how == ED_OK {
+    } else if how == ED_OK || how == ED_VISUAL {
         let (r, c) = pos_at(e, e.buf.len)
         move_to(mut e, r, c)
         if !(c == 0 && r > e.r0) {
@@ -1586,6 +1554,10 @@ fn emacs_loop(mut e: Ed) {
             }
         } else if k == 12 {
             redraw_all(mut e, true)
+        } else if k == 18 {
+            if isearch(mut e) {
+                return
+            }
         } else if k == K_UP || k == 16 {
             if e.h > 0 {
                 show_hist(mut e, e.h - 1, true)
@@ -1612,6 +1584,185 @@ fn emacs_loop(mut e: Ed) {
             insert(mut e, one)
         }
         // other controls, Ctrl-Z, Ctrl-\ and unknown sequences: nothing
+    }
+}
+
+// ------------------------------------------------------------- Ctrl-R
+
+/// Where `pat` first occurs in history line `h`, or -1.
+fn hist_find(e: Ed, h: int, pat: List[int]) -> int {
+    let cps = cps_of(e.hist[h])
+    var i = 0
+    while i + pat.len <= cps.len {
+        var j = 0
+        while j < pat.len && cps[i + j] == pat[j] {
+            j += 1
+        }
+        if j == pat.len {
+            return i
+        }
+        i += 1
+    }
+    -1
+}
+
+/// The newest history line at or before `from` holding `pat`, or -1.
+fn search_back(e: Ed, from: int, pat: List[int]) -> int {
+    var h = if from >= e.hist.len then e.hist.len - 1 else from
+    while h >= 0 {
+        if hist_find(e, h, pat) >= 0 {
+            return h
+        }
+        h -= 1
+    }
+    -1
+}
+
+/// Draw the search: pelt's own `(search 'pat') ` (or `(failed search
+/// 'pat') `) before the line matched, the cursor on the match.
+fn show_search(mut e: Ed, pat: List[int], line: List[int], pos: int, failed: bool) {
+    var nb = cps_of(if failed then "(failed search '" else "(search '")
+    for v in pat {
+        (mut nb).push(v)
+    }
+    for v in cps_of("') ") {
+        (mut nb).push(v)
+    }
+    let at = nb.len
+    for v in line {
+        (mut nb).push(v)
+    }
+    let total = nb.len
+    e.buf = nb
+    e.cur = if pos >= 0 then at + pos else total
+    draw_from(mut e, 0)
+}
+
+/// Ctrl-R (module doc). Answers true when the line has ended.
+fn isearch(mut e: Ed) -> bool {
+    let keep = copy e.buf
+    let keep_cur = e.cur
+    // the search starts at the line before the one shown
+    let start = e.h - 1
+    var pat = List[int]()
+    var at = -1
+    var pos = -1
+    var failed = false
+    var line = copy keep
+    show_search(mut e, pat, line, -1, false)
+    loop {
+        let k = next_key(mut e)
+        var again = false
+        if k == K_HUP || k == K_EOF || k == K_INTR || k == 3 && !e.int_ignored {
+            // the line ends; what is shown is the match
+            leave_search(mut e, keep, keep_cur, at, pos, pat)
+            let _ended = ends_line(mut e, k)
+            return true
+        }
+        if k == 18 {
+            if pat.len == 0 && e.mem.rpat.len > 0 {
+                pat = copy e.mem.rpat
+                again = true
+            } else if pat.len == 0 {
+                bell(mut e)
+                continue
+            } else {
+                let from = if at >= 0 then at - 1 else start
+                let f = search_back(e, from, pat)
+                if f < 0 {
+                    bell(mut e)
+                    failed = true
+                } else {
+                    at = f
+                    failed = false
+                }
+            }
+        } else if k == 7 {
+            // Ctrl-G: the line as it was before Ctrl-R
+            e.buf = keep
+            e.cur = keep_cur
+            draw_from(mut e, 0)
+            remember_rpat(mut e, pat)
+            return false
+        } else if k == 127 || k == 8 {
+            if pat.len == 0 {
+                bell(mut e)
+                continue
+            }
+            pat = slice_of(pat, 0, pat.len - 1)
+            again = true
+        } else if k == 13 || k == 10 {
+            leave_search(mut e, keep, keep_cur, at, pos, pat)
+            finish(mut e, ED_OK)
+            return true
+        } else if is_char_key(k) && k < K_RAW {
+            (mut pat).push(k)
+            // the match may still hold the longer pattern
+            let from = if at >= 0 then at else start
+            let f = search_back(e, from, pat)
+            if f < 0 {
+                bell(mut e)
+                failed = true
+            } else {
+                at = f
+                failed = false
+            }
+        } else {
+            // any other key ends the search and then acts
+            leave_search(mut e, keep, keep_cur, at, pos, pat)
+            var one = List[int]()
+            (mut one).push(k)
+            e.inj = one
+            e.ii = 0
+            return false
+        }
+        if again {
+            if pat.len == 0 {
+                at = -1
+                failed = false
+            } else {
+                let f = search_back(e, start, pat)
+                at = f
+                failed = f < 0
+                if failed {
+                    bell(mut e)
+                }
+            }
+        }
+        pos = -1
+        if at >= 0 && !failed {
+            pos = hist_find(e, at, pat)
+            line = cps_of(e.hist[at])
+        } else if at < 0 {
+            line = copy keep
+        }
+        show_search(mut e, pat, line, if failed then -1 else pos, failed)
+    }
+    false
+}
+
+fn remember_rpat(mut e: Ed, pat: List[int]) {
+    if pat.len > 0 {
+        e.mem.rpat = copy pat
+        e.mem_set = true
+    }
+}
+
+/// End the search: the line matched becomes the line shown (as Up would
+/// leave it), the cursor on the match; no match leaves the line as it
+/// was.
+fn leave_search(mut e: Ed, keep: List[int], keep_cur: int, at: int, pos: int, pat: List[int]) {
+    remember_rpat(mut e, pat)
+    e.buf = copy keep
+    e.cur = keep_cur
+    if at < 0 {
+        draw_from(mut e, 0)
+        return
+    }
+    show_hist(mut e, at, false)
+    if pos >= 0 {
+        e.cur = pos
+        place(mut e)
     }
 }
 
@@ -1917,8 +2068,10 @@ fn vi_command(mut e: Ed, k: int, count: int) {
         return
     }
     if c == 118 {
-        // `v` needs `fc` and history numbers (sh12)
-        alert(mut e)
+        // `[number]v`: the line (or command `number`) goes to vi through
+        // `fc`'s editing path once the terminal is the user's again
+        e.vnum = count
+        finish(mut e, ED_VISUAL)
         return
     }
     if c == 126 {
@@ -2487,8 +2640,9 @@ fn vi_history(mut e: Ed, c: int, count: int) {
             alert(mut e)
             return
         }
-        h = if count > 0 then count - 1 else 0
-        if h >= e.hist.len {
+        // `G` with a count goes to that history number (XCU `sh`)
+        h = if count > 0 then count - e.hnum0 else 0
+        if h < 0 || h >= e.hist.len {
             alert(mut e)
             return
         }
