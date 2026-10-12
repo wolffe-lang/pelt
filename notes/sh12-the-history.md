@@ -299,3 +299,69 @@ KB at 0 → 20,000 commands, release:
 | the same with a `HISTFILE` | 0.017 / 0.066 ms | 0.024 / 0.091 ms |
 | start to the first prompt, empty file / 32,767 entries | 1.0 / 5.1 ms (+4.1) | 1.1 / 7.7 ms (+6.6) |
 | Ctrl-R, a key no line holds, over 32,767 entries: median / p99 | 5.54 / 5.71 ms | 9.49 / 10.05 ms |
+
+### 4.5 CI and the planted reds
+
+Filled in below as the runs finish (§4.6).
+
+## 5. Prediction against result
+
+| predicted (`3a890b4`) | measured | |
+|---|---|---|
+| entries are complete commands; blank and Ctrl-C'd lines not entered | as predicted (`hist-witness` write: the `for` loop is one line of the file) | hit |
+| `fc` per §3.2: format, defaults, clamping, `-s`, `-e`, `FCEDIT`, not-found | every bash-recorded `fc` case passes | hit |
+| `first` newer than `last` lists in reverse, `-r` reverses again | as predicted; **bash does not cancel** (`fc -lr -1 -2`) and lists only the `fc` line for `-0` alone, so those two steps left the bash-recorded cases and are table checks pinned to POSIX and dash (probe d09) | hit; bash's two quirks found, not predicted |
+| six cases move to pass, pending 20 | the six pass; pending **20** | hit |
+| ~20 new sessions from bash | **20** new (`c_hist_*` 12, `c_ed_search_*` 5, `c_vi_v_*` 2, `c_ps1_bang_number`) + the corpus case `param/c_ps_from_env` | hit |
+| sessions 171 + 6 + new / 0 / 20 | **197 / 0 / 20 (4)** on both tiers and under `taskset` | hit |
+| corpus unchanged but `fc/c_noninteractive` | **837 / 0 / 98 (8)**: that case, and the new `param/c_ps_from_env` | hit, plus one case not predicted |
+| clause table: `fc/1`–`fc/4`, `sh/18`, `sh/37`, `2.5.3/10` met | those seven and the new `fc/5`: **439 of 545** (trunk 431 of 544) | hit |
+| `PS1` from the environment | not predicted: pelt overwrote `PS1`, `PS2`, `PS4` from the environment (dash imports them), so `c_ps1_bang`'s `env=PS1=!!>` could not pass; fixed (`78e1ec1`) | **miss** (found) |
+| `c_ps1_bang` passes as recorded | bash writes `exit` to standard error at `exit`, dash and pelt do not, and the case judged standard error: it ends with `exec true` now | **miss** (case changed) |
+| memory: ±16 B a command with no file | −0.6 B | hit |
+| memory: ≤ 64 B a command more with a file | +1.8 B | hit |
+| Enter to prompt with a file ≤ +0.15 ms | +0.005 ms release, +0.005 ms native (medians) | hit |
+| Ctrl-R over 32,767 entries < 10 ms median (release) | 5.54 ms release (native 9.49 ms) | hit |
+| start with 32,767 entries < 60 ms more | +4.1 ms release, +6.6 ms native | hit |
+| planted reds in CI | §4.6 | — |
+
+Not in the prediction, found: a key typed before the editor has set
+its mode (just after the prompt is written) is the line discipline's,
+and Ctrl-R there is the terminal's REPRINT (the bench met it; a person
+cannot type that fast, but type-ahead during a command is always the
+line discipline's); dash 0.5.13.4 has `fc` when interactive (sh06
+recorded it as having no editing; its history is libedit's).
+
+## 6. Not verified
+
+- Any real terminal emulator by a person: Ctrl-R's screen is the
+  harness's `Screen`, and its expected rows are pelt's own design
+  written by hand (`c_ed_search_screen`, `screen_by=hand`).
+- Two shells appending in the same instant: the path that passes over
+  this shell's own entries when another shell's append landed between
+  the write and the size check (`own`) is never forced by the witness.
+- A file replaced under a running shell by another shell's cut: the
+  running shell adopts the new end and does not re-read it (read from
+  the code, not run).
+- `exec cmd` typed at the prompt, or a death by signal: the entry is
+  written before the next prompt or at the end, so these lose that one
+  entry (read from the code, not run).
+- An in-process subshell running `fc` (`( fc -s )`) changes the
+  shell's own history: the history is not part of the subshell's
+  snapshot (read from the code).
+- `ed` as the default editor and a real `vi`: neither is installed on
+  kasumi; every case uses a stand-in on `PATH`.
+- A history file on a network file system (`O_APPEND` across hosts).
+- macOS outside CI: no pelt ran on nomad-1 (no build there); macOS is
+  CI's sessions, corpus and `hist-witness`.
+- linux aarch64: no tier builds (wolf-lang#614).
+- Numbers past 32,767 (they never wrap; not run that far).
+
+## 7. Done-when
+
+- Branch `sh12` in pelt, PR #24 open and unmerged, the five sections
+  above by name, commit shas as bullets, a test checklist.
+- CI green at the head (§4.6), the planted reds red (§4.6).
+- `wolf/tools/lane-audit.sh pelt sh12 24` run from the org directory,
+  its exit status read directly (the report).
+- No issue filed or closed; none needed: nothing wolf lacked here.
