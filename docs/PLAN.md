@@ -36,7 +36,10 @@ filed.
   10 times on the native tier.
 - **Memory.** A loop of simple commands stays flat. But each pipeline,
   command substitution or function call keeps 1 to 10 KB that is never
-  freed. A script of 20,000 pipelines peaks at 258 MB.
+  freed. A script of 20,000 pipelines peaks at 258 MB. **Since sh08
+  (S2) every shape is flat**: pipelines, substitutions, subshells,
+  calls, `case`, `for`, long scripts and typed lines keep under 0.2 KB
+  a turn, and the 20,000-line script peaks at about 3.5 MB.
 
 ## The gaps, ranked by what they break
 
@@ -48,7 +51,7 @@ counts the 80 in `tools/script-census`.
 |---|---|---|---|
 | 1 | **done in sh07**: `test -r/-w/-x/-L/-h/-ef` answer wrongly | 14 scripts (libtool, git's tests, debconf and so four Debian postinsts, init scripts, `service`, `which`) | pelt; exact access as the caller wants a wolf call (to be filed: W07) |
 | 2 | `umask` missing | 9 scripts (install-sh, config.guess, every configure through it) | wolf-lang s230 (`os_umask`, merged for the release after 0.2.27), then pelt |
-| 3 | memory kept per pipeline, substitution, function call and script line | any long script or session; not a script failure in the census, which runs each script once | pelt |
+| 3 | **done in sh08**: memory kept per pipeline, substitution, function call and script line | any long script or session; not a script failure in the census, which runs each script once | pelt |
 | 4 | **done in sh07** (recorded; catching it is #679): `trap ACTION 13` (a signal number with no wolf meaning) refused | 7 scripts | pelt records it; catching it is #679 |
 | 5 | **done in sh07**: a bracket expression holding `/` never matches outside file names | 4 scripts, the first wall of every autoconf configure | pelt |
 | 6 | **done in sh07**: unquoted `$*` in an assignment joins with nothing: **a silent wrong answer** (`host_os=linuxgnu`) | 3 scripts | pelt |
@@ -83,7 +86,10 @@ needs the least from upstream.
   at most 76 of 80 can run as under dash, the last 3 being gap 7 (`notes/sh07-the-script-walls.md`).
 - **S2, memory:** gap 3. Done when `tools/loop-rss` also holds flat a
   loop of `true | true`, `x=$(true)`, a function call and a 20,000-line
-  script.
+  script. **Landed in sh08**: `tools/shape-rss` holds 22 shapes flat
+  (loops, scripts, typed lines) on both tiers in CI; what a turn still
+  keeps is a superseded variable value and the editor's history line
+  (`notes/sh08-the-memory.md`).
 - **S3, the small built-ins and corners:** gap 15, `type`, `hash` (it
   also removes the per-command `PATH` search), aliases (gap 9) and
   `$'…'` (gap 12). Done when those cases leave `PENDING.md`.
