@@ -1,0 +1,41 @@
+/home/mfwolffe/lanes/sh11/pelt/tools/lib_session.py:29: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  and `\s` in a value is a space
+clause-census: part                               stmts  met pend  gap untest  share
+clause-census: 2.1 Introduction                       2    1    0    0      1  100%
+clause-census: 2.2 Quoting                           19   11    8    0      0  58%
+clause-census: 2.3 Token recognition and aliases     18    8   10    0      0  44%
+clause-census: 2.4 Reserved words                     3    3    0    0      0  100%
+clause-census: 2.5 Parameters and variables          34   27    6    0      1  82%
+clause-census: 2.6 Word expansions                   67   66    1    0      0  99%
+clause-census: 2.7 Redirection                       27   27    0    0      0  100%
+clause-census: 2.8 Exit status and errors            17   15    1    0      1  94%
+clause-census: 2.9 Shell commands                    68   64    4    0      0  94%
+clause-census: 2.10 Grammar                          15   15    0    0      0  100%
+clause-census: 2.11 Job control                      15    3   10    2      0  20%
+clause-census: 2.12 Signals                           5    3    2    0      0  60%
+clause-census: 2.13 Execution environment            12    8    4    0      0  67%
+clause-census: 2.14 Pattern matching                 17   17    0    0      0  100%
+clause-census: 2.15 Special built-ins                88   76   12    0      0  86%
+clause-census: `sh` (utility page)                   38   26   10    0      2  72%
+clause-census: `alias` (utility page)                 6    0    6    0      0  0%
+clause-census: `command` (utility page)               7    5    2    0      0  71%
+clause-census: `type` (utility page)                  2    0    2    0      0  0%
+clause-census: `hash` (utility page)                  2    1    1    0      0  50%
+clause-census: `cd` (utility page)                    8    7    1    0      0  88%
+clause-census: `pwd` (utility page)                   2    1    1    0      0  50%
+clause-census: `echo` (utility page)                  1    1    0    0      0  100%
+clause-census: `true` (utility page)                  1    1    0    0      0  100%
+clause-census: `test` (utility page)                 15   13    2    0      0  87%
+clause-census: `printf` (utility page)                9    6    3    0      0  67%
+clause-census: `read` (utility page)                  8    5    3    0      0  62%
+clause-census: `getopts` (utility page)               7    7    0    0      0  100%
+clause-census: `wait` (utility page)                  7    5    2    0      0  71%
+clause-census: `kill` (utility page)                  6    2    4    0      0  33%
+clause-census: `umask` (utility page)                 4    0    4    0      0  0%
+clause-census: `ulimit` (utility page)                4    0    4    0      0  0%
+clause-census: `fc` (utility page)                    4    0    4    0      0  0%
+clause-census: `jobs` (utility page)                  3    0    3    0      0  0%
+clause-census: `fg` (utility page)                    2    0    2    0      0  0%
+clause-census: `bg` (utility page)                    1    0    1    0      0  0%
+clause-census: total                                544  424  113    2      5  78.7%
+clause-census: not counted (kind X): 27; statements with a passing case older than the census: 289

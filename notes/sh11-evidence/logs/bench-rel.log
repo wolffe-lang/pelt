@@ -1,0 +1,5 @@
+edit-bench: /home/mfwolffe/lanes/sh11/pelt/target/release/pelt
+latency at the end of the line, 2000 keys: median 0.015 ms, p99 0.073 ms, bytes per key median 1.0
+latency at the start of an 2000-character line: median 0.044 ms, p99 0.149 ms, bytes per key median 2008.0
+Enter to the next prompt, 500 lines: median 0.060 ms with the editor, 0.101 ms without
+idle at the prompt for 30 s: 0.00 s of CPU (0.0 s an hour)

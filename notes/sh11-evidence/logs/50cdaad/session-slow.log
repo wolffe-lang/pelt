@@ -1,0 +1,196 @@
+session: pelt = /home/mfwolffe/lanes/sh11/pelt/target/release/pelt
+ok   c_ed_alt_word
+ok   c_ed_backspace_delete
+ok   c_ed_combining
+PEND-fail c_ed_complete_command (waits on line editor)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k unam\\t -s >/dev/null && echo completed\\r"
+     ! pelt err yes
+       dash out "completed\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 127 at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+PEND-fail c_ed_complete_file (waits on line editor)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "touch unique_file_name"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\\k echo uniq\\t\\r"
+     ! pelt out "uniq\n"
+       dash out "unique_file_name\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 4
+     (c_ed_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c
+     (c_ed_ctrl_c_continued: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_continued
+     (c_ed_ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_ignored
+     (c_ed_ctrl_c_trap: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_trap
+ok   c_ed_ctrl_k_y
+ok   c_ed_ctrl_l
+ok   c_ed_ctrl_u_y
+ok   c_ed_ctrl_v
+ok   c_ed_ctrl_w
+PEND-ok   c_ed_delete_char (waits on line editor)
+ok   c_ed_history_screen
+PEND-ok   c_ed_home_end (waits on line editor)
+ok   c_ed_home_end_keys
+ok   c_ed_insert_mid
+ok   c_ed_keys_abf
+PEND-ok   c_ed_kill_to_end (waits on line editor)
+PEND-ok   c_ed_left_insert (waits on line editor)
+     (c_ed_mode_after_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_mode_after_ctrl_c
+ok   c_ed_mode_command
+ok   c_ed_mode_exec
+PEND-fail c_ed_search (waits on line editor)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "echo findme"
+       pelt out "findme\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo other"
+       pelt out "other\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "\\k \\x12find\\r"
+     ! pelt out ".\n"
+       dash out "findme\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 5 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 5
+ok   c_ed_tab_literal
+PEND-ok   c_ed_up_arrow (waits on line editor)
+PEND-ok   c_ed_up_down_edit (waits on line editor)
+PEND-ok   c_ed_utf8_erase (waits on line editor)
+PEND-ok   c_ed_utf8_left (waits on line editor)
+ok   c_ed_wide_insert
+ok   c_ed_wide_wrap
+ok   c_ed_wide_wrap_edit
+PEND-ok   c_ed_word_motion (waits on line editor)
+ok   c_ed_wrap_erase
+ok   c_ed_wrap_exact
+ok   c_ed_wrap_insert
+PEND-ok   c_long_line (waits on line editor)
+ok   c_vi_D_C
+ok   c_vi_E_e
+ok   c_vi_R
+ok   c_vi_S
+ok   c_vi_X
+ok   c_vi_arrows_insert
+ok   c_vi_at_letter
+ok   c_vi_back_find
+ok   c_vi_backslash
+ok   c_vi_bar
+PEND-ok   c_vi_basic (waits on vi mode)
+ok   c_vi_bigword
+ok   c_vi_caret
+ok   c_vi_count_x
+     (c_vi_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_vi_ctrl_c
+ok   c_vi_cw
+ok   c_vi_dd_cc
+ok   c_vi_dollar_append
+ok   c_vi_dot
+ok   c_vi_dot_count
+ok   c_vi_dw
+ok   c_vi_emacs_switch
+ok   c_vi_eof
+ok   c_vi_find
+ok   c_vi_hash
+PEND-ok   c_vi_history (waits on vi mode)
+ok   c_vi_history_G
+ok   c_vi_history_jk
+ok   c_vi_insert
+ok   c_vi_insert_ctrl_v
+ok   c_vi_insert_ctrl_w
+ok   c_vi_insert_erase
+ok   c_vi_insert_kill
+ok   c_vi_insert_start
+PEND-ok   c_vi_motion (waits on vi mode)
+ok   c_vi_motions
+ok   c_vi_replace_char
+ok   c_vi_search
+ok   c_vi_search_anchor
+ok   c_vi_search_n
+ok   c_vi_star
+ok   c_vi_tilde
+ok   c_vi_till
+ok   c_vi_underscore
+ok   c_vi_undo
+ok   c_vi_undo_all
+PEND-fail c_vi_v (waits on history)
+       pelt step 0
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt "\u001b[?2004h$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt "$ "
+       dash prompt "\u001b[?2004l\r\u001b[?2004h$ "
+       pelt step 2 "set -o vi"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt "$ "
+       dash prompt "\u001b[?2004l\r\u001b[?2004h$ "
+       pelt step 3 "\\k echo abc\\ev"
+     ! pelt err no
+       dash out "xyz\n"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 4 "exit"
+       dash prompt "\u001b[?2004h$ "
+     ! pelt out "atb\n"
+       dash step 4 "exit"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt "$ "
+       dash prompt ""
+     ! pelt alive at step 4
+       dash exit 0 at step 4
+ok   c_vi_yank_put
+session: pass 70  fail 0  pending 17 (13)

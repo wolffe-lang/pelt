@@ -1,0 +1,6 @@
+ok   editing: modes before 0xb, while editing 0x0
+ok   hup: status -1, modes after 0xb (before 0xb)
+ok   term: alive after TERM True, output b'part\n', status 0, modes restored True
+ok   int: new prompt True, output b'st=130\n', status 0, modes restored True
+ok   hangup: status 0
+ok   kill: status -9, modes restored False (nothing can restore them)

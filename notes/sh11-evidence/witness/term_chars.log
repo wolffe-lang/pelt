@@ -1,0 +1,5 @@
+pty at start: IXON True, IEXTEN True, VINTR b'\x03'
+   'ready'
+   "mode before 263, in raw 65536, read back after the driver's changes 65536"
+   'bytes that arrived: 97 22 98 15 99'
+typed: 19 (Ctrl-S) 97 22 (Ctrl-V) 98 15 (Ctrl-O) 99, then 17 (Ctrl-Q)

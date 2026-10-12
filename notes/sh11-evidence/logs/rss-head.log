@@ -1,0 +1,5 @@
+release : commands 0 rss_kb 3124 commands 20000 rss_kb 10108
+release +o emacs: commands 0 rss_kb 3120 commands 20000 rss_kb 9136
+native : commands 0 rss_kb 3840 commands 20000 rss_kb 11024
+native +o emacs: commands 0 rss_kb 3604 commands 20000 rss_kb 9828
+trunk: commands 0 rss_kb 3044 commands 20000 rss_kb 9016

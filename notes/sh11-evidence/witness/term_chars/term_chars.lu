@@ -1,0 +1,39 @@
+//! witness (sh11): what a line editor cannot see or change of the
+//! terminal through `[os.term.mode]`.
+//!
+//! The program reads the mode, puts the terminal in the mode pelt's
+//! editor uses (CANONICAL, ECHO and SIGNALS off, VMIN 0, VTIME 1), says
+//! `ready`, and for two seconds collects every byte that arrives. The
+//! driver meanwhile changes the interrupt character to Ctrl-X and turns
+//! IXON off and on through the other side, and types Ctrl-S, `a`,
+//! Ctrl-V, `b`, Ctrl-O and `c`. The mode is read again: the same int,
+//! whatever the driver changed, because the int has no field for the
+//! special characters or the other flags; and the bytes the line
+//! discipline kept for itself never arrive.
+
+fn main() -> int {
+    let old = os_term_mode(0) else |_| -1
+    if old < 0 {
+        print("term_chars: standard input is not a terminal")
+        return 2
+    }
+    let raw = old & 248 | 1 << 16
+    os_term_set_mode(0, raw) else |_| {
+        print("term_chars: cannot set the mode")
+        return 2
+    }
+    print("ready")
+    var seen = ""
+    let start = time_now_ms()
+    while time_now_ms() - start < 2000 {
+        let c = fs_read_chunk(0, 1) else |_| List[byte]()
+        if c.len > 0 {
+            seen += " {c[0] as int}"
+        }
+    }
+    let during = os_term_mode(0) else |_| -1
+    os_term_set_mode(0, old) else |_| {}
+    print("mode before {old}, in raw {raw}, read back after the driver's changes {during}")
+    print("bytes that arrived:{seen}")
+    0
+}
