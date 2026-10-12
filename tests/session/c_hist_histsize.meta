@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU sh HISTSIZE: the number of previous commands that are accessible (bash and pelt read it at once)

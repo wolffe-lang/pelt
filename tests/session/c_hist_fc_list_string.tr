@@ -1,0 +1,31 @@
+step 0
+err no
+prompt "$ "
+step 1 "echo apple"
+out "apple\n"
+err yes
+prompt "$ "
+step 2 "printf 'x\\n'"
+out "x\n"
+err yes
+prompt "$ "
+step 3 "echo banana"
+out "banana\n"
+err yes
+prompt "$ "
+step 4 "fc -l ec"
+out "3\techo banana\n"
+err yes
+prompt "$ "
+step 5 "fc -l pri ec"
+out "2\tprintf 'x\\n'\n3\techo banana\n"
+err yes
+prompt "$ "
+step 6 "fc -ln echo"
+out "\techo banana\n\tfc -l ec\n\tfc -l pri ec\n"
+err yes
+prompt "$ "
+step 7 "exit"
+err yes
+prompt ""
+exit 0 at step 7

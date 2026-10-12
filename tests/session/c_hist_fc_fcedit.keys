@@ -1,0 +1,5 @@
+FCEDIT=true
+echo one
+fc
+fc -l
+exit

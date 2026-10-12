@@ -1,0 +1,6 @@
+echo a
+HISTSIZE=3
+echo b
+echo c
+fc -l
+exit

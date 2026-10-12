@@ -1,0 +1,5 @@
+echo one
+fc -e false
+echo "st=$?"
+fc -l
+exit

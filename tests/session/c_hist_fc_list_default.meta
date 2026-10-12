@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU fc: with no operands -l lists the previous 16 commands; the fc line itself is entered but is not previous

@@ -1,0 +1,5 @@
+echo apple
+echo banana
+fc -s banana=cherry ec
+fc -s echo
+exit

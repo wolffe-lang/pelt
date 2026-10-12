@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU fc: -s re-executes the previous command; the fc is not entered and the command is

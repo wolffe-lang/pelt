@@ -1,0 +1,5 @@
+echo one
+echo two
+fc -e true 1 2
+fc -l
+exit

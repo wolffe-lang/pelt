@@ -1,0 +1,4 @@
+echo one
+fc -s
+fc -l
+exit

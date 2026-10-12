@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=agree
+why=XCU fc: -s with old=new and a string operand

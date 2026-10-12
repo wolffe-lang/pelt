@@ -1,0 +1,7 @@
+echo apple
+printf 'x\n'
+echo banana
+fc -l ec
+fc -l pri ec
+fc -ln echo
+exit

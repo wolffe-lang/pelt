@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU fc: no command matching a string operand is an error (>0); the shell goes on

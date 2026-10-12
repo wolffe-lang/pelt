@@ -1,0 +1,23 @@
+step 0
+err no
+prompt "$ "
+step 1 "echo apple"
+out "apple\n"
+err yes
+prompt "$ "
+step 2 "echo banana"
+out "banana\n"
+err yes
+prompt "$ "
+step 3 "fc -s banana=cherry ec"
+out "cherry\n"
+err yes
+prompt "$ "
+step 4 "fc -s echo"
+out "cherry\n"
+err yes
+prompt "$ "
+step 5 "exit"
+err yes
+prompt ""
+exit 0 at step 5

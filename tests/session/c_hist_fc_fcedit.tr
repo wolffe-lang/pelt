@@ -1,0 +1,22 @@
+step 0
+err no
+prompt "$ "
+step 1 "FCEDIT=true"
+err yes
+prompt "$ "
+step 2 "echo one"
+out "one\n"
+err yes
+prompt "$ "
+step 3 "fc"
+out "one\n"
+err yes
+prompt "$ "
+step 4 "fc -l"
+out "1\tFCEDIT=true\n2\techo one\n3\techo one\n"
+err yes
+prompt "$ "
+step 5 "exit"
+err yes
+prompt ""
+exit 0 at step 5

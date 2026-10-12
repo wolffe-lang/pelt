@@ -1,0 +1,26 @@
+step 0
+err no
+prompt "$ "
+step 1 "echo a"
+out "a\n"
+err yes
+prompt "$ "
+step 2 "HISTSIZE=3"
+err yes
+prompt "$ "
+step 3 "echo b"
+out "b\n"
+err yes
+prompt "$ "
+step 4 "echo c"
+out "c\n"
+err yes
+prompt "$ "
+step 5 "fc -l"
+out "3\techo b\n4\techo c\n"
+err yes
+prompt "$ "
+step 6 "exit"
+err yes
+prompt ""
+exit 0 at step 6

@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU fc: values not in the list stand for the oldest or newest; bash and dash both take a first beyond the newest as the oldest; 0 is the previous command (bash). Not here: -0 alone (bash lists only the fc line; dash and pelt the range from it back to the previous command, POSIX: first newer than last is reversed), sh12 probe d09

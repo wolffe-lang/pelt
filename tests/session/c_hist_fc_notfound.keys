@@ -1,0 +1,6 @@
+echo one
+fc -l nosuch
+echo "st=$?"
+fc -s zzz
+echo "st=$?"
+exit

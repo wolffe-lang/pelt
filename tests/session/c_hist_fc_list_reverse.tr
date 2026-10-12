@@ -1,0 +1,35 @@
+step 0
+err no
+prompt "$ "
+step 1 "echo a"
+out "a\n"
+err yes
+prompt "$ "
+step 2 "echo b"
+out "b\n"
+err yes
+prompt "$ "
+step 3 "echo c"
+out "c\n"
+err yes
+prompt "$ "
+step 4 "echo d"
+out "d\n"
+err yes
+prompt "$ "
+step 5 "fc -l 3 1"
+out "3\techo c\n2\techo b\n1\techo a\n"
+err yes
+prompt "$ "
+step 6 "fc -lr 1 3"
+out "3\techo c\n2\techo b\n1\techo a\n"
+err yes
+prompt "$ "
+step 7 "fc -lr -1 -2"
+out "6\tfc -lr 1 3\n5\tfc -l 3 1\n"
+err yes
+prompt "$ "
+step 8 "exit"
+err yes
+prompt ""
+exit 0 at step 8

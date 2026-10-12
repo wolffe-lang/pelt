@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU fc: first newer than last lists in reverse, as -r does; -r reverses. Not here: -r with first newer than last (POSIX: the two cancel, `fc -r 40 30` is `fc 30 40`, as dash does; bash does not), sh12 probe d09
