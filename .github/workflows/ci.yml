@@ -130,6 +130,23 @@ jobs:
         if: ${{ matrix.builds && !cancelled() }}
         run: tools/loop-rss target/release/pelt
 
+      # pelt#19, sh08: and over every other shape a long script or session
+      # repeats — a pipeline, a command substitution, a subshell, a
+      # function call (with `local` and `return`), an arithmetic
+      # assignment, `case` and `for`, a script of 10,000 and 20,000
+      # lines, and lines typed at the prompt — each at 10,000 and 20,000
+      # turns under loop-rss's bound (100 B a turn + 1 MiB). Before sh08
+      # every one of the 22 grew 1.7 to 13.5 KB a turn (tools/shape-rss).
+      - name: memory flat over every shape, native tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 20
+        run: tools/shape-rss target/native/pelt
+
+      - name: memory flat over every shape, release tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 20
+        run: tools/shape-rss target/release/pelt
+
       # sh05: `exec cmd` replaces the shell (`os_exec`). The corpus sees
       # only what a script prints, and a shell that ran the program as
       # a child and then left would print the same; this asks the host:
