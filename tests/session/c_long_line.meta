@@ -2,3 +2,4 @@ env=PS1=$\s
 oracle=bash
 compare=stdout
 dash=differs
+why=macOS's wc pads its count with blanks; tr takes them out (sh11)
