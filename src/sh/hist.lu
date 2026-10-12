@@ -1,0 +1,964 @@
+//! sh.hist — the command history list, its file, `fc`, and `PS1`'s
+//! exclamation mark.
+//!
+//! References consulted: POSIX.1-2024 XCU `fc` (all of it), XCU `sh`
+//! (Command History List; ENVIRONMENT VARIABLES `HISTFILE`, `HISTSIZE`;
+//! vi-mode `v` and `G`), XCU 2.5.3 (`PS1`, exclamation-mark expansion);
+//! wolf's `spec/11-os.md` at v0.2.28 (`[os.fs.open]`,
+//! `[os.fs.create.mode]`, `[os.fs.stat]`); black-box sessions of
+//! `bash --posix -i` 5.3 and `dash -i` 0.5.13.4 as a user sees them
+//! (`notes/sh12-evidence/probe/`). No shell's source.
+//!
+//! **Entries** are complete commands as typed (a command continued over
+//! `PS2` lines is one entry of several lines), entered by an interactive
+//! shell just before the command runs; empty and blank commands are not
+//! entered. Each gets the next number; numbers never wrap. The list
+//! keeps the newest `HISTSIZE` (read at every entry: a positive decimal
+//! up to 32767, else 128).
+//!
+//! **The file** (`HISTFILE`, else `$HOME/.sh_history`) is read once,
+//! right after the `ENV` file has run. One entry a line: a backslash is
+//! written `\\` and a newline inside an entry `\n`; a backslash before
+//! anything else reads as itself, so a file of plain lines reads as
+//! written. A file that is not text (a NUL byte, or not UTF-8), or that
+//! cannot be read or created, is left alone and the history is kept in
+//! memory only (POSIX's "unspecified mechanism"), with nothing said.
+//! An entry is appended (one write, so shells sharing the file do not
+//! interleave) before the next prompt or when the shell ends: by then a
+//! `fc` that edits has taken its own line back out, which POSIX says is
+//! never entered. Before each prompt the bytes another shell appended
+//! are read and entered too, so a command typed in one shell is in the
+//! other's list at its next prompt; when the file holds twice `HISTSIZE`
+//! entries (or more than `HISTSIZE` when it is first read) the newest
+//! `HISTSIZE` are written to a new file that is renamed over it.
+//!
+//! **`fc`** sees the line it was typed on as the newest entry: `-1` is
+//! the command before it, `-0` the `fc` itself, `0` the previous
+//! command (bash), `[+]n` command `n`, and a string the newest command
+//! before it that starts with the string. A `first` beyond either end
+//! of the list is the oldest (bash and dash, measured); a `last` beyond
+//! the newest is the previous command, before the oldest the oldest.
+
+/// The history list and what is known of its file.
+struct Hist {
+    /// The newest entries: a ring of `n` from `head`.
+    ring: List[str],
+    head: int,
+    n: int,
+    /// The number the next entry gets.
+    next: int,
+    /// The newest entry is the command being run.
+    cur: bool,
+    /// 0 not initialised yet, 1 a file, 2 memory only.
+    state: int,
+    path: str,
+    /// The file as last read: its size, its entries, and whether its
+    /// last byte is not a newline (an append starts with one).
+    size: int,
+    fcount: int,
+    need_nl: bool,
+    /// Entries not written yet; entries written while another shell
+    /// also wrote, to be passed over when the file is read again.
+    unsaved: List[str],
+    own: List[str],
+    /// How deep `fc` re-executions are nested.
+    depth: int,
+}
+
+fn new_hist() -> Hist {
+    Hist {
+        ring: List[str](),
+        head: 0,
+        n: 0,
+        next: 1,
+        cur: false,
+        state: 0,
+        path: "",
+        size: 0,
+        fcount: 0,
+        need_nl: false,
+        unsaved: List[str](),
+        own: List[str](),
+        depth: 0,
+    }
+}
+
+const H_NONE: int = 0
+
+const H_FILE: int = 1
+
+const H_MEM: int = 2
+
+/// The history size: `HISTSIZE` when it is a positive number (at most
+/// 32767), else 128 (XCU `sh` asks for at least 128).
+fn hist_cap(sh: Sh) -> int {
+    let v = sh.vals["HISTSIZE"] else ""
+    if v.len > 0 && is_digits(v) && v.len < 6 {
+        let n = to_int(v) else 128
+        if n > 0 {
+            return if n > 32767 then 32767 else n
+        }
+    }
+    128
+}
+
+// ---------------------------------------------------------- the ring
+
+/// Entry `i`, 0 the oldest kept.
+fn hist_at(h: Hist, i: int) -> str {
+    h.ring[(h.head + i) % h.ring.len]
+}
+
+/// The number of entry `i`.
+fn hist_num(h: Hist, i: int) -> int {
+    h.next - h.n + i
+}
+
+/// Keep `line` as the newest entry, `cap` at most.
+fn ring_push(mut h: Hist, cap: int, line: str) {
+    if h.ring.len != cap {
+        // a new size: the newest `cap` entries are kept, in order
+        var keep = List[str]()
+        let n = h.n
+        let from = if n > cap then n - cap else 0
+        var i = from
+        while i < n {
+            (mut keep).push(hist_at(h, i))
+            i += 1
+        }
+        while keep.len < cap {
+            (mut keep).push("")
+        }
+        h.ring = keep
+        h.head = 0
+        h.n = if n > cap then cap else n
+    }
+    if h.n < cap {
+        h.ring[(h.head + h.n) % cap] = line
+        h.n += 1
+    } else {
+        h.ring[h.head] = line
+        h.head = (h.head + 1) % cap
+    }
+    h.next += 1
+}
+
+/// Take the newest entry back out (the `fc` that edits, XCU `fc`).
+fn ring_drop_newest(mut h: Hist) {
+    if h.n == 0 {
+        return
+    }
+    h.n -= 1
+    h.next -= 1
+    if h.unsaved.len > 0 {
+        let _gone = (mut h.unsaved).pop() else ""
+    }
+}
+
+/// Whether `s` has nothing but blanks and newlines.
+fn all_blank(s: str) -> bool {
+    for b in s.bytes() {
+        let c = b as int
+        if c != 32 && c != 9 && c != 10 {
+            return false
+        }
+    }
+    true
+}
+
+/// `s` without one newline at its end.
+fn chomp(s: str) -> str {
+    if s.len > 0 && byte_at(s, s.len - 1) == 10 {
+        return s[0..s.len - 1]
+    }
+    s
+}
+
+/// Enter a command typed at the prompt (its newline may still be on
+/// it). It is the command about to run: `fc` sees it as the newest.
+fn hist_add(mut sh: Sh, src: str) {
+    hist_init(mut sh)
+    let line = chomp(src)
+    if all_blank(line) {
+        return
+    }
+    hist_enter(mut sh, line)
+    sh.ed.h.cur = true
+}
+
+fn hist_enter(mut sh: Sh, line: str) {
+    let cap = hist_cap(sh)
+    ring_push(mut sh.ed.h, cap, line)
+    if sh.ed.h.state == H_FILE {
+        (mut sh.ed.h.unsaved).push(line)
+    }
+}
+
+/// Enter each complete command of `body` (what `fc` runs).
+fn hist_enter_text(mut sh: Sh, body: str) {
+    var o = buf()
+    var any = false
+    for line in body.split("\n") {
+        if any {
+            putc(mut o, '\n')
+        }
+        put(mut o, line)
+        any = true
+        let so_far = copy region hq {
+            needs_more("{text(o)}\n")
+        }
+        if !so_far {
+            let cmd = text(o)
+            if !all_blank(cmd) {
+                hist_enter(mut sh, cmd)
+            }
+            o = buf()
+            any = false
+        }
+    }
+    if any {
+        let cmd = text(o)
+        if !all_blank(cmd) {
+            hist_enter(mut sh, cmd)
+        }
+    }
+}
+
+// ---------------------------------------------------------- the file
+
+/// An entry as a line of the file, newline included.
+fn encode_entry(mut o: Buf, s: str) {
+    for b in s.bytes() {
+        let c = b as int
+        if c == 92 {
+            putb(mut o, 92)
+            putb(mut o, 92)
+        } else if c == 10 {
+            putb(mut o, 92)
+            putb(mut o, 110)
+        } else {
+            putb(mut o, c)
+        }
+    }
+    putb(mut o, 10)
+}
+
+/// A line of the file as an entry.
+fn decode_entry(s: str) -> str {
+    if !s.contains("\\") {
+        return s
+    }
+    var o = buf()
+    var i = 0
+    while i < s.len {
+        let c = byte_at(s, i)
+        if c == 92 && i + 1 < s.len {
+            let d = byte_at(s, i + 1)
+            if d == 92 {
+                putb(mut o, 92)
+                i += 2
+                continue
+            }
+            if d == 110 {
+                putb(mut o, 10)
+                i += 2
+                continue
+            }
+        }
+        putb(mut o, c)
+        i += 1
+    }
+    text(o)
+}
+
+/// What a read of the file found.
+struct HRead {
+    ok: bool,
+    /// The newest entries (at most the cap asked for), oldest first,
+    /// and how many the bytes held in all.
+    entries: List[str],
+    count: int,
+    /// The bytes read up to the last newline.
+    used: int,
+    need_nl: bool,
+}
+
+fn hread_none() -> HRead {
+    HRead { ok: false, entries: List[str](), count: 0, used: 0, need_nl: false }
+}
+
+/// The entries in `bytes[from..]`, the newest `cap` kept. Not ours (a
+/// NUL byte, not UTF-8): `ok` false.
+fn hist_parse(bytes: List[byte], from: int, cap: int) -> HRead {
+    var r = hread_none()
+    var i = from
+    while i < bytes.len {
+        if bytes[i] as int == 0 {
+            return r
+        }
+        i += 1
+    }
+    let s = str_from_utf8(bytes[from..bytes.len]) else |_| { return r }
+    var all = List[str]()
+    var used = 0
+    var start = 0
+    var k = 0
+    while k < s.len {
+        if byte_at(s, k) == 10 {
+            if k > start {
+                (mut all).push(decode_entry(s[start..k]))
+            }
+            start = k + 1
+            used = k + 1
+        }
+        k += 1
+    }
+    if start < s.len {
+        // a last line with no newline: an entry all the same
+        (mut all).push(decode_entry(s[start..s.len]))
+        r.need_nl = true
+        used = s.len
+    }
+    let skip = if all.len > cap then all.len - cap else 0
+    var j = skip
+    while j < all.len {
+        (mut r.entries).push(all[j])
+        j += 1
+    }
+    r.count = all.len
+    r.used = used
+    r.ok = true
+    r
+}
+
+/// Read the whole file at `path`; one that does not exist is created
+/// (mode 0600, empty).
+fn hist_load(path: str, cap: int) -> HRead {
+    let bytes = fs_read_bytes(path) else |e| match e {
+        not_found => {
+            let fd = fs_open_perm(path, 4, 0o600) else |_| { return hread_none() }
+            fs_close(fd) else |_| {}
+            var r = hread_none()
+            r.ok = true
+            return r
+        },
+        denied => { return hread_none() },
+        io => { return hread_none() },
+    }
+    hist_parse(bytes, 0, cap)
+}
+
+/// The file's size now, or -1.
+fn file_size(path: str) -> int {
+    copy region fsz {
+        let st = fs_stat(path) else |_| List[int]()
+        if st.len > 1 then st[1] else -1
+    }
+}
+
+/// Read the history file once (module doc): after the `ENV` file, or
+/// at `fc`'s first use if that comes first.
+fn hist_init(mut sh: Sh) {
+    if sh.ed.h.state != H_NONE {
+        return
+    }
+    sh.ed.h.state = H_MEM
+    var path = ""
+    if sh.vals.has("HISTFILE") {
+        path = sh.vals["HISTFILE"] else ""
+    } else {
+        let home = sh.vals["HOME"] else ""
+        if home.len > 0 {
+            path = if home.ends_with("/") then home + ".sh_history" else home + "/.sh_history"
+        }
+    }
+    if path.len == 0 {
+        return
+    }
+    let cap = hist_cap(sh)
+    let r = copy region hl {
+        hist_load(path, cap)
+    }
+    if !r.ok {
+        return
+    }
+    let size = file_size(path)
+    if size < 0 {
+        return
+    }
+    sh.ed.h.state = H_FILE
+    sh.ed.h.path = path
+    sh.ed.h.size = r.used
+    sh.ed.h.fcount = r.count
+    sh.ed.h.need_nl = r.need_nl
+    for e in r.entries {
+        ring_push(mut sh.ed.h, cap, e)
+    }
+    if r.count > cap {
+        hist_rewrite(mut sh)
+    }
+}
+
+/// Before a prompt: enter what other shells appended, write what this
+/// one entered, and keep the file at most twice `HISTSIZE` entries.
+/// `read` false (the shell is ending) only writes.
+fn hist_sync(mut sh: Sh, read: bool) {
+    if sh.ed.h.state != H_FILE {
+        return
+    }
+    let path = sh.ed.h.path
+    let cap = hist_cap(sh)
+    if read {
+        let size = file_size(path)
+        if size >= 0 && size < sh.ed.h.size {
+            // replaced or cut under us (another shell): take it as it is
+            sh.ed.h.size = size
+            sh.ed.h.fcount = cap
+            sh.ed.h.need_nl = false
+        } else if size > sh.ed.h.size {
+            let from = sh.ed.h.size
+            let r = copy region hr {
+                let bytes = fs_read_bytes(path) else |_| List[byte]()
+                if bytes.len < size {
+                    hread_none()
+                } else {
+                    hist_parse(bytes, from, 32767)
+                }
+            }
+            if r.ok {
+                for e in r.entries {
+                    if sh.ed.h.own.len > 0 && sh.ed.h.own[0] == e {
+                        sh.ed.h.own = sh.ed.h.own[1..sh.ed.h.own.len]
+                    } else {
+                        ring_push(mut sh.ed.h, cap, e)
+                    }
+                }
+                sh.ed.h.size = from + r.used
+                sh.ed.h.fcount += r.count
+                sh.ed.h.need_nl = r.need_nl
+            }
+        }
+    }
+    if sh.ed.h.unsaved.len > 0 {
+        let before = sh.ed.h.size
+        let wrote = copy region hw {
+            hist_append(path, sh.ed.h.unsaved, sh.ed.h.need_nl)
+        }
+        if wrote >= 0 {
+            let after = file_size(path)
+            if after == before + wrote {
+                sh.ed.h.size = after
+            } else {
+                // another shell wrote too: ours come back on the next read
+                for e in sh.ed.h.unsaved {
+                    (mut sh.ed.h.own).push(e)
+                }
+            }
+            sh.ed.h.fcount += sh.ed.h.unsaved.len
+            sh.ed.h.need_nl = false
+        }
+        while sh.ed.h.unsaved.len > 0 {
+            let _done = (mut sh.ed.h.unsaved).pop() else ""
+        }
+    }
+    if sh.ed.h.fcount >= 2 * cap {
+        hist_rewrite(mut sh)
+    }
+}
+
+/// Append `xs` to the file in one write; the bytes written, or -1.
+fn hist_append(path: str, xs: List[str], nl: bool) -> int {
+    var o = buf()
+    if nl {
+        putb(mut o, 10)
+    }
+    for x in xs {
+        encode_entry(mut o, x)
+    }
+    let fd = fs_open_perm(path, 2, 0o600) else |_| { return -1 }
+    fs_write_chunk(fd, o.b) else |_| {
+        fs_close(fd) else |_| {}
+        return -1
+    }
+    fs_close(fd) else |_| {}
+    o.b.len
+}
+
+/// Write the entries kept to a new file beside the history file and
+/// rename it over it (oldest first are the ones gone).
+fn hist_rewrite(mut sh: Sh) {
+    let path = sh.ed.h.path
+    let tmp = "{path}.pelt{shell_pid()}"
+    let wrote = copy region hrw {
+        hist_write_all(tmp, sh.ed.h)
+    }
+    if wrote < 0 {
+        return
+    }
+    fs_rename(tmp, path) else |_| {
+        fs_remove(tmp) else |_| {}
+        return
+    }
+    sh.ed.h.size = wrote
+    sh.ed.h.fcount = sh.ed.h.n
+    sh.ed.h.need_nl = false
+    while sh.ed.h.unsaved.len > 0 {
+        let _a = (mut sh.ed.h.unsaved).pop() else ""
+    }
+    while sh.ed.h.own.len > 0 {
+        let _b = (mut sh.ed.h.own).pop() else ""
+    }
+}
+
+fn hist_write_all(tmp: str, h: Hist) -> int {
+    var o = buf()
+    var i = 0
+    while i < h.n {
+        encode_entry(mut o, hist_at(h, i))
+        i += 1
+    }
+    let fd = fs_open_perm(tmp, 1, 0o600) else |_| { return -1 }
+    fs_write_chunk(fd, o.b) else |_| {
+        fs_close(fd) else |_| {}
+        fs_remove(tmp) else |_| {}
+        return -1
+    }
+    fs_close(fd) else |_| {}
+    o.b.len
+}
+
+// ------------------------------------------------------- PS1's `!`
+
+/// XCU 2.5.3: each `!` is the number of the next command, `!!` one `!`.
+fn ps1_bang(raw: str, num: int) -> str {
+    if !raw.contains("!") {
+        return raw
+    }
+    var o = buf()
+    var i = 0
+    while i < raw.len {
+        let c = byte_at(raw, i)
+        if c == 33 {
+            if byte_at(raw, i + 1) == 33 {
+                putb(mut o, 33)
+                i += 2
+                continue
+            }
+            put(mut o, "{num}")
+        } else {
+            putb(mut o, c)
+        }
+        i += 1
+    }
+    text(o)
+}
+
+// ------------------------------------------------------------- fc
+
+/// The newest entry's number, the one `fc` calls previous, the oldest.
+fn fc_newest(h: Hist) -> int {
+    h.next - 1
+}
+
+fn fc_prev(h: Hist) -> int {
+    if h.cur then h.next - 2 else h.next - 1
+}
+
+fn fc_oldest(h: Hist) -> int {
+    h.next - h.n
+}
+
+/// Whether `s` is `[+-]digits`.
+fn is_signed_number(s: str) -> bool {
+    if s.len == 0 {
+        return false
+    }
+    let c = byte_at(s, 0)
+    if c == 43 || c == 45 {
+        return s.len > 1 && is_digits(s[1..s.len])
+    }
+    is_digits(s)
+}
+
+/// The number operand `op` names before clamping (module doc), or -1
+/// when it is a string that names no command.
+fn fc_raw(h: Hist, op: str) -> int {
+    let oldest = fc_oldest(h)
+    let prev = fc_prev(h)
+    if is_signed_number(op) {
+        let neg = byte_at(op, 0) == 45
+        let digits = if byte_at(op, 0) == 43 || neg then op[1..op.len] else op
+        // past nine digits every number is beyond either end
+        let v = if digits.len > 9 then 999999999 else (to_int(digits) else 0)
+        if neg {
+            return fc_newest(h) - v
+        }
+        if v == 0 {
+            return prev
+        }
+        return v
+    }
+    // a string: the newest command before the `fc` that starts with it
+    var i = prev - oldest
+    while i >= 0 {
+        if hist_at(h, i).starts_with(op) {
+            return hist_num(h, i)
+        }
+        i -= 1
+    }
+    -1
+}
+
+/// A `first` beyond either end is the oldest (bash and dash, measured).
+fn fc_clamp_first(h: Hist, k: int) -> int {
+    if k < fc_oldest(h) || k > fc_newest(h) {
+        return fc_oldest(h)
+    }
+    k
+}
+
+/// A `last` beyond the newest is the previous command; before the
+/// oldest, the oldest.
+fn fc_clamp_last(h: Hist, k: int) -> int {
+    if k > fc_newest(h) {
+        let p = fc_prev(h)
+        return if p < fc_oldest(h) then fc_oldest(h) else p
+    }
+    if k < fc_oldest(h) {
+        return fc_oldest(h)
+    }
+    k
+}
+
+/// The command `op` names, clamped as `first` or `last`; -1 when a
+/// string names no command.
+fn fc_number(h: Hist, op: str, first: bool) -> int {
+    let k = fc_raw(h, op)
+    if k < 0 && !is_signed_number(op) {
+        return -1
+    }
+    if first then fc_clamp_first(h, k) else fc_clamp_last(h, k)
+}
+
+/// One entry as `fc -l` writes it: `%d\t%s\n`, a continuation line
+/// `\t%s\n`; with `-n` every line `\t%s\n` (XCU `fc`, STDOUT).
+fn fc_list_entry(mut o: Buf, num: int, s: str, nonum: bool) {
+    var first = true
+    for line in s.split("\n") {
+        if first && !nonum {
+            put(mut o, "{num}")
+        }
+        putc(mut o, '\t')
+        put(mut o, line)
+        putc(mut o, '\n')
+        first = false
+    }
+}
+
+/// The numbers `a..=b` in order, newest first when `rev`.
+fn fc_order(a: int, b: int, rev: bool) -> List[int] {
+    var o = List[int]()
+    var k = 0
+    while k <= b - a {
+        (mut o).push(if rev then b - k else a + k)
+        k += 1
+    }
+    o
+}
+
+/// `old` replaced by `new` once, at its first occurrence.
+fn replace_once(s: str, old: str, new: str) -> str {
+    if old.len == 0 {
+        return s
+    }
+    let at = s.find(old) else -1
+    if at < 0 {
+        return s
+    }
+    "{s[0..at]}{new}{s[at + old.len..s.len]}"
+}
+
+fn fc_usage(mut sh: Sh, what: str) -> int {
+    diag(
+        mut sh,
+        "fc: {what} (fc [-r] [-e editor] [first [last]], fc -l [-nr] [first [last]], fc -s [old=new] [first])",
+    )
+    2
+}
+
+/// XCU `fc`.
+fn bi_fc(mut sh: Sh, args: List[str]) -> int {
+    var list = false
+    var nonum = false
+    var rev = false
+    var redo = false
+    var editor = ""
+    var have_e = false
+    var i = 0
+    while i < args.len {
+        let a = args[i]
+        if a.len < 2 || byte_at(a, 0) != 45 {
+            break
+        }
+        if a == "--" {
+            i += 1
+            break
+        }
+        if is_digit(ch(a, 1)) {
+            // `-number` is an operand
+            break
+        }
+        var j = 1
+        while j < a.len {
+            let c = ch(a, j)
+            if c == 'l' {
+                list = true
+            } else if c == 'n' {
+                nonum = true
+            } else if c == 'r' {
+                rev = true
+            } else if c == 's' {
+                redo = true
+            } else if c == 'e' {
+                if j + 1 < a.len {
+                    editor = a[j + 1..a.len]
+                } else {
+                    i += 1
+                    if i >= args.len {
+                        return fc_usage(mut sh, "-e needs an editor")
+                    }
+                    editor = args[i]
+                }
+                have_e = true
+                j = a.len
+                continue
+            } else {
+                return fc_usage(mut sh, "-{c}: not an option")
+            }
+            j += 1
+        }
+        i += 1
+    }
+    if have_e && editor == "-" {
+        // the historical spelling of `-s`
+        redo = true
+        have_e = false
+    }
+    if !sh.interactive {
+        diag(mut sh, "fc: no history: the shell is not interactive")
+        return 2
+    }
+    hist_init(mut sh)
+    var ops = List[str]()
+    while i < args.len {
+        (mut ops).push(args[i])
+        i += 1
+    }
+    if list && redo {
+        return fc_usage(mut sh, "-l and -s together")
+    }
+    var old = ""
+    var new = ""
+    if redo && ops.len > 0 && ops[0].contains("=") {
+        let eq = ops[0].find("=") else 0
+        old = ops[0][0..eq]
+        new = ops[0][eq + 1..ops[0].len]
+        ops = ops[1..ops.len]
+    }
+    if redo && ops.len > 1 || ops.len > 2 {
+        return fc_usage(mut sh, "too many operands")
+    }
+    if sh.ed.h.n == 0 {
+        diag(mut sh, "fc: the history is empty")
+        return 1
+    }
+    let h = copy sh.ed.h
+    let oldest = fc_oldest(h)
+    var prev = fc_prev(h)
+    if !list && prev < oldest {
+        // only the `fc` itself is there
+        diag(mut sh, "fc: no command before this one")
+        return 1
+    }
+    if prev < oldest {
+        prev = oldest
+    }
+    var a = 0
+    var b = 0
+    if ops.len > 0 {
+        a = fc_number(h, ops[0], true)
+        if a < 0 {
+            diag(mut sh, "fc: {ops[0]}: no command starts so")
+            return 1
+        }
+    } else if list {
+        a = fc_clamp_first(h, prev - 15)
+    } else {
+        a = prev
+    }
+    if ops.len > 1 {
+        b = fc_number(h, ops[1], false)
+        if b < 0 {
+            diag(mut sh, "fc: {ops[1]}: no command starts so")
+            return 1
+        }
+    } else if list {
+        b = prev
+    } else {
+        b = a
+    }
+    if redo {
+        b = a
+    }
+    if a > b {
+        let t = a
+        a = b
+        b = t
+        rev = !rev
+    }
+    if list {
+        var o = buf()
+        for k in fc_order(a, b, rev) {
+            fc_list_entry(mut o, k, hist_at(h, k - oldest), nonum)
+        }
+        emit(mut sh, text(o))
+        return 0
+    }
+    if !redo && b > prev {
+        // an edit never takes in the `fc` that asks for it
+        b = prev
+        if a > b {
+            a = b
+        }
+    }
+    if sh.ed.h.depth >= 32 {
+        diag(mut sh, "fc: re-executed too deeply")
+        return 1
+    }
+    var texts = List[str]()
+    for k in fc_order(a, b, rev) {
+        (mut texts).push(hist_at(h, k - oldest))
+    }
+    // the `fc` that edits is never entered (XCU `fc`)
+    if sh.ed.h.cur {
+        ring_drop_newest(mut sh.ed.h)
+        sh.ed.h.cur = false
+    }
+    if redo {
+        let one = replace_once(texts[0], old, new)
+        return fc_rerun(mut sh, "{one}\n")
+    }
+    var body = buf()
+    for t in texts {
+        put(mut body, t)
+        putc(mut body, '\n')
+    }
+    if !have_e {
+        editor = sh.vals["FCEDIT"] else ""
+        if editor.len == 0 {
+            editor = "ed"
+        }
+    }
+    let (st, edited) = fc_edit(mut sh, text(body), editor)
+    if st != 0 {
+        return st
+    }
+    fc_rerun(mut sh, edited)
+}
+
+/// `body` in a new file, `editor file` run as a command, the file read
+/// back and removed: the editor's status and the text.
+fn fc_edit(mut sh: Sh, body: str, editor: str) -> (int, str) {
+    let path = fc_temp(sh, body)
+    if path.len == 0 {
+        diag(mut sh, "fc: cannot make a file to edit in {temp_dir(sh)}")
+        return (1, "")
+    }
+    let st = eval_string(mut sh, "{editor} {squote(path)}", "fc")
+    if sh.flow != F_NONE {
+        fs_remove(path) else |_| {}
+        return (if st == 0 then 1 else st, "")
+    }
+    if st != 0 {
+        fs_remove(path) else |_| {}
+        return (st, "")
+    }
+    let bytes = fs_read_bytes(path) else |_| {
+        fs_remove(path) else |_| {}
+        diag(mut sh, "fc: the edited file is gone")
+        return (1, "")
+    }
+    fs_remove(path) else |_| {}
+    (0, text(Buf { b: bytes }))
+}
+
+/// A new file (create-new, mode 0600) holding `body`; its path, or "".
+fn fc_temp(sh: Sh, body: str) -> str {
+    let dir = temp_dir(sh)
+    var tries = 0
+    while tries < 16 {
+        var o = buf()
+        put(mut o, dir)
+        put(mut o, "/pelt-fc.")
+        for x in os_random(10) {
+            putb(mut o, 97 + (x & 255) % 26)
+        }
+        let path = text(o)
+        let fd = fs_open_perm(path, 4, 0o600) else -1
+        if fd >= 0 {
+            var b = List[byte]()
+            for x in body.bytes() {
+                (mut b).push(x)
+            }
+            fs_write_chunk(fd, b) else |_| {}
+            fs_close(fd) else |_| {}
+            return path
+        }
+        tries += 1
+    }
+    ""
+}
+
+/// Run what `fc` re-executes: written to standard error, entered, then
+/// run as `eval` runs text (XCU `fc`; bash writes it, as a user sees).
+fn fc_rerun(mut sh: Sh, edited: str) -> int {
+    if all_blank(edited) {
+        return 0
+    }
+    var shown = edited
+    if byte_at(shown, shown.len - 1) != 10 {
+        shown = shown + "\n"
+    }
+    write_fd(mut sh, 2, shown)
+    hist_enter_text(mut sh, chomp(shown))
+    sh.ed.h.cur = true
+    sh.ed.h.depth += 1
+    let st = eval_string(mut sh, shown, "fc")
+    sh.ed.h.depth -= 1
+    st
+}
+
+/// vi `[number]v` (XCU `sh`): the line, or command `number`, edited
+/// with vi through `fc`'s path; the line itself is never entered.
+fn hist_visual(mut sh: Sh, line: str, num: int) -> int {
+    hist_init(mut sh)
+    var body = chomp(line)
+    if num > 0 {
+        let h = copy sh.ed.h
+        if num < fc_oldest(h) || num > fc_newest(h) {
+            diag(mut sh, "v: {num}: no such command in the history")
+            sh.status = 1
+            return 1
+        }
+        body = hist_at(h, num - fc_oldest(h))
+    }
+    let (st, edited) = fc_edit(mut sh, "{body}\n", "vi")
+    if st != 0 {
+        sh.status = st
+        return st
+    }
+    let r = fc_rerun(mut sh, edited)
+    sh.ed.h.cur = false
+    sh.status = r
+    r
+}
