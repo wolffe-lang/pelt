@@ -1,0 +1,6 @@
+prompt, no file:          median 0.019 ms  p99 0.057 ms  (2000 lines)
+prompt, HISTFILE:         median 0.024 ms  p99 0.091 ms  (2000 lines)
+start, empty file:        median 1.1 ms  (20 runs)
+start, 32,767 entries:    median 7.7 ms  (20 runs; +6.6 ms)
+Ctrl-R z over 32,767:     median 9.49 ms  p99 10.05 ms  (20 searches)
+EXIT=0

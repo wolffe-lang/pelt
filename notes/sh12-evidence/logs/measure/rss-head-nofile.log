@@ -1,0 +1,8 @@
+session-rss: target/release/pelt -i
+commands      0  rss_kb 3156
+commands   5000  rss_kb 4964
+commands  10000  rss_kb 6684
+commands  15000  rss_kb 8408
+commands  20000  rss_kb 10124
+x = 20000  (0.623 s)
+EXIT=0

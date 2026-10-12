@@ -204,3 +204,98 @@ an interactive shell. `PS2` untouched.
 - **Start**: reading a 32,767-entry file adds under **60 ms** (release)
   to an interactive start.
 - **Wrong predictions will be reported as such in §5.**
+
+## 4. Evidence index
+
+Hosts: kasumi (linux x86-64, CachyOS, 16 cpus, shared: load 6–27
+while measuring) for every build, session and measurement; nomad-1 for
+editing only (no build). Toolchain: wolf 0.2.28 `f71ece8e`, lupin
+0.1.51 `f72e78d`, std `98e1b7b` (the pin, unchanged). Logs under
+`notes/sh12-evidence/logs/`; black-box probes of dash and bash under
+`notes/sh12-evidence/probe/` (`probe.log`, `d09.log`, `nonint.log`).
+
+### 4.1 What was built
+
+- `src/sh/hist.lu` (new, `025d7e1`) — the history list (a ring of
+  `HISTSIZE` complete commands, numbered), `HISTFILE` (read after `ENV`,
+  appended before the next prompt and at the end, other shells' appends
+  read before each prompt, cut to `HISTSIZE` at start and at twice
+  `HISTSIZE`), `fc` (`-l -n -r -s -e`, `-e -`, `old=new`, the operands
+  and their clamping), `PS1`'s `!`, and `hist_visual` (vi `v`).
+- `src/sh/edit.lu` (`bdc13b6`) — the editor reads `sh.hist`'s list;
+  Ctrl-R (`isearch`, pelt's own `(search 'pat') ` / `(failed search
+  'pat') `); vi `[number]v` ends the line for `hist_visual`; vi `G` with a
+  count goes to that history number.
+- `src/sh/interact.lu` (`4b853b0`) — a command is entered once it is
+  complete (sh11 entered each physical line), the file read after `ENV`
+  and brought up to date before each `PS1`, `PS1`'s `!` before the other
+  expansions, vi `v` run through `fc`'s editing path.
+- `fc` a regular built-in (`35b7989`); `PS1`, `PS2`, `PS4` from the
+  environment win over the defaults, as in dash (`78e1ec1`; found here:
+  pelt overwrote them, so no session could set `PS1` by `env=`).
+- Table checks (`2c7df10`): `fc`'s operands and clamping, the list
+  format, `-r` against reversed operands, a multi-line entry, the file's
+  lines, `PS1`'s `!` — the places bash and POSIX part, pinned to POSIX.
+  Seen to fail when an expectation is broken (`-1` wanted as 3: "fc_number(-1,
+  first=true) = 4, want 3", kasumi, before the commit).
+- `tools/hist-witness` (`3f8fc79`), in CI on both tiers (`47848a4`).
+- Sessions (`4203394`, `9ffd8de`, `df48430`, `fa29d18`, `a95d65f`,
+  `0e208e0`), the diff case `param/c_ps_from_env` (`881efb5`),
+  `fc/c_noninteractive` out of pending (`6fef2d9`), the clause table
+  (`c2549b4`), `docs/CENSUS.md` (`4becba5`), `docs/PLAN.md` (`b08cdb3`),
+  README (`6921b7c`).
+
+### 4.2 Each feature against dash and bash --posix
+
+| feature | pelt | bash --posix 5.3 | dash 0.5.13.4 |
+|---|---|---|---|
+| `fc -l` format | `%d\t%s`, continuation `\t%s` (POSIX) | `%d\t%s` | `%5d %s`; `-n` with no tab |
+| a multi-line command | one entry, its lines kept | one entry joined with `;` | one entry, lines kept |
+| the `fc` that edits / `-s` | not entered; the result is (POSIX) | same | enters the `fc -s` line |
+| `fc -s`, `fc -e` | the commands written to standard error, then run | same | same |
+| a failing editor | nothing run, nothing entered | same | — |
+| `first` beyond either end | the oldest | the oldest | the oldest |
+| `-r` with first newer than last | the two cancel (POSIX's example) | does not cancel | cancels |
+| `-0` alone | from the `fc` line back to the previous | only the `fc` line | as pelt |
+| `+n` | command n (POSIX `[+]number`) | "no command found" | — |
+| non-interactive `fc` | status 2, the shell goes on | status 0, nothing | status 2 |
+| `HISTFILE` | read at start, appended per command, shared, cut to `HISTSIZE`; default `$HOME/.sh_history` | read at start, written at exit; `.bash_history` | not read |
+| `HISTSIZE` | at once | at once | at once (its own numbering) |
+| `PS1` `!` / `!!` | the next number / `!`, before parameter expansion | same | not expanded |
+| Ctrl-R | pelt's own screen; Enter runs, Ctrl-G restores, Backspace searches again, any other key ends and acts | the same keys (the `c_ed_search*` transcripts); its own screen | not measured |
+| vi `[number]v` | `vi` from `PATH` (POSIX names vi) on the line or command `number`, through `fc`'s path | the same with the cases' stand-in `vi` (`c_vi_v*`) | not measured |
+| `PS1`/`PS2`/`PS4` from the environment | imported (new here) | `PS1`, `PS2` not imported non-interactively | imported |
+
+### 4.3 Session and corpus results
+
+| head | where | sessions pass / fail / pending (PEND-ok) | corpus | log |
+|---|---|---|---|---|
+| `96828ac` trunk | kasumi, release and native | 171 / 0 / 26 (4) | 835 / 0 / 99 (8) | `logs/base-96828ac/` |
+| `806b7d2` + `0e208e0`'s transcripts | kasumi, native and release | 197 / 0 / 20 (4) (the gauntlet's own run: 195 / 2, the two transcripts recorded before two steps were dropped; re-recorded and both pass on both tiers) | 837 / 0 / 98 (8), both tiers | `logs/g1-806b7d2/` |
+| idem | kasumi, release, `taskset -c 0-3` | 197 / 0 / 20 (4) | — | `logs/g1-806b7d2/session-release-taskset.log` |
+
+Every other gate in that gauntlet exits 0: fmt, the clause table,
+the width table, `wolf test`, glob-rss, loop-rss, exec-witness,
+edit-witness and hist-witness (6 of 6) on both tiers, both harness
+self-tests (`logs/g1-806b7d2/summary`). Clause census: **439 of 545
+met (81.3%)**, trunk 431 of 544 (80.0%).
+
+### 4.4 Memory and speed (kasumi, quiet only by luck; load 6–16)
+
+`tools/session-rss -n 20000` (`logs/measure/`, `logs/base-96828ac/`),
+KB at 0 → 20,000 commands, release:
+
+| binary | KB | per command |
+|---|---|---|
+| trunk `96828ac` (no file: `HOME=/`) | 3,116 → 10,096 | 357.4 B |
+| head, no file | 3,156 → 10,124 | 356.8 B (−0.6 B) |
+| head, `HISTFILE` in scratch (`env HISTFILE=…`) | 3,156 → 10,160 | 358.6 B (+1.8 B over no file); the file 162 lines at the end (`HISTSIZE` 128, cut at 256) |
+
+`notes/sh12-evidence/hist-bench.py` (`logs/measure/bench-*.log`):
+
+| | release | native |
+|---|---|---|
+| Enter to the next prompt, `:`, no file: median / p99 (2,000 lines) | 0.012 / 0.027 ms | 0.019 / 0.057 ms |
+| the same with a `HISTFILE` | 0.017 / 0.066 ms | 0.024 / 0.091 ms |
+| start to the first prompt, empty file / 32,767 entries | 1.0 / 5.1 ms (+4.1) | 1.1 / 7.7 ms (+6.6) |
+| Ctrl-R, a key no line holds, over 32,767 entries: median / p99 | 5.54 / 5.71 ms | 9.49 / 10.05 ms |

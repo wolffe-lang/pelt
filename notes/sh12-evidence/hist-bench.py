@@ -10,7 +10,7 @@ arrangement, the line editor on). Three numbers:
   start    spawn to the first prompt with HISTSIZE=32767 and a history
            file of 0 and of 32,767 entries: median of R runs, ms
   ctrl-r   with that full file: Ctrl-R then `z` (no line holds it, so the
-           whole list is searched) until the screen answers, R times:
+           whole list is searched) until the bell that says so, R times:
            median and p99, ms
 
 usage: hist-bench.py [-n N] [-r R] PELT
@@ -111,13 +111,17 @@ def start_cost(pelt, env, reps, pristine):
 def ctrl_r_cost(pelt, env, reps):
     sh = Sh(pelt, env)
     sh.wait_prompt()
+    # the editor sets its mode just after the prompt: a key typed before
+    # that is the line discipline's (Ctrl-R is its REPRINT) -- wait
+    time.sleep(0.3)
     ts = []
     for _ in range(reps):
         os.write(sh.master, b"\x12")
         sh.drain_tty(b"(search '') ")
         t = time.perf_counter()
         os.write(sh.master, b"z")
-        sh.drain_tty(b"(failed search 'z') ")
+        # a search that finds nothing rings the bell before it draws
+        sh.drain_tty(b"\x07")
         ts.append((time.perf_counter() - t) * 1000)
         os.write(sh.master, b"\x07")
         sh.drain_tty(b"\x1b[J", 0.3)

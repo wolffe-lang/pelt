@@ -1,0 +1,9 @@
+session-rss: /usr/bin/env HISTFILE=/home/mfwolffe/lanes/sh12/tmp/rss-h target/release/pelt -i
+commands      0  rss_kb 3156
+commands   5000  rss_kb 4952
+commands  10000  rss_kb 6692
+commands  15000  rss_kb 8424
+commands  20000  rss_kb 10160
+x = 20000  (0.736 s)
+EXIT=0
+162 /home/mfwolffe/lanes/sh12/tmp/rss-h
