@@ -106,11 +106,16 @@ fn needs_more(src: str) -> bool {
 /// The next line, prompted with `PS1` (`first`) or `PS2`, and how it
 /// ended: 0 at a newline, 1 at the end of input after some bytes, 2 at
 /// the end before any, `ED_INTR` when Ctrl-C (or a SIGINT) ended the
-/// line being edited. Through the line editor (`sh.edit`) when the
-/// terminal is ours, the width learned before the prompt is written;
-/// else as typed through the terminal's own line discipline.
+/// line being edited, `ED_VISUAL` when vi's `v` did (its count in
+/// `sh.ed.vnum`). Through the line editor (`sh.edit`) when the terminal
+/// is ours, the width learned before the prompt is written; else as
+/// typed through the terminal's own line discipline. Before `PS1` the
+/// history file is brought up to date (`hist_sync`).
 fn next_line(mut sh: Sh, first: bool) -> (str, int) {
     let name = if first then "PS1" else "PS2"
+    if first && sh.interactive {
+        hist_sync(mut sh, true)
+    }
     if !ed_active(sh) {
         if sh.interactive {
             let _shown = prompt(mut sh, name, false)
@@ -132,12 +137,13 @@ fn next_line(mut sh: Sh, first: bool) -> (str, int) {
     if r.how == ED_INTR {
         return ("", ED_INTR)
     }
+    if r.how == ED_VISUAL {
+        sh.ed.vnum = r.num
+        return (r.line, ED_VISUAL)
+    }
     if r.how != ED_OK {
         sh.eof0 = true
         return ("", 2)
-    }
-    if r.line.len > 1 {
-        hist_add(mut sh, r.line[0..r.line.len - 1])
     }
     (r.line, 0)
 }
@@ -154,9 +160,12 @@ fn prompt(mut sh: Sh, var_name: str, keep: bool) -> str {
     if raw.len == 0 {
         return ""
     }
+    // `PS1`'s `!` is the next command's number (XCU 2.5.3), replaced
+    // before the other expansions (bash's order, as a user sees it)
+    let num = if var_name == "PS1" && sh.interactive then sh.ed.h.next else -1
     if keep {
         let (done, fast_shown) = copy region pk {
-            prompt_fast(sh, raw, true)
+            prompt_fast(sh, if num >= 0 then ps1_bang(raw, num) else raw, true)
         }
         if done {
             return fast_shown
@@ -166,7 +175,7 @@ fn prompt(mut sh: Sh, var_name: str, keep: bool) -> str {
         // root about 15 bytes a prompt, even for "" (sh11 measured it
         // over 20,000 commands); a `bool` costs nothing
         let done = copy region pr {
-            prompt_fast(sh, raw, false).0
+            prompt_fast(sh, if num >= 0 then ps1_bang(raw, num) else raw, false).0
         }
         if done {
             return ""
@@ -175,7 +184,7 @@ fn prompt(mut sh: Sh, var_name: str, keep: bool) -> str {
     let saved_status = sh.status
     let saved_cs = sh.cs_status
     let saved_ran = sh.cs_ran
-    let shown = expand_one(mut sh, raw, X_DQ)
+    let shown = expand_one(mut sh, if num >= 0 then ps1_bang(raw, num) else raw, X_DQ)
     if sh.flow != F_NONE {
         sh.flow = F_NONE
         sh.abort = false
@@ -236,14 +245,25 @@ fn count_lines(s: str) -> int {
 
 /// Read and run standard input, one complete command at a time: with
 /// prompts and 2.8.1's interactive rules when `sh.interactive`, as a
-/// script otherwise. Answers the status the shell leaves with.
+/// script otherwise. Answers the status the shell leaves with. An
+/// interactive shell reads its history file after the `ENV` file and
+/// writes what is left to write when it ends (`sh.hist`).
 fn run_stdin(mut sh: Sh) -> int {
     if sh.interactive {
         run_env_file(mut sh)
         if sh.flow == F_EXIT {
             return sh.status
         }
+        hist_init(mut sh)
     }
+    let st = run_lines(mut sh)
+    if sh.interactive {
+        hist_sync(mut sh, false)
+    }
+    st
+}
+
+fn run_lines(mut sh: Sh) -> int {
     var line = 1
     loop {
         // a one-line command is kept as read; only a continued one is
@@ -254,10 +274,25 @@ fn run_stdin(mut sh: Sh) -> int {
         var first = true
         var ended = false
         var intr = false
+        var visual = false
         loop {
             let (got, how) = next_line(mut sh, first)
             if how == ED_INTR {
                 intr = true
+                break
+            }
+            if how == ED_VISUAL {
+                // vi `v`: the command so far goes to vi (`hist_visual`)
+                visual = true
+                if first {
+                    src = got
+                } else {
+                    if !joined {
+                        put(mut o, src)
+                        joined = true
+                    }
+                    put(mut o, got)
+                }
                 break
             }
             if sh.opt_v && got.len > 0 {
@@ -300,12 +335,26 @@ fn run_stdin(mut sh: Sh) -> int {
         if joined {
             src = text(o)
         }
+        if visual {
+            let _vst = hist_visual(mut sh, src, sh.ed.vnum)
+            flush(mut sh)
+            if sh.flow == F_EXIT && !sh.abort {
+                return sh.status
+            }
+            sh.flow = F_NONE
+            sh.abort = false
+            continue
+        }
         if src.len == 0 {
             if sh.interactive {
                 // leave the terminal's cursor off the prompt line
                 write_fd(mut sh, 2, "\n")
             }
             break
+        }
+        if sh.interactive {
+            // the command about to run is the history's newest entry
+            hist_add(mut sh, src)
         }
         // a signal that came while the line was being typed: its trap
         // runs now, before the line does (dash, black-box); Ctrl-C with
@@ -336,6 +385,7 @@ fn run_stdin(mut sh: Sh) -> int {
             let _st = eval_from(mut sh, src, line)
         }
         line += count_lines(src)
+        sh.ed.h.cur = false
         if sh.flow == F_EXIT && sh.interactive && sh.abort {
             sh.flow = F_NONE
             sh.abort = false
