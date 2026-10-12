@@ -524,10 +524,10 @@ fn run_simple(mut sh: Sh, n: int) -> int {
     sh.cs_ran = false
     let nowait = sh.nowait
     sh.nowait = false
-    if !nowait && fast_ok(sh) {
+    if fast_ok(sh) && (!nowait || stage_fast(sh)) {
         flush(mut sh)
         let r = copy region turn {
-            run_fast(sh, sh.ast, n)
+            run_fast(sh, sh.ast, n, nowait)
         }
         if r.kind != R_SLOW {
             return commit_fast(mut sh, r)
@@ -542,30 +542,69 @@ const R_SLOW: int = 0
 
 const R_DONE: int = 1
 
-const R_ASSIGN: int = 2
+/// A pipeline stage's program, started on the stage's pipe and not
+/// waited for: its handle is `Fast.child`.
+const R_STAGE: int = 2
+
+/// A pipeline stage's built-in: what it wrote, ready to be read by the
+/// next stage, behind the handle `Fast.child`.
+const R_FEED: int = 3
 
 /// What a simple command run in the shadow state leaves for the real
-/// one: only scalars and one `str`, so that copying it out of the
-/// region costs nothing per command but the assigned values themselves
+/// one: only scalars and two `str`s, so that copying it out of the
+/// region costs nothing per command but what is kept
 /// (`[mem.region.copyout]`: every `List` in the copied value would be a
 /// fresh buffer in the root region, which frees nothing).
 struct Fast {
     kind: int,
     status: int,
-    /// R_ASSIGN: `name` NUL `value` NUL, for each assignment in order.
+    /// The writes the state must make, `name` NUL `value` NUL each, in
+    /// order: an assignment-only command's assignments, and any an
+    /// expansion made (`$((j=j+1))`, `${x=…}`).
     enc: str,
     reads: int,
     /// The signal that ended the program, or 0: said by the real state
     /// (`commit_fast`), since the shadow writes no diagnostic.
     sig: int,
+    /// R_STAGE and R_FEED: the handle.
+    child: int,
+    /// What the command wrote to the open capture (a substitution's
+    /// body): its text, or when the bytes are not UTF-8 (`raw`) the
+    /// bytes in hex.
+    out: str,
+    raw: bool,
 }
 
 fn slow() -> Fast {
-    Fast { kind: R_SLOW, status: 0, enc: "", reads: 0, sig: 0 }
+    Fast { kind: R_SLOW, status: 0, enc: "", reads: 0, sig: 0, child: -1, out: "", raw: false }
 }
 
 fn fast_ok(sh: Sh) -> bool {
-    !sh.opt_x && !sh.shadow && sh.caps.len == 0
+    !sh.opt_x && !sh.shadow && caps_fast(sh)
+}
+
+/// Whether the fast path can serve the captures that are open: none
+/// is, or every descriptor that names one names the innermost (a
+/// substitution's body, a pipeline stage). An outer capture still named
+/// would need the ordinary path's temporary files.
+fn caps_fast(sh: Sh) -> bool {
+    if sh.caps.len == 0 {
+        return true
+    }
+    let inner = cap_mark(sh.caps.len)
+    for h in sh.fds {
+        if is_cap(h) && h != inner {
+            return false
+        }
+    }
+    true
+}
+
+/// A pipeline stage the fast path can start without waiting: its
+/// capture is the innermost, and the stage's pipe is open
+/// (`run_pipeline`). An asynchronous list (`&`) is not one.
+fn stage_fast(sh: Sh) -> bool {
+    sh.stage_w >= 0 && sh.stage_cap == sh.caps.len
 }
 
 /// The built-ins that change nothing but their output and status.
@@ -582,8 +621,10 @@ fn is_pure_builtin(name: str) -> bool {
 
 /// What expansion and the pure built-ins read, copied: the shadow a
 /// simple command runs in inside the region. Writing to it writes
-/// nothing the shell keeps; anything that would have to (`set_var`,
-/// `diag`, a command substitution) sets `bail` instead.
+/// nothing the shell keeps: an assignment an expansion makes is
+/// recorded for the real state (`defer_ok`, `deferred`), and anything
+/// else that would have to write (`unset`, `diag`, a command
+/// substitution) sets `bail` instead.
 fn shadow_of(sh: Sh) -> Sh {
     var t = new_sh(sh.name)
     t.vals = copy sh.vals
@@ -611,12 +652,30 @@ fn shadow_of(sh: Sh) -> Sh {
     t.egid = sh.egid
     t.groups = sh.groups
     t.shadow = true
+    t.defer_ok = true
     t
 }
 
+/// The assignments the shadow's expansions made since last asked, onto
+/// `enc`, in order.
+fn take_deferred(mut t: Sh, mut enc: Buf) {
+    var k = 0
+    while k + 1 < t.deferred.len {
+        put(mut enc, t.deferred[k])
+        putb(mut enc, 0)
+        put(mut enc, t.deferred[k + 1])
+        putb(mut enc, 0)
+        k += 2
+    }
+    (mut t.deferred).clear()
+}
+
 /// The simple command `n` with the state read only: expanded,
-/// redirected, and run when it is a program or a pure built-in.
-fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
+/// redirected, and run when it is a program or a pure built-in. Under a
+/// capture (`caps_fast`) a built-in's output and a waited program's
+/// are handed back for the capture; a pipeline stage (`nowait`) is
+/// started on the stage's pipe, or its output made ready to read.
+fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     var t = shadow_of(sh)
     t.line = a.nodes[n].line
     let na = a.nodes[n].ints[0]
@@ -635,6 +694,8 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
     if t.bail || t.flow != F_NONE {
         return slow()
     }
+    var enc = buf()
+    take_deferred(mut t, mut enc)
     var pure = false
     if fields.len > 0 {
         let cmd = fields[0]
@@ -648,7 +709,6 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
             pure = true
         }
     }
-    var enc = buf()
     var names = List[str]()
     var values = List[str]()
     var ai = 0
@@ -661,6 +721,7 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
         if is_ronly(sh, name) {
             return slow()
         }
+        take_deferred(mut t, mut enc)
         // the next assignment's expansion sees this one (XCU 2.9.1.1:
         // in order, left to right); the shadow keeps nothing, and the
         // last one has nobody after it to see it
@@ -668,10 +729,12 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
         if ai < assigns.len {
             t.vals[name] = v
         }
-        put(mut enc, name)
-        putb(mut enc, 0)
-        put(mut enc, v)
-        putb(mut enc, 0)
+        if fields.len == 0 {
+            put(mut enc, name)
+            putb(mut enc, 0)
+            put(mut enc, v)
+            putb(mut enc, 0)
+        }
         (mut names).push(name)
         (mut values).push(v)
     }
@@ -681,28 +744,54 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
             close_opened(t)
             return slow()
         }
+        take_deferred(mut t, mut enc)
     }
+    var r = slow()
+    r.kind = R_DONE
+    r.enc = text(enc)
     if fields.len == 0 {
         close_opened(t)
-        if assigns.len == 0 {
-            return Fast { kind: R_DONE, status: 0, enc: "", reads: t.dir_reads, sig: 0 }
-        }
-        return Fast { kind: R_ASSIGN, status: 0, enc: text(enc), reads: t.dir_reads, sig: 0 }
+        r.reads = t.dir_reads
+        return r
     }
     if pure {
         let st = builtin(mut t, fields)
-        let h = fd_get(t, 1)
-        if t.bail || t.flow != F_NONE || t.out.len > 0 && h < 0 {
+        if t.bail || t.flow != F_NONE {
             close_opened(t)
             return slow()
         }
-        if t.out.len > 0 {
+        let h = fd_get(t, 1)
+        if is_cap(h) {
+            // the shadow's own capture list: it began empty
+            flush(mut t)
+        } else if t.out.len > 0 {
+            if h < 0 {
+                close_opened(t)
+                return slow()
+            }
             fs_write_chunk(h, t.out) else |_| {}
         }
         close_opened(t)
-        return Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads, sig: 0 }
+        r.status = st
+        r.reads = t.dir_reads
+        if t.cap_data.len > 0 {
+            if nowait {
+                // a pure built-in may run again: when no reader can be
+                // made, the ordinary path makes it and says why
+                let fd = feed(t, t.cap_data)
+                if fd < 0 {
+                    return slow()
+                }
+                r.kind = R_FEED
+                r.child = fd
+            } else {
+                set_out(mut r, t.cap_data)
+            }
+        }
+        return r
     }
-    // a program: found, and given no capture, or the ordinary path runs it
+    // a program: found, and started with any capture going to a pipe of
+    // its own (read here to its end) or to the stage's pipe
     let cmd = fields[0]
     var path = cmd
     if (cmd.find("/") else -1) < 0 {
@@ -712,10 +801,27 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
             return slow()
         }
     }
+    var capped = false
     for h in t.fds {
         if is_cap(h) {
-            close_opened(t)
-            return slow()
+            capped = true
+        }
+    }
+    var to = -1
+    var cap_r = -1
+    var cap_w = -1
+    if capped {
+        if nowait {
+            to = sh.stage_w
+        } else {
+            let (pr, pw) = os_pipe() else (-1, -1)
+            if pr < 0 {
+                close_opened(t)
+                return slow()
+            }
+            cap_r = pr
+            cap_w = pw
+            to = pw
         }
     }
     sync_env(t)
@@ -724,20 +830,106 @@ fn run_fast(sh: Sh, a: Ast, n: int) -> Fast {
         env_set(names[k], values[k]) else |_| {}
         k += 1
     }
-    let hd = os_spawn_fds(path, fields[1..fields.len], child_map(t)) else -1
+    let hd = os_spawn_fds(path, fields[1..fields.len], map_to(t, to)) else -1
+    if cap_w >= 0 {
+        fs_close(cap_w) else |_| {}
+    }
+    var got = List[byte]()
+    if cap_r >= 0 {
+        if hd >= 0 {
+            drain_to(cap_r, mut got)
+        }
+        fs_close(cap_r) else |_| {}
+    }
     var st = 0
     var sig = 0
-    if hd >= 0 {
-        let (code, n) = wait_child(hd, sh.sig_listen != 0)
+    if hd >= 0 && !nowait {
+        let (code, signo) = wait_child(hd, sh.sig_listen != 0)
         st = code
-        sig = n
+        sig = signo
     }
     env_back(t, names)
     close_opened(t)
     if hd < 0 {
         return slow()
     }
-    Fast { kind: R_DONE, status: st, enc: "", reads: t.dir_reads, sig: sig }
+    r.status = st
+    r.sig = sig
+    r.reads = t.dir_reads
+    if nowait {
+        r.kind = R_STAGE
+        r.child = hd
+    }
+    if got.len > 0 {
+        set_out(mut r, got)
+    }
+    r
+}
+
+/// A child's descriptor map (`[os.proc.fds]`) for the shadow's table:
+/// as `child_map`, with every capture marker going to `to`.
+fn map_to(sh: Sh, to: int) -> List[int] {
+    var map = List[int]()
+    var k = 0
+    while k < sh.fds.len {
+        let h = sh.fds[k]
+        if h == FD_CLOSED {
+            if k <= 2 {
+                (mut map).push(k)
+                (mut map).push(-1)
+            }
+        } else if is_cap(h) {
+            (mut map).push(k)
+            (mut map).push(to)
+        } else {
+            (mut map).push(k)
+            (mut map).push(h)
+        }
+        k += 1
+    }
+    map
+}
+
+/// Everything readable from `r`, appended to `got`.
+fn drain_to(r: int, mut got: List[byte]) {
+    loop {
+        let c = fs_read_chunk(r, 65536) else |e| match e {
+            eof => { break },
+            io => { break },
+        }
+        for x in c {
+            (mut got).push(x)
+        }
+    }
+}
+
+/// The capture's bytes into the result: as text when they are UTF-8,
+/// else as hex (`raw`), so that the real state gets the very bytes.
+fn set_out(mut r: Fast, b: List[byte]) {
+    let s = str_from_utf8(b) else |_| {
+        r.out = hex_of(b)
+        r.raw = true
+        return
+    }
+    r.out = s
+}
+
+fn hex_of(b: List[byte]) -> str {
+    var o = buf()
+    for x in b {
+        let v = x as int
+        putb(mut o, hex_digit(v / 16))
+        putb(mut o, hex_digit(v % 16))
+    }
+    text(o)
+}
+
+fn hex_digit(d: int) -> int {
+    if d < 10 then 48 + d else 87 + d
+}
+
+fn hex_val(c: int) -> int {
+    if c <= 57 then c - 48 else c - 87
 }
 
 /// A line typed at the prompt, parsed and run inside the region when it
@@ -757,7 +949,7 @@ fn run_turn_fast(sh: Sh, src: str, line: int) -> Fast {
     if a.nodes[k].kind != K_SIMPLE {
         return slow()
     }
-    run_fast(sh, a, k)
+    run_fast(sh, a, k, false)
 }
 
 fn nul_at(s: str, from: int) -> int {
@@ -768,24 +960,48 @@ fn nul_at(s: str, from: int) -> int {
     i
 }
 
-/// Write a fast result into the state: its assignments and status.
+/// Write a fast result into the state: what it wrote to the capture,
+/// the signal that ended its program, its assignments, a stage's
+/// handle, and its status.
 fn commit_fast(mut sh: Sh, r: Fast) -> int {
     sh.dir_reads += r.reads
+    if r.out.len > 0 {
+        // straight into the innermost capture, the only one the command
+        // could name (`caps_fast`): its own redirections, which may have
+        // aimed descriptor 1 elsewhere, were the shadow's
+        flush(mut sh)
+        if r.raw {
+            var at = 0
+            while at + 1 < r.out.len {
+                let v = hex_val(byte_at(r.out, at)) * 16 + hex_val(byte_at(r.out, at + 1))
+                (mut sh.cap_data).push(v as byte)
+                at += 2
+            }
+        } else {
+            for x in r.out.bytes() {
+                (mut sh.cap_data).push(x)
+            }
+        }
+    }
     if r.sig != 0 {
         report_signal(mut sh, r.sig)
     }
-    if r.kind == R_ASSIGN {
-        var at = 0
-        while at < r.enc.len {
-            let z = nul_at(r.enc, at)
-            let z2 = nul_at(r.enc, z + 1)
-            let name = r.enc[at..z]
-            if !set_var(mut sh, name, r.enc[z + 1..z2]) {
-                fatal(mut sh, "{name}: is read-only", 2)
-                return 2
-            }
-            at = z2 + 1
+    var at = 0
+    while at < r.enc.len {
+        let z = nul_at(r.enc, at)
+        let z2 = nul_at(r.enc, z + 1)
+        let name = r.enc[at..z]
+        if !set_var(mut sh, name, r.enc[z + 1..z2]) {
+            fatal(mut sh, "{name}: is read-only", 2)
+            return 2
         }
+        at = z2 + 1
+    }
+    if r.kind == R_STAGE {
+        sh.stage_child = r.child
+        sh.started = true
+    } else if r.kind == R_FEED {
+        sh.stage_in = r.child
     }
     sh.status = r.status
     r.status
@@ -1597,14 +1813,17 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         sh.stage_w = w
         sh.stage_cap = sh.caps.len
         sh.stage_child = -1
+        sh.stage_in = -1
         let simple = sh.ast.nodes[node].kind == K_SIMPLE
         let _st = run_stage(mut sh, node, input, simple)
         let child = sh.stage_child
+        let given = sh.stage_in
         sh.stage_child = -1
+        sh.stage_in = -1
         sh.stage_w = -1
         sh.stage_cap = 0
-        var fed = FD_CLOSED
-        if child >= 0 {
+        var fed = given
+        if child >= 0 || given >= 0 {
             let start = cap_close(mut sh)
             cap_cut(mut sh, start)
         } else {

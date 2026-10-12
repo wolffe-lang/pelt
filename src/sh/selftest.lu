@@ -446,12 +446,15 @@ pub fn self_test() -> List[str] {
     // inside the region: a test, an assignment, output to a file
     want_route(mut bad, "[ 1 -lt 2 ]\n", false, R_DONE, "")
     want_route(mut bad, "true\n", false, R_DONE, "")
-    want_route(mut bad, "i=$((i+1))\n", false, R_ASSIGN, enc1("i", "2"))
+    want_route(mut bad, "i=$((i+1))\n", false, R_DONE, enc1("i", "2"))
     want_route(mut bad, "echo hi >/dev/null\n", false, R_DONE, "")
+    // an expansion's assignment is recorded, in order (sh08)
+    want_route(mut bad, ": ${{y:=1}}\n", false, R_DONE, enc1("y", "1"))
+    want_route(mut bad, "echo $((z=1)) >/dev/null\n", false, R_DONE, enc1("z", "1"))
+    want_route(mut bad, "j=$((k=3))\n", false, R_DONE, enc1("k", "3") + enc1("j", "3"))
     // the ordinary path: anything that writes the state while it runs
     want_route(mut bad, "x=$(true)\n", false, R_SLOW, "")
-    want_route(mut bad, ": ${{y:=1}}\n", false, R_SLOW, "")
-    want_route(mut bad, "echo $((z=1))\n", false, R_SLOW, "")
+    want_route(mut bad, "unset i\n", false, R_SLOW, "")
     want_route(mut bad, "cd /\n", false, R_SLOW, "")
     want_route(mut bad, "read x\n", false, R_SLOW, "")
     want_route(mut bad, "echo $nope\n", true, R_SLOW, "")
