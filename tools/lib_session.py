@@ -334,8 +334,17 @@ _LMODES = termios.ICANON | termios.ECHO | termios.ISIG
 def _lmode(fd):
     try:
         return termios.tcgetattr(fd)[3] & _LMODES
-    except termios.error:
+    except (termios.error, OSError):
         return None
+
+
+def term_lmode(master, hold):
+    """The terminal's local modes after the shell may have gone: through
+    the master, which answers for the pair on linux and macOS alike (on
+    macOS the slave is revoked when its session leader exits, and
+    tcgetattr on it is ENOTTY); through the slave if the master cannot."""
+    m = _lmode(master)
+    return m if m is not None else _lmode(hold)
 
 
 def read_meta(path):
@@ -639,7 +648,7 @@ def _session(argv, keys, env, cwd, expect, meta=None):
         last_screens[-1] = scr.snapshot(start_row)
     last_mode = None
     if rc is not None:
-        last_mode = _lmode(hold) == mode_before
+        last_mode = term_lmode(master, hold) == mode_before
     os.close(hold)
     if rc is None:
         exit_line = "alive"
