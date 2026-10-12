@@ -1,0 +1,30 @@
+bench: 9 runs each, unpinned; load ['3.32', '6.91', '8.03']
+script           shell    median s   min s  user s   sys s  ratio
+fork             dash        0.331   0.327   0.271   0.058   1.00
+fork             base        0.490   0.486   0.356   0.149   1.48
+fork             trunk       0.488   0.485   0.354   0.147   1.47
+fork             head        0.498   0.492   0.356   0.154   1.50
+fork             base-native    0.517   0.511   0.375   0.157   1.56
+fork             trunk-native    0.525   0.514   0.378   0.163   1.58
+fork             head-native    0.520   0.518   0.379   0.159   1.57
+pipeline         dash        0.601   0.326   0.590   0.424   1.00
+pipeline         base        0.566   0.541   0.441   0.278   0.94
+pipeline         trunk       0.540   0.528   0.431   0.258   0.90
+pipeline         head        0.404   0.399   0.382   0.173   0.67
+pipeline         base-native    0.589   0.563   0.458   0.281   0.98
+pipeline         trunk-native    0.575   0.567   0.454   0.278   0.96
+pipeline         head-native    0.450   0.448   0.420   0.186   0.75
+param            dash        0.363   0.345   0.362   0.000   1.00
+param            base        1.597   1.527   1.565   0.026   4.40
+param            trunk       1.522   1.501   1.497   0.022   4.19
+param            head        1.523   1.482   1.518   0.008   4.19
+param            base-native    4.601   4.476   4.561   0.028  12.67
+param            trunk-native    5.015   4.759   4.974   0.030  13.81
+param            head-native    5.206   4.928   5.188   0.007  14.33
+configure-shaped dash        0.349   0.342   0.305   0.122   1.00
+configure-shaped base        0.517   0.510   0.292   0.290   1.48
+configure-shaped trunk       0.520   0.506   0.295   0.292   1.49
+configure-shaped head        0.343   0.341   0.260   0.149   0.98
+configure-shaped base-native    0.592   0.570   0.362   0.292   1.69
+configure-shaped trunk-native    0.596   0.589   0.361   0.297   1.71
+configure-shaped head-native    0.438   0.433   0.341   0.163   1.26

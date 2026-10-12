@@ -305,3 +305,40 @@ trunk's did, and that is where it was left.
   checked tier of this work is the compiler's only.
 - sh12 (the history) touches `sh.interact`; whichever lands second
   rebases, and the gates are to be re-run then.
+
+## 7. After the rebase onto sh12 (trunk `50eb06c`)
+
+sh12 (the history) landed while this lane ran; the branch was rebased
+onto `50eb06c` (one conflict, the module doc of `sh.selftest`, both
+halves kept) and force-pushed with lease. Everything was taken again at
+the rebased head `ac6891d`, under `notes/sh08-evidence/rebase/`:
+
+- the gauntlet (`head4.status`): every step exit 0; corpus **837/0/98**
+  on both tiers and under `taskset -c 0-3`, sessions **197/0/20**
+  likewise — new trunk's own numbers; loop-rss 14 / 24 B a turn.
+- `tools/shape-rss`: **22 of 22 on both tiers** at the head; on new
+  trunk's release binary **21 of 22 fail** (`shape-trunk2-release.log`),
+  as on the old one. sh12's history adds nothing the gate sees (its
+  environment has no writable history file).
+- the script census, both passes: 76 same, 3 differ, 1 unstable, every
+  verdict and exit status identical to old trunk's.
+- `tools/bench` with new trunk as a third binary (`bench/`). The pinned
+  run began at load 20.7 and its wall times are not read; unpinned
+  (load 3.3 → 2.2), head against new trunk: pipeline **−25% release,
+  −22% native**, configure-shaped **−34% / −27%**, param 0.0% / +3.8%,
+  fork +2.0% / −1.0%. Instructions (load-independent): release param
+  −2.4%, configure −0.7%, fork +0.6%, pipeline +0.8%; native param
+  +3.4%, fork +3.3%, pipeline +8.1%, configure +5.7% — §3.6's reading
+  stands: the release tier at or under trunk, the native tier dearer
+  per command and cheaper per pipeline in time.
+
+CI: the first PR runs (`70c51dd`, `a09a162`, `8abb1e2`) failed on macOS
+only, in the typed rows of `tools/shape-rss`: after `exit` the harness
+stopped reading the pty and waited 10 s, and pelt, putting the
+terminal's mode back, waited for the pty's output to be read (every
+loop and script row passed there, 11–113 B a turn). The tool now keeps
+reading until the shell is gone (`ac6891d`'s parent). The planted
+break (run 38243184319, `0337d7f`) is red where it should be: on linux
+x86-64 the shape steps of both tiers fail on six rows (`pipeline`
+1,713 B a turn, `subshell` 871, `script-pipeline` 1,550,
+`typed-pipeline` 1,778, …) and on nothing else.
