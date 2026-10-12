@@ -24,12 +24,25 @@
 //! the position the capture began at, and its result is cut back out.
 //!
 //! **Subshells run in-process.** wolf has no fork, so `( … )`, `$( … )`
-//! and an in-process pipeline stage copy the environment, run, and put
-//! it back (`snap` and `restore`): variables, functions, positional
-//! parameters, options, traps, the `local` stack, the descriptor table,
-//! the working directory and the file mode creation mask. The process environment a child sees is
+//! and an in-process pipeline stage run in the shell's own state, inside
+//! a FRAME (`frame_open`, `frame_close`) that puts it back after:
+//! variables, functions, positional parameters, options, traps, the
+//! `local` stack, the descriptor table, the working directory and the
+//! file mode creation mask. The process environment a child sees is
 //! made to match the variables before every spawn (`sh.exec`'s
 //! `sync_env`), so a subshell's `export` or `unset` ends with it too.
+//!
+//! **Memory (pelt#19).** The root region frees nothing, so a frame
+//! copies nothing: every write to the variables, the export and
+//! read-only marks, the functions and the traps goes through one helper
+//! per table (`vset`, `xset`, `rset`, `fnset`, `tset` and their `…del`)
+//! that, inside a frame, first records the value it replaces — once per
+//! name and frame — on the JOURNAL; closing the frame plays the journal
+//! back. The frame's scalars, the descriptor table and `$@` go on two
+//! stacks. All of these are lists the state keeps and reuses, so a
+//! subshell that writes nothing allocates nothing, and one that writes
+//! keeps only what it wrote (before sh08, `snap` and `restore` copied
+//! the whole state twice per subshell: 10 KB a pipeline).
 
 const F_NONE: int = 0
 
@@ -190,28 +203,24 @@ struct Sh {
     /// until a `umask` has run.
     mask: int,
     mask0: int,
-}
-
-struct Snap {
-    vals: Map[str, str],
-    exported: Map[str, bool],
-    ronly: Map[str, bool],
-    funcs: Map[str, int],
-    pos: List[str],
-    arg0: str,
-    opts: List[bool],
-    traps: Map[str, str],
-    loops: int,
-    fdepth: int,
-    dots: int,
-    lnames: List[str],
-    lvals: List[str],
-    lset: List[bool],
-    lexp: List[bool],
-    lframes: List[int],
-    fds: List[int],
-    phys: str,
-    mask: int,
+    /// The journal (module doc): per entry, the table (`J_VAL` …), the
+    /// name, the value it replaced (a `str` for variables and traps, an
+    /// `int` for functions and marks) and whether there was one.
+    jtab: List[int],
+    jname: List[str],
+    jstr: List[str],
+    jint: List[int],
+    jhad: List[bool],
+    /// A name's latest journal entry: a write finds it here and records
+    /// nothing when it is in the open frame already.
+    jseen: Map[str, int],
+    /// Per open frame: where its journal starts, and where its record
+    /// starts on `fr_int` and `fr_str`.
+    jframes: List[int],
+    fr_ibase: List[int],
+    fr_sbase: List[int],
+    fr_int: List[int],
+    fr_str: List[str],
 }
 
 fn new_sh(name: str) -> Sh {
@@ -301,6 +310,17 @@ fn new_sh(name: str) -> Sh {
         groups: "",
         mask: -1,
         mask0: -1,
+        jtab: List[int](),
+        jname: List[str](),
+        jstr: List[str](),
+        jint: List[int](),
+        jhad: List[bool](),
+        jseen: Map[str, int](),
+        jframes: List[int](),
+        fr_ibase: List[int](),
+        fr_sbase: List[int](),
+        fr_int: List[int](),
+        fr_str: List[str](),
     }
 }
 
@@ -313,89 +333,407 @@ fn std_fds() -> List[int] {
     f
 }
 
-fn opts_list(sh: Sh) -> List[bool] {
-    var o = List[bool]()
-    (mut o).push(sh.opt_e)
-    (mut o).push(sh.opt_u)
-    (mut o).push(sh.opt_x)
-    (mut o).push(sh.opt_f)
-    (mut o).push(sh.opt_n)
-    (mut o).push(sh.opt_v)
-    (mut o).push(sh.opt_a)
-    (mut o).push(sh.opt_bigc)
-    (mut o).push(sh.opt_vi)
-    (mut o).push(sh.opt_emacs)
-    o
+// ------------------------------------------------------------- frames
+
+const J_VAL: int = 1
+
+const J_EXP: int = 2
+
+const J_RO: int = 3
+
+const J_FN: int = 4
+
+const J_TRAP: int = 5
+
+/// The options as one number: what a frame keeps of them.
+fn opts_bits(sh: Sh) -> int {
+    var b = 0
+    if sh.opt_e {
+        b = b | 1
+    }
+    if sh.opt_u {
+        b = b | 2
+    }
+    if sh.opt_x {
+        b = b | 4
+    }
+    if sh.opt_f {
+        b = b | 8
+    }
+    if sh.opt_n {
+        b = b | 16
+    }
+    if sh.opt_v {
+        b = b | 32
+    }
+    if sh.opt_a {
+        b = b | 64
+    }
+    if sh.opt_bigc {
+        b = b | 128
+    }
+    if sh.opt_vi {
+        b = b | 256
+    }
+    if sh.opt_emacs {
+        b = b | 512
+    }
+    b
 }
 
-fn snap(sh: Sh) -> Snap {
-    Snap {
-        vals: copy sh.vals,
-        exported: copy sh.exported,
-        ronly: copy sh.ronly,
-        funcs: copy sh.funcs,
-        pos: copy sh.pos,
-        arg0: sh.arg0,
-        opts: opts_list(sh),
-        traps: copy sh.traps,
-        loops: sh.loops,
-        fdepth: sh.fdepth,
-        dots: sh.dots,
-        lnames: copy sh.lnames,
-        lvals: copy sh.lvals,
-        lset: copy sh.lset,
-        lexp: copy sh.lexp,
-        lframes: copy sh.lframes,
-        fds: copy sh.fds,
-        phys: sh.phys,
-        mask: sh.mask,
+fn set_opts_bits(mut sh: Sh, b: int) {
+    sh.opt_e = b & 1 != 0
+    sh.opt_u = b & 2 != 0
+    sh.opt_x = b & 4 != 0
+    sh.opt_f = b & 8 != 0
+    sh.opt_n = b & 16 != 0
+    sh.opt_v = b & 32 != 0
+    sh.opt_a = b & 64 != 0
+    sh.opt_bigc = b & 128 != 0
+    sh.opt_vi = b & 256 != 0
+    sh.opt_emacs = b & 512 != 0
+}
+
+/// Where a frame's record keeps its fixed fields on `fr_int`.
+const FR_OPTS: int = 0
+
+const FR_LOOPS: int = 1
+
+const FR_FDEPTH: int = 2
+
+const FR_DOTS: int = 3
+
+const FR_MASK: int = 4
+
+const FR_LOCALS: int = 5
+
+const FR_LFRAMES: int = 6
+
+const FR_NPOS: int = 7
+
+const FR_NFDS: int = 8
+
+/// The descriptor table follows the fixed fields.
+const FR_FDS: int = 9
+
+/// Start a subshell's frame: everything `frame_close` puts back.
+fn frame_open(mut sh: Sh) {
+    (mut sh.jframes).push(sh.jtab.len)
+    (mut sh.fr_ibase).push(sh.fr_int.len)
+    (mut sh.fr_sbase).push(sh.fr_str.len)
+    (mut sh.fr_int).push(opts_bits(sh))
+    (mut sh.fr_int).push(sh.loops)
+    (mut sh.fr_int).push(sh.fdepth)
+    (mut sh.fr_int).push(sh.dots)
+    (mut sh.fr_int).push(sh.mask)
+    (mut sh.fr_int).push(sh.lnames.len)
+    (mut sh.fr_int).push(sh.lframes.len)
+    (mut sh.fr_int).push(sh.pos.len)
+    (mut sh.fr_int).push(sh.fds.len)
+    var k = 0
+    while k < sh.fds.len {
+        (mut sh.fr_int).push(sh.fds[k])
+        k += 1
+    }
+    (mut sh.fr_str).push(sh.arg0)
+    (mut sh.fr_str).push(sh.phys)
+    k = 0
+    while k < sh.pos.len {
+        (mut sh.fr_str).push(sh.pos[k])
+        k += 1
     }
 }
 
-fn restore(mut sh: Sh, s: Snap) {
-    sh.vals = copy s.vals
-    sh.exported = copy s.exported
-    sh.ronly = copy s.ronly
-    sh.funcs = copy s.funcs
-    sh.pos = copy s.pos
-    sh.arg0 = s.arg0
-    sh.opt_e = s.opts[0]
-    sh.opt_u = s.opts[1]
-    sh.opt_x = s.opts[2]
-    sh.opt_f = s.opts[3]
-    sh.opt_n = s.opts[4]
-    sh.opt_v = s.opts[5]
-    sh.opt_a = s.opts[6]
-    sh.opt_bigc = s.opts[7]
-    sh.opt_vi = s.opts[8]
-    sh.opt_emacs = s.opts[9]
-    sh.traps = copy s.traps
-    sh.loops = s.loops
-    sh.fdepth = s.fdepth
-    sh.dots = s.dots
-    sh.lnames = copy s.lnames
-    sh.lvals = copy s.lvals
-    sh.lset = copy s.lset
-    sh.lexp = copy s.lexp
-    sh.lframes = copy s.lframes
-    restore_fds(mut sh, s.fds)
-    if s.phys.len > 0 && s.phys != sh.phys {
-        os_chdir(s.phys) else |_| {}
-        sh.phys = s.phys
+/// End the innermost frame: the journal played back, the record put
+/// back, the stacks cut to where the frame began.
+fn frame_close(mut sh: Sh) {
+    let jb = (mut sh.jframes).pop() else 0
+    journal_back(mut sh, jb)
+    let ib = (mut sh.fr_ibase).pop() else 0
+    let sb = (mut sh.fr_sbase).pop() else 0
+    set_opts_bits(mut sh, sh.fr_int[ib + FR_OPTS])
+    sh.loops = sh.fr_int[ib + FR_LOOPS]
+    sh.fdepth = sh.fr_int[ib + FR_FDEPTH]
+    sh.dots = sh.fr_int[ib + FR_DOTS]
+    let nl = sh.fr_int[ib + FR_LOCALS]
+    while sh.lnames.len > nl {
+        let _n = (mut sh.lnames).pop() else ""
+        let _v = (mut sh.lvals).pop() else ""
+        let _s = (mut sh.lset).pop() else false
+        let _e = (mut sh.lexp).pop() else false
     }
-    restore_mask(mut sh, s.mask)
+    let nf = sh.fr_int[ib + FR_LFRAMES]
+    while sh.lframes.len > nf {
+        let _f = (mut sh.lframes).pop() else 0
+    }
+    sh.arg0 = sh.fr_str[sb]
+    let np = sh.fr_int[ib + FR_NPOS]
+    (mut sh.pos).clear()
+    var k = 0
+    while k < np {
+        (mut sh.pos).push(sh.fr_str[sb + 2 + k])
+        k += 1
+    }
+    restore_fds(mut sh, ib + FR_FDS, sh.fr_int[ib + FR_NFDS])
+    let phys = sh.fr_str[sb + 1]
+    if phys.len > 0 && phys != sh.phys {
+        os_chdir(phys) else |_| {}
+        sh.phys = phys
+    }
+    restore_mask(mut sh, sh.fr_int[ib + FR_MASK])
+    while sh.fr_int.len > ib {
+        let _i = (mut sh.fr_int).pop() else 0
+    }
+    while sh.fr_str.len > sb {
+        let _s = (mut sh.fr_str).pop() else ""
+    }
 }
 
-/// Put the descriptor table back to `was`, closing every handle pelt
-/// opened that the table no longer names.
-fn restore_fds(mut sh: Sh, was: List[int]) {
+/// Put the descriptor table back to the `n` handles a frame recorded at
+/// `fr_int[at..]`, closing every handle pelt opened that the table no
+/// longer names. Written in place.
+fn restore_fds(mut sh: Sh, at: int, n: int) {
     flush(mut sh)
     for h in sh.fds {
-        if h >= 3 && !names_handle(was, h) {
+        if h >= 3 && !frame_names(sh, at, n, h) {
             fs_close(h) else |_| {}
         }
     }
-    sh.fds = copy was
+    while sh.fds.len > n {
+        let _h = (mut sh.fds).pop() else 0
+    }
+    var k = 0
+    while k < n {
+        if k < sh.fds.len {
+            sh.fds[k] = sh.fr_int[at + k]
+        } else {
+            (mut sh.fds).push(sh.fr_int[at + k])
+        }
+        k += 1
+    }
+}
+
+fn frame_names(sh: Sh, at: int, n: int, h: int) -> bool {
+    var k = 0
+    while k < n {
+        if sh.fr_int[at + k] == h {
+            return true
+        }
+        k += 1
+    }
+    false
+}
+
+/// Before a write to table `tab` at `name` inside a frame: record what
+/// is there, unless this frame recorded it already.
+fn jot(mut sh: Sh, tab: int, name: str) {
+    if sh.jframes.len == 0 {
+        return
+    }
+    let base = sh.jframes[sh.jframes.len - 1]
+    let at = sh.jseen[name] else -1
+    if at >= base && at < sh.jtab.len && sh.jtab[at] == tab && sh.jname[at] == name {
+        return
+    }
+    var had = false
+    var s = ""
+    var i = 0
+    if tab == J_VAL {
+        had = has_var(sh, name)
+        s = sh.vals[name] else ""
+    } else if tab == J_TRAP {
+        let a = sh.traps[name] else ""
+        had = trap_set(sh, name)
+        s = a
+    } else if tab == J_FN {
+        i = sh.funcs[name] else -1
+        had = i >= 0
+    } else if tab == J_EXP {
+        had = marked(sh.exported, name)
+        let e = sh.exported[name] else false
+        i = if e then 1 else 0
+    } else {
+        had = marked(sh.ronly, name)
+        let r = sh.ronly[name] else false
+        i = if r then 1 else 0
+    }
+    (mut sh.jtab).push(tab)
+    (mut sh.jname).push(name)
+    (mut sh.jstr).push(s)
+    (mut sh.jint).push(i)
+    (mut sh.jhad).push(had)
+    sh.jseen[name] = sh.jtab.len - 1
+}
+
+/// Whether the mark map `m` has an entry for `name` (true or false).
+fn marked(m: Map[str, bool], name: str) -> bool {
+    let _b = m[name] else {
+        return false
+    }
+    true
+}
+
+fn trap_set(sh: Sh, name: str) -> bool {
+    let _a = sh.traps[name] else {
+        return false
+    }
+    true
+}
+
+/// Play the journal back to entry `base`, newest first.
+fn journal_back(mut sh: Sh, base: int) {
+    while sh.jtab.len > base {
+        let tab = (mut sh.jtab).pop() else 0
+        let name = (mut sh.jname).pop() else ""
+        let s = (mut sh.jstr).pop() else ""
+        let i = (mut sh.jint).pop() else 0
+        let had = (mut sh.jhad).pop() else false
+        if tab == J_VAL {
+            if had {
+                sh.vals[name] = s
+            } else {
+                let _v = (mut sh.vals).remove(name) else ""
+            }
+        } else if tab == J_TRAP {
+            if had {
+                sh.traps[name] = s
+            } else {
+                let _t = (mut sh.traps).remove(name) else ""
+            }
+        } else if tab == J_FN {
+            if had {
+                sh.funcs[name] = i
+            } else {
+                let _f = (mut sh.funcs).remove(name) else 0
+            }
+        } else if tab == J_EXP {
+            if had {
+                sh.exported[name] = i == 1
+            } else {
+                let _e = (mut sh.exported).remove(name) else false
+            }
+        } else if had {
+            sh.ronly[name] = i == 1
+        } else {
+            let _r = (mut sh.ronly).remove(name) else false
+        }
+    }
+}
+
+// The writers: every write to the five tables goes through one of these.
+
+fn vset(mut sh: Sh, name: str, v: str) {
+    jot(mut sh, J_VAL, name)
+    sh.vals[name] = v
+}
+
+fn vdel(mut sh: Sh, name: str) {
+    jot(mut sh, J_VAL, name)
+    let _v = (mut sh.vals).remove(name) else ""
+}
+
+fn xset(mut sh: Sh, name: str, on: bool) {
+    jot(mut sh, J_EXP, name)
+    sh.exported[name] = on
+}
+
+fn xdel(mut sh: Sh, name: str) {
+    jot(mut sh, J_EXP, name)
+    let _e = (mut sh.exported).remove(name) else false
+}
+
+fn rset(mut sh: Sh, name: str) {
+    jot(mut sh, J_RO, name)
+    sh.ronly[name] = true
+}
+
+fn rdel(mut sh: Sh, name: str) {
+    jot(mut sh, J_RO, name)
+    let _r = (mut sh.ronly).remove(name) else false
+}
+
+fn fnset(mut sh: Sh, name: str, body: int) {
+    jot(mut sh, J_FN, name)
+    sh.funcs[name] = body
+}
+
+fn fndel(mut sh: Sh, name: str) {
+    jot(mut sh, J_FN, name)
+    let _f = (mut sh.funcs).remove(name) else 0
+}
+
+fn tset(mut sh: Sh, name: str, action: str) {
+    jot(mut sh, J_TRAP, name)
+    sh.traps[name] = action
+}
+
+fn tdel(mut sh: Sh, name: str) {
+    jot(mut sh, J_TRAP, name)
+    let _t = (mut sh.traps).remove(name) else ""
+}
+
+/// Every name `trap` can record a condition under (`sh.builtin`'s
+/// `trap_name`), in a fixed order; "" past the end. A literal each, so
+/// walking them allocates nothing.
+fn trap_cond(i: int) -> str {
+    match i {
+        0 => "EXIT",
+        1 => "HUP",
+        2 => "INT",
+        3 => "QUIT",
+        4 => "ILL",
+        5 => "TRAP",
+        6 => "ABRT",
+        7 => "FPE",
+        8 => "KILL",
+        9 => "SEGV",
+        10 => "PIPE",
+        11 => "ALRM",
+        12 => "TERM",
+        13 => "USR1",
+        14 => "USR2",
+        15 => "CHLD",
+        16 => "CONT",
+        17 => "TSTP",
+        _ => "",
+    }
+}
+
+/// A subshell starts with its traps reset (XCU 2.12): a trap with an
+/// action is removed; an ignored one (`trap '' …`) stays ignored. In
+/// place, through the journal, so the frame puts them back.
+fn traps_reset(mut sh: Sh) {
+    if sh.traps.len == 0 {
+        return
+    }
+    var i = 0
+    loop {
+        let c = trap_cond(i)
+        if c.len == 0 {
+            break
+        }
+        let a = sh.traps[c] else ""
+        if a.len > 0 {
+            tdel(mut sh, c)
+        }
+        i += 1
+    }
+}
+
+/// Every trap removed (a program run in a subshell's place by `exec`
+/// leaves no `EXIT` trap to run), through the journal.
+fn traps_clear(mut sh: Sh) {
+    var i = 0
+    loop {
+        let c = trap_cond(i)
+        if c.len == 0 {
+            break
+        }
+        if trap_set(sh, c) {
+            tdel(mut sh, c)
+        }
+        i += 1
+    }
 }
 
 fn names_handle(fds: List[int], h: int) -> bool {
@@ -458,9 +796,9 @@ fn set_var(mut sh: Sh, name: str, value: str) -> bool {
     if is_ronly(sh, name) {
         return false
     }
-    sh.vals[name] = value
+    vset(mut sh, name, value)
     if sh.opt_a {
-        sh.exported[name] = true
+        xset(mut sh, name, true)
     }
     true
 }
@@ -473,8 +811,8 @@ fn unset_var(mut sh: Sh, name: str) -> bool {
     if is_ronly(sh, name) {
         return false
     }
-    let _v = (mut sh.vals).remove(name) else ""
-    let _e = (mut sh.exported).remove(name) else false
+    vdel(mut sh, name)
+    xdel(mut sh, name)
     true
 }
 
