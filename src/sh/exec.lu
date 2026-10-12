@@ -61,6 +61,7 @@ fn is_regular_builtin(name: str) -> bool {
         name == "getopts" ||
         name == "wait" ||
         name == "umask" ||
+        name == "fc" ||
         name == "alias" ||
         name == "unalias" ||
         name == "type"

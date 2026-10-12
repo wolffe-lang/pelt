@@ -82,6 +82,8 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
         st = bi_wait(mut sh, args)
     } else if name == "umask" {
         st = bi_umask(mut sh, args)
+    } else if name == "fc" {
+        st = bi_fc(mut sh, args)
     } else if name == "alias" || name == "unalias" || name == "type" {
         diag(mut sh, "{name}: not supported yet")
         st = 2
