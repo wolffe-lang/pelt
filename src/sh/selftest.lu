@@ -169,15 +169,15 @@ fn want_journal(mut bad: List[str]) {
     if after != before {
         (mut bad).push("frame: before {before}\n       after  {after}")
     }
-    let left = sh.jtab.len + sh.jframes.len + sh.fr_int.len + sh.fr_str.len + sh.fdepth
-    if left != 0 {
+    let left = sh.ji.len + sh.jn.len + sh.istk.len + sh.sstk.len + sh.fdepth
+    if left != 0 || sh.fr_top != -1 {
         (mut bad).push(
-            "frame: left journal {sh.jtab.len} frames {sh.jframes.len} ints {sh.fr_int.len} strs {sh.fr_str.len} fdepth {sh.fdepth}",
+            "frame: left journal {sh.ji.len} {sh.jn.len} stacks {sh.istk.len} {sh.sstk.len} top {sh.fr_top} fdepth {sh.fdepth}",
         )
     }
     // outside any frame nothing is journaled
     let _h = set_var(mut sh, "a", "5")
-    if sh.jtab.len != 0 {
+    if sh.ji.len != 0 {
         (mut bad).push("frame: a write outside a frame was journaled")
     }
 }

@@ -304,12 +304,12 @@ fn run_loop(mut sh: Sh, n: int, until: bool) -> int {
 
 /// `for name [in word…]; do …; done`. The items, expanded once (inside
 /// a region when that writes nothing), wait on the state's own stack
-/// (`Sh.items`) and each turn reads its own in place (pelt#19).
+/// (`Sh.sstk`) and each turn reads its own in place (pelt#19).
 fn run_for(mut sh: Sh, n: int) -> int {
     let name = sh.ast.nodes[n].text
     let body = sh.ast.nodes[n].kids[0]
     sh.line = sh.ast.nodes[n].line
-    let base = sh.items.len
+    let base = sh.sstk.len
     if sh.ast.nodes[n].ints[0] == 1 {
         let pre = copy region fe {
             pre_words(sh, sh.ast, n)
@@ -319,7 +319,7 @@ fn run_for(mut sh: Sh, n: int) -> int {
             var at = 0
             while at < pre.enc.len {
                 let z = nul_at(pre.enc, at)
-                (mut sh.items).push(pre.enc[at..z])
+                (mut sh.sstk).push(pre.enc[at..z])
                 at = z + 1
             }
         } else {
@@ -328,22 +328,22 @@ fn run_for(mut sh: Sh, n: int) -> int {
                 return sh.status
             }
             for g in got {
-                (mut sh.items).push(g)
+                (mut sh.sstk).push(g)
             }
         }
     } else {
         var k = 0
         while k < sh.pos.len {
-            (mut sh.items).push(sh.pos[k])
+            (mut sh.sstk).push(sh.pos[k])
             k += 1
         }
     }
-    let top = sh.items.len
+    let top = sh.sstk.len
     var st = 0
     sh.loops += 1
     var k = base
     while k < top {
-        let item = sh.items[k]
+        let item = sh.sstk[k]
         if !set_var(mut sh, name, item) {
             fatal(mut sh, "{name}: is read-only", 2)
             break
@@ -357,9 +357,7 @@ fn run_for(mut sh: Sh, n: int) -> int {
         k += 1
     }
     sh.loops -= 1
-    while sh.items.len > base {
-        let _i = (mut sh.items).pop() else ""
-    }
+    cut_sstk(mut sh, base)
     st
 }
 
@@ -367,8 +365,11 @@ fn run_for(mut sh: Sh, n: int) -> int {
 /// the word and the patterns writes nothing (pelt#19), else here.
 fn run_case(mut sh: Sh, n: int) -> int {
     sh.line = sh.ast.nodes[n].line
-    var i = copy region cm {
-        case_pick(sh, sh.ast, n)
+    var i = case_plain(sh, n)
+    if i == CASE_BAIL {
+        i = copy region cm {
+            case_pick(sh, sh.ast, n)
+        }
     }
     if i == CASE_BAIL {
         i = case_pick_here(mut sh, n)
@@ -401,12 +402,89 @@ fn run_case(mut sh: Sh, n: int) -> int {
 /// `case_pick`'s answer when the expansion would write the state.
 const CASE_BAIL: int = -2
 
+/// `case_pick` for the commonest `case`: a word that is literal or one
+/// parameter alone (`$x`, `${x}`, `$1`, either in double quotes) and
+/// patterns that are all literal — answered from the state as it
+/// stands, nothing built and no region (a `case` word is neither split
+/// nor globbed, and a literal is its own expansion). `CASE_BAIL` when
+/// anything is less plain than that.
+fn case_plain(sh: Sh, n: int) -> int {
+    let (ok, word) = plain_word(sh, sh.ast.nodes[n].text)
+    if !ok {
+        return CASE_BAIL
+    }
+    var i = 0
+    while i < sh.ast.nodes[n].kids.len {
+        let item = sh.ast.nodes[n].kids[i]
+        var j = 0
+        while j < sh.ast.nodes[item].words.len {
+            let pat = sh.ast.nodes[item].words[j]
+            if !plain_lit(pat) {
+                return CASE_BAIL
+            }
+            if pmatch(pat, word) {
+                return i
+            }
+            j += 1
+        }
+        i += 1
+    }
+    -1
+}
+
+/// Whether `w` expands to itself: no quoting, no expansion, no leading
+/// `~`, no byte the expander would mark.
+fn plain_lit(w: str) -> bool {
+    if w.len > 0 && ch(w, 0) == '~' {
+        return false
+    }
+    for b in w.bytes() {
+        let c = b as int
+        if c < 7 || c == 36 || c == 96 || c == 92 || c == 39 || c == 34 {
+            return false
+        }
+    }
+    true
+}
+
+/// A `case` word's value when it is plain (`case_plain`).
+fn plain_word(sh: Sh, w: str) -> (bool, str) {
+    if plain_lit(w) {
+        return (true, w)
+    }
+    var inner = w
+    if w.len >= 2 && ch(w, 0) == '"' && ch(w, w.len - 1) == '"' {
+        inner = w[1..w.len - 1]
+    }
+    var name = ""
+    if inner.len >= 4 && inner.starts_with("${{") && inner.ends_with("}}") {
+        name = inner[2..inner.len - 1]
+    } else if inner.len >= 2 && ch(inner, 0) == '$' {
+        name = inner[1..inner.len]
+    } else {
+        return (false, "")
+    }
+    if name.len == 1 && ch(name, 0) >= '1' && ch(name, 0) <= '9' {
+        let k = byte_at(name, 0) - 49
+        if k < sh.pos.len {
+            return (true, sh.pos[k])
+        }
+        return (!sh.opt_u, "")
+    }
+    if !is_name(name) {
+        return (false, "")
+    }
+    let v = sh.vals[name] else {
+        return (!sh.opt_u, "")
+    }
+    (true, v)
+}
+
 /// The first item of `case` node `n` whose pattern matches its word, or
 /// -1; the word and the patterns expanded in the shadow, in order, as
 /// far as the first match.
 fn case_pick(sh: Sh, a: Ast, n: int) -> int {
-    var t = shadow_of(sh)
-    t.defer_ok = false
+    var t = shadow_read(sh)
     t.line = a.nodes[n].line
     let word = expand_one(mut t, a.nodes[n].text, X_TILDE)
     if t.bail || t.flow != F_NONE {
@@ -538,10 +616,18 @@ fn eval_string(mut sh: Sh, src: str, what: str) -> int {
 /// input: what an interactive shell runs after each prompt, so its
 /// diagnostics count lines from the start of the session.
 fn eval_from(mut sh: Sh, src: str, line: int) -> int {
-    if !sh.lp_busy {
-        return eval_top(mut sh, src, line)
-    }
     var p = new_parser(src, line)
+    eval_top(mut sh, mut p, src, line)
+}
+
+/// `eval_from` through parser `p`, reset in place for `src`: a shell's
+/// outermost text — a script, a `-c` string, each line read at the
+/// prompt — keeps one parser for all of it, so a line typed or read
+/// builds none (pelt#19). After each complete command has run, the
+/// nodes it added are dead unless kept (`sh.ast`'s `recycle`); a
+/// here-document still to be read belongs to what follows.
+fn eval_top(mut sh: Sh, mut p: P, src: str, line: int) -> int {
+    reset_parser(mut p, src, line)
     var st = 0
     loop {
         let top = sh.ast.top
@@ -558,8 +644,6 @@ fn eval_from(mut sh: Sh, src: str, line: int) -> int {
         if !sh.opt_n {
             st = run(mut sh, n)
         }
-        // the command has run: its nodes are dead unless kept (pelt#19);
-        // a here-document still to be read belongs to what follows
         if p.pend.len == 0 && p.want_doc == 0 {
             recycle(mut sh.ast, top, dtop)
         }
@@ -567,43 +651,6 @@ fn eval_from(mut sh: Sh, src: str, line: int) -> int {
             return st
         }
     }
-    st
-}
-
-/// `eval_from` for the outermost text — a script, a `-c` string, each
-/// line read at the prompt — through the parser the state keeps
-/// (`Sh.lp`), reset in place, so a line typed or read builds no parser
-/// (pelt#19). Whatever that text runs that parses (`eval`, `.`, a
-/// trap) gets a parser of its own.
-fn eval_top(mut sh: Sh, src: str, line: int) -> int {
-    sh.lp_busy = true
-    reset_parser(mut sh.lp, src, line)
-    var st = 0
-    loop {
-        let top = sh.ast.top
-        let dtop = sh.ast.dtop
-        let n = parse_complete(mut sh.lp, mut sh.ast)
-        if n == -1 {
-            break
-        }
-        if n == -2 {
-            sh.line = sh.lp.err_line
-            let err = sh.lp.err
-            fatal(mut sh, err, 2)
-            st = 2
-            break
-        }
-        if !sh.opt_n {
-            st = run(mut sh, n)
-        }
-        if sh.lp.pend.len == 0 && sh.lp.want_doc == 0 {
-            recycle(mut sh.ast, top, dtop)
-        }
-        if sh.flow != F_NONE {
-            break
-        }
-    }
-    sh.lp_busy = false
     st
 }
 
@@ -788,7 +835,7 @@ fn is_pure_builtin(name: str) -> bool {
 /// What expansion and the pure built-ins read, copied: the shadow a
 /// simple command runs in inside the region. Writing to it writes
 /// nothing the shell keeps: an assignment an expansion makes is
-/// recorded for the real state (`defer_ok`, `deferred`), and anything
+/// recorded for the real state (`defer_ok`, on the shadow's `sstk`), and anything
 /// else that would have to write (`unset`, `diag`, a command
 /// substitution) sets `bail` instead.
 fn shadow_of(sh: Sh) -> Sh {
@@ -827,15 +874,42 @@ fn shadow_of(sh: Sh) -> Sh {
     t
 }
 
+/// A lighter shadow for an expansion that only reads (`pre_expand`,
+/// `case_pick`): the variables and `$@`, with what `$-`, `$?`, `$!`,
+/// `$0` and the line read; no marks, descriptors or identity, which
+/// only a command reads. It refuses every write (`defer_ok` off).
+fn shadow_read(sh: Sh) -> Sh {
+    var t = new_sh(sh.name)
+    t.vals = copy sh.vals
+    t.pos = copy sh.pos
+    t.arg0 = sh.arg0
+    t.status = sh.status
+    t.opt_e = sh.opt_e
+    t.opt_u = sh.opt_u
+    t.opt_x = sh.opt_x
+    t.opt_f = sh.opt_f
+    t.opt_n = sh.opt_n
+    t.opt_v = sh.opt_v
+    t.opt_a = sh.opt_a
+    t.opt_bigc = sh.opt_bigc
+    t.line = sh.line
+    t.interactive = sh.interactive
+    t.from_stdin = sh.from_stdin
+    t.last_bg = sh.last_bg
+    t.phys = sh.phys
+    t.shadow = true
+    t
+}
+
 /// The assignments the shadow's expansions made since last asked, onto
 /// `enc`, in order.
 fn take_deferred(mut t: Sh, mut enc: Buf) {
     var k = 0
-    while k + 1 < t.deferred.len {
-        put_op(mut enc, '=', t.deferred[k], t.deferred[k + 1])
+    while k + 1 < t.sstk.len {
+        put_op(mut enc, '=', t.sstk[k], t.sstk[k + 1])
         k += 2
     }
-    (mut t.deferred).clear()
+    (mut t.sstk).clear()
 }
 
 /// `enc` as the `str` a `Fast` carries: the empty literal when there is
@@ -886,7 +960,10 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     var bk = B_NONE
     if fields.len > 0 {
         let cmd = fields[0]
-        if sh.funcs.has(cmd) {
+        // the map's own lookup: `std.map`'s `has` builds a list of the
+        // pairs per call
+        let fnode = sh.funcs[cmd] else -1
+        if fnode >= 0 {
             return slow()
         }
         if is_special_builtin(cmd) || is_regular_builtin(cmd) {
@@ -1497,8 +1574,7 @@ struct Pre {
 }
 
 fn pre_expand(sh: Sh, a: Ast, n: int, na: int) -> Pre {
-    var t = shadow_of(sh)
-    t.defer_ok = false
+    var t = shadow_read(sh)
     t.line = a.nodes[n].line
     var rest = List[str]()
     var i = na
@@ -1512,8 +1588,7 @@ fn pre_expand(sh: Sh, a: Ast, n: int, na: int) -> Pre {
 
 /// `for` node `n`'s word list, expanded as `pre_expand` expands.
 fn pre_words(sh: Sh, a: Ast, n: int) -> Pre {
-    var t = shadow_of(sh)
-    t.defer_ok = false
+    var t = shadow_read(sh)
     t.line = a.nodes[n].line
     let fields = expand_words(mut t, copy a.nodes[n].words)
     pre_of(t, fields)
@@ -2199,7 +2274,7 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
     var input = fd_get(sh, 0)
     var own_in = false
     // the children started, on the state's own stack (pelt#19)
-    let kbase = sh.pipe_kids.len
+    let kbase = sh.istk.len
     var st = 0
     var i = 0
     while i < count {
@@ -2242,7 +2317,7 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
             fs_close(input) else |_| {}
         }
         if child >= 0 {
-            (mut sh.pipe_kids).push(child)
+            (mut sh.istk).push(child)
             input = r
         } else {
             fs_close(r) else |_| {}
@@ -2252,14 +2327,12 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         i += 1
     }
     var k = kbase
-    while k < sh.pipe_kids.len {
-        let h = sh.pipe_kids[k]
+    while k < sh.istk.len {
+        let h = sh.istk[k]
         let _s = reap(mut sh, h)
         k += 1
     }
-    while sh.pipe_kids.len > kbase {
-        let _h = (mut sh.pipe_kids).pop() else 0
-    }
+    cut_istk(mut sh, kbase)
     read_pending_caps(mut sh)
     st
 }
