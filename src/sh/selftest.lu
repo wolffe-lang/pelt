@@ -3,9 +3,11 @@
 //! splitting, prefix and suffix trimming, unsigned digits, the parser's
 //! tree, the descriptor table's redirection frames, `cd`'s logical
 //! path, which simple commands run inside the region (`sh.exec`'s
-//! fast path), `umask`'s operand reader, and the history (`sh.hist`):
-//! `fc`'s operands, its list format and the history file's lines. `src/sh_test.lu` runs
-//! them under `wolf test`.
+//! fast path), `umask`'s operand reader, the history (`sh.hist`):
+//! `fc`'s operands, its list format and the history file's lines, and
+//! what pelt#19's memory work keeps in place: a subshell's frame and
+//! journal, the tree's recycled slots and a word's text as a view.
+//! `src/sh_test.lu` runs them under `wolf test`.
 //!
 //! References consulted: POSIX.1-2024 XCU 2.6.4, 2.6.5, 2.14; every
 //! expected value here was read off a black-box run of `dash` 0.5.13.4
@@ -81,6 +83,170 @@ fn want_tree(mut bad: List[str], src: str, want: str) {
     let got = text(o)
     if got != want || p.err.len > 0 {
         (mut bad).push("tree of {escaped(src)}:\n{got}err={p.err}\nwant:\n{want}")
+    }
+}
+
+/// The state a frame must put back, as one line: variables, export and
+/// read-only marks, functions, traps, `$@`, the options and the local
+/// stack's depth.
+fn state_line(sh: Sh) -> str {
+    var o = buf()
+    for k in sort_strs(sh.vals.keys()) {
+        put(mut o, "{k}={sh.vals[k] else ""} ")
+    }
+    put(mut o, "| x:")
+    for k in sort_strs(sh.exported.keys()) {
+        let on = sh.exported[k] else false
+        put(mut o, " {k}={on}")
+    }
+    put(mut o, " | r:")
+    for k in sort_strs(sh.ronly.keys()) {
+        put(mut o, " {k}")
+    }
+    put(mut o, " | f:")
+    for k in sort_strs(sh.funcs.keys()) {
+        put(mut o, " {k}={sh.funcs[k] else -1}")
+    }
+    put(mut o, " | t:")
+    for k in sort_strs(sh.traps.keys()) {
+        put(mut o, " {k}=[{sh.traps[k] else ""}]")
+    }
+    put(mut o, " | @:")
+    for x in sh.pos {
+        put(mut o, " {x}")
+    }
+    put(mut o, " | -{dash_flags(sh)} | locals {sh.lnames.len}")
+    text(o)
+}
+
+/// A subshell's frame (`sh.state`): every write inside it, nested
+/// frames included, is put back when it closes, through the journal,
+/// and the journal and stacks end as they began.
+fn want_journal(mut bad: List[str]) {
+    var sh = new_sh("selftest")
+    sh.vals["a"] = "1"
+    sh.vals["keep"] = "k"
+    sh.exported["a"] = true
+    sh.ronly["keep"] = true
+    sh.funcs["f"] = 3
+    sh.traps["EXIT"] = "echo bye"
+    sh.traps["INT"] = ""
+    (mut sh.pos).push("p1")
+    (mut sh.pos).push("p2")
+    let before = state_line(sh)
+    frame_open(mut sh)
+    traps_reset(mut sh)
+    if trap_set(sh, "EXIT") || !trap_set(sh, "INT") {
+        (mut bad).push("frame: traps_reset left {state_line(sh)}")
+    }
+    let _a = set_var(mut sh, "a", "2")
+    let _b = set_var(mut sh, "b", "new")
+    let _c = unset_var(mut sh, "a")
+    let _d = set_var(mut sh, "a", "3")
+    xset(mut sh, "b", true)
+    xdel(mut sh, "a")
+    rset(mut sh, "b")
+    fnset(mut sh, "g", 7)
+    fndel(mut sh, "f")
+    tset(mut sh, "HUP", "echo hup")
+    tset(mut sh, "INT", "echo int")
+    var args = List[str]()
+    (mut args).push("z1")
+    (mut args).push("z2")
+    (mut args).push("z3")
+    set_pos(mut sh, args, 0)
+    shift_pos(mut sh, 1)
+    sh.opt_e = true
+    sh.fdepth = 1
+    local_push(mut sh, "a")
+    frame_open(mut sh)
+    let _e = set_var(mut sh, "a", "inner")
+    let _f = set_var(mut sh, "c", "inner")
+    set_pos(mut sh, args, 2)
+    frame_close(mut sh)
+    let _g = set_var(mut sh, "a", "4")
+    frame_close(mut sh)
+    let after = state_line(sh)
+    if after != before {
+        (mut bad).push("frame: before {before}\n       after  {after}")
+    }
+    let left = sh.jtab.len + sh.jframes.len + sh.fr_int.len + sh.fr_str.len + sh.fdepth
+    if left != 0 {
+        (mut bad).push(
+            "frame: left journal {sh.jtab.len} frames {sh.jframes.len} ints {sh.fr_int.len} strs {sh.fr_str.len} fdepth {sh.fdepth}",
+        )
+    }
+    // outside any frame nothing is journaled
+    let _h = set_var(mut sh, "a", "5")
+    if sh.jtab.len != 0 {
+        (mut bad).push("frame: a write outside a frame was journaled")
+    }
+}
+
+/// The tree's slots (`sh.ast`): a complete command's nodes are reused by
+/// the next once it is recycled, and kept when something names them.
+fn want_recycle(mut bad: List[str]) {
+    var a = new_ast()
+    var p = new_parser("true | true\nfalse | false\nx() {{ :; }}\ntrue\n", 1)
+    let n1 = parse_complete(mut p, mut a)
+    let used = a.top
+    recycle(mut a, 0, 0)
+    let n2 = parse_complete(mut p, mut a)
+    if n2 != n1 || a.nodes.len != used || a.nodes[n2 + 1].text != "" {
+        (mut bad).push(
+            "recycle: second command at {n2} (first {n1}), {a.nodes.len} slots for {used}",
+        )
+    }
+    if dump_of(a, n2) != dump_of_src("false | false\n") {
+        (mut bad).push("recycle: the reused slots read {escaped(dump_of(a, n2))}")
+    }
+    recycle(mut a, 0, 0)
+    let f = parse_complete(mut p, mut a)
+    keep(mut a)
+    let kept = a.top
+    recycle(mut a, 0, 0)
+    if a.top != kept || f < 0 {
+        (mut bad).push("recycle: a kept tree was taken back ({a.top} of {kept})")
+    }
+    let t = parse_complete(mut p, mut a)
+    if t < kept {
+        (mut bad).push("recycle: a node was reused under the pin ({t} < {kept})")
+    }
+}
+
+fn dump_of(a: Ast, n: int) -> str {
+    var o = buf()
+    dump(a, n, 0, mut o)
+    text(o)
+}
+
+fn dump_of_src(src: str) -> str {
+    var a = new_ast()
+    var p = new_parser(src, 1)
+    let n = parse_complete(mut p, mut a)
+    dump_of(a, n)
+}
+
+/// A word's text (`sh.parse`'s `word_text`): the source itself, with a
+/// `\`-newline cut out where the word or a double-quoted part of it
+/// has one, and kept inside single quotes, `$(…)`, `${…}` and
+/// backquotes, which are read later.
+fn want_word(mut bad: List[str], src: str, want: str) {
+    var a = new_ast()
+    var p = new_parser(src, 1)
+    let n = parse_complete(mut p, mut a)
+    var got = ""
+    if n >= 0 {
+        var k = n
+        while a.nodes[k].kind != K_SIMPLE && a.nodes[k].kids.len > 0 {
+            k = a.nodes[k].kids[0]
+        }
+        for w in a.nodes[k].words {
+            got = got + "[" + w + "]"
+        }
+    }
+    if got != want || p.err.len > 0 {
+        (mut bad).push("words of {escaped(src)} = {escaped(got)}, want {escaped(want)} err={p.err}")
     }
 }
 
@@ -442,6 +608,14 @@ pub fn self_test() -> List[str] {
     // `set -f`: nothing is a pattern
     want_reads(mut bad, "*", true, 0)
     want_frames(mut bad)
+    want_journal(mut bad)
+    want_recycle(mut bad)
+    want_word(mut bad, "echo a b\n", "[echo][a][b]")
+    want_word(mut bad, "ec\\\nho a\\\nb\n", "[echo][ab]")
+    want_word(mut bad, "echo \"a\\\nb\"c\n", "[echo][\"ab\"c]")
+    want_word(mut bad, "echo 'a\\\nb'\n", "[echo]['a\\\nb']")
+    want_word(mut bad, "echo $(a\\\nb) ${{x:-a\\\nb}}\n", "[echo][$(a\\\nb)][${{x:-a\\\nb}}]")
+    want_word(mut bad, "echo `a\\\nb`\n", "[echo][`a\\\nb`]")
     want_canon(mut bad, "/a/./b/../c", "/a/c")
     want_canon(mut bad, "/..", "/")
     want_canon(mut bad, "//usr", "//usr")
