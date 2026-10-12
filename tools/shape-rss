@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+"""shape-rss — does a shell's memory stay flat, construct by construct?
+
+tools/loop-rss holds a loop of simple commands flat. This holds the
+other shapes a long script or a long session repeats (pelt#19): a
+pipeline, a command substitution, a subshell, a function call, an
+arithmetic assignment, a long script of one line repeated, and lines
+typed at the prompt. Each shape runs at N and at 2N turns, and the 2N
+run may peak at most BOUND_B bytes a turn (plus 1 MiB of allocator
+steps) above the N run, as tools/loop-rss's bound reads.
+
+  loop    `while [ $i -lt N ]; do BODY; i=$((i+1)); done`, one process
+          per size; peak resident set from `/usr/bin/time` (the child's
+          maximum resident set size)
+  script  a script of N lines, each LINE, then `echo done`; as above
+  typed   LINE typed N times at the prompt through a pseudo-terminal
+          (tools/lib_session.py's arrangement), then `echo $i`: the
+          shell's resident set after N and after 2N lines, in one
+          session (`ps -o rss=`)
+
+Every run must also answer what the shape counts (`echo $i`, `done`),
+with nothing on standard error, or the shape fails whatever its memory.
+Each loop and script prelude defines `f() { :; }` and
+`g() { local v; v=$1; return 0; }`.
+
+usage: tools/shape-rss [-n N] [-b BOUND_B] [--only NAME[,NAME…]] [--list] SHELL
+Exits 1 when any shape grows past its bound or answers wrongly.
+"""
+
+import os
+import pty
+import select
+import subprocess
+import sys
+import tempfile
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+
+PRELUDE = "f() { :; }\ng() { local v; v=$1; return 0; }\n"
+
+# (name, kind, text)
+SHAPES = [
+    ("pipeline", "loop", "true | true"),
+    ("pipeline-program", "loop", "echo x | cat >/dev/null"),
+    ("substitution", "loop", "x=$(true)"),
+    ("substitution-output", "loop", "x=$(echo y)"),
+    ("backquote", "loop", "x=`true`"),
+    ("substitution-pipeline", "loop", "x=$(echo a | cat)"),
+    ("subshell", "loop", "( true )"),
+    ("call", "loop", "f a b"),
+    ("call-local", "loop", "g a b"),
+    ("arith-assign", "loop", ": $((j=j+1))"),
+    ("script-simple", "script", "true"),
+    ("script-pipeline", "script", "true | true"),
+    ("script-substitution", "script", "x=$(true)"),
+    ("script-call", "script", "f"),
+    ("typed-pipeline", "typed", "true | true"),
+    ("typed-and", "typed", "true && true"),
+    ("typed-brace", "typed", "{ true; }"),
+    ("typed-if", "typed", "if true; then :; fi"),
+    ("typed-substitution", "typed", "x=$(true)"),
+]
+
+ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+
+
+def peak_kb(shell, script, cwd):
+    """Peak RSS in KB of `shell script`, as `/usr/bin/time` reports its
+    child; and the run's exit status, standard output and the length of
+    its standard error. Not `getrusage` from Python: a child forked from
+    Python starts with Python's resident pages counted."""
+    if sys.platform == "darwin":
+        r = subprocess.run(["/usr/bin/time", "-l", shell, script], cwd=cwd, env=ENV,
+                           capture_output=True, text=True)
+        kb = -1
+        for line in r.stderr.splitlines():
+            if line.strip().endswith("maximum resident set size"):
+                kb = int(line.split()[0]) // 1024
+        nerr = len([ln for ln in r.stderr.splitlines()
+                    if ln and not ln.startswith(" ") and "real" not in ln])
+    else:
+        out = os.path.join(cwd, "time.out")
+        r = subprocess.run(["/usr/bin/time", "-f", "%M", "-o", out, shell, script],
+                           cwd=cwd, env=ENV, capture_output=True, text=True)
+        kb = int(open(out).read().strip().splitlines()[-1])
+        nerr = len(r.stderr)
+    return kb, r.returncode, r.stdout.strip(), nerr
+
+
+def run_file(shell, kind, text, n, cwd):
+    path = os.path.join(cwd, "shape.sh")
+    with open(path, "w") as f:
+        f.write(PRELUDE)
+        if kind == "loop":
+            f.write("i=0\n")
+            f.write(f"while [ $i -lt {n} ]; do\n{text}\ni=$((i+1))\ndone\n")
+            f.write("echo $i\n")
+        else:
+            f.write((text + "\n") * n)
+            f.write("echo done\n")
+    want = str(n) if kind == "loop" else "done"
+    kb, rc, out, nerr = peak_kb(shell, "shape.sh", cwd)
+    ok = rc == 0 and out == want and nerr == 0
+    return kb, ok, f"exit {rc} out {out!r} stderr_bytes {nerr}"
+
+
+def rss_of(pid):
+    out = subprocess.run(["ps", "-o", "rss=", "-p", str(pid)],
+                         capture_output=True, text=True).stdout.strip()
+    return int(out) if out else -1
+
+
+def run_typed(shell, text, n):
+    """RSS after n and after 2n typed lines, one session; and whether
+    `echo $i` answered 2n."""
+    master, slave = pty.openpty()
+    rout, wout = os.pipe()
+    rerr, werr = os.pipe()
+    p = subprocess.Popen([shell, "-i"], stdin=slave, stdout=wout, stderr=werr, env=ENV,
+                         start_new_session=True, preexec_fn=ls._ctty)
+    os.close(slave)
+    os.close(wout)
+    os.close(werr)
+    got = {"out": b"", "err": b""}
+
+    def wait_prompt():
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            r, _, _ = select.select([rout, rerr, master], [], [], 0.5)
+            for fd in r:
+                try:
+                    d = os.read(fd, 65536)
+                except OSError:
+                    d = b""
+                if fd == rerr:
+                    got["err"] += d
+                elif fd == rout:
+                    got["out"] += d
+            if got["err"].endswith(b"$ "):
+                got["err"] = b""
+                return True
+        return False
+
+    line = (text + "; i=$((i+1))\n").encode()
+    rows = []
+    try:
+        if not wait_prompt():
+            return [-1, -1], False, "no first prompt"
+        for k in range(1, 2 * n + 1):
+            os.write(master, line)
+            if not wait_prompt():
+                return [-1, -1], False, f"no prompt after line {k}"
+            if k == n or k == 2 * n:
+                rows.append(rss_of(p.pid))
+        os.write(master, b"echo $i\n")
+        wait_prompt()
+        os.write(master, b"exit\n")
+        p.wait(timeout=10)
+    finally:
+        if p.poll() is None:
+            p.kill()
+            p.wait()
+        for fd in (rout, rerr, master):
+            os.close(fd)
+    out = got["out"].decode(errors="replace").strip()
+    return rows, out == str(2 * n), f"exit {p.returncode} out {out!r}"
+
+
+def main(argv):
+    n = 10000
+    bound_b = 100
+    only = None
+    while argv[:1] in (["-n"], ["-b"], ["--only"], ["--list"]):
+        if argv[0] == "--list":
+            for name, kind, text in SHAPES:
+                print(f"{name:24} {kind:7} {text}")
+            return 0
+        if argv[0] == "-n":
+            n = int(argv[1])
+        elif argv[0] == "-b":
+            bound_b = int(argv[1])
+        else:
+            only = set(argv[1].split(","))
+        argv = argv[2:]
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    shell = os.path.abspath(argv[0])
+    limit = n * bound_b // 1024 + 1024
+    failed = []
+    for name, kind, text in SHAPES:
+        if only is not None and name not in only:
+            continue
+        if kind == "typed":
+            rows, ok, why = run_typed(shell, text, n)
+        else:
+            rows = []
+            ok = True
+            why = ""
+            with tempfile.TemporaryDirectory(prefix="shape-rss.") as cwd:
+                for size in (n, 2 * n):
+                    kb, good, why = run_file(shell, kind, text, size, cwd)
+                    rows.append(kb)
+                    ok = ok and good
+        grew = rows[1] - rows[0]
+        per = grew * 1024 // n
+        verdict = "ok" if ok and grew <= limit else "FAIL"
+        print(f"shape-rss: {verdict:4} {name:24} {kind:6} {n:>6} {rows[0]:>8} KB  "
+              f"{2 * n:>6} {rows[1]:>8} KB  grew {grew:>7} KB ({per} B a turn)  [{text}]")
+        if not ok:
+            print(f"shape-rss:      {name}: wrong answer ({why})")
+        if verdict != "ok":
+            failed.append(name)
+    if failed:
+        print(f"shape-rss: FAIL {len(failed)}: {', '.join(failed)} "
+              f"(bound {limit} KB: {bound_b} B a turn + 1 MiB)")
+        return 1
+    print(f"shape-rss: ok (bound {limit} KB: {bound_b} B a turn + 1 MiB)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
