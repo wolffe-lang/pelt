@@ -58,7 +58,7 @@ id	kind	statement	cases	note
 2.5.2/13	T	$$ is the shell's real process ID (what its child sees as its parent)	param/c_pid_is_real	
 2.5.2/14	T	$! is the process ID of the most recent asynchronous list	jobs/bang signal/bang_is_a_process param/c_bang	
 2.5.2/15	T	$0 is the script's name as given; in a function it is unchanged	exec/argv0 param/c_zero	
-2.5.3/1	T	Variables are initialized from the environment and marked for export at once	env/reexport env/c_init_exported	
+2.5.3/1	T	Variables are initialized from the environment and marked for export at once	env/reexport env/c_init_exported param/c_ps_from_env	
 2.5.3/2	T	Environment entries whose names are not valid names do not become shell variables	env/c_invalid_names	
 2.5.3/3	S	ENV is parameter-expanded and the file it names is run before an interactive shell reads commands	session:env_file session:env_missing	
 2.5.3/4	T	ENV is not read by a non-interactive shell	env/c_env_not_read	
@@ -67,7 +67,7 @@ id	kind	statement	cases	note
 2.5.3/7	T	LINENO is the current line number within the script or function	param/lineno param/c_lineno	dash 0.5.13.4 counts from the function's first line inside a function; bash --posix and pelt count lines of the script. The standard's words allow either; the script's line is what a diagnostic needs, so bash is the oracle
 2.5.3/8	T	PPID is the parent's process ID, the same in a subshell	env/c_ppid	
 2.5.3/9	S	PS1 is parameter-expanded and written to standard error before each command is read; default "$ "	session:echo_hi session:ps1_param	
-2.5.3/10	S	In PS1 each ! is replaced by the history number of the next command, and !! by one !	session:c_ps1_bang	
+2.5.3/10	S	In PS1 each ! is replaced by the history number of the next command, and !! by one !	session:c_ps1_bang session:c_ps1_bang_number	
 2.5.3/11	S	PS2 is expanded and written to standard error when a command continues onto another line; default "> "	session:ps2_if	
 2.5.3/12	T	PS4 is parameter-expanded and written before each line of a set -x trace; default "+ "	option/xtrace option/c_ps4	
 2.5.3/13	T	PWD is set from the environment when that is an absolute pathname of the current directory with no dot components	cd/c_pwd_from_env	
@@ -424,7 +424,7 @@ sh/14	T	The shell's own exit: the EXIT status is that of the last command when i
 sh/15	S	An interactive shell ignores SIGQUIT and SIGTERM and survives SIGINT	session:ctrl_c_prompt session:term_at_prompt	
 sh/16	S	With -m an interactive shell ignores SIGTSTP, SIGTTIN and SIGTTOU	session:c_jc_shell_ignores_tstp	
 sh/17	S	set -o ignoreeof keeps an interactive shell alive at end-of-file	session:c_ignoreeof	
-sh/18	S	The command history list: commands typed are kept, at least 128 of them, HISTSIZE and HISTFILE honoured	session:c_hist_fc_list	HISTFILE across two sessions has no case: one session cannot show a file read at the next start
+sh/18	S	The command history list: commands typed are kept, at least 128 of them, HISTSIZE and HISTFILE honoured	session:c_hist_fc_list session:c_hist_histsize session:c_hist_file_read	HISTFILE read at the start is a session (c_hist_file_read); written by one shell and read by the next, two shells sharing one file, and the file cut to HISTSIZE are tools/hist-witness (sh12, CI on both tiers): one session is one shell
 sh/19	S	set -o vi: ESC enters command mode; motion, editing and history keys as the vi-mode sections list (about 60 commands)	session:c_vi_basic session:c_vi_motion session:c_vi_history	
 sh/20	S	In vi insert mode the erase, kill, ^V, ^W and end-of-file characters act as described	session:c_vi_insert session:c_vi_basic session:c_vi_insert_ctrl_w session:c_vi_insert_kill session:c_vi_insert_erase session:c_vi_insert_ctrl_v session:c_vi_eof	
 sh/21	S	MAIL, MAILCHECK, MAILPATH: the shell tells the user before a prompt when a mailbox file changes	session:c_mail	
@@ -441,7 +441,7 @@ sh/33	S	vi . repeats the last change, even one made on an earlier line, with its
 sh/34	S	vi u undoes the last change and U every change to the line	session:c_vi_undo session:c_vi_undo_all	U: POSIX says all changes to the edit line; bash, as a user sees it, goes back to the line as command mode first found it, and so does pelt
 sh/35	S	vi k, -, j, +, G walk the history; /pattern and ?pattern search it (a leading ^ anchors), n and N repeat the search	session:c_vi_history session:c_vi_history_jk session:c_vi_history_G session:c_vi_search session:c_vi_search_n session:c_vi_search_anchor	
 sh/36	S	vi =, \ and * expand the bigword at the cursor as pathnames; @letter inserts the alias _letter, and does nothing when there is none	session:c_vi_star session:c_vi_backslash session:c_vi_at_letter	
-sh/37	S	vi v edits the line with vi in a temporary file, then runs it	session:c_vi_v	
+sh/37	S	vi v edits the line with vi in a temporary file, then runs it	session:c_vi_v session:c_vi_v_number session:c_vi_v_fail	
 sh/38	S	SIGINT while a line is edited ends the line and reissues the prompt on the next line	session:c_vi_ctrl_c session:c_ed_ctrl_c session:c_ed_ctrl_c_continued	
 sh/22	U	ENV is ignored when the real and effective user or group IDs differ		needs a set-user-ID shell; not built by the corpus (and wolf has no uid surface, wolf-lang#633)
 sh/23	U	A FIFO or terminal standard input set non-blocking is put back to blocking reads		needs a descriptor inherited with O_NONBLOCK; measured by hand (docs/CENSUS.md)
@@ -535,10 +535,11 @@ ulimit/1	T	ulimit -f reports or sets the file size limit in 512-byte blocks; unl
 ulimit/2	T	A file-size limit applies to children: a write past it fails	ulimit/c_enforced	
 ulimit/3	T	ulimit -H and -S select hard and soft limits; -a reports all; -c -d -n -s -t -v name resources (new in 2024)	ulimit/c_resources	
 ulimit/4	T	Raising a hard limit without privilege, or a bad operand, fails	ulimit/c_bad	
-fc/1	S	fc -l lists the history; fc -l first last selects a range; -n omits numbers; -r reverses	session:c_hist_fc_list	
-fc/2	S	fc -s re-executes a command, optionally with old=new substituted	session:c_hist_fc_s	
-fc/3	S	fc first last edits the commands with FCEDIT or -e editor and then runs the result	session:c_hist_fc_edit	
+fc/1	S	fc -l lists the history; fc -l first last selects a range; -n omits numbers; -r reverses	session:c_hist_fc_list session:c_hist_fc_list_default session:c_hist_fc_list_reverse session:c_hist_fc_list_string session:c_hist_fc_list_clamp	where bash and POSIX part (-r with first newer than last cancels, POSIX example; a multi-line entry keeps its lines) the table checks pin pelt to POSIX (src/sh/selftest.lu)
+fc/2	S	fc -s re-executes a command, optionally with old=new substituted	session:c_hist_fc_s session:c_hist_fc_s_prev session:c_hist_fc_s_string	
+fc/3	S	fc first last edits the commands with FCEDIT or -e editor and then runs the result	session:c_hist_fc_edit session:c_hist_fc_e_fail session:c_hist_fc_e_range session:c_hist_fc_fcedit	
 fc/4	T	fc in a non-interactive shell with no history fails without ending the shell	fc/c_noninteractive	
+fc/5	S	A string operand that names no command is an error (status >0) and the shell goes on	session:c_hist_fc_notfound	
 jobs/1	S	jobs lists each job: [n], current (+) or previous (-), state, command; -l adds process IDs; -p writes only process group IDs	session:c_jc_jobs_list	
 jobs/2	T	jobs in a non-interactive shell lists background commands and jobs -p writes their process IDs	jobsctl/c_jobs_script	
 jobs/3	S	A job's state is reported as Running, Done, Done(n), Stopped (signal) as the page lists	session:c_jc_jobs_states	
@@ -549,7 +550,7 @@ ed/1	X	Left and right arrows move the cursor; a character typed is inserted ther
 ed/2	X	Ctrl-A and Ctrl-E (Home and End) move to the ends of the line	session:c_ed_home_end	
 ed/3	X	Ctrl-K kills to the end of the line; Ctrl-D deletes the character under the cursor	session:c_ed_kill_to_end session:c_ed_delete_char	
 ed/4	X	Up and down arrows walk the history, and a recalled line can be edited	session:c_ed_up_arrow session:c_ed_up_down_edit	
-ed/5	X	Ctrl-R searches the history backwards as the pattern is typed	session:c_ed_search	
+ed/5	X	Ctrl-R searches the history backwards as the pattern is typed	session:c_ed_search session:c_ed_search_again session:c_ed_search_edit session:c_ed_search_abort session:c_ed_search_backspace session:c_ed_search_screen	
 ed/6	X	Tab completes a file name, and a command name in command position	session:c_ed_complete_file session:c_ed_complete_command	
 ed/7	X	Alt-B and Alt-F move by words	session:c_ed_word_motion	
 ed/8	X	In a UTF-8 locale backspace erases one character, and the cursor moves by characters, whatever their byte length or width	session:c_ed_utf8_erase session:c_ed_utf8_left	
