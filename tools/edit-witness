@@ -93,10 +93,13 @@ class Shell:
         return ls.term_lmode(self.master, self.hold)
 
     def done(self, secs=3):
-        try:
-            return self.p.wait(timeout=secs)
-        except subprocess.TimeoutExpired:
-            return None
+        """Wait for the shell to end, reading the terminal meanwhile (on
+        macOS a pty's output drains only when it is read, and a shell
+        putting its mode back waits for the drain)."""
+        end = time.time() + secs
+        while self.p.poll() is None and time.time() < end:
+            self.pump(0.05)
+        return self.p.poll()
 
     def close(self):
         if self.p.poll() is None:
@@ -167,6 +170,9 @@ def scenario(pelt, home, name):
 
 
 def timed_out(_sig, _frame):
+    # where it hung, for the log
+    import faulthandler
+    faulthandler.dump_traceback(sys.stdout)
     raise TimeoutError()
 
 
