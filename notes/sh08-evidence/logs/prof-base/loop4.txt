@@ -1,0 +1,18 @@
+== loop [( true )]
+heapprof: /home/mfwolffe/lanes/sh08/bin/base-native l4.sh: 195 chunk grabs after the first 20 (~12480 KiB)
+-- innermost wolf frame
+   195 100.0%  [map_copy]
+-- innermost four frames
+   195 100.0%  [map_copy] < restore < run_subshell < run_node
+-- on the stack at all
+   195 100.0%  run_source
+   195 100.0%  restore
+   195 100.0%  eval_from
+   195 100.0%  run_main
+   195 100.0%  run_list
+   195 100.0%  run_node
+   195 100.0%  run_subshell
+   195 100.0%  eval_string
+   195 100.0%  [map_copy]
+   195 100.0%  run
+   195 100.0%  run_loop

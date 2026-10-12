@@ -1,0 +1,56 @@
+== loop [x=$(echo a | cat)]
+heapprof: /home/mfwolffe/lanes/sh08/bin/base-native l7.sh: 867 chunk grabs after the first 20 (~55488 KiB)
+-- innermost wolf frame
+   433  49.9%  [map_copy]
+    97  11.2%  [list_new]
+    97  11.2%  [map_new]
+    48   5.5%  [list_slice]
+    48   5.5%  [list_push]
+    48   5.5%  [fs_stat_record]
+    48   5.5%  [list_copy]
+    48   5.5%  [map_pairs]
+-- innermost four frames
+   144  16.6%  [map_copy] < snap < run_subshell < run_stage
+    97  11.2%  [map_copy] < snap < run_cmdsub < dollar
+    96  11.1%  [map_copy] < restore < run_subshell < run_stage
+    96  11.1%  [map_copy] < restore < run_cmdsub < dollar
+    49   5.7%  [list_new] < run_slow < run_simple < run_node
+    49   5.7%  [map_new] < restore < run_subshell < run_stage
+    48   5.5%  [list_slice] < cap_end_bytes < cap_end < run_cmdsub
+    48   5.5%  [map_new] < run_subshell < run_stage < run_pipeline
+    48   5.5%  [list_push] < putb < unmark < expand_words
+    48   5.5%  [list_new] < buf < expand_words < expand_command
+    48   5.5%  [fs_stat_record] < stat_of < find_in < run_external
+    48   5.5%  [list_copy] < snap < run_cmdsub < dollar
+    48   5.5%  [map_pairs] < subshell_traps < run_subshell < run_stage
+-- on the stack at all
+   867 100.0%  run_cmdsub
+   867 100.0%  run_simple
+   867 100.0%  xw
+   867 100.0%  run
+   867 100.0%  expand_one
+   867 100.0%  run_node
+   867 100.0%  run_list
+   867 100.0%  run_slow
+   867 100.0%  dollar
+   626  72.2%  run_loop
+   578  66.7%  run_pipeline
+   578  66.7%  run_subshell
+   578  66.7%  run_stage
+   578  66.7%  run_pipe
+   433  49.9%  [map_copy]
+   289  33.3%  eval_string
+   289  33.3%  snap
+   289  33.3%  eval_from
+   241  27.8%  run_source
+   241  27.8%  restore
+   193  22.3%  run_main
+    97  11.2%  [list_new]
+    97  11.2%  [map_new]
+    96  11.1%  expand_words
+    96  11.1%  expand_command
+    48   5.5%  cap_end
+    48   5.5%  [list_slice]
+    48   5.5%  cap_end_bytes
+    48   5.5%  putb
+    48   5.5%  unmark

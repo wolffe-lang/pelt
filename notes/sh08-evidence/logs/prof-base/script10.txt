@@ -1,0 +1,49 @@
+== script [f]
+heapprof: /home/mfwolffe/lanes/sh08/bin/base-native s10.sh: 166 chunk grabs after the first 5 (~10624 KiB)
+-- innermost wolf frame
+    85  51.2%  [list_new]
+    54  32.5%  [list_push]
+    26  15.7%  [list_copy]
+     1   0.6%  [str_repeat]
+-- innermost four frames
+    37  22.3%  [list_new] < run_slow < run_simple < run_node
+    14   8.4%  [list_copy] < add < parse_list_top < parse_complete
+    13   7.8%  [list_push] < parse_simple < parse_command < parse_pipeline
+    13   7.8%  [list_push] < split_marked < expand_words < expand_command
+    12   7.2%  [list_new] < expand_words < expand_command < run_slow
+    12   7.2%  [list_new] < add < parse_list_top < parse_complete
+    12   7.2%  [list_copy] < add < parse_simple < parse_command
+    12   7.2%  [list_push] < expand_words < expand_command < run_slow
+    12   7.2%  [list_new] < buf < lex < peek
+    12   7.2%  [list_new] < add < parse_simple < parse_command
+    12   7.2%  [list_push] < parse_list_top < parse_complete < eval_from
+     4   2.4%  [list_push] < add < parse_list_top < parse_complete
+     1   0.6%  [str_repeat] < run_simple < run_node < run
+-- on the stack at all
+   166 100.0%  eval_string
+   166 100.0%  eval_from
+   166 100.0%  run_source
+   166 100.0%  run_main
+    91  54.8%  parse_complete
+    85  51.2%  [list_new]
+    79  47.6%  parse_list_top
+    75  45.2%  run_node
+    75  45.2%  run
+    75  45.2%  run_list
+    75  45.2%  run_simple
+    74  44.6%  run_slow
+    54  32.5%  add
+    54  32.5%  [list_push]
+    37  22.3%  parse_command
+    37  22.3%  parse_andor
+    37  22.3%  parse_pipeline
+    37  22.3%  parse_simple
+    37  22.3%  expand_words
+    37  22.3%  expand_command
+    26  15.7%  [list_copy]
+    13   7.8%  split_marked
+    12   7.2%  skip_nl
+    12   7.2%  buf
+    12   7.2%  lex
+    12   7.2%  peek
+     1   0.6%  [str_repeat]

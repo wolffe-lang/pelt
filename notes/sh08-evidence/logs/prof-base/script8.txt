@@ -1,0 +1,24 @@
+== script [true]
+heapprof: /home/mfwolffe/lanes/sh08/bin/base-native s8.sh: 82 chunk grabs after the first 5 (~5248 KiB)
+-- innermost wolf frame
+    52  63.4%  [list_copy]
+    30  36.6%  [list_push]
+-- innermost four frames
+    26  31.7%  [list_push] < parse_list_top < parse_complete < eval_from
+    26  31.7%  [list_copy] < add < parse_list_top < parse_complete
+    26  31.7%  [list_copy] < add < parse_simple < parse_command
+     4   4.9%  [list_push] < add < parse_list_top < parse_complete
+-- on the stack at all
+    82 100.0%  parse_complete
+    82 100.0%  run_source
+    82 100.0%  eval_from
+    82 100.0%  parse_list_top
+    82 100.0%  run_main
+    82 100.0%  eval_string
+    56  68.3%  add
+    52  63.4%  [list_copy]
+    30  36.6%  [list_push]
+    26  31.7%  parse_pipeline
+    26  31.7%  parse_andor
+    26  31.7%  parse_simple
+    26  31.7%  parse_command

@@ -1,0 +1,34 @@
+== loop [x=$(true)]
+heapprof: /home/mfwolffe/lanes/sh08/bin/base-native l1.sh: 287 chunk grabs after the first 20 (~18368 KiB)
+-- innermost wolf frame
+   172  59.9%  [list_new]
+   115  40.1%  [map_copy]
+-- innermost four frames
+    58  20.2%  [list_new] < run_slow < run_simple < run_node
+    58  20.2%  [map_copy] < snap < run_cmdsub < dollar
+    57  19.9%  [list_new] < expand_words < expand_command < run_slow
+    57  19.9%  [map_copy] < restore < run_cmdsub < dollar
+    57  19.9%  [list_new] < args_of < builtin < run_slow
+-- on the stack at all
+   287 100.0%  run_simple
+   287 100.0%  run_list
+   287 100.0%  run
+   287 100.0%  run_slow
+   287 100.0%  run_node
+   287 100.0%  run_loop
+   230  80.1%  expand_one
+   230  80.1%  run_cmdsub
+   230  80.1%  dollar
+   230  80.1%  xw
+   172  59.9%  [list_new]
+   172  59.9%  eval_string
+   172  59.9%  run_source
+   172  59.9%  eval_from
+   172  59.9%  run_main
+   115  40.1%  [map_copy]
+    58  20.2%  snap
+    57  19.9%  expand_words
+    57  19.9%  expand_command
+    57  19.9%  restore
+    57  19.9%  args_of
+    57  19.9%  builtin
