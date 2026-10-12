@@ -1,0 +1,7 @@
+step 2
+| $ echo one three
+cursor 0 16
+step 3
+| $ echo one three
+| $
+cursor 1 2

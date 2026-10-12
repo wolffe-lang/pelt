@@ -1,0 +1,4 @@
+PS1='$ '
+\k ho b\e[Hc\e[1~e\e[4~c\e[F
+\k \r
+exit

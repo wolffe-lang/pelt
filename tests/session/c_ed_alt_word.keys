@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo one three\eb\ebX\ef\efY
+\k \r
+exit

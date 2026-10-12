@@ -1,0 +1,3 @@
+PS1='$ '
+\k printf %s a\x16\x01b | od -An -c\r
+exit

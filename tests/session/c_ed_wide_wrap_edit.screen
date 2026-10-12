@@ -1,0 +1,9 @@
+step 2
+| $ echo Z中文中文中文
+| 中文
+cursor 0 8
+step 3
+| $ echo Z中文中文中文
+| 中文
+| $
+cursor 2 2

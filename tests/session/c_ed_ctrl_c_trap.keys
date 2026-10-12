@@ -1,0 +1,6 @@
+PS1='$ '
+trap 'echo caught' INT
+\k ech
+^C
+echo next
+exit

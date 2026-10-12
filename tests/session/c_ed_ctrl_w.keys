@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo one two\x17three
+\k \r
+exit

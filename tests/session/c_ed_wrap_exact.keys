@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo aaaaaaaaaaaaa
+\k b\r
+exit

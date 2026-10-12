@@ -1,0 +1,8 @@
+step 2
+| $ echo aaaaaaaaaaaaa
+| 
+cursor 1 0
+step 3
+| b
+| $
+cursor 1 2

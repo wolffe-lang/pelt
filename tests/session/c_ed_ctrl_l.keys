@@ -1,0 +1,5 @@
+PS1='$ '
+echo before
+\k echo hi\x0c
+\k \r
+exit

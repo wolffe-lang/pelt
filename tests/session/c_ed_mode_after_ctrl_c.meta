@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=after Ctrl-C at the prompt the next command still runs in the user's mode (the mode check after exit is the harness's)

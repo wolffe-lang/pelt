@@ -1,0 +1,4 @@
+PS1='$ '
+\k abc\x15echo \x19
+\k \r
+exit

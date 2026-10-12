@@ -1,0 +1,11 @@
+step 2
+| $ echo abc
+cursor 0 10
+step 3
+| $ echo abc^C
+| $
+cursor 1 2
+step 4
+| $ echo st=$?
+| $
+cursor 1 2

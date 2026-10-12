@@ -1,0 +1,2 @@
+bash=agree
+why=the editor puts the terminal back before a command runs: stty sees canonical input, echo and signals on

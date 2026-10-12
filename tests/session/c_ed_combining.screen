@@ -1,0 +1,7 @@
+step 2
+| $ echo zéy
+cursor 0 8
+step 3
+| $ echo zéy
+| $
+cursor 1 2

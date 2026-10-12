@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo aaaaaaaaaaaaab\x7f\x7f\x7fc
+\k \r
+exit

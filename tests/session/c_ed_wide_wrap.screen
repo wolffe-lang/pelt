@@ -1,0 +1,8 @@
+step 2
+| $ echo 中文中文中文
+| 中文
+cursor 1 4
+step 3
+| 中文
+| $
+cursor 1 2

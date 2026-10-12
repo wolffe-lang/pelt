@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\x01\x06\x06\x06\x06\x06b
+\k \r
+exit

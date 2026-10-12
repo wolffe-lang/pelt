@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo ac\e[Db
+\k \r
+exit

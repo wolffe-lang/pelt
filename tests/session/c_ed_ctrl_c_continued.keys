@@ -1,0 +1,6 @@
+PS1='$ '
+echo "a
+\k b
+^C
+echo st=$?
+exit

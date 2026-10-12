@@ -1,0 +1,5 @@
+PS1='$ '
+\k echo abc
+^C
+echo st=$?
+exit

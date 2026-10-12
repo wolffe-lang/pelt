@@ -1,0 +1,6 @@
+PS1='$ '
+echo one
+\k \e[A\e[A
+\k \e[B\x7f\x7f\x7fTWO\e[A
+\k \r
+exit

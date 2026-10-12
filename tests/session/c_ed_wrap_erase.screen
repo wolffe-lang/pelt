@@ -1,0 +1,7 @@
+step 2
+| $ echo aaaaaaaaaaac
+cursor 0 19
+step 3
+| $ echo aaaaaaaaaaac
+| $
+cursor 1 2

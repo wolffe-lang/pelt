@@ -1,0 +1,6 @@
+PS1='$ '
+trap '' INT
+\k echo abc
+^C
+\k \r
+exit

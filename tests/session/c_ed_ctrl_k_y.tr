@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "\u001b[?2004h$ "
+step 1 "PS1='$ '"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 2 "\\k echo tail head\\eb\\x0b\\x01\\ef \\x19"
+err no
+prompt "echo tail head\b\b\b\b\u001b[K\r$ echo \u001b[1@ \b\u001b[4@head"
+step 3 "\\k \\r"
+out "head tail\n"
+err no
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 4 "exit"
+err yes
+prompt ""
+exit 0 at step 4

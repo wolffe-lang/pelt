@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "\u001b[?2004h$ "
+step 1 "PS1='$ '"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 2 "\\k echo aaaaaaaaaaaaab\\x7f\\x7f\\x7fc"
+err yes
+prompt "\r\u001b[K\u001b[A$ echo aaaaaaaaaaaa\b \bc"
+step 3 "\\k \\r"
+out "aaaaaaaaaaac\n"
+err no
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 4 "exit"
+err yes
+prompt ""
+exit 0 at step 4

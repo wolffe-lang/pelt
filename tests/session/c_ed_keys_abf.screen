@@ -1,0 +1,7 @@
+step 2
+| $ echo xyz!
+cursor 0 11
+step 3
+| $ echo xyz!
+| $
+cursor 1 2

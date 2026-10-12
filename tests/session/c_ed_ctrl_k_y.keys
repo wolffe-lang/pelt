@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo tail head\eb\x0b\x01\ef \x19
+\k \r
+exit

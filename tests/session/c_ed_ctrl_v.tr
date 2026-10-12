@@ -1,0 +1,14 @@
+step 0
+err no
+prompt "\u001b[?2004h$ "
+step 1 "PS1='$ '"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 2 "\\k printf %s a\\x16\\x01b | od -An -c\\r"
+out "   a 001   b\n"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 3 "exit"
+err yes
+prompt ""
+exit 0 at step 3

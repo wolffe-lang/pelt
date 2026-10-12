@@ -1,0 +1,4 @@
+PS1='$ '
+\k echo xe\xcc\x81y\e[D\e[D\x7fz
+\k \r
+exit

@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "\u001b[?2004h$ "
+step 1 "PS1='$ '"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 2 "\\k echo xe\\xcc\\x81y\\e[D\\e[D\\x7fz"
+err no
+prompt "echo xe\u0301y\b\b\b\u001b[1P\u001b[1@z"
+step 3 "\\k \\r"
+out "ze\u0301y\n"
+err no
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 4 "exit"
+err yes
+prompt ""
+exit 0 at step 4

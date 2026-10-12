@@ -1,0 +1,11 @@
+step 2
+| $ echo baaaaaaaaaaaa
+| aaaaaaaaaaaaaaaaaaaa
+| aaaaaaaaaaaaa
+cursor 0 8
+step 3
+| $ echo baaaaaaaaaaaa
+| aaaaaaaaaaaaaaaaaaaa
+| aaaaaaaaaaaaa
+| $
+cursor 3 2

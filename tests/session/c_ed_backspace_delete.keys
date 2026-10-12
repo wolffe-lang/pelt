@@ -1,0 +1,4 @@
+PS1='$ '
+\k xecho abcd\x7f\x01\e[3~\e[F\x08
+\k \r
+exit

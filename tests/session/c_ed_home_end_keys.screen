@@ -1,0 +1,7 @@
+step 2
+| $ echo bc
+cursor 0 9
+step 3
+| $ echo bc
+| $
+cursor 1 2
