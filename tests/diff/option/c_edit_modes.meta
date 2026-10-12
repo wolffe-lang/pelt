@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+oracle=bash
+why=XCU sh: set -o vi turns any other editing mode off; dash 0.5.13 lists vi before emacs and leaves vi on under set -o emacs, so bash --posix is the oracle (pelt lists options sorted, as bash does)
+dash=differs

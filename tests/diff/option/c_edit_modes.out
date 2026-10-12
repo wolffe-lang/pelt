@@ -1,0 +1,10 @@
+set +o emacs
+set +o vi
+set +o emacs
+set -o vi
+set -o emacs
+set +o vi
+set +o emacs
+set +o vi
+set +o emacs
+set +o vi

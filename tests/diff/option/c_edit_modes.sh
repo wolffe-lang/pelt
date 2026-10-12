@@ -1,0 +1,5 @@
+set +o | grep -E ' (vi|emacs)$'
+set -o vi; set +o | grep -E ' (vi|emacs)$'
+set -o emacs; set +o | grep -E ' (vi|emacs)$'
+set +o emacs; set +o | grep -E ' (vi|emacs)$'
+set -o vi; set +o vi; set +o | grep -E ' (vi|emacs)$'
