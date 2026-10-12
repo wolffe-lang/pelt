@@ -105,19 +105,20 @@ fn needs_more(src: str) -> bool {
 
 /// Write the prompt `var` (`PS1` or `PS2`) to standard error, expanded
 /// as a double-quoted word is (XCU 2.5.3; dash also runs arithmetic and
-/// command substitution there). The expansion leaves `$?` alone, and an
-/// error in it does not end the shell.
-fn prompt(mut sh: Sh, var_name: str) {
+/// command substitution there), and answer it as written (the line
+/// editor redraws it). The expansion leaves `$?` alone, and an error in
+/// it does not end the shell.
+fn prompt(mut sh: Sh, var_name: str) -> str {
     flush(mut sh)
     let raw = sh.vals[var_name] else ""
     if raw.len == 0 {
-        return
+        return ""
     }
-    let done = copy region pr {
+    let (done, fast_shown) = copy region pr {
         prompt_fast(sh, raw)
     }
     if done {
-        return
+        return fast_shown
     }
     let saved_status = sh.status
     let saved_cs = sh.cs_status
@@ -131,19 +132,20 @@ fn prompt(mut sh: Sh, var_name: str) {
     sh.cs_status = saved_cs
     sh.cs_ran = saved_ran
     write_fd(mut sh, 2, shown)
+    shown
 }
 
 /// The prompt expanded and written in the shadow state, inside the
 /// region; false when its expansion would write the state (a command
 /// substitution, an error), and `prompt` does it the ordinary way.
-fn prompt_fast(sh: Sh, raw: str) -> bool {
+fn prompt_fast(sh: Sh, raw: str) -> (bool, str) {
     var t = shadow_of(sh)
     let shown = expand_one(mut t, raw, X_DQ)
     if t.bail || t.flow != F_NONE {
-        return false
+        return (false, "")
     }
     write_fd(mut t, 2, shown)
-    true
+    (true, shown)
 }
 
 /// `$ENV` (XCU 2.5.3): an interactive shell expands it and runs the
@@ -199,11 +201,48 @@ fn run_stdin(mut sh: Sh) -> int {
         var joined = false
         var first = true
         var ended = false
+        var intr = false
         loop {
-            if sh.interactive {
-                prompt(mut sh, if first then "PS1" else "PS2")
+            // the line editor (`sh.edit`) when the terminal is ours;
+            // the width is learned before the prompt is written
+            let editing = ed_active(sh)
+            var q = Query { cols: 80, col0: 0, cpr: sh.ed.cpr, pend: List[int]() }
+            if editing {
+                let cpr = sh.ed.cpr
+                q = copy region eq {
+                    ed_query(sh, cpr)
+                }
+                sh.ed.cpr = q.cpr
             }
-            let (got, how) = read_raw_line(mut sh)
+            var shown = ""
+            if sh.interactive {
+                shown = prompt(mut sh, if first then "PS1" else "PS2")
+            }
+            var got = ""
+            var how = 0
+            if editing {
+                let r = copy region el {
+                    ed_line(sh, shown, q)
+                }
+                if r.mem_set {
+                    sh.ed.mem = r.mem
+                }
+                if r.how == ED_INTR {
+                    intr = true
+                    break
+                }
+                got = r.line
+                how = if r.how == ED_OK then 0 else 2
+                if how != 0 {
+                    sh.eof0 = true
+                } else if got.len > 1 {
+                    hist_add(mut sh, got[0..got.len - 1])
+                }
+            } else {
+                let (g, h) = read_raw_line(mut sh)
+                got = g
+                how = h
+            }
             if sh.opt_v && got.len > 0 {
                 write_fd(mut sh, 2, got)
             }
@@ -224,6 +263,22 @@ fn run_stdin(mut sh: Sh) -> int {
             if !needs_more(if joined then text(o) else src) {
                 break
             }
+        }
+        if intr {
+            // Ctrl-C (or a SIGINT) while a line was edited: the command
+            // is abandoned, `$?` is 130, and a trap on INT runs now
+            sh.status = 130
+            let action = sh.traps["INT"] else ""
+            if action.len > 0 {
+                run_trap_action(mut sh, action)
+                flush(mut sh)
+            }
+            if sh.flow == F_EXIT && !sh.abort {
+                return sh.status
+            }
+            sh.flow = F_NONE
+            sh.abort = false
+            continue
         }
         if joined {
             src = text(o)
