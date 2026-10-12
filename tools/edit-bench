@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""edit-bench — what the line editor costs, measured from outside.
+
+pelt runs interactively on a pseudo-terminal (tools/lib_session.py's
+arrangement). Three numbers:
+
+  latency   N keys typed one at a time at the end of the line: the time
+            from writing a key to the master until its echo is read back,
+            median and 99th percentile, and the bytes the editor wrote
+            for each key; then the same N keys typed at the START of a
+            line of N characters (each key redraws the rest of the line)
+  prompt    the time from a line's Enter to the next prompt for `:`
+            (no command runs), against the shell with no editor
+            (`+o emacs`), which is the editor's per-line cost: the mode
+            switches and the width query
+  idle      CPU time (user + system, /proc) the shell spends while it
+            waits at the prompt for S seconds (linux only): the cost of
+            the timed reads that stand in for an interruptible read
+
+usage: tools/edit-bench [-n N] [-s S] PELT
+"""
+
+import os
+import pty
+import select
+import signal
+import statistics
+import subprocess
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_session as ls  # noqa: E402
+
+
+def start(pelt, extra):
+    master, slave = pty.openpty()
+    rerr, werr = os.pipe()
+    env = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C", "COLUMNS": "99999"}
+    p = subprocess.Popen([pelt, "-i"] + extra, stdin=slave, stdout=subprocess.DEVNULL,
+                         stderr=werr, env=env, start_new_session=True,
+                         preexec_fn=ls._ctty, close_fds=True)
+    os.close(slave)
+    os.close(werr)
+    return p, master, rerr
+
+
+def wait_prompt(master, rerr, n_before, err):
+    end = time.time() + 10
+    while time.time() < end:
+        r, _, _ = select.select([master, rerr], [], [], 0.5)
+        for fd in r:
+            d = os.read(fd, 65536)
+            if fd == rerr:
+                err[0] += d
+        if err[0].count(b"$ ") > n_before:
+            return True
+    return False
+
+
+def drain(master):
+    while select.select([master], [], [], 0.05)[0]:
+        os.read(master, 65536)
+
+
+def typed(master, key):
+    """Write one key; answer (seconds until the first echo byte, bytes
+    echoed for it)."""
+    t0 = time.perf_counter()
+    os.write(master, key)
+    got = b""
+    select.select([master], [], [], 2)
+    t1 = time.perf_counter()
+    got += os.read(master, 65536)
+    while select.select([master], [], [], 0.002)[0]:
+        got += os.read(master, 65536)
+    return t1 - t0, len(got)
+
+
+def finish(p, master):
+    """Wait for the shell to end, reading what it writes meanwhile."""
+    end = time.time() + 10
+    while p.poll() is None and time.time() < end:
+        if select.select([master], [], [], 0.05)[0]:
+            try:
+                os.read(master, 65536)
+            except OSError:
+                break
+    return p.wait(timeout=1)
+
+
+def pct(xs, p):
+    xs = sorted(xs)
+    return xs[min(len(xs) - 1, int(len(xs) * p))]
+
+
+def latency(pelt, n):
+    p, master, rerr = start(pelt, [])
+    err = [b""]
+    wait_prompt(master, rerr, 0, err)
+    drain(master)
+    end_t, end_b = [], []
+    for _ in range(n):
+        t, b = typed(master, b"a")
+        end_t.append(t)
+        end_b.append(b)
+    os.write(master, b"\x01")
+    drain(master)
+    mid_t, mid_b = [], []
+    for _ in range(n):
+        t, b = typed(master, b"b")
+        mid_t.append(t)
+        mid_b.append(b)
+    os.write(master, b"\x05\x15exit\r")
+    finish(p, master)
+    ms = 1000.0
+    print(f"latency at the end of the line, {n} keys: median {statistics.median(end_t) * ms:.3f} ms, "
+          f"p99 {pct(end_t, 0.99) * ms:.3f} ms, bytes per key median {statistics.median(end_b)}")
+    print(f"latency at the start of an {n}-character line: median {statistics.median(mid_t) * ms:.3f} ms, "
+          f"p99 {pct(mid_t, 0.99) * ms:.3f} ms, bytes per key median {statistics.median(mid_b)}")
+
+
+def per_line(pelt, extra, n):
+    p, master, rerr = start(pelt, extra)
+    err = [b""]
+    wait_prompt(master, rerr, 0, err)
+    ts = []
+    for i in range(n):
+        t0 = time.perf_counter()
+        os.write(master, b":\r")
+        wait_prompt(master, rerr, i + 1, err)
+        ts.append(time.perf_counter() - t0)
+        drain(master)
+    os.write(master, b"exit\r")
+    finish(p, master)
+    return statistics.median(ts)
+
+
+def idle(pelt, secs):
+    p, master, rerr = start(pelt, [])
+    err = [b""]
+    wait_prompt(master, rerr, 0, err)
+
+    def cpu():
+        with open(f"/proc/{p.pid}/stat") as fh:
+            f = fh.read().rsplit(")", 1)[1].split()
+        return (int(f[11]) + int(f[12])) / os.sysconf("SC_CLK_TCK")
+
+    c0 = cpu()
+    end = time.time() + secs
+    while time.time() < end:
+        r, _, _ = select.select([master, rerr], [], [], 0.5)
+        for fd in r:
+            os.read(fd, 65536)
+    c1 = cpu()
+    os.write(master, b"exit\r")
+    finish(p, master)
+    print(f"idle at the prompt for {secs} s: {c1 - c0:.2f} s of CPU "
+          f"({(c1 - c0) / secs * 3600:.1f} s an hour)")
+
+
+def main(argv):
+    sys.stdout.reconfigure(line_buffering=True)
+    n, secs = 2000, 30
+    while argv[:1] in (["-n"], ["-s"]):
+        if argv[0] == "-n":
+            n = int(argv[1])
+        else:
+            secs = int(argv[1])
+        argv = argv[2:]
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    pelt = os.path.abspath(argv[0])
+    print(f"edit-bench: {pelt}")
+    latency(pelt, n)
+    with_ed = per_line(pelt, [], 500)
+    without = per_line(pelt, ["+o", "emacs"], 500)
+    print(f"Enter to the next prompt, 500 lines: median {with_ed * 1000:.3f} ms with the editor, "
+          f"{without * 1000:.3f} ms without")
+    if os.path.exists("/proc/self/stat"):
+        idle(pelt, secs)
+    return 0
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    sys.exit(main(sys.argv[1:]))
