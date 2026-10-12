@@ -214,18 +214,28 @@ fn poll_traps(mut sh: Sh) {
             }
             continue
         }
-        let saved = sh.status
-        let line = sh.line
-        sh.in_trap = true
-        sh.trap_status = saved
-        let _st = eval_string(mut sh, action, "trap")
-        sh.in_trap = false
-        sh.line = line
+        run_trap_action(mut sh, action)
         if sh.flow != F_NONE {
             return
         }
-        sh.status = saved
     }
+}
+
+/// Run a trap's action as XCU `trap` says: `$?` is the same after it as
+/// before, unless the action leaves by `exit`, `return`, `break` or
+/// `continue` (then `sh.flow` says so).
+fn run_trap_action(mut sh: Sh, action: str) {
+    let saved = sh.status
+    let line = sh.line
+    sh.in_trap = true
+    sh.trap_status = saved
+    let _st = eval_string(mut sh, action, "trap")
+    sh.in_trap = false
+    sh.line = line
+    if sh.flow != F_NONE {
+        return
+    }
+    sh.status = saved
 }
 
 /// The delivered meaning in `set` with the lowest signal number, taken
