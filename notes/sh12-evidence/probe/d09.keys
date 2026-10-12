@@ -1,0 +1,7 @@
+echo a
+echo b
+echo c
+fc -lr 3 1
+fc -l -0
+fc -l 2 1
+exit
