@@ -1,0 +1,3 @@
+#!/bin/sh
+# a stand-in for vi(1) that fails: nothing it was given may run
+exit 1

@@ -1,0 +1,5 @@
+env=TERM=xterm PATH=bin:/usr/bin:/bin PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU sh vi-mode v through fc: an editor that fails runs nothing

@@ -1,0 +1,5 @@
+set -o vi
+echo abc
+echo other
+\k \e2v
+exit

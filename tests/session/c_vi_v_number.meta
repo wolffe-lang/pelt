@@ -1,0 +1,5 @@
+env=TERM=xterm PATH=bin:/usr/bin:/bin PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=XCU sh vi-mode [number]v: command number is edited with vi (a stand-in on PATH) and run

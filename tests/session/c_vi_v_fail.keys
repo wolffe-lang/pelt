@@ -1,0 +1,4 @@
+set -o vi
+\k echo abc\ev
+echo after
+exit
