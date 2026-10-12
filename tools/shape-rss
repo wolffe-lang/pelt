@@ -160,7 +160,21 @@ def run_typed(shell, text, n):
         os.write(master, b"echo $i\n")
         wait_prompt()
         os.write(master, b"exit\n")
-        p.wait(timeout=10)
+        # keep reading while the shell leaves: it puts the terminal's
+        # mode back as it goes, and on macOS that waits for the pty's
+        # output to be read (a run that stopped reading here timed out)
+        deadline = time.time() + 30
+        while p.poll() is None and time.time() < deadline:
+            r, _, _ = select.select([rout, rerr, master], [], [], 0.2)
+            for fd in r:
+                try:
+                    d = os.read(fd, 65536)
+                except OSError:
+                    d = b""
+                if fd == rout:
+                    got["out"] += d
+        if p.poll() is None:
+            return rows, False, "still running 30 s after `exit`"
     finally:
         if p.poll() is None:
             p.kill()
@@ -211,7 +225,7 @@ def main(argv):
         per = grew * 1024 // n
         verdict = "ok" if ok and grew <= limit else "FAIL"
         print(f"shape-rss: {verdict:4} {name:24} {kind:6} {n:>6} {rows[0]:>8} KB  "
-              f"{2 * n:>6} {rows[1]:>8} KB  grew {grew:>7} KB ({per} B a turn)  [{text}]")
+              f"{2 * n:>6} {rows[1]:>8} KB  grew {grew:>7} KB ({per} B a turn)  [{text}]", flush=True)
         if not ok:
             print(f"shape-rss:      {name}: wrong answer ({why})")
         if verdict != "ok":
