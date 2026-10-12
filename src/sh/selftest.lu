@@ -276,9 +276,11 @@ fn want_conditions(mut bad: List[str]) {
         (mut bad).push("interactive_set = {interactive_set(sh)}")
     }
     var order = buf()
-    for m in by_number() {
-        put(mut order, cond_of(m))
+    var k = 0
+    while k < 5 {
+        put(mut order, cond_of(by_number(k)))
         putc(mut order, ' ')
+        k += 1
     }
     if text(order) != "HUP INT QUIT TERM USR2 " {
         (mut bad).push("by_number = {text(order)}")
