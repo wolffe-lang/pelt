@@ -42,6 +42,7 @@ PRELUDE = "f() { :; }\ng() { local v; v=$1; return 0; }\n"
 
 # (name, kind, text)
 SHAPES = [
+    ("baseline", "loop", ":"),
     ("pipeline", "loop", "true | true"),
     ("pipeline-program", "loop", "echo x | cat >/dev/null"),
     ("substitution", "loop", "x=$(true)"),
@@ -52,6 +53,8 @@ SHAPES = [
     ("call", "loop", "f a b"),
     ("call-local", "loop", "g a b"),
     ("arith-assign", "loop", ": $((j=j+1))"),
+    ("case", "loop", "case a in a) :;; esac"),
+    ("for", "loop", "for j in 1; do :; done"),
     ("script-simple", "script", "true"),
     ("script-pipeline", "script", "true | true"),
     ("script-substitution", "script", "x=$(true)"),
