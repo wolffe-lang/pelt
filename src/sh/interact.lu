@@ -103,22 +103,74 @@ fn needs_more(src: str) -> bool {
     more
 }
 
+/// The next line, prompted with `PS1` (`first`) or `PS2`, and how it
+/// ended: 0 at a newline, 1 at the end of input after some bytes, 2 at
+/// the end before any, `ED_INTR` when Ctrl-C (or a SIGINT) ended the
+/// line being edited. Through the line editor (`sh.edit`) when the
+/// terminal is ours, the width learned before the prompt is written;
+/// else as typed through the terminal's own line discipline.
+fn next_line(mut sh: Sh, first: bool) -> (str, int) {
+    let name = if first then "PS1" else "PS2"
+    if !ed_active(sh) {
+        if sh.interactive {
+            let _shown = prompt(mut sh, name, false)
+        }
+        return read_raw_line(mut sh)
+    }
+    let cpr = sh.ed.cpr
+    let q = copy region eq {
+        ed_query(sh, cpr)
+    }
+    sh.ed.cpr = q.cpr
+    let shown = prompt(mut sh, name, true)
+    let r = copy region el {
+        ed_line(sh, shown, q)
+    }
+    if r.mem_set {
+        sh.ed.mem = txt_mem(r.mem)
+    }
+    if r.how == ED_INTR {
+        return ("", ED_INTR)
+    }
+    if r.how != ED_OK {
+        sh.eof0 = true
+        return ("", 2)
+    }
+    if r.line.len > 1 {
+        hist_add(mut sh, r.line[0..r.line.len - 1])
+    }
+    (r.line, 0)
+}
+
 /// Write the prompt `var` (`PS1` or `PS2`) to standard error, expanded
 /// as a double-quoted word is (XCU 2.5.3; dash also runs arithmetic and
 /// command substitution there), and answer it as written (the line
-/// editor redraws it). The expansion leaves `$?` alone, and an error in
-/// it does not end the shell.
-fn prompt(mut sh: Sh, var_name: str) -> str {
+/// editor redraws it; only when `keep`, so that a shell with no editor
+/// copies nothing out of the prompt's region). The expansion leaves `$?`
+/// alone, and an error in it does not end the shell.
+fn prompt(mut sh: Sh, var_name: str, keep: bool) -> str {
     flush(mut sh)
     let raw = sh.vals[var_name] else ""
     if raw.len == 0 {
         return ""
     }
-    let (done, fast_shown) = copy region pr {
-        prompt_fast(sh, raw)
-    }
-    if done {
-        return fast_shown
+    if keep {
+        let (done, fast_shown) = copy region pk {
+            prompt_fast(sh, raw, true)
+        }
+        if done {
+            return fast_shown
+        }
+    } else {
+        // a tuple holding a `str` copied out of the region costs the
+        // root about 15 bytes a prompt, even for "" (sh11 measured it
+        // over 20,000 commands); a `bool` costs nothing
+        let done = copy region pr {
+            prompt_fast(sh, raw, false).0
+        }
+        if done {
+            return ""
+        }
     }
     let saved_status = sh.status
     let saved_cs = sh.cs_status
@@ -138,14 +190,14 @@ fn prompt(mut sh: Sh, var_name: str) -> str {
 /// The prompt expanded and written in the shadow state, inside the
 /// region; false when its expansion would write the state (a command
 /// substitution, an error), and `prompt` does it the ordinary way.
-fn prompt_fast(sh: Sh, raw: str) -> (bool, str) {
+fn prompt_fast(sh: Sh, raw: str, keep: bool) -> (bool, str) {
     var t = shadow_of(sh)
     let shown = expand_one(mut t, raw, X_DQ)
     if t.bail || t.flow != F_NONE {
         return (false, "")
     }
     write_fd(mut t, 2, shown)
-    (true, shown)
+    (true, if keep then shown else "")
 }
 
 /// `$ENV` (XCU 2.5.3): an interactive shell expands it and runs the
@@ -203,45 +255,10 @@ fn run_stdin(mut sh: Sh) -> int {
         var ended = false
         var intr = false
         loop {
-            // the line editor (`sh.edit`) when the terminal is ours;
-            // the width is learned before the prompt is written
-            let editing = ed_active(sh)
-            var q = Query { cols: 80, col0: 0, cpr: sh.ed.cpr, pend: List[int]() }
-            if editing {
-                let cpr = sh.ed.cpr
-                q = copy region eq {
-                    ed_query(sh, cpr)
-                }
-                sh.ed.cpr = q.cpr
-            }
-            var shown = ""
-            if sh.interactive {
-                shown = prompt(mut sh, if first then "PS1" else "PS2")
-            }
-            var got = ""
-            var how = 0
-            if editing {
-                let r = copy region el {
-                    ed_line(sh, shown, q)
-                }
-                if r.mem_set {
-                    sh.ed.mem = r.mem
-                }
-                if r.how == ED_INTR {
-                    intr = true
-                    break
-                }
-                got = r.line
-                how = if r.how == ED_OK then 0 else 2
-                if how != 0 {
-                    sh.eof0 = true
-                } else if got.len > 1 {
-                    hist_add(mut sh, got[0..got.len - 1])
-                }
-            } else {
-                let (g, h) = read_raw_line(mut sh)
-                got = g
-                how = h
+            let (got, how) = next_line(mut sh, first)
+            if how == ED_INTR {
+                intr = true
+                break
             }
             if sh.opt_v && got.len > 0 {
                 write_fd(mut sh, 2, got)
