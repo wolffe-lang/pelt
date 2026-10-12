@@ -81,8 +81,7 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
     } else if name == "wait" {
         st = bi_wait(mut sh, args)
     } else if name == "umask" {
-        diag(mut sh, "umask: not supported yet (no umask builtin in wolf 0.2.24)")
-        st = 2
+        st = bi_umask(mut sh, args)
     } else if name == "alias" || name == "unalias" || name == "type" {
         diag(mut sh, "{name}: not supported yet")
         st = 2

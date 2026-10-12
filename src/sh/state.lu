@@ -26,8 +26,8 @@
 //! **Subshells run in-process.** wolf has no fork, so `( … )`, `$( … )`
 //! and an in-process pipeline stage copy the environment, run, and put
 //! it back (`snap` and `restore`): variables, functions, positional
-//! parameters, options, traps, the `local` stack, the descriptor table
-//! and the working directory. The process environment a child sees is
+//! parameters, options, traps, the `local` stack, the descriptor table,
+//! the working directory and the file mode creation mask. The process environment a child sees is
 //! made to match the variables before every spawn (`sh.exec`'s
 //! `sync_env`), so a subshell's `export` or `unset` ends with it too.
 
@@ -185,6 +185,11 @@ struct Sh {
     euid: int,
     egid: int,
     groups: str,
+    /// The file mode creation mask (`sh.umask`): the process's as pelt
+    /// last set or read it, and the one the shell started with; -1
+    /// until a `umask` has run.
+    mask: int,
+    mask0: int,
 }
 
 struct Snap {
@@ -206,6 +211,7 @@ struct Snap {
     lframes: List[int],
     fds: List[int],
     phys: str,
+    mask: int,
 }
 
 fn new_sh(name: str) -> Sh {
@@ -293,6 +299,8 @@ fn new_sh(name: str) -> Sh {
         euid: -1,
         egid: -1,
         groups: "",
+        mask: -1,
+        mask0: -1,
     }
 }
 
@@ -340,6 +348,7 @@ fn snap(sh: Sh) -> Snap {
         lframes: copy sh.lframes,
         fds: copy sh.fds,
         phys: sh.phys,
+        mask: sh.mask,
     }
 }
 
@@ -374,6 +383,7 @@ fn restore(mut sh: Sh, s: Snap) {
         os_chdir(s.phys) else |_| {}
         sh.phys = s.phys
     }
+    restore_mask(mut sh, s.mask)
 }
 
 /// Put the descriptor table back to `was`, closing every handle pelt

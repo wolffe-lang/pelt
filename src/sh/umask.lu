@@ -1,0 +1,260 @@
+//! sh.umask — the `umask` built-in (XCU `umask`): the file mode
+//! creation mask, written in octal or with `-S` symbolically, and set
+//! from an octal number or a symbolic mode.
+//!
+//! References consulted: POSIX.1-2024 XCU `umask`, and `chmod` for the
+//! symbolic_mode grammar; black-box runs of `dash` 0.5.13.4 and
+//! `bash --posix` 5.3 for what every form answers. The messages are
+//! pelt's own.
+//!
+//! **The mask is the process's** (`os_umask`, wolf 0.2.28,
+//! `[os.fs.umask]`): every program the shell starts inherits it, and
+//! so does the program `exec` becomes, with nothing handed over.
+//! `os_umask` only sets, answering the mask it replaced, so a read is
+//! two calls; pelt makes them the first time a `umask` needs the mask
+//! and keeps it in `sh.mask` from then on (nothing else in the process
+//! changes it). Until a `umask` runs, `sh.mask` is -1 and nothing here
+//! makes a call.
+//!
+//! **Subshells run in-process**, so a subshell's `umask` would outlive
+//! it: `snap` records `sh.mask` and `restore` (`sh.state`) calls
+//! `restore_mask`, which sets the process's mask back when it differs.
+//! A snapshot taken before any `umask` ran records -1, which means the
+//! mask the shell started with, `sh.mask0`.
+//!
+//! **Where the mask cannot be set** — lupin, which refuses `os_umask`
+//! by name (ruling #67 R10), and windows, which has none — `os_umask`
+//! answers `unsupported`, and `umask` says so and answers 2.
+//!
+//! **The symbolic form, as dash answers it.** The mode works on the
+//! permissions the mask leaves (its complement), as `chmod` works on a
+//! file's. An empty `who` is all three classes. `X` and the copy
+//! letters `u`, `g`, `o` read the permissions as they were before the
+//! operand, not as an earlier clause left them, and `X` is `x` when any
+//! class had execute permission (a mask has no directory to ask about).
+//! `s` is accepted and changes nothing; `t` is refused (bash accepts
+//! it). Clauses are separated by commas, and one trailing comma is
+//! accepted. An empty operand changes nothing and answers 0; an octal
+//! operand keeps its low nine bits. Only the first operand is read.
+
+/// The permission bits of each class: `0o111`.
+const EACH_CLASS: int = 73
+
+/// The mask operand `s` makes from the mask `cur` (`0..=0o777`), or the
+/// `parse` row when `s` is neither an octal number nor a symbolic mode.
+fn mask_from(cur: int, s: str) -> int ! {parse} {
+    if s.len == 0 {
+        return cur
+    }
+    if is_digit(ch(s, 0)) {
+        var m: int = 0
+        for c in s.chars() {
+            if c < '0' || c > '7' {
+                return parse
+            }
+            m = m * 8 + (c as int - '0' as int) & 511
+        }
+        return m
+    }
+    let orig = 511 - (cur & 511)
+    var p = orig
+    var i = 0
+    while i < s.len {
+        var who = 0
+        while i < s.len && class_bits(ch(s, i)) > 0 {
+            who = who | class_bits(ch(s, i))
+            i += 1
+        }
+        if who == 0 {
+            who = 511
+        }
+        if i >= s.len || !is_mode_op(ch(s, i)) {
+            return parse
+        }
+        while i < s.len && is_mode_op(ch(s, i)) {
+            let op = ch(s, i)
+            i += 1
+            var bits = 0
+            while i < s.len {
+                let c = ch(s, i)
+                if c == 'r' {
+                    bits = bits | 4
+                } else if c == 'w' {
+                    bits = bits | 2
+                } else if c == 'x' {
+                    bits = bits | 1
+                } else if c == 'X' {
+                    if orig & EACH_CLASS != 0 {
+                        bits = bits | 1
+                    }
+                } else if c == 'u' {
+                    bits = bits | orig / 64 % 8
+                } else if c == 'g' {
+                    bits = bits | orig / 8 % 8
+                } else if c == 'o' {
+                    bits = bits | orig % 8
+                } else if c != 's' {
+                    break
+                }
+                i += 1
+            }
+            let spread = bits * EACH_CLASS & who
+            if op == '+' {
+                p = p | spread
+            } else if op == '-' {
+                p = p - (p & spread)
+            } else {
+                p = p - (p & who) | spread
+            }
+        }
+        if i < s.len {
+            if ch(s, i) != ',' {
+                return parse
+            }
+            i += 1
+        }
+    }
+    511 - p
+}
+
+/// The permission bits a `who` letter names, or 0.
+fn class_bits(c: char) -> int {
+    match c {
+        'u' => 448,
+        'g' => 56,
+        'o' => 7,
+        'a' => 511,
+        _ => 0,
+    }
+}
+
+fn is_mode_op(c: char) -> bool {
+    c == '+' || c == '-' || c == '='
+}
+
+/// `umask`'s octal answer: four digits, as dash writes it (`0022`).
+fn mask_octal(m: int) -> str {
+    "0{m / 64 % 8}{m / 8 % 8}{m % 8}"
+}
+
+/// `umask -S`'s answer: the permissions the mask leaves, by class
+/// (`u=rwx,g=rx,o=rx`).
+fn mask_symbolic(m: int) -> str {
+    let p = 511 - (m & 511)
+    "u={rwx(p / 64 % 8)},g={rwx(p / 8 % 8)},o={rwx(p % 8)}"
+}
+
+fn rwx(bits: int) -> str {
+    var o = buf()
+    if bits & 4 != 0 {
+        putc(mut o, 'r')
+    }
+    if bits & 2 != 0 {
+        putc(mut o, 'w')
+    }
+    if bits & 1 != 0 {
+        putc(mut o, 'x')
+    }
+    text(o)
+}
+
+/// Set the process's mask to `m`, learning the one the shell started
+/// with on the first call.
+fn set_mask(mut sh: Sh, m: int) -> () ! {unsupported} {
+    let was = os_umask(m) else |_| {
+        return unsupported
+    }
+    if sh.mask0 < 0 {
+        sh.mask0 = was
+    }
+    sh.mask = m
+}
+
+/// The process's mask: `sh.mask` once known, else read (set and put
+/// back: `os_umask` has no read of its own).
+fn mask_now(mut sh: Sh) -> int ! {unsupported} {
+    if sh.mask >= 0 {
+        return sh.mask
+    }
+    let was = os_umask(0) else |_| {
+        return unsupported
+    }
+    os_umask(was) else |_| {
+        return unsupported
+    }
+    sh.mask0 = was
+    sh.mask = was
+    was
+}
+
+/// A subshell ends: put back the mask snapshot `want` recorded (-1:
+/// the mask the shell started with). Nothing to do until a `umask`
+/// has run.
+fn restore_mask(mut sh: Sh, want: int) {
+    if sh.mask < 0 {
+        return
+    }
+    var m = want
+    if m < 0 {
+        m = sh.mask0
+    }
+    if m >= 0 && m != sh.mask {
+        os_umask(m) else |_| {
+            return
+        }
+        sh.mask = m
+    }
+}
+
+/// `umask [-S] [mask]` (XCU `umask`).
+fn bi_umask(mut sh: Sh, args: List[str]) -> int {
+    var i = 0
+    var symbolic = false
+    while i < args.len && args[i].len > 1 && ch(args[i], 0) == '-' {
+        let a = args[i]
+        i += 1
+        if a == "--" {
+            break
+        }
+        for c in a[1..].chars() {
+            if c != 'S' {
+                diag(mut sh, "umask: -{c}: not an option (umask [-S] [mask])")
+                return 2
+            }
+        }
+        symbolic = true
+    }
+    if i < args.len {
+        let operand = args[i]
+        var cur = 0
+        if operand.len > 0 && !is_digit(ch(operand, 0)) {
+            cur = mask_now(mut sh) else |_| {
+                return no_mask(mut sh)
+            }
+        }
+        let m = mask_from(cur, operand) else |_| {
+            diag(mut sh, "umask: {operand}: not an octal mask or a symbolic mode")
+            return 2
+        }
+        if operand.len > 0 {
+            set_mask(mut sh, m) else |_| {
+                return no_mask(mut sh)
+            }
+        }
+        return 0
+    }
+    let m = mask_now(mut sh) else |_| {
+        return no_mask(mut sh)
+    }
+    if symbolic {
+        emit(mut sh, "{mask_symbolic(m)}\n")
+    } else {
+        emit(mut sh, "{mask_octal(m)}\n")
+    }
+    0
+}
+
+fn no_mask(mut sh: Sh) -> int {
+    diag(mut sh, "umask: this machine has no file mode creation mask to set")
+    2
+}
