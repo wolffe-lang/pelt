@@ -240,6 +240,10 @@ struct Sh {
     pos_save: List[str],
     /// The items of the `for` loops running now, innermost last.
     items: List[str],
+    /// The parser of the outermost text (`sh.exec`'s `eval_top`), and
+    /// whether it is in use.
+    lp: P,
+    lp_busy: bool,
     /// Per open frame: where its journal starts, and where its record
     /// starts on `fr_int` and `fr_str`.
     jframes: List[int],
@@ -352,6 +356,8 @@ fn new_sh(name: str) -> Sh {
         jseen: Map[str, int](),
         pos_save: List[str](),
         items: List[str](),
+        lp: new_parser("", 0),
+        lp_busy: false,
         jframes: List[int](),
         fr_ibase: List[int](),
         fr_sbase: List[int](),

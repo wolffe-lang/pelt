@@ -117,6 +117,7 @@ fn run_node(mut sh: Sh, n: int, k: int) -> int {
         st = run_case(mut sh, n)
     } else if k == K_FUNC {
         fnset(mut sh, sh.ast.nodes[n].text, sh.ast.nodes[n].kids[0])
+        keep(mut sh.ast)
         st = 0
     }
     if sh.flow == F_NONE || sh.flow == F_EXIT {
@@ -538,9 +539,14 @@ fn eval_string(mut sh: Sh, src: str, what: str) -> int {
 /// input: what an interactive shell runs after each prompt, so its
 /// diagnostics count lines from the start of the session.
 fn eval_from(mut sh: Sh, src: str, line: int) -> int {
+    if !sh.lp_busy {
+        return eval_top(mut sh, src, line)
+    }
     var p = new_parser(src, line)
     var st = 0
     loop {
+        let top = sh.ast.top
+        let dtop = sh.ast.dtop
         let n = parse_complete(mut p, mut sh.ast)
         if n == -1 {
             break
@@ -550,14 +556,55 @@ fn eval_from(mut sh: Sh, src: str, line: int) -> int {
             fatal(mut sh, p.err, 2)
             return 2
         }
-        if sh.opt_n {
-            continue
+        if !sh.opt_n {
+            st = run(mut sh, n)
         }
-        st = run(mut sh, n)
+        // the command has run: its nodes are dead unless kept (pelt#19);
+        // a here-document still to be read belongs to what follows
+        if p.pend.len == 0 && p.want_doc == 0 {
+            recycle(mut sh.ast, top, dtop)
+        }
         if sh.flow != F_NONE {
             return st
         }
     }
+    st
+}
+
+/// `eval_from` for the outermost text — a script, a `-c` string, each
+/// line read at the prompt — through the parser the state keeps
+/// (`Sh.lp`), reset in place, so a line typed or read builds no parser
+/// (pelt#19). Whatever that text runs that parses (`eval`, `.`, a
+/// trap) gets a parser of its own.
+fn eval_top(mut sh: Sh, src: str, line: int) -> int {
+    sh.lp_busy = true
+    reset_parser(mut sh.lp, src, line)
+    var st = 0
+    loop {
+        let top = sh.ast.top
+        let dtop = sh.ast.dtop
+        let n = parse_complete(mut sh.lp, mut sh.ast)
+        if n == -1 {
+            break
+        }
+        if n == -2 {
+            sh.line = sh.lp.err_line
+            let err = sh.lp.err
+            fatal(mut sh, err, 2)
+            st = 2
+            break
+        }
+        if !sh.opt_n {
+            st = run(mut sh, n)
+        }
+        if sh.lp.pend.len == 0 && sh.lp.want_doc == 0 {
+            recycle(mut sh.ast, top, dtop)
+        }
+        if sh.flow != F_NONE {
+            break
+        }
+    }
+    sh.lp_busy = false
     st
 }
 
@@ -1124,19 +1171,34 @@ fn hex_val(c: int) -> int {
 /// is kept, not even its parse tree (`sh.interact`).
 fn run_turn_fast(sh: Sh, src: str, line: int) -> Fast {
     var a = new_ast()
-    var p = new_parser(src, line)
-    let n = parse_complete(mut p, mut a)
-    if n < 0 || parse_complete(mut p, mut a) != -1 {
-        return slow()
-    }
-    if a.nodes[n].kind != K_LIST || a.nodes[n].kids.len != 1 || a.nodes[n].ints[0] != 0 {
-        return slow()
-    }
-    let k = a.nodes[n].kids[0]
-    if a.nodes[k].kind != K_SIMPLE {
+    let k = simple_in(mut a, src, line)
+    if k < 0 {
         return slow()
     }
     run_fast(sh, a, k, false)
+}
+
+/// Whether `src` is one simple command and nothing else: its node in a
+/// scratch tree, or -1.
+fn turn_simple(src: str, line: int) -> int {
+    var a = new_ast()
+    simple_in(mut a, src, line)
+}
+
+fn simple_in(mut a: Ast, src: str, line: int) -> int {
+    var p = new_parser(src, line)
+    let n = parse_complete(mut p, mut a)
+    if n < 0 || parse_complete(mut p, mut a) != -1 {
+        return -1
+    }
+    if a.nodes[n].kind != K_LIST || a.nodes[n].kids.len != 1 || a.nodes[n].ints[0] != 0 {
+        return -1
+    }
+    let k = a.nodes[n].kids[0]
+    if a.nodes[k].kind != K_SIMPLE {
+        return -1
+    }
+    k
 }
 
 fn nul_at(s: str, from: int) -> int {

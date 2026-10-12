@@ -265,11 +265,13 @@ fn run_stdin(mut sh: Sh) -> int {
 
 fn run_lines(mut sh: Sh) -> int {
     var line = 1
+    // one buffer for every line, emptied in place (pelt#19)
+    var o = buf()
     loop {
         // a one-line command is kept as read; only a continued one is
         // joined in a buffer
         var src = ""
-        var o = buf()
+        (mut o.b).clear()
         var joined = false
         var first = true
         var ended = false
@@ -366,9 +368,17 @@ fn run_lines(mut sh: Sh) -> int {
         if sh.flow != F_NONE {
             fast = true
         }
+        // a typed simple command runs inside the region, its parse tree
+        // included (`sh.exec`'s `run_turn_fast`); which lines are one is
+        // asked first, in a region of its own whose answer is a `bool`,
+        // so any other line costs nothing to ask about (pelt#19)
+        var one = false
         if !fast && sh.interactive && !sh.opt_n && !sh.opt_v && fast_ok(sh) {
-            // a typed simple command runs inside the region, its parse
-            // tree included (`sh.exec`'s `run_turn_fast`)
+            one = copy region ask {
+                turn_simple(src, line) >= 0
+            }
+        }
+        if one {
             flush(mut sh)
             let r = copy region turn {
                 run_turn_fast(sh, src, line)

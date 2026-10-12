@@ -44,6 +44,9 @@ struct P {
     pend: List[int],
     pend_delim: List[str],
     pend_strip: List[bool],
+    /// Where the word being scanned has a `\`-newline cut out
+    /// (`word_text`).
+    cuts: List[int],
     err: str,
     err_line: int,
     more: bool,
@@ -64,10 +67,33 @@ fn new_parser(src: str, line: int) -> P {
         pend: List[int](),
         pend_delim: List[str](),
         pend_strip: List[bool](),
+        cuts: List[int](),
         err: "",
         err_line: 0,
         more: false,
     }
+}
+
+/// `p` made ready for `src` from line `line`, its lists emptied in
+/// place: `new_parser` without building one.
+fn reset_parser(mut p: P, src: str, line: int) {
+    p.src = src
+    p.pos = 0
+    p.line = line
+    p.have = false
+    p.tk = 0
+    p.tx = ""
+    p.tl = line
+    p.tdoc = -1
+    p.tq = false
+    p.want_doc = 0
+    (mut p.pend).clear()
+    (mut p.pend_delim).clear()
+    (mut p.pend_strip).clear()
+    (mut p.cuts).clear()
+    p.err = ""
+    p.err_line = 0
+    p.more = false
 }
 
 fn fail(mut p: P, msg: str) {
@@ -167,13 +193,16 @@ fn lex(mut p: P, mut a: Ast) {
         return
     }
     let start_line = p.line
-    var o = buf()
+    let start = p.pos
+    let cb = p.cuts.len
     var quoted = false
-    scan_word(mut p, mut a, mut o, mut quoted)
+    scan_word(mut p, mut a, mut quoted)
     if p.err.len > 0 {
+        cuts_back(mut p, cb)
         return
     }
-    let w = text(o)
+    let w = word_text(p, start, cb)
+    cuts_back(mut p, cb)
     p.tq = quoted
     p.tx = w
     p.tl = start_line
@@ -185,8 +214,7 @@ fn lex(mut p: P, mut a: Ast) {
         return
     }
     if p.want_doc > 0 {
-        let id = a.docs.len
-        (mut a.docs).push("")
+        let id = doc_slot(mut a)
         (mut p.pend).push(id)
         (mut p.pend_delim).push(unquote_delim(w))
         (mut p.pend_strip).push(p.want_doc == 2)
@@ -246,7 +274,7 @@ fn lex_op(mut p: P) {
     }
 }
 
-fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
+fn scan_word(mut p: P, mut a: Ast, mut quoted: bool) {
     while p.pos < p.src.len {
         let c = at(p, p.pos)
         if is_meta(c) {
@@ -255,6 +283,8 @@ fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
         if c == '\\' {
             quoted = true
             if at(p, p.pos + 1) == '\n' {
+                // a `\`-newline is removed from the word (`word_text`)
+                (mut p.cuts).push(p.pos)
                 p.pos += 2
                 p.line += 1
                 if p.pos >= p.src.len {
@@ -263,10 +293,8 @@ fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
                 continue
             }
             if p.pos + 1 < p.src.len {
-                put_range(mut o, p.src, p.pos, p.pos + 2)
                 p.pos += 2
             } else {
-                putc(mut o, '\\')
                 p.pos += 1
             }
             continue
@@ -287,39 +315,36 @@ fn scan_word(mut p: P, mut a: Ast, mut o: Buf, mut quoted: bool) {
                 return
             }
             p.pos += 1
-            put_range(mut o, p.src, start, p.pos)
             continue
         }
         if c == '"' {
             quoted = true
-            scan_dq(mut p, mut a, mut o)
+            scan_dq(mut p, mut a, true)
             if p.err.len > 0 {
                 return
             }
             continue
         }
         if c == '$' {
-            scan_dollar(mut p, mut a, mut o)
+            scan_dollar(mut p, mut a)
             if p.err.len > 0 {
                 return
             }
             continue
         }
         if c == '`' {
-            scan_bq(mut p, mut o)
+            scan_bq(mut p)
             if p.err.len > 0 {
                 return
             }
             continue
         }
-        putb(mut o, byte_at(p.src, p.pos))
         p.pos += 1
     }
 }
 
-fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
+fn scan_dq(mut p: P, mut a: Ast, real: bool) {
     let line = p.line
-    putc(mut o, '"')
     p.pos += 1
     loop {
         if p.pos >= p.src.len {
@@ -328,12 +353,14 @@ fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
         }
         let c = at(p, p.pos)
         if c == '"' {
-            putc(mut o, '"')
             p.pos += 1
             return
         }
         if c == '\\' {
             if at(p, p.pos + 1) == '\n' {
+                if real {
+                    (mut p.cuts).push(p.pos)
+                }
                 p.pos += 2
                 p.line += 1
                 if p.pos >= p.src.len {
@@ -342,20 +369,19 @@ fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
                 continue
             }
             if p.pos + 1 < p.src.len {
-                put_range(mut o, p.src, p.pos, p.pos + 2)
                 p.pos += 2
                 continue
             }
         }
         if c == '$' {
-            scan_dollar(mut p, mut a, mut o)
+            scan_dollar(mut p, mut a)
             if p.err.len > 0 {
                 return
             }
             continue
         }
         if c == '`' {
-            scan_bq(mut p, mut o)
+            scan_bq(mut p)
             if p.err.len > 0 {
                 return
             }
@@ -364,12 +390,11 @@ fn scan_dq(mut p: P, mut a: Ast, mut o: Buf) {
         if c == '\n' {
             p.line += 1
         }
-        putb(mut o, byte_at(p.src, p.pos))
         p.pos += 1
     }
 }
 
-fn scan_bq(mut p: P, mut o: Buf) {
+fn scan_bq(mut p: P) {
     let line = p.line
     let start = p.pos
     p.pos += 1
@@ -381,7 +406,6 @@ fn scan_bq(mut p: P, mut o: Buf) {
         let c = at(p, p.pos)
         if c == '`' {
             p.pos += 1
-            put_range(mut o, p.src, start, p.pos)
             return
         }
         if c == '\\' && p.pos + 1 < p.src.len {
@@ -398,20 +422,19 @@ fn scan_bq(mut p: P, mut o: Buf) {
     }
 }
 
-fn scan_dollar(mut p: P, mut a: Ast, mut o: Buf) {
+fn scan_dollar(mut p: P, mut a: Ast) {
     let d = at(p, p.pos + 1)
     if d == '(' {
-        if at(p, p.pos + 2) == '(' && scan_arith(mut p, mut o) {
+        if at(p, p.pos + 2) == '(' && scan_arith(mut p) {
             return
         }
-        scan_cmdsub(mut p, mut a, mut o)
+        scan_cmdsub(mut p, mut a)
         return
     }
     if d == '{' {
-        scan_brace(mut p, mut a, mut o)
+        scan_brace(mut p, mut a)
         return
     }
-    putc(mut o, '$')
     p.pos += 1
 }
 
@@ -419,7 +442,7 @@ fn scan_dollar(mut p: P, mut a: Ast, mut o: Buf) {
 /// the text appended and the position past it; false (nothing moved)
 /// when the parentheses close some other way, which makes it a command
 /// substitution whose first command is a subshell.
-fn scan_arith(mut p: P, mut o: Buf) -> bool {
+fn scan_arith(mut p: P) -> bool {
     var i = p.pos + 3
     var depth = 2
     var lines = 0
@@ -433,7 +456,6 @@ fn scan_arith(mut p: P, mut o: Buf) -> bool {
                 if at(p, i + 1) != ')' {
                     return false
                 }
-                put_range(mut o, p.src, p.pos, i + 2)
                 p.pos = i + 2
                 p.line += lines
                 return true
@@ -446,7 +468,7 @@ fn scan_arith(mut p: P, mut o: Buf) -> bool {
     false
 }
 
-fn scan_cmdsub(mut p: P, mut a: Ast, mut o: Buf) {
+fn scan_cmdsub(mut p: P, mut a: Ast) {
     let start = p.pos
     let line = p.line
     p.pos += 2
@@ -464,7 +486,6 @@ fn scan_cmdsub(mut p: P, mut a: Ast, mut o: Buf) {
             k += 1
         }
         p.pos = j + 1
-        put_range(mut o, p.src, start, p.pos)
         return
     }
     let saved_want = p.want_doc
@@ -485,15 +506,13 @@ fn scan_cmdsub(mut p: P, mut a: Ast, mut o: Buf) {
     }
     p.have = false
     p.want_doc = saved_want
-    put_range(mut o, p.src, start, p.pos)
 }
 
-fn scan_brace(mut p: P, mut a: Ast, mut o: Buf) {
+fn scan_brace(mut p: P, mut a: Ast) {
     let start = p.pos
     let line = p.line
     p.pos += 2
     var depth = 1
-    var junk = buf()
     loop {
         if p.pos >= p.src.len {
             fail_eof(mut p, "unterminated parameter expansion")
@@ -504,7 +523,6 @@ fn scan_brace(mut p: P, mut a: Ast, mut o: Buf) {
             depth -= 1
             p.pos += 1
             if depth == 0 {
-                put_range(mut o, p.src, start, p.pos)
                 return
             }
             continue
@@ -533,21 +551,21 @@ fn scan_brace(mut p: P, mut a: Ast, mut o: Buf) {
             continue
         }
         if c == '"' {
-            scan_dq(mut p, mut a, mut junk)
+            scan_dq(mut p, mut a, false)
             if p.err.len > 0 {
                 return
             }
             continue
         }
         if c == '$' {
-            scan_dollar(mut p, mut a, mut junk)
+            scan_dollar(mut p, mut a)
             if p.err.len > 0 {
                 return
             }
             continue
         }
         if c == '`' {
-            scan_bq(mut p, mut junk)
+            scan_bq(mut p)
             if p.err.len > 0 {
                 return
             }
@@ -557,6 +575,33 @@ fn scan_brace(mut p: P, mut a: Ast, mut o: Buf) {
             p.line += 1
         }
         p.pos += 1
+    }
+}
+
+/// The word scanned from `start` to here: the source text itself (a
+/// view, nothing built) unless a `\`-newline was cut out of it, whose
+/// positions are `p.cuts[cb..]`.
+fn word_text(p: P, start: int, cb: int) -> str {
+    if p.cuts.len == cb {
+        return p.src[start..p.pos]
+    }
+    var o = buf()
+    var at_ = start
+    var k = cb
+    while k < p.cuts.len {
+        put_range(mut o, p.src, at_, p.cuts[k])
+        at_ = p.cuts[k] + 2
+        k += 1
+    }
+    put_range(mut o, p.src, at_, p.pos)
+    text(o)
+}
+
+/// Forget the cuts a word recorded (a nested word records and forgets
+/// its own above the enclosing one's).
+fn cuts_back(mut p: P, cb: int) {
+    while p.cuts.len > cb {
+        let _c = (mut p.cuts).pop() else 0
     }
 }
 
@@ -617,9 +662,10 @@ fn read_docs(mut p: P, mut a: Ast) {
         a.docs[id] = text(body)
         k += 1
     }
-    p.pend = List[int]()
-    p.pend_delim = List[str]()
-    p.pend_strip = List[bool]()
+    // emptied in place (pelt#19)
+    (mut p.pend).clear()
+    (mut p.pend_delim).clear()
+    (mut p.pend_strip).clear()
 }
 
 // --------------------------------------------------------------- parser

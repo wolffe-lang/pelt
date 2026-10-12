@@ -11,6 +11,14 @@
 //! The arena is the shell's for its whole life: a function body parsed
 //! by `eval` or `.` stays where its definition can find it.
 //!
+//! **Recycled (pelt#19).** The root region frees nothing, so a tree
+//! that only grew kept every line of a script and every line typed.
+//! Now `top` marks the arena's live end: once a complete command has
+//! run (`sh.exec`'s `eval_from`) its nodes are dead unless something
+//! kept one — a function definition, a parsed command substitution —
+//! which raises `pin` to cover them; `add` reuses a dead slot, its lists
+//! emptied in place, and here-document bodies (`dtop`) likewise.
+//!
 //! One `Node` shape serves every kind; what each field means per kind:
 //!
 //! | kind | text | words | kids | ints |
@@ -71,13 +79,32 @@ struct Node {
 struct Ast {
     nodes: List[Node],
     docs: List[str],
+    /// The live ends of `nodes` and `docs`: slots past them are dead
+    /// and reused (module doc).
+    top: int,
+    dtop: int,
+    /// Every node below this is kept: something outside the tree names
+    /// one of them (`keep`).
+    pin: int,
 }
 
 fn new_ast() -> Ast {
-    Ast { nodes: List[Node](), docs: List[str]() }
+    Ast { nodes: List[Node](), docs: List[str](), top: 0, dtop: 0, pin: 0 }
 }
 
 fn add(mut a: Ast, kind: int, text: str, line: int) -> int {
+    let i = a.top
+    a.top += 1
+    if i < a.nodes.len {
+        a.nodes[i].kind = kind
+        a.nodes[i].text = text
+        a.nodes[i].line = line
+        (mut a.nodes[i].words).clear()
+        (mut a.nodes[i].kids).clear()
+        (mut a.nodes[i].ints).clear()
+        (mut a.nodes[i].redirs).clear()
+        return i
+    }
     (mut a.nodes).push(Node {
         kind: kind,
         text: text,
@@ -87,7 +114,35 @@ fn add(mut a: Ast, kind: int, text: str, line: int) -> int {
         redirs: List[int](),
         line: line,
     })
-    a.nodes.len - 1
+    i
+}
+
+/// A here-document's slot in `docs`, empty, the dead one reused.
+fn doc_slot(mut a: Ast) -> int {
+    let id = a.dtop
+    a.dtop += 1
+    if id < a.docs.len {
+        a.docs[id] = ""
+    } else {
+        (mut a.docs).push("")
+    }
+    id
+}
+
+/// Something outside the tree now names nodes parsed so far: keep them.
+fn keep(mut a: Ast) {
+    if a.pin < a.top {
+        a.pin = a.top
+    }
+}
+
+/// A complete command parsed from `top` and `dtop` = the marks has run:
+/// its nodes and bodies are dead again, unless something kept them.
+fn recycle(mut a: Ast, top: int, dtop: int) {
+    if a.pin <= top {
+        a.top = top
+        a.dtop = dtop
+    }
 }
 
 fn kind_name(k: int) -> str {
