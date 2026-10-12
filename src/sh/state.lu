@@ -148,6 +148,9 @@ struct Sh {
     /// `stage_cap`).
     nowait: bool,
     stage_child: int,
+    /// A stage's built-in run on the fast path: the read end its output
+    /// waits behind for the next stage, or -1.
+    stage_in: int,
     stage_w: int,
     stage_cap: int,
     /// Temporary-file captures of children still running: the read
@@ -166,6 +169,11 @@ struct Sh {
     /// the ordinary way.
     shadow: bool,
     bail: bool,
+    /// In the shadow: an assignment an expansion makes is kept in the
+    /// shadow and recorded here (name, value, …) for the real state,
+    /// instead of bailing (`sh.exec`'s `take_deferred`).
+    defer_ok: bool,
+    deferred: List[str],
     /// End of file seen on descriptor 0 (a terminal's Ctrl-D is one
     /// zero-byte read; the next read would wait for more typing).
     eof0: bool,
@@ -278,6 +286,7 @@ fn new_sh(name: str) -> Sh {
         started: false,
         nowait: false,
         stage_child: -1,
+        stage_in: -1,
         stage_w: -1,
         stage_cap: 0,
         pend_cap: List[int](),
@@ -286,6 +295,8 @@ fn new_sh(name: str) -> Sh {
         phys: "",
         shadow: false,
         bail: false,
+        defer_ok: false,
+        deferred: List[str](),
         eof0: false,
         name: name,
         line: 0,
@@ -792,7 +803,7 @@ fn is_exported(sh: Sh, name: str) -> bool {
 /// Assign, honouring `readonly` and `set -a`. False (and nothing set)
 /// when the variable is read-only; the caller reports it.
 fn set_var(mut sh: Sh, name: str, value: str) -> bool {
-    if sh.shadow {
+    if sh.shadow && !sh.defer_ok {
         sh.bail = true
         sh.flow = F_EXIT
     }
@@ -802,6 +813,10 @@ fn set_var(mut sh: Sh, name: str, value: str) -> bool {
     vset(mut sh, name, value)
     if sh.opt_a {
         xset(mut sh, name, true)
+    }
+    if sh.shadow && sh.defer_ok {
+        (mut sh.deferred).push(name)
+        (mut sh.deferred).push(value)
     }
     true
 }
