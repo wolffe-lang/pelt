@@ -1,0 +1,12 @@
+for i in 1 2
+do echo $i
+done
+fc -l
+fc -ln -1
+fc -s -2
+HISTSIZE=3
+echo a
+echo b
+fc -l
+fc -l 1
+exit

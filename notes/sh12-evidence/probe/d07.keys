@@ -1,0 +1,5 @@
+fc -l
+echo new
+fc -l
+fc -s old2
+exit

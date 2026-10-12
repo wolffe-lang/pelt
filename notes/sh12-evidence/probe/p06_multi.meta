@@ -1,0 +1,2 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s PS2=>\s

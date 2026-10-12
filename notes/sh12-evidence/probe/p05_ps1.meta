@@ -1,0 +1,3 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s
+who=bash

@@ -1,0 +1,6 @@
+PS1=!\>
+echo a
+PS1=!!\>
+echo b
+PS1=\!\>
+exit

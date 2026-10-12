@@ -1,0 +1,10 @@
+fc -l
+fc -s
+fc -l 5
+fc -l nosuch
+echo x
+fc -l nosuch
+fc -l 99
+fc -l -99
+fc -s zzz
+exit

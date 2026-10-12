@@ -1,0 +1,5 @@
+echo one
+set -o vi
+set -o
+fc -e true
+exit

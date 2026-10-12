@@ -1,0 +1,10 @@
+echo one
+echo two
+fc -l
+fc -ln -1
+fc -l 1 2
+fc -lr
+fc -s
+fc -s one=uno 1
+fc -l
+exit
