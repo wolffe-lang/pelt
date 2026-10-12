@@ -302,7 +302,31 @@ KB at 0 → 20,000 commands, release:
 
 ### 4.5 CI and the planted reds
 
-Filled in below as the runs finish (§4.6).
+**CI run 38240346784 at `68ca6f1`: green on all three jobs** (the
+code of the head; later commits touch only this note). linux x86-64
+and macOS arm64 build both tiers and run everything: sessions **197 / 0
+/ 20** on both tiers of both hosts (PEND-ok 4 on linux, 1 on macOS: the
+lnext cases, sh11), corpus **837 / 0 / 98** on both, `hist-witness` 6 of
+6 on both tiers of both hosts; linux aarch64 asserts both refusals
+(wolf-lang#614). Run 38239898935 at `b380b7a` (same code) is green too.
+
+**The planted reds**: commit `553b0ae` on branch `sh12-plant` (left on
+origin, never to merge; `68ca6f1` plus two breaks in `src/sh/hist.lu`:
+the `HISTFILE` append skipped, and `fc`'s `-n` resolved one command too
+far back), run by `workflow_dispatch` as **CI run 38248031375: red on
+linux x86-64 and macOS arm64**, each break caught by its own check on
+both hosts:
+
+- `-n` one too far: `wolf test` fails four table checks
+  (`fc_number(-1, first=true) = 3, want 4`, `-0`, `fc -ln -2 -1`,
+  `fc -l -0`); on kasumi before the push the session `c_hist_fc_list`
+  failed too (in CI the session steps do not run after a red `wolf
+  test`, by the workflow's design);
+- the append skipped: `hist-witness` 1 of 6 on both tiers of both hosts
+  (write, read, shared, truncate, default fail; foreign, which writes
+  nothing, holds).
+
+Nothing else went red; aarch64 green (it builds nothing).
 
 ## 5. Prediction against result
 
@@ -323,7 +347,7 @@ Filled in below as the runs finish (§4.6).
 | Enter to prompt with a file ≤ +0.15 ms | +0.005 ms release, +0.005 ms native (medians) | hit |
 | Ctrl-R over 32,767 entries < 10 ms median (release) | 5.54 ms release (native 9.49 ms) | hit |
 | start with 32,767 entries < 60 ms more | +4.1 ms release, +6.6 ms native | hit |
-| planted reds in CI | §4.6 | — |
+| planted reds in CI | red on both hosts, each break by its own check (run 38248031375) | hit |
 
 Not in the prediction, found: a key typed before the editor has set
 its mode (just after the prompt is written) is the line discipline's,
@@ -362,7 +386,7 @@ interactive (probes p01, d06–d09), with no `HISTFILE` and no `!` in
 
 - Branch `sh12` in pelt, PR #24 open and unmerged, the five sections
   above by name, commit shas as bullets, a test checklist.
-- CI green at the head (§4.6), the planted reds red (§4.6).
+- CI green at the head and the planted reds red (§4.5).
 - `wolf/tools/lane-audit.sh pelt sh12 24` run from the org directory,
   its exit status read directly (the report).
 - No issue filed or closed; none needed: nothing wolf lacked here.
