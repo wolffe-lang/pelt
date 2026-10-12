@@ -444,6 +444,28 @@ witness passes on both tiers of both hosts. kasumi at `d69165e` (the
 code of `5474c9d`): 171 / 0 / 26 (4), the witness, the clause census
 427 of 544 met (79.2%; trunk `251f90a` 414 of 532, 77.8%).
 
+### 4.9 The planted reds
+
+Both plants in one commit, `8021e35` on branch `sh11-plant` (left on
+origin, never to merge; it is `5474c9d` plus the plant), run by
+`workflow_dispatch` as **CI run 38209110786: red on linux x86-64 and
+macOS arm64**, each break caught by its own cases:
+
+- **a wide character counted as one cell** (`cells` answers 1 for a
+  width-2 code point): `c_ed_wide_insert` and `c_ed_wide_wrap_edit`
+  fail on their screens, on both hosts;
+- **the mode not restored after Ctrl-C** (`ed_line` skips
+  `os_term_set_mode` when the line was interrupted): `c_ed_ctrl_c`,
+  `c_ed_ctrl_c_trap`, `c_ed_ctrl_c_continued`, `c_ed_mode_after_ctrl_c`
+  and `c_vi_ctrl_c` fail on the harness's exit check ("pelt left the
+  terminal's modes changed"), and `tools/edit-witness` fails its `int`
+  scenario ("modes restored False") on both tiers of both hosts.
+
+Sessions there: 164 pass, 7 fail, 26 pending on both hosts; nothing
+else moved. The same plant on kasumi before it was pushed: the same
+seven cases (one more, `c_ed_wide_wrap`, stays green: the terminal
+wraps a wide character itself when the editor writes only at the end).
+
 ## 5. Prediction against result
 
 | predicted (`480e6b5`) | measured | |
