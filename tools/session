@@ -10,6 +10,13 @@ wrote from `dash -i +m`: the output of every step, whether anything but
 the prompt reached standard error, every prompt string, and the exit
 status and the step it came at.
 
+A case with a `<name>.screen` file (and `screen=N` in its meta) is also
+judged on the screen: what a terminal shows of each step from N on
+(tools/lib_session.py's `Screen`), against the recorded rows and
+cursor. And every pelt session must leave the terminal's modes as it
+found them (ICANON, ECHO, ISIG): a shell that exits with its terminal
+raw fails, whatever its transcript says.
+
 A case marked `pending=` needs a primitive pelt does not have yet. It
 still RUNS and is reported as PEND-ok or PEND-fail without deciding the
 exit status; every such case must be named in tests/session/PENDING.md
@@ -42,6 +49,12 @@ def show_diff(got, want):
         print(f"     {mark}pelt {g}")
         if g != w:
             print(f"       dash {w}")
+
+
+def show_screens(bad):
+    for i, have, want in bad:
+        print(f"     screen after step {i}:")
+        show_diff(have, want)
 
 
 def main(argv):
@@ -80,6 +93,22 @@ def main(argv):
             ok = ls.stdout_and_exit(got) == ls.stdout_and_exit(want)
         else:
             ok = got == want
+        bad_screen = []
+        scp = keys[:-5] + ".screen"
+        if "screen" in meta and os.path.exists(scp):
+            want_scr = ls.read_screen(scp)
+            if not want_scr:
+                die(f"{name}: {name}.screen holds no step")
+            for i in sorted(want_scr):
+                have = ls.last_screens[i] if i < len(ls.last_screens) else ["<none>"]
+                if have != want_scr[i]:
+                    bad_screen.append((i, have, want_scr[i]))
+            ok = ok and not bad_screen
+        elif "screen" in meta:
+            die(f"{name}: screen={meta['screen']} but no {name}.screen")
+        if ls.last_mode is False:
+            ok = False
+            print(f"     ({name}: pelt left the terminal's modes changed)")
         if ls.last_sig:
             print(f"     ({name}: pelt {ls.last_sig})")
         if "pending" in meta:
@@ -90,6 +119,7 @@ def main(argv):
             print(f"PEND-{'ok  ' if ok else 'fail'} {name} (waits on {meta['pending']})")
             if not ok:
                 show_diff(got, want)
+                show_screens(bad_screen)
             continue
         if ok:
             passed += 1
@@ -98,6 +128,7 @@ def main(argv):
         failed += 1
         print(f"FAIL {name}")
         show_diff(got, want)
+        show_screens(bad_screen)
     print(f"session: pass {passed}  fail {failed}  pending {pend} ({pend_ok})")
     if unlisted:
         for u in unlisted:

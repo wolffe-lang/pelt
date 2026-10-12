@@ -23,7 +23,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_session as ls  # noqa: E402
 
-KEEP = ("args", "pelt_args", "oracle_args", "env", "oracle", "compare", "pending", "why")
+KEEP = ("args", "pelt_args", "oracle_args", "env", "oracle", "compare", "pending", "why",
+        "screen", "cols", "rows", "screen_by")
 
 
 def main(argv):
@@ -50,10 +51,19 @@ def main(argv):
         view = ls.stdout_and_exit if meta.get("compare") == "stdout" else (lambda t: t)
         d = ls.run(ls.argv_for(first, meta, False), keys, meta)
         dash_sig = ls.last_sig
+        scr1 = ls.last_screens
         # a second recording: the transcript must not depend on timing
         d2 = ls.run(ls.argv_for(first, meta, False), keys, meta)
         if view(d) != view(d2):
             print(f"UNSTABLE {name}: two {first[0]} runs differ")
+            drift += 1
+            continue
+        spec = meta.get("screen")
+        # a screen written by hand (`screen_by=hand`) is kept as it is
+        record_screen = spec is not None and meta.get("screen_by") != "hand"
+        judged = ls.screen_steps(spec, len(scr1)) if record_screen else []
+        if record_screen and [scr1[i] for i in judged] != [ls.last_screens[i] for i in judged if i < len(ls.last_screens)]:
+            print(f"UNSTABLE {name}: two {first[0]} screens differ")
             drift += 1
             continue
         b = ls.run(ls.argv_for(other, meta, False), keys, meta)
@@ -67,6 +77,8 @@ def main(argv):
             continue
         with open(trp, "w", encoding="utf-8") as fh:
             fh.write("\n".join(d) + "\n")
+        if record_screen:
+            ls.write_screen(keys[:-5] + ".screen", scr1, spec)
         ls.write_meta(mpath, meta)
         sig = f" (dash {dash_sig})" if dash_sig else ""
         print(f"recorded {name}: {d[-1]}{'' if same else ' (bash differs)'}{sig}")

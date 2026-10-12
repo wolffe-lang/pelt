@@ -25,7 +25,11 @@ A session case is a set of files in tests/session/:
                                 for such a case the oracle must decide
                                 for itself too (`oracle_args=+m`)
                   env=K=V …     extra environment, split on blanks; a
-                                `$HOME` in a value is left for the shell
+                                `$HOME` in a value is left for the shell,
+                                and `\s` in a value is a space
+                                (`PS1=$\s`: bash's first prompt is then
+                                pelt's, so a bash-recorded case paces
+                                pelt from its first step)
                   bash=agree|differs  the second opinion (`bash --posix
                                 -i`), on standard output and exit status
                   oracle=bash   the transcript is `bash --posix -i`'s:
@@ -41,6 +45,18 @@ A session case is a set of files in tests/session/:
                   pending=WHAT  needs a primitive pelt lacks; listed by
                                 name in tests/session/PENDING.md
                   why=TEXT      free text
+                  screen=N[-M]  judge the screen of steps N through M
+                                (or N to the end) against
+                                <name>.screen (below)
+                  cols=N rows=N the terminal's size (80 by 24): the
+                                pty's window size, which bash reads,
+                                and the screen's, whose cursor report
+                                pelt reads
+  <name>.screen the oracle's screen at the end of each step from
+                `screen=` on, written by tools/session-record (or by
+                hand, said so in `why=`): the rows the step drew, from
+                the row its first byte landed on, as `| text` lines,
+                then `cursor ROW COL` relative to that row
   <name>.files/ optional: copied into the case's scratch directory
                 before the shell starts (`home/` is `$HOME`, `w/` the
                 working directory)
@@ -62,7 +78,25 @@ prompt the step ended on — the part of standard error after its last
 newline. The last line is `exit N` (`signal N` for a death by signal)
 with the step it happened at, or `alive` if the shell outlived what was
 typed. Lines are typed until the shell exits; any left over are not.
+
+**The screen.** Beside the transcript a small terminal (`Screen`,
+ECMA-48's controls and the CSI sequences an editor uses, auto-wrap with
+xterm's pending-wrap rule, wide characters by Unicode's East Asian
+Width) is fed what a real terminal would show of the line being edited:
+the pty's own output and standard error, in the order they arrive (the
+pty's first when both are ready; standard output, the commands' output,
+is left out so the order cannot race). It answers a cursor-position
+report (`ESC[6n`) on the pty, as a terminal does. `last_screens` holds
+one snapshot per step.
+
+**The mode.** `last_mode` is whether the pty's local modes (ICANON,
+ECHO, ISIG) were what they were before the shell started when it ended
+(None when it was killed): a shell that leaves its terminal raw fails.
 """
+
+import codecs
+import struct
+import unicodedata
 
 import json
 import os
@@ -86,6 +120,222 @@ EXIT_WAIT = 8.0
 # $PELT_SESSION_SLOW=seconds types every byte on its own with that gap
 # (0.02 is about a 500-baud line); the transcripts must not change.
 SLOW = float(os.environ.get("PELT_SESSION_SLOW") or 0)
+
+
+class Screen:
+    """A terminal small enough to read: COLS by ROWS cells over a grid
+    that only grows (the rows above the window are kept), a cursor, and
+    xterm's pending wrap. `reply` collects what the terminal answers."""
+
+    def __init__(self, cols=80, rows=24):
+        self.cols, self.rows = cols, rows
+        self.grid = [[" "] * cols for _ in range(rows)]
+        self.top = 0
+        self.r = 0
+        self.c = 0
+        self.pend = False
+        self.saved = (0, 0, False)
+        self.dec = codecs.getincrementaldecoder("utf-8")("replace")
+        self.state = 0
+        self.seq = ""
+        self.reply = b""
+
+    @staticmethod
+    def width(ch):
+        cp = ord(ch)
+        if 0x1160 <= cp <= 0x11FF or 0xD7B0 <= cp <= 0xD7FF:
+            return 0
+        cat = unicodedata.category(ch)
+        if cat in ("Mn", "Me") or (cat == "Cf" and cp != 0xAD):
+            return 0
+        if unicodedata.east_asian_width(ch) in ("W", "F") or 0x20000 <= cp <= 0x3FFFD:
+            return 2
+        return 1
+
+    def _row(self, r):
+        while r >= len(self.grid):
+            self.grid.append([" "] * self.cols)
+        return self.grid[r]
+
+    def _lf(self):
+        self.pend = False
+        if self.r == self.top + self.rows - 1:
+            self.top += 1
+            self._row(self.top + self.rows - 1)
+        self.r += 1
+        self._row(self.r)
+
+    def _put(self, ch):
+        w = self.width(ch)
+        if w == 0:
+            row = self._row(self.r)
+            col = self.c if self.pend else self.c - 1
+            while col > 0 and row[col] == "":
+                col -= 1
+            if col >= 0:
+                row[col] += ch
+            return
+        if self.pend or (w == 2 and self.c == self.cols - 1):
+            self.c = 0
+            self._lf()
+        row = self._row(self.r)
+        row[self.c] = ch
+        if w == 2:
+            row[self.c + 1] = ""
+        self.c += w
+        if self.c >= self.cols:
+            self.c = self.cols - 1
+            self.pend = True
+
+    def _csi(self, seq):
+        final = seq[-1]
+        body = seq[:-1]
+        nums = [int(x) if x.isdigit() else 0 for x in body.split(";")] if body else []
+        n = nums[0] if nums and nums[0] > 0 else 1
+        self.pend = False
+        if final == "A":
+            self.r = max(self.top, self.r - n)
+        elif final == "B":
+            self.r = min(self.top + self.rows - 1, self.r + n)
+        elif final == "C":
+            self.c = min(self.cols - 1, self.c + n)
+        elif final == "D":
+            self.c = max(0, self.c - n)
+        elif final in "Hf":
+            row = nums[0] if nums and nums[0] > 0 else 1
+            col = nums[1] if len(nums) > 1 and nums[1] > 0 else 1
+            self.r = self.top + min(row, self.rows) - 1
+            self.c = min(col, self.cols) - 1
+        elif final == "J":
+            mode = nums[0] if nums else 0
+            if mode == 2:
+                for r in range(self.top, self.top + self.rows):
+                    self._row(r)[:] = [" "] * self.cols
+            else:
+                row = self._row(self.r)
+                row[self.c:] = [" "] * (self.cols - self.c)
+                for r in range(self.r + 1, len(self.grid)):
+                    self.grid[r] = [" "] * self.cols
+        elif final == "K":
+            row = self._row(self.r)
+            row[self.c:] = [" "] * (self.cols - self.c)
+        elif final == "P":
+            # delete characters: the rest of the row moves left
+            row = self._row(self.r)
+            n = min(n, self.cols - self.c)
+            row[self.c:] = row[self.c + n:] + [" "] * n
+        elif final == "@":
+            # insert blanks: the rest of the row moves right
+            row = self._row(self.r)
+            n = min(n, self.cols - self.c)
+            row[self.c:] = ([" "] * n + row[self.c:])[:self.cols - self.c]
+        elif final == "X":
+            row = self._row(self.r)
+            n = min(n, self.cols - self.c)
+            row[self.c:self.c + n] = [" "] * n
+        elif final == "n" and body == "6":
+            self.reply += f"\x1b[{self.r - self.top + 1};{self.c + 1}R".encode()
+
+    def feed(self, data):
+        for ch in self.dec.decode(data):
+            o = ord(ch)
+            if self.state == 1:
+                if ch == "[":
+                    self.state, self.seq = 2, ""
+                elif ch == "]":
+                    self.state = 3
+                elif ch == "7":
+                    self.saved = (self.r, self.c, self.pend)
+                    self.state = 0
+                elif ch == "8":
+                    self.r, self.c, self.pend = self.saved
+                    self.state = 0
+                else:
+                    self.state = 0
+                continue
+            if self.state == 2:
+                self.seq += ch
+                if 0x40 <= o <= 0x7E:
+                    self._csi(self.seq)
+                    self.state = 0
+                continue
+            if self.state == 3:
+                if o == 7 or o == 0x9C:
+                    self.state = 0
+                elif o == 27:
+                    self.state = 4
+                continue
+            if self.state == 4:
+                self.state = 0
+                continue
+            if o == 27:
+                self.state = 1
+            elif o == 13:
+                self.c, self.pend = 0, False
+            elif o == 10:
+                self._lf()
+            elif o == 8:
+                self.pend = False
+                if self.c > 0:
+                    self.c -= 1
+            elif o == 9:
+                self.pend = False
+                self.c = min(self.cols - 1, (self.c // 8 + 1) * 8)
+            elif o < 32 or o == 127:
+                pass
+            else:
+                self._put(ch)
+
+    def snapshot(self, start):
+        """The rows from `start` (absolute) down, and the cursor."""
+        last = self.r
+        for r in range(len(self.grid) - 1, start - 1, -1):
+            if "".join(self.grid[r]).strip():
+                last = max(last, r)
+                break
+        rows = ["| " + "".join(self.grid[r]).rstrip() for r in range(start, last + 1)]
+        return rows + [f"cursor {self.r - start} {self.c}"]
+
+
+def read_screen(path):
+    """A .screen file as {step: [lines]}."""
+    out = {}
+    cur = None
+    with open(path, encoding="utf-8") as fh:
+        for ln in fh.read().split("\n"):
+            if ln.startswith("step "):
+                cur = int(ln[5:])
+                out[cur] = []
+            elif cur is not None and ln:
+                out[cur].append(ln)
+    return out
+
+
+def screen_steps(spec, n):
+    """The steps a `screen=N[-M]` judges, of `n`."""
+    a, _, b = spec.partition("-")
+    last = int(b) if b else n - 1
+    return list(range(int(a), min(last, n - 1) + 1))
+
+
+def write_screen(path, screens, spec):
+    with open(path, "w", encoding="utf-8") as fh:
+        for i, rows in enumerate(screens):
+            if i not in screen_steps(spec, len(screens)):
+                continue
+            fh.write(f"step {i}\n")
+            for ln in rows:
+                fh.write(ln + "\n")
+
+
+_LMODES = termios.ICANON | termios.ECHO | termios.ISIG
+
+
+def _lmode(fd):
+    try:
+        return termios.tcgetattr(fd)[3] & _LMODES
+    except termios.error:
+        return None
 
 
 def read_meta(path):
@@ -187,6 +437,9 @@ def _ctty():
     signal.pthread_sigmask(signal.SIG_SETMASK, [])
 
 
+last_screens = []
+last_mode = None
+
 # The shell's signal mask and ignored set as /proc showed them, for a
 # case that types ^C (linux only; None elsewhere): the evidence that a
 # signal row's answer was not decided by an inherited mask.
@@ -207,6 +460,26 @@ class Step:
         self.typed = typed
         self.out = b""
         self.err = b""
+
+
+def shown_tail(b):
+    """What a terminal shows of the text after the last line break:
+    escape sequences dropped, and only what follows the last CR."""
+    out = bytearray()
+    i = 0
+    while i < len(b):
+        if b[i] == 27 and i + 1 < len(b) and b[i + 1] == 0x5B:
+            j = i + 2
+            while j < len(b) and not (0x40 <= b[j] <= 0x7E):
+                j += 1
+            i = j + 1
+            continue
+        if b[i] == 13:
+            out = bytearray()
+        else:
+            out.append(b[i])
+        i += 1
+    return bytes(out)
 
 
 def split_err(err):
@@ -232,14 +505,23 @@ def run(argv, keys_path, meta, expect=None):
         env = {"PATH": "/usr/bin:/bin", "HOME": home, "LC_ALL": "C"}
         for kv in meta.get("env", "").split():
             k, _, v = kv.partition("=")
-            env[k] = v
-        return _session(argv, keystrokes(keys_path), env, work, expect)
+            env[k] = v.replace("\\s", " ")
+        return _session(argv, keystrokes(keys_path), env, work, expect, meta)
     finally:
         shutil.rmtree(holder, ignore_errors=True)
 
 
-def _session(argv, keys, env, cwd, expect):
+def _session(argv, keys, env, cwd, expect, meta=None):
+    meta = meta or {}
+    cols = int(meta.get("cols") or 80)
+    nrows = int(meta.get("rows") or 24)
     master, slave = pty.openpty()
+    fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", nrows, cols, 0, 0))
+    mode_before = _lmode(slave)
+    # a second hold on the terminal, so its modes can be read after the
+    # shell is gone (`last_mode`)
+    hold = os.dup(slave)
+    scr = Screen(cols, nrows)
     rout, wout = os.pipe()
     rerr, werr = os.pipe()
     p = subprocess.Popen(argv, stdin=slave, stdout=wout, stderr=werr,
@@ -255,6 +537,9 @@ def _session(argv, keys, env, cwd, expect):
         """Read whatever arrives within `timeout`; True if anything did."""
         got = False
         r, _, _ = select.select([fd for fd in open_fds], [], [], timeout)
+        # the pty first: what the editor drew comes before the prompt
+        # written after it
+        r.sort(key=lambda fd: 0 if fd == master else 1)
         for fd in r:
             try:
                 d = os.read(fd, 65536)
@@ -272,6 +557,15 @@ def _session(argv, keys, env, cwd, expect):
                 step.out += d
             elif open_fds.get(fd) == b"err":
                 step.err += d
+                scr.feed(d)
+            else:
+                scr.feed(d)
+                if scr.reply:
+                    try:
+                        os.write(master, scr.reply)
+                    except OSError:
+                        pass
+                    scr.reply = b""
         return got
 
     def settle(step, want_prompt):
@@ -280,7 +574,7 @@ def _session(argv, keys, env, cwd, expect):
         if want_prompt:
             while time.time() - start < PROMPT_WAIT:
                 pump(step, 0.05)
-                if split_err(step.err)[1] == want_prompt:
+                if shown_tail(split_err(step.err)[1]) == shown_tail(want_prompt):
                     # a last look for output that raced the prompt
                     while pump(step, 0.05):
                         pass
@@ -302,10 +596,13 @@ def _session(argv, keys, env, cwd, expect):
             return None
         return expect["steps"][i]["prompt"].encode() or None
 
+    global last_sig, last_screens, last_mode
+    last_screens = []
+    start_row = scr.r
     s0 = Step(None)
     settle(s0, want(0))
     steps.append(s0)
-    global last_sig
+    last_screens.append(scr.snapshot(start_row))
     last_sig = None
     if any(label == "^C" for label, _ in keys):
         last_sig = _sig_state(p.pid)
@@ -314,6 +611,7 @@ def _session(argv, keys, env, cwd, expect):
         if p.poll() is not None:
             break
         st = Step(label)
+        start_row = scr.r
         try:
             if SLOW > 0:
                 # a slow line: one byte at a time, as a serial console
@@ -327,6 +625,7 @@ def _session(argv, keys, env, cwd, expect):
             break
         settle(st, want(len(steps)))
         steps.append(st)
+        last_screens.append(scr.snapshot(start_row))
     try:
         rc = p.wait(timeout=EXIT_WAIT if expect is not None else 3)
     except subprocess.TimeoutExpired:
@@ -335,6 +634,13 @@ def _session(argv, keys, env, cwd, expect):
     while (rout in open_fds or rerr in open_fds) and rc is not None:
         if not pump(steps[-1], 0.2):
             break
+    if rc is not None and len(last_screens) == len(steps):
+        # what the exit itself drew belongs to the last step
+        last_screens[-1] = scr.snapshot(start_row)
+    last_mode = None
+    if rc is not None:
+        last_mode = _lmode(hold) == mode_before
+    os.close(hold)
     if rc is None:
         exit_line = "alive"
         try:
