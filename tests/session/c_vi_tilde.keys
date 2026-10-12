@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k echo abcd\e0w3~\r
+exit

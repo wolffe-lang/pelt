@@ -1,0 +1,4 @@
+step 3
+| $ printf %s a^[b | od -An -c
+| $
+cursor 1 2

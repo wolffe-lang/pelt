@@ -1,0 +1,8 @@
+step 3
+| $ echo first last
+| $
+cursor 1 2
+step 4
+| $ echo last
+| $
+cursor 1 2

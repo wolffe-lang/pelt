@@ -1,0 +1,7 @@
+PS1='$ '
+set -o vi
+echo x1
+echo y
+echo x2
+\k \e/x\rn\r
+exit

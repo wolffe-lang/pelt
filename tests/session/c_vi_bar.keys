@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k echo abcdef\e7|x\r
+exit

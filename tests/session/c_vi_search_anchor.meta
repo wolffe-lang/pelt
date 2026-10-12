@@ -1,0 +1,5 @@
+env=TERM=xterm PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+screen=3-5

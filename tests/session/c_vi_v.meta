@@ -1,0 +1,6 @@
+env=TERM=xterm PATH=bin:/usr/bin:/bin PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+pending=history
+why=XCU sh vi-mode v: the line is edited with vi (here a stand-in on PATH) in a temporary file and then run; needs fc and history numbers (sh12)

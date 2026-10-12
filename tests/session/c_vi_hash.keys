@@ -1,0 +1,5 @@
+PS1='$ '
+set -o vi
+\k echo hidden\e#
+echo shown
+exit

@@ -1,0 +1,16 @@
+step 3
+| $ echo apple
+| $
+cursor 1 2
+step 4
+| $ echo banana
+| $
+cursor 1 2
+step 5
+| $ echo cherry
+| $
+cursor 1 2
+step 6
+| $ echo apple
+| $
+cursor 1 2

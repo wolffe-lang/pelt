@@ -1,0 +1,6 @@
+PS1='$ '
+set -o vi
+echo one
+echo two
+\k \ekkj\r
+exit

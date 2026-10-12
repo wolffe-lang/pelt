@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k junk junk\eSecho fresh\e\r
+exit

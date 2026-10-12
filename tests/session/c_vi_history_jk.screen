@@ -1,0 +1,12 @@
+step 3
+| $ echo one
+| $
+cursor 1 2
+step 4
+| $ echo two
+| $
+cursor 1 2
+step 5
+| $ echo two
+| $
+cursor 1 2

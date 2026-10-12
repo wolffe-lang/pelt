@@ -1,0 +1,4 @@
+step 3
+| $ echo ONE two
+| $
+cursor 1 2

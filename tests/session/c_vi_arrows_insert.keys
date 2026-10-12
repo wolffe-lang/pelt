@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k echo ac\e[Db\r
+exit

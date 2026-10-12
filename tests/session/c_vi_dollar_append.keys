@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k cho one\e0ie\e$a+\eAx\e\r
+exit

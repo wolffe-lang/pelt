@@ -1,0 +1,7 @@
+PS1='$ '
+set -o vi
+echo apple
+echo banana
+echo cherry
+\k \e/app\r\r
+exit

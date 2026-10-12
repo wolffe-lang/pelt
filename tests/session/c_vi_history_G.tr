@@ -1,0 +1,24 @@
+step 0
+err no
+prompt "\u001b[?2004h$ "
+step 1 "PS1='$ '"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 2 "set -o vi"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 3 "echo one"
+out "one\n"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 4 "echo two"
+out "two\n"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 5 "\\k \\eG\\r"
+err yes
+prompt "\u001b[?2004l\r\u001b[?2004h$ "
+step 6 "exit"
+err yes
+prompt ""
+exit 0 at step 6

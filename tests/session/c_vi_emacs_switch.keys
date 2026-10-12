@@ -1,0 +1,5 @@
+PS1='$ '
+set -o vi
+set -o emacs
+\k echo ac\x02b\r
+exit

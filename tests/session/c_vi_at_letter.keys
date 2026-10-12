@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k echo abc\e@ax\r
+exit

@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k junk\eddiecho one\eccecho two\e\r
+exit

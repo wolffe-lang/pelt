@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k echo one two three\e0wdw\r
+exit

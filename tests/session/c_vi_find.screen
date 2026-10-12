@@ -1,0 +1,4 @@
+step 3
+| $ echo abc-d
+| $
+cursor 1 2

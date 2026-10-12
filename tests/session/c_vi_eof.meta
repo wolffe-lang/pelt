@@ -1,0 +1,4 @@
+env=TERM=xterm PS1=$\s
+oracle=bash
+compare=stdout
+dash=agree

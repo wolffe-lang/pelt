@@ -1,0 +1,5 @@
+PS1='$ '
+set -o vi
+echo first last
+\k echo\e_\e\r
+exit

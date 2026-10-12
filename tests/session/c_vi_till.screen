@@ -1,0 +1,4 @@
+step 3
+| $ echo -b-c-d
+| $
+cursor 1 2

@@ -1,0 +1,4 @@
+PS1='$ '
+set -o vi
+\k echo a-b-c-d\e0t-dt-\r
+exit

@@ -1,0 +1,6 @@
+PS1='$ '
+set -o vi
+\k echo abc\e
+^C
+echo st=$?
+exit
