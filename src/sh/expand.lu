@@ -343,6 +343,7 @@ fn cmdsub_at(mut sh: Sh, w: str, i: int) -> (int, int) {
         }
         end = p.pos
     }
+    keep(mut sh.ast)
     (mut sh.cs_off).push(i)
     (mut sh.cs_nd).push(node)
     (mut sh.cs_e).push(end)
@@ -778,6 +779,7 @@ fn bq_node_of(mut sh: Sh, w: str, i: int, dq: bool) -> (int, int) {
     if sh.flow != F_NONE {
         return (-1, w.len)
     }
+    keep(mut sh.ast)
     if dq {
         sh.bq_rawq[raw] = node
     } else {
