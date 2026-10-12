@@ -1,0 +1,2553 @@
+//! sh.edit — the line editor at an interactive prompt: emacs keys by
+//! default and POSIX's vi mode (`set -o vi`).
+//!
+//! References consulted: POSIX.1-2024 XCU `sh` (Command Line Editing,
+//! Command Line Editing (vi-mode), vi Line Editing Insert Mode and
+//! Command Mode, ASYNCHRONOUS EVENTS), XBD 8.3 (`COLUMNS`), XBD 11 and
+//! `termios(3)` (the terminal's modes), ECMA-48 (CR, LF, BS, BEL; CSI
+//! `A B C D H J`; the cursor-position report `CSI 6 n` / `CSI r;c R`)
+//! and DEC's `ESC 7` / `ESC 8`; Unicode 16.0.0's character database as
+//! data (`sh.width`); wolf's `spec/11-os.md` (`[os.term.mode]`,
+//! `[os.term.note]`, `[os.signal.*]`); black-box sessions of `dash`
+//! 0.5.13.4 (which has no editor here) and `bash --posix -i` 5.3 as a
+//! user sees them. No shell's or line-editing library's source.
+//!
+//! **When.** `ed_active` decides: an interactive shell whose descriptor
+//! 0 is the process's own and a terminal whose mode can be read, `TERM`
+//! not `dumb`, and an editing option on. Otherwise the terminal's own
+//! line discipline edits and `sh.interact` reads bytes as before.
+//!
+//! **The mode.** For each line the mode is read, CANONICAL, ECHO and
+//! SIGNALS are turned off with `VMIN 0, VTIME 1`, and the mode read is
+//! set back before `ed_line` answers — on every way out of a line. A
+//! command never runs in the editor's mode. SIGNALS is off so that
+//! Ctrl-C and Ctrl-Z arrive as bytes; a SIGINT sent by `kill` is polled.
+//!
+//! **No read is torn by a signal** (`[os.term.note]`), so a read waits
+//! at most a tenth of a second and the editor polls between reads: a
+//! SIGINT ends the line as Ctrl-C does, and a SIGHUP (heard only while
+//! editing, and only when no trap names it) puts the mode back and lets
+//! the default end the shell. Three empty reads much quicker than the
+//! tenth of a second are a terminal that hung up: end of input.
+//!
+//! **Drawing.** The prompt is the shell's (standard error, as POSIX
+//! says); the line is drawn on the terminal itself, descriptor 0, so
+//! standard error carries what it did without an editor. The buffer is
+//! a list of code points; a CLUSTER is one code point that takes cells
+//! and the zero-width ones after it, and the cursor rests only between
+//! clusters. An edit at cluster `k` redraws from `k` to the end, clears
+//! below only when the line got shorter, and moves back with relative
+//! moves; typing at the end writes the character alone. A wide
+//! character that would straddle the right margin goes to the next row
+//! behind a space written here, and the cursor is never moved while the
+//! terminal is in its pending-wrap state (a row filled to the margin is
+//! followed by CR LF). Positions are (row, column) with row 0 the row
+//! the prompt's last line starts on.
+//!
+//! **Width** (wolf has no window size, W05): `COLUMNS` when it is a
+//! positive number; else one cursor-position round trip before each
+//! prompt (`ESC[6n`, then `ESC 7 ESC[999C ESC[6n ESC 8`: the column the
+//! prompt starts in, and the width), 0.3 s at most; a terminal that never
+//! answers is not asked again, and the width is 80.
+//!
+//! **History** is the seam sh12 needs, no more: the lines accepted, in
+//! memory (`HISTSIZE`, 128 when unset), walked by Up and Down and by
+//! vi's `k j - + G / ? n N`. Editing a recalled line makes it the edit
+//! line (XCU `sh`, vi-mode).
+
+// ------------------------------------------------------------ constants
+
+/// How a line ended: accepted, end of input, interrupted (`ed_line`).
+const ED_OK: int = 0
+
+const ED_EOF: int = 2
+
+const ED_INTR: int = 3
+
+/// Keys that are not characters. A character key is its code point; a
+/// byte that is not UTF-8 is `K_RAW + b`; Alt (ESC first) is `K_ALT + c`.
+const K_RAW: int = 2097152
+
+const K_ALT: int = 4194304
+
+const K_LEFT: int = 3145729
+
+const K_RIGHT: int = 3145730
+
+const K_UP: int = 3145731
+
+const K_DOWN: int = 3145732
+
+const K_HOME: int = 3145733
+
+const K_END: int = 3145734
+
+const K_DEL: int = 3145735
+
+const K_WLEFT: int = 3145736
+
+const K_WRIGHT: int = 3145737
+
+const K_NONE: int = 3145738
+
+const K_EOF: int = -2
+
+const K_INTR: int = -3
+
+const K_HUP: int = -4
+
+/// The mode bits (`[os.term.mode]`).
+const TM_CANON: int = 1
+
+const TM_ECHO: int = 2
+
+const TM_SIG: int = 4
+
+// --------------------------------------------------- what outlives a line
+
+/// The vi state that outlives a line (XCU: `.` repeats "even if it was
+/// executed on an earlier command line"; `;` `,` `n` `N` likewise).
+struct EdMem {
+    kill: List[int],
+    dot: List[int],
+    dot_count: int,
+    find_kind: int,
+    find_c: int,
+    pat: str,
+    pat_dir: int,
+}
+
+/// The editor's part of the shell state: the history ring, what a line
+/// leaves behind, and what is known of the terminal.
+struct EdKeep {
+    hist: List[str],
+    hist_head: int,
+    hist_n: int,
+    mem: EdMem,
+    /// 0 never asked, 1 answers the cursor-position report, -1 never did.
+    cpr: int,
+}
+
+fn new_edmem() -> EdMem {
+    EdMem {
+        kill: List[int](),
+        dot: List[int](),
+        dot_count: 0,
+        find_kind: 0,
+        find_c: 0,
+        pat: "",
+        pat_dir: 0,
+    }
+}
+
+fn new_edkeep() -> EdKeep {
+    EdKeep {
+        hist: List[str](),
+        hist_head: 0,
+        hist_n: 0,
+        mem: new_edmem(),
+        cpr: 0,
+    }
+}
+
+/// The history size: `HISTSIZE` when it is a positive number (at most
+/// 32767), else 128 (XCU `sh` asks for at least 128).
+fn hist_cap(sh: Sh) -> int {
+    let v = sh.vals["HISTSIZE"] else ""
+    if v.len > 0 && is_digits(v) && v.len < 6 {
+        let n = to_int(v) else 128
+        if n > 0 {
+            return if n > 32767 then 32767 else n
+        }
+    }
+    128
+}
+
+/// History entry `i`, 0 the oldest.
+fn hist_at(k: EdKeep, i: int) -> str {
+    k.hist[(k.hist_head + i) % k.hist.len]
+}
+
+/// Keep a line accepted at the prompt (its newline already gone).
+fn hist_add(mut sh: Sh, line: str) {
+    if line.len == 0 {
+        return
+    }
+    let cap = hist_cap(sh)
+    if sh.ed.hist.len != cap {
+        // a new size: the newest `cap` lines are kept, in order
+        var keep = List[str]()
+        var i = 0
+        let n = sh.ed.hist_n
+        let from = if n > cap then n - cap else 0
+        while i < n {
+            if i >= from {
+                (mut keep).push(hist_at(sh.ed, i))
+            }
+            i += 1
+        }
+        while keep.len < cap {
+            (mut keep).push("")
+        }
+        sh.ed.hist = keep
+        sh.ed.hist_head = 0
+        sh.ed.hist_n = if n > cap then cap else n
+    }
+    if sh.ed.hist_n < cap {
+        sh.ed.hist[(sh.ed.hist_head + sh.ed.hist_n) % cap] = line
+        sh.ed.hist_n += 1
+    } else {
+        sh.ed.hist[sh.ed.hist_head] = line
+        sh.ed.hist_head = (sh.ed.hist_head + 1) % cap
+    }
+}
+
+// ----------------------------------------------------------- when to edit
+
+/// Whether the next line is read by the editor (module doc).
+fn ed_active(sh: Sh) -> bool {
+    if !sh.interactive || !(sh.opt_emacs || sh.opt_vi) {
+        return false
+    }
+    if fd_get(sh, 0) != 0 || sh.eof0 {
+        return false
+    }
+    let term = sh.vals["TERM"] else ""
+    if term == "dumb" {
+        return false
+    }
+    let t = os_isatty(0) else false
+    if !t {
+        return false
+    }
+    let m = os_term_mode(0) else -1
+    m >= 0
+}
+
+/// The editor's mode for a read: `old` with CANONICAL, ECHO and SIGNALS
+/// off, `VMIN 0` and `VTIME 1`.
+fn raw_mode(old: int) -> int {
+    let fields = old & 255
+    let kept = fields & 255 - TM_CANON - TM_ECHO - TM_SIG
+    kept | 1 << 16
+}
+
+// ------------------------------------------------------------- the reads
+
+/// One read of at most a byte: the byte, -1 when the tenth of a second
+/// passed with none, -2 when the terminal answered an error.
+fn read1() -> int {
+    copy region r1 {
+        read1_in()
+    }
+}
+
+fn read1_in() -> int {
+    let c = fs_read_chunk(0, 1) else |e| match e {
+        eof => { return -1 },
+        io => { return -2 },
+    }
+    if c.len == 0 {
+        return -1
+    }
+    c[0] as int
+}
+
+// ---------------------------------------------------------- the terminal
+
+/// What `ed_query` learned: the width, the column the prompt will start
+/// in (0-based), whether the terminal answered, and the bytes that came
+/// while it waited (typed ahead), for the editor to take first.
+struct Query {
+    cols: int,
+    col0: int,
+    cpr: int,
+    pend: List[int],
+}
+
+/// `COLUMNS` as a width, or 0.
+fn columns_var(sh: Sh) -> int {
+    let v = sh.vals["COLUMNS"] else ""
+    if v.len > 0 && v.len < 6 && is_digits(v) {
+        let n = to_int(v) else 0
+        if n >= 2 {
+            return n
+        }
+    }
+    0
+}
+
+/// Learn the width before the prompt is written (module doc). `cpr` is
+/// what is known of the terminal: 0 never asked, 1 answers, -1 never did.
+fn ed_query(sh: Sh, cpr: int) -> Query {
+    let cv = columns_var(sh)
+    var q = Query { cols: if cv > 0 then cv else 80, col0: 0, cpr: cpr, pend: List[int]() }
+    if cv > 0 || cpr < 0 {
+        return q
+    }
+    let old = os_term_mode(0) else |_| { return q }
+    os_term_set_mode(0, raw_mode(old)) else |_| { return q }
+    var o = List[byte]()
+    put_esc(mut o, "[6n")
+    put_esc(mut o, "7")
+    put_esc(mut o, "[999C")
+    put_esc(mut o, "[6n")
+    put_esc(mut o, "8")
+    fs_write_chunk(0, o) else |_| {
+        os_term_set_mode(0, old) else |_| {}
+        return q
+    }
+    // two replies, `ESC [ row ; col R`; anything else is a key typed ahead
+    var cols_seen = List[int]()
+    let start = time_now_ms()
+    var st = 0
+    var num = 0
+    var held = List[int]()
+    while cols_seen.len < 2 && time_now_ms() - start < 300 {
+        let b = read1()
+        if b == -2 {
+            break
+        }
+        if b < 0 {
+            continue
+        }
+        if st == 0 {
+            if b == 27 {
+                st = 1
+                held = List[int]()
+                (mut held).push(b)
+            } else {
+                (mut q.pend).push(b)
+            }
+        } else if st == 1 {
+            (mut held).push(b)
+            st = if b == 91 then 2 else 0
+            if st == 0 {
+                for x in held {
+                    (mut q.pend).push(x)
+                }
+            }
+        } else {
+            (mut held).push(b)
+            if b >= 48 && b <= 57 {
+                num = num * 10 + (b - 48)
+                if num > 100000 {
+                    num = 100000
+                }
+            } else if b == 59 {
+                num = 0
+            } else if b == 82 {
+                (mut cols_seen).push(num)
+                num = 0
+                st = 0
+            } else {
+                // a sequence that is not a report: the user's key
+                for x in held {
+                    (mut q.pend).push(x)
+                }
+                num = 0
+                st = 0
+            }
+        }
+    }
+    os_term_set_mode(0, old) else |_| {}
+    if cols_seen.len == 2 && cols_seen[1] >= 2 {
+        q.cols = cols_seen[1]
+        q.col0 = if cols_seen[0] >= 1 then cols_seen[0] - 1 else 0
+        if q.col0 >= q.cols {
+            q.col0 = 0
+        }
+        q.cpr = 1
+    } else if cpr == 0 {
+        q.cpr = -1
+    }
+    q
+}
+
+fn put_esc(mut o: List[byte], rest: str) {
+    (mut o).push(27 as byte)
+    for c in rest.bytes() {
+        (mut o).push(c)
+    }
+}
+
+// ------------------------------------------------------------ the editor
+
+/// One line's editing state. Lives inside the line's region.
+struct Ed {
+    buf: List[int],
+    cur: int,
+    cols: int,
+    /// The line's first cell: row and column (row 0: the prompt's last line).
+    r0: int,
+    c0: int,
+    /// The prompt as written, and the column its last line starts in.
+    prompt: str,
+    col0: int,
+    /// Where the terminal's cursor is, and the index it stands for.
+    tr: int,
+    tc: int,
+    at: int,
+    /// Where the drawn text ends.
+    er: int,
+    ec: int,
+    out: List[byte],
+    /// Typed-ahead and pushed-back bytes, then keys injected by vi's `.`.
+    pend: List[int],
+    pi: int,
+    inj: List[int],
+    ii: int,
+    fast: int,
+    poll_hup: bool,
+    poll_int: bool,
+    int_ignored: bool,
+    vi: bool,
+    vi_ins: bool,
+    /// How the line ended, once it has (-1 while editing).
+    done: int,
+    mem: EdMem,
+    mem_set: bool,
+    hist: List[str],
+    /// The history line shown (`hist.len` is the edit line), and the edit
+    /// line kept while another is shown.
+    h: int,
+    saved: List[int],
+    last_kill: bool,
+    /// vi: the undo snapshot, the line as it became the edit line, the
+    /// keys of the command being read, and whether they are recorded.
+    undo: List[int],
+    undo_cur: int,
+    orig: List[int],
+    rec: List[int],
+    recording: bool,
+    cmd_count: int,
+    prev_line: str,
+}
+
+/// What a line hands back (`copy region`'s value).
+struct EdOut {
+    line: str,
+    how: int,
+    mem: EdMem,
+    mem_set: bool,
+}
+
+/// Edit one line at the terminal. `shown` is the prompt as written,
+/// `q` what `ed_query` learned. Answers the line with its newline, and
+/// how it ended (`ED_OK`, `ED_EOF`, `ED_INTR`).
+fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
+    let old = os_term_mode(0) else |_| {
+        return EdOut { line: "", how: ED_EOF, mem: new_edmem(), mem_set: false }
+    }
+    var hist = List[str]()
+    var i = 0
+    while i < sh.ed.hist_n {
+        (mut hist).push(hist_at(sh.ed, i))
+        i += 1
+    }
+    let prev = if hist.len > 0 then hist[hist.len - 1] else ""
+    var e = Ed {
+        buf: List[int](),
+        cur: 0,
+        cols: q.cols,
+        r0: 0,
+        c0: 0,
+        prompt: shown,
+        col0: q.col0,
+        tr: 0,
+        tc: 0,
+        at: 0,
+        er: 0,
+        ec: 0,
+        out: List[byte](),
+        pend: copy q.pend,
+        pi: 0,
+        inj: List[int](),
+        ii: 0,
+        fast: 0,
+        poll_hup: (sh.sig_listen | sh.sig_ignore) & M_HUP == 0,
+        poll_int: sh.sig_listen & M_INT != 0,
+        int_ignored: sh.sig_ignore & M_INT != 0,
+        vi: sh.opt_vi,
+        vi_ins: true,
+        done: -1,
+        mem: copy sh.ed.mem,
+        mem_set: false,
+        hist: hist,
+        h: 0,
+        saved: List[int](),
+        last_kill: false,
+        undo: List[int](),
+        undo_cur: 0,
+        orig: List[int](),
+        rec: List[int](),
+        recording: false,
+        cmd_count: 0,
+        prev_line: prev,
+    }
+    e.h = e.hist.len
+    if e.cols < 2 {
+        e.cols = 2
+    }
+    if e.poll_hup {
+        os_signal_listen(M_HUP) else |_| {
+            e.poll_hup = false
+        }
+    }
+    os_term_set_mode(0, raw_mode(old)) else |_| {
+        if e.poll_hup {
+            os_signal_default(M_HUP) else |_| {}
+        }
+        return EdOut { line: "", how: ED_EOF, mem: new_edmem(), mem_set: false }
+    }
+    start_line(mut e)
+    flush_out(mut e)
+    if e.vi {
+        vi_loop(mut e)
+    } else {
+        emacs_loop(mut e)
+    }
+    flush_out(mut e)
+    os_term_set_mode(0, old) else |_| {}
+    if e.done == K_HUP {
+        // the default ends the shell, with the terminal as it was
+        os_signal_default(M_HUP) else |_| {}
+        os_signal_raise(M_HUP) else |_| {}
+        settle_hup()
+        return EdOut { line: "", how: ED_EOF, mem: e.mem, mem_set: false }
+    }
+    if e.poll_hup {
+        os_signal_default(M_HUP) else |_| {}
+    }
+    var line = ""
+    if e.done == ED_OK {
+        var o = List[byte]()
+        encode_into(mut o, e.buf, 0, e.buf.len)
+        (mut o).push(10 as byte)
+        line = text(Buf { b: o })
+    }
+    EdOut { line: line, how: e.done, mem: e.mem, mem_set: e.mem_set }
+}
+
+/// A raised SIGHUP at its default ends the process; give it a moment.
+fn settle_hup() {
+    var n = 0
+    while n < 50 {
+        time_sleep_ms(10)
+        n += 1
+    }
+}
+
+/// Work out where the line starts and draw nothing yet.
+fn start_line(mut e: Ed) {
+    let (pw, has_nl) = prompt_width(e.prompt)
+    let total = (if has_nl then 0 else e.col0) + pw
+    e.r0 = total / e.cols
+    e.c0 = total % e.cols
+    if e.c0 == 0 && total > 0 {
+        // the prompt filled its row: leave the pending-wrap state
+        put_s(mut e, "\r\n")
+    }
+    e.tr = e.r0
+    e.tc = e.c0
+    e.at = 0
+    e.er = e.r0
+    e.ec = e.c0
+}
+
+/// The cells the prompt's last line takes (escape sequences take none),
+/// and whether the prompt has a line break in it.
+fn prompt_width(p: str) -> (int, bool) {
+    let cps = cps_of(p)
+    var w = 0
+    var nl = false
+    var i = 0
+    while i < cps.len {
+        let c = cps[i]
+        if c == 10 || c == 13 {
+            w = 0
+            nl = nl || c == 10
+            i += 1
+            continue
+        }
+        if c == 27 {
+            i = skip_escape(cps, i)
+            continue
+        }
+        if c == 9 {
+            w = (w / 8 + 1) * 8
+        } else if c >= 32 && c != 127 && (c < 128 || c >= 160) {
+            w += cp_width(c)
+        }
+        i += 1
+    }
+    (w, nl)
+}
+
+/// Past the escape sequence at `i` (CSI, OSC, or ESC and one byte).
+fn skip_escape(cps: List[int], i: int) -> int {
+    var j = i + 1
+    if j >= cps.len {
+        return j
+    }
+    if cps[j] == 91 {
+        j += 1
+        while j < cps.len && (cps[j] < 64 || cps[j] > 126) {
+            j += 1
+        }
+        return j + 1
+    }
+    if cps[j] == 93 {
+        j += 1
+        while j < cps.len {
+            if cps[j] == 7 {
+                return j + 1
+            }
+            if cps[j] == 27 && j + 1 < cps.len && cps[j + 1] == 92 {
+                return j + 2
+            }
+            j += 1
+        }
+        return j
+    }
+    j + 1
+}
+
+// ------------------------------------------------- code points and cells
+
+/// The code points of `s` (a byte that is not UTF-8 is `K_RAW + b`).
+fn cps_of(s: str) -> List[int] {
+    var o = List[int]()
+    var i = 0
+    let n = s.len
+    while i < n {
+        let b = byte_at(s, i)
+        let need = utf8_need(b)
+        if need == 0 {
+            (mut o).push(b)
+            i += 1
+            continue
+        }
+        if need < 0 || i + need >= n {
+            (mut o).push(K_RAW + b)
+            i += 1
+            continue
+        }
+        var cp = b & 63 >> need
+        var k = 1
+        var ok = true
+        while k <= need {
+            let c = byte_at(s, i + k)
+            if c < 128 || c > 191 {
+                ok = false
+                break
+            }
+            cp = cp << 6 | c & 63
+            k += 1
+        }
+        if ok && cp_ok(cp, need) {
+            (mut o).push(cp)
+            i += need + 1
+        } else {
+            (mut o).push(K_RAW + b)
+            i += 1
+        }
+    }
+    o
+}
+
+/// The continuation bytes a lead byte `b` announces: 0 for ASCII, -1
+/// for a byte that cannot start a character.
+fn utf8_need(b: int) -> int {
+    if b < 128 {
+        return 0
+    }
+    if b >= 194 && b <= 223 {
+        return 1
+    }
+    if b >= 224 && b <= 239 {
+        return 2
+    }
+    if b >= 240 && b <= 244 {
+        return 3
+    }
+    -1
+}
+
+/// Whether `cp` is a scalar value written in its shortest form.
+fn cp_ok(cp: int, need: int) -> bool {
+    if cp >= 55296 && cp <= 57343 || cp > 1114111 {
+        return false
+    }
+    if need == 2 && cp < 2048 || need == 3 && cp < 65536 {
+        return false
+    }
+    true
+}
+
+/// Whether buffer element `v` joins the cluster before it.
+fn zero_w(v: int) -> bool {
+    if v < 160 || v >= K_RAW {
+        return false
+    }
+    cp_width(v) == 0
+}
+
+/// The cells buffer element `v` is shown in.
+fn cells(v: int) -> int {
+    if v >= K_RAW {
+        return 1
+    }
+    if v < 32 || v == 127 {
+        return 2
+    }
+    if v >= 128 && v < 160 {
+        return 1
+    }
+    cp_width(v)
+}
+
+/// The next cluster boundary after `i`.
+fn nxt(e: Ed, i: int) -> int {
+    var j = i + 1
+    while j < e.buf.len && zero_w(e.buf[j]) {
+        j += 1
+    }
+    if j > e.buf.len {
+        return e.buf.len
+    }
+    j
+}
+
+/// The cluster boundary before `i`.
+fn prv(e: Ed, i: int) -> int {
+    if i <= 0 {
+        return 0
+    }
+    var j = i - 1
+    while j > 0 && zero_w(e.buf[j]) {
+        j -= 1
+    }
+    j
+}
+
+/// The bytes of buffer elements `a..b` as the line holds them.
+fn encode_into(mut o: List[byte], buf: List[int], a: int, b: int) {
+    var i = a
+    while i < b {
+        put_cp(mut o, buf[i])
+        i += 1
+    }
+}
+
+fn put_cp(mut o: List[byte], v: int) {
+    if v >= K_RAW {
+        (mut o).push((v - K_RAW) as byte)
+    } else if v < 128 {
+        (mut o).push(v as byte)
+    } else if v < 2048 {
+        (mut o).push((192 | v >> 6) as byte)
+        (mut o).push((128 | v & 63) as byte)
+    } else if v < 65536 {
+        (mut o).push((224 | v >> 12) as byte)
+        (mut o).push((128 | v >> 6 & 63) as byte)
+        (mut o).push((128 | v & 63) as byte)
+    } else {
+        (mut o).push((240 | v >> 18) as byte)
+        (mut o).push((128 | v >> 12 & 63) as byte)
+        (mut o).push((128 | v >> 6 & 63) as byte)
+        (mut o).push((128 | v & 63) as byte)
+    }
+}
+
+/// How element `v` is shown: itself, `^X` for a control, `?` for a
+/// C1 control or a byte that is not UTF-8.
+fn show_cp(mut o: List[byte], v: int) {
+    if v >= K_RAW || v >= 128 && v < 160 {
+        (mut o).push(63 as byte)
+    } else if v < 32 {
+        (mut o).push(94 as byte)
+        (mut o).push((v + 64) as byte)
+    } else if v == 127 {
+        (mut o).push(94 as byte)
+        (mut o).push(63 as byte)
+    } else {
+        put_cp(mut o, v)
+    }
+}
+
+// ------------------------------------------------------------- drawing
+
+fn put_s(mut e: Ed, s: str) {
+    for b in s.bytes() {
+        (mut e.out).push(b)
+    }
+}
+
+fn put_n(mut e: Ed, n: int) {
+    if n >= 10 {
+        put_n(mut e, n / 10)
+    }
+    (mut e.out).push((48 + n % 10) as byte)
+}
+
+fn bell(mut e: Ed) {
+    (mut e.out).push(7 as byte)
+}
+
+fn flush_out(mut e: Ed) {
+    if e.out.len == 0 {
+        return
+    }
+    fs_write_chunk(0, e.out) else |_| {
+        fs_write_chunk(2, e.out) else |_| {}
+    }
+    e.out = List[byte]()
+}
+
+/// Where cluster `i` starts (`i` = the length: where the text ends).
+fn pos_at(e: Ed, i: int) -> (int, int) {
+    var r = e.r0
+    var c = e.c0
+    var k = 0
+    while k < i && k < e.buf.len {
+        let w = cells(e.buf[k])
+        if w == 2 && c == e.cols - 1 {
+            r += 1
+            c = 0
+        }
+        c += w
+        if c >= e.cols {
+            r += 1
+            c = 0
+        }
+        k = nxt(e, k)
+    }
+    if i < e.buf.len && cells(e.buf[i]) == 2 && c == e.cols - 1 {
+        r += 1
+        c = 0
+    }
+    (r, c)
+}
+
+/// Move the terminal's cursor to (r, c) with relative moves.
+fn move_to(mut e: Ed, r: int, c: int) {
+    if r < e.tr {
+        put_esc(mut e.out, "[")
+        put_n(mut e, e.tr - r)
+        put_s(mut e, "A")
+    } else if r > e.tr {
+        put_esc(mut e.out, "[")
+        put_n(mut e, r - e.tr)
+        put_s(mut e, "B")
+    }
+    if c == 0 && e.tc != 0 {
+        put_s(mut e, "\r")
+    } else if c < e.tc {
+        if e.tc - c == 1 {
+            (mut e.out).push(8 as byte)
+        } else {
+            put_esc(mut e.out, "[")
+            put_n(mut e, e.tc - c)
+            put_s(mut e, "D")
+        }
+    } else if c > e.tc {
+        put_esc(mut e.out, "[")
+        put_n(mut e, c - e.tc)
+        put_s(mut e, "C")
+    }
+    e.tr = r
+    e.tc = c
+}
+
+/// Redraw from cluster `k` to the end, then put the cursor at `e.cur`.
+fn draw_from(mut e: Ed, k: int) {
+    var r = e.tr
+    var c = e.tc
+    if k != e.at {
+        let (pr, pc) = pos_at(e, k)
+        move_to(mut e, pr, pc)
+        r = pr
+        c = pc
+    } else if k < e.buf.len && cells(e.buf[k]) == 2 && c == e.cols - 1 {
+        // the cursor stands in the pad cell before a wide character
+        let (pr, pc) = pos_at(e, k)
+        move_to(mut e, pr, pc)
+        r = pr
+        c = pc
+    }
+    var cur_r = -1
+    var cur_c = -1
+    var pending = false
+    var i = k
+    while i < e.buf.len {
+        let w = cells(e.buf[i])
+        if w == 2 && c == e.cols - 1 {
+            (mut e.out).push(32 as byte)
+            r += 1
+            c = 0
+            pending = false
+        }
+        if i == e.cur {
+            cur_r = r
+            cur_c = c
+        }
+        let j = nxt(e, i)
+        var x = i
+        while x < j {
+            show_cp(mut e.out, e.buf[x])
+            x += 1
+        }
+        c += w
+        pending = false
+        if c >= e.cols {
+            r += 1
+            c = 0
+            pending = true
+        }
+        i = j
+    }
+    if pending {
+        put_s(mut e, "\r\n")
+    }
+    e.tr = r
+    e.tc = c
+    if r < e.er || r == e.er && c < e.ec {
+        put_esc(mut e.out, "[J")
+    }
+    e.er = r
+    e.ec = c
+    if e.cur >= e.buf.len {
+        cur_r = r
+        cur_c = c
+    } else if cur_r < 0 {
+        let (pr, pc) = pos_at(e, e.cur)
+        cur_r = pr
+        cur_c = pc
+    }
+    move_to(mut e, cur_r, cur_c)
+    e.at = e.cur
+}
+
+/// Put the cursor at `e.cur` without changing the text.
+fn place(mut e: Ed) {
+    let (r, c) = pos_at(e, e.cur)
+    move_to(mut e, r, c)
+    e.at = e.cur
+}
+
+/// Clear the screen (or just start below), write the prompt again and
+/// the whole line.
+fn redraw_all(mut e: Ed, clear: bool) {
+    if clear {
+        put_esc(mut e.out, "[H")
+        put_esc(mut e.out, "[2J")
+    }
+    put_s(mut e, e.prompt)
+    e.col0 = 0
+    start_line(mut e)
+    let k = e.cur
+    e.at = 0
+    e.cur = k
+    draw_from(mut e, 0)
+}
+
+// ---------------------------------------------------------- the buffer
+
+/// The buffer with elements `a..b` replaced by `ins`.
+fn spliced(buf: List[int], a: int, b: int, ins: List[int]) -> List[int] {
+    var o = List[int]()
+    var i = 0
+    while i < a {
+        (mut o).push(buf[i])
+        i += 1
+    }
+    for v in ins {
+        (mut o).push(v)
+    }
+    i = b
+    while i < buf.len {
+        (mut o).push(buf[i])
+        i += 1
+    }
+    o
+}
+
+fn slice_of(buf: List[int], a: int, b: int) -> List[int] {
+    var o = List[int]()
+    var i = a
+    while i < b && i < buf.len {
+        (mut o).push(buf[i])
+        i += 1
+    }
+    o
+}
+
+/// A change is about to be made: a history line shown becomes the edit
+/// line (XCU `sh`, vi-mode; both modes here).
+fn touch(mut e: Ed) {
+    if e.h < e.hist.len {
+        e.h = e.hist.len
+        e.saved = List[int]()
+        e.orig = copy e.buf
+    }
+}
+
+/// Insert `ins` at the cursor; the cursor goes after it.
+fn insert(mut e: Ed, ins: List[int]) {
+    touch(mut e)
+    let k = e.cur
+    if k == e.buf.len {
+        for v in ins {
+            (mut e.buf).push(v)
+        }
+    } else {
+        e.buf = spliced(e.buf, k, k, ins)
+    }
+    e.cur = k + ins.len
+    // a combining mark typed joins the cluster before it: redraw that
+    var from = k
+    if ins.len > 0 && zero_w(ins[0]) && k > 0 {
+        from = prv(e, k)
+    }
+    draw_from(mut e, from)
+}
+
+/// Delete elements `a..b`; the cursor goes to `a`.
+fn delete(mut e: Ed, a: int, b: int) {
+    if a >= b {
+        return
+    }
+    touch(mut e)
+    e.buf = spliced(e.buf, a, b, List[int]())
+    e.cur = a
+    draw_from(mut e, a)
+}
+
+/// Replace the whole line, the cursor at `cur` (clamped).
+fn set_line(mut e: Ed, nb: List[int], cur: int) {
+    e.buf = slice_of(nb, 0, nb.len)
+    e.cur = if cur > e.buf.len then e.buf.len else cur
+    draw_from(mut e, 0)
+}
+
+/// Keep `xs` as the last kill (or join it to the last one).
+fn kill_text(mut e: Ed, xs: List[int], before: bool) {
+    if e.last_kill {
+        if before {
+            e.mem.kill = spliced(xs, xs.len, xs.len, e.mem.kill)
+        } else {
+            e.mem.kill = spliced(e.mem.kill, e.mem.kill.len, e.mem.kill.len, xs)
+        }
+    } else {
+        e.mem.kill = copy xs
+    }
+    e.mem_set = true
+}
+
+fn show_hist(mut e: Ed, h: int, at_end: bool) {
+    if e.h == e.hist.len {
+        e.saved = copy e.buf
+    }
+    e.h = h
+    var nb = List[int]()
+    if h == e.hist.len {
+        nb = copy e.saved
+    } else {
+        nb = cps_of(e.hist[h])
+    }
+    e.orig = copy nb
+    set_line(mut e, nb, if at_end then nb.len else 0)
+}
+
+// ----------------------------------------------------------------- keys
+
+/// The next byte: typed ahead first, then the terminal. Polls signals
+/// between timed reads; answers `K_EOF`, `K_INTR` or `K_HUP` for those.
+fn next_byte(mut e: Ed) -> int {
+    if e.pi < e.pend.len {
+        let b = e.pend[e.pi]
+        e.pi += 1
+        return b
+    }
+    flush_out(mut e)
+    loop {
+        let t0 = time_now_ms()
+        let b = read1()
+        if b >= 0 {
+            e.fast = 0
+            return b
+        }
+        if b == -2 {
+            return K_EOF
+        }
+        if time_now_ms() - t0 < 50 {
+            e.fast += 1
+            if e.fast >= 3 {
+                return K_EOF
+            }
+        } else {
+            e.fast = 0
+        }
+        if e.poll_hup {
+            let h = os_signal_poll(M_HUP) else 0
+            if h != 0 {
+                return K_HUP
+            }
+        }
+        if e.poll_int {
+            let g = os_signal_poll(M_INT) else 0
+            if g != 0 {
+                return K_INTR
+            }
+        }
+    }
+    K_EOF
+}
+
+/// A byte waited for at most a tenth of a second (vi's ESC), -1 if none.
+fn peek_byte(mut e: Ed) -> int {
+    if e.pi < e.pend.len {
+        let b = e.pend[e.pi]
+        e.pi += 1
+        return b
+    }
+    flush_out(mut e)
+    let b = read1()
+    if b < 0 {
+        return -1
+    }
+    b
+}
+
+fn unread(mut e: Ed, b: int) {
+    if e.pi > 0 {
+        e.pi -= 1
+        e.pend[e.pi] = b
+    } else {
+        var o = List[int]()
+        (mut o).push(b)
+        for x in e.pend {
+            (mut o).push(x)
+        }
+        e.pend = o
+        e.pi = 0
+    }
+}
+
+/// The rest of a UTF-8 character whose lead byte is `b`.
+fn utf8_rest(mut e: Ed, b: int) -> int {
+    let need = utf8_need(b)
+    if need <= 0 {
+        return if need == 0 then b else K_RAW + b
+    }
+    var cp = b & 63 >> need
+    var k = 0
+    while k < need {
+        let c = next_byte(mut e)
+        if c < 0 {
+            return c
+        }
+        if c < 128 || c > 191 {
+            unread(mut e, c)
+            return K_RAW + b
+        }
+        cp = cp << 6 | c & 63
+        k += 1
+    }
+    if !cp_ok(cp, need) {
+        return K_RAW + b
+    }
+    cp
+}
+
+/// The next key (module doc on key values). After ESC, emacs waits for
+/// the rest; vi waits a tenth of a second for `[` or `O`, and otherwise
+/// ESC is a key of its own.
+fn next_key(mut e: Ed) -> int {
+    if e.ii < e.inj.len {
+        let k = e.inj[e.ii]
+        e.ii += 1
+        if e.recording {
+            (mut e.rec).push(k)
+        }
+        return k
+    }
+    let k = key_raw(mut e)
+    if e.recording && k >= 0 {
+        (mut e.rec).push(k)
+    }
+    k
+}
+
+fn key_raw(mut e: Ed) -> int {
+    let b = next_byte(mut e)
+    if b < 0 {
+        return b
+    }
+    if b != 27 {
+        return utf8_rest(mut e, b)
+    }
+    if e.vi {
+        let n = peek_byte(mut e)
+        if n == 91 {
+            return csi(mut e)
+        }
+        if n == 79 {
+            return ss3(mut e)
+        }
+        if n >= 0 {
+            unread(mut e, n)
+        }
+        return 27
+    }
+    let n = next_byte(mut e)
+    if n < 0 {
+        return n
+    }
+    if n == 91 {
+        return csi(mut e)
+    }
+    if n == 79 {
+        return ss3(mut e)
+    }
+    if n == 27 {
+        return K_NONE
+    }
+    K_ALT + utf8_rest(mut e, n)
+}
+
+/// `ESC [ params final`: the keys a terminal sends.
+fn csi(mut e: Ed) -> int {
+    var p1 = 0
+    var p2 = 0
+    var nparam = 0
+    loop {
+        let b = next_byte(mut e)
+        if b < 0 {
+            return b
+        }
+        if b >= 48 && b <= 57 {
+            if nparam == 0 {
+                p1 = p1 * 10 + b - 48
+            } else {
+                p2 = p2 * 10 + b - 48
+            }
+            if p1 > 1000 || p2 > 1000 {
+                p1 = 1000
+                p2 = 1000
+            }
+            continue
+        }
+        if b == 59 {
+            nparam += 1
+            continue
+        }
+        if b >= 32 && b <= 63 {
+            continue
+        }
+        let ctl = p2 == 5 || p2 == 3
+        if b == 65 {
+            return K_UP
+        }
+        if b == 66 {
+            return K_DOWN
+        }
+        if b == 67 {
+            return if ctl then K_WRIGHT else K_RIGHT
+        }
+        if b == 68 {
+            return if ctl then K_WLEFT else K_LEFT
+        }
+        if b == 72 {
+            return K_HOME
+        }
+        if b == 70 {
+            return K_END
+        }
+        if b == 126 {
+            if p1 == 1 || p1 == 7 {
+                return K_HOME
+            }
+            if p1 == 4 || p1 == 8 {
+                return K_END
+            }
+            if p1 == 3 {
+                return K_DEL
+            }
+        }
+        return K_NONE
+    }
+    K_NONE
+}
+
+/// `ESC O x`: the keys a terminal in application mode sends.
+fn ss3(mut e: Ed) -> int {
+    let b = next_byte(mut e)
+    if b < 0 {
+        return b
+    }
+    if b == 65 {
+        return K_UP
+    }
+    if b == 66 {
+        return K_DOWN
+    }
+    if b == 67 {
+        return K_RIGHT
+    }
+    if b == 68 {
+        return K_LEFT
+    }
+    if b == 72 {
+        return K_HOME
+    }
+    if b == 70 {
+        return K_END
+    }
+    K_NONE
+}
+
+// ----------------------------------------------------- ending the line
+
+fn finish(mut e: Ed, how: int) {
+    if how == ED_OK || how == ED_INTR {
+        let (r, c) = pos_at(e, e.buf.len)
+        move_to(mut e, r, c)
+        if how == ED_INTR {
+            put_s(mut e, "^C")
+        }
+        if !(how == ED_OK && c == 0 && r > e.r0) || how == ED_INTR {
+            put_s(mut e, "\r\n")
+        }
+    }
+    e.done = how
+}
+
+/// A key that ends the line whatever the mode: the signals and the end.
+fn ends_line(mut e: Ed, k: int) -> bool {
+    if k == K_HUP {
+        e.done = K_HUP
+        return true
+    }
+    if k == K_EOF {
+        e.done = ED_EOF
+        return true
+    }
+    if k == K_INTR || k == 3 && !e.int_ignored {
+        finish(mut e, ED_INTR)
+        return true
+    }
+    false
+}
+
+// ------------------------------------------------------------ emacs mode
+
+fn is_wordch(v: int) -> bool {
+    v >= 48 && v <= 57 || v >= 65 && v <= 90 || v >= 97 && v <= 122 || v >= 160
+}
+
+fn is_blank(v: int) -> bool {
+    v == 32 || v == 9
+}
+
+/// The end of the word after the cursor (Alt-F).
+fn word_fwd(e: Ed, from: int) -> int {
+    var i = from
+    while i < e.buf.len && !is_wordch(e.buf[i]) {
+        i = nxt(e, i)
+    }
+    while i < e.buf.len && is_wordch(e.buf[i]) {
+        i = nxt(e, i)
+    }
+    i
+}
+
+/// The start of the word before the cursor (Alt-B).
+fn word_back(e: Ed, from: int) -> int {
+    var i = from
+    while i > 0 && !is_wordch(e.buf[prv(e, i)]) {
+        i = prv(e, i)
+    }
+    while i > 0 && is_wordch(e.buf[prv(e, i)]) {
+        i = prv(e, i)
+    }
+    i
+}
+
+fn emacs_loop(mut e: Ed) {
+    while e.done < 0 {
+        let k = next_key(mut e)
+        if ends_line(mut e, k) {
+            return
+        }
+        let was_kill = e.last_kill
+        e.last_kill = false
+        if k == 13 || k == 10 {
+            finish(mut e, ED_OK)
+        } else if k == 3 {
+            // interrupt ignored (`trap '' INT`): the key does nothing
+            e.last_kill = was_kill
+        } else if k == 4 {
+            if e.buf.len == 0 {
+                e.done = ED_EOF
+            } else if e.cur < e.buf.len {
+                delete(mut e, e.cur, nxt(e, e.cur))
+            } else {
+                bell(mut e)
+            }
+        } else if k == K_DEL {
+            if e.cur < e.buf.len {
+                delete(mut e, e.cur, nxt(e, e.cur))
+            } else {
+                bell(mut e)
+            }
+        } else if k == 127 || k == 8 {
+            if e.cur > 0 {
+                delete(mut e, prv(e, e.cur), e.cur)
+            } else {
+                bell(mut e)
+            }
+        } else if k == K_LEFT || k == 2 {
+            if e.cur > 0 {
+                e.cur = prv(e, e.cur)
+                place(mut e)
+            } else {
+                bell(mut e)
+            }
+        } else if k == K_RIGHT || k == 6 {
+            if e.cur < e.buf.len {
+                e.cur = nxt(e, e.cur)
+                place(mut e)
+            } else {
+                bell(mut e)
+            }
+        } else if k == K_HOME || k == 1 {
+            e.cur = 0
+            place(mut e)
+        } else if k == K_END || k == 5 {
+            e.cur = e.buf.len
+            place(mut e)
+        } else if k == K_ALT + 98 || k == K_ALT + 66 || k == K_WLEFT {
+            e.cur = word_back(e, e.cur)
+            place(mut e)
+        } else if k == K_ALT + 102 || k == K_ALT + 70 || k == K_WRIGHT {
+            e.cur = word_fwd(e, e.cur)
+            place(mut e)
+        } else if k == K_ALT + 100 || k == K_ALT + 68 {
+            let to = word_fwd(e, e.cur)
+            e.last_kill = was_kill
+            kill_text(mut e, slice_of(e.buf, e.cur, to), false)
+            e.last_kill = true
+            delete(mut e, e.cur, to)
+        } else if k == K_ALT + 127 || k == K_ALT + 8 {
+            let from = word_back(e, e.cur)
+            e.last_kill = was_kill
+            kill_text(mut e, slice_of(e.buf, from, e.cur), true)
+            e.last_kill = true
+            delete(mut e, from, e.cur)
+        } else if k == 23 {
+            var from = e.cur
+            while from > 0 && is_blank(e.buf[prv(e, from)]) {
+                from = prv(e, from)
+            }
+            while from > 0 && !is_blank(e.buf[prv(e, from)]) {
+                from = prv(e, from)
+            }
+            e.last_kill = was_kill
+            kill_text(mut e, slice_of(e.buf, from, e.cur), true)
+            e.last_kill = true
+            delete(mut e, from, e.cur)
+        } else if k == 21 {
+            e.last_kill = was_kill
+            kill_text(mut e, slice_of(e.buf, 0, e.cur), true)
+            e.last_kill = true
+            delete(mut e, 0, e.cur)
+        } else if k == 11 {
+            e.last_kill = was_kill
+            kill_text(mut e, slice_of(e.buf, e.cur, e.buf.len), false)
+            e.last_kill = true
+            delete(mut e, e.cur, e.buf.len)
+        } else if k == 25 {
+            if e.mem.kill.len > 0 {
+                insert(mut e, copy e.mem.kill)
+            } else {
+                bell(mut e)
+            }
+        } else if k == 12 {
+            redraw_all(mut e, true)
+        } else if k == K_UP || k == 16 {
+            if e.h > 0 {
+                show_hist(mut e, e.h - 1, true)
+            } else {
+                bell(mut e)
+            }
+        } else if k == K_DOWN || k == 14 {
+            if e.h < e.hist.len {
+                show_hist(mut e, e.h + 1, true)
+            } else {
+                bell(mut e)
+            }
+        } else if k == 22 {
+            let b = next_byte(mut e)
+            if ends_line_byte(mut e, b) {
+                return
+            }
+            var one = List[int]()
+            (mut one).push(utf8_rest(mut e, b))
+            insert(mut e, one)
+        } else if is_char_key(k) {
+            var one = List[int]()
+            (mut one).push(k)
+            insert(mut e, one)
+        }
+        // other controls, Ctrl-Z, Ctrl-\ and unknown sequences: nothing
+    }
+}
+
+/// `next_byte`'s signals and end, after Ctrl-V.
+fn ends_line_byte(mut e: Ed, b: int) -> bool {
+    if b >= 0 {
+        return false
+    }
+    ends_line(mut e, b)
+}
+
+// --------------------------------------------------------------- vi mode
+
+/// A character's class for vi's word motions: 0 blank, 1 letters,
+/// digits, `_` and every non-ASCII character, 2 the other punctuation.
+fn vclass(v: int) -> int {
+    if is_blank(v) {
+        return 0
+    }
+    if is_wordch(v) || v == 95 || v >= 128 {
+        return 1
+    }
+    2
+}
+
+fn vclass_big(v: int) -> int {
+    if is_blank(v) then 0 else 1
+}
+
+/// The last cluster's start, or 0.
+fn last_ch(e: Ed) -> int {
+    if e.buf.len == 0 {
+        return 0
+    }
+    prv(e, e.buf.len)
+}
+
+/// Keep the cursor on a character in command mode.
+fn clamp_cmd(mut e: Ed) {
+    if e.buf.len > 0 && e.cur >= e.buf.len {
+        e.cur = last_ch(e)
+    }
+}
+
+fn snapshot(mut e: Ed) {
+    e.undo = copy e.buf
+    e.undo_cur = e.cur
+}
+
+fn vi_loop(mut e: Ed) {
+    e.orig = copy e.buf
+    e.vi_ins = true
+    snapshot(mut e)
+    while e.done < 0 {
+        if e.vi_ins {
+            vi_insert(mut e, false)
+            continue
+        }
+        // command mode: an optional count, then a command
+        e.recording = true
+        e.rec = List[int]()
+        var count = 0
+        var k = next_key(mut e)
+        while k >= 49 && k <= 57 || count > 0 && k == 48 {
+            count = count * 10 + (k - 48)
+            if count > 99999 {
+                count = 99999
+            }
+            k = next_key(mut e)
+        }
+        if ends_line(mut e, k) {
+            return
+        }
+        // the recorded keys start at the command, not the count
+        e.rec = List[int]()
+        (mut e.rec).push(k)
+        e.cmd_count = count
+        vi_command(mut e, k, count)
+        e.recording = false
+        if e.done < 0 && !e.vi_ins {
+            clamp_cmd(mut e)
+            place(mut e)
+        }
+    }
+}
+
+/// Insert mode (XCU vi Line Editing Insert Mode); `replace` for `R`.
+/// Returns when ESC goes back to command mode or the line ends.
+fn vi_insert(mut e: Ed, replace: bool) {
+    while e.done < 0 {
+        let k = next_key(mut e)
+        if ends_line(mut e, k) {
+            return
+        }
+        if k == 13 || k == 10 {
+            finish(mut e, ED_OK)
+            return
+        }
+        if k == 3 {
+            continue
+        }
+        if k == 27 {
+            e.vi_ins = false
+            if e.cur > 0 {
+                e.cur = prv(e, e.cur)
+            }
+            if e.recording {
+                save_dot(mut e)
+            }
+            return
+        }
+        if k == 4 {
+            if e.buf.len == 0 {
+                e.done = ED_EOF
+                return
+            }
+            bell(mut e)
+        } else if k == 127 || k == 8 {
+            if e.cur > 0 {
+                delete(mut e, prv(e, e.cur), e.cur)
+            } else {
+                bell(mut e)
+            }
+        } else if k == 21 {
+            delete(mut e, 0, e.buf.len)
+        } else if k == 23 {
+            var from = e.cur
+            while from > 0 && is_blank(e.buf[prv(e, from)]) {
+                from = prv(e, from)
+            }
+            if from > 0 {
+                let cl = vclass(e.buf[prv(e, from)])
+                while from > 0 && vclass(e.buf[prv(e, from)]) == cl {
+                    from = prv(e, from)
+                }
+            }
+            delete(mut e, from, e.cur)
+        } else if k == 22 {
+            let b = next_byte(mut e)
+            if ends_line_byte(mut e, b) {
+                return
+            }
+            let v = utf8_rest(mut e, b)
+            if e.recording {
+                (mut e.rec).push(v)
+            }
+            var one = List[int]()
+            (mut one).push(v)
+            insert(mut e, one)
+        } else if k == K_LEFT {
+            if e.cur > 0 {
+                e.cur = prv(e, e.cur)
+                place(mut e)
+            }
+        } else if k == K_RIGHT {
+            if e.cur < e.buf.len {
+                e.cur = nxt(e, e.cur)
+                place(mut e)
+            }
+        } else if k == K_HOME {
+            e.cur = 0
+            place(mut e)
+        } else if k == K_END {
+            e.cur = e.buf.len
+            place(mut e)
+        } else if k == K_UP {
+            if e.h > 0 {
+                show_hist(mut e, e.h - 1, true)
+            } else {
+                bell(mut e)
+            }
+        } else if k == K_DOWN {
+            if e.h < e.hist.len {
+                show_hist(mut e, e.h + 1, true)
+            } else {
+                bell(mut e)
+            }
+        } else if k == K_DEL {
+            if e.cur < e.buf.len {
+                delete(mut e, e.cur, nxt(e, e.cur))
+            }
+        } else if k == 12 {
+            redraw_all(mut e, true)
+        } else if is_char_key(k) {
+            var one = List[int]()
+            (mut one).push(k)
+            if replace && e.cur < e.buf.len {
+                touch(mut e)
+                let j = nxt(e, e.cur)
+                e.buf = spliced(e.buf, e.cur, j, one)
+                e.cur = e.cur + 1
+                draw_from(mut e, e.cur - 1)
+            } else {
+                insert(mut e, one)
+            }
+        }
+    }
+}
+
+/// The keys of the change just made become what `.` repeats.
+fn save_dot(mut e: Ed) {
+    e.mem.dot = copy e.rec
+    e.mem.dot_count = e.cmd_count
+    e.mem_set = true
+}
+
+/// A key that is a character to insert (a tab included).
+fn is_char_key(k: int) -> bool {
+    k >= 32 && k != 127 && k < K_RAW + 256 || k == 9
+}
+
+fn alert(mut e: Ed) {
+    bell(mut e)
+}
+
+/// One command-mode command `k` with `count` (0: none given).
+fn vi_command(mut e: Ed, k: int, count: int) {
+    let n = if count > 0 then count else 1
+    if k == 13 || k == 10 {
+        finish(mut e, ED_OK)
+        return
+    }
+    if k == 3 {
+        return
+    }
+    if k == 4 {
+        if e.buf.len == 0 {
+            e.done = ED_EOF
+        } else {
+            alert(mut e)
+        }
+        return
+    }
+    if k == 27 {
+        return
+    }
+    if k == 12 {
+        redraw_all(mut e, true)
+        return
+    }
+    if k == K_LEFT {
+        vi_command(mut e, 104, count)
+        return
+    }
+    if k == K_RIGHT {
+        vi_command(mut e, 108, count)
+        return
+    }
+    if k == K_UP {
+        vi_command(mut e, 107, count)
+        return
+    }
+    if k == K_DOWN {
+        vi_command(mut e, 106, count)
+        return
+    }
+    if k == K_HOME {
+        vi_command(mut e, 48, 0)
+        return
+    }
+    if k == K_END {
+        vi_command(mut e, 36, 0)
+        return
+    }
+    // a motion moves the cursor
+    if is_motion(k) {
+        let t = motion(mut e, k, n, count > 0, false)
+        if t < 0 {
+            alert(mut e)
+        } else {
+            e.cur = t
+        }
+        return
+    }
+    let c = k
+    if c == 35 {
+        // `#`: comment the line out and accept it
+        snapshot(mut e)
+        var one = List[int]()
+        (mut one).push(35)
+        let keep = e.cur
+        e.cur = 0
+        insert(mut e, one)
+        e.cur = keep
+        finish(mut e, ED_OK)
+        return
+    }
+    if c == 61 || c == 92 || c == 42 {
+        vi_expand(mut e, c)
+        return
+    }
+    if c == 64 {
+        // `@letter`: pelt has no aliases, so no `_letter` is enabled
+        let _l = next_key(mut e)
+        return
+    }
+    if c == 118 {
+        // `v` needs `fc` and history numbers (sh12)
+        alert(mut e)
+        return
+    }
+    if c == 126 {
+        if e.buf.len == 0 {
+            alert(mut e)
+            return
+        }
+        snapshot(mut e)
+        touch(mut e)
+        var i = 0
+        var at = e.cur
+        var nb = copy e.buf
+        while i < n && at < nb.len {
+            let v = nb[at]
+            if v >= 97 && v <= 122 {
+                nb[at] = v - 32
+            } else if v >= 65 && v <= 90 {
+                nb[at] = v + 32
+            }
+            let nx = nxt(e, at)
+            at = nx
+            i += 1
+        }
+        e.buf = nb
+        let first = e.cur
+        e.cur = if at >= e.buf.len then last_ch(e) else at
+        draw_from(mut e, first)
+        save_dot_count(mut e, count)
+        return
+    }
+    if c == 46 {
+        // `.`: repeat the last change, its count or this one
+        if e.mem.dot.len == 0 {
+            alert(mut e)
+            return
+        }
+        let dc = if count > 0 then count else e.mem.dot_count
+        let keys = copy e.mem.dot
+        e.inj = slice_of(keys, 1, keys.len)
+        e.ii = 0
+        e.rec = List[int]()
+        (mut e.rec).push(keys[0])
+        e.cmd_count = dc
+        vi_command(mut e, keys[0], dc)
+        e.inj = List[int]()
+        e.ii = 0
+        if count > 0 {
+            e.mem.dot_count = count
+        }
+        return
+    }
+    if c == 97 || c == 65 || c == 105 || c == 73 {
+        snapshot(mut e)
+        if c == 97 && e.buf.len > 0 {
+            e.cur = nxt(e, e.cur)
+        } else if c == 65 {
+            e.cur = e.buf.len
+        } else if c == 73 {
+            e.cur = 0
+        }
+        place(mut e)
+        e.vi_ins = true
+        vi_insert(mut e, false)
+        return
+    }
+    if c == 82 {
+        snapshot(mut e)
+        e.vi_ins = true
+        vi_insert(mut e, true)
+        return
+    }
+    if c == 120 || c == 88 {
+        if e.buf.len == 0 {
+            alert(mut e)
+            return
+        }
+        var a = e.cur
+        var b = e.cur
+        if c == 120 {
+            var i = 0
+            while i < n && b < e.buf.len {
+                b = nxt(e, b)
+                i += 1
+            }
+        } else {
+            if e.cur == 0 {
+                alert(mut e)
+                return
+            }
+            var i = 0
+            while i < n && a > 0 {
+                a = prv(e, a)
+                i += 1
+            }
+        }
+        snapshot(mut e)
+        e.mem.kill = slice_of(e.buf, a, b)
+        e.mem_set = true
+        delete(mut e, a, b)
+        save_dot_count(mut e, count)
+        return
+    }
+    if c == 114 {
+        let r = next_key(mut e)
+        if r < 0 || !is_char_key(r) {
+            if r < 0 {
+                let _x = ends_line(mut e, r)
+            }
+            return
+        }
+        if e.buf.len == 0 {
+            alert(mut e)
+            return
+        }
+        snapshot(mut e)
+        touch(mut e)
+        var i = 0
+        var at = e.cur
+        var last = e.cur
+        var nb = List[int]()
+        var j = 0
+        while j < e.cur {
+            (mut nb).push(e.buf[j])
+            j += 1
+        }
+        while i < n && at < e.buf.len {
+            last = nb.len
+            (mut nb).push(r)
+            at = nxt(e, at)
+            i += 1
+        }
+        while at < e.buf.len {
+            (mut nb).push(e.buf[at])
+            at += 1
+        }
+        let first = e.cur
+        e.buf = nb
+        e.cur = last
+        draw_from(mut e, first)
+        save_dot_count(mut e, count)
+        return
+    }
+    if c == 67 || c == 68 || c == 83 || c == 89 {
+        snapshot(mut e)
+        if c == 89 {
+            e.mem.kill = slice_of(e.buf, e.cur, e.buf.len)
+            e.mem_set = true
+            return
+        }
+        let from = if c == 83 then 0 else e.cur
+        e.mem.kill = slice_of(e.buf, from, e.buf.len)
+        e.mem_set = true
+        delete(mut e, from, e.buf.len)
+        if c == 68 {
+            save_dot_count(mut e, count)
+        } else {
+            e.vi_ins = true
+            vi_insert(mut e, false)
+        }
+        return
+    }
+    if c == 99 || c == 100 || c == 121 {
+        vi_operator(mut e, c, count)
+        return
+    }
+    if c == 112 || c == 80 {
+        if e.mem.kill.len == 0 {
+            alert(mut e)
+            return
+        }
+        snapshot(mut e)
+        var at = e.cur
+        if c == 112 && e.buf.len > 0 {
+            at = nxt(e, e.cur)
+        }
+        var ins = List[int]()
+        var i = 0
+        while i < n {
+            for v in e.mem.kill {
+                (mut ins).push(v)
+            }
+            i += 1
+        }
+        e.cur = at
+        insert(mut e, ins)
+        e.cur = prv(e, e.cur)
+        place(mut e)
+        save_dot_count(mut e, count)
+        return
+    }
+    if c == 117 {
+        // `u`: undo the last change (a second `u` undoes the undo)
+        let nb = copy e.undo
+        let nc = e.undo_cur
+        snapshot(mut e)
+        set_line(mut e, nb, nc)
+        return
+    }
+    if c == 85 {
+        snapshot(mut e)
+        let ob = copy e.orig
+        set_line(mut e, ob, 0)
+        return
+    }
+    if c == 95 {
+        // `_`: a space and the countth bigword of the previous line
+        let words = bigwords(cps_of(e.prev_line))
+        if words.len == 0 {
+            alert(mut e)
+            return
+        }
+        let w = if count > 0 then count else words.len
+        if w > words.len {
+            alert(mut e)
+            return
+        }
+        snapshot(mut e)
+        var ins = List[int]()
+        (mut ins).push(32)
+        for v in words[w - 1] {
+            (mut ins).push(v)
+        }
+        if e.buf.len > 0 {
+            e.cur = nxt(e, e.cur)
+        }
+        insert(mut e, ins)
+        e.vi_ins = true
+        vi_insert(mut e, false)
+        return
+    }
+    if c == 107 || c == 45 || c == 106 || c == 43 || c == 71 {
+        vi_history(mut e, c, count)
+        return
+    }
+    if c == 47 || c == 63 {
+        vi_search_cmd(mut e, c)
+        return
+    }
+    if c == 110 || c == 78 {
+        if e.mem.pat.len == 0 {
+            alert(mut e)
+            return
+        }
+        let dir = if c == 110 then e.mem.pat_dir else 0 - e.mem.pat_dir
+        vi_search(mut e, e.mem.pat, dir)
+        return
+    }
+    alert(mut e)
+}
+
+/// The count a change was given, kept for `.`.
+fn save_dot_count(mut e: Ed, count: int) {
+    e.mem.dot = copy e.rec
+    e.mem.dot_count = count
+    e.mem_set = true
+}
+
+fn is_motion(k: int) -> bool {
+    k == 32 ||
+        k == 48 ||
+        k == 98 ||
+        k == 70 ||
+        k == 108 ||
+        k == 87 ||
+        k == 94 ||
+        k == 36 ||
+        k == 59 ||
+        k == 69 ||
+        k == 102 ||
+        k == 84 ||
+        k == 119 ||
+        k == 124 ||
+        k == 44 ||
+        k == 66 ||
+        k == 101 ||
+        k == 104 ||
+        k == 116
+}
+
+/// The countth occurrence of `ch` after (dir 1) or before (dir -1) the
+/// cursor, or -1.
+fn find_char(e: Ed, ch: int, dir: int, n: int) -> int {
+    var i = e.cur
+    var found = 0
+    loop {
+        if dir > 0 {
+            if i >= e.buf.len {
+                return -1
+            }
+            i = nxt(e, i)
+            if i >= e.buf.len {
+                return -1
+            }
+        } else {
+            if i <= 0 {
+                return -1
+            }
+            i = prv(e, i)
+        }
+        if e.buf[i] == ch {
+            found += 1
+            if found == n {
+                return i
+            }
+        }
+    }
+    -1
+}
+
+/// Where motion `k` with count `n` takes the cursor, or -1 (an error).
+/// `op`: for an operator, where "to the end" is the length, not the last
+/// character.
+fn motion(mut e: Ed, k: int, n: int, counted: bool, op: bool) -> int {
+    let len = e.buf.len
+    let last = if op then len else last_ch(e)
+    if k == 108 || k == 32 {
+        if e.cur >= last_ch(e) && !op || len == 0 {
+            return -1
+        }
+        var i = e.cur
+        var c = 0
+        while c < n && i < len {
+            i = nxt(e, i)
+            c += 1
+        }
+        return if i > last then last else i
+    }
+    if k == 104 {
+        if e.cur == 0 {
+            return -1
+        }
+        var i = e.cur
+        var c = 0
+        while c < n && i > 0 {
+            i = prv(e, i)
+            c += 1
+        }
+        return i
+    }
+    if k == 48 {
+        return 0
+    }
+    if k == 94 {
+        var i = 0
+        while i < len && is_blank(e.buf[i]) {
+            i = nxt(e, i)
+        }
+        return if i > last then last else i
+    }
+    if k == 36 {
+        return last
+    }
+    if k == 124 {
+        var i = 0
+        var c = 1
+        let want = if counted then n else 1
+        while c < want && i < len {
+            i = nxt(e, i)
+            c += 1
+        }
+        if i >= len {
+            return last_ch(e)
+        }
+        return i
+    }
+    if k == 119 || k == 87 {
+        if len == 0 || e.cur >= last_ch(e) && !op {
+            return -1
+        }
+        var i = e.cur
+        var c = 0
+        while c < n && i < len {
+            let cl = cls(e.buf[i], k == 87)
+            if cl != 0 {
+                while i < len && cls(e.buf[i], k == 87) == cl {
+                    i = nxt(e, i)
+                }
+            }
+            while i < len && is_blank(e.buf[i]) {
+                i = nxt(e, i)
+            }
+            c += 1
+        }
+        return if i > last then last else i
+    }
+    if k == 101 || k == 69 {
+        if len == 0 || e.cur >= last_ch(e) {
+            return -1
+        }
+        var i = e.cur
+        var c = 0
+        while c < n && i < last_ch(e) {
+            i = nxt(e, i)
+            while i < last_ch(e) && is_blank(e.buf[i]) {
+                i = nxt(e, i)
+            }
+            let cl = cls(e.buf[i], k == 69)
+            while i < last_ch(e) && cls(e.buf[nxt(e, i)], k == 69) == cl {
+                i = nxt(e, i)
+            }
+            c += 1
+        }
+        return if op then nxt(e, i) else i
+    }
+    if k == 98 || k == 66 {
+        if e.cur == 0 {
+            return -1
+        }
+        var i = e.cur
+        var c = 0
+        while c < n && i > 0 {
+            i = prv(e, i)
+            while i > 0 && is_blank(e.buf[i]) {
+                i = prv(e, i)
+            }
+            let cl = cls(e.buf[i], k == 66)
+            while i > 0 && cls(e.buf[prv(e, i)], k == 66) == cl && cl != 0 {
+                i = prv(e, i)
+            }
+            c += 1
+        }
+        return i
+    }
+    if k == 102 || k == 70 || k == 116 || k == 84 {
+        let ch = next_key(mut e)
+        if ch < 0 || !is_char_key(ch) {
+            if ch < 0 {
+                let _x = ends_line(mut e, ch)
+            }
+            return -1
+        }
+        e.mem.find_kind = k
+        e.mem.find_c = ch
+        e.mem_set = true
+        return find_motion(e, k, ch, n, op)
+    }
+    if k == 59 || k == 44 {
+        if e.mem.find_kind == 0 {
+            return -1
+        }
+        var kind = e.mem.find_kind
+        if k == 44 {
+            kind = flip_find(kind)
+        }
+        return find_motion(e, kind, e.mem.find_c, n, op)
+    }
+    -1
+}
+
+fn flip_find(k: int) -> int {
+    if k == 102 {
+        return 70
+    }
+    if k == 70 {
+        return 102
+    }
+    if k == 116 {
+        return 84
+    }
+    116
+}
+
+fn cls(v: int, big: bool) -> int {
+    if big then vclass_big(v) else vclass(v)
+}
+
+fn find_motion(e: Ed, kind: int, ch: int, n: int, op: bool) -> int {
+    if kind == 102 || kind == 116 {
+        let f = find_char(e, ch, 1, n)
+        if f < 0 {
+            return -1
+        }
+        let t = if kind == 116 then prv(e, f) else f
+        return if op then nxt(e, t) else t
+    }
+    let f = find_char(e, ch, -1, n)
+    if f < 0 {
+        return -1
+    }
+    if kind == 84 then nxt(e, f) else f
+}
+
+/// `c`, `d` or `y` and a motion (or itself, the whole line).
+fn vi_operator(mut e: Ed, op: int, count: int) {
+    var mcount = 0
+    var m = next_key(mut e)
+    while m >= 49 && m <= 57 || mcount > 0 && m == 48 {
+        mcount = mcount * 10 + (m - 48)
+        if mcount > 99999 {
+            mcount = 99999
+        }
+        m = next_key(mut e)
+    }
+    if m < 0 {
+        let _x = ends_line(mut e, m)
+        return
+    }
+    let total = (if count > 0 then count else 1) * (if mcount > 0 then mcount else 1)
+    var a = 0
+    var b = e.buf.len
+    if m == op {
+        a = 0
+        b = e.buf.len
+    } else {
+        if !is_motion(m) {
+            alert(mut e)
+            return
+        }
+        var mm = m
+        // `cw` on a non-blank changes to the end of the word, as vi does
+        if op == 99 && (m == 119 || m == 87) && e.cur < e.buf.len && !is_blank(e.buf[e.cur]) {
+            mm = if m == 119 then 101 else 69
+        }
+        let ignore = mm == 48 || mm == 94 || mm == 36
+        let t = motion(mut e, mm, if ignore then 1 else total, count > 0 || mcount > 0, true)
+        if t < 0 {
+            alert(mut e)
+            return
+        }
+        if t >= e.cur {
+            a = e.cur
+            b = if mm == 36 then e.buf.len else t
+            if b == a && e.buf.len > 0 && (mm == 108 || mm == 32) {
+                b = nxt(e, a)
+            }
+        } else {
+            a = t
+            b = e.cur
+        }
+    }
+    e.mem.kill = slice_of(e.buf, a, b)
+    e.mem_set = true
+    if op == 121 {
+        // the cursor stays where it was (XCU `y`)
+        return
+    }
+    snapshot(mut e)
+    delete(mut e, a, b)
+    if op == 99 {
+        e.vi_ins = true
+        vi_insert(mut e, false)
+    } else {
+        save_dot_count(mut e, count)
+    }
+}
+
+/// `k - j + G`: another line from the history.
+fn vi_history(mut e: Ed, c: int, count: int) {
+    let n = if count > 0 then count else 1
+    var h = e.h
+    if c == 107 || c == 45 {
+        h = e.h - n
+        if h < 0 {
+            alert(mut e)
+            return
+        }
+    } else if c == 106 || c == 43 {
+        h = e.h + n
+        if h > e.hist.len {
+            // past the edit line: back to it, and an alert
+            alert(mut e)
+            h = e.hist.len
+        }
+    } else {
+        if e.hist.len == 0 {
+            alert(mut e)
+            return
+        }
+        h = if count > 0 then count - 1 else 0
+        if h >= e.hist.len {
+            alert(mut e)
+            return
+        }
+    }
+    show_hist(mut e, h, false)
+}
+
+/// `/` or `?`: read a pattern on the line, then search.
+fn vi_search_cmd(mut e: Ed, c: int) {
+    let keep = copy e.buf
+    let keep_cur = e.cur
+    var pb = List[int]()
+    (mut pb).push(c)
+    set_line(mut e, pb, 1)
+    loop {
+        let k = next_key(mut e)
+        if ends_line(mut e, k) {
+            return
+        }
+        if k == 13 || k == 10 {
+            break
+        }
+        if k == 27 || (k == 127 || k == 8) && e.buf.len == 1 {
+            set_line(mut e, keep, keep_cur)
+            return
+        }
+        if k == 127 || k == 8 {
+            delete(mut e, prv(e, e.buf.len), e.buf.len)
+        } else if is_char_key(k) {
+            var one = List[int]()
+            (mut one).push(k)
+            insert(mut e, one)
+        }
+    }
+    var o = List[byte]()
+    encode_into(mut o, e.buf, 1, e.buf.len)
+    var pat = text(Buf { b: o })
+    set_line(mut e, keep, keep_cur)
+    if pat.len == 0 {
+        pat = e.mem.pat
+        if pat.len == 0 {
+            alert(mut e)
+            return
+        }
+    }
+    let dir = if c == 47 then -1 else 1
+    e.mem.pat = pat
+    e.mem.pat_dir = dir
+    e.mem_set = true
+    vi_search(mut e, pat, dir)
+}
+
+/// Search the history from the line shown: -1 older, 1 newer. A pattern
+/// is XCU 2.14's; a leading `^` anchors it at the start of the line.
+fn vi_search(mut e: Ed, pat: str, dir: int) {
+    var p = "*" + pat + "*"
+    if byte_at(pat, 0) == 94 {
+        p = pat[1..pat.len] + "*"
+    }
+    var h = e.h + dir
+    while h >= 0 && h < e.hist.len {
+        if pmatch(p, e.hist[h]) {
+            show_hist(mut e, h, false)
+            return
+        }
+        h += dir
+    }
+    alert(mut e)
+}
+
+/// The bigwords of a line.
+fn bigwords(cps: List[int]) -> List[List[int]] {
+    var o = List[List[int]]()
+    var i = 0
+    while i < cps.len {
+        while i < cps.len && is_blank(cps[i]) {
+            i += 1
+        }
+        if i >= cps.len {
+            break
+        }
+        var w = List[int]()
+        while i < cps.len && !is_blank(cps[i]) {
+            (mut w).push(cps[i])
+            i += 1
+        }
+        (mut o).push(w)
+    }
+    o
+}
+
+/// `=`, `\` and `*`: pathname expansion of the bigword at the cursor.
+fn vi_expand(mut e: Ed, c: int) {
+    if e.buf.len == 0 {
+        alert(mut e)
+        return
+    }
+    var a = if e.cur >= e.buf.len then last_ch(e) else e.cur
+    if is_blank(e.buf[a]) && a > 0 {
+        a = prv(e, a)
+    }
+    var b = a
+    while a > 0 && !is_blank(e.buf[prv(e, a)]) {
+        a = prv(e, a)
+    }
+    while b < e.buf.len && !is_blank(e.buf[b]) {
+        b = nxt(e, b)
+    }
+    var o = List[byte]()
+    encode_into(mut o, e.buf, a, b)
+    var word = text(Buf { b: o })
+    if !has_magic(word) {
+        word = word + "*"
+    }
+    var t = new_sh("pelt")
+    let found = glob(mut t, word)
+    if found.len == 0 {
+        alert(mut e)
+        return
+    }
+    if c == 61 {
+        // `=`: the expansions on the lines below, then the line again
+        let (r, col) = pos_at(e, e.buf.len)
+        move_to(mut e, r, col)
+        put_s(mut e, "\r\n")
+        for f in found {
+            put_s(mut e, f)
+            if fs_is_dir(f) {
+                put_s(mut e, "/")
+            }
+            put_s(mut e, "\r\n")
+        }
+        redraw_all(mut e, false)
+        return
+    }
+    snapshot(mut e)
+    var ins = List[int]()
+    if c == 42 {
+        var i = 0
+        while i < found.len {
+            if i > 0 {
+                (mut ins).push(32)
+            }
+            for v in cps_of(found[i]) {
+                (mut ins).push(v)
+            }
+            i += 1
+        }
+    } else {
+        let common = common_prefix(found)
+        for v in cps_of(common) {
+            (mut ins).push(v)
+        }
+        if found.len == 1 {
+            (mut ins).push(if fs_is_dir(found[0]) then 47 else 32)
+        }
+    }
+    touch(mut e)
+    e.buf = spliced(e.buf, a, b, ins)
+    e.cur = a + ins.len
+    draw_from(mut e, a)
+    e.vi_ins = true
+    vi_insert(mut e, false)
+}
+
+fn common_prefix(xs: List[str]) -> str {
+    var p = xs[0]
+    for x in xs {
+        var n = 0
+        while n < p.len && n < x.len && byte_at(p, n) == byte_at(x, n) {
+            n += 1
+        }
+        // never cut a character in two
+        while n > 0 && n < p.len && byte_at(p, n) >= 128 && byte_at(p, n) < 192 {
+            n -= 1
+        }
+        p = p[0..n]
+    }
+    p
+}
