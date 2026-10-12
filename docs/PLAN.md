@@ -18,7 +18,7 @@ filed.
 - **Three in four POSIX statements are met**: 400 of 527 testable
   statements of XCU chapter 2 and the built-ins' pages; 414 since
   sh07 (S1, below); since sh11 the table has 544 statements, and
-  since sh13 (S4) 431 of them are met.
+  since sh13 (S4) 431 of them are met; since sh12 (H3b) 439 of 545.
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
@@ -105,7 +105,11 @@ needs the least from upstream.
 - **H3b, history.** The history list, Up and Down, Ctrl-R, `fc`,
   `HISTFILE`, `HISTSIZE` and `!` in `PS1`. Nothing upstream on Linux.
   On PAX a history file needs a writable tree (px27). Proved by
-  `c_hist_*` and `c_ps1_bang`.
+  `c_hist_*` and `c_ps1_bang`. **Landed in sh12**: `fc` (POSIX's
+  forms; bash --posix the oracle, POSIX where they part), a shared
+  `HISTFILE` (`$HOME/.sh_history` by default) cut to `HISTSIZE`, Ctrl-R,
+  vi `[number]v`, `!` in `PS1`; the file across shells is
+  `tools/hist-witness` (`notes/sh12-the-history.md`).
 - **H3c, the prompt's own:** aliases at the prompt, `ignoreeof`,
   `MAIL`. Nothing upstream.
 - **H3d, completion and vi mode,** after rulings R3 and R2. vi mode is
