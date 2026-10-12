@@ -234,9 +234,17 @@ fn import_env(mut sh: Sh) {
     }
     sh.vals["IFS"] = " \t\n"
     let _e = (mut sh.exported).remove("IFS") else false
-    sh.vals["PS1"] = "$ "
-    sh.vals["PS2"] = "> "
-    sh.vals["PS4"] = "+ "
+    // the prompts from the environment win over the defaults (dash,
+    // black-box: `env PS1=a dash -c 'echo $PS1'` prints `a`)
+    if !sh.vals.has("PS1") {
+        sh.vals["PS1"] = "$ "
+    }
+    if !sh.vals.has("PS2") {
+        sh.vals["PS2"] = "> "
+    }
+    if !sh.vals.has("PS4") {
+        sh.vals["PS4"] = "+ "
+    }
     sh.vals["OPTIND"] = "1"
     let cwd = os_cwd() else ""
     sh.phys = cwd
