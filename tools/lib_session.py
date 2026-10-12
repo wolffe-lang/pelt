@@ -552,6 +552,8 @@ def _session(argv, keys, env, cwd, expect, meta=None):
         for fd in r:
             try:
                 d = os.read(fd, 65536)
+            except BlockingIOError:
+                continue
             except OSError:
                 d = b""
             if not d:
@@ -608,6 +610,28 @@ def _session(argv, keys, env, cwd, expect, meta=None):
     global last_sig, last_screens, last_mode
     last_screens = []
     start_row = scr.r
+    def type_bytes(step, data):
+        """Write keys to the terminal, reading what it shows meanwhile.
+        A pty takes a bounded amount of input (macOS: about 1 KB) and
+        holds a bounded amount of output: one blocking write of a long
+        line deadlocks against a shell echoing it (c_long_line hung on
+        macOS until this)."""
+        os.set_blocking(master, False)
+        try:
+            while data:
+                _, w, _ = select.select([], [master], [], 0.05)
+                if w:
+                    try:
+                        n = os.write(master, data)
+                        data = data[n:]
+                    except BlockingIOError:
+                        pass
+                pump(step, 0)
+                if p.poll() is not None and data:
+                    raise OSError("the shell is gone")
+        finally:
+            os.set_blocking(master, True)
+
     s0 = Step(None)
     settle(s0, want(0))
     steps.append(s0)
@@ -626,19 +650,23 @@ def _session(argv, keys, env, cwd, expect, meta=None):
                 # a slow line: one byte at a time, as a serial console
                 # at a low rate delivers them
                 for i in range(len(data)):
-                    os.write(master, data[i:i + 1])
+                    type_bytes(st, data[i:i + 1])
                     time.sleep(SLOW)
             else:
-                os.write(master, data)
+                type_bytes(st, data)
         except OSError:
             break
         settle(st, want(len(steps)))
         steps.append(st)
         last_screens.append(scr.snapshot(start_row))
-    try:
-        rc = p.wait(timeout=EXIT_WAIT if expect is not None else 3)
-    except subprocess.TimeoutExpired:
-        rc = None
+    # wait for the exit reading all the while, as a terminal does: a
+    # shell that puts its terminal's mode back waits for its output to
+    # drain, and on macOS a pty's output drains only when it is read
+    deadline = time.time() + (EXIT_WAIT if expect is not None else 3)
+    rc = p.poll()
+    while rc is None and time.time() < deadline:
+        pump(steps[-1], 0.05)
+        rc = p.poll()
     # whatever is still in flight belongs to the last step
     while (rout in open_fds or rerr in open_fds) and rc is not None:
         if not pump(steps[-1], 0.2):
@@ -649,7 +677,6 @@ def _session(argv, keys, env, cwd, expect, meta=None):
     last_mode = None
     if rc is not None:
         last_mode = term_lmode(master, hold) == mode_before
-    os.close(hold)
     if rc is None:
         exit_line = "alive"
         try:
@@ -663,6 +690,15 @@ def _session(argv, keys, env, cwd, expect, meta=None):
         exit_line = f"exit {rc}"
     for fd in list(open_fds):
         os.close(fd)
+    # the master first, then the slave: on macOS closing a terminal can
+    # wait for its output to drain, and only a read of the master drains
+    # it; once the master is closed there is nothing to wait for
+    if master not in open_fds:
+        try:
+            os.close(master)
+        except OSError:
+            pass
+    os.close(hold)
     return render(steps, exit_line)
 
 
