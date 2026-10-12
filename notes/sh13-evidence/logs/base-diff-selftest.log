@@ -1,0 +1,3 @@
+difftest-selftest: right exits 0 as it must
+difftest-selftest: wrong exits 1 as it must
+difftest-selftest: unlisted exits 1 as it must

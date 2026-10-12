@@ -1,0 +1,24 @@
+head=251f90a3964d333bf0b4e37e58a4788ff1b665b1 dirty=0
+fetch=0
+fmt=0
+build=0
+test=0
+clause=0
+diff-native=0
+diff-release=0
+diff-taskset=0
+diff-selftest=0
+sess-native=0
+sess-release=0
+sess-taskset=0
+sess-selftest=0
+glob-native=0
+loop-native=0
+exec-native=0
+glob-release=0
+loop-release=0
+exec-release=0
+oracle-check=0
+static=0
+8a498b238992c0cffecfed9802961a662722d9bdc30fbc93359995f80d202c21  /home/mfwolffe/lanes/sh13/sc/pelt-base
+done
