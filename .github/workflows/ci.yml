@@ -66,6 +66,18 @@ jobs:
       - name: the clause table agrees with the corpus
         run: tools/clause-census
 
+      # sh11: the line editor's width table is what tools/gen-width
+      # makes from Unicode 16.0.0. A runner whose Python carries another
+      # Unicode version says so here rather than in a session.
+      - name: the width table is the generated one
+        run: |
+          python3 -c "import unicodedata; print('runner Unicode', unicodedata.unidata_version)"
+          if python3 -c "import unicodedata, sys; sys.exit(unicodedata.unidata_version != '16.0.0')"; then
+            tools/gen-width --check
+          else
+            echo "::notice::runner Python is not Unicode 16.0.0; the table is checked on kasumi (notes/sh11-the-line-editor.md)"
+          fi
+
       - name: build, both tiers
         if: matrix.builds
         run: tools/build --all
@@ -163,6 +175,19 @@ jobs:
         if: matrix.builds
         timeout-minutes: 10
         run: tools/session --bin target/release
+
+      # sh11: the editor gives the terminal back, asked from outside: the
+      # modes after SIGHUP (pelt dies of it, as dash), SIGTERM (ignored),
+      # SIGINT (the line abandoned, $? 130) and a hangup (tools/edit-witness).
+      # Every session above also fails if pelt exits with the terminal's
+      # ICANON, ECHO or ISIG changed.
+      - name: the editor restores the terminal, native tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/edit-witness target/native/pelt
+
+      - name: the editor restores the terminal, release tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/edit-witness target/release/pelt
 
       - name: the session harness sees a difference (the planted red)
         if: matrix.builds
