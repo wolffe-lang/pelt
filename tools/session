@@ -88,7 +88,11 @@ def main(argv):
         # a pending case is expected to miss its prompts: do not spend
         # the full wait on each step of it
         ls.PROMPT_WAIT = 2.0 if "pending" in meta else full_wait
-        got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, ls.parse_tr(want))
+        # a case judged on standard output alone (its oracle draws its
+        # own line, so the prompt the transcript shows mid-line is not
+        # one pelt writes) is paced by quiet, as it was recorded
+        pace = None if meta.get("compare") == "stdout" else ls.parse_tr(want)
+        got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, pace)
         if meta.get("compare") == "stdout":
             ok = ls.stdout_and_exit(got) == ls.stdout_and_exit(want)
         else:
