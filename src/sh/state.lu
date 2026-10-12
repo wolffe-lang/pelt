@@ -227,6 +227,7 @@ struct Sh {
     /// `$@` and `for` loops' items.
     istk: List[int],
     sstk: List[str],
+    planted: List[Map[str, str]],
 }
 
 fn new_sh(name: str) -> Sh {
@@ -322,6 +323,7 @@ fn new_sh(name: str) -> Sh {
         fr_top: -1,
         istk: List[int](),
         sstk: List[str](),
+        planted: List[Map[str, str]](),
     }
 }
 

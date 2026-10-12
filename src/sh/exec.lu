@@ -537,6 +537,9 @@ fn case_pick_here(mut sh: Sh, n: int) -> int {
 /// `( list )` in-process: run in a frame (`sh.state`), which puts the
 /// environment back.
 fn run_subshell(mut sh: Sh, body: int) -> int {
+    // PLANT (sh08): a copy of the variables kept per subshell, as before
+    // the journal; tools/shape-rss must go red on it
+    (mut sh.planted).push(copy sh.vals)
     frame_open(mut sh)
     traps_reset(mut sh)
     sh.sub += 1
