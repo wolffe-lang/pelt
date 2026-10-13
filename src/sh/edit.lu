@@ -566,10 +566,12 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
     flush_out(mut e)
     os_term_set_mode(0, old) else |_| {}
     if e.done == K_HUP {
-        // the default ends the shell, with the terminal as it was
+        // the default ends the shell, with the terminal as it was:
+        // the raise is delivered before it returns (`[os.signal.raise]`
+        // since wolf 0.2.29; pelt used to sleep up to half a second
+        // for the death), so what follows is for a host that refused it
         os_signal_default(m_hup()) else |_| {}
         os_signal_raise(m_hup()) else |_| {}
-        settle_hup()
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     if e.poll_hup {
@@ -588,15 +590,6 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         mem: if e.mem_set then mem_txt(e.mem) else "",
         mem_set: e.mem_set,
         num: e.vnum,
-    }
-}
-
-/// A raised SIGHUP at its default ends the process; give it a moment.
-fn settle_hup() {
-    var n = 0
-    while n < 50 {
-        time_sleep_ms(10)
-        n += 1
     }
 }
 
