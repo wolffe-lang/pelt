@@ -1,0 +1,6 @@
+st=3
+bg=0
+cs=4 out
+pipe=6
+trap -- '' CHLD
+st=7
