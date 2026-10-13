@@ -98,9 +98,15 @@ def _default_signals():
     inherits SIGINT, SIGQUIT or SIGHUP IGNORED, and a shell may not trap
     a signal that was ignored when it started (XCU `trap`): the oracle
     and pelt would both answer for the harness's parent, not the case."""
-    for s in (signal.SIGHUP, signal.SIGINT, signal.SIGQUIT, signal.SIGTERM,
-              signal.SIGPIPE, signal.SIGUSR1, signal.SIGUSR2, signal.SIGALRM):
-        signal.signal(s, signal.SIG_DFL)
+    for n in range(1, signal.NSIG):
+        # every signal, since sh14: `trap` takes them all, and a shell
+        # leaves alone whichever it was started ignoring
+        if n in (signal.SIGKILL, signal.SIGSTOP):
+            continue
+        try:
+            signal.signal(n, signal.SIG_DFL)
+        except (OSError, ValueError):
+            pass
     signal.pthread_sigmask(signal.SIG_SETMASK, [])
 
 

@@ -441,8 +441,15 @@ def _ctty():
     # 2.11), and dash and its children would then never see Ctrl-C:
     # the first recording of ctrl_c_child showed `sleep 5` outliving
     # its ^C for exactly that reason.
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    signal.signal(signal.SIGQUIT, signal.SIG_DFL)
+    # Every signal, since sh14: a shell leaves alone whichever it was
+    # started ignoring, and the sessions trap and send others too.
+    for n in range(1, signal.NSIG):
+        if n in (signal.SIGKILL, signal.SIGSTOP):
+            continue
+        try:
+            signal.signal(n, signal.SIG_DFL)
+        except (OSError, ValueError):
+            pass
     signal.pthread_sigmask(signal.SIG_SETMASK, [])
 
 
