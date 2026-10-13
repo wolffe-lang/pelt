@@ -222,8 +222,10 @@ fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int 
 }
 
 /// The variables a shell starts with (XCU 2.5.3): everything in the
-/// environment, exported; then the shell's own.
+/// environment, exported; then the shell's own. And `SIGCHLD` at its
+/// default (`sh.signal`'s `sig_start`).
 fn import_env(mut sh: Sh) {
+    sig_start()
     for kv in env_vars() {
         let eq = kv.find("=") else -1
         if eq > 0 {

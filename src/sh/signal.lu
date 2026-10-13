@@ -39,7 +39,10 @@
 //! disposition, and `sig_apply` leaves those signals ignored whatever
 //! the trap table says. The table still records the action and `trap`
 //! lists it, as dash, which holds the rule for an interactive shell too
-//! (black-box); so does pelt.
+//! (black-box); so does pelt. `SIGCHLD` is the exception: it is put
+//! back to its default when the shell starts (`sig_start`), and `trap
+//! '' CHLD` is recorded without ignoring it, because a process that
+//! ignores it cannot read its children's statuses.
 //!
 //! **Subshells run in-process**, so there is one set of dispositions for
 //! the shell and every subshell it is running. A subshell starts with
@@ -235,6 +238,15 @@ fn less(set: int, gone: int) -> int {
     set - (set & gone)
 }
 
+/// The first thing a shell does: `SIGCHLD` at its default. A process
+/// started ignoring it never learns how its children ended (XSH
+/// `wait`: the host takes their statuses), and every command would
+/// answer 1; dash puts it back too (black-box), so it is the one signal
+/// whose start disposition is not kept.
+fn sig_start() {
+    signal.reset(signal.child()) else |_| {}
+}
+
 /// The set of signals ignored when the shell started, read once, before
 /// pelt first changes a disposition (`[os.signal.ignored]`: read then,
 /// it is the set the process was started with); they count as ignored
@@ -280,7 +292,14 @@ fn sig_apply(mut sh: Sh) {
                 let m = sig_meaning(k)
                 let action = sh.traps[c] else ""
                 if action.len == 0 {
-                    ignore = ignore | m
+                    // `trap '' CHLD` is recorded and no more: the
+                    // default already does nothing to the shell, and a
+                    // host that is told to ignore it keeps the
+                    // children's statuses from `wait` (dash leaves it
+                    // alone too, black-box)
+                    if m != signal.child() {
+                        ignore = ignore | m
+                    }
                     listen = less(listen, m)
                     mine = less(mine, m)
                 } else {
