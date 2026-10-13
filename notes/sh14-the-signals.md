@@ -167,3 +167,201 @@ their answers recorded; predicted: lupin still `unsupported` at
 `env_vars` (wolf-interp#240), and now would stop at `os_signal_ignored`
 besides; the checked machine does not run pelt to a prompt (an
 `unsupported` or a budget, to be named from the record).
+
+### 3.9 The result against the prediction
+
+Measured on kasumi (linux x86-64; dash 0.5.13.4 for the corpus, the
+census images' own dash for the scripts), at `812cafc` (the head of
+the code; what follows it is this file, the README, the plan and the
+census document), and in CI on linux x86-64, macOS arm64 and linux
+aarch64 (run 38349110222 at `812cafc`). **native** is `tools/build
+--native` (`wolf build`), **release** `tools/build --release` (`wolf
+build --release`); "both tiers" means both.
+
+| prediction | predicted | measured | held? |
+|---|---|---|---|
+| 3.1 the pin builds with no source change | both tiers, `--deny-warnings` | both tiers, no change (`logs/pin.status`, at `4c16941`) | held |
+| 3.1 at the bare pin | corpus 837/0/98 (8 PEND-ok), sessions 197/0/20, every gate as at trunk, census unchanged | **837/0/98 (8)** on native, release and both under `taskset -c 0-3`; **197/0/20** on native, release and release under `taskset`; every other gate 0; census unaided **76** | held |
+| 3.2 `$$`, `PPID`: five corpus cases and one session leave pending | 5 + 1 | **5 + 1**, on linux and on macOS (CI) | held |
+| 3.3 `trap`: eight cases leave pending; `c_trap_ignore_pipe`, the two interruptible-wait cases and `pending/subshell_signal` stay | 8 leave, 4 stay | **8 leave, 4 stay**; `c_trap_ignore_pipe` moved to the fork row | held |
+| 3.3 an unnamed number or a non-POSIX name refused; faults recorded only | as said | as said (`probe/pelt/p2b.pelt` against `p2b.dash`) | held |
+| 3.4 `kill`: four cases and `wait/c_job_id` leave pending | 5 | **5** | held |
+| 3.4 statuses as dash's | 0, 1, 2 | as dash on every probed form but the ones named in `tests/diff/PENDING.md` (a signal POSIX does not name; a job id's number after an earlier job ended); **not predicted:** dash stops at the first operand that fails, and tries a `-word` as a signal before it reads it as options (`-stop` is `SIGSTOP`, `-sTERM` is `-s TERM`); pelt does both | held, with two things learned |
+| 3.5 the barrier goes; 0 misses | 2,000 rounds, 0 misses on four cpus and on one | the witness asks 5,000 times with a child as sender and 5,000 with the built-in: **0 misses** on native and release, on 16 cpus, four and one (`logs/head-sigw-*.log`), and on linux and macOS in CI. Seen red: trunk on 0.2.28 with the barrier's call removed misses **3 to 12 of 5,000** on four cpus and sixteen (`logs/red-barrier.log`) | held |
+| 3.5 `settle_hup` goes | — | gone; `tools/edit-witness`'s `hup` row still ends by the signal (status −1) with the modes restored, both tiers, also under `taskset -c 0-3` and `-c 0` | held |
+| 3.5 the editor's timed read stays | — | stays | held |
+| 3.6 corpus | (855 + new)/0/80 | **880/0/80** on both tiers and under `taskset -c 0-3` (25 new cases; 18 left pending) | held |
+| 3.6 sessions | 198/0/19 plus new | **201/0/19** (three new cases) on both tiers and under `taskset` | held |
+| 3.6 statements | 449 of 545 | **450 of 545 (83.3%)** | **off by one**: 2.12/5 ("signals for every name can be trapped") is met too. Its one failing case, `c_trap_ignore_pipe`, fails for want of a fork, so it moved to 2.9.2/9 (a producer written in the shell meets `SIGPIPE` or `EPIPE`), which was and stays pending; `signal/trap_ignore_pipe_fifo` shows `trap '' PIPE` in the shell's own process |
+| 3.6 scripts, unaided | 76 | **75 printed at the head, 75 at trunk today, 76 at the bare pin**: the head's table and trunk's are the same verdict for verdict (`scripts/base-unaided.tsv`, `head-unaided.tsv`), and both are sh13's 76 but for `configure-sed`, whose one differing line is a coin (below) | held in substance (no script moved; the count is no lower than trunk's taken the same day), **missed as printed** (75, not 76) |
+| 3.6 scripts, aided | 76 | **76** at trunk and at the head, verdict for verdict | held |
+| 3.7 speed, head against the pin | no row above 2% (user instructions) | user instructions, head against the pin (`bench/instructions.txt`, three runs each, identical to five digits): release param −0.6%, fork −0.0%, pipeline −0.1%, configure-shaped +0.3%; native param +0.1%, fork +0.1%, pipeline −1.5%, configure-shaped +1.0%. Wall time under `taskset -c 0-3`, medians of 9: every row within 1.3% of the pin but native configure-shaped, +2.5% (0.393 s → 0.403 s) | held on instructions; one native wall-time row is over by half a point |
+| 3.8 lupin | `unsupported` at `env_vars` | `lupin run --json src/pelt.lu`: `unsupported` at resolve, as predicted, but the name it gives is now `os_signal_default` ("this machine admits no `unsafe` and std has no `sigaction`"): with `std.signal` imported, the disposition builtins lupin refuses by ruling are met before `env_vars` (`lupin/pelt.txt`). So wolf-interp#240 is not the only thing between lupin and pelt | **held in kind, the name missed** |
+| 3.8 the checked machine | an `unsupported` or a budget | `wolf conform-run --json --checked src/pelt.lu`: `unsupported`, "home-module method calls in checked execution", `phase_reached mem`; the same at trunk on 0.2.28 (`lupin/pelt.txt`) | held |
+
+**Not predicted.**
+
+- **A shell started with `SIGCHLD` ignored answered 1 for every
+  command** (trunk too): the host takes the children's statuses and
+  `os_wait_status` answers `io`. dash puts `SIGCHLD` back to its
+  default when it starts, and so does pelt now (`sig_start`); and `trap
+  '' CHLD` is recorded without ignoring the signal, as dash
+  (`probe/p9`, `probe/chld.py`; `tools/signal-witness`'s `chld` row,
+  seen red first).
+- **With `SIGPIPE` ignored, a built-in's failed write was silent**
+  (status 0). It is the command's error now (status 1), on the fast
+  path too; a failed write for any other reason (a full disk) is still
+  not reported by the ordinary path, which buffers.
+- **dash serves every waiting trap before a `break` in one of them
+  takes effect**, and runs a second signal's action inside the first's
+  when it comes there (`signal/trap_break_keeps_pending`,
+  `signal/trap_nested`); pelt did neither before.
+- **`configure-sed` is a coin**: its third line prints a filesystem
+  timestamp resolution it measures by how fast the shell runs between
+  two file writes (`checking the filesystem timestamp resolution... 0.2` under dash, `0.1` under pelt in 3 of 23 census runs: trunk 1 of 8, the bare pin 1 of 7, the head 1 of 8; `scripts/sed-repeat.txt`. The same check run alone 300 times a shell (`scripts/ts.sh`, `ts-run.txt`) sees the second file newer at the first look in 34 and 35 of 300 runs under dash and in 62 and 71 (trunk), 70 (pin), 51 and 73 (head) under pelt: a shell that is slower between the two writes crosses the filesystem's clock tick more often, dash crosses it too, and the three pelts cannot be told apart. `tools/script-census` calls a script unstable only when dash disagrees with dash in the same run, which a one-in-nine coin rarely shows).
+- The corpus harness reset eight signals to their defaults; with every
+  signal trappable and the ignored-at-start rule in, it resets all of
+  them (the oracle re-checked: 0 drifted).
+
+**Seen red.** (1) `tools/signal-witness` on trunk with the barrier's
+call removed, wolf 0.2.28: 3 to 12 misses of 5,000
+(`logs/red-barrier.log`). (2) The `ignored` rows on the build before
+the rule (`logs/ignored-red.txt`). (3) The `chld` row on the build
+before `sig_start` (`logs/chld-red.txt`). (4) In CI, branch
+`sh14-plant` (`0b108ec`: the set ignored at start unread, `kill -s`
+unused), run 38349137192: the witness's `ignored` and `ignored-i` rows
+fail on both tiers on linux (the shell dies of signal 10) and macOS
+(signal 30), and eight corpus cases fail on each host
+(`kill/c_send`, `forms`, `job_ids`, `self`, `status_names`, `targets`,
+`signal/c_ignored_on_entry`, `ignored_at_start`): 872/8/80
+(`logs/plant-38349137192.txt`).
+
+## 4. Evidence index
+
+- **The prediction:** `75c08f3`, before the pin (`4c16941`) and the
+  first `src/` change (`bcec4eb`).
+- **The probes:** `notes/sh14-evidence/probe/` — `p1`–`p9` under dash
+  (`.dash`) and under pelt at the head (`pelt/`), `chld.py`.
+- **The five builtins on four machines:** `notes/sh14-evidence/wolf/sig/`.
+- **pelt on the checked machine and lupin:** `notes/sh14-evidence/lupin/pelt.txt`.
+- **The gauntlets:** `notes/sh14-evidence/logs/` — `base.status`
+  (trunk `1315587`, wolf 0.2.28), `pin.status` (`4c16941`),
+  `head.status` (`812cafc`): fmt, both builds, `wolf test`, the clause
+  census, the width table, difftest on both tiers and both under
+  `taskset -c 0-3`, the planted difftest red, sessions on both tiers
+  and under `taskset`, the planted session red, glob-rss, loop-rss,
+  shape-rss, exec-witness, edit-witness, hist-witness on both tiers,
+  signal-witness on both tiers and both under `taskset` (head),
+  `oracle-record --check` (0 drifted), the static build; every exit
+  status 0. The totals are in `gauntlet-totals.txt`; the head's
+  session transcripts checked against the oracle
+  (`head-session-record-check.log`).
+- **The census:** `notes/sh14-evidence/scripts/` — `base-*`, `pin-unaided.*`,
+  `head-*` (`.tsv`, `.log`, `.bin`), `sed-repeat.txt`.
+- **The bench:** `notes/sh14-evidence/bench/`.
+- **The system calls:** `notes/sh14-evidence/sysc/` (pin and head).
+- **Seen red:** `logs/red-barrier.log`, `logs/ignored-red.txt`,
+  `logs/chld-red.txt`, `logs/plant-38349137192.txt`.
+- **CI:** PR wolffe-lang/pelt#26; run 38349110222 green at `812cafc`
+  on three hosts (linux x86-64 and macOS arm64: corpus 880/0/80,
+  sessions 201/0/19, the witnesses; linux aarch64: both tiers still
+  refused by name); the plant, run 38349137192, red as said above.
+
+## 5. Done-when
+
+- Branch `sh14`, PR #26 open and unmerged, CI green at the head;
+  `wolf/tools/lane-audit.sh pelt sh14 26` run from the org directory,
+  its exit status read directly.
+- pelt issues: none of #10–#20 is closed by this branch (§2). The
+  census rows it clears were routed to wolf-lang issues that s232
+  closed (#141, #679, #681, #691, #423).
+
+## 6. What waits on what
+
+**On job control** (wolf-lang#680 and the lane after it: a child wait
+a signal can cut short, a stopped child's report, a signal to a
+process group):
+- `wait` cut short by a trapped signal (`pending/wait_interrupted`,
+  `signal/c_wait_interrupted_term`);
+- `kill 0`, `kill -- -N` (refused by name, status 1);
+- `jobs`, `fg`, `bg`, Ctrl-Z, job numbers that are given back when a
+  job ends, `%name` (pelt#18 is `jobs` in a script).
+
+**On the terminal builtins** (s234, wolf-lang trunk, not in 0.2.29):
+- the editor's read that times out every tenth of a second to poll for
+  `SIGHUP` and `SIGINT` (`os_signal_wait_fd`);
+- a redraw on `SIGWINCH` and the window's size (`os_term_size`); pelt
+  can TRAP `WINCH` since this lane, the editor does not use it;
+- the terminal's own special characters (`os_term_chars`).
+
+**On a fork** (ruling #69 R1): a signal to "the subshell"
+(`pending/subshell_signal`), a subshell's own trap for a signal sent
+to `$$`, `signal/c_trap_ignore_pipe`.
+
+**For PAX** (`notes/sh14-evidence/sysc/`: `tools/syscall-census` on
+the static build, the pin and the head over the head's corpus, 46
+distinct calls each). New at the head: `getppid` (once a shell) and
+`kill` (the built-in; `os_signal_send`). Gone: `tgkill` and `gettid`
+(the barrier's raise). Many more `rt_sigaction` (5,893 → 18,698 over
+the corpus): one at every start (`SIGCHLD` to its default) and twenty
+that only ASK (a null new action: the set ignored at start) the first
+time a shell runs a subshell, sets a trap or starts an asynchronous
+list. A kernel that answers `rt_sigaction` with no new action wrongly
+would make pelt think signals are, or are not, ignored at start.
+
+## 7. Wolf findings (not filed; texts for the orchestrator)
+
+1. **A program started with `SIGCHLD` ignored cannot learn how any
+   child ended**, and nothing says so at the call: `os_wait_status`
+   answers `io` for every child (`[os.signal.disp]` states it for a
+   program that ignores `CHILD` itself; the inherited case is the same
+   and is not the program's doing). pelt's witness:
+   `tools/signal-witness`'s `chld` row; before `sig_start` every `$?`
+   was 1. A runtime that reset `SIGCHLD` at its first spawn, or a
+   sentence in `[os.proc.status]`, would have saved the search.
+2. **`[os.signal.disp]` still says "a bit outside the nine meanings is
+   `io`"** at v0.2.29, beside `[os.signal.set]`'s twenty: a stale
+   count.
+3. **No meaning for a signal POSIX does not name**, so `kill -s IO`,
+   `kill -PWR`, `kill -34` and `trap … 16` cannot be written in wolf
+   (ruling #70 R1 took exactly POSIX's set). dash takes them. Not a
+   defect; the edge of the ruling, met by a shell.
+4. **`os_signal_send` reaches one process** (R6): a shell's `kill 0`
+   and `kill -- -pgid` wait on the job-control lane.
+5. **The checked machine refuses pelt** with "home-module method calls
+   in checked execution" (the `Map` methods that resolve into
+   `std.map`), at 0.2.28 and 0.2.29 alike: pelt has never run there.
+6. **While a wolf program starts a child, its signal mask is full**
+   (`SigBlk: fffffffffffbfeff` read from `/proc` by the child of a
+   pelt pinned to one cpu). It is the spawn's own window and closes
+   again; noted because a witness that reads a parent's mask from a
+   child sees it.
+
+## 8. Not verified, and inferred
+
+- **macOS** by CI only (no build on nomad-1): the corpus, the sessions
+  and the witnesses are green there; the probes `p1`–`p9` were not run
+  there, and the census scripts are linux-only.
+- **linux aarch64**: no tier builds (asserted in CI).
+- **The checked machine and lupin run no pelt**; the five builtins
+  were measured on all four machines by one small program, not
+  through pelt.
+- **`kill/job_ids` takes bash as its oracle** (the corpus's rule for
+  where POSIX and dash part): dash 0.5.13.4 answers "no such process"
+  to every `kill %n` in a script. pelt signals the job, as XCU `kill`
+  says and bash does.
+- **Inferred, not measured:** that dash tries a `-word` as a signal
+  first is read from four forms (`-stop`, `-segv`, `-sys`, `-sTERM`);
+  that dash stops at the first failing operand, from two.
+- **The order of two actions that both leave** (`break` in one,
+  `return` in another, waiting together): pelt keeps the later; dash
+  was not asked.
+- **A trap for `TSTP`, `TTIN`, `TTOU`** is caught when a child sends
+  the signal (`signal/trap_every`); what the terminal's own Ctrl-Z
+  does to a pelt with such a trap was not typed.
+- **`kill` of a pid that is one of the shell's own reaped children**
+  answers "no such process" without asking the host (the id may be
+  another process's by then); a host that reuses ids faster than a
+  script loops was not constructed.
+- The `unsupported` rows of `os_ppid`, `os_signal_number` and
+  `os_signal_send` (windows): no machine pelt runs on answers them.
