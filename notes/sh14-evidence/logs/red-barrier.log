@@ -1,0 +1,88 @@
+tree 13155878ce37fd56654b3e3ebedb56451acb47e4
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+wolf 0.2.28 (wolfgang, pin f71ece8)
+build: target/native/pelt
+build: target/release/pelt
+build-with-barrier=0
+WITH the barrier, 0.2.28, native, cpus 0-15
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+WITH the barrier, 0.2.28, native, cpus 0-3
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+WITH the barrier, 0.2.28, native, cpus 0
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+WITH the barrier, 0.2.28, release, cpus 0-15
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+WITH the barrier, 0.2.28, release, cpus 0-3
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+WITH the barrier, 0.2.28, release, cpus 0
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+ src/sh/exec.lu | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+build: target/native/pelt
+build: target/release/pelt
+build-without-barrier=0
+WITHOUT the barrier, 0.2.28, native, cpus 0-15
+signal-witness: reap    FAIL 2 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=1
+WITHOUT the barrier, 0.2.28, native, cpus 0-3
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+WITHOUT the barrier, 0.2.28, native, cpus 0
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+WITHOUT the barrier, 0.2.28, release, cpus 0-15
+signal-witness: reap    FAIL 1 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=1
+WITHOUT the barrier, 0.2.28, release, cpus 0-3
+signal-witness: reap    FAIL 2 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=1
+WITHOUT the barrier, 0.2.28, release, cpus 0
+signal-witness: reap    ok   0 misses of 2000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+
+== the witness as committed (sender /bin/kill, 5000 rounds), trunk 1315587 on wolf 0.2.28 WITHOUT the barrier
+0ce00793c3677df073e564ad4d04fae0c41906119a8b066ecbaea596c7ad4e04  redbin/pelt-native
+3bbad35eddf77772bfe9f8ba428aa1b8151e189c9d2058898ae323d3bd07c6a7  redbin/pelt-release
+native cpus 0-15
+signal-witness: reap    FAIL 3 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=1
+native cpus 0-3
+signal-witness: reap    FAIL 9 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=1
+native cpus 0
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+release cpus 0-15
+signal-witness: reap    FAIL 9 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=1
+release cpus 0-3
+signal-witness: reap    FAIL 12 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=1
+release cpus 0
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+== the same witness, sh14 dev tree on wolf 0.2.29 WITHOUT the barrier
+native cpus 0-15
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+native cpus 0-3
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+native cpus 0
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+release cpus 0-15
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+release cpus 0-3
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0
+release cpus 0
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+rc=0

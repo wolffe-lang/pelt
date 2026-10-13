@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""signal-witness — does a trap run when it should, asked many times?
+
+A corpus case asks once. The races a shell's signals have are rare on a
+quiet 16-cpu box and common on four cpus or one (sh05 found
+wolf-lang#691 only under `taskset -c 0-3`), so this asks the same
+question thousands of times and counts. For SHELL:
+
+  reap    a trap is set; ROUNDS times, a child (the program
+          `/bin/kill`, which ends the moment it has sent) signals the
+          shell while the shell is waiting for that child, and the very
+          next command asks whether the action has run. XCU 2.12: the
+          action runs when the foreground command completes. A miss
+          means the poll after the reap answered "nothing came" for a
+          signal that had (the barrier `settle` hid that until wolf
+          0.2.29; now `[os.signal.poll]` promises it). Seen red: trunk
+          `1315587` on wolf 0.2.28 with the barrier's call removed
+          misses 10 to 19 of 5,000 on two cpus or more
+          (`notes/sh14-evidence/logs/red-barrier.log`).
+
+The shell is started with every signal at its default and nothing
+blocked, and its SigBlk and SigIgn are printed (linux), so a row is not
+decided by what the witness inherited. Signals go only to the shell
+this tool started (from its own child).
+
+usage: tools/signal-witness [--rounds N] SHELL
+Run it also as `taskset -c 0-3 tools/signal-witness SHELL` and
+`taskset -c 0 …`. Exits 1 when any row fails.
+"""
+
+import os
+import signal
+import subprocess
+import sys
+import tempfile
+
+REAP = r'''
+grep -E 'SigBlk|SigIgn' /proc/$$/status 2>/dev/null | tr '\n\t' '  ' >&2
+trap 'got=1' USR2
+i=0 miss=0
+while [ $i -lt ROUNDS ]; do
+  got=0
+  /bin/kill -USR2 $$
+  if [ $got = 0 ]; then miss=$((miss+1)); fi
+  i=$((i+1))
+done
+echo "$miss $i"
+'''
+
+
+def _defaults():
+    for n in range(1, signal.NSIG):
+        if n in (signal.SIGKILL, signal.SIGSTOP):
+            continue
+        try:
+            signal.signal(n, signal.SIG_DFL)
+        except (OSError, ValueError):
+            pass
+    signal.pthread_sigmask(signal.SIG_SETMASK, [])
+
+
+def main(argv):
+    rounds = 5000
+    if argv[:1] == ["--rounds"] and len(argv) >= 2:
+        rounds = int(argv[1])
+        argv = argv[2:]
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    shell = os.path.abspath(argv[0])
+    base = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+    ok = True
+    with tempfile.TemporaryDirectory(prefix="signal-witness.") as cwd:
+        r = subprocess.run([shell, "-c", REAP.replace("ROUNDS", str(rounds))],
+                           cwd=cwd, env=base, capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, preexec_fn=_defaults,
+                           timeout=600)
+        words = r.stdout.split()
+        good = r.returncode == 0 and words == ["0", str(rounds)]
+        print(f"signal-witness: reap    {'ok  ' if good else 'FAIL'} "
+              f"{words[0] if words else '?'} misses of {rounds} "
+              f"(exit {r.returncode}; shell {r.stderr.strip()!r})")
+        ok = ok and good
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
