@@ -1,0 +1,74 @@
+CI run 38349137192 (workflow_dispatch on branch sh14-plant, commit 0b108ec: sh14's 812cafc with two planted breaks: the set ignored at start is not read; kill -s reads its signal and does not use it)
+
+gauntlet (ubuntu-24.04-arm, false): success
+gauntlet (macos-latest, true): failure
+   failed step: traps run on time; ignored at start stays ignored, native tier
+   failed step: traps run on time; ignored at start stays ignored, release tier
+   failed step: the differential corpus, native tier
+   failed step: the differential corpus, release tier
+gauntlet (ubuntu-latest, true): failure
+   failed step: traps run on time; ignored at start stays ignored, native tier
+   failed step: traps run on time; ignored at start stays ignored, release tier
+   failed step: the differential corpus, native tier
+   failed step: the differential corpus, release tier
+
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:54.4414980Z signal-witness: reap    ok   0 misses of 5000 (exit 0; shell '')
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:54.4416510Z signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:54.4417180Z signal-witness: ignored FAIL exit -30, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:54.4417930Z signal-witness: ignored-i FAIL exit -30, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:54.4418780Z signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:54.4420070Z signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:10:03.9646380Z signal-witness: reap    ok   0 misses of 5000 (exit 0; shell '')
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:10:03.9647150Z signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:10:03.9647700Z signal-witness: ignored FAIL exit -30, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:10:03.9648350Z signal-witness: ignored-i FAIL exit -30, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:10:03.9648930Z signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:10:03.9654520Z signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:35.0180850Z FAIL kill/c_send: stdout
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:35.0429970Z FAIL kill/forms: stdout
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:35.0495110Z FAIL kill/job_ids: stdout
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:35.1248700Z FAIL kill/self: stdout, exit 143 (oracle 0), stderr absent
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:35.1632160Z FAIL kill/status_names: stdout
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:35.1677620Z FAIL kill/targets: stdout, exit 143 (oracle 0)
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:41.2639620Z FAIL signal/c_ignored_on_entry: stdout
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:49.3951240Z FAIL signal/ignored_at_start: stdout
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-13T05:10:59.4102260Z difftest: total        872     8    80 (2)
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:27.7246660Z FAIL kill/c_send: stdout
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:27.7506470Z FAIL kill/forms: stdout
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:27.7580390Z FAIL kill/job_ids: stdout
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:27.8401780Z FAIL kill/self: stdout, exit 143 (oracle 0), stderr absent
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:27.8825900Z FAIL kill/status_names: stdout
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:27.8878420Z FAIL kill/targets: stdout, exit 143 (oracle 0)
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:33.8392460Z FAIL signal/c_ignored_on_entry: stdout
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:41.9157680Z FAIL signal/ignored_at_start: stdout
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-13T05:11:52.0560040Z difftest: total        872     8    80 (2)
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:45.7236893Z signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:45.7237979Z signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:45.7238619Z signal-witness: ignored FAIL exit -10, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:45.7239326Z signal-witness: ignored-i FAIL exit -10, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:45.7240070Z signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier	2026-10-13T05:09:45.7240679Z signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:09:49.6594782Z signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:09:49.6595841Z signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:09:49.6597123Z signal-witness: ignored FAIL exit -10, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:09:49.6598437Z signal-witness: ignored-i FAIL exit -10, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:09:49.6599516Z signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier	2026-10-13T05:09:49.6600422Z signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:09.5285742Z FAIL kill/c_send: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:09.5472373Z FAIL kill/forms: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:09.5517623Z FAIL kill/job_ids: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:09.5912676Z FAIL kill/self: stdout, exit 143 (oracle 0), stderr absent
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:09.6067071Z FAIL kill/status_names: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:09.6094258Z FAIL kill/targets: stdout, exit 143 (oracle 0)
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:15.2429988Z FAIL signal/c_ignored_on_entry: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:22.6811879Z FAIL signal/ignored_at_start: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-13T05:10:30.7412015Z difftest: total        872     8    80 (1)
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:47.4486950Z FAIL kill/c_send: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:47.4646292Z FAIL kill/forms: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:47.4686637Z FAIL kill/job_ids: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:47.5039497Z FAIL kill/self: stdout, exit 143 (oracle 0), stderr absent
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:47.5176233Z FAIL kill/status_names: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:47.5202880Z FAIL kill/targets: stdout, exit 143 (oracle 0)
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:52.0440201Z FAIL signal/c_ignored_on_entry: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:10:59.4752814Z FAIL signal/ignored_at_start: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-13T05:11:07.5121631Z difftest: total        872     8    80 (1)
