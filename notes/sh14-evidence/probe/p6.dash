@@ -1,0 +1,39 @@
+../p6.sh: 3: kill: No such process
+
+k1=1
+../p6.sh: 3: kill: No such process
+
+k2=1
+w=0
+../p6.sh: 4: kill: No such process
+
+kcur=1
+../p6.sh: 5: kill: No such process
+
+kplus=1
+../p6.sh: 6: kill: No such process
+
+kminus=1
+../p6.sh: 6: kill: No such process
+
+../p6.sh: 7: kill: No such job: %sleep
+kname=2
+../p6.sh: 8: kill: No such job: %?lee
+ksub=2
+kbad=2
+k1again=1
+done-job=1
+../p6.sh: 11: kill: No such process
+
+../p6.sh: 11: kill: No such process
+
+0
+0
+../p6.sh: 12: kill: No such process
+
+zero=1
+../p6.sh: 12: kill: No such process
+
+wj=0
+st=3
+exit=0

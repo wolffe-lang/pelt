@@ -1,0 +1,280 @@
+--- kill -l
+0
+HUP
+INT
+QUIT
+ILL
+TRAP
+ABRT
+BUS
+FPE
+KILL
+USR1
+SEGV
+USR2
+PIPE
+ALRM
+TERM
+16
+CHLD
+CONT
+STOP
+TSTP
+TTIN
+TTOU
+URG
+XCPU
+XFSZ
+VTALRM
+PROF
+WINCH
+IO
+PWR
+SYS
+32
+33
+RTMIN
+RTMIN+1
+RTMIN+2
+RTMIN+3
+RTMIN+4
+RTMIN+5
+RTMIN+6
+RTMIN+7
+RTMIN+8
+RTMIN+9
+RTMIN+10
+RTMIN+11
+RTMIN+12
+RTMIN+13
+RTMIN+14
+RTMIN+15
+RTMAX-14
+RTMAX-13
+RTMAX-12
+RTMAX-11
+RTMAX-10
+RTMAX-9
+RTMAX-8
+RTMAX-7
+RTMAX-6
+RTMAX-5
+RTMAX-4
+RTMAX-3
+RTMAX-2
+RTMAX-1
+RTMAX
+st=0
+--- kill -l nums
+0=../p1.sh: 3: kill: invalid signal number or exit status: 0
+ st=2
+1=HUP
+ st=0
+2=INT
+ st=0
+3=QUIT
+ st=0
+4=ILL
+ st=0
+5=TRAP
+ st=0
+6=ABRT
+ st=0
+7=BUS
+ st=0
+8=FPE
+ st=0
+9=KILL
+ st=0
+10=USR1
+ st=0
+11=SEGV
+ st=0
+12=USR2
+ st=0
+13=PIPE
+ st=0
+14=ALRM
+ st=0
+15=TERM
+ st=0
+16=16
+ st=0
+17=CHLD
+ st=0
+18=CONT
+ st=0
+19=STOP
+ st=0
+20=TSTP
+ st=0
+21=TTIN
+ st=0
+22=TTOU
+ st=0
+23=URG
+ st=0
+24=XCPU
+ st=0
+25=XFSZ
+ st=0
+26=VTALRM
+ st=0
+27=PROF
+ st=0
+28=WINCH
+ st=0
+29=IO
+ st=0
+30=PWR
+ st=0
+31=SYS
+ st=0
+32=32
+ st=0
+33=33
+ st=0
+34=RTMIN
+ st=0
+64=RTMAX
+ st=0
+65=../p1.sh: 3: kill: invalid signal number or exit status: 65
+ st=2
+--- kill -l status
+128=../p1.sh: 4: kill: invalid signal number or exit status: 128
+ st=2
+129=HUP
+ st=0
+130=INT
+ st=0
+137=KILL
+ st=0
+143=TERM
+ st=0
+159=SYS
+ st=0
+160=32
+ st=0
+192=RTMAX
+ st=0
+255=../p1.sh: 4: kill: invalid signal number or exit status: 255
+ st=2
+256=../p1.sh: 4: kill: invalid signal number or exit status: 256
+ st=2
+257=../p1.sh: 4: kill: invalid signal number or exit status: 257
+ st=2
+300=../p1.sh: 4: kill: invalid signal number or exit status: 300
+ st=2
+385=../p1.sh: 4: kill: invalid signal number or exit status: 385
+ st=2
+-1=../p1.sh: 4: kill: Illegal option -1
+ st=2
+--- kill -l names
+HUP=../p1.sh: 5: kill: Illegal number: HUP
+ st=2
+SIGHUP=../p1.sh: 5: kill: Illegal number: SIGHUP
+ st=2
+hup=../p1.sh: 5: kill: Illegal number: hup
+ st=2
+TERM=../p1.sh: 5: kill: Illegal number: TERM
+ st=2
+--- kill -l two
+HUP
+st=0
+--- kill -L
+../p1.sh: 7: kill: Illegal option -L
+st=0
+--- kill none
+../p1.sh: 8: kill: Usage: kill [-s sigspec | -signum | -sigspec] [pid | job]... or
+kill -l [exitstatus]
+st=2
+--- kill -s none
+../p1.sh: 9: kill: No arg for -s option
+st=2
+--- kill -s TERM none
+../p1.sh: 10: kill: Usage: kill [-s sigspec | -signum | -sigspec] [pid | job]... or
+kill -l [exitstatus]
+st=2
+--- kill -n
+../p1.sh: 11: kill: Illegal option -n
+st=2
+Terminated
+w=143
+--- forms
+[-s SIGTERM] kill=2 wait=137
+[-s term] kill=0 wait=143
+[-s Term] kill=0 wait=143
+[-SIGTERM] kill=2 wait=137
+[-term] kill=0 wait=143
+[-s 0] kill=0 wait=137
+[-0] kill=0 wait=137
+[-s 9] kill=0 wait=137
+[-KILL] kill=0 wait=137
+[-s USR1] kill=0 wait=138
+[-USR1] kill=0 wait=138
+[-10] kill=0 wait=138
+[-s INT] kill=0 wait=137
+[-INT] kill=0 wait=137
+[-2] kill=0 wait=137
+[-s QUIT] kill=0 wait=137
+[-s ABRT] kill=0 wait=137
+[-6] kill=0 wait=137
+[-s ALRM] kill=0 wait=142
+[-s PIPE] kill=0 wait=141
+[-s USR2] kill=0 wait=140
+[-s CONT] kill=0 wait=137
+[-s STOP] kill=0 wait=137
+[-s SEGV] kill=0 wait=137
+[-s BUS] kill=0 wait=137
+[-s FPE] kill=0 wait=137
+[-s ILL] kill=0 wait=137
+[-s TRAP] kill=0 wait=137
+[-s SYS] kill=0 wait=137
+[-s XCPU] kill=0 wait=137
+[-s XFSZ] kill=0 wait=137
+[-s VTALRM] kill=0 wait=154
+[-s PROF] kill=0 wait=155
+[-s WINCH] kill=0 wait=137
+[-s URG] kill=0 wait=137
+[-s CHLD] kill=0 wait=137
+[-s TSTP] kill=0 wait=137
+[-s TTIN] kill=0 wait=137
+[-s TTOU] kill=0 wait=137
+[-s IO] kill=0 wait=157
+[-s PWR] kill=0 wait=158
+[-s STKFLT] kill=2 wait=137
+[-s POLL] kill=2 wait=137
+[-s RTMIN] kill=0 wait=162
+[-s 64] kill=0 wait=192
+[-s 65] kill=2 wait=137
+[-65] kill=2 wait=137
+[-s EXIT] kill=2 wait=137
+[-EXIT] kill=2 wait=137
+[-s 1x] kill=2 wait=137
+[-1x] kill=2 wait=137
+[-s -1] kill=2 wait=137
+[--] kill=0 wait=143
+[-- -TERM] kill=2 wait=137
+[-s TERM --] kill=0 wait=143
+[-TERM --] kill=2 wait=137
+[-l --] kill=2 wait=137
+[-x] kill=2 wait=137
+[-s TERM -s KILL] kill=0 wait=137
+--- targets
+self0=0
+nosuch=1
+huge=2
+abc=2
+init=1
+empty=2
+12x=2
+plus=0
+space=0
+zero-lead=0
+mixed=1
+Terminated
+w=143
+nojob=1
+nojob5=2
+pct=1
+exit=0

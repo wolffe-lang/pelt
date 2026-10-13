@@ -1,0 +1,87 @@
+[HUP] st=0 -> trap -- ':' HUP
+[INT] st=0 -> trap -- ':' INT
+[QUIT] st=0 -> trap -- ':' QUIT
+[ILL] st=0 -> trap -- ':' ILL
+[TRAP] st=0 -> trap -- ':' TRAP
+[ABRT] st=0 -> trap -- ':' ABRT
+[BUS] st=0 -> trap -- ':' BUS
+[FPE] st=0 -> trap -- ':' FPE
+[KILL] st=0 -> trap -- ':' KILL
+[USR1] st=0 -> trap -- ':' USR1
+[SEGV] st=0 -> trap -- ':' SEGV
+[USR2] st=0 -> trap -- ':' USR2
+[PIPE] st=0 -> trap -- ':' PIPE
+[ALRM] st=0 -> trap -- ':' ALRM
+[TERM] st=0 -> trap -- ':' TERM
+[STKFLT] st=1 -> 
+[CHLD] st=0 -> trap -- ':' CHLD
+[CONT] st=0 -> trap -- ':' CONT
+[STOP] st=0 -> trap -- ':' STOP
+[TSTP] st=0 -> trap -- ':' TSTP
+[TTIN] st=0 -> trap -- ':' TTIN
+[TTOU] st=0 -> trap -- ':' TTOU
+[URG] st=0 -> trap -- ':' URG
+[XCPU] st=0 -> trap -- ':' XCPU
+[XFSZ] st=0 -> trap -- ':' XFSZ
+[VTALRM] st=0 -> trap -- ':' VTALRM
+[PROF] st=0 -> trap -- ':' PROF
+[WINCH] st=0 -> trap -- ':' WINCH
+[IO] st=0 -> trap -- ':' IO
+[PWR] st=0 -> trap -- ':' PWR
+[SYS] st=0 -> trap -- ':' SYS
+[0] st=0 -> trap -- ':' EXIT
+[1] st=0 -> trap -- ':' HUP
+[2] st=0 -> trap -- ':' INT
+[3] st=0 -> trap -- ':' QUIT
+[4] st=0 -> trap -- ':' ILL
+[5] st=0 -> trap -- ':' TRAP
+[6] st=0 -> trap -- ':' ABRT
+[7] st=0 -> trap -- ':' BUS
+[8] st=0 -> trap -- ':' FPE
+[9] st=0 -> trap -- ':' KILL
+[10] st=0 -> trap -- ':' USR1
+[11] st=0 -> trap -- ':' SEGV
+[12] st=0 -> trap -- ':' USR2
+[13] st=0 -> trap -- ':' PIPE
+[14] st=0 -> trap -- ':' ALRM
+[15] st=0 -> trap -- ':' TERM
+[16] st=0 -> trap -- ':' 16
+[17] st=0 -> trap -- ':' CHLD
+[18] st=0 -> trap -- ':' CONT
+[19] st=0 -> trap -- ':' STOP
+[20] st=0 -> trap -- ':' TSTP
+[21] st=0 -> trap -- ':' TTIN
+[22] st=0 -> trap -- ':' TTOU
+[23] st=0 -> trap -- ':' URG
+[24] st=0 -> trap -- ':' XCPU
+[25] st=0 -> trap -- ':' XFSZ
+[26] st=0 -> trap -- ':' VTALRM
+[27] st=0 -> trap -- ':' PROF
+[28] st=0 -> trap -- ':' WINCH
+[29] st=0 -> trap -- ':' IO
+[30] st=0 -> trap -- ':' PWR
+[31] st=0 -> trap -- ':' SYS
+[32] st=0 -> trap -- ':' 32
+[33] st=0 -> trap -- ':' 33
+[34] st=0 -> trap -- ':' RTMIN
+[63] st=0 -> trap -- ':' RTMAX-1
+[64] st=0 -> trap -- ':' RTMAX
+[65] st=1 -> 
+--- order
+trap -- 'd' EXIT
+trap -- 'b' HUP
+trap -- '' INT
+trap -- 'c' USR1
+trap -- 'f' ALRM
+trap -- 'a' TERM
+trap -- 'e' WINCH
+--- reset forms
+st=0
+st=0
+trap: -: bad trap
+trap -- 'x' USR1
+st=0
+st=0
+st=0
+../p2b.sh: 15: trap: Illegal option -x
+exit=2

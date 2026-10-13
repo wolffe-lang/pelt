@@ -1,0 +1,66 @@
+--- -i via stdin, TERM default at start
+trapped-i
+after-i
+--- -i via stdin, TERM, USR1 ignored at start
+after-i
+after-u1
+trap -- 'echo u1' USR1
+trap -- 'echo trapped-i' TERM
+--- -i, INT ignored at start
+after-int
+after-reset
+--- kill misc
+twice=0
+Terminated
+w=143
+reaped=1
+l0=2
+TERM
+l--=0
+lx=2
+dd-none=2
+s-nopid=2
+9-nopid=2
+l-s=2
+Terminated
+sTERM=143
+--- kill self default in script: exit status by parent
+Terminated
+st=143
+st=130
+yes
+st=0
+zero-ok
+s0-ok
+--- trap action sees $? and exit in action
+in=0
+st=7
+in=0
+after=0
+a
+c
+b
+d
+once
+mid
+no
+--- EXIT trap on signal death / trap exit
+Terminated
+st=143
+bye
+st=3
+--- in function, loop
+1
+t
+end
+t
+st=5
+--- kill pid lists + bad
+st=2
+Terminated
+w=143
+st=2
+Terminated
+w=143
+end
+exit=0

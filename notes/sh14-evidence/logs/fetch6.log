@@ -1,0 +1,38 @@
+wolf-0.2.29-aarch64-apple-darwin.tar.gz: OK
+wolf-0.2.29-aarch64-unknown-linux-gnu.tar.gz: OK
+wolf-0.2.29-x86_64-unknown-linux-gnu.tar.gz: OK
+lupin-0.1.52-aarch64-apple-darwin.tar.gz: OK
+lupin-0.1.52-aarch64-unknown-linux-gnu.tar.gz: OK
+lupin-0.1.52-x86_64-unknown-linux-gnu.tar.gz: OK
+wolf-0.2.29-aarch64-apple-darwin.tar.gz: OK
+wolf-0.2.29-aarch64-unknown-linux-gnu.tar.gz: OK
+wolf-0.2.29-x86_64-unknown-linux-gnu.tar.gz: OK
+lupin-0.1.52-aarch64-apple-darwin.tar.gz: OK
+lupin-0.1.52-aarch64-unknown-linux-gnu.tar.gz: OK
+lupin-0.1.52-x86_64-unknown-linux-gnu.tar.gz: OK
+-rw-r--r-- 1 mfwolffe mfwolffe  2631556 Oct 13 00:11 lupin-0.1.52-aarch64-apple-darwin.tar.gz
+-rw-r--r-- 1 mfwolffe mfwolffe  2784026 Oct 13 00:11 lupin-0.1.52-aarch64-unknown-linux-gnu.tar.gz
+-rw-r--r-- 1 mfwolffe mfwolffe  2943200 Oct 13 00:11 lupin-0.1.52-x86_64-unknown-linux-gnu.tar.gz
+-rw-r--r-- 1 mfwolffe mfwolffe 18536271 Oct 13 00:10 wolf-0.2.29-aarch64-apple-darwin.tar.gz
+-rw-r--r-- 1 mfwolffe mfwolffe 74761726 Oct 13 00:10 wolf-0.2.29-aarch64-unknown-linux-gnu.tar.gz
+-rw-r--r-- 1 mfwolffe mfwolffe 78902948 Oct 13 00:11 wolf-0.2.29-x86_64-unknown-linux-gnu.tar.gz
+x
+x/wolf-0.2.29-x86_64-unknown-linux-gnu
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/LICENSE-EXCEPTION
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/LICENSE
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf-cimport-worker
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf.fish
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/libwolf_rt.a
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/README.md
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/std
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf.1
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/_wolf
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/libwolf_rt_none.a
+x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf.bash
+x/lupin-0.1.52-x86_64-unknown-linux-gnu
+x/lupin-0.1.52-x86_64-unknown-linux-gnu/lupin
+x/lupin-0.1.52-x86_64-unknown-linux-gnu/LICENSE
+x/lupin-0.1.52-x86_64-unknown-linux-gnu/CHANGELOG.md
+x/lupin-0.1.52-x86_64-unknown-linux-gnu/README.md
+fail=0

@@ -1,0 +1,43 @@
+== /home/mfwolffe/lanes/sh14/arch/x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf conform-run --json --checked main.lu --std-root /home/mfwolffe/lanes/sh14/std/std
+verdict: exit(0)
+pid>1 true ppid>0 true differ true
+HUP=1 TERM=15 QUIT=3 USR2=12 INT=2 TSTP=20 TTIN=21 TTOU=22 CHLD=17 USR1=10 ALRM=14 PIPE=13 ABRT=6 CONT=18 WINCH=28 URG=23 VTALRM=26 PROF=27 XCPU=24 XFSZ=25 KILL=9 STOP=19 SEGV=11 BUS=7 FPE=8 ILL=4 TRAP=5 SYS=31 
+number(0): invalid
+ignored-at-start nonneg true bad 0
+send(0,TERM): invalid
+send(nosuch,0): not_found
+send(1,0): denied
+misses 0 of 3400
+USR1 ignored now true
+alive
+rc=0
+== /home/mfwolffe/lanes/sh14/arch/x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf conform-run --json --native main.lu --std-root /home/mfwolffe/lanes/sh14/std/std
+verdict: exit(0)
+pid>1 true ppid>0 true differ true
+HUP=1 TERM=15 QUIT=3 USR2=12 INT=2 TSTP=20 TTIN=21 TTOU=22 CHLD=17 USR1=10 ALRM=14 PIPE=13 ABRT=6 CONT=18 WINCH=28 URG=23 VTALRM=26 PROF=27 XCPU=24 XFSZ=25 KILL=9 STOP=19 SEGV=11 BUS=7 FPE=8 ILL=4 TRAP=5 SYS=31 
+number(0): invalid
+ignored-at-start nonneg true bad 0
+send(0,TERM): invalid
+send(nosuch,0): not_found
+send(1,0): denied
+misses 0 of 3400
+USR1 ignored now true
+alive
+rc=0
+== /home/mfwolffe/lanes/sh14/arch/x/wolf-0.2.29-x86_64-unknown-linux-gnu/wolf conform-run --json --release main.lu --std-root /home/mfwolffe/lanes/sh14/std/std
+verdict: exit(0)
+pid>1 true ppid>0 true differ true
+HUP=1 TERM=15 QUIT=3 USR2=12 INT=2 TSTP=20 TTIN=21 TTOU=22 CHLD=17 USR1=10 ALRM=14 PIPE=13 ABRT=6 CONT=18 WINCH=28 URG=23 VTALRM=26 PROF=27 XCPU=24 XFSZ=25 KILL=9 STOP=19 SEGV=11 BUS=7 FPE=8 ILL=4 TRAP=5 SYS=31 
+number(0): invalid
+ignored-at-start nonneg true bad 0
+send(0,TERM): invalid
+send(nosuch,0): not_found
+send(1,0): denied
+misses 0 of 3400
+USR1 ignored now true
+alive
+rc=0
+== lupin run --json main.lu (LUPIN_STD=/home/mfwolffe/lanes/sh14/std/std)
+{"protocol":1,"impl":"lupin","impl_version":"0.1.52","commit":"025428b","file":"main.lu","phase_reached":"resolve","seeded":false,"diagnostics":[],"warnings":[],"verdict":"unsupported","stdout_sha256":null,"stdout_inline":null,"x-unsupported":"`os_signal_ignored` reads a signal's disposition: this machine admits no `unsafe` and std has no `sigaction` ([os.signal.ignored], [os.term.note] R8)"}
+
+rc=0

@@ -1,0 +1,117 @@
+use std.env
+use std.signal
+
+fn name(k: int) -> str {
+    match k {
+        0 => "HUP",
+        1 => "TERM",
+        2 => "QUIT",
+        3 => "USR2",
+        4 => "INT",
+        5 => "TSTP",
+        6 => "TTIN",
+        7 => "TTOU",
+        8 => "CHLD",
+        9 => "USR1",
+        10 => "ALRM",
+        11 => "PIPE",
+        12 => "ABRT",
+        13 => "CONT",
+        14 => "WINCH",
+        15 => "URG",
+        16 => "VTALRM",
+        17 => "PROF",
+        18 => "XCPU",
+        19 => "XFSZ",
+        20 => "KILL",
+        21 => "STOP",
+        22 => "SEGV",
+        23 => "BUS",
+        24 => "FPE",
+        25 => "ILL",
+        26 => "TRAP",
+        27 => "SYS",
+        _ => "",
+    }
+}
+
+fn meaning(k: int) -> int {
+    match k {
+        0 => signal.reload(),
+        1 => signal.terminate(),
+        2 => signal.quit(),
+        3 => signal.upgrade(),
+        4 => signal.interrupt(),
+        5 => signal.suspend(),
+        6 => signal.bg_read(),
+        7 => signal.bg_write(),
+        8 => signal.child(),
+        9 => signal.user(),
+        10 => signal.alarm(),
+        11 => signal.broken_pipe(),
+        12 => signal.abort(),
+        13 => signal.continued(),
+        14 => signal.resize(),
+        15 => signal.urgent(),
+        16 => signal.virtual_alarm(),
+        17 => signal.profile_alarm(),
+        18 => signal.cpu_limit(),
+        19 => signal.file_limit(),
+        20 => signal.kill(),
+        21 => signal.stop(),
+        22 => signal.segment_fault(),
+        23 => signal.bus_error(),
+        24 => signal.arithmetic(),
+        25 => signal.illegal(),
+        26 => signal.breakpoint(),
+        27 => signal.bad_syscall(),
+        _ => 0,
+    }
+}
+
+fn main() -> int {
+    let me = env.pid()
+    let pp = env.ppid() else |_| 0 - 1
+    print("pid>1 {me > 1} ppid>0 {pp > 0} differ {me != pp}")
+    var k = 0
+    var line = ""
+    while k < 28 {
+        let n = signal.number(meaning(k)) else |_| 0 - 1
+        line = "{line}{name(k)}={n} "
+        k += 1
+    }
+    print(line)
+    let bad = signal.number(0) else |e| { print("number(0): {e}"); 0 }
+    let ig = signal.ignored() else |e| { print("ignored: {e}"); 0 - 1 }
+    print("ignored-at-start nonneg {ig >= 0} bad {bad}")
+    signal.send(me, 0) else |e| { print("send(me,0): {e}") }
+    signal.send(0, signal.terminate()) else |e| { print("send(0,TERM): {e}") }
+    signal.send(999999999, 0) else |e| { print("send(nosuch,0): {e}") }
+    signal.send(1, 0) else |e| { print("send(1,0): {e}") }
+    // every listenable meaning: listen, send to self, poll at once
+    var misses = 0
+    var round = 0
+    while round < 200 {
+        k = 0
+        while k < 20 {
+            let m = meaning(k)
+            if k != 5 && k != 6 && k != 7 {
+                signal.listen(m) else |e| { print("listen {name(k)}: {e}") }
+                signal.send(me, m) else |e| { print("send {name(k)}: {e}") }
+                let got = signal.poll(m) else |_| 0
+                if got != m {
+                    misses += 1
+                }
+            }
+            k += 1
+        }
+        round += 1
+    }
+    print("misses {misses} of {200 * 17}")
+    signal.ignore(signal.user()) else |e| { print("ignore: {e}") }
+    let ig2 = signal.ignored() else |_| 0
+    print("USR1 ignored now {ig2 & signal.user() != 0}")
+    signal.send(me, signal.user()) else |e| { print("send: {e}") }
+    print("alive")
+    0
+}

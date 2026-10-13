@@ -1,0 +1,27 @@
+pid-num: ok
+sub-same
+cs-same
+pipe-same
+bg-same
+child-ppid-is-me
+ppid-sub-same
+assign st=0 PPID=changed
+unset st=0 []
+0
+0
+0
+1
+env PPID honoured: no
+st=127
+dollar-set N
+--- status after signals
+Terminated
+143 TERM
+Killed
+137 KILL
+User defined signal 1
+138 USR1
+141 PIPE
+User defined signal 2
+140 USR2
+exit=0

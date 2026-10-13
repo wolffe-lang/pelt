@@ -1,0 +1,115 @@
+got-HUP
+after-HUP st=0
+got-INT
+after-INT st=0
+got-QUIT
+after-QUIT st=0
+got-USR1
+after-USR1 st=0
+got-USR2
+after-USR2 st=0
+got-PIPE
+after-PIPE st=0
+got-ALRM
+after-ALRM st=0
+got-TERM
+after-TERM st=0
+got-ABRT
+after-ABRT st=0
+got-CONT
+after-CONT st=0
+got-WINCH
+after-WINCH st=0
+got-URG
+after-URG st=0
+got-VTALRM
+after-VTALRM st=0
+got-PROF
+after-PROF st=0
+got-XCPU
+after-XCPU st=0
+got-XFSZ
+after-XFSZ st=0
+got-CHLD
+after-CHLD st=0
+got-TSTP
+after-TSTP st=0
+got-TTIN
+after-TTIN st=0
+got-TTOU
+after-TTOU st=0
+got-ILL
+after-ILL st=0
+got-TRAP
+after-TRAP st=0
+got-BUS
+after-BUS st=0
+got-FPE
+after-FPE st=0
+got-SEGV
+after-SEGV st=0
+got-SYS
+after-SYS st=0
+got-IO
+after-IO st=0
+got-PWR
+after-PWR st=0
+notrap-STKFLT
+--- ignore then send
+ign-HUP alive
+ign-INT alive
+ign-QUIT alive
+ign-USR1 alive
+ign-USR2 alive
+ign-PIPE alive
+ign-ALRM alive
+ign-TERM alive
+ign-ABRT alive
+ign-WINCH alive
+ign-URG alive
+ign-VTALRM alive
+ign-PROF alive
+ign-XCPU alive
+ign-XFSZ alive
+ign-TSTP alive
+ign-TTIN alive
+ign-TTOU alive
+--- default deaths (child shells)
+HUP -> 129
+INT -> 130
+QUIT -> 131
+USR1 -> 138
+USR2 -> 140
+PIPE -> 141
+ALRM -> 142
+TERM -> 143
+ABRT -> 134
+VTALRM -> 154
+PROF -> 155
+XCPU -> 152
+XFSZ -> 153
+KILL -> 137
+ILL -> 132
+TRAP -> 133
+BUS -> 135
+FPE -> 136
+SEGV -> 139
+SYS -> 159
+--- defaults that do nothing
+survived-CONT
+CONT -> 0
+survived-WINCH
+WINCH -> 0
+survived-URG
+URG -> 0
+survived-CHLD
+CHLD -> 0
+--- order of two pending
+H
+U1
+U2
+A
+T
+W
+done
+exit=0
