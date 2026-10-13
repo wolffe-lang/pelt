@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """exec-witness — does `exec cmd` replace the shell, measured from outside?
 
-The differential corpus can only see what a script prints, and `$$` is
-not available on every host (wolf-lang#141). This asks the host
-instead. For SHELL:
+The differential corpus can only see what a script prints (since sh14
+`$$` is the process id on every host, and `exec/exec_pid` compares it
+across an `exec`; a shell that ran the program as a child and handed
+its own id on would still pass that). This asks the host instead. For
+SHELL:
 
   pid     SHELL -c 'exec sleep 30' is started; the process with THAT pid
           must become `sleep` (`ps -o comm=`), and no child of it may
