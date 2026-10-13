@@ -1,0 +1,1003 @@
+difftest: pelt = /home/mfwolffe/lanes/sh14/head/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+PEND-fail alias/c_after_reserved (waits on alias)
+PEND-fail alias/c_alias_missing (waits on alias)
+PEND-fail alias/c_alias_names (waits on alias)
+PEND-fail alias/c_alias_print (waits on alias)
+PEND-fail alias/c_basic (waits on alias)
+PEND-fail alias/c_no_self_recursion (waits on alias)
+PEND-fail alias/c_not_inherited (waits on alias)
+PEND-fail alias/c_parse_time (waits on alias)
+PEND-fail alias/c_position (waits on alias)
+PEND-fail alias/c_quoted_not (waits on alias)
+PEND-fail alias/c_subshell (waits on alias)
+PEND-fail alias/c_takes_effect_next (waits on alias)
+PEND-fail alias/c_trailing_blank (waits on alias)
+PEND-fail alias/c_unalias (waits on alias)
+PEND-fail alias/c_value_tokens (waits on alias)
+ok   arith/assign_ops
+ok   arith/assign_var
+ok   arith/basic
+ok   arith/c_assign
+ok   arith/c_constants
+ok   arith/c_expand_first
+PEND-fail arith/c_incr_optional (waits on arith-increment)
+ok   arith/c_invalid
+ok   arith/c_long
+ok   arith/c_operators
+ok   arith/c_result_split
+ok   arith/c_value_not_constant
+ok   arith/c_variable_value
+ok   arith/compare
+ok   arith/divzero
+ok   arith/hex_octal
+ok   arith/illegal_value
+ok   arith/logical
+ok   arith/negative_div
+ok   arith/nested
+ok   arith/overflow
+ok   arith/precedence
+ok   arith/shifts_bits
+ok   arith/short_circuit
+ok   arith/spaces_newlines
+ok   arith/syntax_error
+ok   arith/ternary
+ok   arith/unary
+ok   arith/variables
+ok   builtin/bracket
+ok   builtin/break_n
+ok   builtin/break_outside
+ok   builtin/c_break
+ok   builtin/c_break_bad
+ok   builtin/c_break_lexical
+ok   builtin/c_colon
+ok   builtin/c_continue
+ok   builtin/c_dot_current_env
+ok   builtin/c_dot_missing
+ok   builtin/c_dot_path
+ok   builtin/c_dot_positional
+ok   builtin/c_dot_return
+ok   builtin/c_dot_status
+ok   builtin/c_dot_syntax_error
+ok   builtin/c_eval_empty
+ok   builtin/c_eval_flow
+ok   builtin/c_eval_join
+ok   builtin/c_eval_status
+ok   builtin/c_exec_dashdash
+ok   builtin/c_exec_fails
+ok   builtin/c_exec_redirects
+ok   builtin/c_exec_replaces
+ok   builtin/c_exec_subshell
+ok   builtin/c_exit_everywhere
+PEND-fail builtin/c_exit_in_trap_status (waits on exit-in-exit-trap)
+ok   builtin/c_exit_n
+ok   builtin/c_exit_signal_status
+ok   builtin/c_exit_trap
+ok   builtin/c_export
+PEND-fail builtin/c_export_invalid (waits on builtin-dashdash)
+ok   builtin/c_export_p
+ok   builtin/c_export_readonly
+ok   builtin/c_readonly
+PEND-fail builtin/c_readonly_everywhere (waits on readonly-read-getopts)
+PEND-fail builtin/c_readonly_p (waits on readonly-p-unset)
+ok   builtin/c_regular_error_continues
+ok   builtin/c_return
+ok   builtin/c_return_in_trap
+PEND-fail builtin/c_s_dot_special_file (waits on fork)
+ok   builtin/c_set_lists
+ok   builtin/c_set_positional
+ok   builtin/c_shift
+ok   builtin/c_special_diag_redirect
+PEND-fail builtin/c_special_error_command (waits on command-special)
+ok   builtin/c_special_error_exits
+ok   builtin/c_special_first
+ok   builtin/c_times_format
+ok   builtin/c_times_real
+ok   builtin/c_unset_f
+ok   builtin/c_unset_forms
+ok   builtin/c_unset_shell_vars
+ok   builtin/cd
+ok   builtin/colon_true_false
+ok   builtin/command_bypass
+ok   builtin/command_v
+ok   builtin/continue_n
+ok   builtin/dot
+ok   builtin/dot_fifo_program
+ok   builtin/echo_escapes
+ok   builtin/echo_n
+ok   builtin/eval
+ok   builtin/eval_syntax_error
+ok   builtin/exec
+ok   builtin/exit_code
+ok   builtin/exit_default
+ok   builtin/exit_in_function
+ok   builtin/export_p
+ok   builtin/getopts
+ok   builtin/getopts_bad
+ok   builtin/local
+ok   builtin/printf_b
+ok   builtin/printf_bad_number
+ok   builtin/printf_char_value
+ok   builtin/printf_escapes
+ok   builtin/printf_formats
+ok   builtin/printf_reuse
+ok   builtin/printf_unsigned
+ok   builtin/printf_width_star
+ok   builtin/printf_zero_pad
+ok   builtin/pwd
+ok   builtin/read
+ok   builtin/read_ifs
+ok   builtin/read_raw
+ok   builtin/readonly_error
+ok   builtin/readonly_p
+ok   builtin/return_status
+ok   builtin/return_top
+ok   builtin/set_positional
+ok   builtin/shift
+ok   builtin/shift_error
+ok   builtin/test_errors
+ok   builtin/test_files
+ok   builtin/test_integers
+ok   builtin/test_logic
+ok   builtin/test_string_order
+ok   builtin/test_strings
+ok   builtin/times
+ok   builtin/trap_exit
+ok   builtin/trap_exit_status
+ok   builtin/trap_in_exit
+ok   builtin/trap_print
+ok   builtin/trap_reset
+ok   builtin/unset
+ok   builtin/unset_readonly
+ok   cd/c_canonical
+ok   cd/c_cdpath_forms
+PEND-fail cd/c_dash_e (waits on cd-e)
+ok   cd/c_failures
+ok   cd/c_home_forms
+ok   cd/c_logical_physical
+ok   cd/c_minus
+PEND-fail cd/c_pwd_from_env (waits on pwd-from-env)
+ok   cd/c_pwd_oldpwd
+ok   cd/cd_subshell
+ok   cd/cdpath
+ok   cd/cdpath_prints
+ok   cd/child_sees_it
+ok   cd/dotdot
+ok   cd/fail
+ok   cd/home
+ok   cd/minus
+ok   cd/oldpwd
+ok   cd/relative_file
+ok   cd/subshell_restores
+ok   cd/symlink
+ok   cmdsub/backquote
+ok   cmdsub/basic
+ok   cmdsub/c_any_program
+ok   cmdsub/c_arith_ambiguity
+ok   cmdsub/c_backquote_backslash
+ok   cmdsub/c_backquote_nested
+ok   cmdsub/c_newlines
+ok   cmdsub/c_not_rescanned
+ok   cmdsub/c_split_glob
+ok   cmdsub/c_stdin_inherited
+ok   cmdsub/c_subshell_env
+ok   cmdsub/case_inside
+ok   cmdsub/empty
+ok   cmdsub/exit_inside
+ok   cmdsub/external
+ok   cmdsub/function
+ok   cmdsub/in_dquotes
+ok   cmdsub/isolation
+ok   cmdsub/nested
+ok   cmdsub/program_backquote
+ok   cmdsub/program_in_loop
+ok   cmdsub/program_large
+ok   cmdsub/program_nested
+ok   cmdsub/program_newlines
+ok   cmdsub/program_status
+ok   cmdsub/program_stderr
+ok   cmdsub/status
+ok   cmdsub/trailing_newlines
+ok   command/c_big_v
+ok   command/c_bypass_function
+ok   command/c_declaration
+PEND-fail command/c_p (waits on command-p)
+ok   command/c_special_properties
+ok   command/c_status
+PEND-fail command/c_v (waits on alias)
+ok   control/and_or
+ok   control/async_list
+ok   control/brace_group
+ok   control/c_and_lazy
+ok   control/c_andor_assoc
+ok   control/c_brace_current
+ok   control/c_case_fallthrough_chain
+ok   control/c_case_fallthrough_last
+ok   control/c_case_first_match
+ok   control/c_case_pattern_quoting
+ok   control/c_case_status_forms
+ok   control/c_case_syntax
+ok   control/c_case_word
+ok   control/c_compound_redirect
+ok   control/c_for_forms
+ok   control/c_for_status
+ok   control/c_for_words
+ok   control/c_group_status
+ok   control/c_if_chain
+ok   control/c_if_status_none
+ok   control/c_if_status_visible
+ok   control/c_or_lazy
+ok   control/c_separators
+ok   control/c_subshell_isolation
+ok   control/c_until_status
+ok   control/c_while_status
+ok   control/case_basic
+ok   control/case_fallthrough
+ok   control/case_multi
+ok   control/case_quoted_pattern
+ok   control/case_status
+ok   control/for_empty
+ok   control/for_in
+ok   control/for_positional
+ok   control/for_var_after
+ok   control/if_elif_else
+ok   control/if_status
+ok   control/loop_status
+ok   control/nested_loops
+ok   control/not
+ok   control/pipeline
+ok   control/subshell
+ok   control/until
+ok   control/while
+ok   control/while_break_value
+ok   echo/c_echo
+ok   echo/c_true_false
+ok   env/c_child_cannot_change
+ok   env/c_env_not_read
+ok   env/c_exit_in_subshell_forms
+ok   env/c_exported_only
+ok   env/c_ifs_reset
+ok   env/c_init_exported
+ok   env/c_invalid_names
+ok   env/c_ppid
+PEND-fail env/c_subshell_concurrent (waits on fork)
+ok   env/c_subshell_cwd_fds
+ok   env/c_subshell_duplicate
+ok   env/c_subshell_forms
+ok   env/c_utility_environment
+ok   env/empty
+ok   env/exact
+ok   env/exec_subshell_exact
+ok   env/export_no_value
+ok   env/function_local_unset
+ok   env/never_exported
+ok   env/only_pwd
+ok   env/ppid_variable
+ok   env/reexport
+ok   env/subshell_export
+ok   env/subshell_unset
+ok   env/temp_assign_back
+ok   env/temp_assign_gone
+ok   env/unset_exported
+ok   env/unset_in_background
+ok   env/unset_then_cmdsub
+ok   env/unset_var
+ok   exec/argv0
+ok   exec/assign_exported_only
+ok   exec/assign_reaches
+ok   exec/cmdsub
+ok   exec/command_exec
+ok   exec/directory
+ok   exec/exec_pid
+ok   exec/exit_trap_when_it_fails
+ok   exec/fd3_inherited
+ok   exec/fd_closed
+ok   exec/flush_first
+ok   exec/function
+ok   exec/in_brace_redirect
+ok   exec/no_exit_trap
+ok   exec/not_executable
+ok   exec/not_found
+ok   exec/not_found_bare
+ok   exec/path_assign_search
+ok   exec/pipeline_stage
+ok   exec/redirect_applied
+ok   exec/redirect_fails
+ok   exec/redirect_fd3
+ok   exec/script_no_shebang
+ok   exec/status
+ok   exec/subshell
+ok   exec/subshell_not_found
+ok   fc/c_noninteractive
+ok   func/args
+ok   func/basic
+ok   func/c_bodies
+ok   func/c_call_status
+ok   func/c_expanded_at_call
+ok   func/c_namespaces
+ok   func/c_positional_scope
+ok   func/c_redefine_self
+ok   func/c_redirect_on_definition
+ok   func/c_return_resumes
+ok   func/compound_body
+ok   func/global_assign
+ok   func/in_cmdsub
+ok   func/name_shadows_builtin
+ok   func/positional_restore
+ok   func/recursion
+ok   func/redefine
+ok   func/return_in_loop
+ok   func/status_of_def
+ok   func/temp_assign
+ok   func/unset_f
+ok   getopts/c_basic
+ok   getopts/c_explicit_args
+ok   getopts/c_grouping
+ok   getopts/c_in_function
+ok   getopts/c_missing_arg
+ok   getopts/c_optind
+ok   getopts/c_unknown
+ok   glob/bracket
+ok   glob/c_backslash_from_expansion
+ok   glob/c_bracket
+ok   glob/c_classes
+ok   glob/c_components
+ok   glob/c_equiv_collating
+ok   glob/c_from_expansion
+ok   glob/c_leading_period
+ok   glob/c_lone_bracket
+ok   glob/c_mixed_quoting
+ok   glob/c_no_file_rules_in_case
+ok   glob/c_question
+ok   glob/c_quoted_specials
+ok   glob/c_s_bracket_slash_case
+ok   glob/c_slash_explicit
+ok   glob/c_sorted_nomatch
+ok   glob/c_star
+ok   glob/c_unreadable
+ok   glob/class
+ok   glob/dirs_only
+ok   glob/edge_a_close
+ok   glob/edge_backslash
+ok   glob/edge_class
+ok   glob/edge_empty
+ok   glob/edge_lone_close
+ok   glob/edge_lone_open
+ok   glob/edge_negate
+ok   glob/edge_open_a
+ok   glob/edge_quoted
+ok   glob/edge_slash
+ok   glob/edge_star_open
+ok   glob/edge_test_cmd
+ok   glob/edge_var
+ok   glob/hidden
+ok   glob/in_for
+ok   glob/no_match
+ok   glob/noglob
+ok   glob/path
+ok   glob/question
+ok   glob/quoted
+ok   glob/sorted
+ok   glob/star
+PEND-fail hash/c_hash (waits on hash)
+ok   hash/c_stale
+ok   jobs/background
+ok   jobs/bang
+ok   jobs/c_async_andor
+ok   jobs/c_async_status
+ok   jobs/c_async_stdin
+ok   jobs/c_async_subshell
+ok   jobs/c_exit_no_wait
+ok   jobs/output
+ok   jobs/stdin_null
+ok   jobs/two
+ok   jobs/wait_all
+ok   jobs/wait_program_status
+ok   jobs/wait_subshell_status
+ok   jobs/wait_unknown
+PEND-ok   jobsctl/c_fg_bg_no_monitor (waits on job-control)
+PEND-fail jobsctl/c_jobs_script (waits on jobs)
+PEND-fail jobsctl/c_monitor_script_pgid (waits on job-control)
+ok   jobsctl/c_no_monitor_pgid
+ok   kill/builtin
+ok   kill/c_bad
+ok   kill/c_job_id
+ok   kill/c_list
+ok   kill/c_multiple
+ok   kill/c_send
+ok   kill/c_zero
+ok   kill/forms
+ok   kill/job_ids
+ok   kill/list
+ok   kill/refused
+ok   kill/self
+ok   kill/status_names
+ok   kill/targets
+ok   option/allexport
+ok   option/bad_option
+ok   option/c_allexport_forms
+ok   option/c_edit_modes
+ok   option/c_errexit_assign_cmdsub
+ok   option/c_errexit_basic
+ok   option/c_errexit_compound_status
+ok   option/c_errexit_exempt
+ok   option/c_errexit_ignored_inside
+ok   option/c_errexit_pipeline
+ok   option/c_errexit_subshell_forms
+ok   option/c_errexit_trap
+ok   option/c_h_b
+PEND-fail option/c_long_names (waits on notify-flag)
+ok   option/c_noexec
+ok   option/c_nounset_arith
+ok   option/c_nounset_forms
+PEND-fail option/c_pipefail_option (waits on pipefail)
+ok   option/c_plus_o
+PEND-fail option/c_ps4 (waits on ps4-expansion)
+ok   option/c_up_options
+PEND-fail option/c_verbose (waits on verbose)
+PEND-fail option/c_verbose_stderr (waits on verbose)
+PEND-fail option/c_xtrace_forms (waits on xtrace-assignment)
+ok   option/dollar_dash
+ok   option/dollar_dash_in_region
+ok   option/errexit
+ok   option/errexit_andor
+ok   option/errexit_function
+ok   option/errexit_if
+ok   option/errexit_not
+ok   option/errexit_subshell
+ok   option/errexit_while
+ok   option/noglob
+ok   option/nounset
+ok   option/nounset_positional
+ok   option/set_o
+ok   option/xtrace
+ok   param/alternative
+ok   param/assign
+ok   param/assign_positional_error
+ok   param/at_empty
+ok   param/at_in_word
+ok   param/at_star
+ok   param/at_star_nosplit
+ok   param/bad_substitution
+ok   param/c_alternative
+ok   param/c_assign_default
+ok   param/c_at_fields
+ok   param/c_at_in_default
+ok   param/c_at_unquoted
+ok   param/c_at_zero
+ok   param/c_bang
+ok   param/c_braces
+ok   param/c_dash_flags
+ok   param/c_default_fields
+ok   param/c_dollar_literal
+ok   param/c_error_exit
+ok   param/c_expansion_error_exits
+ok   param/c_expansion_order
+ok   param/c_hash
+ok   param/c_length
+ok   param/c_length_bytes_in_c
+ok   param/c_length_nounset
+ok   param/c_lineno
+ok   param/c_longest_name
+ok   param/c_matching_brace
+ok   param/c_no_rescan
+ok   param/c_pid_is_real
+ok   param/c_pid_subshell
+ok   param/c_positional_digits
+ok   param/c_ps_from_env
+ok   param/c_s_star_assign_ifs
+ok   param/c_set_null
+ok   param/c_special_modifiers
+ok   param/c_star_assign
+ok   param/c_star_join
+ok   param/c_status
+ok   param/c_status_assign_cmdsub
+ok   param/c_status_into_subshell
+ok   param/c_trim_expanded_pattern
+ok   param/c_trim_literal
+ok   param/c_trim_nounset
+ok   param/c_trim_prefix
+ok   param/c_trim_suffix
+ok   param/c_use_default
+ok   param/c_word_expanded
+ok   param/c_word_lazy
+ok   param/c_zero
+ok   param/concat
+ok   param/default
+ok   param/default_split
+ok   param/dollar_alone
+ok   param/error_null
+ok   param/error_unset
+ok   param/ifs_star
+ok   param/length
+ok   param/length_all
+ok   param/lineno
+ok   param/nested
+ok   param/pid
+ok   param/pid_everywhere
+ok   param/positional
+ok   param/simple
+ok   param/status
+ok   param/ten
+ok   param/trim_prefix
+ok   param/trim_quoted
+ok   param/trim_suffix
+ok   param/trim_var_pattern
+ok   param/underscore_names
+ok   param/unset_var
+ok   param/zero
+ok   parse/arith_ok
+ok   parse/bad_funcname
+ok   parse/bang_ok
+ok   parse/c_blanks
+ok   parse/c_colon_word
+ok   parse/c_comment_word
+ok   parse/c_empty_do
+ok   parse/c_empty_lists
+ok   parse/c_empty_subshell
+ok   parse/c_error_in_subshell
+ok   parse/c_exec_before_parse
+ok   parse/c_exec_before_parse_cd
+ok   parse/c_heredoc_rest_of_line
+ok   parse/c_in_third_word
+ok   parse/c_io_number
+ok   parse/c_nested_units
+ok   parse/c_nesting
+ok   parse/c_newline_continues
+ok   parse/c_no_final_newline
+ok   parse/c_only_comments
+ok   parse/c_operators_adjacent
+ok   parse/c_quotes_join
+ok   parse/c_reserved_after_reserved
+ok   parse/c_reserved_quoted
+ok   parse/c_rule1
+ok   parse/c_rule4
+ok   parse/c_rule6
+ok   parse/c_rule7
+ok   parse/c_rule8
+ok   parse/c_rule9
+ok   parse/c_syntax_error_exits
+ok   parse/c_syntax_error_late
+ok   parse/case_no_in
+ok   parse/cmdsub_nested_ok
+ok   parse/comments_ok
+ok   parse/compound_ok
+ok   parse/continuation_ok
+ok   parse/done_late
+ok   parse/empty_brace
+ok   parse/fi_unexpected
+ok   parse/for_bad_name
+ok   parse/func_simple_body
+ok   parse/heredoc_ok
+ok   parse/leading_semicolon
+ok   parse/missing_done
+ok   parse/missing_esac
+ok   parse/missing_fi
+ok   parse/missing_then
+ok   parse/newlines_ok
+ok   parse/quotes_ok
+ok   parse/redirect_no_target
+ok   parse/redirs_ok
+ok   parse/simple_ok
+ok   parse/stray_dsemi
+ok   parse/stray_paren
+ok   parse/then_empty
+ok   parse/trailing_andand
+ok   parse/trailing_pipe
+ok   parse/two_heredocs_ok
+ok   parse/unterminated_backquote
+ok   parse/unterminated_cmdsub
+ok   parse/unterminated_dquote
+ok   parse/unterminated_squote
+PEND-fail pending/subshell_signal (waits on fork)
+PEND-fail pending/wait_interrupted (waits on interruptible wait)
+ok   pipe/builtin_to_program
+ok   pipe/c_bang
+PEND-fail pipe/c_concurrent_stages (waits on fork)
+ok   pipe/c_incremental_reader
+PEND-fail pipe/c_pipefail (waits on pipefail)
+ok   pipe/c_pipefail_at_start
+ok   pipe/c_redirect_overrides
+PEND-fail pipe/c_shell_producer_ends (waits on fork)
+ok   pipe/c_stage_environment
+ok   pipe/c_status_last
+ok   pipe/cd_in_stage
+ok   pipe/compound_stage
+ok   pipe/exit_in_stage
+ok   pipe/function_stage
+ok   pipe/large_in_process
+ok   pipe/many_stages
+ok   pipe/negation
+ok   pipe/pipeline_status
+ok   pipe/program_to_builtin
+ok   pipe/set_e
+ok   pipe/sigpipe_producer
+ok   pipe/stage_is_subshell
+ok   pipe/status_last
+ok   pipe/stderr_through
+ok   pipe/stdin_through
+ok   pipe/three
+ok   printf/c_b
+PEND-fail printf/c_bad_operand (waits on printf-partial-number)
+ok   printf/c_basic
+PEND-fail printf/c_floats (waits on printf-float)
+ok   printf/c_format_escapes
+ok   printf/c_integers
+PEND-fail printf/c_numbered (waits on printf-numbered)
+ok   printf/c_quote_value
+ok   printf/c_strings
+PEND-fail printf/c_usage (waits on builtin-dashdash)
+ok   pwd/c_pwd
+PEND-fail pwd/c_pwd_bad (waits on pwd-bad-option)
+ok   quote/backslash
+ok   quote/c_backslash_each
+ok   quote/c_continuation_joins
+ok   quote/c_dq_backquote
+ok   quote/c_dq_backslash
+ok   quote/c_dq_cmdsub_inner_quotes
+ok   quote/c_dq_default_word
+ok   quote/c_dq_dollar
+ok   quote/c_dq_no_dollar_single
+ok   quote/c_dq_result_literal
+ok   quote/c_dq_trim_pattern
+PEND-fail quote/c_ds_control (waits on dollar-single-quote)
+PEND-fail quote/c_ds_embedded (waits on dollar-single-quote)
+PEND-fail quote/c_ds_escapes (waits on dollar-single-quote)
+PEND-fail quote/c_ds_hex (waits on dollar-single-quote)
+PEND-fail quote/c_ds_octal (waits on dollar-single-quote)
+PEND-fail quote/c_ds_plain (waits on dollar-single-quote)
+PEND-fail quote/c_ds_quoted (waits on dollar-single-quote)
+ok   quote/c_removal
+ok   quote/c_removal_not_expanded
+PEND-fail quote/c_s_high_bytes (waits on non-utf8-bytes)
+ok   quote/c_single_all
+ok   quote/continuation
+ok   quote/dollar_single
+ok   quote/double
+ok   quote/dq_in_param
+ok   quote/empty_args
+ok   quote/mixed
+ok   quote/newline_inside
+ok   quote/single
+ok   quote/special_chars
+ok   quote/tab
+ok   quote/utf8_bytes
+ok   read/c_backslash
+PEND-fail read/c_bad_target (waits on readonly-read-getopts)
+PEND-fail read/c_delim (waits on read-d)
+ok   read/c_eof
+PEND-fail read/c_fields (waits on read-trailing-delimiter)
+ok   read/c_no_expansion
+PEND-fail read/c_no_var (waits on read-no-var)
+ok   read/c_one_line
+ok   redir/append
+ok   redir/assign_fail
+ok   redir/bad_fd
+ok   redir/c_anywhere
+ok   redir/c_append
+ok   redir/c_dup_bad
+ok   redir/c_dup_expanded
+ok   redir/c_dup_in
+ok   redir/c_dup_out
+ok   redir/c_fd_range
+ok   redir/c_heredoc_backslash
+ok   redir/c_heredoc_delimiter
+ok   redir/c_heredoc_end_of_string
+ok   redir/c_heredoc_expansions
+ok   redir/c_heredoc_fd
+ok   redir/c_heredoc_in_cmdsub
+ok   redir/c_heredoc_order
+ok   redir/c_heredoc_quoted_forms
+ok   redir/c_heredoc_skipped
+ok   redir/c_heredoc_tabs
+ok   redir/c_in_fd
+ok   redir/c_noclobber
+ok   redir/c_number_forms
+ok   redir/c_open_fails
+ok   redir/c_order
+ok   redir/c_other_redirect_error
+ok   redir/c_out_trunc
+ok   redir/c_readwrite
+PEND-fail redir/c_s_cmdsub_fd_pipeline (waits on fork)
+ok   redir/c_special_redirect_error
+ok   redir/c_target_expansions
+ok   redir/c_target_no_glob
+ok   redir/c_target_not_split
+ok   redir/child_inherits_fd
+ok   redir/close_out
+ok   redir/compound_out
+ok   redir/devnull
+ok   redir/dup_err_to_out
+ok   redir/exec_command
+ok   redir/exec_fd
+ok   redir/exec_in_group
+ok   redir/exec_stdout
+ok   redir/fail_status
+ok   redir/func_body
+ok   redir/heredoc
+ok   redir/heredoc_expand
+ok   redir/heredoc_function
+ok   redir/heredoc_large
+ok   redir/heredoc_quoted
+ok   redir/heredoc_read
+ok   redir/heredoc_strip
+ok   redir/heredoc_two
+ok   redir/in_file
+ok   redir/noclobber
+ok   redir/order_matters
+ok   redir/out_trunc
+ok   redir/read_fd
+ok   redir/readwrite
+ok   redir/redir_only
+ok   redir/redirect_err
+ok   redir/redirect_out
+ok   redir/special_fail_exits
+ok   redir/target_expansion
+ok   redir/while_in
+PEND-fail sh/c_combined_options (waits on sh-option-parsing)
+ok   sh/c_command_file
+ok   sh/c_command_file_cwd
+ok   sh/c_command_file_missing
+ok   sh/c_dash_c
+ok   sh/c_dash_c_empty
+ok   sh/c_dash_c_stdin
+PEND-fail sh/c_dash_s (waits on sh-option-parsing)
+ok   sh/c_eof_status
+ok   sh/c_exit_status
+ok   sh/c_long_line
+ok   sh/c_no_read_ahead
+ok   sh/c_no_read_ahead_file
+ok   sh/c_not_interactive
+ok   sh/c_options_on_command_line
+ok   sh/c_syntax_status
+ok   signal/background_ignores_int
+ok   signal/bang_is_a_process
+ok   signal/bang_of_a_list
+ok   signal/c_async_ignores_quit
+ok   signal/c_exit_trap_env
+ok   signal/c_exit_trap_subshell
+ok   signal/c_ignored_on_entry
+ok   signal/c_inherited_ignore
+ok   signal/c_s_trap_by_number
+PEND-fail signal/c_subshell_trap_reset (waits on fork)
+ok   signal/c_trap_abrt_number
+ok   signal/c_trap_alrm
+PEND-fail signal/c_trap_cmdsub_shows_parent (waits on trap-in-cmdsub)
+ok   signal/c_trap_condition_names
+ok   signal/c_trap_dashdash
+PEND-fail signal/c_trap_ignore_pipe (waits on fork)
+ok   signal/c_trap_in_action
+ok   signal/c_trap_invalid
+PEND-fail signal/c_trap_p (waits on trap-p)
+ok   signal/c_trap_pipe
+ok   signal/c_trap_print_reinput
+ok   signal/c_trap_reset_forms
+ok   signal/c_trap_usr1_self
+ok   signal/c_trap_winch_cont
+PEND-fail signal/c_wait_interrupted_term (waits on interruptible wait)
+ok   signal/child_bg_unwaited
+ok   signal/child_bg_wait
+ok   signal/child_hup
+ok   signal/child_in_cmdsub
+ok   signal/child_in_function
+ok   signal/child_in_pipeline
+ok   signal/child_in_subshell
+ok   signal/child_int
+ok   signal/child_kill
+ok   signal/child_last_in_pipeline
+ok   signal/child_term
+ok   signal/death_runs_no_exit_trap
+ok   signal/ignored_at_start
+ok   signal/trap_action_runs_program
+ok   signal/trap_action_sets_variable
+ok   signal/trap_action_status_dropped
+ok   signal/trap_bad_condition
+ok   signal/trap_break_keeps_pending
+ok   signal/trap_breaks_loop
+ok   signal/trap_caught_default_in_child
+ok   signal/trap_chld
+ok   signal/trap_deferred_to_foreground_end
+ok   signal/trap_eval
+ok   signal/trap_every
+ok   signal/trap_exec_resets
+ok   signal/trap_exit_in_action
+ok   signal/trap_exit_no_operand
+ok   signal/trap_exit_runs_exit_trap
+ok   signal/trap_hup
+ok   signal/trap_ignore
+ok   signal/trap_ignore_chld
+ok   signal/trap_ignore_every
+ok   signal/trap_ignore_inherited
+ok   signal/trap_ignore_int
+ok   signal/trap_ignore_pipe_fifo
+ok   signal/trap_ignore_usr1
+ok   signal/trap_in_cmdsub
+ok   signal/trap_in_function
+ok   signal/trap_in_loop
+ok   signal/trap_in_subshell
+ok   signal/trap_int
+ok   signal/trap_names
+ok   signal/trap_nested
+ok   signal/trap_number
+ok   signal/trap_numbers_common
+ok   signal/trap_one_operand
+ok   signal/trap_pending_order
+ok   signal/trap_print
+ok   signal/trap_print_order
+ok   signal/trap_quit
+ok   signal/trap_replaced
+ok   signal/trap_reset
+ok   signal/trap_reset_after_ignore
+ok   signal/trap_reset_number
+ok   signal/trap_send_only
+ok   signal/trap_status_kept
+ok   signal/trap_subshell_ends_restores
+ok   signal/trap_subshell_reset
+ok   signal/trap_term
+ok   signal/trap_twice_same
+ok   signal/trap_two
+ok   signal/trap_usr1
+ok   signal/trap_usr2
+ok   signal/wait_twice
+ok   signal/wait_two_jobs
+ok   simple/assign_expansion
+ok   simple/assign_only
+ok   simple/assign_order_program
+ok   simple/assign_status
+ok   simple/c_126_127
+ok   simple/c_arg0
+ok   simple/c_assign_current
+ok   simple/c_assign_error_exits
+ok   simple/c_assign_expansions
+ok   simple/c_assign_function
+ok   simple/c_assign_regular_builtin
+ok   simple/c_assign_special_persists
+ok   simple/c_assign_temp
+ok   simple/c_declaration_utility
+ok   simple/c_enoexec
+PEND-ok   simple/c_enoexec_binary (waits on enoexec)
+ok   simple/c_exit_mod_256
+ok   simple/c_name_after_empty
+ok   simple/c_not_declaration
+ok   simple/c_not_found_continues
+ok   simple/c_path_empty_component
+ok   simple/c_path_order
+ok   simple/c_path_rehash
+ok   simple/c_redirect_only
+ok   simple/c_search_order
+ok   simple/c_slash_direct
+PEND-fail simple/c_special_not_shadowed (waits on special-name-function)
+ok   simple/c_status_no_name
+ok   simple/child_stdin
+ok   simple/command_name_from_var
+ok   simple/declaration_forms
+ok   simple/empty_command
+ok   simple/external
+ok   simple/external_args
+ok   simple/external_env
+ok   simple/not_found
+ok   simple/path_search
+ok   simple/persist_special
+ok   simple/readonly_assign
+ok   simple/script_no_shebang
+ok   simple/slash_not_found
+ok   simple/temp_builtin
+ok   split/c_basic
+ok   split/c_ifs_changes
+ok   split/c_literal_parts
+ok   split/c_mixed
+ok   split/c_nonwhite
+ok   split/c_not_in_assign
+ok   split/c_null_ifs
+ok   split/c_one_field
+ok   split/c_trailing_delim
+ok   split/c_unset_ifs_read
+ok   split/c_whitespace_runs
+ok   split/c_zero_fields
+ok   split/cmdsub
+ok   split/colon
+ok   split/default
+ok   split/empty_ifs
+ok   split/empty_unquoted
+ok   split/ifs_digits
+ok   split/joined_word
+ok   split/leading_colon
+ok   split/literal_not_split
+ok   split/mixed_ifs
+ok   split/quoted
+ok   split/unset_ifs
+ok   stdin/no_prompt
+ok   stdin/program_takes_rest
+ok   stdin/read_takes_next_line
+ok   stdin/syntax_error_ends
+ok   test/c_and_or
+ok   test/c_arity_0_1
+ok   test/c_arity_2
+ok   test/c_arity_3
+ok   test/c_arity_4
+ok   test/c_file_compare
+ok   test/c_file_types
+PEND-ok   test/c_files (waits on host-dir-size)
+ok   test/c_integer_errors
+ok   test/c_integers
+PEND-fail test/c_owner (waits on uid)
+ok   test/c_permissions
+ok   test/c_s_test_access
+ok   test/c_strings
+ok   test/primaries_more
+ok   tilde/assign
+ok   tilde/c_assign_colon
+ok   tilde/c_basic
+ok   tilde/c_not_assign
+ok   tilde/c_quoted_prefix
+ok   tilde/c_quoted_result
+ok   tilde/c_redirect_case
+PEND-fail tilde/c_user_root (waits on user database)
+ok   tilde/home
+ok   tilde/middle
+ok   tilde/unset_home
+PEND-fail tilde/user (waits on user database)
+PEND-fail type/c_type (waits on type)
+PEND-fail type/c_type_path (waits on type)
+PEND-fail ulimit/c_bad (waits on ulimit)
+PEND-fail ulimit/c_enforced (waits on ulimit)
+PEND-fail ulimit/c_file_size (waits on ulimit)
+PEND-fail ulimit/c_resources (waits on ulimit)
+ok   umask/c_bad
+ok   umask/c_s_umask_set
+ok   umask/c_symbolic
+ok   umask/c_umask
+ok   umask/children
+ok   umask/options
+ok   umask/refused
+ok   umask/subshells
+ok   umask/symbolic_forms
+ok   wait/c_all
+ok   wait/c_already_ended
+ok   wait/c_job_id
+ok   wait/c_pid
+ok   wait/c_signalled
+PEND-fail wait/c_subshell (waits on fork)
+ok   wait/c_unknown
+ok   wait/job_ids
+difftest: area        pass  fail  pending (of which pass)
+difftest: alias          0     0    15 (0)
+difftest: arith         28     0     1 (0)
+difftest: builtin       99     0     6 (0)
+difftest: cd            19     0     2 (0)
+difftest: cmdsub        28     0     0 (0)
+difftest: command        5     0     2 (0)
+difftest: control       45     0     0 (0)
+difftest: echo           2     0     0 (0)
+difftest: env           29     0     1 (0)
+difftest: exec          26     0     0 (0)
+difftest: fc             1     0     0 (0)
+difftest: func          21     0     0 (0)
+difftest: getopts        7     0     0 (0)
+difftest: glob          42     0     0 (0)
+difftest: hash           1     0     1 (0)
+difftest: jobs          14     0     0 (0)
+difftest: jobsctl        1     0     3 (1)
+difftest: kill          14     0     0 (0)
+difftest: option        32     0     6 (0)
+difftest: param         75     0     0 (0)
+difftest: parse         63     0     0 (0)
+difftest: pending        0     0     2 (0)
+difftest: pipe          23     0     3 (0)
+difftest: printf         6     0     4 (0)
+difftest: pwd            1     0     1 (0)
+difftest: quote         25     0     8 (0)
+difftest: read           4     0     4 (0)
+difftest: redir         63     0     1 (0)
+difftest: sh            14     0     2 (0)
+difftest: signal        85     0     5 (0)
+difftest: simple        40     0     2 (1)
+difftest: split         24     0     0 (0)
+difftest: stdin          4     0     0 (0)
+difftest: test          13     0     2 (1)
+difftest: tilde         10     0     2 (0)
+difftest: type           0     0     2 (0)
+difftest: ulimit         0     0     4 (0)
+difftest: umask          9     0     0 (0)
+difftest: wait           7     0     1 (0)
+difftest: total        880     0    80 (3)

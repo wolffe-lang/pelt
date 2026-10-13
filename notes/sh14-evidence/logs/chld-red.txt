@@ -1,0 +1,15 @@
+tools/signal-witness --rounds 100, kasumi, the release build of e26cadd (the commit before
+1c7e2fe: no sig_start; trap '' CHLD ignored the signal), then /usr/bin/dash 0.5.13.4.
+The shell is started with SIGCHLD ignored (the witness sets it so).
+
+--- pelt before sig_start
+signal-witness: chld    FAIL exit 0, wrote 'st=1\nst=1\n'
+--- dash as the shell
+signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+--- pelt with sig_start (1c7e2fe), native and release
+signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+
+probe/chld.py (the same start, three shells, the build before the fix):
+/usr/bin/dash 0 "st=3\nSigIgn:\t0000000000000000\nc\nst=4\ntrap -- 'echo c' CHLD\n" ''
+/usr/bin/bash 0 "st=3\nSigIgn:\t0000000000010000\nst=4\ntrap -- '' SIGCHLD\n" ''
+pelt 0 "st=1\nSigIgn:\t0000000000010000\nst=1\ntrap -- 'echo c' CHLD\n" ''
