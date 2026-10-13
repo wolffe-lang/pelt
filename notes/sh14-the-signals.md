@@ -173,8 +173,9 @@ besides; the checked machine does not run pelt to a prompt (an
 Measured on kasumi (linux x86-64; dash 0.5.13.4 for the corpus, the
 census images' own dash for the scripts), at `812cafc` (the head of
 the code; what follows it is this file, the README, the plan and the
-census document), and in CI on linux x86-64, macOS arm64 and linux
-aarch64 (run 38349110222 at `812cafc`). **native** is `tools/build
+census document, and one case rewritten after the gauntlet, below),
+and in CI on linux x86-64, macOS arm64 and linux aarch64 (run
+38349110222 at `812cafc`). **native** is `tools/build
 --native` (`wolf build`), **release** `tools/build --release` (`wolf
 build --release`); "both tiers" means both.
 
@@ -219,6 +220,16 @@ build --release`); "both tiers" means both.
 - **`configure-sed` is a coin**: its third line prints a filesystem
   timestamp resolution it measures by how fast the shell runs between
   two file writes (`checking the filesystem timestamp resolution... 0.2` under dash, `0.1` under pelt in 3 of 23 census runs: trunk 1 of 8, the bare pin 1 of 7, the head 1 of 8; `scripts/sed-repeat.txt`. The same check run alone 300 times a shell (`scripts/ts.sh`, `ts-run.txt`) sees the second file newer at the first look in 34 and 35 of 300 runs under dash and in 62 and 71 (trunk), 70 (pin), 51 and 73 (head) under pelt: a shell that is slower between the two writes crosses the filesystem's clock tick more often, dash crosses it too, and the three pelts cannot be told apart. `tools/script-census` calls a script unstable only when dash disagrees with dash in the same run, which a one-in-nine coin rarely shows).
+- **`tools/syscall-census` leaves a shell behind for every case that
+  times out under it** (it stops `strace`, not the shell `strace` was
+  following): two from `builtin/c_s_dot_special_file`, which always
+  times out, and one from this lane's own
+  `signal/trap_ignore_pipe_fifo`, whose helper then waited on its FIFO
+  for ever. The three were this lane's and were ended by their pids;
+  the case was rewritten so its reader gives up by itself (`2b85644`:
+  the binaries are the same bytes as at `812cafc`, the corpus re-run
+  880/0/80 on both tiers, `logs/gauntlet-totals.txt`). The tool's leak
+  is trunk's and is not fixed here.
 - The corpus harness reset eight signals to their defaults; with every
   signal trappable and the ignored-at-start rule in, it resets all of
   them (the oracle re-checked: 0 drifted).

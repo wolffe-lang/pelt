@@ -94,3 +94,14 @@ ok   int: new prompt True, output b'st=130\n', status 0, modes restored True
 ok   hangup: status 0
 ok   kill: status -9, modes restored False (nothing can restore them)
 exit 0
+
+== after the gauntlet: 2b85644 (812cafc plus docs, notes, and one case rewritten: signal/trap_ignore_pipe_fifo)
+kasumi, the same tree at 2b85644, clean: fmt 0, build 0; the binaries are the same bytes as at 812cafc
+c77d3c0c789cf94400f40c2a2677b8c459c0d0a2b69166e28883368b3306640d  target/native/pelt
+1565b2e98f5ca646260ea239f9f195a310c67c88899bc7870029da7d4117068b  target/release/pelt
+clause-census: total                                545  450   88    2      5  83.3%
+diff-native=0 difftest: total        880     0    80 (3)
+diff-native-taskset=0 difftest: total        880     0    80 (3)
+diff-release=0 difftest: total        880     0    80 (3)
+diff-release-taskset=0 difftest: total        880     0    80 (3)
+oracle-record: 0 drifted
