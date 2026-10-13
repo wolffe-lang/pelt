@@ -248,6 +248,15 @@ fn import_env(mut sh: Sh) {
         sh.vals["PS4"] = "+ "
     }
     sh.vals["OPTIND"] = "1"
+    // the parent's process id, once, whatever the environment said
+    // (XCU 2.5.3; dash, black-box: an ordinary variable, not exported)
+    let _x = (mut sh.exported).remove("PPID") else false
+    let parent = os_ppid() else |_| 0
+    if parent > 0 {
+        sh.vals["PPID"] = "{parent}"
+    } else {
+        let _p = (mut sh.vals).remove("PPID") else ""
+    }
     let cwd = os_cwd() else ""
     sh.phys = cwd
     if cwd.len > 0 {
