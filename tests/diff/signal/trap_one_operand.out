@@ -1,0 +1,4 @@
+name=0
+trap -- 'echo x' USR2
+number=0
+exit=0

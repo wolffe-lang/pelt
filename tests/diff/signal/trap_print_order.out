@@ -1,0 +1,10 @@
+trap -- 'd' EXIT
+trap -- 'b' HUP
+trap -- '' INT
+trap -- 'i' QUIT
+trap -- 'g' ABRT
+trap -- 'h' PIPE
+trap -- 'f' ALRM
+trap -- 'a' TERM
+trap -- 'e' WINCH
+left=0

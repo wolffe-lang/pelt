@@ -1,0 +1,38 @@
+got-HUP
+after-HUP 0
+got-INT
+after-INT 0
+got-QUIT
+after-QUIT 0
+got-USR1
+after-USR1 0
+got-USR2
+after-USR2 0
+got-PIPE
+after-PIPE 0
+got-ALRM
+after-ALRM 0
+got-TERM
+after-TERM 0
+got-ABRT
+after-ABRT 0
+got-CONT
+after-CONT 0
+got-WINCH
+after-WINCH 0
+got-URG
+after-URG 0
+got-VTALRM
+after-VTALRM 0
+got-PROF
+after-PROF 0
+got-XCPU
+after-XCPU 0
+got-XFSZ
+after-XFSZ 0
+got-TSTP
+after-TSTP 0
+got-TTIN
+after-TTIN 0
+got-TTOU
+after-TTOU 0

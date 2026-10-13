@@ -1,0 +1,8 @@
+trap -- 'echo x' HUP
+trap -- 'echo x' INT
+trap -- 'echo x' QUIT
+sig-prefix=1
+unknown=1
+mixed=1
+trap -- 'echo z' EXIT
+z

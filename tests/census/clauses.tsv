@@ -217,7 +217,7 @@ id	kind	statement	cases	note
 2.9.2/6	T	The pipefail setting used is the one in effect when the pipeline starts	pipe/c_pipefail_at_start	
 2.9.2/7	T	Each command of a multi-command pipeline runs in a subshell environment (or the current one, as an extension, for some)	pipe/stage_is_subshell pipe/cd_in_stage pipe/exit_in_stage pipe/c_stage_environment	
 2.9.2/8	T	The shell waits for the last command of a foreground pipeline; stages run concurrently	pipe/sigpipe_producer pipe/large_in_process pipe/c_concurrent_stages	
-2.9.2/9	T	A reader that exits early ends a producer written in the shell itself (SIGPIPE or EPIPE)	pipe/c_shell_producer_ends	
+2.9.2/9	T	A reader that exits early ends a producer written in the shell itself (SIGPIPE or EPIPE)	pipe/c_shell_producer_ends signal/c_trap_ignore_pipe	
 2.9.2/10	T	A pipeline stage that is a compound command or function reads the previous stage as it arrives	pipe/compound_stage pipe/function_stage pipe/builtin_to_program pipe/program_to_builtin pipe/c_incremental_reader	
 2.9.3/1	T	&& and || have equal precedence and associate left	control/and_or control/c_andor_assoc	
 2.9.3/2	T	; and newline run lists in sequence; & runs the list asynchronously	control/async_list jobs/background control/c_separators	
@@ -291,7 +291,7 @@ id	kind	statement	cases	note
 2.12/2	T	Otherwise commands inherit the signal actions the shell inherited, unless trap changed them	signal/trap_ignore_inherited signal/trap_caught_default_in_child signal/c_inherited_ignore	
 2.12/3	T	A trapped signal that arrives while a foreground command runs is acted on after that command completes	signal/trap_deferred_to_foreground_end	
 2.12/4	T	A trapped signal that arrives during wait makes wait return at once with a status above 128, then the trap runs	pending/wait_interrupted signal/c_wait_interrupted_term	
-2.12/5	T	Signals for every name in signal.h can be trapped (USR1, ALRM, PIPE, CHLD, CONT, WINCH and the rest)	pending/trap_usr1 pending/trap_ignore_usr1 signal/c_trap_alrm signal/c_trap_pipe signal/c_trap_usr1_self signal/c_trap_abrt_number signal/c_trap_ignore_pipe signal/c_trap_winch_cont	
+2.12/5	T	Signals for every name in signal.h can be trapped (USR1, ALRM, PIPE, CHLD, CONT, WINCH and the rest)	signal/trap_usr1 signal/trap_ignore_usr1 signal/c_trap_alrm signal/c_trap_pipe signal/c_trap_usr1_self signal/c_trap_abrt_number signal/c_trap_winch_cont signal/trap_every signal/trap_ignore_every signal/trap_chld	
 2.13/1	T	A utility is run with the shell's open files, working directory and file creation mask	redir/child_inherits_fd exec/fd3_inherited cd/child_sees_it env/c_utility_environment	
 2.13/2	T	A utility receives the exported variables and those assigned for the command, and no others	env/exact env/never_exported env/empty env/only_pwd env/c_exported_only	
 2.13/3	T	A utility cannot change the shell's environment	env/c_child_cannot_change	

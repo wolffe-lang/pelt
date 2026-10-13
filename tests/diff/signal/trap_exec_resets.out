@@ -1,0 +1,5 @@
+ignored-in-child
+ignored-after-exec
+default-in-child
+default-after-exec
+end

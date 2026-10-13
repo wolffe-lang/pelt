@@ -9,7 +9,6 @@ makes it pass.
 
 | primitive pelt waits on | where it comes from | cases |
 |---|---|---|
-| **a meaning for every signal** — catching or ignoring `USR1`, `ALRM`, `PIPE` and the rest | wolf 0.2.27's signal surface is by meaning (`[os.signal.set]`): `HUP`, `INT`, `QUIT`, `TERM`, `USR2`, the job-control stops and `CHLD`, and no other. `trap` records and prints any condition, but one with no meaning keeps its default: the shell dies where dash runs the action (wolf-lang#679, and #423 for `PIPE`) | `pending/trap_usr1`, `pending/trap_ignore_usr1` |
 | **an interruptible wait** — `wait` cut short by a trapped signal | `os_wait_status` blocks until the child ends and nothing waits for "a child or a signal" (`[os.term.note]` leaves stop reporting and the rest to the next job-control lane): the action runs after the jobs end and `wait` answers 0, where dash runs it at once and answers 128+N (wolf-lang#680) | `pending/wait_interrupted` |
 | **fork** — a process for a subshell | none planned: pelt runs `( … )` in-process, so a signal sent to "the subshell" (`$PPID` of its child) reaches the shell itself, whose trap then runs where dash's subshell would have died | `pending/subshell_signal` |
 | **user database** — `~login` | no `getpwnam` surface in wolf 0.2.27; not filed until a lane needs it beyond this case | `tilde/user` |
@@ -54,7 +53,7 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **notify-flag** | `set -o notify` does not put `b` in `$-` | pelt (P10) | `option/c_long_names` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
-| **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13); `(echo … >fifo &)` opens the FIFO for writing inside the shell, which waits for a reader that comes only after it, so `builtin/c_s_dot_special_file` times out (its `. /dev/null` line passes since sh07, and `builtin/dot_fifo_program` reads a FIFO a program writes) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `builtin/c_s_dot_special_file`, `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell` |
+| **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13); `(echo … >fifo &)` opens the FIFO for writing inside the shell, which waits for a reader that comes only after it, so `builtin/c_s_dot_special_file` times out (its `. /dev/null` line passes since sh07, and `builtin/dot_fifo_program` reads a FIFO a program writes); and `signal/c_trap_ignore_pipe` (since sh14 `trap '' PIPE` is honoured, `signal/trap_ignore_pipe_fifo`; this case's writer is a brace group in a pipeline, which runs to its end before the reader starts, so its write meets a pipe that still has a reader) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `builtin/c_s_dot_special_file`, `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell`, `signal/c_trap_ignore_pipe` |
 | **ulimit** | `ulimit` | wolf-lang: no `getrlimit`/`setrlimit` surface (W02) | `ulimit/c_bad`, `ulimit/c_enforced`, `ulimit/c_file_size`, `ulimit/c_resources` |
 | **kill** | `kill` as a built-in: `kill -l`, exit statuses, a signal to the shell's own pid | wolf-lang#141 (a signal to any pid), then pelt | `kill/c_bad`, `kill/c_job_id`, `kill/c_list`, `kill/c_send` |
 | **job-ids** | `wait %1`, `kill %1` | pelt once `kill` is a built-in (wolf-lang#141) | `wait/c_job_id` |
@@ -64,7 +63,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
 | **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
 | **non-utf8-bytes** | a byte that is not UTF-8 (`a\377b` from a command substitution) cannot be a program's argument, since a wolf `str` is UTF-8: it reaches the program as `?`. Valid UTF-8 passes unchanged everywhere since sh07 (`quote/utf8_bytes`); this case's other lines pass | wolf-lang W06 (byte strings) | `quote/c_s_high_bytes` |
-| **signal meaning** | a trap for `USR1`, `ALRM`, `PIPE`, `ABRT`, `WINCH`, `CONT`: the shell dies or ignores where the action must run | wolf-lang#679, #423 | `signal/c_trap_abrt_number`, `signal/c_trap_alrm`, `signal/c_trap_ignore_pipe`, `signal/c_trap_pipe`, `signal/c_trap_usr1_self`, `signal/c_trap_winch_cont` |
 | **interruptible wait** | `wait` cut short by a trapped signal | wolf-lang#680 | `signal/c_wait_interrupted_term` |
 | **user database** | `~login` | wolf-lang: no `getpwnam` surface (W04) | `tilde/c_user_root` |
 <!-- census:end -->
@@ -84,6 +82,13 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 - `kill` is not a built-in (wolf can signal only a child it holds a
   handle for, wolf-lang#141), so `kill` is the host's program: it has
   no job ids (`%1`).
+
+**Cleared by sh14 (wolf 0.2.29), the signals:** `pending/trap_usr1`
+and `pending/trap_ignore_usr1` (now under `signal/`),
+`signal/c_trap_abrt_number`, `signal/c_trap_alrm`, `signal/c_trap_pipe`,
+`signal/c_trap_usr1_self`, `signal/c_trap_winch_cont`: wolf has a
+meaning for every signal POSIX names (`[os.signal.set]`, s232), and
+`trap` catches, ignores and resets the twenty a program may hear.
 
 **Cleared by sh14 (wolf 0.2.29):** `pending/pid` (now `param/pid`),
 `pending/exec_pid` (now `exec/exec_pid`), `param/c_pid_is_real`,
