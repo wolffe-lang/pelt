@@ -1,0 +1,18 @@
+run 1 base: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.85
+run 1 pin: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.84
+run 1 head: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.79
+run 2 base: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.86
+run 2 pin: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.99
+run 2 head: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.88
+run 3 base: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.79
+run 3 pin: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.89
+run 3 head: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.78
+run 4 base: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.87
+run 4 pin: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.70
+run 4 head: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.72
+run 5 base: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.83
+run 5 pin: same configure-hello dash 0 pelt 0;differs configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff: 3c3 < checking the filesystem timestamp resolution... 0.2 --- > checking the filesystem timestamp resolution... 0.1  | load 0.92
+run 5 head: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.85
+run 6 base: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.94
+run 6 pin: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.87
+run 6 head: same configure-hello dash 0 pelt 0;same configure-sed dash 0 pelt 0;same configure-gzip dash 0 pelt 0; | sed diff:  | load 0.83

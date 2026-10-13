@@ -1,0 +1,7 @@
+dash: first look newer (0.1) 35, second (0.2) 265, later 0 of 300; load 0.36
+base: first look newer (0.1) 71, second (0.2) 229, later 0 of 300; load 0.24
+pin: first look newer (0.1) 70, second (0.2) 230, later 0 of 300; load 0.22
+head: first look newer (0.1) 73, second (0.2) 227, later 0 of 300; load 0.13
+dash-again: first look newer (0.1) 34, second (0.2) 266, later 0 of 300; load 0.15
+head-again: first look newer (0.1) 51, second (0.2) 249, later 0 of 300; load 0.26
+base-again: first look newer (0.1) 62, second (0.2) 238, later 0 of 300; load 0.17
