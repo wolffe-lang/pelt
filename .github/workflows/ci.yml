@@ -163,6 +163,25 @@ jobs:
         if: ${{ matrix.builds && !cancelled() }}
         run: tools/exec-witness target/release/pelt
 
+      # sh14: a trap's action runs when the command the signal came
+      # during ends, asked 5,000 times with a child as the sender and
+      # 5,000 with the shell's own `kill` (before wolf 0.2.29 a poll
+      # could trail a delivery, wolf-lang#691, and pelt carried a
+      # barrier; trunk without it missed 3 to 12 of 5,000,
+      # notes/sh14-evidence/logs/red-barrier.log). And a shell started
+      # with signals ignored neither traps nor resets them, asked from
+      # outside (the corpus harness starts every case with the
+      # defaults) (tools/signal-witness).
+      - name: traps run on time; ignored at start stays ignored, native tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
+        run: tools/signal-witness target/native/pelt
+
+      - name: traps run on time; ignored at start stays ignored, release tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
+        run: tools/signal-witness target/release/pelt
+
       # The corpus steps run whatever came before, so that a break seen
       # only from outside (above) and one seen only by a script each
       # report on their own.
