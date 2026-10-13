@@ -54,7 +54,7 @@ id	kind	statement	cases	note
 2.5.2/9	T	A subshell starts with the invoking shell's $?	param/c_status_into_subshell	
 2.5.2/10	T	x=$(cmd) leaves the command substitution's status in $?	simple/assign_status param/c_status_assign_cmdsub	
 2.5.2/11	T	$- holds the current single-letter option flags	option/dollar_dash param/c_dash_flags	
-2.5.2/12	T	$$ is the process ID of the invoked shell, the same value in a subshell	pending/pid param/c_pid_subshell	
+2.5.2/12	T	$$ is the process ID of the invoked shell, the same value in a subshell	param/pid param/c_pid_subshell param/pid_everywhere	
 2.5.2/13	T	$$ is the shell's real process ID (what its child sees as its parent)	param/c_pid_is_real	
 2.5.2/14	T	$! is the process ID of the most recent asynchronous list	jobs/bang signal/bang_is_a_process param/c_bang	
 2.5.2/15	T	$0 is the script's name as given; in a function it is unchanged	exec/argv0 param/c_zero	
@@ -65,7 +65,7 @@ id	kind	statement	cases	note
 2.5.3/5	T	IFS is set to space, tab, newline when the shell is invoked, whatever the environment held	env/c_ifs_reset	
 2.5.3/6	T	With IFS unset, splitting and read behave as if it were space, tab, newline	split/unset_ifs split/c_unset_ifs_read	
 2.5.3/7	T	LINENO is the current line number within the script or function	param/lineno param/c_lineno	dash 0.5.13.4 counts from the function's first line inside a function; bash --posix and pelt count lines of the script. The standard's words allow either; the script's line is what a diagnostic needs, so bash is the oracle
-2.5.3/8	T	PPID is the parent's process ID, the same in a subshell	env/c_ppid	
+2.5.3/8	T	PPID is the parent's process ID, the same in a subshell	env/c_ppid env/ppid_variable	
 2.5.3/9	S	PS1 is parameter-expanded and written to standard error before each command is read; default "$ "	session:echo_hi session:ps1_param	
 2.5.3/10	S	In PS1 each ! is replaced by the history number of the next command, and !! by one !	session:c_ps1_bang session:c_ps1_bang_number	
 2.5.3/11	S	PS2 is expanded and written to standard error when a command continues onto another line; default "> "	session:ps2_if	
