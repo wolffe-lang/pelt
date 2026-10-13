@@ -1,0 +1,30 @@
+bench: 9 runs each, unpinned; load ['0.00', '0.00', '0.15']
+script           shell    median s   min s  user s   sys s  ratio
+fork             dash        0.328   0.326   0.269   0.056   1.00
+fork             base        0.486   0.484   0.359   0.146   1.48
+fork             pin         0.489   0.486   0.359   0.147   1.49
+fork             head        0.483   0.480   0.354   0.145   1.48
+fork             base-native    0.523   0.518   0.382   0.157   1.60
+fork             pin-native    0.525   0.520   0.393   0.152   1.60
+fork             head-native    0.526   0.522   0.381   0.163   1.60
+pipeline         dash        0.322   0.320   0.426   0.179   1.00
+pipeline         base        0.402   0.401   0.384   0.169   1.25
+pipeline         pin         0.404   0.401   0.384   0.169   1.25
+pipeline         head        0.400   0.398   0.381   0.171   1.24
+pipeline         base-native    0.448   0.446   0.421   0.180   1.39
+pipeline         pin-native    0.449   0.446   0.417   0.187   1.39
+pipeline         head-native    0.448   0.446   0.415   0.185   1.39
+param            dash        0.329   0.326   0.328   0.000   1.00
+param            base        1.407   1.403   1.401   0.004   4.28
+param            pin         1.402   1.398   1.395   0.005   4.27
+param            head        1.383   1.379   1.378   0.004   4.21
+param            base-native    4.654   4.643   4.646   0.004  14.16
+param            pin-native    4.689   4.632   4.679   0.006  14.27
+param            head-native    4.693   4.673   4.681   0.005  14.28
+configure-shaped dash        0.331   0.329   0.299   0.107   1.00
+configure-shaped base        0.342   0.340   0.260   0.145   1.03
+configure-shaped pin         0.341   0.339   0.263   0.142   1.03
+configure-shaped head        0.340   0.338   0.261   0.142   1.03
+configure-shaped base-native    0.433   0.430   0.335   0.164   1.31
+configure-shaped pin-native    0.433   0.431   0.338   0.159   1.31
+configure-shaped head-native    0.435   0.432   0.338   0.160   1.32
