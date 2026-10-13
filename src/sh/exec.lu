@@ -2222,6 +2222,7 @@ fn run_async(mut sh: Sh, node: int) -> int {
     sh.stage_child = -1
     sh.nowait = sh.ast.nodes[node].kind == K_SIMPLE && sh.caps.len == 0
     if sh.nowait {
+        sig_boot(mut sh)
         let two = m_int() | m_quit()
         os_signal_ignore(two) else |_| {}
         sh.sig_listen = less(sh.sig_listen, two)

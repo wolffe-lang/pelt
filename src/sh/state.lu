@@ -134,6 +134,9 @@ struct Sh {
     sig_listen: int,
     sig_ignore: int,
     sig_mine: int,
+    /// The meanings ignored when the shell started (`sig_boot`): never
+    /// trapped, never reset. -1 until read.
+    sig_ign0: int,
     in_trap: bool,
     trap_status: int,
     intr: bool,
@@ -272,6 +275,7 @@ fn new_sh(name: str) -> Sh {
         sig_listen: 0,
         sig_ignore: 0,
         sig_mine: 0,
+        sig_ign0: -1,
         in_trap: false,
         trap_status: 0,
         intr: false,

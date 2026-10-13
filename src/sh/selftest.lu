@@ -524,6 +524,11 @@ fn want_conditions(mut bad: List[str]) {
     if interactive_set(sh) != m_int() | m_quit() | sig_meaning(sig_index("TERM")) {
         (mut bad).push("interactive_set = {interactive_set(sh)}")
     }
+    // one of the three ignored when the shell started is not listened for
+    sh.sig_ign0 = m_quit()
+    if interactive_set(sh) != m_int() | sig_meaning(sig_index("TERM")) {
+        (mut bad).push("interactive_set with QUIT ignored at start = {interactive_set(sh)}")
+    }
 }
 
 /// `$!` and `wait`: a job is found by the id it was given, the newest

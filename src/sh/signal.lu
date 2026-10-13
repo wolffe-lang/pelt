@@ -33,6 +33,14 @@
 //! POSIX does not name (linux's `IO`, `PWR`, `STKFLT`, the real-time
 //! ones) has no meaning and is refused.
 //!
+//! **Ignored at start.** A signal that was ignored when the shell
+//! started cannot be trapped or reset (XCU `trap`): `sig_boot` reads
+//! that set (`os_signal_ignored`) before pelt first changes any
+//! disposition, and `sig_apply` leaves those signals ignored whatever
+//! the trap table says. The table still records the action and `trap`
+//! lists it, as dash, which holds the rule for an interactive shell too
+//! (black-box); so does pelt.
+//!
 //! **Subshells run in-process**, so there is one set of dispositions for
 //! the shell and every subshell it is running. A subshell starts with
 //! its traps reset (XCU 2.12) and polls only for what it has trapped
@@ -227,23 +235,40 @@ fn less(set: int, gone: int) -> int {
     set - (set & gone)
 }
 
+/// The set of signals ignored when the shell started, read once, before
+/// pelt first changes a disposition (`[os.signal.ignored]`: read then,
+/// it is the set the process was started with); they count as ignored
+/// from then on. A host that cannot say starts with none.
+fn sig_boot(mut sh: Sh) {
+    if sh.sig_ign0 >= 0 {
+        return
+    }
+    sh.sig_ign0 = signal.ignored() else 0
+    sh.sig_ignore = sh.sig_ignore | sh.sig_ign0
+}
+
 /// What an interactive shell does with no trap set (XCU 2.12; dash -i,
 /// black-box): `SIGINT` abandons the command and prompts again, and
 /// `SIGQUIT` and `SIGTERM` do nothing. pelt LISTENS for the three rather
 /// than ignoring them, so its children start with the default, as
-/// dash's do.
+/// dash's do. One it was started ignoring stays ignored.
 fn interactive_set(sh: Sh) -> int {
     if !sh.interactive {
         return 0
     }
-    m_int() | m_quit() | signal.terminate()
+    let three = m_int() | m_quit() | signal.terminate()
+    if sh.sig_ign0 > 0 {
+        return less(three, sh.sig_ign0)
+    }
+    three
 }
 
 /// Make the process's dispositions what the trap table says, changing
 /// only what differs from what was last applied. Inside a subshell
 /// nothing an enclosing shell listens for or ignores is put back to the
-/// default (module doc).
+/// default (module doc). A signal ignored at the start is left alone.
 fn sig_apply(mut sh: Sh) {
+    sig_boot(mut sh)
     var listen = interactive_set(sh)
     var ignore = 0
     var mine = listen
@@ -270,6 +295,9 @@ fn sig_apply(mut sh: Sh) {
         listen = listen | less(sh.sig_listen, ignore)
         ignore = ignore | less(sh.sig_ignore, listen)
     }
+    listen = less(listen, sh.sig_ign0)
+    mine = less(mine, sh.sig_ign0)
+    ignore = ignore | sh.sig_ign0
     let quiet = less(sh.sig_listen, listen)
     let to_default = less(sh.sig_listen | sh.sig_ignore, listen | ignore)
     let to_ignore = less(ignore, sh.sig_ignore)
