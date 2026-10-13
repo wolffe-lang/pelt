@@ -569,16 +569,11 @@ fn param(sh: Sh, name: str) -> (str, bool) {
     ("", false)
 }
 
-/// `$$`. wolf 0.2.27 has no `getpid` (wolf-lang#141); on linux the
-/// process's own `/proc/self/stat` begins with it, and elsewhere the
-/// answer is a fixed stand-in (PENDING on #141).
+/// `$$`: the shell's process id (`os_pid`, `[os.proc.self]`). A
+/// subshell runs in this process, so it answers the same there, which
+/// is what XCU 2.5.2 asks of a subshell with a process of its own.
 fn shell_pid() -> str {
-    let stat = fs_read_text("/proc/self/stat") else |_| { return "1" }
-    let sp = stat.find(" ") else -1
-    if sp > 0 {
-        return stat[0..sp]
-    }
-    "1"
+    "{os_pid()}"
 }
 
 /// `$@` / `$*` in place, keeping the parameters apart (XCU 2.5.2).
