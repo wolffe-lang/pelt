@@ -1,0 +1,12 @@
+st=3
+bg=0
+cs=4 out
+pipe=6
+SigIgn:	0000000000000000
+SigIgn:	0000000000000000
+SigIgn:	0000000008420000
+st=7
+trap -- '' CONT
+trap -- '' URG
+trap -- '' WINCH
+exit=0

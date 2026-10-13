@@ -1,0 +1,241 @@
+--- kill -l
+HUP
+INT
+QUIT
+ILL
+TRAP
+ABRT
+BUS
+FPE
+KILL
+USR1
+SEGV
+USR2
+PIPE
+ALRM
+TERM
+CHLD
+CONT
+STOP
+TSTP
+TTIN
+TTOU
+URG
+XCPU
+XFSZ
+VTALRM
+PROF
+WINCH
+SYS
+st=0
+--- kill -l nums
+0=pelt: ../p1.sh: line 3: kill: 0: no signal has that number or status
+ st=2
+1=HUP
+ st=0
+2=INT
+ st=0
+3=QUIT
+ st=0
+4=ILL
+ st=0
+5=TRAP
+ st=0
+6=ABRT
+ st=0
+7=BUS
+ st=0
+8=FPE
+ st=0
+9=KILL
+ st=0
+10=USR1
+ st=0
+11=SEGV
+ st=0
+12=USR2
+ st=0
+13=PIPE
+ st=0
+14=ALRM
+ st=0
+15=TERM
+ st=0
+16=pelt: ../p1.sh: line 3: kill: 16: no signal has that number or status
+ st=2
+17=CHLD
+ st=0
+18=CONT
+ st=0
+19=STOP
+ st=0
+20=TSTP
+ st=0
+21=TTIN
+ st=0
+22=TTOU
+ st=0
+23=URG
+ st=0
+24=XCPU
+ st=0
+25=XFSZ
+ st=0
+26=VTALRM
+ st=0
+27=PROF
+ st=0
+28=WINCH
+ st=0
+29=pelt: ../p1.sh: line 3: kill: 29: no signal has that number or status
+ st=2
+30=pelt: ../p1.sh: line 3: kill: 30: no signal has that number or status
+ st=2
+31=SYS
+ st=0
+32=pelt: ../p1.sh: line 3: kill: 32: no signal has that number or status
+ st=2
+33=pelt: ../p1.sh: line 3: kill: 33: no signal has that number or status
+ st=2
+34=pelt: ../p1.sh: line 3: kill: 34: no signal has that number or status
+ st=2
+64=pelt: ../p1.sh: line 3: kill: 64: no signal has that number or status
+ st=2
+65=pelt: ../p1.sh: line 3: kill: 65: no signal has that number or status
+ st=2
+--- kill -l status
+128=pelt: ../p1.sh: line 4: kill: 128: no signal has that number or status
+ st=2
+129=HUP
+ st=0
+130=INT
+ st=0
+137=KILL
+ st=0
+143=TERM
+ st=0
+159=SYS
+ st=0
+160=pelt: ../p1.sh: line 4: kill: 160: no signal has that number or status
+ st=2
+192=pelt: ../p1.sh: line 4: kill: 192: no signal has that number or status
+ st=2
+255=pelt: ../p1.sh: line 4: kill: 255: no signal has that number or status
+ st=2
+256=pelt: ../p1.sh: line 4: kill: 256: no signal has that number or status
+ st=2
+257=pelt: ../p1.sh: line 4: kill: 257: no signal has that number or status
+ st=2
+300=pelt: ../p1.sh: line 4: kill: 300: no signal has that number or status
+ st=2
+385=pelt: ../p1.sh: line 4: kill: 385: no signal has that number or status
+ st=2
+-1=pelt: ../p1.sh: line 4: kill: -1: no such signal or option
+ st=2
+--- kill -l names
+HUP=pelt: ../p1.sh: line 5: kill: HUP: not a number
+ st=2
+SIGHUP=pelt: ../p1.sh: line 5: kill: SIGHUP: not a number
+ st=2
+hup=pelt: ../p1.sh: line 5: kill: hup: not a number
+ st=2
+TERM=pelt: ../p1.sh: line 5: kill: TERM: not a number
+ st=2
+--- kill -l two
+HUP
+st=0
+--- kill -L
+pelt: ../p1.sh: line 7: kill: -L: no such signal or option
+st=0
+--- kill none
+pelt: ../p1.sh: line 8: kill: usage: kill [-s signal | -signal] pid… or kill -l [number]
+st=2
+--- kill -s none
+pelt: ../p1.sh: line 9: kill: -s needs a signal
+st=2
+--- kill -s TERM none
+pelt: ../p1.sh: line 10: kill: usage: kill [-s signal | -signal] pid… or kill -l [number]
+st=2
+--- kill -n
+pelt: ../p1.sh: line 11: kill: -n: no such signal or option
+st=2
+pelt: ended by signal 15 (TERM)
+w=143
+--- forms
+[-s SIGTERM] kill=2 wait=137
+[-s term] kill=0 wait=143
+[-s Term] kill=0 wait=143
+[-SIGTERM] kill=2 wait=137
+[-term] kill=0 wait=143
+[-s 0] kill=0 wait=137
+[-0] kill=0 wait=137
+[-s 9] kill=0 wait=137
+[-KILL] kill=0 wait=137
+[-s USR1] kill=0 wait=138
+[-USR1] kill=0 wait=138
+[-10] kill=0 wait=138
+[-s INT] kill=0 wait=137
+[-INT] kill=0 wait=137
+[-2] kill=0 wait=137
+[-s QUIT] kill=0 wait=137
+[-s ABRT] kill=0 wait=137
+[-6] kill=0 wait=137
+[-s ALRM] kill=0 wait=142
+[-s PIPE] kill=0 wait=141
+[-s USR2] kill=0 wait=140
+[-s CONT] kill=0 wait=137
+[-s STOP] kill=0 wait=137
+[-s SEGV] kill=0 wait=137
+[-s BUS] kill=0 wait=137
+[-s FPE] kill=0 wait=137
+[-s ILL] kill=0 wait=137
+[-s TRAP] kill=0 wait=137
+[-s SYS] kill=0 wait=137
+[-s XCPU] kill=0 wait=137
+[-s XFSZ] kill=0 wait=137
+[-s VTALRM] kill=0 wait=154
+[-s PROF] kill=0 wait=155
+[-s WINCH] kill=0 wait=137
+[-s URG] kill=0 wait=137
+[-s CHLD] kill=0 wait=137
+[-s TSTP] kill=0 wait=137
+[-s TTIN] kill=0 wait=137
+[-s TTOU] kill=0 wait=137
+[-s IO] kill=2 wait=137
+[-s PWR] kill=2 wait=137
+[-s STKFLT] kill=2 wait=137
+[-s POLL] kill=2 wait=137
+[-s RTMIN] kill=2 wait=137
+[-s 64] kill=2 wait=137
+[-s 65] kill=2 wait=137
+[-65] kill=2 wait=137
+[-s EXIT] kill=2 wait=137
+[-EXIT] kill=2 wait=137
+[-s 1x] kill=2 wait=137
+[-1x] kill=2 wait=137
+[-s -1] kill=2 wait=137
+[--] kill=0 wait=143
+[-- -TERM] kill=2 wait=137
+[-s TERM --] kill=0 wait=143
+[-TERM --] kill=2 wait=137
+[-l --] kill=2 wait=137
+[-x] kill=2 wait=137
+[-s TERM -s KILL] kill=0 wait=137
+--- targets
+self0=0
+nosuch=1
+huge=2
+abc=2
+init=1
+empty=2
+12x=2
+plus=0
+space=0
+zero-lead=0
+mixed=1
+pelt: ended by signal 15 (TERM)
+w=143
+nojob=1
+nojob5=1
+pct=1
+exit=0

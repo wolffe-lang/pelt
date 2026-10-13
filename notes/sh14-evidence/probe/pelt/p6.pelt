@@ -1,0 +1,29 @@
+k1=0
+k2=0
+pelt: ended by signal 15 (TERM)
+pelt: ended by signal 15 (TERM)
+w=0
+kcur=0
+pelt: ended by signal 15 (TERM)
+kplus=0
+pelt: ended by signal 15 (TERM)
+kminus=0
+pelt: ended by signal 15 (TERM)
+pelt: ended by signal 15 (TERM)
+pelt: ../p6.sh: line 7: kill: %sleep: no such job
+kname=2
+pelt: ../p6.sh: line 8: kill: %?lee: no such job
+ksub=2
+kbad=1
+k1again=1
+pelt: ended by signal 15 (TERM)
+done-job=1
+pelt: ../p6.sh: line 11: kill: %1: no such process
+0
+0
+pelt: ../p6.sh: line 12: kill: %1: no such process
+zero=1
+pelt: ../p6.sh: line 12: kill: %1: no such process
+wj=143
+st=143
+exit=0

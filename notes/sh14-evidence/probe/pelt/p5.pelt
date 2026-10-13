@@ -1,0 +1,38 @@
+set=0
+trap -- 'echo trapped' TERM
+not-trapped
+reset=0
+still-ignored
+listed: 
+trap -- 'echo i' INT
+trap -- 'echo t' USR1
+usr1-ignored
+ign=0
+trap -- '' TERM
+--
+end
+sub-not-trapped
+child of child: 0
+grandchild-ignored
+--- interactive child may trap
+after-i
+--- exec keeps
+exec-kept-ignored
+--- traps reset on exec / subshell
+pelt: ended by signal 10 (USR1)
+child default: 138
+sub-after
+parent-usr1
+sub: 0
+sub-traps-listed-above
+sub-own
+sub-done
+st=0
+--- trap '' inherited by subshell and exec
+sub-ignored
+child-ignored
+--- cmdsub
+[cs
+cs-done]
+end
+exit=0
