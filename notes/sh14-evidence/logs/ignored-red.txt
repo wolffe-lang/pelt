@@ -1,0 +1,21 @@
+tools/signal-witness --rounds 200, kasumi, the native build of aef71a5 (before the
+ignored-at-start rule), then /usr/bin/dash 0.5.13.4, then the build with the rule.
+
+--- pelt at aef71a5 (no rule)
+signal-witness: reap    ok   0 misses of 200 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+signal-witness: ignored FAIL exit -10, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+signal-witness: ignored-i FAIL exit -10, wrote "trap -- 'echo trapped' USR1\ntrapped\nalive\n"
+signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+rc=1
+--- dash as the shell
+signal-witness: reap    ok   0 misses of 200 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+signal-witness: ignored ok   exit 0, wrote "trap -- 'echo trapped' USR1\nalive\nstill\n"
+signal-witness: ignored-i ok   exit 0, wrote "trap -- 'echo trapped' USR1\nalive\nstill\n"
+signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+rc=0
+--- pelt with the rule (native; release the same)
+signal-witness: reap    ok   0 misses of 500 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+signal-witness: ignored ok   exit 0, wrote "trap -- 'echo trapped' USR1\nalive\nstill\n"
+signal-witness: ignored-i ok   exit 0, wrote "trap -- 'echo trapped' USR1\nalive\nstill\n"
+signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+rc=0
