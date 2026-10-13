@@ -18,7 +18,8 @@ filed.
 - **Three in four POSIX statements are met**: 400 of 527 testable
   statements of XCU chapter 2 and the built-ins' pages; 414 since
   sh07 (S1, below); since sh11 the table has 544 statements, and
-  since sh13 (S4) 431 of them are met; since sh12 (H3b) 439 of 545.
+  since sh13 (S4) 431 of them are met; since sh12 (H3b) 439 of 545;
+  since sh14 (the signals, wolf 0.2.29) 450 of 545.
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
@@ -52,16 +53,16 @@ counts the 80 in `tools/script-census`.
 | 1 | **done in sh07**: `test -r/-w/-x/-L/-h/-ef` answer wrongly | 14 scripts (libtool, git's tests, debconf and so four Debian postinsts, init scripts, `service`, `which`) | pelt; exact access as the caller wants a wolf call (to be filed: W07) |
 | 2 | `umask` missing | 9 scripts (install-sh, config.guess, every configure through it) | wolf-lang s230 (`os_umask`, merged for the release after 0.2.27), then pelt |
 | 3 | **done in sh08**: memory kept per pipeline, substitution, function call and script line | any long script or session; not a script failure in the census, which runs each script once | pelt |
-| 4 | **done in sh07** (recorded; catching it is #679): `trap ACTION 13` (a signal number with no wolf meaning) refused | 7 scripts | pelt records it; catching it is #679 |
+| 4 | **done in sh07** (recorded) **and sh14** (caught: wolf 0.2.29 has a meaning for every signal POSIX names): `trap ACTION 13` (a signal number with no wolf meaning) refused | 7 scripts | done |
 | 5 | **done in sh07**: a bracket expression holding `/` never matches outside file names | 4 scripts, the first wall of every autoconf configure | pelt |
 | 6 | **done in sh07**: unquoted `$*` in an assignment joins with nothing: **a silent wrong answer** (`host_os=linuxgnu`) | 3 scripts | pelt |
 | 7 | no process for a subshell or an in-process pipeline stage: stages run one after another, a descriptor written from a stage is lost, an endless producer never ends | 3 scripts, 7 statements | wolf-lang or pelt, by ruling R1 (to be filed: W01) |
 | 8 | **UTF-8 half done in sh07**: bytes above 0x7f become `?` on their way out: **a silent wrong answer** (a certificate with a non-ASCII name is left out of the bundle) | 1 script; every non-ASCII file name | pelt; bytes that are not UTF-8 need wolf byte strings (to be filed: W06) |
 | 9 | aliases | 17 statements; daily use | pelt |
-| 10 | job control | 14 statements; daily use | wolf-lang (to be filed: W03; #680, #141), then pelt; PAX for PAX |
+| 10 | job control | 14 statements; daily use | wolf-lang (to be filed: W03; #680: a wait a signal can cut short, stop reporting, a signal to a process group), then pelt; PAX for PAX. `kill` and the signals themselves are in (sh14) |
 | 11 | line editing and history | daily use; 7 statements (`fc`, vi mode, `!` in `PS1`) | pelt; window size (to be filed: W05) |
 | 12 | `$'…'` (new in POSIX.1-2024) | 7 statements | pelt |
-| 13 | `kill` built in, `$$`/`PPID` everywhere | 8 statements | #141 |
+| 13 | **done in sh14** (wolf 0.2.29): `kill` built in, `$$`/`PPID` everywhere | 8 statements | done; a signal to a process group (`kill 0`, `kill -- -N`) waits on job control |
 | 14 | `ulimit` | 4 statements | wolf-lang (to be filed: W02) |
 | 15 | about forty corners, one or two statements each (`type`, `hash`, `command -p`, `pipefail`, declaration utilities, `read -d`, `trap -p`, `set -v`, `PS4`, `.` of a FIFO, …) | 53 statements | pelt |
 | 16 | speed: the interpreter's per-command allocation; 57 system calls per program started; a `PATH` search per command | 3.9× and 10× dash on expansion loops | pelt; a cheaper spawn (to be filed: W08) |
@@ -122,9 +123,12 @@ needs the least from upstream.
   POSIX (`set -o vi`). Completion is not POSIX.
 - **H3e, job control on Linux.** A wait that reports a stopped child
   and can be woken by a signal or by any child (W03, #680). `SIGCONT`
-  and a signal to a process group (W03). `kill` built in, with job IDs
-  (#141). Signals ignored on entry (#681). The poll race fixed (#691).
-  Then `jobs`, `fg`, `bg`, Ctrl-Z, job numbers, notices, `set -b`.
+  and a signal to a process group (W03). **Landed in sh14 on wolf
+  0.2.29:** `kill` built in, with job ids for the shell's own `&` lists
+  (#141); signals ignored on entry left alone (#681); the poll race
+  gone and pelt's barrier with it (#691, `tools/signal-witness`); a
+  trap for every signal POSIX names (#679). Still to come: `jobs`,
+  `fg`, `bg`, Ctrl-Z, job numbers, notices, `set -b`.
   Proved by the eleven `c_jc_*` sessions under `dash -i -m`.
 - **H3f, subshells as processes.** Gap 7, by ruling R1: either wolf
   gains a fork (W01), or pelt starts itself again for a subshell and
@@ -185,10 +189,11 @@ Each of these is a ruling first. None is started before POSIX is met.
 | S4 `umask` | done: wolf 0.2.28's `os_umask` (sh13) | `umask(2)` on PAX (px27 lists it) |
 | H3a editor | W05 for resize and for restoring the terminal | a console that answers `TIOCGWINSZ` (px19's framebuffer does) |
 | H3b history | — | px27 (a writable tree) for `HISTFILE` |
-| H3e job control | W03, #680, #141, #681, #691 | process groups, sessions, `tcsetpgrp`, stopped processes (a pax lane) |
+| H3e job control | W03, #680 (#141, #681, #691 done in wolf 0.2.29) | process groups, sessions, `tcsetpgrp`, stopped processes (a pax lane) |
 | H3f subshells | W01, or nothing under R1(B) | `clone` without `CLONE_VM` if W01 is a real fork |
-| `kill`, `$$`, `PPID` | #141 | — |
-| `trap` for every signal | #679, #423 | the signals already delivered (px26) |
+| `kill`, `$$`, `PPID` | done: wolf 0.2.29's `os_signal_send`, `os_signal_number`, `os_pid`, `os_ppid` (sh14) | `kill(2)` to any pid, `getppid`, and `rt_sigaction` asked what a signal's disposition is |
+| `trap` for every signal | done: wolf 0.2.29's twenty meanings and `os_signal_ignored` (sh14) | the signals already delivered (px26); every one POSIX names, and a poll that changes the thread's mask (`rt_sigprocmask`) |
+| the editor's timed poll for signals | s234's `os_signal_wait_fd` (wolf-lang trunk, not in 0.2.29) | — |
 | `ulimit` | W02 | `prlimit64` |
 | `~login` | W04 | `/etc/passwd` in the image |
 | non-UTF-8 bytes | W06 | — |
