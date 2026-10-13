@@ -1,0 +1,20 @@
+set=0
+trap -- 'echo trapped' TERM
+not-trapped
+reset=0
+still-ignored
+trap -- 'echo int-trapped' INT
+trap -- 'echo t' USR1
+usr1-ignored
+int-trapped
+after-int
+trap -- '' TERM
+--
+end
+sub-not-trapped
+cs-not-trapped
+grandchild-ignored
+exec-kept-ignored
+a child inherits it: 0
+trapped-again
+after

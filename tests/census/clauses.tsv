@@ -399,7 +399,7 @@ trap/9	T	Traps stay in place until changed; an action can itself set or reset tr
 trap/10	T	$(trap) in a command substitution shows the parent's traps	signal/trap_in_cmdsub signal/c_trap_cmdsub_shows_parent	
 trap/11	T	The EXIT trap runs in the environment of the last command: variables and $? are visible; it runs once	builtin/trap_exit signal/trap_exit_in_action signal/c_exit_trap_env	
 trap/12	T	An EXIT trap set in a subshell runs when that subshell ends; the parent's EXIT trap does not run there	signal/trap_in_subshell signal/c_exit_trap_subshell	
-trap/13	T	A signal ignored on entry to a non-interactive shell cannot be trapped or reset	signal/c_ignored_on_entry	wolf-lang#681
+trap/13	T	A signal ignored on entry to a non-interactive shell cannot be trapped or reset	signal/c_ignored_on_entry signal/ignored_at_start	since sh14 (wolf 0.2.29, `os_signal_ignored`); from outside, tools/signal-witness
 trap/14	T	A trap action runs between commands of a list, loop or function, not only at the end of the script	signal/trap_in_loop signal/trap_in_function signal/trap_breaks_loop signal/trap_action_runs_program signal/trap_action_sets_variable	
 trap/15	T	trap -- action condition is accepted	signal/c_trap_dashdash	
 trap/16	T	A signal with a default action of terminate ends the shell with that signal when not trapped; the EXIT trap may or may not run	signal/death_runs_no_exit_trap	

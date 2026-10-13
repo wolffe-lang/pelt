@@ -59,7 +59,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **job-ids** | `wait %1`, `kill %1` | pelt once `kill` is a built-in (wolf-lang#141) | `wait/c_job_id` |
 | **jobs** | `jobs`, `jobs -p` | pelt (P12); job states need wolf-lang W03 | `jobsctl/c_jobs_script` |
 | **job-control** | `set -m`: a process group per job | wolf-lang: stop reporting, `SIGCONT`, a signal to a group, an interruptible wait (W03, wolf-lang#680) | `jobsctl/c_fg_bg_no_monitor`, `jobsctl/c_monitor_script_pgid` |
-| **ignored-on-entry** | a signal ignored when the shell started can be trapped | wolf-lang#681 | `signal/c_ignored_on_entry` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
 | **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
 | **non-utf8-bytes** | a byte that is not UTF-8 (`a\377b` from a command substitution) cannot be a program's argument, since a wolf `str` is UTF-8: it reaches the program as `?`. Valid UTF-8 passes unchanged everywhere since sh07 (`quote/utf8_bytes`); this case's other lines pass | wolf-lang W06 (byte strings) | `quote/c_s_high_bytes` |
@@ -69,11 +68,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 
 **No case, named:**
 
-- A signal that was ignored when a non-interactive shell started cannot
-  be trapped or reset (XCU `trap`). wolf 0.2.27 cannot ask what a
-  signal's disposition is, so pelt traps it anyway (wolf-lang#681); the
-  corpus harness starts every case with the defaults, so no case can
-  show it.
 - With no fork, a pipeline stage pelt runs itself runs to the end
   before the next starts, so an endless in-process producer
   (`while :; do echo y; done | head -1`) does not end as it does under
@@ -82,6 +76,12 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 - `kill` is not a built-in (wolf can signal only a child it holds a
   handle for, wolf-lang#141), so `kill` is the host's program: it has
   no job ids (`%1`).
+
+**Cleared by sh14 (wolf 0.2.29), ignored at start:**
+`signal/c_ignored_on_entry`. pelt reads the set of signals it was
+started ignoring (`os_signal_ignored`) and neither traps nor resets
+them; `tools/signal-witness` asks it from outside (the corpus harness
+starts every case with the defaults).
 
 **Cleared by sh14 (wolf 0.2.29), the signals:** `pending/trap_usr1`
 and `pending/trap_ignore_usr1` (now under `signal/`),
