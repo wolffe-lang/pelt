@@ -1,9 +1,11 @@
 //! sh.signal — `trap` for signals, and what a signal did to a child
-//! (XCU 2.12 "Signals and Error Handling", the `trap` and `wait` pages).
+//! (XCU 2.12 "Signals and Error Handling", the `trap`, `kill` and `wait`
+//! pages).
 //!
-//! References consulted: POSIX.1-2024 XCU 2.12 and `trap`; wolf's
-//! `spec/11-os.md` (`[os.signal.*]`, `[os.proc.status]`); black-box runs
-//! of `dash` 0.5.13.4. No shell's source.
+//! References consulted: POSIX.1-2024 XCU 2.12, `trap` and `kill`;
+//! wolf's `spec/11-os.md` at v0.2.29 (`[os.signal.*]`,
+//! `[os.proc.status]`); black-box runs of `dash` 0.5.13.4
+//! (`notes/sh14-evidence/probe/`). No shell's source.
 //!
 //! **No handler runs wolf code.** wolf delivers a signal as a MEANING a
 //! program listens for and later takes off a queue (`os_signal_listen`,
@@ -13,20 +15,32 @@
 //! simple command, pipeline and subshell, and after a line is read at
 //! the prompt).
 //!
-//! **Which conditions.** wolf 0.2.27 has a meaning for `HUP`, `INT`,
-//! `QUIT`, `TERM` and `USR2` (and for the job-control stops and `CHLD`,
-//! which pelt does not trap yet). Every other condition (`USR1`, `ALRM`,
-//! `PIPE`, …) is recorded and printed by `trap` and never caught or
-//! ignored (wolf-lang#679; `tests/diff/PENDING.md`). And wolf cannot
-//! say which signals were ignored when the shell started, so pelt
-//! traps one that XCU `trap` says it may not (wolf-lang#681).
+//! **A meaning is named, never written.** wolf 0.2.29 has a meaning for
+//! every signal POSIX names (`[os.signal.set]`): twenty a program may
+//! hear and eight it may only send. pelt names each by `std.signal`'s
+//! function and by its place in one table here (`sig_meaning`,
+//! `sig_name`); it writes no bit, and no signal's number: the number a
+//! host gives a meaning is asked for (`signal.number`), since `USR1` is
+//! 10 on linux and 30 on macOS. So `trap … 13`, `kill -9`, `kill -l`
+//! and the `128 + N` of a child a signal ended all go through
+//! `sig_number` and `sig_by_number`.
+//!
+//! **Which conditions.** `trap` catches, ignores and resets the twenty.
+//! The eight wolf can only send (`KILL`, `STOP`, and the six a real
+//! fault raises: `SEGV`, `BUS`, `FPE`, `ILL`, `TRAP`, `SYS`) are
+//! recorded and printed back and never caught: no process can catch the
+//! first two, and wolf's runtime keeps the faults for itself. A signal
+//! POSIX does not name (linux's `IO`, `PWR`, `STKFLT`, the real-time
+//! ones) has no meaning and is refused.
 //!
 //! **Subshells run in-process**, so there is one set of dispositions for
 //! the shell and every subshell it is running. A subshell starts with
 //! its traps reset (XCU 2.12) and polls only for what it has trapped
 //! itself; a signal the enclosing shell traps stays queued until that
 //! shell is running again, which is when dash's parent would run its
-//! action too (it is waiting for the subshell).
+//! action too (it is waiting for the subshell). A program pelt starts,
+//! or `exec`s, begins as XSH `exec` leaves it: what pelt listens for is
+//! at its default there, what pelt ignores is ignored.
 //!
 //! **No barrier.** Until wolf 0.2.29 a poll could trail a delivery
 //! (wolf-lang#691), so pelt raised one more signal on itself and waited
@@ -35,57 +49,175 @@
 //! when the poll looks, so the poll after a reap is enough
 //! (`tools/signal-witness`).
 
-const M_HUP: int = 1
+use std.signal
 
-const M_TERM: int = 2
+/// How many meanings a program may hear (the first of the table), and
+/// how many there are.
+const SIG_HEARD: int = 20
 
-const M_QUIT: int = 4
+const SIG_ALL: int = 28
 
-const M_USR2: int = 8
-
-const M_INT: int = 16
-
-/// Every meaning `trap` can set.
-const M_TRAPS: int = 31
-
-/// The meaning behind a trap condition's name, or 0 for one wolf has no
-/// meaning for.
-fn meaning_of(cond: str) -> int {
-    if cond == "HUP" {
-        return M_HUP
+/// The `k`th meaning of the table: 0 to 19 can be heard, 20 to 27 only
+/// sent; 0 past the end. The order is `[os.signal.set]`'s, and nothing
+/// depends on it but the two counts above.
+fn sig_meaning(k: int) -> int {
+    match k {
+        0 => signal.reload(),
+        1 => signal.terminate(),
+        2 => signal.quit(),
+        3 => signal.upgrade(),
+        4 => signal.interrupt(),
+        5 => signal.suspend(),
+        6 => signal.bg_read(),
+        7 => signal.bg_write(),
+        8 => signal.child(),
+        9 => signal.user(),
+        10 => signal.alarm(),
+        11 => signal.broken_pipe(),
+        12 => signal.abort(),
+        13 => signal.continued(),
+        14 => signal.resize(),
+        15 => signal.urgent(),
+        16 => signal.virtual_alarm(),
+        17 => signal.profile_alarm(),
+        18 => signal.cpu_limit(),
+        19 => signal.file_limit(),
+        20 => signal.kill(),
+        21 => signal.stop(),
+        22 => signal.segment_fault(),
+        23 => signal.bus_error(),
+        24 => signal.arithmetic(),
+        25 => signal.illegal(),
+        26 => signal.breakpoint(),
+        27 => signal.bad_syscall(),
+        _ => 0,
     }
-    if cond == "TERM" {
-        return M_TERM
-    }
-    if cond == "QUIT" {
-        return M_QUIT
-    }
-    if cond == "USR2" {
-        return M_USR2
-    }
-    if cond == "INT" {
-        return M_INT
-    }
-    0
 }
 
-fn cond_of(m: int) -> str {
-    if m == M_HUP {
-        return "HUP"
+/// The `k`th meaning's name as XCU `kill` and `trap` spell it (XBD
+/// `<signal.h>` without the `SIG`); "" past the end.
+fn sig_name(k: int) -> str {
+    match k {
+        0 => "HUP",
+        1 => "TERM",
+        2 => "QUIT",
+        3 => "USR2",
+        4 => "INT",
+        5 => "TSTP",
+        6 => "TTIN",
+        7 => "TTOU",
+        8 => "CHLD",
+        9 => "USR1",
+        10 => "ALRM",
+        11 => "PIPE",
+        12 => "ABRT",
+        13 => "CONT",
+        14 => "WINCH",
+        15 => "URG",
+        16 => "VTALRM",
+        17 => "PROF",
+        18 => "XCPU",
+        19 => "XFSZ",
+        20 => "KILL",
+        21 => "STOP",
+        22 => "SEGV",
+        23 => "BUS",
+        24 => "FPE",
+        25 => "ILL",
+        26 => "TRAP",
+        27 => "SYS",
+        _ => "",
     }
-    if m == M_TERM {
-        return "TERM"
+}
+
+/// Where `name` (upper case, no `SIG`) is in the table, or -1.
+fn sig_index(name: str) -> int {
+    var k = 0
+    while k < SIG_ALL {
+        if sig_name(k) == name {
+            return k
+        }
+        k += 1
     }
-    if m == M_QUIT {
-        return "QUIT"
+    -1
+}
+
+/// The number this host gives the `k`th meaning, or 0 for none (a host
+/// with no signal numbers; `k` past the table).
+fn sig_number(k: int) -> int {
+    let m = sig_meaning(k)
+    if m == 0 {
+        return 0
     }
-    if m == M_USR2 {
-        return "USR2"
+    signal.number(m) else 0
+}
+
+/// Where the meaning this host numbers `n` is in the table, or -1.
+fn sig_by_number(n: int) -> int {
+    if n <= 0 {
+        return -1
     }
-    if m == M_INT {
-        return "INT"
+    var k = 0
+    while k < SIG_ALL {
+        if sig_number(k) == n {
+            return k
+        }
+        k += 1
     }
-    ""
+    -1
+}
+
+/// A signal as a script writes it, by name in any case or by this
+/// host's number: its place in the table, or -1. No `SIG` prefix, as
+/// dash (XCU `kill` and `trap` make the prefix an extension).
+fn sig_parse(word: str) -> int {
+    if word.len == 0 {
+        return -1
+    }
+    if is_digits(word) {
+        let n = to_int(word) else -1
+        return sig_by_number(n)
+    }
+    sig_index(word.upper())
+}
+
+/// The name `trap` records a condition under: `EXIT` (also 0), or a
+/// signal's name; "" for a word that names none.
+fn cond_name(word: str) -> str {
+    if word.len == 0 {
+        return ""
+    }
+    if is_digits(word) {
+        let n = to_int(word) else -1
+        if n == 0 {
+            return "EXIT"
+        }
+        return sig_name(sig_by_number(n))
+    }
+    let up = word.upper()
+    if up == "EXIT" {
+        return "EXIT"
+    }
+    sig_name(sig_index(up))
+}
+
+/// The three meanings the rest of the shell names: a hangup, the
+/// terminal's interrupt and quit characters.
+fn m_hup() -> int {
+    signal.reload()
+}
+
+fn m_int() -> int {
+    signal.interrupt()
+}
+
+fn m_quit() -> int {
+    signal.quit()
+}
+
+/// `set` without the meanings in `gone`.
+fn less(set: int, gone: int) -> int {
+    set - (set & gone)
 }
 
 /// What an interactive shell does with no trap set (XCU 2.12; dash -i,
@@ -94,10 +226,10 @@ fn cond_of(m: int) -> str {
 /// than ignoring them, so its children start with the default, as
 /// dash's do.
 fn interactive_set(sh: Sh) -> int {
-    if sh.interactive {
-        return M_INT | M_QUIT | M_TERM
+    if !sh.interactive {
+        return 0
     }
-    0
+    m_int() | m_quit() | signal.terminate()
 }
 
 /// Make the process's dispositions what the trap table says, changing
@@ -108,43 +240,46 @@ fn sig_apply(mut sh: Sh) {
     var listen = interactive_set(sh)
     var ignore = 0
     var mine = listen
-    var m = 1
-    while m <= M_INT {
-        let c = cond_of(m)
-        if has_trap(sh, c) {
-            let action = sh.traps[c] else ""
-            if action.len == 0 {
-                ignore = ignore | m
-                listen = listen & M_TRAPS - m
-                mine = mine & M_TRAPS - m
-            } else {
-                listen = listen | m
-                mine = mine | m
+    if sh.traps.len > 0 {
+        var k = 0
+        while k < SIG_HEARD {
+            let c = sig_name(k)
+            if has_trap(sh, c) {
+                let m = sig_meaning(k)
+                let action = sh.traps[c] else ""
+                if action.len == 0 {
+                    ignore = ignore | m
+                    listen = less(listen, m)
+                    mine = less(mine, m)
+                } else {
+                    listen = listen | m
+                    mine = mine | m
+                }
             }
+            k += 1
         }
-        m = m * 2
     }
     if sh.sub > 0 {
-        listen = listen | sh.sig_listen & M_TRAPS - ignore
-        ignore = ignore | sh.sig_ignore & M_TRAPS - listen
+        listen = listen | less(sh.sig_listen, ignore)
+        ignore = ignore | less(sh.sig_ignore, listen)
     }
-    let quiet = sh.sig_listen & M_TRAPS - listen
-    let to_default = (sh.sig_listen | sh.sig_ignore) & M_TRAPS - (listen | ignore)
-    let to_ignore = ignore & M_TRAPS - sh.sig_ignore
-    let to_listen = listen & M_TRAPS - sh.sig_listen
+    let quiet = less(sh.sig_listen, listen)
+    let to_default = less(sh.sig_listen | sh.sig_ignore, listen | ignore)
+    let to_ignore = less(ignore, sh.sig_ignore)
+    let to_listen = less(listen, sh.sig_listen)
     if to_default != 0 {
-        os_signal_default(to_default) else |_| {}
+        signal.reset(to_default) else |_| {}
     }
     if to_ignore != 0 {
-        os_signal_ignore(to_ignore) else |_| {}
+        signal.ignore(to_ignore) else |_| {}
     }
     if to_listen != 0 {
-        os_signal_listen(to_listen) else |_| {}
+        signal.listen(to_listen) else |_| {}
     }
     // a delivery taken before the listen ended is nobody's now
     if quiet != 0 {
         loop {
-            let got = os_signal_poll(quiet) else 0
+            let got = signal.poll(quiet) else 0
             if got == 0 {
                 break
             }
@@ -167,44 +302,134 @@ fn has_trap(sh: Sh, cond: str) -> bool {
 /// `trap`), unless the action leaves by `exit`, `return`, `break` or
 /// `continue`. With no action (an interactive shell's own three),
 /// `SIGINT` abandons the command being run and the others do nothing.
+///
+/// Signals that are waiting together run in the order of their
+/// numbers, as dash runs them (black-box: `HUP USR1 USR2 ALRM TERM
+/// WINCH` whatever order they were sent in), not in the order their
+/// deliveries happened to land. So everything waiting is taken first,
+/// then served lowest number first; one that comes while an action
+/// runs is served by the action's own commands (dash runs it there
+/// too) or by the next turn of the loop. An action that leaves by
+/// `break`, `continue` or `return` does not stop the others that were
+/// waiting with it: they run, and then the loop or function is left
+/// (dash, black-box: `signal/trap_break_keeps_pending`). One that
+/// leaves by `exit` ends the serving, and what was taken and not
+/// served goes back on the queue (an enclosing shell may be the one
+/// listening).
 fn poll_traps(mut sh: Sh) {
-    if sh.sig_mine == 0 || sh.in_trap || sh.shadow {
+    if sh.sig_mine == 0 || sh.shadow {
         return
     }
     loop {
         if sh.flow != F_NONE {
             return
         }
-        let m = next_signal(sh.sig_mine)
-        if m == 0 {
+        var taken = take_waiting(sh.sig_mine)
+        if taken == 0 {
             return
         }
-        let action = sh.traps[cond_of(m)] else ""
-        if action.len == 0 {
-            // at the prompt there is no command to abandon
-            if m == M_INT && sh.interactive && !sh.at_prompt {
-                interrupt(mut sh)
+        var held = F_NONE
+        var held_n = 0
+        while taken != 0 {
+            let k = lowest_numbered(taken)
+            if k < 0 {
+                break
+            }
+            let m = sig_meaning(k)
+            taken = less(taken, m)
+            let action = sh.traps[sig_name(k)] else ""
+            if action.len == 0 {
+                // at the prompt there is no command to abandon
+                if m == m_int() && sh.interactive && !sh.at_prompt {
+                    interrupt(mut sh)
+                    give_back(sh, taken)
+                    return
+                }
+                continue
+            }
+            run_trap_action(mut sh, action)
+            if sh.flow == F_EXIT {
+                give_back(sh, taken)
                 return
             }
-            continue
+            if sh.flow != F_NONE {
+                held = sh.flow
+                held_n = sh.flow_n
+                sh.flow = F_NONE
+            }
         }
-        run_trap_action(mut sh, action)
-        if sh.flow != F_NONE {
+        if held != F_NONE {
+            sh.flow = held
+            sh.flow_n = held_n
             return
         }
     }
 }
 
+/// Every delivered meaning in `set`, taken off the queue.
+fn take_waiting(set: int) -> int {
+    var taken = 0
+    loop {
+        let got = signal.poll(set) else 0
+        if got == 0 {
+            break
+        }
+        taken = taken | got
+    }
+    taken
+}
+
+/// The place in the table of the meaning in `set` with the lowest
+/// signal number, or -1 for an empty set.
+fn lowest_numbered(set: int) -> int {
+    var best = -1
+    var best_n = 0
+    var k = 0
+    while k < SIG_HEARD {
+        if set & sig_meaning(k) != 0 {
+            let n = sig_number(k)
+            if best < 0 || n < best_n {
+                best = k
+                best_n = n
+            }
+        }
+        k += 1
+    }
+    best
+}
+
+/// Signals taken off the queue and not served (the action before them
+/// left by `exit`, `break`, …) go back on it, each one the shell still
+/// listens for.
+fn give_back(sh: Sh, taken: int) {
+    if taken == 0 {
+        return
+    }
+    var k = 0
+    while k < SIG_HEARD {
+        let m = sig_meaning(k)
+        if taken & m != 0 && sh.sig_listen & m != 0 {
+            signal.raise(m) else |_| {}
+        }
+        k += 1
+    }
+}
+
 /// Run a trap's action as XCU `trap` says: `$?` is the same after it as
 /// before, unless the action leaves by `exit`, `return`, `break` or
-/// `continue` (then `sh.flow` says so).
+/// `continue` (then `sh.flow` says so). An action may itself be
+/// interrupted by another trapped signal, whose action then runs
+/// inside it (dash, black-box).
 fn run_trap_action(mut sh: Sh, action: str) {
     let saved = sh.status
     let line = sh.line
+    let was_in = sh.in_trap
+    let was_status = sh.trap_status
     sh.in_trap = true
     sh.trap_status = saved
     let _st = eval_string(mut sh, action, "trap")
-    sh.in_trap = false
+    sh.in_trap = was_in
+    sh.trap_status = was_status
     sh.line = line
     if sh.flow != F_NONE {
         return
@@ -212,58 +437,27 @@ fn run_trap_action(mut sh: Sh, action: str) {
     sh.status = saved
 }
 
-/// The delivered meaning in `set` with the lowest signal number, taken
-/// off the queue, or 0. Two signals that arrive together are handled
-/// in the order of their numbers, as dash handles them (black-box: HUP
-/// then TERM, whichever the kernel delivered first), not in the order
-/// their handlers happened to finish.
-fn next_signal(set: int) -> int {
-    var k = 0
-    while k < 5 {
-        let m = by_number(k)
-        if set & m != 0 {
-            let got = os_signal_poll(m) else 0
-            if got != 0 {
-                return got
-            }
-        }
-        k += 1
-    }
-    0
-}
-
-/// The trappable meanings in the order of their signal numbers: HUP 1,
-/// INT 2, QUIT 3, TERM 15, then USR2 (12 on linux, 31 on macOS: last
-/// here on both, a named simplification); the `k`th of the five. A
-/// `match`, not a list: this runs after every command an interactive
-/// shell runs, and a list would be built in the root each time
-/// (pelt#19).
-fn by_number(k: int) -> int {
-    match k {
-        0 => M_HUP,
-        1 => M_INT,
-        2 => M_QUIT,
-        3 => M_TERM,
-        _ => M_USR2,
-    }
-}
-
 /// Ctrl-C with no trap, in an interactive shell: the command is
-/// abandoned with status 130, through every in-process subshell, back
-/// to the prompt (`sh.interact`).
+/// abandoned with `SIGINT`'s status, through every in-process subshell,
+/// back to the prompt (`sh.interact`).
 fn interrupt(mut sh: Sh) {
-    sh.status = 130
+    sh.status = int_status()
     sh.flow = F_EXIT
     sh.flow_n = 0
     sh.abort = true
     sh.intr = true
 }
 
+/// `$?` after an interrupt: 128 plus `SIGINT`'s number on this host.
+fn int_status() -> int {
+    128 + (signal.number(m_int()) else 0)
+}
+
 /// A subshell or a command substitution ends: an interrupt goes on
 /// unwinding through it.
 fn pass_interrupt(mut sh: Sh) {
     if sh.intr {
-        sh.status = 130
+        sh.status = int_status()
         sh.flow = F_EXIT
         sh.flow_n = 0
         sh.abort = true
@@ -286,27 +480,22 @@ fn status_of(raw: int) -> (int, int) {
 /// Nothing for `SIGINT` (the user did it) or `SIGPIPE` (the reader
 /// left), as dash, black-box.
 fn signal_spoken(n: int) -> bool {
-    n > 0 && n != 2 && n != 13
+    if n <= 0 {
+        return false
+    }
+    let int_n = signal.number(m_int()) else 0
+    let pipe_n = signal.number(signal.broken_pipe()) else 0
+    n != int_n && n != pipe_n
 }
 
-/// pelt's own words for a death by signal `n`. Only the numbers XCU
-/// `kill` fixes are named; the rest differ between hosts.
+/// pelt's own words for a death by signal `n`: the number, and the
+/// signal's name when wolf has one for it.
 fn signal_words(n: int) -> str {
-    var name = ""
-    if n == 1 {
-        name = " (HUP)"
-    } else if n == 3 {
-        name = " (QUIT)"
-    } else if n == 6 {
-        name = " (ABRT)"
-    } else if n == 9 {
-        name = " (KILL)"
-    } else if n == 14 {
-        name = " (ALRM)"
-    } else if n == 15 {
-        name = " (TERM)"
+    let name = sig_name(sig_by_number(n))
+    if name.len > 0 {
+        return "ended by signal {n} ({name})"
     }
-    "ended by signal {n}{name}"
+    "ended by signal {n}"
 }
 
 /// Say that signal `n` ended a child, on descriptor 2, without the

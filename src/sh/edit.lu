@@ -511,9 +511,9 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         inj: List[int](),
         ii: 0,
         fast: 0,
-        poll_hup: (sh.sig_listen | sh.sig_ignore) & M_HUP == 0,
-        poll_int: sh.sig_listen & M_INT != 0,
-        int_ignored: sh.sig_ignore & M_INT != 0,
+        poll_hup: (sh.sig_listen | sh.sig_ignore) & m_hup() == 0,
+        poll_int: sh.sig_listen & m_int() != 0,
+        int_ignored: sh.sig_ignore & m_int() != 0,
         vi: sh.opt_vi,
         vi_ins: true,
         done: -1,
@@ -546,13 +546,13 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         e.cols = 2
     }
     if e.poll_hup {
-        os_signal_listen(M_HUP) else |_| {
+        os_signal_listen(m_hup()) else |_| {
             e.poll_hup = false
         }
     }
     os_term_set_mode(0, raw_mode(old)) else |_| {
         if e.poll_hup {
-            os_signal_default(M_HUP) else |_| {}
+            os_signal_default(m_hup()) else |_| {}
         }
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
@@ -567,13 +567,13 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
     os_term_set_mode(0, old) else |_| {}
     if e.done == K_HUP {
         // the default ends the shell, with the terminal as it was
-        os_signal_default(M_HUP) else |_| {}
-        os_signal_raise(M_HUP) else |_| {}
+        os_signal_default(m_hup()) else |_| {}
+        os_signal_raise(m_hup()) else |_| {}
         settle_hup()
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     if e.poll_hup {
-        os_signal_default(M_HUP) else |_| {}
+        os_signal_default(m_hup()) else |_| {}
     }
     var line = ""
     if e.done == ED_OK || e.done == ED_VISUAL {
@@ -1155,13 +1155,13 @@ fn next_byte(mut e: Ed) -> int {
             e.fast = 0
         }
         if e.poll_hup {
-            let h = os_signal_poll(M_HUP) else 0
+            let h = os_signal_poll(m_hup()) else 0
             if h != 0 {
                 return K_HUP
             }
         }
         if e.poll_int {
-            let g = os_signal_poll(M_INT) else 0
+            let g = os_signal_poll(m_int()) else 0
             if g != 0 {
                 return K_INTR
             }

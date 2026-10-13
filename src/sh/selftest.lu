@@ -418,38 +418,111 @@ fn want_exec_env(mut bad: List[str]) {
     }
 }
 
-/// The trap table to dispositions: what the shell polls for itself,
-/// with nothing applied to the host (the masks are read back only when
-/// the table is empty, so no signal's disposition moves in the test).
+/// A child the signal named `name` ended: `128 + N` for this host's N.
+fn want_signal_status(mut bad: List[str], name: str, spoken: bool) {
+    let n = sig_number(sig_index(name))
+    if n <= 0 {
+        (mut bad).push("no number for {name}")
+        return
+    }
+    want_status(mut bad, 0 - n, 128 + n, n, spoken)
+}
+
+/// `sh.signal`'s table: every meaning has a name, a number on this
+/// host and one place, a condition is read by name in any case and by
+/// number, and the twenty a program may hear are exactly the ones the
+/// host takes in a set (the eight send-only are refused there,
+/// `[os.signal.set]`). Nothing is applied to the host: no signal's
+/// disposition moves in the test.
 fn want_conditions(mut bad: List[str]) {
-    for c in ["HUP", "INT", "QUIT", "TERM", "USR2"] {
-        let m = meaning_of(c)
-        if m == 0 || cond_of(m) != c {
-            (mut bad).push("meaning_of({c}) = {m}, cond_of = {cond_of(m)}")
+    var seen = 0
+    var k = 0
+    while k < SIG_ALL {
+        let name = sig_name(k)
+        let m = sig_meaning(k)
+        let n = sig_number(k)
+        if name.len == 0 || m == 0 || n <= 0 {
+            (mut bad).push("table row {k}: name [{name}] meaning {m} number {n}")
+        }
+        if seen & m != 0 {
+            (mut bad).push("table row {k}: {name} shares a meaning with an earlier row")
+        }
+        seen = seen | m
+        if sig_index(name) != k || sig_by_number(n) != k {
+            (mut bad).push(
+                "{name}: sig_index {sig_index(name)}, sig_by_number({n}) {sig_by_number(n)}, want {k}",
+            )
+        }
+        if cond_name(name) != name || cond_name(name.lower()) != name || cond_name("{n}") != name {
+            (mut bad).push(
+                "cond_name({name}) = [{cond_name(name)}] [{cond_name(name.lower())}] [{cond_name("{n}")}]",
+            )
+        }
+        if sig_parse(name) != k || sig_parse("{n}") != k {
+            (mut bad).push("sig_parse({name}) = {sig_parse(name)}, by number {sig_parse("{n}")}")
+        }
+        k += 1
+    }
+    if sig_meaning(SIG_ALL) != 0 || sig_name(SIG_ALL).len != 0 || sig_number(SIG_ALL) != 0 {
+        (mut bad).push("the table does not end at {SIG_ALL}")
+    }
+    for c in ["0", "EXIT", "exit", "00"] {
+        if cond_name(c) != "EXIT" {
+            (mut bad).push("cond_name({c}) = [{cond_name(c)}], want EXIT")
         }
     }
-    for c in ["USR1", "ALRM", "PIPE", "EXIT", "KILL", ""] {
-        if meaning_of(c) != 0 {
-            (mut bad).push("meaning_of({c}) = {meaning_of(c)}, want 0")
+    for c in ["", "SIGHUP", "NOSUCH", "-1", "1x", " 1", "+1", "999999"] {
+        if cond_name(c).len != 0 || sig_parse(c) >= 0 {
+            (mut bad).push("cond_name({c}) = [{cond_name(c)}], sig_parse {sig_parse(c)}: want none")
         }
+    }
+    if sig_parse("0") >= 0 || sig_parse("EXIT") >= 0 {
+        (mut bad).push("sig_parse takes 0 or EXIT for a signal")
+    }
+    // the heard set is a set the host takes; one more meaning is not
+    var heard = 0
+    k = 0
+    while k < SIG_HEARD {
+        heard = heard | sig_meaning(k)
+        k += 1
+    }
+    let quiet = os_signal_poll(heard) else |_| 0 - 1
+    if quiet != 0 {
+        (mut bad).push("a poll of the {SIG_HEARD} heard meanings answered {quiet}, want 0")
+    }
+    let refused = os_signal_poll(heard | sig_meaning(SIG_HEARD)) else |_| 0 - 1
+    if refused != 0 - 1 {
+        (mut bad).push("a poll of {SIG_HEARD + 1} meanings answered {refused}, want the io row")
+    }
+    // waiting signals are served lowest number first
+    var set = heard
+    var last = 0
+    var served = 0
+    loop {
+        let j = lowest_numbered(set)
+        if j < 0 {
+            break
+        }
+        if sig_number(j) <= last {
+            (mut bad).push("lowest_numbered: {sig_name(j)} ({sig_number(j)}) after {last}")
+        }
+        last = sig_number(j)
+        set = less(set, sig_meaning(j))
+        served += 1
+    }
+    if served != SIG_HEARD || set != 0 {
+        (mut bad).push("lowest_numbered served {served} of {SIG_HEARD}")
+    }
+    if less(m_hup() | m_int(), m_int()) != m_hup() || less(m_hup(), m_int()) != m_hup() {
+        (mut bad).push("less: a set without a meaning")
     }
     var sh = new_sh("selftest")
     if interactive_set(sh) != 0 {
         (mut bad).push("a script listens for nothing by itself")
     }
     sh.interactive = true
-    if interactive_set(sh) != M_INT | M_QUIT | M_TERM {
+    if interactive_set(sh) != m_int() | m_quit() | sig_meaning(sig_index("TERM")) {
         (mut bad).push("interactive_set = {interactive_set(sh)}")
-    }
-    var order = buf()
-    var k = 0
-    while k < 5 {
-        put(mut order, cond_of(by_number(k)))
-        putc(mut order, ' ')
-        k += 1
-    }
-    if text(order) != "HUP INT QUIT TERM USR2 " {
-        (mut bad).push("by_number = {text(order)}")
     }
 }
 
@@ -643,13 +716,18 @@ pub fn self_test() -> List[str] {
     want_status(mut bad, 0, 0, 0, false)
     want_status(mut bad, 7, 7, 0, false)
     want_status(mut bad, 255, 255, 0, false)
-    want_status(mut bad, -15, 143, 15, true)
-    want_status(mut bad, -9, 137, 9, true)
-    want_status(mut bad, -1, 129, 1, true)
-    want_status(mut bad, -2, 130, 2, false)
-    want_status(mut bad, -13, 141, 13, false)
-    if signal_words(15) != "ended by signal 15 (TERM)" || signal_words(31) != "ended by signal 31" {
-        (mut bad).push("signal_words: {signal_words(15)} / {signal_words(31)}")
+    want_signal_status(mut bad, "TERM", true)
+    want_signal_status(mut bad, "KILL", true)
+    want_signal_status(mut bad, "HUP", true)
+    want_signal_status(mut bad, "USR1", true)
+    want_signal_status(mut bad, "INT", false)
+    want_signal_status(mut bad, "PIPE", false)
+    let term_n = sig_number(sig_index("TERM"))
+    if signal_words(term_n) != "ended by signal {term_n} (TERM)" {
+        (mut bad).push("signal_words: {signal_words(term_n)}")
+    }
+    if signal_words(999999) != "ended by signal 999999" {
+        (mut bad).push("signal_words: {signal_words(999999)}")
     }
     want_exec_env(mut bad)
     want_conditions(mut bad)

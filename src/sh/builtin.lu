@@ -541,72 +541,18 @@ fn bi_exec(mut sh: Sh, args: List[str]) -> int {
     run_exec(mut sh, fields, List[str](), List[str](), List[Rd]())
 }
 
-fn trap_name(c: str) -> str {
-    if c == "0" || c == "EXIT" {
-        return "EXIT"
-    }
-    if c == "1" || c == "HUP" {
-        return "HUP"
-    }
-    if c == "2" || c == "INT" {
-        return "INT"
-    }
-    if c == "3" || c == "QUIT" {
-        return "QUIT"
-    }
-    if c == "4" || c == "ILL" {
-        return "ILL"
-    }
-    if c == "5" || c == "TRAP" {
-        return "TRAP"
-    }
-    if c == "6" || c == "ABRT" {
-        return "ABRT"
-    }
-    if c == "8" || c == "FPE" {
-        return "FPE"
-    }
-    if c == "9" || c == "KILL" {
-        return "KILL"
-    }
-    if c == "11" || c == "SEGV" {
-        return "SEGV"
-    }
-    if c == "13" || c == "PIPE" {
-        return "PIPE"
-    }
-    if c == "14" || c == "ALRM" {
-        return "ALRM"
-    }
-    if c == "15" || c == "TERM" {
-        return "TERM"
-    }
-    if c == "USR1" || c == "USR2" || c == "CHLD" || c == "CONT" || c == "TSTP" {
-        return c
-    }
-    ""
-}
-
-// A condition is taken by number for every number XCU `trap` names (0,
-// 1, 2, 3, 6, 9, 14, 15) and for the others whose number is the same on
-// every host pelt runs on (4 ILL, 5 TRAP, 8 FPE, 11 SEGV, 13 PIPE: linux,
-// macOS and the BSDs agree), so `trap … 1 2 13 15`, which configure and
-// automake's helpers write, is taken as dash takes it. Numbers that
-// differ between hosts (USR1 is 10 on linux and 30 on macOS) are taken
-// by name only. A condition wolf 0.2.27 has no meaning for (PIPE, ALRM,
-// USR1, ILL, …) is recorded and listed, and that is all: the signal
-// keeps its default, so a SIGPIPE still ends pelt where dash would run
-// the action or, under `trap '' PIPE`, go on (wolf-lang#679, #423).
-
-/// `trap`: every condition is recorded and printed back. `EXIT` runs
-/// as the shell ends; `HUP`, `INT`, `QUIT`, `TERM` and `USR2` are
-/// caught, ignored or put back to the default (`sh.signal`); a
-/// condition wolf has no meaning for is recorded only.
+/// `trap` (XCU `trap`): a condition is `EXIT` (or 0) or a signal, by
+/// its name in any case or by this host's number (`sh.signal`'s
+/// `cond_name`). The twenty signals wolf can hear are caught, ignored
+/// or put back to the default; the eight it can only send are recorded
+/// and printed back and that is all. With no operand the traps are
+/// printed, `EXIT` first and then in the order of the signals'
+/// numbers, as dash prints them. A lone operand that names a condition
+/// resets it, and so does a first operand that is a number (`trap 1
+/// 2`), as dash.
 fn bi_trap(mut sh: Sh, args: List[str]) -> int {
     if args.len == 0 {
-        for k in sort_strs(sh.traps.keys()) {
-            emit(mut sh, "trap -- {squote(sh.traps[k] else "")} {k}\n")
-        }
+        print_traps(mut sh)
         return 0
     }
     var i = 0
@@ -619,14 +565,16 @@ fn bi_trap(mut sh: Sh, args: List[str]) -> int {
     var action = args[i]
     var reset = action == "-"
     var conds = args[i + 1..args.len]
-    // a lone unsigned integer is a condition, and resets it
-    if is_digits(action) && trap_name(action).len > 0 {
+    if is_digits(action) && cond_name(action).len > 0 {
+        reset = true
+        conds = args[i..args.len]
+    } else if conds.len == 0 && cond_name(action).len > 0 {
         reset = true
         conds = args[i..args.len]
     }
     var st = 0
     for c in conds {
-        let n = trap_name(c)
+        let n = cond_name(c)
         if n.len == 0 {
             diag(mut sh, "trap: {c}: no such condition")
             st = 1
@@ -640,6 +588,39 @@ fn bi_trap(mut sh: Sh, args: List[str]) -> int {
     }
     sig_apply(mut sh)
     st
+}
+
+/// Every trap as a `trap` command that sets it again: `EXIT`, then the
+/// signals lowest number first.
+fn print_traps(mut sh: Sh) {
+    if sh.traps.len == 0 {
+        return
+    }
+    if has_trap(sh, "EXIT") {
+        emit(mut sh, "trap -- {squote(sh.traps["EXIT"] else "")} EXIT\n")
+    }
+    var last = 0
+    loop {
+        var best = -1
+        var best_n = 0
+        var k = 0
+        while k < SIG_ALL {
+            if has_trap(sh, sig_name(k)) {
+                let n = sig_number(k)
+                if n > last && (best < 0 || n < best_n) {
+                    best = k
+                    best_n = n
+                }
+            }
+            k += 1
+        }
+        if best < 0 {
+            break
+        }
+        let c = sig_name(best)
+        emit(mut sh, "trap -- {squote(sh.traps[c] else "")} {c}\n")
+        last = best_n
+    }
 }
 
 fn bi_pwd(mut sh: Sh, args: List[str]) -> int {

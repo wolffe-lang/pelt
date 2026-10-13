@@ -734,31 +734,14 @@ fn tdel(mut sh: Sh, name: str) {
     let _t = (mut sh.traps).remove(name) else ""
 }
 
-/// Every name `trap` can record a condition under (`sh.builtin`'s
-/// `trap_name`), in a fixed order; "" past the end. A literal each, so
-/// walking them allocates nothing.
+/// Every name `trap` can record a condition under, in a fixed order:
+/// `EXIT`, then the signals of `sh.signal`'s table; "" past the end. A
+/// literal each, so walking them allocates nothing.
 fn trap_cond(i: int) -> str {
-    match i {
-        0 => "EXIT",
-        1 => "HUP",
-        2 => "INT",
-        3 => "QUIT",
-        4 => "ILL",
-        5 => "TRAP",
-        6 => "ABRT",
-        7 => "FPE",
-        8 => "KILL",
-        9 => "SEGV",
-        10 => "PIPE",
-        11 => "ALRM",
-        12 => "TERM",
-        13 => "USR1",
-        14 => "USR2",
-        15 => "CHLD",
-        16 => "CONT",
-        17 => "TSTP",
-        _ => "",
+    if i == 0 {
+        return "EXIT"
     }
+    sig_name(i - 1)
 }
 
 /// A subshell starts with its traps reset (XCU 2.12): a trap with an
