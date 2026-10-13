@@ -1,0 +1,18 @@
+HUP -> HUP
+INT -> INT
+USR1 -> USR1
+USR2 -> USR2
+PIPE -> PIPE
+ALRM -> ALRM
+TERM -> TERM
+VTALRM -> VTALRM
+PROF -> PROF
+KILL -> KILL
+survived-CONT
+CONT -> 0
+survived-WINCH
+WINCH -> 0
+survived-URG
+URG -> 0
+survived-CHLD
+CHLD -> 0

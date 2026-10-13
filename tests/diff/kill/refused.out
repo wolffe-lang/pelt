@@ -1,0 +1,20 @@
+[-s SIGTERM] 2
+[-SIGTERM] 2
+[-s EXIT] 2
+[-EXIT] 2
+[-s 1x] 2
+[-1x] 2
+[-s -1] 2
+[-x] 2
+[-TERM --] 2
+[-- -TERM] 2
+[-s NOSUCH] 2
+[-s] 2
+none=2
+no-pid=2
+no-pid-9=2
+dashdash-only=2
+still-there=0
+ended=TERM
+no-such-job=2
+no-such-name=2

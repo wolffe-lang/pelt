@@ -55,8 +55,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
 | **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13); `(echo … >fifo &)` opens the FIFO for writing inside the shell, which waits for a reader that comes only after it, so `builtin/c_s_dot_special_file` times out (its `. /dev/null` line passes since sh07, and `builtin/dot_fifo_program` reads a FIFO a program writes); and `signal/c_trap_ignore_pipe` (since sh14 `trap '' PIPE` is honoured, `signal/trap_ignore_pipe_fifo`; this case's writer is a brace group in a pipeline, which runs to its end before the reader starts, so its write meets a pipe that still has a reader) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `builtin/c_s_dot_special_file`, `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell`, `signal/c_trap_ignore_pipe` |
 | **ulimit** | `ulimit` | wolf-lang: no `getrlimit`/`setrlimit` surface (W02) | `ulimit/c_bad`, `ulimit/c_enforced`, `ulimit/c_file_size`, `ulimit/c_resources` |
-| **kill** | `kill` as a built-in: `kill -l`, exit statuses, a signal to the shell's own pid | wolf-lang#141 (a signal to any pid), then pelt | `kill/c_bad`, `kill/c_job_id`, `kill/c_list`, `kill/c_send` |
-| **job-ids** | `wait %1`, `kill %1` | pelt once `kill` is a built-in (wolf-lang#141) | `wait/c_job_id` |
 | **jobs** | `jobs`, `jobs -p` | pelt (P12); job states need wolf-lang W03 | `jobsctl/c_jobs_script` |
 | **job-control** | `set -m`: a process group per job | wolf-lang: stop reporting, `SIGCONT`, a signal to a group, an interruptible wait (W03, wolf-lang#680) | `jobsctl/c_fg_bg_no_monitor`, `jobsctl/c_monitor_script_pgid` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
@@ -73,9 +71,25 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
   (`while :; do echo y; done | head -1`) does not end as it does under
   dash; and `exec cmd` inside a subshell starts `cmd` as a child of
   pelt rather than replacing a subshell process.
-- `kill` is not a built-in (wolf can signal only a child it holds a
-  handle for, wolf-lang#141), so `kill` is the host's program: it has
-  no job ids (`%1`).
+- `kill 0`, `kill -- -N` (a process group): refused by name with
+  status 1. `os_signal_send` takes one process, and a signal to a group
+  is job control's (`[os.term.note]`; the job-control row above). No
+  case, here or under the oracle: it would signal the harness's own
+  group.
+- `kill` and `trap` for a signal POSIX does not name (linux's `IO`,
+  `PWR`, `STKFLT`, 16, the real-time signals, by name or number): wolf
+  has a meaning for the signals POSIX names and no other, so pelt
+  refuses these (status 2 from `kill`, 1 from `trap`) where dash takes
+  them. `kill -l` lists the 28 names wolf has.
+- A job id is the job's place among the asynchronous lists the shell
+  has started (`%1` the first, `%%` the newest); dash and bash give a
+  finished job's number to the next job, pelt does not. `%name` and
+  `%?text` name no job (pelt keeps no job's command text).
+
+**Cleared by sh14 (wolf 0.2.29), `kill`:** `kill/c_bad`,
+`kill/c_job_id`, `kill/c_list`, `kill/c_send` and `wait/c_job_id`.
+`kill` is a built-in on `os_signal_send` and `os_signal_number`, and
+`kill` and `wait` take a job id.
 
 **Cleared by sh14 (wolf 0.2.29), ignored at start:**
 `signal/c_ignored_on_entry`. pelt reads the set of signals it was

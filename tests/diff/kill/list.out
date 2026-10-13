@@ -1,0 +1,19 @@
+HUP INT QUIT ABRT KILL ALRM TERM 
+HUP INT QUIT ABRT KILL ALRM TERM 
+TERM
+st=0
+TERM
+st=0
+[0] 2
+[128] 2
+[255] 2
+[256] 2
+[257] 2
+[999] 2
+[x] 2
+[HUP] 2
+[-1] 2
+[] 2
+listed
+unknown=2
+taken

@@ -1,0 +1,5 @@
+no-path=0
+function=0
+subshell=0
+cmdsub=TERM
+pipe=KILL

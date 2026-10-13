@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+oracle=bash
+why=dash cannot signal a job by its id in a script (no process group without set -m); XCU kill says it is signalled
+dash=differs

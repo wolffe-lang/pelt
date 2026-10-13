@@ -520,14 +520,14 @@ wait/2	T	wait pid returns that child's status; several operands: the status of t
 wait/3	T	wait for a pid that is not a child of this shell returns 127	jobs/wait_unknown wait/c_unknown	
 wait/4	T	wait reports a child ended by a signal with a status above 128	signal/child_bg_wait wait/c_signalled	
 wait/5	T	The status of a child that ended before wait is still collected, for any of the known process IDs	signal/wait_twice signal/child_bg_unwaited wait/c_already_ended	
-wait/6	T	wait with a job ID operand (%1, %%)	wait/c_job_id	
+wait/6	T	wait with a job ID operand (%1, %%)	wait/c_job_id wait/job_ids	
 wait/7	T	wait in a subshell cannot wait for the parent's children	wait/c_subshell	
-kill/1	T	kill pid sends SIGTERM; kill -s name and kill -name and kill -number send that signal; the status of a signalled child shows it	signal/child_bg_wait kill/c_send	
-kill/2	T	kill -l lists signal names; kill -l number names that signal; kill -l with an exit status names the signal that caused it	kill/c_list	
-kill/3	T	kill -0 pid tests for the process without sending; a missing process fails	kill/c_zero	
-kill/4	T	kill is built in: it signals by job ID (%1), and works on the shell's own children without a search of PATH	kill/c_job_id	
-kill/5	T	kill with a bad signal name or no operand fails	kill/c_bad	
-kill/6	T	kill accepts several pids, a negative pid for a process group, and -- before it	kill/c_multiple	
+kill/1	T	kill pid sends SIGTERM; kill -s name and kill -name and kill -number send that signal; the status of a signalled child shows it	signal/child_bg_wait kill/c_send kill/forms kill/status_names kill/self	
+kill/2	T	kill -l lists signal names; kill -l number names that signal; kill -l with an exit status names the signal that caused it	kill/c_list kill/list	
+kill/3	T	kill -0 pid tests for the process without sending; a missing process fails	kill/c_zero kill/targets	
+kill/4	T	kill is built in: it signals by job ID (%1), and works on the shell's own children without a search of PATH	kill/c_job_id kill/builtin kill/job_ids	
+kill/5	T	kill with a bad signal name or no operand fails	kill/c_bad kill/refused	
+kill/6	T	kill accepts several pids, a negative pid for a process group, and -- before it	kill/c_multiple	a pid of 0 or below (a process group) is refused by name until wolf has job control (`os_signal_send` takes one process); no case sends to a group, here or under the oracle: it would signal the harness
 umask/1	T	umask writes the mask as octal; umask -S symbolically; umask mode sets it for the shell and its children	umask/c_umask	
 umask/2	T	umask accepts a symbolic mode	umask/c_symbolic	
 umask/3	T	umask with an invalid mode fails	umask/c_bad	

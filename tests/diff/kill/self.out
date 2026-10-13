@@ -1,0 +1,11 @@
+got-usr1
+after=0
+ignored=0
+zero-ok
+before
+term: TERM
+before
+int: INT
+no-exit-trap: TERM
+bye
+trap-exit: 3

@@ -1,0 +1,13 @@
+self=0
+self-s0=0
+plus=0
+blank=0
+word=2
+mixed=2
+empty=2
+huge=2
+two=0
+gone=1
+gone-term=1
+one-gone=1
+ended=TERM
