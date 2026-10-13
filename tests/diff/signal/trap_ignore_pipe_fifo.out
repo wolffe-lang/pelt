@@ -1,0 +1,2 @@
+ignored: echo=1
+default: PIPE

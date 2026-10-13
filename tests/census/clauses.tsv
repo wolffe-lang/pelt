@@ -291,7 +291,7 @@ id	kind	statement	cases	note
 2.12/2	T	Otherwise commands inherit the signal actions the shell inherited, unless trap changed them	signal/trap_ignore_inherited signal/trap_caught_default_in_child signal/c_inherited_ignore	
 2.12/3	T	A trapped signal that arrives while a foreground command runs is acted on after that command completes	signal/trap_deferred_to_foreground_end	
 2.12/4	T	A trapped signal that arrives during wait makes wait return at once with a status above 128, then the trap runs	pending/wait_interrupted signal/c_wait_interrupted_term	
-2.12/5	T	Signals for every name in signal.h can be trapped (USR1, ALRM, PIPE, CHLD, CONT, WINCH and the rest)	signal/trap_usr1 signal/trap_ignore_usr1 signal/c_trap_alrm signal/c_trap_pipe signal/c_trap_usr1_self signal/c_trap_abrt_number signal/c_trap_winch_cont signal/trap_every signal/trap_ignore_every signal/trap_chld	
+2.12/5	T	Signals for every name in signal.h can be trapped (USR1, ALRM, PIPE, CHLD, CONT, WINCH and the rest)	signal/trap_usr1 signal/trap_ignore_usr1 signal/c_trap_alrm signal/c_trap_pipe signal/c_trap_usr1_self signal/c_trap_abrt_number signal/c_trap_winch_cont signal/trap_every signal/trap_ignore_every signal/trap_chld signal/trap_ignore_pipe_fifo	
 2.13/1	T	A utility is run with the shell's open files, working directory and file creation mask	redir/child_inherits_fd exec/fd3_inherited cd/child_sees_it env/c_utility_environment	
 2.13/2	T	A utility receives the exported variables and those assigned for the command, and no others	env/exact env/never_exported env/empty env/only_pwd env/c_exported_only	
 2.13/3	T	A utility cannot change the shell's environment	env/c_child_cannot_change	
