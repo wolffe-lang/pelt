@@ -17,6 +17,9 @@ question thousands of times and counts. For SHELL:
           `1315587` on wolf 0.2.28 with the barrier's call removed
           misses 3 to 12 of 5,000 on four cpus or sixteen, none on
           one (`notes/sh14-evidence/logs/red-barrier.log`).
+  self    the same, the signal sent by the shell to itself with the
+          `kill` built-in (`os_signal_send` to its own pid): the action
+          must have run before the next command, ROUNDS times.
   ignored the shell is started with SIGUSR1 and SIGTERM ignored (this
           tool sets them so; no shell in between). XCU `trap`: such a
           signal cannot be trapped or reset. The trap is recorded and
@@ -28,8 +31,10 @@ question thousands of times and counts. For SHELL:
           runs the action and then dies of SIGTERM.
 
 The shell is started with every signal at its default and nothing
-blocked, and its SigBlk and SigIgn are printed (linux), so a row is not
-decided by what the witness inherited. Signals go only to the shell
+blocked, and it prints its own SigBlk and SigIgn (linux; read with
+`read`, not by a child: while a shell starts a program its mask is
+briefly full, and a child that looked then would report that), so a
+row is not decided by what the witness inherited. Signals go only to the shell
 this tool started (from its own child).
 
 usage: tools/signal-witness [--rounds N] SHELL
@@ -44,7 +49,11 @@ import sys
 import tempfile
 
 REAP = r'''
-grep -E 'SigBlk|SigIgn' /proc/$$/status 2>/dev/null | tr '\n\t' '  ' >&2
+if [ -r /proc/$$/status ]; then
+  while read k v; do
+    case $k in SigBlk:|SigIgn:) printf '%s %s ' "$k" "$v" >&2;; esac
+  done < /proc/$$/status
+fi
 trap 'got=1' USR2
 i=0 miss=0
 while [ $i -lt ROUNDS ]; do
@@ -55,6 +64,8 @@ while [ $i -lt ROUNDS ]; do
 done
 echo "$miss $i"
 '''
+
+SELF = REAP.replace("/bin/kill -USR2 $$", "kill -USR2 $$")
 
 IGNORED = r'''trap 'echo trapped' USR1
 trap
@@ -105,6 +116,16 @@ def main(argv):
         print(f"signal-witness: reap    {'ok  ' if good else 'FAIL'} "
               f"{words[0] if words else '?'} misses of {rounds} "
               f"(exit {r.returncode}; shell {r.stderr.strip()!r})")
+        ok = ok and good
+
+        r = subprocess.run([shell, "-c", SELF.replace("ROUNDS", str(rounds))],
+                           cwd=cwd, env=base, capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, preexec_fn=_defaults,
+                           timeout=600)
+        words = r.stdout.split()
+        good = r.returncode == 0 and words == ["0", str(rounds)]
+        print(f"signal-witness: self    {'ok  ' if good else 'FAIL'} "
+              f"{words[0] if words else '?'} misses of {rounds} (exit {r.returncode})")
         ok = ok and good
 
         want = "trap -- 'echo trapped' USR1\nalive\nstill\n"
