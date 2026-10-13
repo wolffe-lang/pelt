@@ -93,6 +93,12 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
         (mut sh.out).clear()
         diag(mut sh, "{name}: write error: bad file descriptor")
         st = 1
+    } else if sh.out.len > 0 && pipe_ignored(sh) && !flush_checked(mut sh) {
+        // with `trap '' PIPE` a write to a pipe nobody reads is this
+        // command's error, where the default would have ended the
+        // shell (XSH `write`: EPIPE; dash: status 1)
+        diag(mut sh, "{name}: write error")
+        st = 1
     }
     if sh.flow == F_NONE || sh.flow == F_EXIT {
         if sh.flow == F_NONE {

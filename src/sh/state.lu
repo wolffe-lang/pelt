@@ -945,6 +945,25 @@ fn flush(mut sh: Sh) {
     (mut sh.out).clear()
 }
 
+/// `flush`, answering whether the bytes went out: false when the host
+/// refused the write (a pipe nobody reads, with `SIGPIPE` ignored).
+fn flush_checked(mut sh: Sh) -> bool {
+    if sh.out.len == 0 {
+        return true
+    }
+    let h = fd_get(sh, 1)
+    if is_cap(h) || h < 0 {
+        flush(mut sh)
+        return true
+    }
+    var went = true
+    fs_write_chunk(h, sh.out) else |_| {
+        went = false
+    }
+    (mut sh.out).clear()
+    went
+}
+
 /// Bytes for shell descriptor `fd` other than 1 (a diagnostic, a prompt,
 /// a trace line), after whatever descriptor 1 has pending.
 fn write_fd(mut sh: Sh, fd: int, s: str) {

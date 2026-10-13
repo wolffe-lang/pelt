@@ -1085,7 +1085,15 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
                 close_opened(t)
                 return slow()
             }
-            fs_write_chunk(h, t.out) else |_| {}
+            var went = true
+            fs_write_chunk(h, t.out) else |_| {
+                went = false
+            }
+            if !went {
+                // the ordinary path writes again and says what failed
+                close_opened(t)
+                return slow()
+            }
         }
         close_opened(t)
         r.status = st

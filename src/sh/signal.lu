@@ -215,6 +215,13 @@ fn m_quit() -> int {
     signal.quit()
 }
 
+/// Whether `SIGPIPE` is ignored (by `trap '' PIPE`, or from the
+/// start): a write to a pipe nobody reads then answers an error instead
+/// of ending the shell, and a built-in reports it (`sh.builtin`).
+fn pipe_ignored(sh: Sh) -> bool {
+    sh.sig_ignore & signal.broken_pipe() != 0
+}
+
 /// `set` without the meanings in `gone`.
 fn less(set: int, gone: int) -> int {
     set - (set & gone)
