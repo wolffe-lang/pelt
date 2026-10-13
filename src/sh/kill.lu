@@ -1,0 +1,294 @@
+//! sh.kill — the `kill` built-in (XCU `kill`), and job ids.
+//!
+//! References consulted: POSIX.1-2024 XCU `kill` and 3.182 "Job ID";
+//! wolf's `spec/11-os.md` at v0.2.29 (`[os.signal.send]`,
+//! `[os.signal.number]`); black-box runs of `dash` 0.5.13.4
+//! (`notes/sh14-evidence/probe/p1`, `p6`, `p7`). No shell's source; the
+//! messages are pelt's own.
+//!
+//! **The forms**, as dash takes them: `kill pid…` (`SIGTERM`), `kill -s
+//! signal pid…`, `kill -signal pid…` (the first word only, and tried as
+//! a signal before it is read as options), `kill -- pid…`, `kill -l`,
+//! `kill -l number`. A signal is a name in any case
+//! without `SIG`, or this host's number; 0 sends nothing and asks
+//! whether the process is there and may be signalled. Status 0 when
+//! every process was signalled, 1 when one could not be, 2 for a usage
+//! error, a signal pelt has no name for, or an operand that names no
+//! process; the first operand that fails ends the command (dash).
+//!
+//! **Which signals.** The twenty-eight wolf has a meaning for: every
+//! signal POSIX names (`sh.signal`'s table). One a host has beyond those
+//! (linux's `IO`, `PWR`, `STKFLT` and the real-time signals, by name or
+//! number) is refused with status 2, where dash sends it: wolf sends a
+//! MEANING (`os_signal_send`), and those have none.
+//!
+//! **Which processes.** One process by its id, or one of the shell's
+//! own asynchronous lists by job id: `%1` the first started, `%%`, `%+`
+//! and `%` the newest, `%-` the one before it. pelt keeps no job's
+//! command text, so `%name` and `%?text` name no job. A process GROUP
+//! (a pid of 0 or below) is refused by name: `os_signal_send` takes one
+//! process, and a signal to a group is job control's, which wolf does
+//! not have yet (`[os.term.note]`; `tests/diff/PENDING.md`, job
+//! control). An asynchronous list pelt ran itself (a compound command
+//! after `&`: no fork) has ended by the time `kill` can name it.
+
+/// What `kill` and `wait` say a word names: a process id above 0;
+/// `P_GROUP` for 0 or a negative number (a process group); `P_NOT` for
+/// a word that is no number or names no job; `P_ENDED` for a job that
+/// has no process any more.
+const P_GROUP: int = 0
+
+const P_NOT: int = -1
+
+const P_ENDED: int = -2
+
+/// The index in the job table a job id names (`%1`, `%%`, `%+`, `%`,
+/// `%-`), or -1.
+fn job_index(sh: Sh, spec: str) -> int {
+    if spec.len == 0 || ch(spec, 0) != '%' {
+        return -1
+    }
+    let rest = spec[1..spec.len]
+    let count = sh.jobs.len
+    if rest.len == 0 || rest == "%" || rest == "+" {
+        return count - 1
+    }
+    if rest == "-" {
+        if count >= 2 {
+            return count - 2
+        }
+        return -1
+    }
+    if is_digits(rest) {
+        let n = to_int(rest) else 0
+        if n >= 1 && n <= count {
+            return n - 1
+        }
+    }
+    -1
+}
+
+/// The process a `kill` operand names (see `P_GROUP` and its fellows).
+/// A number may have blanks and a `+` before it, as dash takes it.
+fn kill_target(sh: Sh, word: str) -> int {
+    if word.len > 0 && ch(word, 0) == '%' {
+        let j = job_index(sh, word)
+        if j < 0 {
+            return P_NOT
+        }
+        if sh.jobs[j] < 0 || sh.job_st[j] >= 0 {
+            return P_ENDED
+        }
+        return sh.job_id[j]
+    }
+    var w = word.trim()
+    if w.len > 1 && ch(w, 0) == '+' {
+        w = w[1..w.len]
+    }
+    if w.len > 1 && ch(w, 0) == '-' && is_digits(w[1..w.len]) {
+        return P_GROUP
+    }
+    if !is_digits(w) {
+        return P_NOT
+    }
+    let pid = to_int(w) else |_| { return P_NOT }
+    if pid == 0 {
+        return P_GROUP
+    }
+    // a child the shell has already waited for: its id may be another
+    // process's by now
+    let j = job_of(sh, pid)
+    if j >= 0 && sh.job_st[j] >= 0 {
+        return P_ENDED
+    }
+    pid
+}
+
+/// The meaning a signal operand names, 0 for signal 0, or -1.
+fn kill_signal(spec: str) -> int {
+    if is_digits(spec) {
+        let n = to_int(spec) else -1
+        if n == 0 {
+            return 0
+        }
+    }
+    let k = sig_parse(spec)
+    if k < 0 {
+        return -1
+    }
+    sig_meaning(k)
+}
+
+fn kill_usage(mut sh: Sh) -> int {
+    diag(mut sh, "kill: usage: kill [-s signal | -signal] pid… or kill -l [number]")
+    2
+}
+
+/// `kill` (module doc).
+fn bi_kill(mut sh: Sh, args: List[str]) -> int {
+    if args.len == 0 {
+        return kill_usage(mut sh)
+    }
+    var meaning = sig_meaning(sig_index("TERM"))
+    var list = false
+    var i = 0
+    let first = args[0]
+    var named = -1
+    if first.len > 1 && ch(first, 0) == '-' && first != "--" {
+        named = kill_signal(first[1..first.len])
+    }
+    if named >= 0 {
+        // `-signal`: the first operand only, and no `--` after it; the
+        // whole word is tried as a signal before it is read as options,
+        // so `-stop` is SIGSTOP and `-sTERM` is `-s TERM` (dash)
+        meaning = named
+        i = 1
+    } else {
+        while i < args.len {
+            let a = args[i]
+            if a == "--" {
+                i += 1
+                break
+            }
+            if a == "-l" {
+                list = true
+                i += 1
+                continue
+            }
+            if a.len >= 2 && ch(a, 0) == '-' && ch(a, 1) == 's' {
+                var spec = a[2..a.len]
+                i += 1
+                if spec.len == 0 {
+                    if i >= args.len {
+                        diag(mut sh, "kill: -s needs a signal")
+                        return 2
+                    }
+                    spec = args[i]
+                    i += 1
+                }
+                meaning = kill_signal(spec)
+                if meaning < 0 {
+                    diag(mut sh, "kill: {spec}: no such signal")
+                    return 2
+                }
+                continue
+            }
+            if a.len > 1 && ch(a, 0) == '-' {
+                diag(mut sh, "kill: {a}: no such signal or option")
+                return 2
+            }
+            break
+        }
+    }
+    if list {
+        return kill_list(mut sh, args[i..args.len])
+    }
+    if i >= args.len {
+        return kill_usage(mut sh)
+    }
+    // what the shell has written goes out before a signal that may end it
+    flush(mut sh)
+    // the first operand that cannot be signalled ends it, with its
+    // status (dash, black-box: later operands are not tried)
+    while i < args.len {
+        let word = args[i]
+        i += 1
+        let pid = kill_target(sh, word)
+        if pid == P_NOT {
+            if word.len > 0 && ch(word, 0) == '%' {
+                diag(mut sh, "kill: {word}: no such job")
+            } else {
+                diag(mut sh, "kill: {word}: not a process id")
+            }
+            return 2
+        }
+        if pid == P_GROUP {
+            diag(mut sh, "kill: {word}: a process group cannot be signalled yet (no job control)")
+            return 1
+        }
+        if pid == P_ENDED {
+            diag(mut sh, "kill: {word}: no such process")
+            return 1
+        }
+        let st = kill_send(mut sh, word, pid, meaning)
+        if st != 0 {
+            return st
+        }
+    }
+    0
+}
+
+/// Send `meaning` to `pid`: 0, or the status and pelt's word why not.
+fn kill_send(mut sh: Sh, word: str, pid: int, meaning: int) -> int {
+    os_signal_send(pid, meaning) else |e| match e {
+        not_found => {
+            diag(mut sh, "kill: {word}: no such process")
+            return 1
+        },
+        denied => {
+            diag(mut sh, "kill: {word}: not permitted")
+            return 1
+        },
+        invalid => {
+            diag(mut sh, "kill: {word}: not a process id")
+            return 2
+        },
+        io => {
+            diag(mut sh, "kill: {word}: could not be signalled")
+            return 1
+        },
+        unsupported => {
+            diag(mut sh, "kill: this host has no signals to send")
+            return 1
+        },
+    }
+    0
+}
+
+/// `kill -l`: every signal's name, lowest number first, one a line;
+/// with an operand, the name of the signal with that number, or of the
+/// signal that ended a command with that exit status (above 128). Only
+/// the first operand is read, as dash.
+fn kill_list(mut sh: Sh, rest: List[str]) -> int {
+    if rest.len > 0 {
+        let word = rest[0]
+        var n = to_int(word) else |_| {
+            diag(mut sh, "kill: {word}: not a number")
+            return 2
+        }
+        if !is_digits(word) {
+            diag(mut sh, "kill: {word}: not a number")
+            return 2
+        }
+        if n > 128 {
+            n -= 128
+        }
+        let name = sig_name(sig_by_number(n))
+        if name.len == 0 {
+            diag(mut sh, "kill: {word}: no signal has that number or status")
+            return 2
+        }
+        emit(mut sh, "{name}\n")
+        return 0
+    }
+    var last = 0
+    loop {
+        var best = -1
+        var best_n = 0
+        var k = 0
+        while k < SIG_ALL {
+            let n = sig_number(k)
+            if n > last && (best < 0 || n < best_n) {
+                best = k
+                best_n = n
+            }
+            k += 1
+        }
+        if best < 0 {
+            break
+        }
+        emit(mut sh, "{sig_name(best)}\n")
+        last = best_n
+    }
+    0
+}
