@@ -1160,7 +1160,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     var st = 0
     var sig = 0
     if hd >= 0 && !nowait {
-        let (code, signo) = wait_child(hd, sh.sig_listen != 0)
+        let (code, signo) = wait_child(hd)
         st = code
         sig = signo
     }
@@ -1881,22 +1881,18 @@ fn child_map(sh: Sh) -> List[int] {
 }
 
 /// Wait for child `h`: its status (`128 + N` when signal N ended it)
-/// and N, or 0 (`os_wait_status`, `sh.signal`'s `status_of`). When the
-/// shell listens for a signal (`armed`), one that came while the child
-/// ran is on the queue before this returns (`sh.signal`'s `settle`), so
-/// the poll that follows sees it.
-fn wait_child(h: int, armed: bool) -> (int, int) {
+/// and N, or 0 (`os_wait_status`, `sh.signal`'s `status_of`). A signal
+/// that came for the shell while the child ran is seen by the poll that
+/// follows (`[os.signal.poll]`); nothing is done here to make it so.
+fn wait_child(h: int) -> (int, int) {
     let raw = os_wait_status(h) else 1
-    if armed {
-        settle()
-    }
     status_of(raw)
 }
 
 /// `wait_child`, and the shell's word on standard error when a signal
 /// ended the child.
 fn reap(mut sh: Sh, h: int) -> int {
-    let (st, sig) = wait_child(h, sh.sig_listen != 0)
+    let (st, sig) = wait_child(h)
     report_signal(mut sh, sig)
     st
 }

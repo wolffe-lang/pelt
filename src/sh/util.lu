@@ -602,7 +602,7 @@ fn status_numbers(text: str, key: str) -> List[int] {
 
 /// What a program prints, run with no input and its standard error
 /// closed, or "" when it cannot be run or fails.
-fn program_says(path: str, args: List[str], armed: bool) -> str {
+fn program_says(path: str, args: List[str]) -> str {
     let (r, w) = os_pipe() else { return "" }
     var map = List[int]()
     (mut map).push(1)
@@ -627,7 +627,7 @@ fn program_says(path: str, args: List[str], armed: bool) -> str {
     if h < 0 {
         return ""
     }
-    let (st, _sig) = wait_child(h, armed)
+    let (st, _sig) = wait_child(h)
     if st != 0 {
         return ""
     }
@@ -666,7 +666,6 @@ fn load_ident(mut sh: Sh) -> bool {
             return true
         }
     }
-    let armed = sh.sig_listen != 0
     for dir in "/usr/bin /bin".words() {
         let id = "{dir}/id"
         if !fs_is_file(id) {
@@ -674,11 +673,11 @@ fn load_ident(mut sh: Sh) -> bool {
         }
         var a = List[str]()
         (mut a).push("-u")
-        let u = to_int(program_says(id, a, armed).trim()) else -1
+        let u = to_int(program_says(id, a).trim()) else -1
         var b = List[str]()
         (mut b).push("-G")
         var gs = List[int]()
-        for w in program_says(id, b, armed).words() {
+        for w in program_says(id, b).words() {
             let n = to_int(w) else -1
             if n >= 0 {
                 (mut gs).push(n)
