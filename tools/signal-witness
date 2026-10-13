@@ -36,6 +36,11 @@ blocked, and it prints its own SigBlk and SigIgn (linux; read with
 briefly full, and a child that looked then would report that), so a
 row is not decided by what the witness inherited. Signals go only to the shell
 this tool started (from its own child).
+  chld    the shell is started with SIGCHLD ignored. It must still
+          learn how its children ended (a process that ignores SIGCHLD
+          has their statuses taken by the host, and every `$?` would be
+          wrong), and may trap CHLD: dash puts it back at start, so
+          does pelt.
 
 usage: tools/signal-witness [--rounds N] SHELL
 Run it also as `taskset -c 0-3 tools/signal-witness SHELL` and
@@ -93,6 +98,15 @@ def _two_ignored():
     _defaults()
     signal.signal(signal.SIGUSR1, signal.SIG_IGN)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+
+def _chld_ignored():
+    _defaults()
+    signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+
+
+CHLD = ("/bin/sh -c 'exit 3'; echo st=$?; trap 'echo c' CHLD; "
+        "/bin/sh -c 'exit 4'; echo st=$?")
 
 
 def main(argv):
@@ -154,6 +168,15 @@ def main(argv):
                 and r.stdout == "trap -- 'echo trapped' USR1\ntrapped\n")
         print(f"signal-witness: default {'ok  ' if good else 'FAIL'} "
               f"returncode {r.returncode} (want {-signal.SIGTERM}), wrote {r.stdout!r}")
+        ok = ok and good
+
+        r = subprocess.run([shell, "-c", CHLD], cwd=cwd, env=base,
+                           capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, preexec_fn=_chld_ignored,
+                           timeout=60)
+        good = r.returncode == 0 and r.stdout == "st=3\nc\nst=4\n"
+        print(f"signal-witness: chld    {'ok  ' if good else 'FAIL'} "
+              f"exit {r.returncode}, wrote {r.stdout!r}")
         ok = ok and good
     return 0 if ok else 1
 
