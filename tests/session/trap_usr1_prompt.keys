@@ -1,0 +1,6 @@
+trap 'echo caught' USR1
+kill -USR1 $$
+echo after=$?
+kill -l 15
+trap
+exit

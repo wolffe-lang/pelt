@@ -1,0 +1,7 @@
+sleep 5 &
+kill -0 $! && echo there
+kill $!
+wait $!
+echo st=$?
+kill -0 $! 2>/dev/null; echo gone=$?
+exit

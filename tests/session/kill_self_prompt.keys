@@ -1,0 +1,10 @@
+kill -TERM $$
+echo alive=$?
+kill -QUIT $$
+echo still=$?
+trap 'echo term-trapped' TERM
+kill -TERM $$
+trap - TERM
+kill -s TERM $$
+echo reset-and-alive
+exit
