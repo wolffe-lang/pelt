@@ -255,7 +255,8 @@ fn sig_boot(mut sh: Sh) {
     if sh.sig_ign0 >= 0 {
         return
     }
-    sh.sig_ign0 = signal.ignored() else 0
+    // PLANTED BREAK (sh14-plant): the set ignored at start is not read
+    sh.sig_ign0 = 0
     sh.sig_ignore = sh.sig_ignore | sh.sig_ign0
 }
 

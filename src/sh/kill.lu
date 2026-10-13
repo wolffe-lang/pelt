@@ -166,8 +166,9 @@ fn bi_kill(mut sh: Sh, args: List[str]) -> int {
                     spec = args[i]
                     i += 1
                 }
-                meaning = kill_signal(spec)
-                if meaning < 0 {
+                // PLANTED BREAK (sh14-plant): `-s` is read and not used
+                let planted = kill_signal(spec)
+                if planted < 0 {
                     diag(mut sh, "kill: {spec}: no such signal")
                     return 2
                 }
