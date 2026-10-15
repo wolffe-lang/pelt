@@ -212,8 +212,8 @@ fn cond_name(word: str) -> str {
     sig_name(sig_index(up))
 }
 
-/// The three meanings the rest of the shell names: a hangup, the
-/// terminal's interrupt and quit characters.
+/// The meanings the rest of the shell names: a hangup, the terminal's
+/// interrupt and quit characters, and a resize.
 fn m_hup() -> int {
     signal.reload()
 }
@@ -224,6 +224,11 @@ fn m_int() -> int {
 
 fn m_quit() -> int {
     signal.quit()
+}
+
+/// A window resized (`SIGWINCH`): the line editor draws its line again.
+fn m_resize() -> int {
+    signal.resize()
 }
 
 /// Whether `SIGPIPE` is ignored (by `trap '' PIPE`, or from the
