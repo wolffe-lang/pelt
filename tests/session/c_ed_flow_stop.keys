@@ -1,0 +1,4 @@
+\k echo a\x13b\r
+\k \x11
+echo after
+exit

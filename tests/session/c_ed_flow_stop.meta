@@ -1,0 +1,2 @@
+compare=stdout
+why=Ctrl-S mid-line: with IXON on the editor's own drawing would stop and the mode's restore would wait for it; FLOW is off while a line is edited, so the shell goes on (sh15). ^Q resumes dash's output
