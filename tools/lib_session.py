@@ -48,6 +48,10 @@ A session case is a set of files in tests/session/:
                   pending=WHAT  needs a primitive pelt lacks; listed by
                                 name in tests/session/PENDING.md
                   why=TEXT      free text
+                  tr_by=hand    the transcript was written by hand,
+                                where pelt chose otherwise than both
+                                oracles (said in `why=`):
+                                tools/session-record leaves it alone
                   screen=N[-M]  judge the screen of steps N through M
                                 (or N to the end) against
                                 <name>.screen (below)
@@ -408,7 +412,7 @@ def read_meta(path):
 
 def write_meta(path, meta):
     order = ["args", "pelt_args", "oracle_args", "env", "oracle", "compare",
-             "bash", "dash", "pending", "why"]
+             "bash", "dash", "pending", "tr_by", "why"]
     keys = [k for k in order if k in meta] + sorted(
         k for k in meta if k not in order)
     with open(path, "w", encoding="utf-8") as fh:
