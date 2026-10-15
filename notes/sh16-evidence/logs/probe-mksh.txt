@@ -1,0 +1,1250 @@
+===== cmd_unique [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k unam\\tX\\x01echo \\r"
+  out "uname X\n"
+  err no
+  prompt ""
+      | # echo uname X
+      | #
+      cursor 1 2
+      bel 0 raw b'unam\r# uname                                                                        \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08euname X\x08\x08\x08\x08\x08\x08\x08cuname X\x08\x08\x08\x08\x08\x08\x08huname X\x08\x08\x08\x08\x08\x08\x08ouname X\x08\x08\x08\x08\x08\x08\x08 uname X\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== cmd_lcp_list [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err no
+  prompt ""
+      | # PATH=$HOME/bin:$PATH
+      | #
+      cursor 1 2
+      bel 0 raw b'PATH=$HOME/bin:$PATH\r\r\n# '
+  step 2 "\\k zq\\t"
+  err no
+  prompt ""
+      | # zq
+      | zqxa1  zqxa2  zqxbb
+      | # zqx
+      cursor 2 5
+      bel 0 raw b'zq\r\r\nzqxa1  zqxa2  zqxbb\r\n\r# zqx                                                                          \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # zqx
+      | zqxa1  zqxa2  zqxbb
+      | # zqx
+      cursor 2 5
+      bel 0 raw b'\r\r\nzqxa1  zqxa2  zqxbb\r\n\r# zqx                                                                          \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 4 "\\k \\t"
+  err no
+  prompt ""
+      | # zqx
+      | zqxa1  zqxa2  zqxbb
+      | # zqx
+      cursor 2 5
+      bel 0 raw b'\r\r\nzqxa1  zqxa2  zqxbb\r\n\r# zqx                                                                          \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 6 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 6
+===== cmd_at_lcp [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err no
+  prompt ""
+      | # PATH=$HOME/bin:$PATH
+      | #
+      cursor 1 2
+      bel 0 raw b'PATH=$HOME/bin:$PATH\r\r\n# '
+  step 2 "\\k zqxa\\t"
+  err no
+  prompt ""
+      | # zqxa
+      | zqxa1  zqxa2
+      | # zqxa
+      cursor 2 6
+      bel 0 raw b'zqxa\r\r\nzqxa1  zqxa2\r\n\r# zqxa                                                                         \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # zqxa
+      | zqxa1  zqxa2
+      | # zqxa
+      cursor 2 6
+      bel 0 raw b'\r\r\nzqxa1  zqxa2\r\n\r# zqxa                                                                         \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 4 "\\k 1\\x01echo \\r"
+  out "zqxa1\n"
+  err no
+  prompt ""
+      | # echo zqxa1
+      | #
+      cursor 1 2
+      bel 0 raw b'1\x08\x08\x08\x08\x08ezqxa1\x08\x08\x08\x08\x08czqxa1\x08\x08\x08\x08\x08hzqxa1\x08\x08\x08\x08\x08ozqxa1\x08\x08\x08\x08\x08 zqxa1\x08\x08\x08\x08\x08\r\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_empty_tab [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k \\t"
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 1 raw b'\x07'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 1 raw b'\x07'
+  step 3 "\\k n"
+  err no
+  prompt ""
+      | # n
+      cursor 0 3
+      bel 0 raw b'n'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_many [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k b\\t"
+  err no
+  prompt ""
+      | # b
+      | b2sum     base64    basenc    bashbug   bind      builtin
+      | base32    basename  bash      bg        break
+      | # b
+      cursor 3 3
+      bel 0 raw b'b\r\r\nb2sum     base64    basenc    bashbug   bind      builtin\r\nbase32    basename  bash      bg        break\r\n\r# b                                                                            \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # b
+      | b2sum     base64    basenc    bashbug   bind      builtin
+      | base32    basename  bash      bg        break
+      | # b
+      cursor 3 3
+      bel 0 raw b'\r\r\nb2sum     base64    basenc    bashbug   bind      builtin\r\nbase32    basename  bash      bg        break\r\n\r# b                                                                            \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k n"
+  err no
+  prompt ""
+      | # bn
+      cursor 0 4
+      bel 0 raw b'n'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_nomatch [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k qqqzz\\t"
+  err no
+  prompt ""
+      | # qqqzz
+      cursor 0 7
+      bel 1 raw b'qqqzz\x07'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # qqqzz
+      cursor 0 7
+      bel 1 raw b'\x07'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== cmd_builtin_fn_alias [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "f_mine() { :; }"
+  err no
+  prompt ""
+      | # f_mine() { :; }
+      | #
+      cursor 1 2
+      bel 0 raw b'f_mine() { :; }\r\r\n# '
+  step 2 "alias al_mine=true"
+  err no
+  prompt ""
+      | # alias al_mine=true
+      | #
+      cursor 1 2
+      bel 0 raw b'alias al_mine=true\r\r\n# '
+  step 3 "\\k f_mi\\tX\\x01echo \\r"
+  out "f_mine X\n"
+  err no
+  prompt ""
+      | # echo f_mine X
+      | #
+      cursor 1 2
+      bel 0 raw b'f_mi\r# f_mine                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08ef_mine X\x08\x08\x08\x08\x08\x08\x08\x08cf_mine X\x08\x08\x08\x08\x08\x08\x08\x08hf_mine X\x08\x08\x08\x08\x08\x08\x08\x08of_mine X\x08\x08\x08\x08\x08\x08\x08\x08 f_mine X\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 4 "\\k al_mi\\tX\\x01echo \\r"
+  out "al_mine X\n"
+  err no
+  prompt ""
+      | # echo al_mine X
+      | #
+      cursor 1 2
+      bel 0 raw b'al_mi\r# al_mine                                                                      \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08\x08eal_mine X\x08\x08\x08\x08\x08\x08\x08\x08\x08cal_mine X\x08\x08\x08\x08\x08\x08\x08\x08\x08hal_mine X\x08\x08\x08\x08\x08\x08\x08\x08\x08oal_mine X\x08\x08\x08\x08\x08\x08\x08\x08\x08 al_mine X\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 5 "\\k alia\\tX\\x01echo \\r"
+  out "alias X\n"
+  err no
+  prompt ""
+      | # echo alias X
+      | #
+      cursor 1 2
+      bel 0 raw b'alia\r# alias                                                                        \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08ealias X\x08\x08\x08\x08\x08\x08\x08calias X\x08\x08\x08\x08\x08\x08\x08halias X\x08\x08\x08\x08\x08\x08\x08oalias X\x08\x08\x08\x08\x08\x08\x08 alias X\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 6 "\\k whil\\tX\\x01echo \\r"
+  out "while X\n"
+  err no
+  prompt ""
+      | # echo while X
+      | #
+      cursor 1 2
+      bel 0 raw b'whil\r# while                                                                        \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08ewhile X\x08\x08\x08\x08\x08\x08\x08cwhile X\x08\x08\x08\x08\x08\x08\x08hwhile X\x08\x08\x08\x08\x08\x08\x08owhile X\x08\x08\x08\x08\x08\x08\x08 while X\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 7 "\\k getop\\tX\\x01echo \\r"
+  out "getoptX\n"
+  err no
+  prompt ""
+      | # getop
+      | getopt   getopts
+      | # echo getoptX
+      | #
+      cursor 3 2
+      bel 0 raw b'getop\r\r\ngetopt   getopts\r\n\r# getopt                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\x08\x08\x08\x08\x08\x08\x08egetoptX\x08\x08\x08\x08\x08\x08\x08cgetoptX\x08\x08\x08\x08\x08\x08\x08hgetoptX\x08\x08\x08\x08\x08\x08\x08ogetoptX\x08\x08\x08\x08\x08\x08\x08 getoptX\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 8 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 8
+===== cmd_after_ops [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo hi | unam\\tX\\x01echo \\r"
+  err no
+  prompt ""
+      | # echo echo hi | uname X
+      | uname: extra operand 'X'
+      | Try 'uname --help' for more information.
+      | #
+      cursor 3 2
+      bel 0 raw b"echo hi | unam\r# echo hi | uname                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08eecho hi | uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08cecho hi | uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08hecho hi | uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08oecho hi | uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 echo hi | uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\nuname: extra operand 'X'\r\nTry 'uname --help' for more information.\r\n# "
+  step 2 "\\k true; unam\\tX\\x01echo \\r"
+  out "true\n"
+  err no
+  prompt ""
+      | # echo true; uname X
+      | uname: extra operand 'X'
+      | Try 'uname --help' for more information.
+      | #
+      cursor 3 2
+      bel 0 raw b"true; unam\r# true; uname                                                                  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08etrue; uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08ctrue; uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08htrue; uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08otrue; uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 true; uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\nuname: extra operand 'X'\r\nTry 'uname --help' for more information.\r\n# "
+  step 3 "\\k true && unam\\tX\\x01echo \\r"
+  out "true\n"
+  err no
+  prompt ""
+      | # echo true && uname X
+      | uname: extra operand 'X'
+      | Try 'uname --help' for more information.
+      | #
+      cursor 3 2
+      bel 0 raw b"true && unam\r# true && uname                                                                \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08etrue && uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08ctrue && uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08htrue && uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08otrue && uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 true && uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\nuname: extra operand 'X'\r\nTry 'uname --help' for more information.\r\n# "
+  step 4 "\\k echo $(unam\\tX\\x01echo \\r"
+  err no
+  prompt ""
+      | # echo echo $(uname X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo $(unam\r# echo $(uname                                                                 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08eecho $(uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08cecho $(uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08hecho $(uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08oecho $(uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 echo $(uname X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n> '
+  step 5 "\\k FOO=1 unam\\tX\\x01echo \\r"
+  err no
+  prompt ""
+      | > echo FOO=1 unamX
+      | >
+      cursor 1 2
+      bel 1 raw b'FOO=1 unam\x07X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08eFOO=1 unamX\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08cFOO=1 unamX\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08hFOO=1 unamX\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08oFOO=1 unamX\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 FOO=1 unamX\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n> '
+  step 6 "\\k if unam\\tX\\x01echo \\r"
+  err no
+  prompt ""
+      | > echo if unamX
+      | >
+      cursor 1 2
+      bel 1 raw b'if unam\x07X\x08\x08\x08\x08\x08\x08\x08\x08eif unamX\x08\x08\x08\x08\x08\x08\x08\x08cif unamX\x08\x08\x08\x08\x08\x08\x08\x08hif unamX\x08\x08\x08\x08\x08\x08\x08\x08oif unamX\x08\x08\x08\x08\x08\x08\x08\x08 if unamX\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n> '
+  step 7 "exit"
+  err no
+  prompt ""
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\r\n> '
+  alive at step 7
+===== cmd_slash [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k ./scr\\tX\\x01echo \\r"
+  out "./script.sh X\n"
+  err no
+  prompt ""
+      | # echo ./script.sh X
+      | #
+      cursor 1 2
+      bel 0 raw b'./scr\r# ./script.sh                                                                  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08e./script.sh X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08c./script.sh X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08h./script.sh X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08o./script.sh X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 ./script.sh X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 2 "\\k ./sc\\t"
+  err no
+  prompt ""
+      | # ./sc
+      | scdir/     scfile     script.sh
+      | # ./sc
+      cursor 2 6
+      bel 0 raw b'./sc\r\r\nscdir/     scfile     script.sh\r\n\r# ./sc                                                                         \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # ./sc
+      | scdir/     scfile     script.sh
+      | # ./sc
+      cursor 2 6
+      bel 0 raw b'\r\r\nscdir/     scfile     script.sh\r\n\r# ./sc                                                                         \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_unique [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo uniq\\tX\\r"
+  out "unique_file_name X\n"
+  err no
+  prompt ""
+      | # echo unique_file_name X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo uniq\r# echo unique_file_name                                                        \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dirs [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo su\\t"
+  err no
+  prompt ""
+      | # echo sub/
+      cursor 0 11
+      bel 0 raw b'echo su\r# echo sub/                                                                    \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo sub/dir/
+      cursor 0 15
+      bel 0 raw b'\r# echo sub/dir/                                                                \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # echo sub/dir/afile
+      cursor 0 21
+      bel 0 raw b'\r# echo sub/dir/afile                                                           \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 '
+  step 4 "\\k X\\r"
+  out "sub/dir/afile X\n"
+  err no
+  prompt ""
+      | # echo sub/dir/afile X
+      | #
+      cursor 1 2
+      bel 0 raw b'X\r\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_list_cols [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo f\\t"
+  err no
+  prompt ""
+      | # echo f
+      | fa                  fhh
+      | fbb                 fiii
+      | fccc                fjjjj
+      | fdddd               fkkkkk
+      | fdir/               fllllllllllll
+      | feeeee              fm
+      | fffffff             fnn
+      | fg
+      | # echo f
+      cursor 9 8
+      bel 0 raw b'echo f\r\r\nfa                  fhh\r\nfbb                 fiii\r\nfccc                fjjjj\r\nfdddd               fkkkkk\r\nfdir/               fllllllllllll\r\nfeeeee              fm\r\nfffffff             fnn\r\nfg\r\n\r# echo f                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo f
+      | fa                  fhh
+      | fbb                 fiii
+      | fccc                fjjjj
+      | fdddd               fkkkkk
+      | fdir/               fllllllllllll
+      | feeeee              fm
+      | fffffff             fnn
+      | fg
+      | # echo f
+      cursor 9 8
+      bel 0 raw b'\r\r\nfa                  fhh\r\nfbb                 fiii\r\nfccc                fjjjj\r\nfdddd               fkkkkk\r\nfdir/               fllllllllllll\r\nfeeeee              fm\r\nfffffff             fnn\r\nfg\r\n\r# echo f                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                      \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_space [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo my\\tX\\r"
+  out "my file X\n"
+  err no
+  prompt ""
+      | # echo my\ file X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo my\r# echo my\\ file                                                                \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_space_lcp [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo my\\t"
+  err no
+  prompt ""
+      | # echo my
+      | my file a  my file b
+      | # echo my\ file\
+      cursor 2 17
+      bel 0 raw b'echo my\r\r\nmy file a  my file b\r\n\r# echo my\\ file\\                                                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo my\ file\
+      | my file a  my file b
+      | # echo my\ file\
+      cursor 2 17
+      bel 0 raw b'\r\r\nmy file a  my file b\r\n\r# echo my\\ file\\                                                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k a\\r"
+  out "my file a\n"
+  err no
+  prompt ""
+      | # echo my\ file\ a
+      | #
+      cursor 1 2
+      bel 0 raw b'a\r\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_dollar [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo a\\tX\\r"
+  out "a$b X\n"
+  err no
+  prompt ""
+      | # echo a\$b X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo a\r# echo a\\$b                                                                    \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_squote [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo q\\tX\\r"
+  out "q'uote X\n"
+  err no
+  prompt ""
+      | # echo q\'uote X
+      | #
+      cursor 1 2
+      bel 0 raw b"echo q\r# echo q\\'uote                                                                 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# "
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dquote [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo d\\tX\\r"
+  out "d\"q X\n"
+  err no
+  prompt ""
+      | # echo d\"q X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo d\r# echo d\\"q                                                                    \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_star [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo st*\\t"
+  err no
+  prompt ""
+      | # echo st*
+      | st*ar  stz
+      | # echo st
+      cursor 2 9
+      bel 0 raw b'echo st*\r\r\nst*ar  stz\r\n\r# echo st                                                                      \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 2 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 3 "\\k echo st\\\\*\\tX\\r"
+  out "st*ar X\n"
+  err no
+  prompt ""
+      | # echo st\*ar X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo st\\*\r# echo st\\*ar                                                                  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_newline [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo nl\\tX\\r"
+  out "nl\nname X\n"
+  err no
+  prompt ""
+      | # echo nl'^J'name X
+      | #
+      cursor 1 2
+      bel 0 raw b"echo nl\r# echo nl'^J'name                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# "
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_amp_semi [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo a\\tX\\r"
+  out "a&b;c(d) X\n"
+  err no
+  prompt ""
+      | # echo a\&b\;c\(d\) X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo a\r# echo a\\&b\\;c\\(d\\)                                                            \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_quoted_typed [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo \"my\\tX\\r"
+  err no
+  prompt ""
+      | # echo "my\ file X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo "my\r# echo "my\\ file                                                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n> '
+  step 2 "\\k echo 'my\\tX\\r"
+  err no
+  prompt ""
+      | > echo 'my\ file X
+      | >
+      cursor 1 2
+      bel 0 raw b"echo 'my\r> echo 'my\\ file                                                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n> "
+  step 3 "\\k echo my\\\\ \\tX\\r"
+  err no
+  prompt ""
+      | > echo my\ file X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo my\\ \r> echo my\\ file                                                                \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n> '
+  step 4 "exit"
+  err no
+  prompt ""
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\r\n> '
+  alive at step 4
+===== file_tilde [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo ~/do\\tX\\r"
+  out "/tmp/pelt-sess.17k4w2hk/home/docs/X\n"
+  err no
+  prompt ""
+      | # echo /tmp/pelt-sess.17k4w2hk/home/docs/X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo ~/do\r# echo /tmp/pelt-sess.17k4w2hk/home/docs/                                      \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\r\r\n# '
+  step 2 "\\k echo ~/\\t"
+  err no
+  prompt ""
+      | # echo /tmp/pelt-sess.17k4w2hk/home/docs/
+      cursor 0 41
+      bel 0 raw b'echo ~/\r# echo /tmp/pelt-sess.17k4w2hk/home/docs/                                      \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # echo /tmp/pelt-sess.17k4w2hk/home/docs/note
+      cursor 0 46
+      bel 0 raw b'\r# echo /tmp/pelt-sess.17k4w2hk/home/docs/note                                  \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 '
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 5 "\\k echo ~\\t"
+  err no
+  prompt ""
+      | # echo /tmp/pelt-sess.17k4w2hk/home/
+      cursor 0 36
+      bel 0 raw b'echo ~\r# echo /tmp/pelt-sess.17k4w2hk/home                                            \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08/'
+  step 6 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 7 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 7
+===== file_abs [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo /us\\tX\\r"
+  out "/usr/X\n"
+  err no
+  prompt ""
+      | # echo /usr/X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo /us\r# echo /usr/                                                                   \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\r\r\n# '
+  step 2 "\\k echo /usr/bi\\tX\\r"
+  out "/usr/bin/X\n"
+  err no
+  prompt ""
+      | # echo /usr/bin/X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo /usr/bi\r# echo /usr/bin/                                                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\r\r\n# '
+  step 3 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== file_hidden [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo \\t"
+  err no
+  prompt ""
+      | # echo vis
+      cursor 0 11
+      bel 0 raw b'echo \r# echo vis                                                                     \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 '
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo vis vis
+      cursor 0 15
+      bel 0 raw b'\r# echo vis vis                                                                 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 '
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 4 "\\k echo .h\\tX\\r"
+  out ".hid1 X\n"
+  err no
+  prompt ""
+      | # echo .hid1 X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo .h\r# echo .hid1                                                                   \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_mid_word [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo uniqZZ\\e[D\\e[D\\t\\r"
+  out "uniqZZ\n"
+  err no
+  prompt ""
+      | # echo uniqZZ
+      | #
+      cursor 1 2
+      bel 1 raw b'echo uniqZZ\x08\x08\x07\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_redir [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k cat <uniq\\tX\\r"
+  err no
+  prompt ""
+      | # cat <unique_file_name X
+      | cat: X: No such file or directory
+      | #
+      cursor 2 2
+      bel 0 raw b'cat <uniq\r# cat <unique_file_name                                                        \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\ncat: X: No such file or directory\r\n# '
+  step 2 "\\k echo hi >uniq\\tX\\r"
+  err no
+  prompt ""
+      | # echo hi >unique_file_name X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo hi >uniq\r# echo hi >unique_file_name                                                    \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 3 "\\k FOO=uniq\\tX\\x01echo \\r"
+  out "FOO=unique_file_name X\n"
+  err no
+  prompt ""
+      | # echo FOO=unique_file_name X
+      | #
+      cursor 1 2
+      bel 0 raw b'FOO=uniq\r# FOO=unique_file_name                                                         \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08eFOO=unique_file_name X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08cFOO=unique_file_name X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08hFOO=unique_file_name X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08oFOO=unique_file_name X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 FOO=unique_file_name X\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== var [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo $HO\\tX\\r"
+  out "\n"
+  err no
+  prompt ""
+      | # echo $HOX
+      | #
+      cursor 1 2
+      bel 1 raw b'echo $HO\x07X\r\r\n# '
+  step 2 "\\k echo ${HO\\tX\\r"
+  err no
+  prompt ""
+      | # echo ${HOE: mksh: no closing quote
+      | # X
+      | E: mksh: X: inaccessible or not found
+      | #
+      cursor 3 2
+      bel 0 raw b'echo ${HOE: mksh: no closing quote\r\n# X\r\r\nE: mksh: X: inaccessible or not found\r\n# '
+  step 3 "\\k echo \"$HO\\tX\\r"
+  err no
+  prompt ""
+      | # echo "$HOX
+      | >
+      cursor 1 2
+      bel 1 raw b'echo "$HO\x07X\r\r\n> '
+  step 4 "\\k echo a$HO\\tX\\r"
+  err no
+  prompt ""
+      | > echo aX
+      | >
+      cursor 1 2
+      bel 0 raw b'echo a$HO\r> echo a                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\r\r\n> '
+  step 5 "exit"
+  err no
+  prompt ""
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\r\n> '
+  alive at step 5
+===== var_lcp [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "ZQV_ONE=1 ZQV_TWO=2"
+  err no
+  prompt ""
+      | # ZQV_ONE=1 ZQV_TWO=2
+      | #
+      cursor 1 2
+      bel 0 raw b'ZQV_ONE=1 ZQV_TWO=2\r\r\n# '
+  step 2 "\\k echo $ZQV\\t"
+  err no
+  prompt ""
+      | # echo $ZQV
+      cursor 0 11
+      bel 1 raw b'echo $ZQV\x07'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # echo $ZQV
+      cursor 0 11
+      bel 1 raw b'\x07'
+  step 4 "\\k \\t"
+  err no
+  prompt ""
+      | # echo $ZQV
+      cursor 0 11
+      bel 1 raw b'\x07'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 6 "\\k echo $ZQV_O\\tX\\r"
+  out "\n"
+  err no
+  prompt ""
+      | # echo $ZQV_OX
+      | #
+      cursor 1 2
+      bel 1 raw b'echo $ZQV_O\x07X\r\r\n# '
+  step 7 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 7
+===== vi_insert_tab [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "set -o vi"
+  err no
+  prompt ""
+      | # set -o vi
+      | #
+      cursor 1 2
+      bel 0 raw b'set -o vi\r\r\n# '
+  step 2 "\\k echo uniq\\tX\\r"
+  out "unique_file_name X\n"
+  err no
+  prompt ""
+      | # echo unique_file_name X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo unique_file_name X\r\r\n# '
+  step 3 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== vi_cmd_expand [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "set -o vi"
+  err no
+  prompt ""
+      | # set -o vi
+      | #
+      cursor 1 2
+      bel 0 raw b'set -o vi\r\r\n# '
+  step 2 "\\k echo fa\\e\\\\"
+  err no
+  prompt ""
+      | # echo fa
+      cursor 0 9
+      bel 0 raw b'echo fa\x08a'
+  step 3 "\\k X\\r"
+  out "faX\n"
+  err no
+  prompt ""
+      | # echo faX
+      | #
+      cursor 1 2
+      bel 0 raw b'X\r\r\n# '
+  step 4 "\\k echo fa\\e*"
+  err no
+  prompt ""
+      | # echo fa1 fa2
+      cursor 0 14
+      bel 0 raw b'echo fa\x08a1 fa2'
+  step 5 "\\k \\r"
+  out "fa1 fa2\n"
+  err no
+  prompt ""
+      | # echo fa1 fa2
+      | #
+      cursor 1 2
+      bel 0 raw b'\r\r\n# '
+  step 6 "\\k echo fa\\e="
+  err no
+  prompt ""
+      | # echo fa
+      | fa1  fa2
+      | # echo fa
+      cursor 2 8
+      bel 0 raw b'echo fa\x08\r\r\nfa1  fa2\r\n# echo fa\x08'
+  step 7 "\\k \\x03"
+  err no
+  prompt ""
+      | # echo f^C
+      | #
+      cursor 1 2
+      bel 0 raw b'^C\r\n# '
+  step 8 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 130 at step 8
+===== tab_literal [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo \"a\\x16\\tb\" | od -c\\r"
+  out "0000000   a  \\t   b  \\n\n0000004\n"
+  err no
+  prompt ""
+      | # echo "a   b" | od -c
+      | #
+      cursor 1 2
+      bel 0 raw b'echo "a   b" | od -c\r\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== list_redraw [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "PS1='my-long-prompt> '"
+  err no
+  prompt ""
+      | # PS1='my-long-prompt> '
+      | my-long-prompt>
+      cursor 1 16
+      bel 0 raw b"PS1='my-long-prompt> '\r\r\nmy-long-prompt> "
+  step 2 "\\k echo xyz aa\\t\\t"
+  err no
+  prompt ""
+      | my-long-prompt> echo xyz aa
+      | aa1  aa2
+      | my-long-prompt> echo xyz aa
+      | aa1  aa2
+      | my-long-prompt> echo xyz aa
+      cursor 4 27
+      bel 0 raw b'echo xyz aa\r\r\naa1  aa2\r\n\rmy-long-prompt> echo xyz aa                                                    \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\naa1  aa2\r\n\rmy-long-prompt> echo xyz aa                                                    \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\r"
+  out "xyz aa\n"
+  err no
+  prompt ""
+      | my-long-prompt> echo xyz aa
+      | my-long-prompt>
+      cursor 1 16
+      bel 0 raw b'\r\r\nmy-long-prompt> '
+  step 4 "exit"
+  err no
+  prompt ""
+      | my-long-prompt> exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4

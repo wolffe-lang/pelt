@@ -1,0 +1,3651 @@
+===== cmd_unique [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k unam\\tX\\x01echo \\r"
+  out "uname X\n"
+  err yes
+  prompt "$ "
+      | $ echo uname X
+      |        $
+      cursor 1 9
+      bel 0 raw b'uname X\r$ echo uname X\x08\x08\x08\x08\x08\x08\x08\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |        $ exit
+      |              exit
+      | 
+      cursor 2 17
+      bel 0 raw b''
+  exit 0 at step 2
+===== cmd_unique [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k unam\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      | # unam  X^Aecho
+      | E: mksh: <stdin>[1]: unam: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'unam\tX^Aecho \r\nE: mksh: <stdin>[1]: unam: inaccessible or not found\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      |                                                     # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 2
+===== cmd_unique [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k unam\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ unam  X^Aecho
+      | dash: 1: unam: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'unam\tX^Aecho \r\ndash: 1: unam: not found\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      |                         $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 2
+===== cmd_lcp_list [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err yes
+  prompt "$ "
+      | $ PATH=$HOME/bin:$PATH
+      |                       $
+      cursor 1 24
+      bel 0 raw b'PATH=$HOME/bin:$PATH\n$ '
+  step 2 "\\k zq\\t"
+  err no
+  prompt "zq\u0007x"
+      |                       $ zqx
+      cursor 0 27
+      bel 1 raw b'zq\x07x'
+  step 3 "\\k \\t"
+  err no
+  prompt "\u0007"
+      |                       $ zqx
+      cursor 0 27
+      bel 1 raw b'\x07'
+  step 4 "\\k \\t"
+  err yes
+  prompt "$ zqx"
+      |                       $ zqx
+      |                            zqxa1  zqxa2  zqxbb
+      |                                                 $ zqx
+      cursor 2 53
+      bel 0 raw b'\nzqxa1  zqxa2  zqxbb  \n$ zqx'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      |                                                 $ echo done
+      |                                                            $
+      cursor 1 61
+      bel 0 raw b'\x08\x08\x08   \x08\x08\x08echo done\n$ '
+  step 6 "exit"
+  err yes
+  prompt ""
+      |                                                            $ exit
+      |                                                                  exit
+      | 
+      cursor 2 69
+      bel 0 raw b''
+  exit 0 at step 6
+===== cmd_lcp_list [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err no
+  prompt "# "
+      | # PATH=$HOME/bin:$PATH
+      | #
+      cursor 1 2
+      bel 0 raw b'PATH=$HOME/bin:$PATH\r\n# '
+  step 2 "\\k zq\\t"
+  err no
+  prompt ""
+      | # zq
+      cursor 0 8
+      bel 0 raw b'zq\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # zq
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 4 "\\k \\t"
+  err no
+  prompt ""
+      | # zq
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 6 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 6
+===== cmd_lcp_list [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err no
+  prompt "$ "
+      | $ PATH=$HOME/bin:$PATH
+      | $
+      cursor 1 2
+      bel 0 raw b'PATH=$HOME/bin:$PATH\r\n$ '
+  step 2 "\\k zq\\t"
+  err no
+  prompt ""
+      | $ zq
+      cursor 0 8
+      bel 0 raw b'zq\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | $ zq
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 4 "\\k \\t"
+  err no
+  prompt ""
+      | $ zq
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 6 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 6
+===== cmd_at_lcp [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err yes
+  prompt "$ "
+      | $ PATH=$HOME/bin:$PATH
+      |                       $
+      cursor 1 24
+      bel 0 raw b'PATH=$HOME/bin:$PATH\n$ '
+  step 2 "\\k zqxa\\t"
+  err no
+  prompt "zqxa\u0007"
+      |                       $ zqxa
+      cursor 0 28
+      bel 1 raw b'zqxa\x07'
+  step 3 "\\k \\t"
+  err yes
+  prompt "$ zqxa"
+      |                       $ zqxa
+      |                             zqxa1  zqxa2
+      |                                           $ zqxa
+      cursor 2 48
+      bel 0 raw b'\nzqxa1  zqxa2  \n$ zqxa'
+  step 4 "\\k 1\\x01echo \\r"
+  out "zqxa1\n"
+  err yes
+  prompt "$ "
+      | $ echo zqxa1                              $ zqxa1
+      |        $
+      cursor 1 9
+      bel 0 raw b'1\r$ echo zqxa1\x08\x08\x08\x08\x08\n$ '
+  step 5 "exit"
+  err yes
+  prompt ""
+      |        $ exit
+      |              exit
+      | 
+      cursor 2 17
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_at_lcp [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err no
+  prompt "# "
+      | # PATH=$HOME/bin:$PATH
+      | #
+      cursor 1 2
+      bel 0 raw b'PATH=$HOME/bin:$PATH\r\n# '
+  step 2 "\\k zqxa\\t"
+  err no
+  prompt ""
+      | # zqxa
+      cursor 0 8
+      bel 0 raw b'zqxa\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # zqxa
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 4 "\\k 1\\x01echo \\r"
+  err yes
+  prompt "# "
+      | # zqxa          1^Aecho
+      | E: mksh: <stdin>[2]: zqxa: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'1^Aecho \r\nE: mksh: <stdin>[2]: zqxa: inaccessible or not found\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      |                                                     # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 5
+===== cmd_at_lcp [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err no
+  prompt "$ "
+      | $ PATH=$HOME/bin:$PATH
+      | $
+      cursor 1 2
+      bel 0 raw b'PATH=$HOME/bin:$PATH\r\n$ '
+  step 2 "\\k zqxa\\t"
+  err no
+  prompt ""
+      | $ zqxa
+      cursor 0 8
+      bel 0 raw b'zqxa\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | $ zqxa
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 4 "\\k 1\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ zqxa          1^Aecho
+      | dash: 2: zqxa: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'1^Aecho \r\ndash: 2: zqxa: not found\n$ '
+  step 5 "exit"
+  err no
+  prompt ""
+      |                         $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 5
+===== cmd_empty_tab [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k \\t"
+  err no
+  prompt "\u0007"
+      | $
+      cursor 0 2
+      bel 1 raw b'\x07'
+  step 2 "\\k \\t"
+  err no
+  prompt "Display all 353 possibilities? (y or n)"
+      | $
+      |   Display all 353 possibilities? (y or n)
+      cursor 1 41
+      bel 0 raw b'\nDisplay all 353 possibilities? (y or n)'
+  step 3 "\\k n"
+  err no
+  prompt "$ "
+      |   Display all 353 possibilities? (y or n)
+      |                                          $
+      cursor 1 43
+      bel 0 raw b'\n$ '
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      |                                          $ echo done
+      |                                                     $
+      cursor 1 54
+      bel 1 raw b'\x07echo done\n$ '
+  step 5 "exit"
+  err yes
+  prompt ""
+      |                                                     $ exit
+      |                                                           exit
+      | 
+      cursor 2 62
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_empty_tab [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k \\t"
+  err no
+  prompt ""
+      | #
+      cursor 0 8
+      bel 0 raw b'\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | #
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k n"
+  err no
+  prompt ""
+      | #               n
+      cursor 0 17
+      bel 0 raw b'n'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_empty_tab [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k \\t"
+  err no
+  prompt ""
+      | $
+      cursor 0 8
+      bel 0 raw b'\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | $
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k n"
+  err no
+  prompt ""
+      | $               n
+      cursor 0 17
+      bel 0 raw b'n'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\n$ '
+  step 5 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_many [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k b\\t"
+  err no
+  prompt "b\u0007"
+      | $ b
+      cursor 0 3
+      bel 1 raw b'b\x07'
+  step 2 "\\k \\t"
+  err yes
+  prompt "$ b"
+      | $ b
+      |    b2sum     base64    basenc    bashbug   bind      builtin
+      |                                                                base32    basenam
+      | e  bash      bg        break
+      |                                  $ b
+      cursor 4 36
+      bel 0 raw b'\nb2sum     base64    basenc    bashbug   bind      builtin   \nbase32    basename  bash      bg        break     \n$ b'
+  step 3 "\\k n"
+  err no
+  prompt "n"
+      |                                  $ bn
+      cursor 0 37
+      bel 0 raw b'n'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      |                                  $ echo done
+      |                                             $
+      cursor 1 46
+      bel 0 raw b'\x08\x08  \x08\x08echo done\n$ '
+  step 5 "exit"
+  err yes
+  prompt ""
+      |                                             $ exit
+      |                                                   exit
+      | 
+      cursor 2 54
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_many [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k b\\t"
+  err no
+  prompt ""
+      | # b
+      cursor 0 8
+      bel 0 raw b'b\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # b
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k n"
+  err no
+  prompt ""
+      | # b             n
+      cursor 0 17
+      bel 0 raw b'n'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08echo done\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_many [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k b\\t"
+  err no
+  prompt ""
+      | $ b
+      cursor 0 8
+      bel 0 raw b'b\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | $ b
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k n"
+  err no
+  prompt ""
+      | $ b             n
+      cursor 0 17
+      bel 0 raw b'n'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08echo done\r\n$ '
+  step 5 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_nomatch [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k qqqzz\\t"
+  err no
+  prompt "qqqzz\u0007"
+      | $ qqqzz
+      cursor 0 7
+      bel 1 raw b'qqqzz\x07'
+  step 2 "\\k \\t"
+  err no
+  prompt "\u0007"
+      | $ qqqzz
+      cursor 0 7
+      bel 1 raw b'\x07'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$      \r$ echo done\n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |            $ exit
+      |                  exit
+      | 
+      cursor 2 21
+      bel 0 raw b''
+  exit 0 at step 4
+===== cmd_nomatch [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k qqqzz\\t"
+  err no
+  prompt ""
+      | # qqqzz
+      cursor 0 8
+      bel 0 raw b'qqqzz\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # qqqzz
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== cmd_nomatch [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k qqqzz\\t"
+  err no
+  prompt ""
+      | $ qqqzz
+      cursor 0 8
+      bel 0 raw b'qqqzz\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | $ qqqzz
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 4 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== cmd_builtin_fn_alias [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "f_mine() { :; }"
+  err yes
+  prompt "$ "
+      | $ f_mine() { :; }
+      |                  $
+      cursor 1 19
+      bel 0 raw b'f_mine() { :; }\n$ '
+  step 2 "alias al_mine=true"
+  err yes
+  prompt "$ "
+      |                  $ alias al_mine=true
+      |                                      $
+      cursor 1 39
+      bel 0 raw b'alias al_mine=true\n$ '
+  step 3 "\\k f_mi\\tX\\x01echo \\r"
+  out "f_mine X\n"
+  err yes
+  prompt "$ "
+      | $ echo f_mine X                      $ f_mine X
+      |        $
+      cursor 1 9
+      bel 0 raw b'f_mine X\r$ echo f_mine X\x08\x08\x08\x08\x08\x08\x08\x08\n$ '
+  step 4 "\\k al_mi\\tX\\x01echo \\r"
+  out "al_mine X\n"
+  err yes
+  prompt "$ "
+      | $ echo al_mine X X
+      |        $
+      cursor 1 9
+      bel 0 raw b'al_mine X\r$ echo al_mine X\r$ echo \n$ '
+  step 5 "\\k alia\\tX\\x01echo \\r"
+  out "alias X\n"
+  err yes
+  prompt "$ "
+      | $ echo alias X X
+      |        $
+      cursor 1 9
+      bel 0 raw b'alias X\r$ echo alias X\x08\x08\x08\x08\x08\x08\x08\n$ '
+  step 6 "\\k whil\\tX\\x01echo \\r"
+  out "while X\n"
+  err yes
+  prompt "$ "
+      | $ echo while X X
+      |        $
+      cursor 1 9
+      bel 0 raw b'while X\r$ echo while X\x08\x08\x08\x08\x08\x08\x08\n$ '
+  step 7 "\\k getop\\tX\\x01echo \\r"
+  out "getoptX\n"
+  err yes
+  prompt "$ "
+      | $ echo getoptXtX
+      |        $
+      cursor 1 9
+      bel 1 raw b'getop\x07tX\r$ echo getoptX\x08\x08\x08\x08\x08\x08\x08\n$ '
+  step 8 "exit"
+  err yes
+  prompt ""
+      |        $ exit
+      |              exit
+      | 
+      cursor 2 17
+      bel 0 raw b''
+  exit 0 at step 8
+===== cmd_builtin_fn_alias [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "f_mine() { :; }"
+  err no
+  prompt "# "
+      | # f_mine() { :; }
+      | #
+      cursor 1 2
+      bel 0 raw b'f_mine() { :; }\r\n# '
+  step 2 "alias al_mine=true"
+  err no
+  prompt "# "
+      | # alias al_mine=true
+      | #
+      cursor 1 2
+      bel 0 raw b'alias al_mine=true\r\n# '
+  step 3 "\\k f_mi\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      | # f_mi  X^Aecho
+      | E: mksh: <stdin>[3]: f_mi: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'f_mi\tX^Aecho \r\nE: mksh: <stdin>[3]: f_mi: inaccessible or not found\n# '
+  step 4 "\\k al_mi\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      |                                                     # al_mi     X^Aecho
+      | E: mksh: <stdin>[4]: al_mi: inaccessible or not found
+      |                                                      #
+      cursor 2 55
+      bel 0 raw b'al_mi\tX^Aecho \r\nE: mksh: <stdin>[4]: al_mi: inaccessible or not found\n# '
+  step 5 "\\k alia\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      |                                                      # alia     X^Aecho
+      | E: mksh: <stdin>[5]: alia: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'alia\tX^Aecho \r\nE: mksh: <stdin>[5]: alia: inaccessible or not found\n# '
+  step 6 "\\k whil\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      |                                                     # whil      X^Aecho
+      | E: mksh: <stdin>[6]: whil: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'whil\tX^Aecho \r\nE: mksh: <stdin>[6]: whil: inaccessible or not found\n# '
+  step 7 "\\k getop\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      |                                                     # getop     X^Aecho
+      | E: mksh: <stdin>[7]: getop: inaccessible or not found
+      |                                                      #
+      cursor 2 55
+      bel 0 raw b'getop\tX^Aecho \r\nE: mksh: <stdin>[7]: getop: inaccessible or not found\n# '
+  step 8 "exit"
+  err no
+  prompt ""
+      |                                                      # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 8
+===== cmd_builtin_fn_alias [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "f_mine() { :; }"
+  err no
+  prompt "$ "
+      | $ f_mine() { :; }
+      | $
+      cursor 1 2
+      bel 0 raw b'f_mine() { :; }\r\n$ '
+  step 2 "alias al_mine=true"
+  err no
+  prompt "$ "
+      | $ alias al_mine=true
+      | $
+      cursor 1 2
+      bel 0 raw b'alias al_mine=true\r\n$ '
+  step 3 "\\k f_mi\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ f_mi  X^Aecho
+      | dash: 3: f_mi: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'f_mi\tX^Aecho \r\ndash: 3: f_mi: not found\n$ '
+  step 4 "\\k al_mi\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      |                         $ al_mi X^Aecho
+      | dash: 4: al_mi: not found
+      |                          $
+      cursor 2 27
+      bel 0 raw b'al_mi\tX^Aecho \r\ndash: 4: al_mi: not found\n$ '
+  step 5 "\\k alia\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      |                          $ alia X^Aecho
+      | dash: 5: alia: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'alia\tX^Aecho \r\ndash: 5: alia: not found\n$ '
+  step 6 "\\k whil\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      |                         $ whil  X^Aecho
+      | dash: 6: whil: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'whil\tX^Aecho \r\ndash: 6: whil: not found\n$ '
+  step 7 "\\k getop\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      |                         $ getop X^Aecho
+      | dash: 7: getop: not found
+      |                          $
+      cursor 2 27
+      bel 0 raw b'getop\tX^Aecho \r\ndash: 7: getop: not found\n$ '
+  step 8 "exit"
+  err no
+  prompt ""
+      |                          $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 8
+===== cmd_after_ops [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo hi | unam\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ echo echo hi | uname X
+      |        uname: extra operand 'X'
+      |                                Try 'uname --help' for more information.
+      |                                                                        $
+      cursor 3 73
+      bel 0 raw b"echo hi | uname X\r$ echo echo hi | uname X\r$ echo \nuname: extra operand 'X'\nTry 'uname --help' for more information.\n$ "
+  step 2 "\\k true; unam\\tX\\x01echo \\r"
+  out "true\n"
+  err yes
+  prompt "$ "
+      |                                                                        $ true; u
+      | $ echo true; uname X
+      |        uname: extra operand 'X'
+      |                                Try 'uname --help' for more information.
+      |                                                                        $
+      cursor 4 73
+      bel 0 raw b"true; uname X\r$ echo true; uname X\r$ echo \nuname: extra operand 'X'\nTry 'uname --help' for more information.\n$ "
+  step 3 "\\k true && unam\\tX\\x01echo \\r"
+  out "true\n"
+  err yes
+  prompt "$ "
+      |                                                                        $ true &&
+      | $ echo true && uname X
+      |        uname: extra operand 'X'
+      |                                Try 'uname --help' for more information.
+      |                                                                        $
+      cursor 4 73
+      bel 0 raw b"true && uname X\r$ echo true && uname X\r$ echo \nuname: extra operand 'X'\nTry 'uname --help' for more information.\n$ "
+  step 4 "\\k echo $(unam\\tX\\x01echo \\r"
+  err yes
+  prompt "> "
+      |                                                                        $ echo $(
+      | $ echo echo $(uname X
+      |        >
+      cursor 2 9
+      bel 0 raw b'echo $(uname X\r$ echo echo $(uname X\r$ echo \n> '
+  step 5 "\\k FOO=1 unam\\tX\\x01echo \\r"
+  err yes
+  prompt "> "
+      | > echo FOO=1 unamXmX
+      |        >
+      cursor 1 9
+      bel 1 raw b'FOO=1 unam\x07X\r> echo FOO=1 unamX\r> echo \n> '
+  step 6 "\\k if unam\\tX\\x01echo \\r"
+  err yes
+  prompt "> "
+      | > echo if unamXmX
+      |        >
+      cursor 1 9
+      bel 1 raw b'if unam\x07X\r> echo if unamX\x08\x08\x08\x08\x08\x08\x08\x08\n> '
+  step 7 "exit"
+  err yes
+  prompt "> "
+      |        > exit
+      |              >
+      cursor 1 15
+      bel 0 raw b'exit\n> '
+  alive at step 7
+===== cmd_after_ops [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo hi | unam\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      | # echo hi | unam        X^Aecho
+      | E: mksh: <stdin>[1]: unam: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'echo hi | unam\tX^Aecho \r\nE: mksh: <stdin>[1]: unam: inaccessible or not found\n# '
+  step 2 "\\k true; unam\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      |                                                     # true; unam        X^Aecho
+      | E: mksh: <stdin>[2]: unam: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'true; unam\tX^Aecho \r\nE: mksh: <stdin>[2]: unam: inaccessible or not found\n# '
+  step 3 "\\k true && unam\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      |                                                     # true && unam      X^Aecho
+      | E: mksh: <stdin>[3]: unam: inaccessible or not found
+      |                                                     #
+      cursor 2 54
+      bel 0 raw b'true && unam\tX^Aecho \r\nE: mksh: <stdin>[3]: unam: inaccessible or not found\n# '
+  step 4 "\\k echo $(unam\\tX\\x01echo \\r"
+  err no
+  prompt "> "
+      |                                                     # echo $(unam       X^Aecho
+      | >
+      cursor 1 2
+      bel 0 raw b'echo $(unam\tX^Aecho \r\n> '
+  step 5 "\\k FOO=1 unam\\tX\\x01echo \\r"
+  err no
+  prompt "> "
+      | > FOO=1 unam    X^Aecho
+      | >
+      cursor 1 2
+      bel 0 raw b'FOO=1 unam\tX^Aecho \r\n> '
+  step 6 "\\k if unam\\tX\\x01echo \\r"
+  err no
+  prompt "> "
+      | > if unam       X^Aecho
+      | >
+      cursor 1 2
+      bel 0 raw b'if unam\tX^Aecho \r\n> '
+  step 7 "exit"
+  err no
+  prompt "> "
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\n> '
+  alive at step 7
+===== cmd_after_ops [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo hi | unam\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ echo hi | unam        X^Aecho
+      | dash: 1: unam: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'echo hi | unam\tX^Aecho \r\ndash: 1: unam: not found\n$ '
+  step 2 "\\k true; unam\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      |                         $ true; unam    X^Aecho
+      | dash: 2: unam: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'true; unam\tX^Aecho \r\ndash: 2: unam: not found\n$ '
+  step 3 "\\k true && unam\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      |                         $ true && unam  X^Aecho
+      | dash: 3: unam: not found
+      |                         $
+      cursor 2 26
+      bel 0 raw b'true && unam\tX^Aecho \r\ndash: 3: unam: not found\n$ '
+  step 4 "\\k echo $(unam\\tX\\x01echo \\r"
+  err no
+  prompt "> "
+      |                         $ echo $(unam   X^Aecho
+      | >
+      cursor 1 2
+      bel 0 raw b'echo $(unam\tX^Aecho \r\n> '
+  step 5 "\\k FOO=1 unam\\tX\\x01echo \\r"
+  err no
+  prompt "> "
+      | > FOO=1 unam    X^Aecho
+      | >
+      cursor 1 2
+      bel 0 raw b'FOO=1 unam\tX^Aecho \r\n> '
+  step 6 "\\k if unam\\tX\\x01echo \\r"
+  err no
+  prompt "> "
+      | > if unam       X^Aecho
+      | >
+      cursor 1 2
+      bel 0 raw b'if unam\tX^Aecho \r\n> '
+  step 7 "exit"
+  err no
+  prompt "> "
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\n> '
+  alive at step 7
+===== cmd_slash [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k ./scr\\tX\\x01echo \\r"
+  out "./script.sh X\n"
+  err yes
+  prompt "$ "
+      | $ echo ./script.sh X
+      |        $
+      cursor 1 9
+      bel 0 raw b'./script.sh X\r$ echo ./script.sh X\r$ echo \n$ '
+  step 2 "\\k ./sc\\t"
+  err no
+  prompt "./sc\u0007"
+      |        $ ./sc
+      cursor 0 13
+      bel 1 raw b'./sc\x07'
+  step 3 "\\k \\t"
+  err yes
+  prompt "$ ./sc"
+      |        $ ./sc
+      |              scdir/     script.sh
+      |                                    $ ./sc
+      cursor 2 41
+      bel 0 raw b'\nscdir/     script.sh  \n$ ./sc'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done                        $ ./sc
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$     \r$ echo done\n$ '
+  step 5 "exit"
+  err yes
+  prompt ""
+      |            $ exit
+      |                  exit
+      | 
+      cursor 2 21
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_slash [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k ./scr\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      | # ./scr X^Aecho
+      | E: mksh: <stdin>[1]: ./scr: inaccessible or not found
+      |                                                      #
+      cursor 2 55
+      bel 0 raw b'./scr\tX^Aecho \r\nE: mksh: <stdin>[1]: ./scr: inaccessible or not found\n# '
+  step 2 "\\k ./sc\\t"
+  err no
+  prompt ""
+      |                                                      # ./sc
+      cursor 0 64
+      bel 0 raw b'./sc\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      |                                                      # ./sc
+      cursor 0 72
+      bel 0 raw b'\t'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      |                                                      # .echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== cmd_slash [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k ./scr\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ ./scr X^Aecho
+      | dash: 1: ./scr: not found
+      |                          $
+      cursor 2 27
+      bel 0 raw b'./scr\tX^Aecho \r\ndash: 1: ./scr: not found\n$ '
+  step 2 "\\k ./sc\\t"
+  err no
+  prompt ""
+      |                          $ ./sc
+      cursor 0 32
+      bel 0 raw b'./sc\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      |                          $ ./sc
+      cursor 0 40
+      bel 0 raw b'\t'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      |                         echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 5 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_unique [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo uniq\\tX\\r"
+  out "unique_file_name X\n"
+  err yes
+  prompt "$ "
+      | $ echo unique_file_name X
+      |                          $
+      cursor 1 27
+      bel 0 raw b'echo unique_file_name X\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |                          $ exit
+      |                                exit
+      | 
+      cursor 2 35
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_unique [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo uniq\\tX\\r"
+  out "uniq X\n"
+  err no
+  prompt "# "
+      | # echo uniq     X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo uniq\tX\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_unique [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo uniq\\tX\\r"
+  out "uniq X\n"
+  err no
+  prompt "$ "
+      | $ echo uniq     X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo uniq\tX\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dirs [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo su\\t"
+  err no
+  prompt "echo sub/"
+      | $ echo sub/
+      cursor 0 11
+      bel 0 raw b'echo sub/'
+  step 2 "\\k \\t"
+  err no
+  prompt "dir/"
+      | $ echo sub/dir/
+      cursor 0 15
+      bel 0 raw b'dir/'
+  step 3 "\\k \\t"
+  err no
+  prompt "afile "
+      | $ echo sub/dir/afile
+      cursor 0 21
+      bel 0 raw b'afile '
+  step 4 "\\k X\\r"
+  out "sub/dir/afile X\n"
+  err yes
+  prompt "$ "
+      | $ echo sub/dir/afile X
+      |                       $
+      cursor 1 24
+      bel 0 raw b'X\n$ '
+  step 5 "exit"
+  err yes
+  prompt ""
+      |                       $ exit
+      |                             exit
+      | 
+      cursor 2 32
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_dirs [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo su\\t"
+  err no
+  prompt ""
+      | # echo su
+      cursor 0 16
+      bel 0 raw b'echo su\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo su
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # echo su
+      cursor 0 32
+      bel 0 raw b'\t'
+  step 4 "\\k X\\r"
+  out "su X\n"
+  err no
+  prompt "# "
+      | # echo su                       X
+      | #
+      cursor 1 2
+      bel 0 raw b'X\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_dirs [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo su\\t"
+  err no
+  prompt ""
+      | $ echo su
+      cursor 0 16
+      bel 0 raw b'echo su\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo su
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo su
+      cursor 0 32
+      bel 0 raw b'\t'
+  step 4 "\\k X\\r"
+  out "su X\n"
+  err no
+  prompt "$ "
+      | $ echo su                       X
+      | $
+      cursor 1 2
+      bel 0 raw b'X\r\n$ '
+  step 5 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_list_cols [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo f\\t"
+  err no
+  prompt "echo f\u0007"
+      | $ echo f
+      cursor 0 8
+      bel 1 raw b'echo f\x07'
+  step 2 "\\k \\t"
+  err yes
+  prompt "$ echo f"
+      | $ echo f
+      |         fa             fhh
+      |                           fbb
+      |  fiii
+      |      fccc           fjjjj
+      |                          fdddd
+      | fkkkkk
+      |       fdir/          fllllllllllll
+      |                                   feeeee
+      |          fm
+      |            fffffff        fnn
+      |                              fg
+      | 
+      |     $ echo f
+      cursor 13 12
+      bel 0 raw b'\nfa             fhh\nfbb            fiii\nfccc           fjjjj\nfdddd          fkkkkk\nfdir/          fllllllllllll\nfeeeee         fm\nfffffff        fnn\nfg             \n$ echo f'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo donef
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$       \r$ echo done\n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |            $ exit
+      |                  exit
+      | 
+      cursor 2 21
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_list_cols [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo f\\t"
+  err no
+  prompt ""
+      | # echo f
+      cursor 0 16
+      bel 0 raw b'echo f\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo f
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | # echo fecho done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_list_cols [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo f\\t"
+  err no
+  prompt ""
+      | $ echo f
+      cursor 0 16
+      bel 0 raw b'echo f\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo f
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | $ echo fecho done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 4 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_space [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo my\\tX\\r"
+  out "my file X\n"
+  err yes
+  prompt "$ "
+      | $ echo my\ file X
+      |                  $
+      cursor 1 19
+      bel 0 raw b'echo my\\ file X\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |                  $ exit
+      |                        exit
+      | 
+      cursor 2 27
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_space [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo my\\tX\\r"
+  out "my X\n"
+  err no
+  prompt "# "
+      | # echo my       X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo my\tX\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_space [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo my\\tX\\r"
+  out "my X\n"
+  err no
+  prompt "$ "
+      | $ echo my       X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo my\tX\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_space_lcp [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo my\\t"
+  err no
+  prompt "echo my\u0007\\ file\\ "
+      | $ echo my\ file\
+      cursor 0 17
+      bel 1 raw b'echo my\x07\\ file\\ '
+  step 2 "\\k \\t"
+  err no
+  prompt "\u0007"
+      | $ echo my\ file\
+      cursor 0 17
+      bel 1 raw b'\x07'
+  step 3 "\\k a\\r"
+  out "my file a\n"
+  err yes
+  prompt "$ "
+      | $ echo my\ file\ a
+      |                   $
+      cursor 1 20
+      bel 0 raw b'a\n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |                   $ exit
+      |                         exit
+      | 
+      cursor 2 28
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_space_lcp [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo my\\t"
+  err no
+  prompt ""
+      | # echo my
+      cursor 0 16
+      bel 0 raw b'echo my\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo my
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 3 "\\k a\\r"
+  out "my a\n"
+  err no
+  prompt "# "
+      | # echo my               a
+      | #
+      cursor 1 2
+      bel 0 raw b'a\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_space_lcp [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo my\\t"
+  err no
+  prompt ""
+      | $ echo my
+      cursor 0 16
+      bel 0 raw b'echo my\t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo my
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 3 "\\k a\\r"
+  out "my a\n"
+  err no
+  prompt "$ "
+      | $ echo my               a
+      | $
+      cursor 1 2
+      bel 0 raw b'a\r\n$ '
+  step 4 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_dollar [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo a\\tX\\r"
+  out "a$b X\n"
+  err yes
+  prompt "$ "
+      | $ echo a\$b X
+      |              $
+      cursor 1 15
+      bel 0 raw b'echo a\\$b X\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |              $ exit
+      |                    exit
+      | 
+      cursor 2 23
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dollar [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo a\\tX\\r"
+  out "a X\n"
+  err no
+  prompt "# "
+      | # echo a        X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo a\tX\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dollar [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo a\\tX\\r"
+  out "a X\n"
+  err no
+  prompt "$ "
+      | $ echo a        X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo a\tX\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_squote [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo q\\tX\\r"
+  out "q'uote X\n"
+  err yes
+  prompt "$ "
+      | $ echo q\'uote X
+      |                 $
+      cursor 1 18
+      bel 0 raw b"echo q\\'uote X\n$ "
+  step 2 "exit"
+  err yes
+  prompt ""
+      |                 $ exit
+      |                       exit
+      | 
+      cursor 2 26
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_squote [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo q\\tX\\r"
+  out "q X\n"
+  err no
+  prompt "# "
+      | # echo q        X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo q\tX\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_squote [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo q\\tX\\r"
+  out "q X\n"
+  err no
+  prompt "$ "
+      | $ echo q        X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo q\tX\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dquote [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo d\\tX\\r"
+  out "d\"q X\n"
+  err yes
+  prompt "$ "
+      | $ echo d\"q X
+      |              $
+      cursor 1 15
+      bel 0 raw b'echo d\\"q X\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |              $ exit
+      |                    exit
+      | 
+      cursor 2 23
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dquote [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo d\\tX\\r"
+  out "d X\n"
+  err no
+  prompt "# "
+      | # echo d        X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo d\tX\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_dquote [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo d\\tX\\r"
+  out "d X\n"
+  err no
+  prompt "$ "
+      | $ echo d        X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo d\tX\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_star [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo st*\\t"
+  err no
+  prompt "echo st*\b\\*ar "
+      | $ echo st\*ar
+      cursor 0 14
+      bel 0 raw b'echo st*\x08\\*ar '
+  step 2 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$             \r$ echo done\n$ '
+  step 3 "\\k echo st\\\\*\\tX\\r"
+  out "st*ar X\n"
+  err yes
+  prompt "$ "
+      |            $ echo st\*ar X
+      |                           $
+      cursor 1 28
+      bel 0 raw b'echo st\\*ar X\n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |                           $ exit
+      |                                 exit
+      | 
+      cursor 2 36
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_star [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo st*\\t"
+  err no
+  prompt ""
+      | # echo st*
+      cursor 0 16
+      bel 0 raw b'echo st*\t'
+  step 2 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | echo done*
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 3 "\\k echo st\\\\*\\tX\\r"
+  out "st* X\n"
+  err no
+  prompt "# "
+      | # echo st\*     X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo st\\*\tX\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_star [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo st*\\t"
+  err no
+  prompt ""
+      | $ echo st*
+      cursor 0 16
+      bel 0 raw b'echo st*\t'
+  step 2 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done*
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 3 "\\k echo st\\\\*\\tX\\r"
+  out "st* X\n"
+  err no
+  prompt "$ "
+      | $ echo st\*     X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo st\\*\tX\r\n$ '
+  step 4 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_newline [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo nl\\tX\\r"
+  out "nl\nname X\n"
+  err yes
+  prompt "$ "
+      | $ echo 'nl^Jname' X
+      |                    $
+      cursor 1 21
+      bel 0 raw b"echo nl\x08\x08'nl^Jname' X\n$ "
+  step 2 "exit"
+  err yes
+  prompt ""
+      |                    $ exit
+      |                          exit
+      | 
+      cursor 2 29
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_newline [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo nl\\tX\\r"
+  out "nl X\n"
+  err no
+  prompt "# "
+      | # echo nl       X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo nl\tX\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_newline [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo nl\\tX\\r"
+  out "nl X\n"
+  err no
+  prompt "$ "
+      | $ echo nl       X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo nl\tX\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_amp_semi [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo a\\tX\\r"
+  out "a&b;c(d) X\n"
+  err yes
+  prompt "$ "
+      | $ echo a\&b\;c\(d\) X
+      |                      $
+      cursor 1 23
+      bel 0 raw b'echo a\\&b\\;c\\(d\\) X\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |                      $ exit
+      |                            exit
+      | 
+      cursor 2 31
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_amp_semi [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo a\\tX\\r"
+  out "a X\n"
+  err no
+  prompt "# "
+      | # echo a        X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo a\tX\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_amp_semi [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo a\\tX\\r"
+  out "a X\n"
+  err no
+  prompt "$ "
+      | $ echo a        X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo a\tX\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_quoted_typed [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \"my\\tX\\r"
+  out "my file X\n"
+  err yes
+  prompt "$ "
+      | $ echo "my file" X
+      |                   $
+      cursor 1 20
+      bel 0 raw b'echo "my file" X\n$ '
+  step 2 "\\k echo 'my\\tX\\r"
+  out "my file X\n"
+  err yes
+  prompt "$ "
+      |                   $ echo 'my file' X
+      |                                     $
+      cursor 1 38
+      bel 0 raw b"echo 'my file' X\n$ "
+  step 3 "\\k echo my\\\\ \\tX\\r"
+  out "my file X\n"
+  err yes
+  prompt "$ "
+      |                                     $ echo my\ file X
+      |                                                      $
+      cursor 1 55
+      bel 0 raw b'echo my\\ file X\n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |                                                      $ exit
+      |                                                            exit
+      | 
+      cursor 2 63
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_quoted_typed [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo \"my\\tX\\r"
+  err no
+  prompt "> "
+      | # echo "my      X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo "my\tX\r\n> '
+  step 2 "\\k echo 'my\\tX\\r"
+  err no
+  prompt "> "
+      | > echo 'my      X
+      | >
+      cursor 1 2
+      bel 0 raw b"echo 'my\tX\r\n> "
+  step 3 "\\k echo my\\\\ \\tX\\r"
+  err no
+  prompt "> "
+      | > echo my\      X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo my\\ \tX\r\n> '
+  step 4 "exit"
+  err no
+  prompt "> "
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\n> '
+  alive at step 4
+===== file_quoted_typed [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \"my\\tX\\r"
+  err no
+  prompt "> "
+      | $ echo "my      X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo "my\tX\r\n> '
+  step 2 "\\k echo 'my\\tX\\r"
+  err no
+  prompt "> "
+      | > echo 'my      X
+      | >
+      cursor 1 2
+      bel 0 raw b"echo 'my\tX\r\n> "
+  step 3 "\\k echo my\\\\ \\tX\\r"
+  err no
+  prompt "> "
+      | > echo my\      X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo my\\ \tX\r\n> '
+  step 4 "exit"
+  err no
+  prompt "> "
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\n> '
+  alive at step 4
+===== file_tilde [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo ~/do\\tX\\r"
+  out "/tmp/pelt-sess.0dlfhzr9/home/docs/X\n"
+  err yes
+  prompt "$ "
+      | $ echo ~/docs/X
+      |                $
+      cursor 1 17
+      bel 0 raw b'echo ~/docs/X\n$ '
+  step 2 "\\k echo ~/\\t"
+  err no
+  prompt "echo ~/\u0007"
+      |                $ echo ~/
+      cursor 0 24
+      bel 1 raw b'echo ~/\x07'
+  step 3 "\\k \\t"
+  err yes
+  prompt "$ echo ~/"
+      |                $ echo ~/
+      |                         .hidden  docs/
+      |                                           $ echo ~/
+      cursor 2 51
+      bel 0 raw b'\n.hidden  docs/    \n$ echo ~/'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done                               $ echo ~/
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$        \r$ echo done\n$ '
+  step 5 "\\k echo ~\\t"
+  err no
+  prompt "echo ~\u0007"
+      |            $ echo ~
+      cursor 0 19
+      bel 1 raw b'echo ~\x07'
+  step 6 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done$ echo ~
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$       \r$ echo done\n$ '
+  step 7 "exit"
+  err yes
+  prompt ""
+      |            $ exit
+      |                  exit
+      | 
+      cursor 2 21
+      bel 0 raw b''
+  exit 0 at step 7
+===== file_tilde [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo ~/do\\tX\\r"
+  out "/tmp/pelt-sess.t805frpx/home/do X\n"
+  err no
+  prompt "# "
+      | # echo ~/do     X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo ~/do\tX\r\n# '
+  step 2 "\\k echo ~/\\t"
+  err no
+  prompt ""
+      | # echo ~/
+      cursor 0 16
+      bel 0 raw b'echo ~/\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # echo ~/
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | # echo ~echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 5 "\\k echo ~\\t"
+  err no
+  prompt ""
+      | # echo ~
+      cursor 0 16
+      bel 0 raw b'echo ~\t'
+  step 6 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | # echo ~echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 7 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 7
+===== file_tilde [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo ~/do\\tX\\r"
+  out "/tmp/pelt-sess.au5h53s2/home/do X\n"
+  err no
+  prompt "$ "
+      | $ echo ~/do     X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo ~/do\tX\r\n$ '
+  step 2 "\\k echo ~/\\t"
+  err no
+  prompt ""
+      | $ echo ~/
+      cursor 0 16
+      bel 0 raw b'echo ~/\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo ~/
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 4 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | $ echo ~echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 5 "\\k echo ~\\t"
+  err no
+  prompt ""
+      | $ echo ~
+      cursor 0 16
+      bel 0 raw b'echo ~\t'
+  step 6 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | $ echo ~echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 7 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 7
+===== file_abs [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo /us\\tX\\r"
+  out "/usr/X\n"
+  err yes
+  prompt "$ "
+      | $ echo /usr/X
+      |              $
+      cursor 1 15
+      bel 0 raw b'echo /usr/X\n$ '
+  step 2 "\\k echo /usr/bi\\tX\\r"
+  out "/usr/bin/X\n"
+  err yes
+  prompt "$ "
+      |              $ echo /usr/bin/X
+      |                               $
+      cursor 1 32
+      bel 0 raw b'echo /usr/bin/X\n$ '
+  step 3 "exit"
+  err yes
+  prompt ""
+      |                               $ exit
+      |                                     exit
+      | 
+      cursor 2 40
+      bel 0 raw b''
+  exit 0 at step 3
+===== file_abs [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo /us\\tX\\r"
+  out "/us X\n"
+  err no
+  prompt "# "
+      | # echo /us      X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo /us\tX\r\n# '
+  step 2 "\\k echo /usr/bi\\tX\\r"
+  out "/usr/bi X\n"
+  err no
+  prompt "# "
+      | # echo /usr/bi  X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo /usr/bi\tX\r\n# '
+  step 3 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== file_abs [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo /us\\tX\\r"
+  out "/us X\n"
+  err no
+  prompt "$ "
+      | $ echo /us      X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo /us\tX\r\n$ '
+  step 2 "\\k echo /usr/bi\\tX\\r"
+  out "/usr/bi X\n"
+  err no
+  prompt "$ "
+      | $ echo /usr/bi  X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo /usr/bi\tX\r\n$ '
+  step 3 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== file_hidden [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \\t"
+  err no
+  prompt "echo \u0007"
+      | $ echo
+      cursor 0 7
+      bel 1 raw b'echo \x07'
+  step 2 "\\k \\t"
+  err yes
+  prompt "$ echo "
+      | $ echo
+      |        .hid1  vis
+      |                      $ echo
+      cursor 2 28
+      bel 0 raw b'\n.hid1  vis    \n$ echo '
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done          $ echo
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$      \r$ echo done\n$ '
+  step 4 "\\k echo .h\\tX\\r"
+  out ".hid1 X\n"
+  err yes
+  prompt "$ "
+      |            $ echo .hid1 X
+      |                          $
+      cursor 1 27
+      bel 0 raw b'echo .hid1 X\n$ '
+  step 5 "exit"
+  err yes
+  prompt ""
+      |                          $ exit
+      |                                exit
+      | 
+      cursor 2 35
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_hidden [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo \\t"
+  err no
+  prompt ""
+      | # echo
+      cursor 0 8
+      bel 0 raw b'echo \t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | # echo
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 4 "\\k echo .h\\tX\\r"
+  out ".h X\n"
+  err no
+  prompt "# "
+      | # echo .h       X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo .h\tX\r\n# '
+  step 5 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_hidden [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \\t"
+  err no
+  prompt ""
+      | $ echo
+      cursor 0 8
+      bel 0 raw b'echo \t'
+  step 2 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo
+      cursor 0 16
+      bel 0 raw b'\t'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 4 "\\k echo .h\\tX\\r"
+  out ".h X\n"
+  err no
+  prompt "$ "
+      | $ echo .h       X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo .h\tX\r\n$ '
+  step 5 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 5
+===== file_mid_word [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo uniqZZ\\e[D\\e[D\\t\\r"
+  out "unique_file_nameZZ\n"
+  err yes
+  prompt "$ "
+      | $ echo unique_file_nameZZ
+      |                        $
+      cursor 1 25
+      bel 0 raw b'echo uniqZZ\x08\x08ue_file_nameZZ\x08\x08\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |                        $ exit
+      |                              exit
+      | 
+      cursor 2 33
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_mid_word [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo uniqZZ\\e[D\\e[D\\t\\r"
+  out "uniqZZ\u001b[D\u001b[D\n"
+  err no
+  prompt "# "
+      | # echo uniqZZ^[[D^[[D
+      | #
+      cursor 1 2
+      bel 0 raw b'echo uniqZZ^[[D^[[D\t\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_mid_word [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo uniqZZ\\e[D\\e[D\\t\\r"
+  out "uniqZZ\u001b[D\u001b[D\n"
+  err no
+  prompt "$ "
+      | $ echo uniqZZ^[[D^[[D
+      | $
+      cursor 1 2
+      bel 0 raw b'echo uniqZZ^[[D^[[D\t\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== file_redir [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k cat <uniq\\tX\\r"
+  err yes
+  prompt "$ "
+      | $ cat <unique_file_name X
+      |                          cat: X: No such file or directory
+      |                                                           $
+      cursor 2 60
+      bel 0 raw b'cat <unique_file_name X\ncat: X: No such file or directory\n$ '
+  step 2 "\\k echo hi >uniq\\tX\\r"
+  err yes
+  prompt "$ "
+      |                                                           $ echo hi >unique_file
+      | _name X
+      |        $
+      cursor 2 9
+      bel 0 raw b'echo hi >unique_file_name X\n$ '
+  step 3 "\\k FOO=uniq\\tX\\x01echo \\r"
+  out "FOO=unique_file_name X\n"
+  err yes
+  prompt "$ "
+      | $ echo FOO=unique_file_name X X
+      |        $
+      cursor 1 9
+      bel 0 raw b'FOO=unique_file_name X\r$ echo FOO=unique_file_name X\r$ echo \n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |        $ exit
+      |              exit
+      | 
+      cursor 2 17
+      bel 0 raw b''
+  exit 0 at step 4
+===== file_redir [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k cat <uniq\\tX\\r"
+  err yes
+  prompt "# "
+      | # cat <uniq     X
+      | W: mksh: <stdin>[1]: uniq: open: No such file or directory
+      |                                                           #
+      cursor 2 60
+      bel 0 raw b'cat <uniq\tX\r\nW: mksh: <stdin>[1]: uniq: open: No such file or directory\n# '
+  step 2 "\\k echo hi >uniq\\tX\\r"
+  err no
+  prompt "# "
+      |                                                           # echo hi >uniq      X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo hi >uniq\tX\r\n# '
+  step 3 "\\k FOO=uniq\\tX\\x01echo \\r"
+  err yes
+  prompt "# "
+      | # FOO=uniq      X^Aecho
+      | E: mksh: <stdin>[3]: Xecho: inaccessible or not found
+      |                                                      #
+      cursor 2 55
+      bel 0 raw b'FOO=uniq\tX^Aecho \r\nE: mksh: <stdin>[3]: X\x01echo: inaccessible or not found\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      |                                                      # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 4
+===== file_redir [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k cat <uniq\\tX\\r"
+  err yes
+  prompt "$ "
+      | $ cat <uniq     X
+      | dash: 1: cannot open uniq: No such file
+      |                                        $
+      cursor 2 41
+      bel 0 raw b'cat <uniq\tX\r\ndash: 1: cannot open uniq: No such file\n$ '
+  step 2 "\\k echo hi >uniq\\tX\\r"
+  err no
+  prompt "$ "
+      |                                        $ echo hi >uniq  X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo hi >uniq\tX\r\n$ '
+  step 3 "\\k FOO=uniq\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ FOO=uniq      X^Aecho
+      | dash: 3: Xecho: not found
+      |                          $
+      cursor 2 27
+      bel 0 raw b'FOO=uniq\tX^Aecho \r\ndash: 3: X\x01echo: not found\n$ '
+  step 4 "exit"
+  err no
+  prompt ""
+      |                          $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 127 at step 4
+===== var [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo $HO\\tX\\r"
+  out "\n"
+  err yes
+  prompt "$ "
+      | $ echo $HOX
+      |            $
+      cursor 1 13
+      bel 1 raw b'echo $HO\x07X\n$ '
+  step 2 "\\k echo ${HO\\tX\\r"
+  err yes
+  prompt "> "
+      |            $ echo ${HOX
+      |                        >
+      cursor 1 25
+      bel 1 raw b'echo ${HO\x07X\n> '
+  step 3 "\\k echo \"$HO\\tX\\r"
+  err yes
+  prompt "> "
+      |                        > echo "$HOX
+      |                                    >
+      cursor 1 37
+      bel 1 raw b'echo "$HO\x07X\n> '
+  step 4 "\\k echo a$HO\\tX\\r"
+  err yes
+  prompt "> "
+      |                                    > echo a$HOX
+      |                                                >
+      cursor 1 49
+      bel 1 raw b'echo a$HO\x07X\n> '
+  step 5 "exit"
+  err yes
+  prompt "> "
+      |                                                > exit
+      |                                                      >
+      cursor 1 55
+      bel 0 raw b'exit\n> '
+  alive at step 5
+===== var [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo $HO\\tX\\r"
+  out "X\n"
+  err no
+  prompt "# "
+      | # echo $HO      X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo $HO\tX\r\n# '
+  step 2 "\\k echo ${HO\\tX\\r"
+  err no
+  prompt "> "
+      | # echo ${HO     X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo ${HO\tX\r\n> '
+  step 3 "\\k echo \"$HO\\tX\\r"
+  err no
+  prompt "> "
+      | > echo "$HO     X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo "$HO\tX\r\n> '
+  step 4 "\\k echo a$HO\\tX\\r"
+  err no
+  prompt "> "
+      | > echo a$HO     X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo a$HO\tX\r\n> '
+  step 5 "exit"
+  err no
+  prompt "> "
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\n> '
+  alive at step 5
+===== var [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo $HO\\tX\\r"
+  out "X\n"
+  err no
+  prompt "$ "
+      | $ echo $HO      X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo $HO\tX\r\n$ '
+  step 2 "\\k echo ${HO\\tX\\r"
+  err no
+  prompt "> "
+      | $ echo ${HO     X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo ${HO\tX\r\n> '
+  step 3 "\\k echo \"$HO\\tX\\r"
+  err no
+  prompt "> "
+      | > echo "$HO     X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo "$HO\tX\r\n> '
+  step 4 "\\k echo a$HO\\tX\\r"
+  err no
+  prompt "> "
+      | > echo a$HO     X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo a$HO\tX\r\n> '
+  step 5 "exit"
+  err no
+  prompt "> "
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\n> '
+  alive at step 5
+===== var_lcp [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "ZQV_ONE=1 ZQV_TWO=2"
+  err yes
+  prompt "$ "
+      | $ ZQV_ONE=1 ZQV_TWO=2
+      |                      $
+      cursor 1 23
+      bel 0 raw b'ZQV_ONE=1 ZQV_TWO=2\n$ '
+  step 2 "\\k echo $ZQV\\t"
+  err no
+  prompt "echo $ZQV\u0007_"
+      |                      $ echo $ZQV_
+      cursor 0 33
+      bel 1 raw b'echo $ZQV\x07_'
+  step 3 "\\k \\t"
+  err no
+  prompt "\u0007"
+      |                      $ echo $ZQV_
+      cursor 0 33
+      bel 1 raw b'\x07'
+  step 4 "\\k \\t"
+  err yes
+  prompt "$ echo $ZQV_"
+      |                      $ echo $ZQV_
+      |                                  $ZQV_ONE  $ZQV_TWO
+      |                                                      $ echo $ZQV_
+      cursor 2 65
+      bel 0 raw b'\n$ZQV_ONE  $ZQV_TWO  \n$ echo $ZQV_'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done                                          $ echo $ZQV_
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$           \r$ echo done\n$ '
+  step 6 "\\k echo $ZQV_O\\tX\\r"
+  out "1 X\n"
+  err yes
+  prompt "$ "
+      |            $ echo $ZQV_ONE X
+      |                             $
+      cursor 1 30
+      bel 0 raw b'echo $ZQV_ONE X\n$ '
+  step 7 "exit"
+  err yes
+  prompt ""
+      |                             $ exit
+      |                                   exit
+      | 
+      cursor 2 38
+      bel 0 raw b''
+  exit 0 at step 7
+===== var_lcp [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "ZQV_ONE=1 ZQV_TWO=2"
+  err no
+  prompt "# "
+      | # ZQV_ONE=1 ZQV_TWO=2
+      | #
+      cursor 1 2
+      bel 0 raw b'ZQV_ONE=1 ZQV_TWO=2\r\n# '
+  step 2 "\\k echo $ZQV\\t"
+  err no
+  prompt ""
+      | # echo $ZQV
+      cursor 0 16
+      bel 0 raw b'echo $ZQV\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | # echo $ZQV
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 4 "\\k \\t"
+  err no
+  prompt ""
+      | # echo $ZQV
+      cursor 0 32
+      bel 0 raw b'\t'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "# "
+      | echo doneQV
+      | #
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n# '
+  step 6 "\\k echo $ZQV_O\\tX\\r"
+  out "X\n"
+  err no
+  prompt "# "
+      | # echo $ZQV_O   X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo $ZQV_O\tX\r\n# '
+  step 7 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 7
+===== var_lcp [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "ZQV_ONE=1 ZQV_TWO=2"
+  err no
+  prompt "$ "
+      | $ ZQV_ONE=1 ZQV_TWO=2
+      | $
+      cursor 1 2
+      bel 0 raw b'ZQV_ONE=1 ZQV_TWO=2\r\n$ '
+  step 2 "\\k echo $ZQV\\t"
+  err no
+  prompt ""
+      | $ echo $ZQV
+      cursor 0 16
+      bel 0 raw b'echo $ZQV\t'
+  step 3 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo $ZQV
+      cursor 0 24
+      bel 0 raw b'\t'
+  step 4 "\\k \\t"
+  err no
+  prompt ""
+      | $ echo $ZQV
+      cursor 0 32
+      bel 0 raw b'\t'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo doneQV
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 6 "\\k echo $ZQV_O\\tX\\r"
+  out "X\n"
+  err no
+  prompt "$ "
+      | $ echo $ZQV_O   X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo $ZQV_O\tX\r\n$ '
+  step 7 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 7
+===== vi_insert_tab [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "set -o vi"
+  err yes
+  prompt "$ "
+      | $ set -o vi
+      |            $
+      cursor 1 13
+      bel 0 raw b'set -o vi\n$ '
+  step 2 "\\k echo uniq\\tX\\r"
+  out "uniq X\n"
+  err yes
+  prompt "$ "
+      |            $ echo uniq     X
+      |                             $
+      cursor 1 30
+      bel 0 raw b'echo uniq     X\n$ '
+  step 3 "exit"
+  err yes
+  prompt ""
+      |                             $ exit
+      |                                   exit
+      | 
+      cursor 2 38
+      bel 0 raw b''
+  exit 0 at step 3
+===== vi_insert_tab [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "set -o vi"
+  err no
+  prompt "# "
+      | # set -o vi
+      | #
+      cursor 1 2
+      bel 0 raw b'set -o vi\r\n# '
+  step 2 "\\k echo uniq\\tX\\r"
+  out "uniq X\n"
+  err no
+  prompt "# "
+      | # echo uniq     X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo uniq\tX\r\n# '
+  step 3 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== vi_insert_tab [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "set -o vi"
+  err no
+  prompt "$ "
+      | $ set -o vi
+      | $
+      cursor 1 2
+      bel 0 raw b'set -o vi\r\n$ '
+  step 2 "\\k echo uniq\\tX\\r"
+  out "uniq X\n"
+  err no
+  prompt "$ "
+      | $ echo uniq     X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo uniq\tX\r\n$ '
+  step 3 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== vi_cmd_expand [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "set -o vi"
+  err yes
+  prompt "$ "
+      | $ set -o vi
+      |            $
+      cursor 1 13
+      bel 0 raw b'set -o vi\n$ '
+  step 2 "\\k echo fa\\e\\\\"
+  err no
+  prompt "echo fa\ba"
+      |            $ echo fa
+      cursor 0 20
+      bel 0 raw b'echo fa\x08a'
+  step 3 "\\k X\\r"
+  out "faX\n"
+  err yes
+  prompt "$ "
+      |            $ echo faX
+      |                      $
+      cursor 1 23
+      bel 0 raw b'X\n$ '
+  step 4 "\\k echo fa\\e*"
+  err no
+  prompt "echo fa\ba1 fa2 "
+      |                      $ echo fa1 fa2
+      cursor 0 36
+      bel 0 raw b'echo fa\x08a1 fa2 '
+  step 5 "\\k \\r"
+  out "fa1 fa2\n"
+  err no
+  prompt "$ "
+      |                      $ echo fa1 fa2
+      |                                     $
+      cursor 1 38
+      bel 0 raw b'\n$ '
+  step 6 "\\k echo fa\\e="
+  err yes
+  prompt "$ echo fa\b"
+      |                                     $ echo fa
+      |                                             fa1  fa2
+      |                                                       $ echo fa
+      cursor 2 62
+      bel 0 raw b'echo fa\x08\nfa1  fa2  \n$ echo fa\x08'
+  step 7 "\\k \\x03"
+  err yes
+  prompt "$ "
+      |                                                       $ echo f^C
+      |                                                                 $
+      cursor 1 66
+      bel 0 raw b'^C\n$ '
+  step 8 "exit"
+  err yes
+  prompt ""
+      |                                                                 $ exit
+      |                                                                       exit
+      | 
+      cursor 2 74
+      bel 0 raw b''
+  exit 130 at step 8
+===== vi_cmd_expand [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "set -o vi"
+  err no
+  prompt "# "
+      | # set -o vi
+      | #
+      cursor 1 2
+      bel 0 raw b'set -o vi\r\n# '
+  step 2 "\\k echo fa\\e\\\\"
+  err no
+  prompt ""
+      | # echo fa^[\
+      cursor 0 12
+      bel 0 raw b'echo fa^[\\'
+  step 3 "\\k X\\r"
+  out "fa\u001bX\n"
+  err no
+  prompt "# "
+      | # echo fa^[\X
+      | #
+      cursor 1 2
+      bel 0 raw b'X\r\n# '
+  step 4 "\\k echo fa\\e*"
+  err no
+  prompt ""
+      | # echo fa^[*
+      cursor 0 12
+      bel 0 raw b'echo fa^[*'
+  step 5 "\\k \\r"
+  out "fa\u001b*\n"
+  err no
+  prompt "# "
+      | # echo fa^[*
+      | #
+      cursor 1 2
+      bel 0 raw b'\r\n# '
+  step 6 "\\k echo fa\\e="
+  err no
+  prompt ""
+      | # echo fa^[=
+      cursor 0 12
+      bel 0 raw b'echo fa^[='
+  step 7 "\\k \\x03"
+  err no
+  prompt ""
+      | # echo fa^[=^C
+      cursor 0 14
+      bel 0 raw b'^C'
+  step 8 "exit"
+  err no
+  prompt "# "
+      | # echo fa^[=^Cexit
+      | 
+      | #
+      cursor 2 2
+      bel 0 raw b'exit\r\n\n# '
+  alive at step 8
+===== vi_cmd_expand [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "set -o vi"
+  err no
+  prompt "$ "
+      | $ set -o vi
+      | $
+      cursor 1 2
+      bel 0 raw b'set -o vi\r\n$ '
+  step 2 "\\k echo fa\\e\\\\"
+  err no
+  prompt ""
+      | $ echo fa^[\
+      cursor 0 12
+      bel 0 raw b'echo fa^[\\'
+  step 3 "\\k X\\r"
+  out "fa\u001bX\n"
+  err no
+  prompt "$ "
+      | $ echo fa^[\X
+      | $
+      cursor 1 2
+      bel 0 raw b'X\r\n$ '
+  step 4 "\\k echo fa\\e*"
+  err no
+  prompt ""
+      | $ echo fa^[*
+      cursor 0 12
+      bel 0 raw b'echo fa^[*'
+  step 5 "\\k \\r"
+  out "fa\u001b*\n"
+  err no
+  prompt "$ "
+      | $ echo fa^[*
+      | $
+      cursor 1 2
+      bel 0 raw b'\r\n$ '
+  step 6 "\\k echo fa\\e="
+  err no
+  prompt ""
+      | $ echo fa^[=
+      cursor 0 12
+      bel 0 raw b'echo fa^[='
+  step 7 "\\k \\x03"
+  err no
+  prompt "$ "
+      | $ echo fa^[=^C
+      |               $
+      cursor 1 16
+      bel 0 raw b'^C\n$ '
+  step 8 "exit"
+  err no
+  prompt ""
+      |               $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 130 at step 8
+===== tab_literal [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \"a\\x16\\tb\" | od -c\\r"
+  out "0000000   a  \\t   b  \\n\n0000004\n"
+  err yes
+  prompt "$ "
+      | $ echo "a       b" | od -c
+      |                           $
+      cursor 1 28
+      bel 0 raw b'echo "a       b" | od -c\n$ '
+  step 2 "exit"
+  err yes
+  prompt ""
+      |                           $ exit
+      |                                 exit
+      | 
+      cursor 2 36
+      bel 0 raw b''
+  exit 0 at step 2
+===== tab_literal [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo \"a\\x16\\tb\" | od -c\\r"
+  out "0000000   a  \\t   b  \\n\n0000004\n"
+  err no
+  prompt "# "
+      | # echo "a^      b" | od -c
+      | #
+      cursor 1 2
+      bel 0 raw b'echo "a^\x08\tb" | od -c\r\n# '
+  step 2 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== tab_literal [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \"a\\x16\\tb\" | od -c\\r"
+  out "0000000   a  \\t   b  \\n\n0000004\n"
+  err no
+  prompt "$ "
+      | $ echo "a^      b" | od -c
+      | $
+      cursor 1 2
+      bel 0 raw b'echo "a^\x08\tb" | od -c\r\n$ '
+  step 2 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 2
+===== list_redraw [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "PS1='my-long-prompt> '"
+  err yes
+  prompt "my-long-prompt> "
+      | $ PS1='my-long-prompt> '
+      |                         my-long-prompt>
+      cursor 1 40
+      bel 0 raw b"PS1='my-long-prompt> '\nmy-long-prompt> "
+  step 2 "\\k echo xyz aa\\t\\t"
+  err yes
+  prompt "my-long-prompt> echo xyz aa"
+      |                         my-long-prompt> echo xyz aa
+      |                                                    aa1  aa2
+      |                                                              my-long-prompt> ech
+      | o xyz aa
+      cursor 3 8
+      bel 1 raw b'echo xyz aa\x07\naa1  aa2  \nmy-long-prompt> echo xyz aa'
+  step 3 "\\k \\r"
+  out "xyz aa\n"
+  err no
+  prompt "my-long-prompt> "
+      | o xyz aa
+      |         my-long-prompt>
+      cursor 1 24
+      bel 0 raw b'\nmy-long-prompt> '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |         my-long-prompt> exit
+      |                             exit
+      | 
+      cursor 2 32
+      bel 0 raw b''
+  exit 0 at step 4
+===== list_redraw [mksh]
+  step 0
+  err no
+  prompt "# "
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "PS1='my-long-prompt> '"
+  err no
+  prompt "my-long-prompt> "
+      | # PS1='my-long-prompt> '
+      | my-long-prompt>
+      cursor 1 16
+      bel 0 raw b"PS1='my-long-prompt> '\r\nmy-long-prompt> "
+  step 2 "\\k echo xyz aa\\t\\t"
+  err no
+  prompt ""
+      | my-long-prompt> echo xyz aa
+      cursor 0 40
+      bel 0 raw b'echo xyz aa\t\t'
+  step 3 "\\k \\r"
+  out "xyz aa\n"
+  err no
+  prompt "my-long-prompt> "
+      | my-long-prompt> echo xyz aa
+      | my-long-prompt>
+      cursor 1 16
+      bel 0 raw b'\r\nmy-long-prompt> '
+  step 4 "exit"
+  err no
+  prompt ""
+      | my-long-prompt> exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== list_redraw [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "PS1='my-long-prompt> '"
+  err no
+  prompt "my-long-prompt> "
+      | $ PS1='my-long-prompt> '
+      | my-long-prompt>
+      cursor 1 16
+      bel 0 raw b"PS1='my-long-prompt> '\r\nmy-long-prompt> "
+  step 2 "\\k echo xyz aa\\t\\t"
+  err no
+  prompt ""
+      | my-long-prompt> echo xyz aa
+      cursor 0 40
+      bel 0 raw b'echo xyz aa\t\t'
+  step 3 "\\k \\r"
+  out "xyz aa\n"
+  err no
+  prompt "my-long-prompt> "
+      | my-long-prompt> echo xyz aa
+      | my-long-prompt>
+      cursor 1 16
+      bel 0 raw b'\r\nmy-long-prompt> '
+  step 4 "exit"
+  err no
+  prompt ""
+      | my-long-prompt> exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4

@@ -1,0 +1,1077 @@
+===== var_forms [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "ZQV_ONE=1 ZQV_TWO=2"
+  err yes
+  prompt "$ "
+      | $ ZQV_ONE=1 ZQV_TWO=2
+      |                      $
+      cursor 1 23
+      bel 0 raw b'ZQV_ONE=1 ZQV_TWO=2\n$ '
+  step 2 "\\k echo ${ZQV_O\\tX\\r"
+  out "1 X\n"
+  err yes
+  prompt "$ "
+      |                      $ echo ${ZQV_ONE} X
+      |                                         $
+      cursor 1 42
+      bel 0 raw b'echo ${ZQV_ONE} X\n$ '
+  step 3 "\\k echo \"$ZQV_O\\tX\\r"
+  out "1 X\n"
+  err yes
+  prompt "$ "
+      |                                         $ echo "$ZQV_ONE" X
+      |                                                            $
+      cursor 1 61
+      bel 0 raw b'echo "$ZQV_ONE" X\n$ '
+  step 4 "\\k echo a$ZQV_O\\tX\\r"
+  out "a\n"
+  err yes
+  prompt "$ "
+      |                                                            $ echo a$ZQV_OX
+      |                                                                           $
+      cursor 1 76
+      bel 1 raw b'echo a$ZQV_O\x07X\n$ '
+  step 5 "\\k echo ${ZQV\\t\\t"
+  err no
+  prompt "echo ${ZQV\u0007_\u0007"
+      |                                                                           $ echo
+      |  ${ZQV_
+      cursor 1 7
+      bel 2 raw b'echo ${ZQV\x07_\x07'
+  step 6 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$            \r$ echo done\n$ '
+  step 7 "\\k echo $\\t\\t"
+  err yes
+  prompt "$ echo $"
+      |            $ echo $
+      |                    $BASH                 $EPOCHSECONDS         $PATH
+      |                                                                     $BASHOPTS
+      |           $EUID                 $PIPESTATUS
+      |                                            $BASHPID              $GROUPS
+      |        $POSIXLY_CORRECT
+      |                        $BASH_ALIASES         $HISTCMD              $PPID
+      |                                                                         $BASH_AR
+      | GC            $HISTFILE             $PS1
+      |                                         $BASH_ARGV            $HISTFILESIZE
+      |     $PS2
+      |         $BASH_ARGV0           $HISTSIZE             $PS4
+      |                                                         $BASH_CMDS            $H
+      | OME                 $PWD
+      |                         $BASH_COMMAND         $HOSTNAME             $RANDOM
+      |                                                                            $BASH
+      | _LINENO          $HOSTTYPE             $SECONDS
+      |                                                $BASH_LOADABLES_PATH  $IFS
+      |            $SHELL
+      |                  $BASH_SOURCE          $LC_ALL               $SHELLOPTS
+      |                                                                        $BASH_SUB
+      | SHELL        $LINENO               $SHLVL
+      |                                          $BASH_VERSINFO        $LINES
+      |      $SRANDOM
+      |              $BASH_VERSION         $MACHTYPE             $TERM
+      |                                                               $COLUMNS
+      |     $MAILCHECK            $UID
+      |                               $COMP_WORDBREAKS      $OPTERR               $ZQV_O
+      | NE
+      |   $DIRSTACK             $OPTIND               $ZQV_TWO
+      |                                                       $EPOCHREALTIME        $OST
+      | YPE               $_
+      |                     $ echo $
+      cursor 32 28
+      bel 1 raw b'echo $\x07\n$BASH                 $EPOCHSECONDS         $PATH\n$BASHOPTS             $EUID                 $PIPESTATUS\n$BASHPID              $GROUPS               $POSIXLY_CORRECT\n$BASH_ALIASES         $HISTCMD              $PPID\n$BASH_ARGC            $HISTFILE             $PS1\n$BASH_ARGV            $HISTFILESIZE         $PS2\n$BASH_ARGV0           $HISTSIZE             $PS4\n$BASH_CMDS            $HOME                 $PWD\n$BASH_COMMAND         $HOSTNAME             $RANDOM\n$BASH_LINENO          $HOSTTYPE             $SECONDS\n$BASH_LOADABLES_PATH  $IFS                  $SHELL\n$BASH_SOURCE          $LC_ALL               $SHELLOPTS\n$BASH_SUBSHELL        $LINENO               $SHLVL\n$BASH_VERSINFO        $LINES                $SRANDOM\n$BASH_VERSION         $MACHTYPE             $TERM\n$COLUMNS              $MAILCHECK            $UID\n$COMP_WORDBREAKS      $OPTERR               $ZQV_ONE\n$DIRSTACK             $OPTIND               $ZQV_TWO\n$EPOCHREALTIME        $OSTYPE               $_\n$ echo $'
+  step 8 "\\k n\\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done         $ echo $n
+      |            $
+      cursor 1 13
+      bel 0 raw b'n\r$        \r$ echo done\n$ '
+  step 9 "\\k echo $ZQV_ONE\\tX\\r"
+  out "1 X\n"
+  err yes
+  prompt "$ "
+      |            $ echo $ZQV_ONE X
+      |                             $
+      cursor 1 30
+      bel 0 raw b'echo $ZQV_ONE X\n$ '
+  step 10 "\\k echo ${ZQV_ONE}\\tX\\r"
+  out "1X\n"
+  err yes
+  prompt "$ "
+      |                             $ echo ${ZQV_ONE}X
+      |                                               $
+      cursor 1 48
+      bel 1 raw b'echo ${ZQV_ONE}\x07X\n$ '
+  step 11 "exit"
+  err yes
+  prompt ""
+      |                                               $ exit
+      |                                                     exit
+      | 
+      cursor 2 56
+      bel 0 raw b''
+  exit 0 at step 11
+===== var_forms [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "ZQV_ONE=1 ZQV_TWO=2"
+  err no
+  prompt ""
+      | # ZQV_ONE=1 ZQV_TWO=2
+      | #
+      cursor 1 2
+      bel 0 raw b'ZQV_ONE=1 ZQV_TWO=2\r\r\n# '
+  step 2 "\\k echo ${ZQV_O\\tX\\r"
+  err no
+  prompt ""
+      | # echo ${ZQV_OE: mksh: no closing quote
+      | # X
+      | E: mksh: X: inaccessible or not found
+      | #
+      cursor 3 2
+      bel 0 raw b'echo ${ZQV_OE: mksh: no closing quote\r\n# X\r\r\nE: mksh: X: inaccessible or not found\r\n# '
+  step 3 "\\k echo \"$ZQV_O\\tX\\r"
+  err no
+  prompt ""
+      | # echo "$ZQV_OX
+      | >
+      cursor 1 2
+      bel 1 raw b'echo "$ZQV_O\x07X\r\r\n> '
+  step 4 "\\k echo a$ZQV_O\\tX\\r"
+  err no
+  prompt ""
+      | > echo aX
+      | >
+      cursor 1 2
+      bel 0 raw b'echo a$ZQV_O\r> echo a                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\r\r\n> '
+  step 5 "\\k echo ${ZQV\\t\\t"
+  err no
+  prompt ""
+      | > echo ${ZQVE: mksh: no closing quote
+      | #
+      cursor 1 2
+      bel 1 raw b'echo ${ZQVE: mksh: no closing quote\r\n# \x07'
+  step 6 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 7 "\\k echo $\\t\\t"
+  err no
+  prompt ""
+      | # echo $
+      cursor 0 8
+      bel 2 raw b'echo $\x07\x07'
+  step 8 "\\k n\\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'n\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 9 "\\k echo $ZQV_ONE\\tX\\r"
+  out "1X\n"
+  err no
+  prompt ""
+      | # echo 1X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo $ZQV_ONE\r# echo 1                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\r\r\n# '
+  step 10 "\\k echo ${ZQV_ONE}\\tX\\r"
+  out "1X\n"
+  err no
+  prompt ""
+      | # echo 1X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo ${ZQV_ONE}\r# echo 1                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\r\r\n# '
+  step 11 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 11
+===== var_forms [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "ZQV_ONE=1 ZQV_TWO=2"
+  err no
+  prompt "$ "
+      | $ ZQV_ONE=1 ZQV_TWO=2
+      | $
+      cursor 1 2
+      bel 0 raw b'ZQV_ONE=1 ZQV_TWO=2\r\n$ '
+  step 2 "\\k echo ${ZQV_O\\tX\\r"
+  err no
+  prompt "> "
+      | $ echo ${ZQV_O  X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo ${ZQV_O\tX\r\n> '
+  step 3 "\\k echo \"$ZQV_O\\tX\\r"
+  err no
+  prompt "> "
+      | > echo "$ZQV_O  X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo "$ZQV_O\tX\r\n> '
+  step 4 "\\k echo a$ZQV_O\\tX\\r"
+  err no
+  prompt "> "
+      | > echo a$ZQV_O  X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo a$ZQV_O\tX\r\n> '
+  step 5 "\\k echo ${ZQV\\t\\t"
+  err no
+  prompt ""
+      | > echo ${ZQV
+      cursor 0 24
+      bel 0 raw b'echo ${ZQV\t\t'
+  step 6 "\\k \\x15echo done\\r"
+  err no
+  prompt "> "
+      | echo done QV
+      | >
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n> '
+  step 7 "\\k echo $\\t\\t"
+  err no
+  prompt ""
+      | > echo $
+      cursor 0 24
+      bel 0 raw b'echo $\t\t'
+  step 8 "\\k n\\x15echo done\\r"
+  err no
+  prompt "> "
+      | > echo $echo done
+      | >
+      cursor 1 2
+      bel 0 raw b'n\x08 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n> '
+  step 9 "\\k echo $ZQV_ONE\\tX\\r"
+  err no
+  prompt "> "
+      | > echo $ZQV_ONE X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo $ZQV_ONE\tX\r\n> '
+  step 10 "\\k echo ${ZQV_ONE}\\tX\\r"
+  err no
+  prompt "> "
+      | > echo ${ZQV_ONE}       X
+      | >
+      cursor 1 2
+      bel 0 raw b'echo ${ZQV_ONE}\tX\r\n> '
+  step 11 "exit"
+  err no
+  prompt "> "
+      | > exit
+      | >
+      cursor 1 2
+      bel 0 raw b'exit\r\n> '
+  alive at step 11
+===== list_tall [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo t\\t\\t"
+  err yes
+  prompt "$ echo t"
+      | $ echo t
+      |         t00  t09  t18  t27  t36  t45  t5
+      | 4
+      |  t01  t10  t19  t28  t37  t46  t55
+      |                                   t02  t
+      | 11  t20  t29  t38  t47  t56
+      |                            t03  t12  t21
+      |   t30  t39  t48  t57
+      |                     t04  t13  t22  t31
+      | t40  t49  t58
+      |              t05  t14  t23  t32  t41  t5
+      | 0  t59
+      |       t06  t15  t24  t33  t42  t51
+      |                                     t07
+      |  t16  t25  t34  t43  t52
+      |                           t08  t17  t26
+      |  t35  t44  t53
+      |                 $ echo t
+      cursor 17 24
+      bel 1 raw b'echo t\x07\nt00  t09  t18  t27  t36  t45  t54\nt01  t10  t19  t28  t37  t46  t55\nt02  t11  t20  t29  t38  t47  t56\nt03  t12  t21  t30  t39  t48  t57\nt04  t13  t22  t31  t40  t49  t58\nt05  t14  t23  t32  t41  t50  t59\nt06  t15  t24  t33  t42  t51  \nt07  t16  t25  t34  t43  t52  \nt08  t17  t26  t35  t44  t53  \n$ echo t'
+  step 2 "\\k  "
+  err no
+  prompt " "
+      |                 $ echo t
+      cursor 0 25
+      bel 0 raw b' '
+  step 3 "\\k  "
+  err no
+  prompt " "
+      |                 $ echo t
+      cursor 0 26
+      bel 0 raw b' '
+  step 4 "\\k q"
+  err no
+  prompt "q"
+      |                 $ echo t  q
+      cursor 0 27
+      bel 0 raw b'q'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done     $ echo t  q
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$          \r$ echo done\n$ '
+  step 6 "exit"
+  err yes
+  prompt ""
+      |            $ exit
+      |                  exit
+      | 
+      cursor 2 21
+      bel 0 raw b''
+  exit 0 at step 6
+===== list_tall [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo t\\t\\t"
+  err no
+  prompt ""
+      | # echo t
+      | t00  t08  t16  t24  t32  t40  t48  t56
+      | t01  t09  t17  t25  t33  t41  t49  t57
+      | t02  t10  t18  t26  t34  t42  t50  t58
+      | t03  t11  t19  t27  t35  t43  t51  t59
+      | t04  t12  t20  t28  t36  t44  t52
+      | t05  t13  t21  t29  t37  t45  t53
+      | t06  t14  t22  t30  t38  t46  t54
+      | t07  t15  t23  t31  t39  t47  t55
+      | # echo t
+      | t00  t08  t16  t24  t32  t40  t48  t56
+      | t01  t09  t17  t25  t33  t41  t49  t57
+      | t02  t10  t18  t26  t34  t42  t50  t58
+      | t03  t11  t19  t27  t35  t43  t51  t59
+      | t04  t12  t20  t28  t36  t44  t52
+      | t05  t13  t21  t29  t37  t45  t53
+      | t06  t14  t22  t30  t38  t46  t54
+      | t07  t15  t23  t31  t39  t47  t55
+      | # echo t
+      cursor 18 8
+      bel 0 raw b'echo t\r\r\nt00  t08  t16  t24  t32  t40  t48  t56\r\nt01  t09  t17  t25  t33  t41  t49  t57\r\nt02  t10  t18  t26  t34  t42  t50  t58\r\nt03  t11  t19  t27  t35  t43  t51  t59\r\nt04  t12  t20  t28  t36  t44  t52\r\nt05  t13  t21  t29  t37  t45  t53\r\nt06  t14  t22  t30  t38  t46  t54\r\nt07  t15  t23  t31  t39  t47  t55\r\n\r# echo t                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\nt00  t08  t16  t24  t32  t40  t48  t56\r\nt01  t09  t17  t25  t33  t41  t49  t57\r\nt02  t10  t18  t26  t34  t42  t50  t58\r\nt03  t11  t19  t27  t35  t43  t51  t59\r\nt04  t12  t20  t28  t36  t44  t52\r\nt05  t13  t21  t29  t37  t45  t53\r\nt06  t14  t22  t30  t38  t46  t54\r\nt07  t15  t23  t31  t39  t47  t55\r\n\r# echo t                               \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 2 "\\k  "
+  err no
+  prompt ""
+      | # echo t
+      cursor 0 9
+      bel 0 raw b' '
+  step 3 "\\k  "
+  err no
+  prompt ""
+      | # echo t
+      cursor 0 10
+      bel 0 raw b' '
+  step 4 "\\k q"
+  err no
+  prompt ""
+      | # echo t  q
+      cursor 0 11
+      bel 0 raw b'q'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                      \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 6 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 6
+===== list_tall [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo t\\t\\t"
+  err no
+  prompt ""
+      | $ echo t
+      cursor 0 24
+      bel 0 raw b'echo t\t\t'
+  step 2 "\\k  "
+  err no
+  prompt ""
+      | $ echo t
+      cursor 0 25
+      bel 0 raw b' '
+  step 3 "\\k  "
+  err no
+  prompt ""
+      | $ echo t
+      cursor 0 26
+      bel 0 raw b' '
+  step 4 "\\k q"
+  err no
+  prompt ""
+      | $ echo t                  q
+      cursor 0 27
+      bel 0 raw b'q'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | $ echo techo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08 \x08\x08 \x08\x08 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 6 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 6
+===== list_query_files [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo q\\t\\t"
+  err yes
+  prompt "Display all 120 possibilities? (y or n)"
+      | $ echo q
+      |         Display all 120 possibilities? (y or n)
+      cursor 1 47
+      bel 1 raw b'echo q\x07\nDisplay all 120 possibilities? (y or n)'
+  step 2 "\\k y"
+  err yes
+  prompt "$ echo q"
+      |         Display all 120 possibilities? (y or n)
+      |                                                q000  q010  q020  q030  q040  q05
+      | 0  q060  q070  q080  q090  q100  q110
+      |                                        q001  q011  q021  q031  q041  q051  q061
+      |  q071  q081  q091  q101  q111
+      |                                q002  q012  q022  q032  q042  q052  q062  q072  q
+      | 082  q092  q102  q112
+      |                        q003  q013  q023  q033  q043  q053  q063  q073  q083  q09
+      | 3  q103  q113
+      |                q004  q014  q024  q034  q044  q054  q064  q074  q084  q094  q104
+      |  q114
+      |        q005  q015  q025  q035  q045  q055  q065  q075  q085  q095  q105  q115
+      |                                                                                q
+      | 006  q016  q026  q036  q046  q056  q066  q076  q086  q096  q106  q116
+      |                                                                        q007  q01
+      | 7  q027  q037  q047  q057  q067  q077  q087  q097  q107  q117
+      |                                                                q008  q018  q028
+      |  q038  q048  q058  q068  q078  q088  q098  q108  q118
+      |                                                        q009  q019  q029  q039  q
+      | 049  q059  q069  q079  q089  q099  q109  q119
+      |                                                $ echo q
+      cursor 20 55
+      bel 0 raw b'\nq000  q010  q020  q030  q040  q050  q060  q070  q080  q090  q100  q110  \nq001  q011  q021  q031  q041  q051  q061  q071  q081  q091  q101  q111  \nq002  q012  q022  q032  q042  q052  q062  q072  q082  q092  q102  q112  \nq003  q013  q023  q033  q043  q053  q063  q073  q083  q093  q103  q113  \nq004  q014  q024  q034  q044  q054  q064  q074  q084  q094  q104  q114  \nq005  q015  q025  q035  q045  q055  q065  q075  q085  q095  q105  q115  \nq006  q016  q026  q036  q046  q056  q066  q076  q086  q096  q106  q116  \nq007  q017  q027  q037  q047  q057  q067  q077  q087  q097  q107  q117  \nq008  q018  q028  q038  q048  q058  q068  q078  q088  q098  q108  q118  \nq009  q019  q029  q039  q049  q059  q069  q079  q089  q099  q109  q119  \n$ echo q'
+  step 3 "\\k  "
+  err no
+  prompt " "
+      |                                                $ echo q
+      cursor 0 56
+      bel 0 raw b' '
+  step 4 "\\k q"
+  err no
+  prompt "q"
+      |                                                $ echo q q
+      cursor 0 57
+      bel 0 raw b'q'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done                                    $ echo q q
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$         \r$ echo done\n$ '
+  step 6 "exit"
+  err yes
+  prompt ""
+      |            $ exit
+      |                  exit
+      | 
+      cursor 2 21
+      bel 0 raw b''
+  exit 0 at step 6
+===== list_query_files [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo q\\t\\t"
+  err no
+  prompt ""
+      | # echo q
+      | q000  q010  q020  q030  q040  q050  q060  q070  q080  q090  q100  q110
+      | q001  q011  q021  q031  q041  q051  q061  q071  q081  q091  q101  q111
+      | q002  q012  q022  q032  q042  q052  q062  q072  q082  q092  q102  q112
+      | q003  q013  q023  q033  q043  q053  q063  q073  q083  q093  q103  q113
+      | q004  q014  q024  q034  q044  q054  q064  q074  q084  q094  q104  q114
+      | q005  q015  q025  q035  q045  q055  q065  q075  q085  q095  q105  q115
+      | q006  q016  q026  q036  q046  q056  q066  q076  q086  q096  q106  q116
+      | q007  q017  q027  q037  q047  q057  q067  q077  q087  q097  q107  q117
+      | q008  q018  q028  q038  q048  q058  q068  q078  q088  q098  q108  q118
+      | q009  q019  q029  q039  q049  q059  q069  q079  q089  q099  q109  q119
+      | # echo q
+      | q000  q010  q020  q030  q040  q050  q060  q070  q080  q090  q100  q110
+      | q001  q011  q021  q031  q041  q051  q061  q071  q081  q091  q101  q111
+      | q002  q012  q022  q032  q042  q052  q062  q072  q082  q092  q102  q112
+      | q003  q013  q023  q033  q043  q053  q063  q073  q083  q093  q103  q113
+      | q004  q014  q024  q034  q044  q054  q064  q074  q084  q094  q104  q114
+      | q005  q015  q025  q035  q045  q055  q065  q075  q085  q095  q105  q115
+      | q006  q016  q026  q036  q046  q056  q066  q076  q086  q096  q106  q116
+      | q007  q017  q027  q037  q047  q057  q067  q077  q087  q097  q107  q117
+      | q008  q018  q028  q038  q048  q058  q068  q078  q088  q098  q108  q118
+      | q009  q019  q029  q039  q049  q059  q069  q079  q089  q099  q109  q119
+      | # echo q
+      cursor 22 8
+      bel 0 raw b'echo q\r\r\nq000  q010  q020  q030  q040  q050  q060  q070  q080  q090  q100  q110\r\nq001  q011  q021  q031  q041  q051  q061  q071  q081  q091  q101  q111\r\nq002  q012  q022  q032  q042  q052  q062  q072  q082  q092  q102  q112\r\nq003  q013  q023  q033  q043  q053  q063  q073  q083  q093  q103  q113\r\nq004  q014  q024  q034  q044  q054  q064  q074  q084  q094  q104  q114\r\nq005  q015  q025  q035  q045  q055  q065  q075  q085  q095  q105  q115\r\nq006  q016  q026  q036  q046  q056  q066  q076  q086  q096  q106  q116\r\nq007  q017  q027  q037  q047  q057  q067  q077  q087  q097  q107  q117\r\nq008  q018  q028  q038  q048  q058  q068  q078  q088  q098  q108  q118\r\nq009  q019  q029  q039  q049  q059  q069  q079  q089  q099  q109  q119\r\n\r# echo q                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\nq000  q010  q020  q030  q040  q050  q060  q070  q080  q090  q100  q110\r\nq001  q011  q021  q031  q041  q051  q061  q071  q081  q091  q101  q111\r\nq002  q012  q022  q032  q042  q052  q062  q072  q082  q092  q102  q112\r\nq003  q013  q023  q033  q043  q053  q063  q073  q083  q093  q103  q113\r\nq004  q014  q024  q034  q044  q054  q064  q074  q084  q094  q104  q114\r\nq005  q015  q025  q035  q045  q055  q065  q075  q085  q095  q105  q115\r\nq006  q016  q026  q036  q046  q056  q066  q076  q086  q096  q106  q116\r\nq007  q017  q027  q037  q047  q057  q067  q077  q087  q097  q107  q117\r\nq008  q018  q028  q038  q048  q058  q068  q078  q088  q098  q108  q118\r\nq009  q019  q029  q039  q049  q059  q069  q079  q089  q099  q109  q119\r\n\r# echo q                                                                       \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 2 "\\k y"
+  err no
+  prompt ""
+      | # echo qy
+      cursor 0 9
+      bel 0 raw b'y'
+  step 3 "\\k  "
+  err no
+  prompt ""
+      | # echo qy
+      cursor 0 10
+      bel 0 raw b' '
+  step 4 "\\k q"
+  err no
+  prompt ""
+      | # echo qy q
+      cursor 0 11
+      bel 0 raw b'q'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 6 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 6
+===== list_query_files [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo q\\t\\t"
+  err no
+  prompt ""
+      | $ echo q
+      cursor 0 24
+      bel 0 raw b'echo q\t\t'
+  step 2 "\\k y"
+  err no
+  prompt ""
+      | $ echo q                y
+      cursor 0 25
+      bel 0 raw b'y'
+  step 3 "\\k  "
+  err no
+  prompt ""
+      | $ echo q                y
+      cursor 0 26
+      bel 0 raw b' '
+  step 4 "\\k q"
+  err no
+  prompt ""
+      | $ echo q                y q
+      cursor 0 27
+      bel 0 raw b'q'
+  step 5 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | $ echo qecho done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08 \x08\x08 \x08\x08 \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 6 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 6
+===== dash_vi [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "set -o vi; echo st=$?"
+  out "st=0\n"
+  err yes
+  prompt "$ "
+      | $ set -o vi; echo st=$?
+      |                        $
+      cursor 1 25
+      bel 0 raw b'set -o vi; echo st=$?\n$ '
+  step 2 "set -o | grep -E 'vi|emacs'"
+  out "emacs          \toff\nprivileged     \toff\nvi             \ton\n"
+  err yes
+  prompt "$ "
+      |                        $ set -o | grep -E 'vi|emacs'
+      |                                                     $
+      cursor 1 54
+      bel 0 raw b"set -o | grep -E 'vi|emacs'\n$ "
+  step 3 "exit"
+  err yes
+  prompt ""
+      |                                                     $ exit
+      |                                                           exit
+      | 
+      cursor 2 62
+      bel 0 raw b''
+  exit 0 at step 3
+===== dash_vi [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "set -o vi; echo st=$?"
+  out "st=0\n"
+  err no
+  prompt ""
+      | # set -o vi; echo st=$?
+      | #
+      cursor 1 2
+      bel 0 raw b'set -o vi; echo st=$?\r\r\n# '
+  step 2 "set -o | grep -E 'vi|emacs'"
+  out "emacs          off  monitor        off  pipefail       off  vi             on\nerrexit        off  noclobber      off  posix          off  vi-esccomplete off\ngmacs          off  noexec         off  privileged     off  vi-tabcomplete on\nignoreeof      off  noglob         off  restricted     off  viraw          off\n"
+  err no
+  prompt ""
+      | # set -o | grep -E 'vi|emacs'
+      | #
+      cursor 1 2
+      bel 0 raw b"set -o | grep -E 'vi|emacs'\r\r\n# "
+  step 3 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== dash_vi [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "set -o vi; echo st=$?"
+  out "st=0\n"
+  err no
+  prompt "$ "
+      | $ set -o vi; echo st=$?
+      | $
+      cursor 1 2
+      bel 0 raw b'set -o vi; echo st=$?\r\n$ '
+  step 2 "set -o | grep -E 'vi|emacs'"
+  out "vi              on\nemacs           off\nprivileged      off\n"
+  err no
+  prompt "$ "
+      | $ set -o | grep -E 'vi|emacs'
+      | $
+      cursor 1 2
+      bel 0 raw b"set -o | grep -E 'vi|emacs'\r\n$ "
+  step 3 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== tab_after_space [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo uniq \\e[D\\tX\\r"
+  out "unique_file_nameX\n"
+  err yes
+  prompt "$ "
+      | $ echo unique_file_nameX
+      |                         $
+      cursor 1 26
+      bel 0 raw b'echo uniq \x08ue_file_name \x08X \x08\n$ '
+  step 2 "\\k echo uniq\\tX\\tY\\r"
+  out "unique_file_name XY\n"
+  err yes
+  prompt "$ "
+      |                         $ echo unique_file_name XY
+      |                                                   $
+      cursor 1 52
+      bel 1 raw b'echo unique_file_name X\x07Y\n$ '
+  step 3 "exit"
+  err yes
+  prompt ""
+      |                                                   $ exit
+      |                                                         exit
+      | 
+      cursor 2 60
+      bel 0 raw b''
+  exit 0 at step 3
+===== tab_after_space [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo uniq \\e[D\\tX\\r"
+  out "unique_file_name X\n"
+  err no
+  prompt ""
+      | # echo unique_file_name X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo uniq \x08\r# echo unique_file_name                                                        \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08  \x08X \x08\r\r\n# '
+  step 2 "\\k echo uniq\\tX\\tY\\r"
+  out "unique_file_name XY\n"
+  err no
+  prompt ""
+      | # echo unique_file_name XY
+      | #
+      cursor 1 2
+      bel 1 raw b'echo uniq\r# echo unique_file_name                                                        \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\x07Y\r\r\n# '
+  step 3 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== tab_after_space [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo uniq \\e[D\\tX\\r"
+  out "uniq \u001b[D X\n"
+  err no
+  prompt "$ "
+      | $ echo uniq ^[[D        X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo uniq ^[[D\tX\r\n$ '
+  step 2 "\\k echo uniq\\tX\\tY\\r"
+  out "uniq X Y\n"
+  err no
+  prompt "$ "
+      | $ echo uniq     X       Y
+      | $
+      cursor 1 2
+      bel 0 raw b'echo uniq\tX\tY\r\n$ '
+  step 3 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 3
+===== cmd_dir_in_path_word [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k subd\\t"
+  err no
+  prompt "subd"
+      | $ subd
+      cursor 0 6
+      bel 0 raw b'subd'
+  step 2 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$     \r$ echo done\n$ '
+  step 3 "\\k cd sub\\tX\\x01echo \\r"
+  out "cd subd/X\n"
+  err yes
+  prompt "$ "
+      | $ echo cd subd/Xsubd/X
+      |        $
+      cursor 1 9
+      bel 0 raw b'cd subd/X\r$ echo cd subd/X\r$ echo \n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |        $ exit
+      |              exit
+      | 
+      cursor 2 17
+      bel 0 raw b''
+  exit 0 at step 4
+===== cmd_dir_in_path_word [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k subd\\t"
+  err no
+  prompt ""
+      | # subd
+      cursor 0 6
+      bel 1 raw b'subd\x07'
+  step 2 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 3 "\\k cd sub\\tX\\x01echo \\r"
+  out "cd subd/X\n"
+  err no
+  prompt ""
+      | # echo cd subd/X
+      | #
+      cursor 1 2
+      bel 0 raw b'cd sub\r# cd subd/                                                                     \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08X\x08\x08\x08\x08\x08\x08\x08\x08\x08ecd subd/X\x08\x08\x08\x08\x08\x08\x08\x08\x08ccd subd/X\x08\x08\x08\x08\x08\x08\x08\x08\x08hcd subd/X\x08\x08\x08\x08\x08\x08\x08\x08\x08ocd subd/X\x08\x08\x08\x08\x08\x08\x08\x08\x08 cd subd/X\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== cmd_dir_in_path_word [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k subd\\t"
+  err no
+  prompt ""
+      | $ subd
+      cursor 0 8
+      bel 0 raw b'subd\t'
+  step 2 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 3 "\\k cd sub\\tX\\x01echo \\r"
+  err yes
+  prompt "$ "
+      | $ cd sub        X^Aecho
+      | dash: 2: cd: can't cd to sub
+      |                             $
+      cursor 2 30
+      bel 0 raw b"cd sub\tX^Aecho \r\ndash: 2: cd: can't cd to sub\n$ "
+  step 4 "exit"
+  err no
+  prompt ""
+      |                             $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 2 at step 4
+===== wide_names [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \\xc3\\xa9\\tX\\r"
+  out "\u00e9t\u00e9 X\n"
+  err yes
+  prompt "$ "
+      | $ echo été X
+      |             $
+      cursor 1 14
+      bel 0 raw b'echo \xc3\xa9t\xc3\xa9 X\n$ '
+  step 2 "\\k echo \\t\\t"
+  err yes
+  prompt "$ echo "
+      |             $ echo
+      |                    été   日本
+      |                                $ echo
+      cursor 2 38
+      bel 1 raw b'echo \x07\n\xc3\xa9t\xc3\xa9   \xe6\x97\xa5\xe6\x9c\xac  \n$ echo '
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err yes
+  prompt "$ "
+      | $ echo done                    $ echo
+      |            $
+      cursor 1 13
+      bel 0 raw b'\r$      \r$ echo done\n$ '
+  step 4 "exit"
+  err yes
+  prompt ""
+      |            $ exit
+      |                  exit
+      | 
+      cursor 2 21
+      bel 0 raw b''
+  exit 0 at step 4
+===== wide_names [mksh]
+  step 0
+  err no
+  prompt ""
+      | #
+      cursor 0 2
+      bel 0 raw b'# '
+  step 1 "\\k echo \\xc3\\xa9\\tX\\r"
+  out "\u00e9t\u00e9 X\n"
+  err no
+  prompt ""
+      | # echo été X
+      | #
+      cursor 1 2
+      bel 0 raw b'echo \xc3\xa9\r# echo \xc3\xa9t\xc3\xa9                                                                   \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 X\r\r\n# '
+  step 2 "\\k echo \\t\\t"
+  err no
+  prompt ""
+      | # echo
+      | été        �^!W��^!\�
+      | # echo
+      | été        �^!W��^!\�
+      | # echo
+      cursor 4 7
+      bel 0 raw b'echo \r\r\n\xc3\xa9t\xc3\xa9        \xe6^!W\xa5\xe6^!\\\xac\r\n\r# echo                                                                         \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\r\r\n\xc3\xa9t\xc3\xa9        \xe6^!W\xa5\xe6^!\\\xac\r\n\r# echo                                                                         \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt ""
+      | # echo done
+      | #
+      cursor 1 2
+      bel 0 raw b'\r#                                                                              \x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08echo done\r\r\n# '
+  step 4 "exit"
+  err no
+  prompt ""
+      | # exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
+===== wide_names [dash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "\\k echo \\xc3\\xa9\\tX\\r"
+  out "\u00e9 X\n"
+  err no
+  prompt "$ "
+      | $ echo é        X
+      | $
+      cursor 1 2
+      bel 0 raw b'echo \xc3\xa9\tX\r\n$ '
+  step 2 "\\k echo \\t\\t"
+  err no
+  prompt ""
+      | $ echo
+      cursor 0 16
+      bel 0 raw b'echo \t\t'
+  step 3 "\\k \\x15echo done\\r"
+  out "done\n"
+  err no
+  prompt "$ "
+      | echo done
+      | $
+      cursor 1 2
+      bel 0 raw b'\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08\x08 \x08echo done\r\n$ '
+  step 4 "exit"
+  err no
+  prompt ""
+      | $ exit
+      | 
+      cursor 1 0
+      bel 0 raw b''
+  exit 0 at step 4
