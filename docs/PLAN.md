@@ -126,7 +126,11 @@ needs the least from upstream.
 - **H3c, the prompt's own:** aliases at the prompt, `ignoreeof`,
   `MAIL`. Nothing upstream.
 - **H3d, completion and vi mode,** after rulings R3 and R2. vi mode is
-  POSIX (`set -o vi`). Completion is not POSIX.
+  POSIX (`set -o vi`). Completion is not POSIX. **Landed in sh16**
+  (ruling #69 R3: files, commands, variables, not programmable): Tab in
+  emacs mode and vi insert mode, the second Tab lists, names quoted to
+  read back; bash's and mksh's black-box behaviour where POSIX is
+  silent, each choice recorded (`notes/sh16-the-completion.md`).
 - **H3e, job control on Linux.** A wait that reports a stopped child
   and can be woken by a signal or by any child (W03, #680). `SIGCONT`
   and a signal to a process group (W03). **Landed in sh14 on wolf
@@ -178,7 +182,8 @@ run there. What is left of M-SH4 ("init's scripts run under it"):
 
 Each of these is a ruling first. None is started before POSIX is met.
 
-- **completion beyond file names** (R3);
+- **completion beyond file names** (R3: files, commands and variables,
+  landed in sh16; nothing programmable);
 - **history expansion** (`!!`, `!$`), which is not POSIX (R4);
 - **`local`**: pelt has it and Debian's scripts use it. Keep it, with
   dash's meaning (R5);
