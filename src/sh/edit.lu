@@ -8,27 +8,48 @@
 //! `A B C D H J`; the cursor-position report `CSI 6 n` / `CSI r;c R`)
 //! and DEC's `ESC 7` / `ESC 8`; Unicode 16.0.0's character database as
 //! data (`sh.width`); wolf's `spec/11-os.md` (`[os.term.mode]`,
-//! `[os.term.note]`, `[os.signal.*]`); black-box sessions of `dash`
-//! 0.5.13.4 (which has no editor here) and `bash --posix -i` 5.3 as a
-//! user sees them. No shell's or line-editing library's source.
+//! `[os.term.size]`, `[os.term.chars]`, `[os.term.note]`,
+//! `[os.signal.*]`, `[os.signal.wait.fd]`; at `v0.2.30` since sh15);
+//! `stty(1)` and `ioctl_tty(2)` as documentation; black-box sessions of
+//! `dash` 0.5.13.4 (which has no editor here; its terminal's line
+//! discipline does what `stty` set) and, for sh11, `bash --posix -i` 5.3
+//! as a user sees them. No shell's or line-editing library's source.
 //!
 //! **When.** `ed_active` decides: an interactive shell whose descriptor
 //! 0 is the process's own and a terminal whose mode can be read, `TERM`
 //! not `dumb`, and an editing option on. Otherwise the terminal's own
 //! line discipline edits and `sh.interact` reads bytes as before.
 //!
-//! **The mode.** For each line the mode is read, CANONICAL, ECHO and
-//! SIGNALS are turned off with `VMIN 0, VTIME 1`, and the mode read is
-//! set back before `ed_line` answers — on every way out of a line. A
-//! command never runs in the editor's mode. SIGNALS is off so that
-//! Ctrl-C and Ctrl-Z arrive as bytes; a SIGINT sent by `kill` is polled.
+//! **The mode.** For each line the mode is read, CANONICAL, ECHO,
+//! SIGNALS, FLOW and EXTENDED are turned off with `VMIN 0, VTIME 1`, and
+//! the mode read is set back before `ed_line` answers — on every way out
+//! of a line. A command never runs in the editor's mode. SIGNALS is off
+//! so that Ctrl-C and Ctrl-Z arrive as bytes; FLOW and EXTENDED are off
+//! (wolf 0.2.30) so that Ctrl-S, Ctrl-Q, Ctrl-V and Ctrl-O do too, on
+//! macOS as on linux.
 //!
-//! **No read is torn by a signal** (`[os.term.note]`), so a read waits
-//! at most a tenth of a second and the editor polls between reads: a
-//! SIGINT ends the line as Ctrl-C does, and a SIGHUP (heard only while
+//! **The wait.** No read is torn by a signal (`[os.term.note]`), so the
+//! editor never waits in a read: it waits in `os_signal_wait_fd` on the
+//! terminal and the meanings it handles while a line is edited — a
+//! SIGINT ends the line as Ctrl-C does, a SIGHUP (heard only while
 //! editing, and only when no trap names it) puts the mode back and lets
-//! the default end the shell. Three empty reads much quicker than the
-//! tenth of a second are a terminal that hung up: end of input.
+//! the default end the shell, and a resize (`RESIZE`) draws the line
+//! again at the new width — and reads only once the terminal has a byte
+//! (or has hung up). An idle prompt wakes for nothing. `VTIME 1` times
+//! only the reads that follow (vi's lone ESC). Three empty reads in a
+//! row much quicker than a tenth of a second are a terminal that hung
+//! up: end of input. A host where the wait fails falls back to sh11's
+//! timed reads with the polls between them, for that line.
+//!
+//! **The keys the user chose.** The terminal's erase, kill, interrupt,
+//! end-of-file, word-erase and literal-next characters (`os_term_chars`,
+//! read for each line; `stty erase '#'`, `stty intr ^X`) act as the
+//! editor's `^?`, `^U`, `^C`, `^D`, `^W` and `^V` do, in emacs mode and
+//! vi insert mode; in vi command mode only interrupt and end of file
+//! (a printable erase stays vi's command there). A default key whose
+//! character was moved or disabled does nothing; `^?` and `^H` always
+//! erase unless one of them is another special character. Quit,
+//! suspend, start and stop do nothing in the editor (`role_key`).
 //!
 //! **Drawing.** The prompt is the shell's (standard error, as POSIX
 //! says); the line is drawn on the terminal itself, descriptor 0, so
@@ -44,11 +65,17 @@
 //! followed by CR LF). Positions are (row, column) with row 0 the row
 //! the prompt's last line starts on.
 //!
-//! **Width** (wolf has no window size, W05): `COLUMNS` when it is a
-//! positive number; else one cursor-position round trip before each
-//! prompt (`ESC[6n`, then `ESC 7 ESC[999C ESC[6n ESC 8`: the column the
-//! prompt starts in, and the width), 0.3 s at most; a terminal that never
-//! answers is not asked again, and the width is 80.
+//! **Width**: `COLUMNS` when it is a positive number (XBD 8.3); else
+//! the window's columns (`os_term_size`), else 80 for a size the
+//! terminal was never told. One cursor-position report before each
+//! prompt (`ESC[6n`) says the column the prompt starts in, 0.3 s at
+//! most; a terminal that never answers is not asked again and the
+//! prompt is taken to start in column 0. A resize while a line is
+//! edited draws it again (`resized`): back to the row the prompt's last
+//! line started on, clear below, that line of the prompt and the edit
+//! line at the new width. The terminal is taken to keep its rows as
+//! they were (xterm's way); one that reflows them on a resize is not
+//! modelled.
 //!
 //! **History** is `sh.hist`'s list (the file, numbers and `fc` live
 //! there): walked by Up and Down and by vi's `k j - + G / ? n N`, and
@@ -109,6 +136,32 @@ const TM_CANON: int = 1
 const TM_ECHO: int = 2
 
 const TM_SIG: int = 4
+
+const TM_FLOW: int = 8
+
+const TM_EXT: int = 16
+
+/// `os_term_chars`'s order (`[os.term.chars]`): erase, kill, interrupt,
+/// quit, suspend, end of file, word erase, literal next, start, stop.
+const TC_ERASE: int = 0
+
+const TC_KILL: int = 1
+
+const TC_INTR: int = 2
+
+const TC_QUIT: int = 3
+
+const TC_SUSP: int = 4
+
+const TC_EOF: int = 5
+
+const TC_WERASE: int = 6
+
+const TC_LNEXT: int = 7
+
+const TC_START: int = 8
+
+const TC_STOP: int = 9
 
 // --------------------------------------------------- what outlives a line
 
@@ -181,12 +234,42 @@ fn ed_active(sh: Sh) -> bool {
     m >= 0
 }
 
-/// The editor's mode for a read: `old` with CANONICAL, ECHO and SIGNALS
-/// off, `VMIN 0` and `VTIME 1`.
+/// The editor's mode for a read: `old` with CANONICAL, ECHO, SIGNALS,
+/// FLOW and EXTENDED off, `VMIN 0` and `VTIME 1`.
 fn raw_mode(old: int) -> int {
     let fields = old & 255
-    let kept = fields & 255 - TM_CANON - TM_ECHO - TM_SIG
+    let kept = fields & 255 - TM_CANON - TM_ECHO - TM_SIG - TM_FLOW - TM_EXT
     kept | 1 << 16
+}
+
+/// The special characters as a terminal sets them by default, for a
+/// host that cannot say (`^?`, `^U`, `^C`, `^\`, `^Z`, `^D`, `^W`, `^V`,
+/// `^Q`, `^S`).
+fn default_chars() -> List[int] {
+    var o = List[int]()
+    (mut o).push(127)
+    (mut o).push(21)
+    (mut o).push(3)
+    (mut o).push(28)
+    (mut o).push(26)
+    (mut o).push(4)
+    (mut o).push(23)
+    (mut o).push(22)
+    (mut o).push(17)
+    (mut o).push(19)
+    o
+}
+
+/// The terminal's special characters (`[os.term.chars]`), or the
+/// defaults.
+fn term_chars() -> List[int] {
+    let got = os_term_chars(0) else |_| {
+        return default_chars()
+    }
+    if got.len < 10 {
+        return default_chars()
+    }
+    got
 }
 
 // ------------------------------------------------------------- the reads
@@ -287,11 +370,16 @@ fn txt_num(t: str) -> int {
 
 // ---------------------------------------------------------- the terminal
 
-/// What `ed_query` learned: the width, the column the prompt will start
-/// in (0-based), whether the terminal answered, and the bytes that came
-/// while it waited (typed ahead), for the editor to take first.
+/// What `ed_query` learned: the width and height, the column the
+/// prompt will start in (0-based), whether the terminal answered, and
+/// the bytes that came while it waited (typed ahead), for the editor to
+/// take first.
 struct Query {
     cols: int,
+    /// The window's rows (0: never told); kept beside the width.
+    rows: int,
+    /// `COLUMNS` when it set the width (a resize then changes nothing).
+    fixed: int,
     col0: int,
     cpr: int,
     /// Bytes typed while the editor waited for the report, as decimal
@@ -311,34 +399,42 @@ fn columns_var(sh: Sh) -> int {
     0
 }
 
-/// Learn the width before the prompt is written (module doc). `cpr` is
-/// what is known of the terminal: 0 never asked, 1 answers, -1 never did.
+/// The width: `COLUMNS` (`fixed`, when it is set), else the window's
+/// columns, else 80; and the window's rows (0 when never told).
+fn term_width(fixed: int) -> (int, int) {
+    let (rows, cols) = os_term_size(0) else (0, 0)
+    if fixed > 0 {
+        return (fixed, rows)
+    }
+    (if cols >= 2 then cols else 80, rows)
+}
+
+/// Learn the width and where the prompt starts before the prompt is
+/// written (module doc). `cpr` is what is known of the terminal: 0 never
+/// asked, 1 answers, -1 never did.
 fn ed_query(sh: Sh, cpr: int) -> Query {
     let cv = columns_var(sh)
-    var q = Query { cols: if cv > 0 then cv else 80, col0: 0, cpr: cpr, pend: "" }
+    let (w, h) = term_width(cv)
+    var q = Query { cols: w, rows: h, fixed: cv, col0: 0, cpr: cpr, pend: "" }
     var pend = List[int]()
-    if cv > 0 || cpr < 0 {
+    if cpr < 0 {
         return q
     }
     let old = os_term_mode(0) else |_| { return q }
     os_term_set_mode(0, raw_mode(old)) else |_| { return q }
     var o = List[byte]()
     put_esc(mut o, "[6n")
-    put_esc(mut o, "7")
-    put_esc(mut o, "[999C")
-    put_esc(mut o, "[6n")
-    put_esc(mut o, "8")
     fs_write_chunk(0, o) else |_| {
         os_term_set_mode(0, old) else |_| {}
         return q
     }
-    // two replies, `ESC [ row ; col R`; anything else is a key typed ahead
+    // one reply, `ESC [ row ; col R`; anything else is a key typed ahead
     var cols_seen = List[int]()
     let start = time_now_ms()
     var st = 0
     var num = 0
     var held = List[int]()
-    while cols_seen.len < 2 && time_now_ms() - start < 300 {
+    while cols_seen.len < 1 && time_now_ms() - start < 300 {
         let b = read1()
         if b == -2 {
             break
@@ -387,8 +483,7 @@ fn ed_query(sh: Sh, cpr: int) -> Query {
     }
     os_term_set_mode(0, old) else |_| {}
     q.pend = ints_txt(pend)
-    if cols_seen.len == 2 && cols_seen[1] >= 2 {
-        q.cols = cols_seen[1]
+    if cols_seen.len == 1 {
         q.col0 = if cols_seen[0] >= 1 then cols_seen[0] - 1 else 0
         if q.col0 >= q.cols {
             q.col0 = 0
@@ -437,6 +532,19 @@ struct Ed {
     poll_hup: bool,
     poll_int: bool,
     int_ignored: bool,
+    /// The terminal's special characters (`term_chars`).
+    chars: List[int],
+    /// What the wait ends for, and whether it works here (else the
+    /// timed reads and polls of sh11).
+    wait_set: int,
+    wait_ok: bool,
+    /// The editor listens for `RESIZE` itself (no trap does); a trap
+    /// listens, and the editor took one off the queue (given back).
+    rs_listen: bool,
+    rs_taken: bool,
+    /// `COLUMNS` when it set the width, and the window's rows.
+    fixed: int,
+    rows: int,
     vi: bool,
     vi_ins: bool,
     /// How the line ended, once it has (-1 while editing).
@@ -514,6 +622,13 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         poll_hup: (sh.sig_listen | sh.sig_ignore) & m_hup() == 0,
         poll_int: sh.sig_listen & m_int() != 0,
         int_ignored: sh.sig_ignore & m_int() != 0,
+        chars: term_chars(),
+        wait_set: 0,
+        wait_ok: true,
+        rs_listen: (sh.sig_listen | sh.sig_ignore) & m_resize() == 0,
+        rs_taken: false,
+        fixed: q.fixed,
+        rows: q.rows,
         vi: sh.opt_vi,
         vi_ins: true,
         done: -1,
@@ -550,10 +665,16 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
             e.poll_hup = false
         }
     }
-    os_term_set_mode(0, raw_mode(old)) else |_| {
-        if e.poll_hup {
-            os_signal_default(m_hup()) else |_| {}
+    if e.rs_listen {
+        os_signal_listen(m_resize()) else |_| {
+            e.rs_listen = false
         }
+    }
+    let rs_heard = e.rs_listen || sh.sig_listen & m_resize() != 0
+    e.wait_set = (if e.poll_hup then m_hup() else 0) | (if e.poll_int then m_int() else 0) | (if rs_heard then m_resize() else 0)
+    e.wait_ok = e.wait_set != 0
+    os_term_set_mode(0, raw_mode(old)) else |_| {
+        ed_unlisten(e)
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     start_line(mut e)
@@ -565,17 +686,19 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
     }
     flush_out(mut e)
     os_term_set_mode(0, old) else |_| {}
-    if e.done == K_HUP {
+    let hup = e.done == K_HUP
+    if !hup {
+        ed_unlisten(e)
+    }
+    if hup {
         // the default ends the shell, with the terminal as it was:
         // the raise is delivered before it returns (`[os.signal.raise]`
         // since wolf 0.2.29; pelt used to sleep up to half a second
         // for the death), so what follows is for a host that refused it
+        ed_unlisten(e)
         os_signal_default(m_hup()) else |_| {}
         os_signal_raise(m_hup()) else |_| {}
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
-    }
-    if e.poll_hup {
-        os_signal_default(m_hup()) else |_| {}
     }
     var line = ""
     if e.done == ED_OK || e.done == ED_VISUAL {
@@ -590,6 +713,29 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         mem: if e.mem_set then mem_txt(e.mem) else "",
         mem_set: e.mem_set,
         num: e.vnum,
+    }
+}
+
+/// What the line listened for goes back as it was: `HUP` and `RESIZE`
+/// to their defaults when the editor listened itself (a resize still
+/// waiting is dropped: the next prompt reads the size anyway), and a
+/// resize a trap listens for, taken off the queue by the wait, goes
+/// back on it so the trap runs after the line (`poll_traps`).
+fn ed_unlisten(e: Ed) {
+    if e.poll_hup {
+        os_signal_default(m_hup()) else |_| {}
+    }
+    if e.rs_listen {
+        os_signal_default(m_resize()) else |_| {}
+        loop {
+            let g = os_signal_poll(m_resize()) else 0
+            if g == 0 {
+                break
+            }
+        }
+    }
+    if e.rs_taken {
+        os_signal_raise(m_resize()) else |_| {}
     }
 }
 
@@ -991,6 +1137,56 @@ fn place(mut e: Ed) {
     e.at = e.cur
 }
 
+/// The window changed size (`RESIZE`): with the new width, go back to
+/// the row the prompt's last line started on (the terminal kept its rows
+/// as they were), clear from there down, and write that line of the
+/// prompt and the edit line again; the cursor stays where it was in the
+/// text. `COLUMNS`, when set, keeps the width, and nothing is drawn.
+fn resized(mut e: Ed) {
+    let (w, h) = term_width(e.fixed)
+    e.rows = h
+    if w == e.cols {
+        return
+    }
+    put_s(mut e, "\r")
+    if e.tr > 0 {
+        put_esc(mut e.out, "[")
+        put_n(mut e, e.tr)
+        put_s(mut e, "A")
+    }
+    let (_pw, has_nl) = prompt_width(e.prompt)
+    var col0 = if has_nl then 0 else e.col0
+    if col0 >= w {
+        col0 = 0
+    }
+    if col0 > 0 {
+        put_esc(mut e.out, "[")
+        put_n(mut e, col0)
+        put_s(mut e, "C")
+    }
+    put_esc(mut e.out, "[J")
+    put_s(mut e, prompt_last(e.prompt))
+    e.cols = if w < 2 then 2 else w
+    e.col0 = col0
+    start_line(mut e)
+    let k = e.cur
+    e.at = 0
+    e.cur = k
+    draw_from(mut e, 0)
+}
+
+/// The prompt's last line: what follows its last newline.
+fn prompt_last(p: str) -> str {
+    var i = p.len
+    while i > 0 {
+        if byte_at(p, i - 1) == 10 {
+            return p[i..p.len]
+        }
+        i -= 1
+    }
+    p
+}
+
 /// Clear the screen (or just start below), write the prompt again and
 /// the whole line.
 fn redraw_all(mut e: Ed, clear: bool) {
@@ -1120,8 +1316,10 @@ fn show_hist(mut e: Ed, h: int, at_end: bool) {
 
 // ----------------------------------------------------------------- keys
 
-/// The next byte: typed ahead first, then the terminal. Polls signals
-/// between timed reads; answers `K_EOF`, `K_INTR` or `K_HUP` for those.
+/// The next byte: typed ahead first, then the terminal. Waits on the
+/// terminal and the signals together (module doc); answers `K_EOF`,
+/// `K_INTR` or `K_HUP` for those, and draws the line again after a
+/// resize and goes on waiting.
 fn next_byte(mut e: Ed) -> int {
     if e.pi < e.pend.len {
         let b = e.pend[e.pi]
@@ -1130,6 +1328,26 @@ fn next_byte(mut e: Ed) -> int {
     }
     flush_out(mut e)
     loop {
+        if e.wait_ok {
+            let got = os_signal_wait_fd(0, e.wait_set) else -1
+            if got < 0 {
+                // this host's wait failed: sh11's timed reads for the line
+                e.wait_ok = false
+            } else if got & m_hup() != 0 {
+                return K_HUP
+            } else if got & m_int() != 0 {
+                return K_INTR
+            } else if got & m_resize() != 0 {
+                if !e.rs_listen {
+                    e.rs_taken = true
+                }
+                resized(mut e)
+                flush_out(mut e)
+                continue
+            } else if got != 0 {
+                continue
+            }
+        }
         let t0 = time_now_ms()
         let b = read1()
         if b >= 0 {
@@ -1146,6 +1364,9 @@ fn next_byte(mut e: Ed) -> int {
             }
         } else {
             e.fast = 0
+        }
+        if e.wait_ok {
+            continue
         }
         if e.poll_hup {
             let h = os_signal_poll(m_hup()) else 0
@@ -1244,6 +1465,9 @@ fn key_raw(mut e: Ed) -> int {
         return b
     }
     if b != 27 {
+        if b < 128 {
+            return role_key(e, b)
+        }
         return utf8_rest(mut e, b)
     }
     if e.vi {
@@ -1273,6 +1497,47 @@ fn key_raw(mut e: Ed) -> int {
         return K_NONE
     }
     K_ALT + utf8_rest(mut e, n)
+}
+
+/// A one-byte key as the editor takes it (module doc): the user's
+/// special character acts as the editor's default key for it does
+/// (interrupt `^C`, end of file `^D`, erase `^?`, kill `^U`, word erase
+/// `^W`, literal next `^V`); quit, suspend, start and stop are nothing;
+/// a default key whose character the user moved or disabled is nothing.
+/// In vi command mode only interrupt and end of file are the terminal's.
+fn role_key(e: Ed, b: int) -> int {
+    let all = !e.vi || e.vi_ins
+    let c = e.chars
+    if b == c[TC_INTR] {
+        return 3
+    }
+    if b == c[TC_EOF] {
+        return 4
+    }
+    if all {
+        if b == c[TC_ERASE] {
+            return 127
+        }
+        if b == c[TC_KILL] {
+            return 21
+        }
+        if b == c[TC_WERASE] {
+            return 23
+        }
+        if b == c[TC_LNEXT] {
+            return 22
+        }
+        if b == c[TC_QUIT] || b == c[TC_SUSP] || b == c[TC_START] || b == c[TC_STOP] {
+            return K_NONE
+        }
+    }
+    if b == 3 || b == 4 {
+        return K_NONE
+    }
+    if all && (b == 21 || b == 23 || b == 22) {
+        return K_NONE
+    }
+    b
 }
 
 /// `ESC [ params final`: the keys a terminal sends.
