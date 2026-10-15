@@ -10,7 +10,7 @@ prompt ""
 step 3 "\\k n"
 err no
 prompt ""
-step 4 "\\k \\t"
+step 4 "\\k \\t\\t"
 err no
 prompt ""
 step 5 "\\k y"

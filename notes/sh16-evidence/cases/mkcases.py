@@ -106,8 +106,8 @@ case("c_ed_complete_list_prompt", ["PS1=\"$(printf 'top\\n> ')\"", "touch aa1 aa
      "after a list the whole prompt (two lines here) and the line are drawn again. The harness reads standard error through a pipe, where the prompt's newline does not return the carriage, so its first drawing is shifted; the editor's redraw goes to the terminal. Screens and transcript written by hand",
      hand=True, extra=dict(COLS, screen="3-3", screen_by="hand"))
 case("c_ed_complete_query", ["i=0; while [ $i -lt 80 ]; do : > q$i; i=$((i+1)); done", "\\k echo q\\t\\t",
-     "\\k n", "\\k \\t", "\\k y", "\\k \\x15echo done\\r"],
-     "a list taller than the window less a row is asked about first: n draws the line again, y lists. Screens and transcript written by hand",
+     "\\k n", "\\k \\t\\t", "\\k y", "\\k \\x15echo done\\r"],
+     "a list taller than the window less a row is asked about first: n draws the line again, y lists; the answer ends the row of Tabs, so asking again takes two. Screens and transcript written by hand",
      hand=True, extra=dict(COLS, rows="10", screen="2-5", screen_by="hand"))
 
 for name, (keys, meta, files) in CASES.items():
