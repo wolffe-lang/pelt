@@ -11,9 +11,11 @@ in the meta are kept.
 The oracle is a program we RUN, never a source we read (ruling #43).
 Run it on the oracle host (tests/diff/ORACLE); it refuses another dash.
 
-usage: tools/session-record [--check] [case ...]
-  --check  write nothing; exit 1 when a recorded transcript no longer
-           matches what this host's oracle answers
+usage: tools/session-record [--check] [--no-second] [case ...]
+  --check      write nothing; exit 1 when a recorded transcript no longer
+               matches what this host's oracle answers
+  --no-second  the oracle alone: no second opinion is run, and the
+               meta's `bash=` is left out (sh15 runs dash only)
 """
 
 import os
@@ -30,8 +32,12 @@ KEEP = ("args", "pelt_args", "oracle_args", "env", "oracle", "compare", "pending
 def main(argv):
     sys.stdout.reconfigure(line_buffering=True)
     check = False
-    if argv[:1] == ["--check"]:
-        check = True
+    second = True
+    while argv[:1] in (["--check"], ["--no-second"]):
+        if argv[0] == "--check":
+            check = True
+        else:
+            second = False
         argv = argv[1:]
     want = open(os.path.join(ls.ROOT, "tests", "diff", "ORACLE"), encoding="utf-8").read()
     pkg = subprocess.run(["pacman", "-Q", "dash"], capture_output=True, text=True).stdout.strip()
@@ -66,9 +72,11 @@ def main(argv):
             print(f"UNSTABLE {name}: two {first[0]} screens differ")
             drift += 1
             continue
-        b = ls.run(ls.argv_for(other, meta, False), keys, meta)
-        same = ls.stdout_and_exit(b) == ls.stdout_and_exit(d)
-        meta["dash" if meta.get("oracle") == "bash" else "bash"] = "agree" if same else "differs"
+        same = True
+        if second:
+            b = ls.run(ls.argv_for(other, meta, False), keys, meta)
+            same = ls.stdout_and_exit(b) == ls.stdout_and_exit(d)
+            meta["dash" if meta.get("oracle") == "bash" else "bash"] = "agree" if same else "differs"
         if check:
             have = open(trp, encoding="utf-8").read().split("\n")[:-1] if os.path.exists(trp) else None
             if have is None or view(have) != view(d):
