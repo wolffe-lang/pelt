@@ -1,0 +1,4 @@
+1
+test ./sh_test.lu::main ... FAILED (trap(assert) [native])
+  stderr: comp_ctx(echo uniq) = 2 [uniq] 0 false false false, want 1 [uniq] 0 false false false
+wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out

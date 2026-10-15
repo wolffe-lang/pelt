@@ -1,0 +1,57 @@
+===== lcp_then_type [bash]
+  step 0
+  err no
+  prompt "$ "
+      | $
+      cursor 0 2
+      bel 0 raw b'$ '
+  step 1 "PATH=$HOME/bin:$PATH"
+  err yes
+  prompt "$ "
+      | $ PATH=$HOME/bin:$PATH
+      |                       $
+      cursor 1 24
+      bel 0 raw b'PATH=$HOME/bin:$PATH\n$ '
+  step 2 "\\k zq\\t"
+  err no
+  prompt "zq\u0007x"
+      |                       $ zqx
+      cursor 0 27
+      bel 1 raw b'zq\x07x'
+  step 3 "\\k a1"
+  err no
+  prompt "a1"
+      |                       $ zqxa1
+      cursor 0 29
+      bel 0 raw b'a1'
+  step 4 "\\k \\t"
+  err no
+  prompt " "
+      |                       $ zqxa1
+      cursor 0 30
+      bel 0 raw b' '
+  step 5 "\\k X\\x01echo \\r"
+  out "zqxa1 X\n"
+  err yes
+  prompt "$ "
+      | $ echo zqxa1 X        $ zqxa1 X
+      |        $
+      cursor 1 9
+      bel 0 raw b'X\r$ echo zqxa1 X\x08\x08\x08\x08\x08\x08\x08\n$ '
+  step 6 "\\k zq\\ta1\\tX\\x01echo \\r"
+  out "zqxa1 X\n"
+  err yes
+  prompt "$ "
+      | $ echo zqxa1 X X
+      |        $
+      cursor 1 9
+      bel 1 raw b'zq\x07xa1 X\r$ echo zqxa1 X\x08\x08\x08\x08\x08\x08\x08\n$ '
+  step 7 "exit"
+  err yes
+  prompt ""
+      |        $ exit
+      |              exit
+      | 
+      cursor 2 17
+      bel 0 raw b''
+  exit 0 at step 7

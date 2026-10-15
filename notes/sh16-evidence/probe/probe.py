@@ -85,6 +85,8 @@ PROBES = [
     ("dash_vi", {}, ["set -o vi; echo st=$?", "set -o | grep -E 'vi|emacs'"], {}),
     ("tab_after_space", {"w/unique_file_name": F}, ["\\k echo uniq \\e[D\\tX\\r", "\\k echo uniq\\tX\\tY\\r"], {}),
     ("cmd_dir_in_path_word", {"w/subd/x": F}, ["\\k subd\\t", "\\k \\x15echo done\\r", "\\k cd sub\\tX\\x01echo \\r"], {}),
+    ("lcp_then_type", {"home/bin/zqxa1": EXE, "home/bin/zqxa2": EXE, "home/bin/zqxbb": EXE},
+     ["PATH=$HOME/bin:$PATH", "\\k zq\\t", "\\k a1", "\\k \\t", "\\k X\\x01echo \\r", "\\k zq\\ta1\\tX\\x01echo \\r"], {}),
     ("wide_names", {"w/\u00e9t\u00e9": F, "w/\u65e5\u672c": F}, ["\\k echo \\xc3\\xa9\\tX\\r", "\\k echo \\t\\t", "\\k \\x15echo done\\r"], {}),
 ]
 
