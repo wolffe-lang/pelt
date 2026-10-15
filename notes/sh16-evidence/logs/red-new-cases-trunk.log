@@ -1,0 +1,849 @@
+session: pelt = /home/mfwolffe/lanes/sh16/trunk/target/release/pelt
+FAIL c_ed_complete_abs
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k echo /us\\tX\\r"
+     ! pelt out "/us X\n"
+       dash out "/usr/X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k echo /usr/bi\\tX\\r"
+     ! pelt out "/usr/bi X\n"
+       dash out "/usr/bin/X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 3
+FAIL c_ed_complete_after_assign
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PATH=$HOME/bin:$PATH"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k FOO=1 zqcm\\tX\\r"
+     ! pelt err yes
+       dash out "zq:X\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "\\k if zqcm\\tX; then :; fi\\r"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "\\k if zqcm\\tX; then :; fi\\r"
+     ! pelt prompt "$ "
+       dash out "zq:X\n"
+     ! pelt step 4 "\\k ! zqcm\\tX\\r"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 4 "\\k ! zqcm\\tX\\r"
+     ! pelt step 5 "\\k echo `zqcm\\tX`\\r"
+       dash out "zq:X\n"
+     ! pelt out "\n"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 5 "\\k echo `zqcm\\tX`\\r"
+     ! pelt step 6 "exit"
+       dash out "zq:X\n"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt exit 0 at step 6
+       dash step 6 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL c_ed_complete_after_ops
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PATH=$HOME/bin:$PATH"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k echo hi | zqcm\\tX\\r"
+     ! pelt err yes
+       dash out "zq:X\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 3 "\\k true; zqcm\\tX\\r"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "\\k true; zqcm\\tX\\r"
+     ! pelt prompt "$ "
+       dash out "zq:X\n"
+     ! pelt step 4 "\\k true && zqcm\\tX\\r"
+       dash err yes
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 4 "\\k true && zqcm\\tX\\r"
+     ! pelt step 5 "\\k echo $(zqcm\\tX)\\r"
+       dash out "zq:X\n"
+     ! pelt out "\n"
+       dash err yes
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 5 "\\k echo $(zqcm\\tX)\\r"
+     ! pelt step 6 "\\k (zqcm\\tX)\\r"
+       dash out "zq:X\n"
+       pelt err yes
+       pelt prompt "$ "
+     ! pelt step 7 "exit"
+       dash step 6 "\\k (zqcm\\tX)\\r"
+     ! pelt err no
+       dash out "zq:X\n"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 127 at step 7
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 7 "exit"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+FAIL c_ed_complete_command
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k unam\\t -s >/dev/null && echo completed\\r"
+     ! pelt err yes
+       dash out "completed\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 127 at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL c_ed_complete_dirs
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k echo su\\t\\t\\tX\\r"
+     ! pelt out "su X\n"
+       dash out "sub/dir/afile X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 2
+FAIL c_ed_complete_file
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "touch unique_file_name"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\\k echo uniq\\t\\r"
+     ! pelt out "uniq\n"
+       dash out "unique_file_name\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_ed_complete_hidden
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "touch .hid1 vis"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo \\tX\\r"
+     ! pelt out "X\n"
+       dash out "vis X\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "\\k echo .h\\tX\\r"
+     ! pelt out ".h X\n"
+       dash out ".hid1 X\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_ed_complete_in_quotes
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "touch 'my file'"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k echo \"my\\tX\\r"
+     ! pelt err no
+       dash out "my file X\n"
+     ! pelt prompt "> "
+       dash err yes
+     ! pelt step 3 "\\k echo 'my\\tX\\r"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "\\k echo 'my\\tX\\r"
+     ! pelt prompt "> "
+       dash out "my file X\n"
+     ! pelt step 4 "\\k echo my\\\\ \\tX\\r"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "> "
+       dash step 4 "\\k echo my\\\\ \\tX\\r"
+     ! pelt step 5 "exit"
+       dash out "my file X\n"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt "> "
+       dash prompt "$ "
+     ! pelt alive at step 5
+       dash step 5 "exit"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 5
+FAIL c_ed_complete_lcp
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PATH=$HOME/bin:$PATH"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k zq\\ta1\\tX\\r"
+     ! pelt err yes
+       dash out "zq:X\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 3 "\\k zqxa\\t\\t2\\tY\\r"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "\\k zqxa\\t\\t2\\tY\\r"
+     ! pelt prompt "$ "
+       dash out "zq:Y\n"
+     ! pelt step 4 "exit"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 4 "exit"
+     ! pelt exit 127 at step 4
+       dash err yes
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL c_ed_complete_list
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k echo f\\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "\\k \\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "\\k \\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 4 "\\k \\x15echo done\\r"
+       pelt out "done\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 5
+     screen after step 2:
+     ! pelt | $ echo f^I^I
+       dash | $ echo f
+     ! pelt cursor 0 12
+       dash | fa             fhh
+     ! pelt <none>
+       dash | fbb            fiii
+     ! pelt <none>
+       dash | fccc           fjjjj
+     ! pelt <none>
+       dash | fdddd          fkkkkk
+     ! pelt <none>
+       dash | fdir/          fllllllllllll
+     ! pelt <none>
+       dash | feeeee         fm
+     ! pelt <none>
+       dash | fffffff        fnn
+     ! pelt <none>
+       dash | fg
+     ! pelt <none>
+       dash | $ echo f
+     ! pelt <none>
+       dash cursor 9 8
+     screen after step 3:
+     ! pelt | $ echo f^I^I^I
+       dash | $ echo f
+     ! pelt cursor 0 14
+       dash | fa             fhh
+     ! pelt <none>
+       dash | fbb            fiii
+     ! pelt <none>
+       dash | fccc           fjjjj
+     ! pelt <none>
+       dash | fdddd          fkkkkk
+     ! pelt <none>
+       dash | fdir/          fllllllllllll
+     ! pelt <none>
+       dash | feeeee         fm
+     ! pelt <none>
+       dash | fffffff        fnn
+     ! pelt <none>
+       dash | fg
+     ! pelt <none>
+       dash | $ echo f
+     ! pelt <none>
+       dash cursor 9 8
+FAIL c_ed_complete_list_prompt
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1=\"$(printf 'top\\n> ')\""
+       pelt err yes
+       pelt prompt "> "
+       pelt step 2 "touch aa1 aa2"
+       pelt err yes
+       pelt prompt "> "
+       pelt step 3 "\\k echo xyz aa\\t\\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 4 "\\k \\x15echo done\\r"
+       pelt out "done\n"
+       pelt err yes
+       pelt prompt "> "
+       pelt step 5 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 5
+     screen after step 3:
+     ! pelt |    > echo xyz aa^I^I
+       dash |    > echo xyz aa
+     ! pelt cursor 0 20
+       dash | aa1  aa2
+     ! pelt <none>
+       dash | top
+     ! pelt <none>
+       dash | > echo xyz aa
+     ! pelt <none>
+       dash cursor 3 13
+FAIL c_ed_complete_list_vars
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "ZQV_ONE=1 ZQV_TWO=2"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo $ZQV\\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "\\k \\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 4 "\\k \\x15echo done\\r"
+       pelt out "done\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 5
+     screen after step 2:
+     ! pelt | $ echo $ZQV^I
+       dash | $ echo $ZQV_
+     ! pelt cursor 0 13
+       dash cursor 0 12
+     screen after step 3:
+     ! pelt | $ echo $ZQV^I^I
+       dash | $ echo $ZQV_
+     ! pelt cursor 0 15
+       dash | $ZQV_ONE  $ZQV_TWO
+     ! pelt <none>
+       dash | $ echo $ZQV_
+     ! pelt <none>
+       dash cursor 2 12
+FAIL c_ed_complete_list_wide
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "touch \u00e9t\u00e9 \u65e5\u672c"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo \\t\\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "\\k \\x15echo done\\r"
+       pelt out "done\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+     screen after step 2:
+     ! pelt | $ echo ^I^I
+       dash | $ echo
+     ! pelt cursor 0 11
+       dash | été   日本
+     ! pelt <none>
+       dash | $ echo
+     ! pelt <none>
+       dash cursor 2 7
+FAIL c_ed_complete_mid_word
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "touch unique_file_name"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k echo uniqZZ\\e[D\\e[D\\t\\r"
+     ! pelt out "uniq ZZ\n"
+       dash out "unique_file_nameZZ\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\\k echo uniq \\e[D\\tX\\r"
+     ! pelt out "uniq X\n"
+       dash out "unique_file_nameX\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_ed_complete_names
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PATH=$HOME/bin:$PATH"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "f_mine() { echo \"fn:$*\"; }"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\\k zqcm\\tX\\r"
+     ! pelt err yes
+       dash out "zq:X\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 4 "\\k f_mi\\tX\\r"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 4 "\\k f_mi\\tX\\r"
+     ! pelt prompt "$ "
+       dash out "fn:X\n"
+     ! pelt step 5 "\\k umas\\tX\\x01echo \\r"
+       dash err yes
+     ! pelt out "umas X\n"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "\\k umas\\tX\\x01echo \\r"
+     ! pelt prompt "$ "
+       dash out "umask X\n"
+     ! pelt step 6 "\\k whil\\tX\\x01echo \\r"
+       dash err yes
+     ! pelt out "whil X\n"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "\\k whil\\tX\\x01echo \\r"
+     ! pelt prompt "$ "
+       dash out "while X\n"
+     ! pelt step 7 "exit"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 7 "exit"
+     ! pelt exit 0 at step 7
+       dash err yes
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+FAIL c_ed_complete_newline
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "touch \"$(printf 'nl\\nname')\""
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k echo nl\\tX\\r"
+     ! pelt out "nl X\n"
+       dash out "nl\nname X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 3
+FAIL c_ed_complete_nomatch
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k echo qqqzz\\tX\\r"
+     ! pelt out "qqqzz X\n"
+       dash out "qqqzzX\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k qqqzz\\t\\x15echo done\\r"
+       pelt out "done\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 3
+FAIL c_ed_complete_query
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "i=0; while [ $i -lt 80 ]; do : > q$i; i=$((i+1)); done"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo q\\t\\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "\\k n"
+       pelt err no
+       pelt prompt ""
+       pelt step 4 "\\k \\t\\t"
+       pelt err no
+       pelt prompt ""
+       pelt step 5 "\\k y"
+       pelt err no
+       pelt prompt ""
+       pelt step 6 "\\k \\x15echo done\\r"
+       pelt out "done\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 7
+     screen after step 2:
+     ! pelt | $ echo q^I^I
+       dash | $ echo q
+     ! pelt cursor 0 12
+       dash | list all 80? (y or n)
+     ! pelt <none>
+       dash cursor 1 22
+     screen after step 3:
+     ! pelt | $ echo q^I^In
+       dash | list all 80? (y or n)
+     ! pelt cursor 0 13
+       dash | $ echo q
+     ! pelt <none>
+       dash cursor 1 8
+     screen after step 4:
+     ! pelt | $ echo q^I^In^I^I
+       dash | $ echo q
+     ! pelt cursor 0 17
+       dash | list all 80? (y or n)
+     ! pelt <none>
+       dash cursor 1 22
+     screen after step 5:
+     ! pelt | $ echo q^I^In^I^Iy
+       dash | list all 80? (y or n)
+     ! pelt cursor 0 18
+       dash | q0   q2   q30  q41  q52  q63  q74
+     ! pelt <none>
+       dash | q1   q20  q31  q42  q53  q64  q75
+     ! pelt <none>
+       dash | q10  q21  q32  q43  q54  q65  q76
+     ! pelt <none>
+       dash | q11  q22  q33  q44  q55  q66  q77
+     ! pelt <none>
+       dash | q12  q23  q34  q45  q56  q67  q78
+     ! pelt <none>
+       dash | q13  q24  q35  q46  q57  q68  q79
+     ! pelt <none>
+       dash | q14  q25  q36  q47  q58  q69  q8
+     ! pelt <none>
+       dash | q15  q26  q37  q48  q59  q7   q9
+     ! pelt <none>
+       dash | q16  q27  q38  q49  q6   q70
+     ! pelt <none>
+       dash | q17  q28  q39  q5   q60  q71
+     ! pelt <none>
+       dash | q18  q29  q4   q50  q61  q72
+     ! pelt <none>
+       dash | q19  q3   q40  q51  q62  q73
+     ! pelt <none>
+       dash | $ echo q
+     ! pelt <none>
+       dash cursor 13 8
+FAIL c_ed_complete_quoting
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "touch 'my file' 'dol$b' \"q'uote\" 'zd\"q' 'amp&b;c(d)' 'st*ar'"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k echo my\\tX\\r"
+     ! pelt out "my X\n"
+       dash out "my file X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\\k echo do\\tX\\r"
+     ! pelt out "do X\n"
+       dash out "dol$b X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "\\k echo q\\tX\\r"
+     ! pelt out "q X\n"
+       dash out "q'uote X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 5 "\\k echo zd\\tX\\r"
+     ! pelt out "zd X\n"
+       dash out "zd\"q X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 6 "\\k echo am\\tX\\r"
+     ! pelt out "am X\n"
+       dash out "amp&b;c(d) X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 7 "\\k echo st\\tX\\r"
+     ! pelt out "st X\n"
+       dash out "st*ar X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 8 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 8
+FAIL c_ed_complete_redirect
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "echo content > unique_file_name"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k cat <uniq\\t\\r"
+     ! pelt err yes
+       dash out "content\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 3 "\\k echo hi >uniq\\t\\r"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "\\k echo hi >uniq\\t\\r"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 4 "cat unique_file_name"
+       dash prompt "$ "
+     ! pelt out "content\n"
+       dash step 4 "cat unique_file_name"
+     ! pelt err no
+       dash out "hi\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 5 "\\k FOO=uniq\\t\\x01echo \\r"
+       dash prompt "$ "
+     ! pelt out "FOO=uniq\n"
+       dash step 5 "\\k FOO=uniq\\t\\x01echo \\r"
+     ! pelt err no
+       dash out "FOO=unique_file_name\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 0 at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL c_ed_complete_slash_cmd
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k ./scr\\tX\\r"
+     ! pelt err yes
+       dash out "zq:X\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 2 "\\k ./scd\\tx\\tY\\x01echo \\r"
+       dash prompt "$ "
+     ! pelt out "./scd x Y\n"
+       dash step 2 "\\k ./scd\\tx\\tY\\x01echo \\r"
+     ! pelt err no
+       dash out "./scdir/xY\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 0 at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+FAIL c_ed_complete_tilde
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k cat ~/do\\tn\\t\\r"
+     ! pelt err yes
+       dash out "note-text\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 2 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 1 at step 2
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 2
+ok   c_ed_complete_tilde_alone
+FAIL c_ed_complete_var
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "ZQV_ONE=1 ZQV_TWO=2"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k echo $ZQV_O\\tX\\r"
+     ! pelt out "X\n"
+       dash out "1 X\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\\k echo ${ZQV_O\\tX\\r"
+     ! pelt err no
+       dash out "1 X\n"
+     ! pelt prompt "> "
+       dash err yes
+     ! pelt step 4 "\\k echo \"$ZQV_O\\tX\\r"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "\\k echo \"$ZQV_O\\tX\\r"
+     ! pelt prompt "> "
+       dash out "1 X\n"
+     ! pelt step 5 "\\k echo $ZQV\\t\\tO\\tX\\r"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "> "
+       dash step 5 "\\k echo $ZQV\\t\\tO\\tX\\r"
+     ! pelt step 6 "exit"
+       dash out "1 X\n"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt "> "
+       dash prompt "$ "
+     ! pelt alive at step 6
+       dash step 6 "exit"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL c_ed_complete_var_in_word
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "ZQV_ONE=1"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo a$ZQV_O\\tX\\r"
+     ! pelt out "a X\n"
+       dash out "a1 X\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 3
+FAIL c_vi_complete
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o vi"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "touch unique_file_name"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "\\k echo uniq\\tX\\r"
+     ! pelt out "uniq X\n"
+       dash out "unique_file_name X\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+session: pass 1  fail 25  pending 0 (0)

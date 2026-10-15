@@ -1,0 +1,7 @@
+6774441ba446250e05065fd4dfa384d80bde593c2f4f612db073488b10c0a997  pelt
+pelt 6774441ba446250e05065fd4dfa384d80bde593c2f4f612db073488b10c0a997 14765328
+static ok
+42
+b'\t' b'\x07' 1
+b'\t' b'\r\r\nlist all 3790? (y or n) ' 27
+b'n' b'\r\r\n$ ' 5

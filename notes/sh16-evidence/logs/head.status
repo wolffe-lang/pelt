@@ -1,0 +1,42 @@
+head=d8d420c7055fcb494c8fd298096735ac0d30cb07 dirty=0
+self: SigBlk: 0000000000000002 SigIgn: 0000000000000004 
+fetch=0
+fmt=0
+build=0
+test=0
+clause=0
+width=0
+diff-native=0
+diff-release=0
+diff-release-taskset=0
+diff-native-taskset=0
+diff-selftest=0
+sess-native=0
+sess-release=0
+sess-release-taskset=0
+sess-native-taskset=0
+sess-selftest=0
+glob-native=0
+loop-native=0
+shape-native=0
+exec-native=0
+edit-native=0
+edit-native-taskset=0
+hist-native=0
+sigw-native=0
+sigw-native-taskset=0
+glob-release=0
+loop-release=0
+shape-release=0
+exec-release=0
+edit-release=0
+edit-release-taskset=0
+hist-release=0
+sigw-release=0
+sigw-release-taskset=0
+oracle-check=0
+static=0
+360e32f913921e4acce9d3455af7afef951a96d7592ff7b9e2fe829692f43e25  /home/mfwolffe/lanes/sh16/sc/pelt-head
+bf64a99742ba14e14a8ed800da64634377f5cc6e02b4e6b19c56385645b7d8c0  target/native/pelt
+47c9741818956db2bc9da1b6ad0e2516cd32d7f5d0a48f777b9f3828c0436127  target/release/pelt
+done

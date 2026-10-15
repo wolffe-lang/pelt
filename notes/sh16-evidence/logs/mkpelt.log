@@ -1,0 +1,16 @@
+pax b7fb8d1b14ec0e0e247e7210779ddf7229607c13
+PELT_REV=d8d420c7055fcb494c8fd298096735ac0d30cb07
+mkpelt: pelt d8d420c7055fcb494c8fd298096735ac0d30cb07 pins wolf 0.2.30 (4e55b39e…), wolf-std fd6bcdcb1dfe03ea5092f10316b7abe81f2df41e
+mkpelt: wolf 0.2.30 (wolfgang, pin 1b37f36)
+wolf build: note: ld.lld not found on PATH — linking with the system linker (lld ships with the toolchain; packaging is c13)
+/usr/bin/ld: /work/tmp/pax-pelt.kz9tKx/wolf/libwolf_rt.a(std-c64e6e11aa24fc43.std.1e3c4ec04c5261a9-cgu.0.rcgu.o): in function `std::sys::net::connection::socket::lookup_host::{closure#0}':
+/rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/std/src/sys/net/connection/socket/mod.rs:350:(.text._RNCNvNtNtNtNtCs2AWtUsOyxgP_3std3sys3net10connection6socket11lookup_host0Bb_+0x54): warning: Using 'getaddrinfo' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+/usr/bin/ld: /work/tmp/pax-pelt.kz9tKx/wolf/libwolf_rt.a(std-c64e6e11aa24fc43.std.1e3c4ec04c5261a9-cgu.0.rcgu.o): note: the message above does not take linker garbage collection into account
+/usr/bin/ld: /work/tmp/pax-pelt.kz9tKx/wolf/libwolf_rt.a(std-c64e6e11aa24fc43.std.1e3c4ec04c5261a9-cgu.0.rcgu.o): in function `std::sys::paths::unix::home_dir::fallback':
+/rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/std/src/sys/paths/unix.rs:456:(.text._RNvNtCs2AWtUsOyxgP_3std3env8home_dir+0x125): warning: Using 'getpwuid_r' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+/usr/bin/ld: /work/tmp/pax-pelt.kz9tKx/wolf/libwolf_rt.a(std-c64e6e11aa24fc43.std.1e3c4ec04c5261a9-cgu.0.rcgu.o): note: the message above does not take linker garbage collection into account
+pelt 6774441ba446250e05065fd4dfa384d80bde593c2f4f612db073488b10c0a997 14765328
+linked against: /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/libc.a
+  Type:                              EXEC (Executable file)
+0
+6774441ba446250e05065fd4dfa384d80bde593c2f4f612db073488b10c0a997  /out/pelt

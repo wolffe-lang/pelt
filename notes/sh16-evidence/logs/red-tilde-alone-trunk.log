@@ -1,0 +1,17 @@
+session: pelt = /home/mfwolffe/lanes/sh16/trunk/target/release/pelt
+FAIL c_ed_complete_tilde_alone
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k ls ~\\tdocs\\r"
+     ! pelt out "/home/mfwolffe/lanes/sh16/tmp/pelt-sess.tozedka7/home:\ndocs\n"
+       dash out "note\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "exit"
+       pelt err no
+       pelt prompt ""
+     ! pelt exit 2 at step 2
+       dash exit 0 at step 2
+session: pass 0  fail 1  pending 0 (0)

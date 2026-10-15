@@ -1,0 +1,16 @@
+gauntlet (macos-latest, true)	the differential corpus, native tier difftest: total        880     0    80 (2)
+gauntlet (macos-latest, true)	the differential corpus, release tier difftest: total        880     0    80 (2)
+gauntlet (macos-latest, true)	the session corpus, native tier session: pass 241  fail 0  pending 14 (0)
+gauntlet (macos-latest, true)	the session corpus, release tier session: pass 241  fail 0  pending 14 (0)
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier ok   tab-latency: Tab at an empty command name, 10 times: the bell median 6.1 ms (max 48.4), the question median 6.1 ms (max 8.4), status 0, modes restored True
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier ok   tab-latency: Tab at an empty command name, 10 times: the bell median 6.3 ms (max 31.6), the question median 6.2 ms (max 10.2), status 0, modes restored True
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier difftest: total        880     0    80 (1)
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier difftest: total        880     0    80 (1)
+gauntlet (ubuntu-latest, true)	the session corpus, native tier session: pass 241  fail 0  pending 14 (0)
+gauntlet (ubuntu-latest, true)	the session corpus, release tier session: pass 241  fail 0  pending 14 (0)
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier ok   tab-latency: Tab at an empty command name, 10 times: the bell median 16.1 ms (max 24.8), the question median 16.1 ms (max 17.2), status 0, modes restored True
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier ok   tab-latency: Tab at an empty command name, 10 times: the bell median 15.0 ms (max 17.6), the question median 16.1 ms (max 16.1), status 0, modes restored True
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier edit-witness: 11 ok, 0 failed, 0 skipped

@@ -1,0 +1,78 @@
+# CI run 38797987258, branch sh16-plant at dc05d19 (head a8cc525 + the plant: Tab inserts itself), workflow_dispatch
+# the FAIL lines, totals and exit codes of every job, from gh run view --log
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier PEND-ok   jobsctl/c_fg_bg_no_monitor (waits on job-control)
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier difftest: total        880     0    80 (1)
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier PEND-ok   jobsctl/c_fg_bg_no_monitor (waits on job-control)
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier difftest: total        880     0    80 (1)
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_abs
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_after_assign
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_after_ops
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_command
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_dirs
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_file
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_hidden
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_in_quotes
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_lcp
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_list
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_list_prompt
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_list_vars
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_list_wide
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_mid_word
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_names
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_newline
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_nomatch
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_query
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_quoting
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_redirect
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_slash_cmd
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_tilde
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_var
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_ed_complete_var_in_word
+gauntlet (ubuntu-latest, true)	the session corpus, native tier FAIL c_vi_complete
+gauntlet (ubuntu-latest, true)	the session corpus, native tier session: pass 216  fail 25  pending 14 (0)
+gauntlet (ubuntu-latest, true)	the session corpus, native tier ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier FAIL tab-latency: no answer in 60 s
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier edit-witness: 10 ok, 1 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier FAIL tab-latency: no answer in 60 s
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier edit-witness: 10 ok, 1 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	the differential corpus, native tier PEND-ok   jobsctl/c_fg_bg_no_monitor (waits on job-control)
+gauntlet (macos-latest, true)	the differential corpus, native tier PEND-ok   simple/c_enoexec_binary (waits on enoexec)
+gauntlet (macos-latest, true)	the differential corpus, native tier difftest: total        880     0    80 (2)
+gauntlet (macos-latest, true)	the differential corpus, release tier PEND-ok   jobsctl/c_fg_bg_no_monitor (waits on job-control)
+gauntlet (macos-latest, true)	the differential corpus, release tier PEND-ok   simple/c_enoexec_binary (waits on enoexec)
+gauntlet (macos-latest, true)	the differential corpus, release tier difftest: total        880     0    80 (2)
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_abs
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_after_assign
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_after_ops
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_command
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_dirs
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_file
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_hidden
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_in_quotes
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_lcp
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_list
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_list_prompt
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_list_vars
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_list_wide
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_mid_word
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_names
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_newline
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_nomatch
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_query
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_quoting
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_redirect
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_slash_cmd
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_tilde
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_var
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_ed_complete_var_in_word
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_vi_complete
+gauntlet (macos-latest, true)	the session corpus, native tier session: pass 216  fail 25  pending 14 (0)
+gauntlet (macos-latest, true)	the session corpus, native tier ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier FAIL tab-latency: no answer in 60 s
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier edit-witness: 10 ok, 1 failed, 0 skipped
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier FAIL tab-latency: no answer in 60 s
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier edit-witness: 10 ok, 1 failed, 0 skipped
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier ##[error]Process completed with exit code 1.
