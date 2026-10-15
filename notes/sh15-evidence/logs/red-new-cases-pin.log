@@ -1,0 +1,261 @@
+session: pelt = /home/mfwolffe/lanes/sh15/bin/p/pelt
+FAIL c_ed_flow_stop
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k echo a\\x13b\\r"
+     ! pelt err no
+       dash out "ab\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 2 "\\k \\x11"
+       dash prompt "$ "
+     ! pelt out "ab\n"
+       dash step 2 "\\k \\x11"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 3 "echo after"
+       pelt out "after\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_ed_resize_narrow
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "\\k echo aaaaaaaaaabbbbbbbbbbcccccccccc"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "\\size 20 24"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "\\k dd\\r"
+       pelt out "aaaaaaaaaabbbbbbbbbbccccccccccdd\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+     screen after step 2:
+       pelt | $ echo aaaaaaaaaabbb
+     ! pelt cursor 0 19
+       dash | bbbbbbbcccccccccc
+     ! pelt <none>
+       dash cursor 1 17
+ok   c_ed_resize_trap
+FAIL c_ed_stty_eof
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "stty eof ^B"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "echo before"
+       pelt out "before\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "\\k \\x02"
+       pelt err no
+       pelt prompt ""
+     ! pelt alive at step 3
+       dash exit 0 at step 3
+FAIL c_ed_stty_erase
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "stty erase '#'"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo ab#c\\r"
+     ! pelt out "ab#c\n"
+       dash out "ac\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "stty erase '^?'"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_ed_stty_intr
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "stty intr ^X"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo abc\\x18"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 ""
+     ! pelt out "abc\n"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 4 "echo st=$?"
+     ! pelt step 4 "echo st=$?"
+       dash out "st=130\n"
+     ! pelt out "st=0\n"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 5 "stty intr ^C"
+     ! pelt step 5 "stty intr ^C"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 6 "exit"
+     ! pelt step 6 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt ""
+     ! pelt prompt ""
+       dash exit 0 at step 6
+     ! pelt exit 0 at step 6
+       dash <none>
+FAIL c_ed_stty_kill
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "stty kill @"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo no@echo yes\\r"
+     ! pelt out "no@echo yes\n"
+       dash out "yes\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "stty kill ^U"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_ed_stty_lnext
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "stty lnext ^T"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k printf %s a\\x14\\x01b | od -An -c\\r"
+     ! pelt err yes
+       dash out "   a 001   b\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "stty lnext ^V"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "stty lnext ^V"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL c_ed_stty_werase
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "stty werase ^T"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "\\k echo aa bb\\x14cc\\r"
+     ! pelt out "aa bbcc\n"
+       dash out "aa cc\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "stty werase ^W"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_vi_stty_erase
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o vi"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 2 "stty erase '#'"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 3 "\\k echo ab#c\\r"
+     ! pelt out "ab#c\n"
+       dash out "ac\n"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 4 "stty erase '^?'"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 5 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 5
+FAIL c_vi_stty_intr
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o vi"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 2 "stty intr ^X"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 3 "\\k echo abc\\x18"
+       pelt err no
+       pelt prompt ""
+       pelt step 4 ""
+     ! pelt out "abc\n"
+       dash err no
+     ! pelt err no
+       dash prompt ""
+     ! pelt prompt "$ "
+       dash step 5 "echo st=$?"
+     ! pelt step 5 "echo st=$?"
+       dash out "st=130\n"
+     ! pelt out "st=0\n"
+       dash err no
+     ! pelt err no
+       dash prompt ""
+     ! pelt prompt "$ "
+       dash step 6 "stty intr ^C"
+     ! pelt step 6 "stty intr ^C"
+       dash err no
+     ! pelt err no
+       dash prompt ""
+     ! pelt prompt "$ "
+       dash step 7 "exit"
+     ! pelt step 7 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt ""
+     ! pelt prompt ""
+       dash exit 0 at step 7
+     ! pelt exit 0 at step 7
+       dash <none>
+session: pass 1  fail 10  pending 0 (0)

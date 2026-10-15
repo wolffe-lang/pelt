@@ -1,0 +1,11 @@
+ok   editing: modes before 0x4000000800b, while editing 4398046543872
+ok   hup: status -1, modes after 4398046543883 (before 4398046543883)
+ok   term: alive after TERM True, output b'part\n', status 0, modes restored True
+ok   int: new prompt True, output b'st=130\n', status 0, modes restored True
+ok   hangup: status 0
+ok   kill: status -9, modes restored False (nothing can restore them)
+FAIL flags: ixon/iexten before (True, True), while editing (True, True), a command saw b'part\niexten\nixon\n', status 0, modes restored True
+FAIL idle: 99 context switches in 10 s at an idle prompt (9.9/s), status 0
+FAIL int-latency: kill -INT to the next prompt, 20 times: median 105.1 ms, max 109.3 ms, status 0, modes restored True
+FAIL resize: redrawn after the resize False, output b'part\n', status 0, modes restored True
+edit-witness: 6 ok, 4 failed, 0 skipped

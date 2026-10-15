@@ -1,0 +1,31 @@
+# CI run 38745143567, branch sh15-plant at ec172cf (head a0ab931 + the plant), workflow_dispatch
+# the FAIL lines, session totals and edit-witness totals of every job, from gh run view --log
+gauntlet (ubuntu-latest, true)	the session corpus, native tier	2026-10-15T13:48:11.2095315Z FAIL c_ed_flow_stop
+gauntlet (ubuntu-latest, true)	the session corpus, native tier	2026-10-15T13:48:32.4975943Z FAIL c_ed_resize_narrow
+gauntlet (ubuntu-latest, true)	the session corpus, native tier	2026-10-15T13:53:36.5714961Z session: pass 213  fail 2  pending 16 (0)
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier	2026-10-15T13:53:44.3948305Z FAIL flags: ixon/iexten before (True, True), while editing (True, True), a command saw b'part\
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier	2026-10-15T13:53:56.3488669Z FAIL idle: 96 context switches in 10 s at an idle prompt (9.6/s), status 0
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier	2026-10-15T13:54:01.6436043Z FAIL int-latency: kill -INT to the next prompt, 20 times: median 105.3 ms, max 108.5 ms, statu
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier	2026-10-15T13:54:04.6992198Z FAIL resize: redrawn after the resize False, output b'part\n', status 0, modes restored True
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier	2026-10-15T13:54:04.6992838Z edit-witness: 6 ok, 4 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier	2026-10-15T13:54:12.5231353Z FAIL flags: ixon/iexten before (True, True), while editing (True, True), a command saw b'part
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier	2026-10-15T13:54:24.4770932Z FAIL idle: 96 context switches in 10 s at an idle prompt (9.6/s), status 0
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier	2026-10-15T13:54:29.7711255Z FAIL int-latency: kill -INT to the next prompt, 20 times: median 105.4 ms, max 108.5 ms, stat
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier	2026-10-15T13:54:32.8255738Z FAIL resize: redrawn after the resize False, output b'part\n', status 0, modes restored True
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier	2026-10-15T13:54:32.8256499Z edit-witness: 6 ok, 4 failed, 0 skipped
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-15T14:06:22.3600060Z FAIL c_ed_ctrl_v
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-15T14:06:54.1949560Z FAIL c_ed_resize_narrow
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-15T14:07:30.9998430Z FAIL c_ed_stty_lnext
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-15T14:07:35.6165000Z FAIL c_ed_tab_literal
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-15T14:11:02.7588740Z FAIL c_vi_insert_ctrl_v
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-15T14:13:05.3693480Z session: pass 210  fail 5  pending 16 (0)
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier	2026-10-15T14:13:14.8144310Z FAIL flags: ixon/iexten before (True, True), while editing (True, True), a command saw b'part\n
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier	2026-10-15T14:13:27.4038000Z FAIL idle: 99 context switches in 10 s at an idle prompt (9.9/s), status 0
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier	2026-10-15T14:13:34.3867410Z FAIL int-latency: kill -INT to the next prompt, 20 times: median 110.8 ms, max 123.5 ms, status
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier	2026-10-15T14:13:37.7093110Z FAIL resize: redrawn after the resize False, output b'part\n', status 0, modes restored True
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier	2026-10-15T14:13:37.7100800Z edit-witness: 6 ok, 4 failed, 0 skipped
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier	2026-10-15T14:13:46.7010500Z FAIL flags: ixon/iexten before (True, True), while editing (True, True), a command saw b'part\
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier	2026-10-15T14:13:59.0025060Z FAIL idle: 101 context switches in 10 s at an idle prompt (10.1/s), status 0
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier	2026-10-15T14:14:05.8663440Z FAIL int-latency: kill -INT to the next prompt, 20 times: median 110.1 ms, max 116.8 ms, statu
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier	2026-10-15T14:14:09.1112650Z FAIL resize: redrawn after the resize False, output b'part\n', status 0, modes restored True
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier	2026-10-15T14:14:09.1131200Z edit-witness: 6 ok, 4 failed, 0 skipped

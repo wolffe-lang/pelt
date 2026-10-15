@@ -1,0 +1,3 @@
+loop-rss: target/release/pelt turns=  10000  peak_kb     3052  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/release/pelt turns=  20000  peak_kb     3580  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 528 KB, about 54 B a turn; bound 2000 KB)

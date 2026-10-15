@@ -1,0 +1,752 @@
+session: pelt = /home/mfwolffe/lanes/sh15/pelt/target/native/pelt
+ok   arith_assign
+ok   arith_error
+ok   background
+ok   background_status
+PEND-fail c_alias_interactive (waits on alias)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "alias hi='echo hello'"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "hi there"
+     ! pelt err yes
+       dash out "hello there\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "unalias hi"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "unalias hi"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "hi"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 4 "hi"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 127 at step 5
+       dash prompt ""
+     ! pelt <none>
+       dash exit 127 at step 5
+ok   c_ed_alt_word
+ok   c_ed_backspace_delete
+ok   c_ed_combining
+PEND-fail c_ed_complete_command (waits on completion)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "\\k unam\\t -s >/dev/null && echo completed\\r"
+     ! pelt err yes
+       dash out "completed\n"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 3 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 127 at step 3
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 3
+PEND-fail c_ed_complete_file (waits on completion)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "PS1='$ '"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 2 "touch unique_file_name"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\\k echo uniq\\t\\r"
+     ! pelt out "uniq\n"
+       dash out "unique_file_name\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "exit"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt exit 0 at step 4
+     (c_ed_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c
+     (c_ed_ctrl_c_continued: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_continued
+     (c_ed_ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_ignored
+     (c_ed_ctrl_c_trap: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_trap
+ok   c_ed_ctrl_k_y
+ok   c_ed_ctrl_l
+ok   c_ed_ctrl_u_y
+ok   c_ed_ctrl_v
+ok   c_ed_ctrl_w
+ok   c_ed_delete_char
+ok   c_ed_flow_stop
+ok   c_ed_history_screen
+ok   c_ed_home_end
+ok   c_ed_home_end_keys
+ok   c_ed_insert_mid
+ok   c_ed_keys_abf
+ok   c_ed_kill_to_end
+ok   c_ed_left_insert
+     (c_ed_mode_after_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_mode_after_ctrl_c
+ok   c_ed_mode_command
+ok   c_ed_mode_exec
+ok   c_ed_resize_narrow
+ok   c_ed_resize_trap
+ok   c_ed_search
+ok   c_ed_search_abort
+ok   c_ed_search_again
+ok   c_ed_search_backspace
+ok   c_ed_search_edit
+ok   c_ed_search_screen
+ok   c_ed_stty_eof
+ok   c_ed_stty_erase
+ok   c_ed_stty_intr
+ok   c_ed_stty_kill
+ok   c_ed_stty_lnext
+ok   c_ed_stty_werase
+ok   c_ed_tab_literal
+ok   c_ed_up_arrow
+ok   c_ed_up_down_edit
+ok   c_ed_utf8_erase
+ok   c_ed_utf8_left
+ok   c_ed_wide_insert
+ok   c_ed_wide_wrap
+ok   c_ed_wide_wrap_edit
+ok   c_ed_word_motion
+ok   c_ed_wrap_erase
+ok   c_ed_wrap_exact
+ok   c_ed_wrap_insert
+ok   c_hist_fc_e_fail
+ok   c_hist_fc_e_range
+ok   c_hist_fc_edit
+ok   c_hist_fc_fcedit
+ok   c_hist_fc_list
+ok   c_hist_fc_list_clamp
+ok   c_hist_fc_list_default
+ok   c_hist_fc_list_reverse
+ok   c_hist_fc_list_string
+ok   c_hist_fc_notfound
+ok   c_hist_fc_s
+ok   c_hist_fc_s_prev
+ok   c_hist_fc_s_string
+ok   c_hist_file_read
+ok   c_hist_histsize
+PEND-fail c_ignoreeof (waits on ignoreeof)
+       pelt step 0
+       pelt err no
+       pelt prompt "$"
+       pelt step 1 "set -o ignoreeof"
+       pelt err no
+       pelt prompt "$"
+       pelt step 2 "^D"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$"
+     ! pelt exit 0 at step 2
+       dash step 3 "echo still-here"
+     ! pelt <none>
+       dash out "still-here\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$"
+     ! pelt <none>
+       dash step 4 "exit"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+PEND-fail c_jc_background_group (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sh -c 'a=$(ps -o pgid= -p $$ | tr -d \" \"); [ \"$a\" = \"$$\" ] && echo leader > out' &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "wait"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "cat out"
+     ! pelt err yes
+       dash out "leader\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 1 at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+PEND-fail c_jc_background_job (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "jobs"
+     ! pelt err yes
+       dash out "[1] + Running                    sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "kill %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "kill %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "wait"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 4 "wait"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 5 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=0\n"
+       dash step 5 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "jobs"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 6 "jobs"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 127 at step 7
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+PEND-fail c_jc_bg (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 1"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "bg"
+     ! pelt err yes
+       dash out "[1] sleep 1\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "wait"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "wait"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 5 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=0\n"
+       dash step 5 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "jobs"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 6 "jobs"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 127 at step 7
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+PEND-fail c_jc_bg_ttin (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "cat &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "echo next"
+       pelt out "next\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "jobs"
+     ! pelt err yes
+       dash out "[1] + Stopped (tty input)        cat\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "kill -9 %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "kill -9 %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 0 at step 5
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 6 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+     (c_jc_ctrl_c_job_only: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_jc_ctrl_c_job_only
+PEND-fail c_jc_ctrl_z (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo st=$?"
+     ! pelt err no
+       dash out "st=148\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "jobs"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "jobs"
+     ! pelt prompt ""
+       dash out "[1] + Stopped                    sleep 30\n"
+     ! pelt step 5 "kill -9 %1"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 5 "kill -9 %1"
+     ! pelt step 6 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 6 "exit"
+     ! pelt step 7 "exit"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 7 "exit"
+     ! pelt alive at step 7
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+PEND-fail c_jc_done_message (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "true &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 0.3"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo next"
+       pelt out "next\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+PEND-fail c_jc_fg (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "cat"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "fg"
+     ! pelt out "fg\n"
+       dash out "cat\n"
+       pelt err no
+       pelt prompt ""
+       pelt step 4 "typed after fg"
+       pelt out "typed after fg\n"
+       pelt err no
+       pelt prompt ""
+       pelt step 5 "^D"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "echo st=$?"
+       pelt out "st=0\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 7
+PEND-fail c_jc_fg_number (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 1 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "fg %2"
+     ! pelt err yes
+       dash out "sleep 1\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=127\n"
+       dash step 4 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "kill %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "kill %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+PEND-fail c_jc_foreground_group (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sh -c 'a=$(ps -o pgid= -p $$ | tr -d \" \"); b=$(ps -o tpgid= -p $$ | tr -d \" \"); [ \"$a\" = \"$b\" ] && echo foreground; [ \"$a\" != \"$(ps -o pgid= -p $PPID | tr -d \" \")\" ] && echo own-group'"
+     ! pelt out "foreground\n"
+       dash out "foreground\nown-group\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "exit"
+       pelt err no
+       pelt prompt ""
+     ! pelt exit 1 at step 2
+       dash exit 0 at step 2
+PEND-fail c_jc_jobs_list (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 31 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "jobs"
+     ! pelt err yes
+       dash out "[2] + Running                    sleep 31\n[1] - Running                    sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "jobs -l | wc -l"
+       dash prompt "$ "
+     ! pelt out "0\n"
+       dash step 4 "jobs -l | wc -l"
+     ! pelt err yes
+       dash out "2\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "jobs -p | wc -l"
+       dash prompt "$ "
+     ! pelt out "0\n"
+       dash step 5 "jobs -p | wc -l"
+     ! pelt err yes
+       dash out "2\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "kill %1 %2"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "kill %1 %2"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 7
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+PEND-fail c_jc_jobs_states (waits on job control)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sh -c 'exit 3' &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "sleep 0.3"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "jobs"
+     ! pelt err yes
+       dash out "[1] + Running                    sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "kill %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "kill %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+ok   c_jc_shell_ignores_tstp
+ok   c_jc_shell_is_leader
+ok   c_jc_terminal_back
+ok   c_long_line
+PEND-fail c_mail (waits on mail)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "MAIL=$HOME/mbox MAILCHECK=0"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "echo x > $HOME/mbox"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo next"
+       pelt out "next\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+ok   c_paste_two_lines
+ok   c_ps1_bang
+ok   c_ps1_bang_number
+ok   c_redirect_error
+ok   c_tty_erase
+ok   c_vi_D_C
+ok   c_vi_E_e
+ok   c_vi_R
+ok   c_vi_S
+ok   c_vi_X
+ok   c_vi_arrows_insert
+ok   c_vi_at_letter
+ok   c_vi_back_find
+ok   c_vi_backslash
+ok   c_vi_bar
+ok   c_vi_basic
+ok   c_vi_bigword
+ok   c_vi_caret
+ok   c_vi_count_x
+     (c_vi_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_vi_ctrl_c
+ok   c_vi_cw
+ok   c_vi_dd_cc
+ok   c_vi_dollar_append
+ok   c_vi_dot
+ok   c_vi_dot_count
+ok   c_vi_dw
+ok   c_vi_emacs_switch
+ok   c_vi_eof
+ok   c_vi_find
+ok   c_vi_hash
+ok   c_vi_history
+ok   c_vi_history_G
+ok   c_vi_history_jk
+ok   c_vi_insert
+ok   c_vi_insert_ctrl_v
+ok   c_vi_insert_ctrl_w
+ok   c_vi_insert_erase
+ok   c_vi_insert_kill
+ok   c_vi_insert_start
+ok   c_vi_motion
+ok   c_vi_motions
+ok   c_vi_replace_char
+ok   c_vi_search
+ok   c_vi_search_anchor
+ok   c_vi_search_n
+ok   c_vi_star
+ok   c_vi_stty_erase
+ok   c_vi_stty_intr
+ok   c_vi_tilde
+ok   c_vi_till
+ok   c_vi_underscore
+ok   c_vi_undo
+ok   c_vi_undo_all
+ok   c_vi_v
+ok   c_vi_v_fail
+ok   c_vi_v_number
+ok   c_vi_yank_put
+ok   cd_cdpath
+ok   cd_fail_continues
+ok   cd_minus
+ok   cd_root
+ok   cd_then_program
+ok   child_stdin
+ok   cmdsub_program
+ok   comment_and_blank
+     (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_child
+     (ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_ignored
+     (ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_loop
+     (ctrl_c_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_pipeline
+     (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_prompt
+     (ctrl_c_subshell: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_subshell
+     (ctrl_c_trap_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_trap_child
+     (ctrl_c_trap_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_trap_prompt
+ok   dash_s_args
+ok   default_interactive
+ok   dollar_dash
+ok   echo_hi
+ok   env_file
+ok   env_missing
+ok   eof_at_once
+ok   eof_in_if
+ok   eof_in_if_trap
+ok   eof_last_status
+ok   exec_missing
+ok   exec_program
+ok   exit_in_function
+ok   exit_last_status
+ok   exit_n
+ok   expansion_error
+ok   externals
+ok   for_loop
+ok   func_define_call
+ok   heredoc
+ok   kill_job_prompt
+ok   kill_self_prompt
+ok   long_session
+ok   ls_dir
+ok   not_found_continues
+ok   pipe
+ok   pipe_builtin_stage
+ok   pipe_status
+ok   pipe_three
+ok   ps1_arith_cmdsub
+ok   ps1_param
+ok   ps1_status
+ok   ps1_unchanged_status
+ok   ps2_andor
+ok   ps2_backslash
+ok   ps2_brace_func
+ok   ps2_case
+ok   ps2_cmdsub
+ok   ps2_custom
+ok   ps2_double_quote
+ok   ps2_if
+ok   ps2_single_quote
+ok   ps2_while
+ok   pwd_is_cwd
+ok   read_at_eof
+ok   read_builtin
+ok   readonly_assign
+ok   redirect_append
+ok   redirect_exec_fd
+ok   redirect_file
+ok   redirect_heredoc_quoted
+ok   redirect_read
+ok   redirect_stderr
+ok   return_top
+ok   set_e_exits
+ok   set_u_error
+ok   set_v_echo
+ok   signal_status
+ok   special_builtin_error
+ok   subshell_error
+ok   syntax_error_continues
+ok   syntax_error_midline
+ok   term_at_prompt
+ok   trap_exit_eof
+ok   trap_exit_exit
+ok   trap_term
+ok   trap_usr1_prompt
+ok   unset_env
+session: pass 215  fail 0  pending 16 (0)
