@@ -4,8 +4,9 @@
 //! tree, the descriptor table's redirection frames, `cd`'s logical
 //! path, which simple commands run inside the region (`sh.exec`'s
 //! fast path), `umask`'s operand reader, the history (`sh.hist`):
-//! `fc`'s operands, its list format and the history file's lines, and
-//! what pelt#19's memory work keeps in place: a subshell's frame and
+//! `fc`'s operands, its list format and the history file's lines, Tab's
+//! reading of a line, its quoting and its list's shape (`sh.complete`),
+//! and what pelt#19's memory work keeps in place: a subshell's frame and
 //! journal, the tree's recycled slots and a word's text as a view.
 //! `src/sh_test.lu` runs them under `wolf test`.
 //!
@@ -756,6 +757,7 @@ pub fn self_test() -> List[str] {
     want_mask(mut bad, 0o027, "-", 0o027)
     want_mask_texts(mut bad)
     want_hist(mut bad)
+    want_complete(mut bad)
     bad
 }
 
@@ -867,5 +869,123 @@ fn want_hist(mut bad: List[str]) {
     // PS1: each ! the next number, !! one ! (XCU 2.5.3)
     if ps1_bang("a!b!!c!", 7) != "a7b!c7" || ps1_bang("$ ", 7) != "$ " {
         (mut bad).push("ps1_bang: {ps1_bang("a!b!!c!", 7)}")
+    }
+}
+
+/// What `comp_ctx` says of `line` (the text up to the cursor), as
+/// `kind lit q brace exec_only lead`.
+fn ctx_line(line: str) -> str {
+    let c = comp_ctx(cps_of(line))
+    "{c.kind} [{c.lit}] {c.q} {c.brace} {c.exec_only} {c.lead}"
+}
+
+fn want_ctx(mut bad: List[str], line: str, want: str) {
+    let got = ctx_line(line)
+    if got != want {
+        (mut bad).push("comp_ctx({escaped(line)}) = {escaped(got)}, want {escaped(want)}")
+    }
+}
+
+fn want_quote(mut bad: List[str], s: str, q: int, lead: bool, want: str) {
+    let got = comp_quote(s, q, lead)
+    if got != want {
+        (mut bad).push(
+            "comp_quote({escaped(s)}, {q}, {lead}) = {escaped(got)}, want {escaped(want)}",
+        )
+    }
+}
+
+fn want_layout(mut bad: List[str], n: int, widest: int, cols: int, want: str) {
+    let (r, c, w) = comp_layout(n, widest, cols)
+    let got = "{r} {c} {w}"
+    if got != want {
+        (mut bad).push("comp_layout({n}, {widest}, {cols}) = {got}, want {want}")
+    }
+}
+
+/// Tab's pieces (`sh.complete`): which word is completed as what, the
+/// quoting of what is inserted, and the list's columns. Each row is a
+/// shape a black-box session of bash or mksh decided
+/// (`notes/sh16-evidence/probe/`) or pelt chose (`notes/sh16-…` §3.1).
+fn want_complete(mut bad: List[str]) {
+    // command position: the line's start, after operators, `$(`, a
+    // backquote, an assignment and the reserved words a command follows
+    want_ctx(mut bad, "unam", "1 [unam] 0 false false false")
+    want_ctx(mut bad, "", "1 [] 0 false false true")
+    want_ctx(mut bad, "echo hi | unam", "1 [unam] 0 false false false")
+    want_ctx(mut bad, "true && un", "1 [un] 0 false false false")
+    want_ctx(mut bad, "true;un", "1 [un] 0 false false false")
+    want_ctx(mut bad, "echo $(unam", "1 [unam] 0 false false false")
+    want_ctx(mut bad, "echo `unam", "1 [unam] 0 false false false")
+    want_ctx(mut bad, "(cd", "1 [cd] 0 false false false")
+    want_ctx(mut bad, "FOO=1 unam", "1 [unam] 0 false false false")
+    want_ctx(mut bad, "if unam", "1 [unam] 0 false false false")
+    want_ctx(mut bad, "! un", "1 [un] 0 false false false")
+    want_ctx(mut bad, "'if' un", "2 [un] 0 false false false")
+    // a file: an argument, after a redirection, a value, a word with `/`
+    want_ctx(mut bad, "echo uniq", "2 [uniq] 0 false false false")
+    want_ctx(mut bad, "echo ", "2 [] 0 false false true")
+    want_ctx(mut bad, "cat <uni", "2 [uni] 0 false false false")
+    want_ctx(mut bad, "echo x >", "2 [] 0 false false true")
+    want_ctx(mut bad, ">out un", "1 [un] 0 false false false")
+    want_ctx(mut bad, "FOO=uni", "2 [uni] 0 false false false")
+    want_ctx(mut bad, "./sc", "2 [./sc] 0 false true false")
+    want_ctx(mut bad, "ls ~/d", "2 [~/d] 0 false false false")
+    // quotes: taken off the text, and the one open at the cursor kept
+    want_ctx(mut bad, "echo \"my", "2 [my] 34 false false false")
+    want_ctx(mut bad, "echo 'my", "2 [my] 39 false false false")
+    want_ctx(mut bad, "echo my\\ f", "2 [my f] 0 false false false")
+    want_ctx(mut bad, "echo \"a\\$b", "2 [a$b] 34 false false false")
+    want_ctx(mut bad, "echo foo\\", "0 [] 0 false false false")
+    // variables: `$name`, `${name`, inside "…", inside a word; not
+    // quoted ones and not positional parameters
+    want_ctx(mut bad, "echo $HO", "3 [HO] 0 false false false")
+    want_ctx(mut bad, "echo ${{HO", "3 [HO] 0 true false false")
+    want_ctx(mut bad, "echo \"$HO", "3 [HO] 34 false false false")
+    want_ctx(mut bad, "echo a$HO", "3 [HO] 0 false false false")
+    want_ctx(mut bad, "echo $", "3 [] 0 false false false")
+    want_ctx(mut bad, "echo '$HO", "2 [$HO] 39 false false false")
+    want_ctx(mut bad, "echo \\$HO", "2 [$HO] 0 false false false")
+    want_ctx(mut bad, "echo $1", "2 [$1] 0 false false false")
+    want_ctx(mut bad, "echo ${{HO}}", "2 [${{HO}}] 0 false false false")
+    // quoting what is inserted (bash's backslashes; a newline as mksh)
+    want_quote(mut bad, "my file", 0, false, "my\\ file")
+    want_quote(mut bad, "a$b&c;d(e)", 0, false, "a\\$b\\&c\\;d\\(e\\)")
+    want_quote(mut bad, "q'u\"o", 0, false, "q\\'u\\\"o")
+    want_quote(mut bad, "st*a?[b", 0, false, "st\\*a\\?\\[b")
+    want_quote(mut bad, "nl\nname", 0, false, "nl'\n'name")
+    want_quote(mut bad, "~x#", 0, true, "\\~x#")
+    want_quote(mut bad, "#x~", 0, true, "\\#x~")
+    want_quote(mut bad, "~x", 0, false, "~x")
+    want_quote(mut bad, "a\"b$c d", 34, false, "a\\\"b\\$c d")
+    want_quote(mut bad, "it's me", 39, false, "it'\\''s me")
+    want_quote(mut bad, "été", 0, false, "été")
+    // what a single match adds
+    let v = Ctx { kind: CK_VAR, lit: "ZQV_O", q: 34, brace: true, exec_only: false, lead: false }
+    if comp_unique(v, "ZQV_O", "ZQV_ONE", false, true) != "NE}}\" " {
+        (mut bad).push("comp_unique(var) = {comp_unique(v, "ZQV_O", "ZQV_ONE", false, true)}")
+    }
+    let f = Ctx { kind: CK_FILE, lit: "su", q: 0, brace: false, exec_only: false, lead: false }
+    if comp_unique(f, "su", "sub", true, true) != "b/" ||
+        comp_unique(f, "su", "sum", false, false) != "m" {
+        (mut bad).push(
+            "comp_unique(file) = {comp_unique(f, "su", "sub", true, true)} {comp_unique(f, "su", "sum", false, false)}",
+        )
+    }
+    // the list: rows, columns, column width (bash's counts)
+    want_layout(mut bad, 15, 13, 40, "8 2 15")
+    want_layout(mut bad, 60, 3, 40, "9 7 5")
+    want_layout(mut bad, 2, 3, 80, "1 2 5")
+    want_layout(mut bad, 3, 100, 40, "3 1 102")
+    want_layout(mut bad, 120, 4, 80, "10 12 6")
+    let three = "zqxa1 zqxa2 zqxbb".split(" ")
+    if common_prefix(three) != "zqx" {
+        (mut bad).push("common_prefix: {common_prefix(three)}")
+    }
+    // every name Tab offers as a built-in is one
+    for w in builtin_names() {
+        if !is_special_builtin(w) && !is_regular_builtin(w) {
+            (mut bad).push("builtin_names: {w} is not a built-in")
+        }
     }
 }
