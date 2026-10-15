@@ -595,6 +595,8 @@ fn ed_list(mut e: Ed, c: Ctx, f: Found) {
         put_s(mut e, "list all {n}? (y or n) ")
         flush_out(mut e)
         let k = next_key(mut e)
+        // the answer is a key: the row of Tabs ends with it
+        e.tabs = 0
         put_s(mut e, "\r\n")
         if k == K_HUP || k == K_EOF {
             ends_line(mut e, k)
