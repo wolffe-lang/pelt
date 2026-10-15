@@ -1,0 +1,3 @@
+id	group	package	version	sha256	licence	dash_exit	pelt_exit	verdict	notes
+configure-sed	configure	GNU sed	4.9	6adefe585116988fe0916cb127a398ab21bf2c37e82136834016f7dbf7747d89	GPL-3.0-or-later	0	0	same	
+pfetch	utility	pfetch	0.6.0	8100a561cac5be6982ea81765d3db6721fb552d7db06b03ba6f77279ed612507	MIT	0,0,0	0,0,0	unstable	run 2: dash disagrees with itself (out); exit and stderr only

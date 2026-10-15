@@ -1,0 +1,5 @@
+script-census: pelt = /home/mfwolffe/lanes/sh15/sc/pelt-head sha256 3392efba63e48de987da99dca25ca71035842e08693174d4947b31bac9759bc8
+same     configure-sed  dash 0  pelt 0
+unstable pfetch  dash 0,0,0  pelt 0,0,0
+         run 2: dash disagrees with itself (out); exit and stderr only
+script-census: same 1  unstable 1  of 2  (/home/mfwolffe/lanes/sh15/sc/head-recheck-1.tsv)
