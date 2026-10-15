@@ -83,7 +83,7 @@ case("c_ed_complete_var_in_word", ["ZQV_ONE=1", "\\k echo a$ZQV_O\\tX\\r"],
      "a $name inside a word is completed too (bash only at a word's start, mksh never). Written by hand", hand=True)
 case("c_ed_complete_hidden", ["touch .hid1 vis", "\\k echo \\tX\\r", "\\k echo .h\\tX\\r"],
      "names starting with . only when the typed part does (pathname expansion's rule, as mksh; bash offers them). Written by hand", hand=True)
-case("c_ed_complete_tilde_alone", ["\\k ls ~\\t\\r"],
+case("c_ed_complete_tilde_alone", ["\\k ls ~\\tdocs\\r"],
      "a lone ~ completes to ~/ (bash offers login names, mksh expands it). Written by hand",
      {"home/docs/note": (0o644, "x\n")}, hand=True)
 
