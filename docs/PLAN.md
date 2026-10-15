@@ -19,7 +19,8 @@ filed.
   statements of XCU chapter 2 and the built-ins' pages; 414 since
   sh07 (S1, below); since sh11 the table has 544 statements, and
   since sh13 (S4) 431 of them are met; since sh12 (H3b) 439 of 545;
-  since sh14 (the signals, wolf 0.2.29) 450 of 545.
+  since sh14 (the signals, wolf 0.2.29) 450 of 545; since sh15 (the
+  terminal, wolf 0.2.30) 451 of 545.
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
@@ -60,7 +61,7 @@ counts the 80 in `tools/script-census`.
 | 8 | **UTF-8 half done in sh07**: bytes above 0x7f become `?` on their way out: **a silent wrong answer** (a certificate with a non-ASCII name is left out of the bundle) | 1 script; every non-ASCII file name | pelt; bytes that are not UTF-8 need wolf byte strings (to be filed: W06) |
 | 9 | aliases | 17 statements; daily use | pelt |
 | 10 | job control | 14 statements; daily use | wolf-lang (to be filed: W03; #680: a wait a signal can cut short, stop reporting, a signal to a process group), then pelt; PAX for PAX. `kill` and the signals themselves are in (sh14) |
-| 11 | line editing and history | daily use; 7 statements (`fc`, vi mode, `!` in `PS1`) | pelt; window size (to be filed: W05) |
+| 11 | line editing and history | daily use; 7 statements (`fc`, vi mode, `!` in `PS1`) | pelt; the terminal's size, resize, a wait a signal ends and the special characters are in (sh15, wolf 0.2.30) |
 | 12 | `$'…'` (new in POSIX.1-2024) | 7 statements | pelt |
 | 13 | **done in sh14** (wolf 0.2.29): `kill` built in, `$$`/`PPID` everywhere | 8 statements | done; a signal to a process group (`kill 0`, `kill -- -N`) waits on job control |
 | 14 | `ulimit` | 4 statements | wolf-lang (to be filed: W02) |
@@ -108,7 +109,12 @@ needs the least from upstream.
   wolf 0.2.27 is enough to start: `os_term_set_mode`, byte reads and a
   timed read (CENSUS.md §3). A resized window needs the window size and
   `SIGWINCH` (W05). Restoring the terminal when the shell is killed is
-  also W05. Proved by the `c_ed_*` sessions.
+  also W05. Proved by the `c_ed_*` sessions. **Moved to wolf 0.2.30 in
+  sh15**: the width from `os_term_size`, a redraw on `RESIZE` mid-line,
+  the wait in `os_signal_wait_fd` (an idle prompt makes no context
+  switch), the user's `stty` characters, and `FLOW`/`EXTENDED` off while
+  a line is edited. Restoring the terminal after an uncatchable death
+  stays out (the runtime restores nothing, by rule).
 - **H3b, history.** The history list, Up and Down, Ctrl-R, `fc`,
   `HISTFILE`, `HISTSIZE` and `!` in `PS1`. Nothing upstream on Linux.
   On PAX a history file needs a writable tree (px27). Proved by
@@ -187,13 +193,13 @@ Each of these is a ruling first. None is started before POSIX is met.
 |---|---|---|
 | S1, S2, S3 | nothing (W07 for exact `test -r/-w/-x`; mode bits and uid are close without it) | — |
 | S4 `umask` | done: wolf 0.2.28's `os_umask` (sh13) | `umask(2)` on PAX (px27 lists it) |
-| H3a editor | W05 for resize and for restoring the terminal | a console that answers `TIOCGWINSZ` (px19's framebuffer does) |
+| H3a editor | done: wolf 0.2.30's `os_term_size`, `os_term_chars`, `os_signal_wait_fd`, `FLOW`/`EXTENDED` (sh15); restoring after SIGKILL is out by rule | a console that answers `TIOCGWINSZ` (px19's framebuffer does) |
 | H3b history | — | px27 (a writable tree) for `HISTFILE` |
 | H3e job control | W03, #680 (#141, #681, #691 done in wolf 0.2.29) | process groups, sessions, `tcsetpgrp`, stopped processes (a pax lane) |
 | H3f subshells | W01, or nothing under R1(B) | `clone` without `CLONE_VM` if W01 is a real fork |
 | `kill`, `$$`, `PPID` | done: wolf 0.2.29's `os_signal_send`, `os_signal_number`, `os_pid`, `os_ppid` (sh14) | `kill(2)` to any pid, `getppid`, and `rt_sigaction` asked what a signal's disposition is |
 | `trap` for every signal | done: wolf 0.2.29's twenty meanings and `os_signal_ignored` (sh14) | the signals already delivered (px26); every one POSIX names, and a poll that changes the thread's mask (`rt_sigprocmask`) |
-| the editor's timed poll for signals | s234's `os_signal_wait_fd` (wolf-lang trunk, not in 0.2.29) | — |
+| the editor's wait | done: wolf 0.2.30's `os_signal_wait_fd` (sh15) | `poll`/`ppoll` on a terminal and a pipe, and `TIOCGWINSZ` |
 | `ulimit` | W02 | `prlimit64` |
 | `~login` | W04 | `/etc/passwd` in the image |
 | non-UTF-8 bytes | W06 | — |
