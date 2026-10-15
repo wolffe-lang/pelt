@@ -21,18 +21,40 @@ types part of a line, so the editor is in the middle of one, and then:
             failure: it is what no handler can do (wolf runs none, and
             the runtime restores nothing, [os.term.mode])
 
+Since sh15 (wolf 0.2.30's terminal surface, ruling #73):
+
+  flags     while a line is edited IXON and IEXTEN are off (so Ctrl-S,
+            Ctrl-Q, Ctrl-V and Ctrl-O reach the editor), and a command
+            run from the line sees them on again, as the user set them
+  idle      an idle prompt makes no context switches: the shell's, every
+            thread's, counted over 10 s from outside (linux
+            /proc/PID/task/*/status; macOS `top -stats csw`). sh11's
+            editor read with VTIME 1 and polled: about ten a second.
+            Fails above 2 in the 10 s; SKIP where neither source exists
+  int-latency  `kill -INT` at an idle prompt, 20 times: the time to the
+            next prompt. A timed read answered within its tenth of a
+            second (median about 50 ms); a wait a signal ends answers at
+            once. Fails at a median of 30 ms or more
+  resize    the window changes while a line is edited: the editor draws
+            the line again (bytes on the terminal within 2 s, the line
+            among them), and the line still runs
+
 Exit 0 when every scenario but `kill` holds, 1 when one does not, 2 when
 the harness cannot run.
 
 usage: tools/edit-witness PELT
 """
 
+import fcntl
 import os
 import pty
+import re
 import select
 import signal
+import struct
 import subprocess
 import sys
+import termios
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -56,6 +78,7 @@ class Shell:
         self.fds = {rout: "out", rerr: "err", self.master: "tty"}
         self.out = b""
         self.err = b""
+        self.tty = b""
 
     def pump(self, secs):
         end = time.time() + secs
@@ -64,7 +87,7 @@ class Shell:
             if not live:
                 time.sleep(0.05)
                 continue
-            r, _, _ = select.select(live, [], [], 0.05)
+            r, _, _ = select.select(live, [], [], max(0.0, min(0.05, end - time.time())))
             for fd in r:
                 try:
                     d = os.read(fd, 65536)
@@ -77,6 +100,8 @@ class Shell:
                     self.out += d
                 elif self.fds[fd] == "err":
                     self.err += d
+                else:
+                    self.tty += d
 
     def wait_prompt(self, n, secs=8):
         end = time.time() + secs
@@ -91,6 +116,14 @@ class Shell:
 
     def mode(self):
         return ls.term_lmode(self.master, self.hold)
+
+    def flags(self):
+        """IXON and IEXTEN as the terminal has them now."""
+        try:
+            a = termios.tcgetattr(self.master)
+        except (termios.error, OSError):
+            a = termios.tcgetattr(self.hold)
+        return bool(a[0] & termios.IXON), bool(a[3] & termios.IEXTEN)
 
     def done(self, secs=3):
         """Wait for the shell to end, reading the terminal meanwhile (on
@@ -112,6 +145,34 @@ class Shell:
         except OSError:
             pass
         os.close(self.hold)
+
+
+def ctx_switches(pid):
+    """The process's context switches so far, every thread; None when
+    this host has no way to say."""
+    task = f"/proc/{pid}/task"
+    if os.path.isdir(task):
+        total = 0
+        for t in os.listdir(task):
+            try:
+                with open(f"{task}/{t}/status", encoding="utf-8") as fh:
+                    for ln in fh:
+                        if ln.startswith(("voluntary_ctxt_switches:", "nonvoluntary_ctxt_switches:")):
+                            total += int(ln.split()[1])
+            except OSError:
+                pass
+        return total
+    try:
+        r = subprocess.run(["top", "-l", "1", "-pid", str(pid), "-stats", "pid,csw"],
+                           capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    for ln in r.stdout.splitlines():
+        f = ln.split()
+        if len(f) >= 2 and f[0] == str(pid):
+            m = re.match(r"(\d+)", f[1])
+            return int(m.group(1)) if m else None
+    return None
 
 
 def scenario(pelt, home, name):
@@ -159,6 +220,68 @@ def scenario(pelt, home, name):
             del sh.fds[sh.master]
             rc = sh.done(5)
             return rc is not None, f"status {rc}"
+        if name == "flags":
+            before = (bool((sh.before >> 32) & termios.IXON), bool(sh.before & termios.IEXTEN))
+            editing = sh.flags()
+            sh.type(b"t; stty -a | tr ' ' '\\n' | grep -E '^-?(ixon|iexten)$' | sort\r")
+            sh.wait_prompt(2)
+            sh.type(b"exit\r")
+            rc = sh.done()
+            after = sh.mode()
+            ok = (before == (True, True) and editing == (False, False)
+                  and sh.out == b"part\niexten\nixon\n" and rc == 0 and after == sh.before)
+            return ok, (f"ixon/iexten before {before}, while editing {editing}, "
+                        f"a command saw {sh.out!r}, status {rc}, modes restored {after == sh.before}")
+        if name == "idle":
+            sh.pump(1.0)
+            c0 = ctx_switches(sh.p.pid)
+            if c0 is None:
+                sh.type(b"\x15exit\r")
+                sh.done()
+                return None, "SKIP: no source of context switches on this host"
+            sh.pump(10.0)
+            c1 = ctx_switches(sh.p.pid)
+            sh.type(b"\x15exit\r")
+            rc = sh.done()
+            n = c1 - c0
+            return n <= 2 and rc == 0, f"{n} context switches in 10 s at an idle prompt ({n / 10:.1f}/s), status {rc}"
+        if name == "int-latency":
+            sh.type(b"\x15")
+            sh.pump(0.3)
+            times = []
+            for i in range(20):
+                have = sh.err.count(b"$ ")
+                # a random phase against any read's own clock
+                sh.pump(0.05 + (i * 37 % 100) / 1000)
+                t0 = time.time()
+                os.kill(sh.p.pid, signal.SIGINT)
+                while sh.err.count(b"$ ") <= have and time.time() - t0 < 3:
+                    sh.pump(0.001)
+                times.append(time.time() - t0)
+            sh.type(b"exit 0\r")
+            rc = sh.done()
+            after = sh.mode()
+            times.sort()
+            med = times[len(times) // 2]
+            ok = med < 0.030 and times[-1] < 3 and rc == 0 and after == sh.before
+            return ok, (f"kill -INT to the next prompt, 20 times: median {med * 1000:.1f} ms, "
+                        f"max {times[-1] * 1000:.1f} ms, status {rc}, modes restored {after == sh.before}")
+        if name == "resize":
+            seen = len(sh.tty)
+            fcntl.ioctl(sh.hold, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 30, 0, 0))
+            t0 = time.time()
+            while b"echo par" not in sh.tty[seen:] and time.time() - t0 < 2:
+                sh.pump(0.01)
+            drawn = b"echo par" in sh.tty[seen:]
+            took = time.time() - t0
+            sh.type(b"t\r")
+            sh.wait_prompt(2)
+            sh.type(b"exit\r")
+            rc = sh.done()
+            after = sh.mode()
+            ok = drawn and sh.out == b"part\n" and rc == 0 and after == sh.before
+            return ok, (f"redrawn after the resize {drawn}" + (f" ({took * 1000:.1f} ms)" if drawn else "")
+                        + f", output {sh.out!r}, status {rc}, modes restored {after == sh.before}")
         if name == "kill":
             os.kill(sh.p.pid, signal.SIGKILL)
             rc = sh.done()
@@ -189,7 +312,10 @@ def main(argv):
     home = tempfile.mkdtemp(prefix="pelt-edit-witness.")
     bad = 0
     try:
-        for name in ("editing", "hup", "term", "int", "hangup", "kill"):
+        names = ("editing", "hup", "term", "int", "hangup", "kill",
+                 "flags", "idle", "int-latency", "resize")
+        skipped = 0
+        for name in names:
             # a scenario that hangs is a failure with a name, not a job
             # timeout with none
             signal.signal(signal.SIGALRM, timed_out)
@@ -199,11 +325,16 @@ def main(argv):
             except TimeoutError:
                 ok, why = False, "no answer in 60 s"
             signal.alarm(0)
+            if ok is None:
+                print(f"SKIP {name}: {why}")
+                skipped += 1
+                continue
             print(f"{'ok  ' if ok else 'FAIL'} {name}: {why}")
             bad += not ok
     finally:
         import shutil
         shutil.rmtree(home, ignore_errors=True)
+    print(f"edit-witness: {len(names) - bad - skipped} ok, {bad} failed, {skipped} skipped")
     return 1 if bad else 0
 
 
