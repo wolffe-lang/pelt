@@ -1,0 +1,6 @@
+PATH=$HOME/bin:$PATH
+\k FOO=1 zqcm\tX\r
+\k if zqcm\tX; then :; fi\r
+\k ! zqcm\tX\r
+\k echo `zqcm\tX`\r
+exit

@@ -1,0 +1,4 @@
+set -o vi
+touch unique_file_name
+\k echo uniq\tX\r
+exit

@@ -1,0 +1,4 @@
+touch .hid1 vis
+\k echo \tX\r
+\k echo .h\tX\r
+exit

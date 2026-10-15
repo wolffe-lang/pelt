@@ -1,0 +1,4 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=vi insert mode: Tab completes (the contract; mksh's vi-tabcomplete; bash --posix inserts a tab). Written by hand

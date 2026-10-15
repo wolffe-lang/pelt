@@ -1,0 +1,4 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=a lone ~ completes to ~/ (bash offers login names, mksh expands it). Written by hand

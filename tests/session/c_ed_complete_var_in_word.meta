@@ -1,0 +1,4 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=a $name inside a word is completed too (bash only at a word's start, mksh never). Written by hand

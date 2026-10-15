@@ -1,0 +1,4 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=names starting with . only when the typed part does (pathname expansion's rule, as mksh; bash offers them). Written by hand

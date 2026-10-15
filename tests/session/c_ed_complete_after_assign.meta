@@ -1,0 +1,4 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=after an assignment, after if or !, and inside a backquote the word is a command name (XCU 2.9.1, 2.6.3): completed as a command; neither bash nor mksh does (bash does after $( but not in a backquote). Written by hand
