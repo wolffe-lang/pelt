@@ -39,6 +39,15 @@ Since sh15 (wolf 0.2.30's terminal surface, ruling #73):
             the line again (bytes on the terminal within 2 s, the line
             among them), and the line still runs
 
+Since sh16 (Tab completion, ruling #69 R3):
+
+  tab-latency  Tab at an empty command name reads every `PATH`
+            directory: the bell (several names, nothing in common) and,
+            on the next Tab, the question before a list taller than the
+            window; `n` draws the prompt again. 10 times each: fails at
+            a median of 0.5 s or more for either (trunk before sh16
+            inserted the tab: no bell at all)
+
 Exit 0 when every scenario but `kill` holds, 1 when one does not, 2 when
 the harness cannot run.
 
@@ -282,6 +291,39 @@ def scenario(pelt, home, name):
             ok = drawn and sh.out == b"part\n" and rc == 0 and after == sh.before
             return ok, (f"redrawn after the resize {drawn}" + (f" ({took * 1000:.1f} ms)" if drawn else "")
                         + f", output {sh.out!r}, status {rc}, modes restored {after == sh.before}")
+        if name == "tab-latency":
+            sh.type(b"\x15")
+            sh.pump(0.3)
+            firsts = []
+            seconds = []
+
+            def until(pat, seen):
+                t0 = time.time()
+                while pat not in sh.tty[seen:] and time.time() - t0 < 3:
+                    sh.pump(0.001)
+                return time.time() - t0 if pat in sh.tty[seen:] else 99.0
+
+            for _i in range(10):
+                seen = len(sh.tty)
+                sh.type(b"\t")
+                firsts.append(until(b"\x07", seen))
+                seen = len(sh.tty)
+                sh.type(b"\t")
+                seconds.append(until(b"(y or n)", seen))
+                seen = len(sh.tty)
+                sh.type(b"n")
+                until(b"$ ", seen)
+            sh.type(b"\x15exit\r")
+            rc = sh.done()
+            after = sh.mode()
+            firsts.sort()
+            seconds.sort()
+            m1 = firsts[len(firsts) // 2]
+            m2 = seconds[len(seconds) // 2]
+            ok = m1 < 0.5 and m2 < 0.5 and rc == 0 and after == sh.before
+            return ok, (f"Tab at an empty command name, 10 times: the bell median {m1 * 1000:.1f} ms "
+                        f"(max {firsts[-1] * 1000:.1f}), the question median {m2 * 1000:.1f} ms "
+                        f"(max {seconds[-1] * 1000:.1f}), status {rc}, modes restored {after == sh.before}")
         if name == "kill":
             os.kill(sh.p.pid, signal.SIGKILL)
             rc = sh.done()
@@ -313,7 +355,7 @@ def main(argv):
     bad = 0
     try:
         names = ("editing", "hup", "term", "int", "hangup", "kill",
-                 "flags", "idle", "int-latency", "resize")
+                 "flags", "idle", "int-latency", "resize", "tab-latency")
         skipped = 0
         for name in names:
             # a scenario that hangs is a failure with a name, not a job
