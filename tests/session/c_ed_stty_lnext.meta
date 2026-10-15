@@ -1,0 +1,2 @@
+compare=stdout
+why=the literal-next character moved to ^T (stty) inserts the next key as itself (sh15, os_term_chars)

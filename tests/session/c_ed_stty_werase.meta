@@ -1,0 +1,2 @@
+compare=stdout
+why=the word-erase character moved to ^T (stty) erases a word (sh15, os_term_chars)

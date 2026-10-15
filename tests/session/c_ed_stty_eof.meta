@@ -1,0 +1,2 @@
+compare=stdout
+why=the end-of-file character moved to ^B (stty) ends the shell on an empty line (sh15, os_term_chars)

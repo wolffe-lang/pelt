@@ -1,0 +1,2 @@
+compare=stdout
+why=the terminal's interrupt character moved to ^X (stty) abandons the line being edited, $? 130; dash's line discipline does what stty set (sh15, os_term_chars)

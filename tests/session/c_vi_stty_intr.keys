@@ -1,0 +1,7 @@
+set -o vi
+stty intr ^X
+\k echo abc\x18
+
+echo st=$?
+stty intr ^C
+exit

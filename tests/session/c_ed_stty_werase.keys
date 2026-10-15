@@ -1,0 +1,4 @@
+stty werase ^T
+\k echo aa bb\x14cc\r
+stty werase ^W
+exit

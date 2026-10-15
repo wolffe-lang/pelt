@@ -1,0 +1,2 @@
+compare=stdout
+why=the kill character moved to @ (stty) kills the line (sh15, os_term_chars)

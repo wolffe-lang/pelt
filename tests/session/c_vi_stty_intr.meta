@@ -1,0 +1,2 @@
+compare=stdout
+why=as c_ed_stty_intr in vi mode (XCU sh vi-mode: the interrupt character is the terminal's)

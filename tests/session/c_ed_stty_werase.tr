@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "stty werase ^T"
+err no
+prompt "$ "
+step 2 "\\k echo aa bb\\x14cc\\r"
+out "aa cc\n"
+err no
+prompt "$ "
+step 3 "stty werase ^W"
+err no
+prompt "$ "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

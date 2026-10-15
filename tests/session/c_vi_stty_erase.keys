@@ -1,0 +1,5 @@
+set -o vi
+stty erase '#'
+\k echo ab#c\r
+stty erase '^?'
+exit

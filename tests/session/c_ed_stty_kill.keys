@@ -1,0 +1,4 @@
+stty kill @
+\k echo no@echo yes\r
+stty kill ^U
+exit

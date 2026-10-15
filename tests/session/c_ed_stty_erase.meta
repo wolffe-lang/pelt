@@ -1,0 +1,2 @@
+compare=stdout
+why=the erase character moved to # (stty) erases in the editor (sh15, os_term_chars)

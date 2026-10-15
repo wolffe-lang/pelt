@@ -1,0 +1,3 @@
+stty eof ^B
+echo before
+\k \x02
