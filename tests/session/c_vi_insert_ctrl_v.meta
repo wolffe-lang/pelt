@@ -1,5 +1,5 @@
 env=TERM=xterm PS1=$\s
-oracle=bash
 compare=stdout
-dash=agree
+why=od pads its columns differently on macOS, so the count is taken without blanks (sh15, when macOS first passed Ctrl-V to the editor); recorded from dash, whose terminal does the literal next itself (sh11 recorded it from bash)
 screen=3-3
+screen_by=hand

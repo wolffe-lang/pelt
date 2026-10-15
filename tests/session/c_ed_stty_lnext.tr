@@ -4,8 +4,8 @@ prompt "$ "
 step 1 "stty lnext ^T"
 err no
 prompt "$ "
-step 2 "\\k printf %s a\\x14\\x01b | od -An -c\\r"
-out "   a 001   b\n"
+step 2 "\\k printf %s a\\x14\\x01b | od -An -c | tr -d ' \\\\n'; echo\\r"
+out "a001b\n"
 err no
 prompt "$ "
 step 3 "stty lnext ^V"

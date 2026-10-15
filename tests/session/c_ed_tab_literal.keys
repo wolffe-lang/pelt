@@ -1,3 +1,3 @@
 PS1='$ '
-\k echo "a\x16\tb" | od -An -c\r
+\k echo "a\x16\tb" | od -An -c | tr -d ' \\n'; echo\r
 exit

@@ -1,4 +1,4 @@
 step 3
-| $ printf %s a^[b | od -An -c
+| $ printf %s a^[b | od -An -c | tr -d ' \n'; echo
 | $
 cursor 1 2

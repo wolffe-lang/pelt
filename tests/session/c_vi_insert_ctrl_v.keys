@@ -1,4 +1,4 @@
 PS1='$ '
 set -o vi
-\k printf %s a\x16\x1bb | od -An -c\r
+\k printf %s a\x16\x1bb | od -An -c | tr -d ' \\n'; echo\r
 exit

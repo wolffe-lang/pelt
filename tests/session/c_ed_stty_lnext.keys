@@ -1,4 +1,4 @@
 stty lnext ^T
-\k printf %s a\x14\x01b | od -An -c\r
+\k printf %s a\x14\x01b | od -An -c | tr -d ' \\n'; echo\r
 stty lnext ^V
 exit
