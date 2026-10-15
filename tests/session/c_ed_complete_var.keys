@@ -1,0 +1,6 @@
+ZQV_ONE=1 ZQV_TWO=2
+\k echo $ZQV_O\tX\r
+\k echo ${ZQV_O\tX\r
+\k echo "$ZQV_O\tX\r
+\k echo $ZQV\t\tO\tX\r
+exit

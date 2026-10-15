@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=~/ completes from HOME and keeps the tilde in the line

@@ -1,0 +1,3 @@
+\k echo qqqzz\tX\r
+\k qqqzz\t\x15echo done\r
+exit

@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=a name with a newline reads back as itself (bash quotes the whole word, pelt the newline alone: the same standard output)

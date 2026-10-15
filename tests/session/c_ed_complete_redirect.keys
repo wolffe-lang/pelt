@@ -1,0 +1,6 @@
+echo content > unique_file_name
+\k cat <uniq\t\r
+\k echo hi >uniq\t\r
+cat unique_file_name
+\k FOO=uniq\t\x01echo \r
+exit

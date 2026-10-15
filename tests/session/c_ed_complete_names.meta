@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=Tab completes a command in PATH, a function, a built-in and a reserved word, each with a space after it

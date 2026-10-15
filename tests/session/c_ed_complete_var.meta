@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=a variable's name after $, ${ (closed with }) and "$ (the quote closed)

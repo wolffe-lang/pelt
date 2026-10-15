@@ -1,0 +1,15 @@
+step 0
+err no
+prompt "$ "
+step 1 "\\k echo qqqzz\\tX\\r"
+out "qqqzzX\n"
+err yes
+prompt "$ "
+step 2 "\\k qqqzz\\t\\x15echo done\\r"
+out "done\n"
+err yes
+prompt "$ "
+step 3 "exit"
+err yes
+prompt ""
+exit 0 at step 3

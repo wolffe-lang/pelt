@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=a directory completes with a slash and no space; Tab again goes on inside it

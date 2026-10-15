@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=several matches: the longest common prefix, then typing on, and a second Tab (a list) changes nothing in the line

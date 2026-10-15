@@ -1,0 +1,4 @@
+touch unique_file_name
+\k echo uniqZZ\e[D\e[D\t\r
+\k echo uniq \e[D\tX\r
+exit

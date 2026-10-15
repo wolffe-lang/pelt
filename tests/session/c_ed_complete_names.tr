@@ -1,0 +1,29 @@
+step 0
+err no
+prompt "$ "
+step 1 "PATH=$HOME/bin:$PATH"
+err yes
+prompt "$ "
+step 2 "f_mine() { echo \"fn:$*\"; }"
+err yes
+prompt "$ "
+step 3 "\\k zqcm\\tX\\r"
+out "zq:X\n"
+err yes
+prompt "$ "
+step 4 "\\k f_mi\\tX\\r"
+out "fn:X\n"
+err yes
+prompt "$ "
+step 5 "\\k umas\\tX\\x01echo \\r"
+out "umask X\n"
+err yes
+prompt "$ "
+step 6 "\\k whil\\tX\\x01echo \\r"
+out "while X\n"
+err yes
+prompt "$ "
+step 7 "exit"
+err yes
+prompt ""
+exit 0 at step 7

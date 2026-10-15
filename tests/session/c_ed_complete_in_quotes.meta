@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=inside a quote the word opened, the name is completed inside it and the quote closed

@@ -1,0 +1,5 @@
+env=PS1=$\s
+oracle=bash
+compare=stdout
+dash=differs
+why=a name with a blank, $, quotes, &;() or * is inserted quoted so it reads back as itself

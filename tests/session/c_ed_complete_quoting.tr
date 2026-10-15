@@ -1,0 +1,34 @@
+step 0
+err no
+prompt "$ "
+step 1 "touch 'my file' 'dol$b' \"q'uote\" 'zd\"q' 'amp&b;c(d)' 'st*ar'"
+err yes
+prompt "$ "
+step 2 "\\k echo my\\tX\\r"
+out "my file X\n"
+err yes
+prompt "$ "
+step 3 "\\k echo do\\tX\\r"
+out "dol$b X\n"
+err yes
+prompt "$ "
+step 4 "\\k echo q\\tX\\r"
+out "q'uote X\n"
+err yes
+prompt "$ "
+step 5 "\\k echo zd\\tX\\r"
+out "zd\"q X\n"
+err yes
+prompt "$ "
+step 6 "\\k echo am\\tX\\r"
+out "amp&b;c(d) X\n"
+err yes
+prompt "$ "
+step 7 "\\k echo st\\tX\\r"
+out "st*ar X\n"
+err yes
+prompt "$ "
+step 8 "exit"
+err yes
+prompt ""
+exit 0 at step 8

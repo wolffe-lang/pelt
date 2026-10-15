@@ -1,0 +1,3 @@
+\k echo /us\tX\r
+\k echo /usr/bi\tX\r
+exit

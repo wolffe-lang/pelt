@@ -1,0 +1,3 @@
+touch "$(printf 'nl\nname')"
+\k echo nl\tX\r
+exit

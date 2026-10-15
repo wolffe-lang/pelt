@@ -1,0 +1,5 @@
+touch 'my file'
+\k echo "my\tX\r
+\k echo 'my\tX\r
+\k echo my\\ \tX\r
+exit

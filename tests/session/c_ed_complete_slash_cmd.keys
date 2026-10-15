@@ -1,0 +1,3 @@
+\k ./scr\tX\r
+\k ./scd\tx\tY\x01echo \r
+exit

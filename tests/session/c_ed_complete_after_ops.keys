@@ -1,0 +1,7 @@
+PATH=$HOME/bin:$PATH
+\k echo hi | zqcm\tX\r
+\k true; zqcm\tX\r
+\k true && zqcm\tX\r
+\k echo $(zqcm\tX)\r
+\k (zqcm\tX)\r
+exit

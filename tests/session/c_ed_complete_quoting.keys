@@ -1,0 +1,8 @@
+touch 'my file' 'dol$b' "q'uote" 'zd"q' 'amp&b;c(d)' 'st*ar'
+\k echo my\tX\r
+\k echo do\tX\r
+\k echo q\tX\r
+\k echo zd\tX\r
+\k echo am\tX\r
+\k echo st\tX\r
+exit

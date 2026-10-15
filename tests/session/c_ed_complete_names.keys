@@ -1,0 +1,7 @@
+PATH=$HOME/bin:$PATH
+f_mine() { echo "fn:$*"; }
+\k zqcm\tX\r
+\k f_mi\tX\r
+\k umas\tX\x01echo \r
+\k whil\tX\x01echo \r
+exit
