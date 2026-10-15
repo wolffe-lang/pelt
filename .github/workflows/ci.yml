@@ -38,7 +38,7 @@ jobs:
             builds: true
           - os: macos-latest
             builds: true
-          # wolf 0.2.24 through 0.2.29 build NO tier on linux aarch64: `wolf build`
+          # wolf 0.2.24 through 0.2.30 build NO tier on linux aarch64: `wolf build`
           # refuses the native tier ("native codegen targets linux/x86-64,
           # macOS/aarch64, and windows/x86-64 … c13") and the release
           # tier ("the release tier targets linux/x86-64 and
@@ -217,8 +217,12 @@ jobs:
       # sh11: the editor gives the terminal back, asked from outside: the
       # modes after SIGHUP (pelt dies of it, as dash), SIGTERM (ignored),
       # SIGINT (the line abandoned, $? 130) and a hangup (tools/edit-witness).
+      # sh15 (wolf 0.2.30): IXON and IEXTEN off while a line is edited,
+      # no context switch at an idle prompt (the editor waits in
+      # os_signal_wait_fd; a VTIME read made about ten a second), a
+      # `kill -INT` answered at once, a resize redrawn mid-line.
       # Every session above also fails if pelt exits with the terminal's
-      # ICANON, ECHO or ISIG changed.
+      # ICANON, ECHO, ISIG, IEXTEN or IXON changed.
       - name: the editor restores the terminal, native tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 8
