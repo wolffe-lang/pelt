@@ -3,4 +3,3 @@ oracle=bash
 compare=stdout
 dash=agree
 screen=3-3
-pending=lnext
