@@ -1,0 +1,28 @@
+step 2
+| $ echo q
+| list all 80? (y or n)
+cursor 1 22
+step 3
+| list all 80? (y or n)
+| $ echo q
+cursor 1 8
+step 4
+| $ echo q
+| list all 80? (y or n)
+cursor 1 22
+step 5
+| list all 80? (y or n)
+| q0   q2   q30  q41  q52  q63  q74
+| q1   q20  q31  q42  q53  q64  q75
+| q10  q21  q32  q43  q54  q65  q76
+| q11  q22  q33  q44  q55  q66  q77
+| q12  q23  q34  q45  q56  q67  q78
+| q13  q24  q35  q46  q57  q68  q79
+| q14  q25  q36  q47  q58  q69  q8
+| q15  q26  q37  q48  q59  q7   q9
+| q16  q27  q38  q49  q6   q70
+| q17  q28  q39  q5   q60  q71
+| q18  q29  q4   q50  q61  q72
+| q19  q3   q40  q51  q62  q73
+| $ echo q
+cursor 13 8

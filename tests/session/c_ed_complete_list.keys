@@ -1,0 +1,5 @@
+\k echo f\t
+\k \t
+\k \t
+\k \x15echo done\r
+exit

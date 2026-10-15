@@ -1,0 +1,8 @@
+step 2
+| $ echo $ZQV_
+cursor 0 12
+step 3
+| $ echo $ZQV_
+| $ZQV_ONE  $ZQV_TWO
+| $ echo $ZQV_
+cursor 2 12

@@ -1,0 +1,20 @@
+step 0
+err no
+prompt "$ "
+step 1 "\\k echo f\\t"
+err no
+prompt ""
+step 2 "\\k \\t"
+err no
+prompt ""
+step 3 "\\k \\t"
+err no
+prompt ""
+step 4 "\\k \\x15echo done\\r"
+out "done\n"
+err no
+prompt "$ "
+step 5 "exit"
+err no
+prompt ""
+exit 0 at step 5

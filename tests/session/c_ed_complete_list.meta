@@ -1,0 +1,7 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=the first Tab rings, the second lists the names below the line in columns down then across (the widest plus 2 cells, as many as fit in 39), a directory with /; then the prompt and the line again. Screens and transcript written by hand
+cols=40
+screen=2-3
+screen_by=hand

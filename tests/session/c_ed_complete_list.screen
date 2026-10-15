@@ -1,0 +1,24 @@
+step 2
+| $ echo f
+| fa             fhh
+| fbb            fiii
+| fccc           fjjjj
+| fdddd          fkkkkk
+| fdir/          fllllllllllll
+| feeeee         fm
+| fffffff        fnn
+| fg
+| $ echo f
+cursor 9 8
+step 3
+| $ echo f
+| fa             fhh
+| fbb            fiii
+| fccc           fjjjj
+| fdddd          fkkkkk
+| fdir/          fllllllllllll
+| feeeee         fm
+| fffffff        fnn
+| fg
+| $ echo f
+cursor 9 8

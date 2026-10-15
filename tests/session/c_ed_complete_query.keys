@@ -1,0 +1,7 @@
+i=0; while [ $i -lt 80 ]; do : > q$i; i=$((i+1)); done
+\k echo q\t\t
+\k n
+\k \t
+\k y
+\k \x15echo done\r
+exit

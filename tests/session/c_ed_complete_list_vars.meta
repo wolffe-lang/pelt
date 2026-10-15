@@ -1,0 +1,7 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=a list of variables shows each with its $. Screens and transcript written by hand
+cols=40
+screen=2-3
+screen_by=hand

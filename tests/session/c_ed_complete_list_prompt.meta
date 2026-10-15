@@ -1,0 +1,7 @@
+env=PS1=$\s
+compare=stdout
+tr_by=hand
+why=after a list the whole prompt (two lines here) and the line are drawn again. The harness reads standard error through a pipe, where the prompt's newline does not return the carriage, so its first drawing is shifted; the editor's redraw goes to the terminal. Screens and transcript written by hand
+cols=40
+screen=3-3
+screen_by=hand

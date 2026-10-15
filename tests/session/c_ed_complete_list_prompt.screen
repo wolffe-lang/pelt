@@ -1,0 +1,6 @@
+step 3
+|    > echo xyz aa
+| aa1  aa2
+| top
+| > echo xyz aa
+cursor 3 13
