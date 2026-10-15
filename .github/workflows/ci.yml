@@ -221,6 +221,8 @@ jobs:
       # no context switch at an idle prompt (the editor waits in
       # os_signal_wait_fd; a VTIME read made about ten a second), a
       # `kill -INT` answered at once, a resize redrawn mid-line.
+      # sh16: Tab at an empty command name (every PATH directory read)
+      # rings within half a second, and the next Tab asks before a list.
       # Every session above also fails if pelt exits with the terminal's
       # ICANON, ECHO, ISIG, IEXTEN or IXON changed.
       - name: the editor restores the terminal, native tier
