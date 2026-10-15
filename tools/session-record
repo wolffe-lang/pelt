@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_session as ls  # noqa: E402
 
 KEEP = ("args", "pelt_args", "oracle_args", "env", "oracle", "compare", "pending", "why",
-        "screen", "cols", "rows", "screen_by")
+        "screen", "cols", "rows", "screen_by", "tr_by")
 
 
 def main(argv):
@@ -50,6 +50,11 @@ def main(argv):
         mpath = keys[:-5] + ".meta"
         trp = keys[:-5] + ".tr"
         old = ls.read_meta(mpath)
+        if old.get("tr_by") == "hand":
+            # a transcript written by hand (pelt chose otherwise than
+            # both oracles, said in `why=`): no oracle can record it
+            print(f"kept {name}: written by hand")
+            continue
         meta = {k: old[k] for k in KEEP if k in old}
         first, other = ls.ORACLE, ls.SECOND
         if meta.get("oracle") == "bash":
