@@ -671,7 +671,9 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         }
     }
     let rs_heard = e.rs_listen || sh.sig_listen & m_resize() != 0
-    e.wait_set = (if e.poll_hup then m_hup() else 0) | (if e.poll_int then m_int() else 0) | (if rs_heard then m_resize() else 0)
+    e.wait_set = (if e.poll_hup then m_hup() else 0) |
+        (if e.poll_int then m_int() else 0) |
+        (if rs_heard then m_resize() else 0)
     e.wait_ok = e.wait_set != 0
     os_term_set_mode(0, raw_mode(old)) else |_| {
         ed_unlisten(e)
