@@ -191,3 +191,121 @@ keeping `FLOW` and `EXTENDED` and the wait disabled (the timed reads
 back). Predicted red in CI: `edit-witness`'s `flags`, `idle` and
 `int-latency` rows on both tiers of linux and macOS, `c_ed_flow_stop`,
 the three `lnext` cases on macOS.
+
+### 3.9 The result against the prediction
+
+Measured on kasumi (linux x86-64, CachyOS, 16 cpus; dash 0.5.13.4)
+and in CI (linux x86-64, macOS arm64, linux aarch64). **native** is
+`tools/build --native`, **release** `tools/build --release`.
+
+| prediction | predicted | measured | held? |
+|---|---|---|---|
+| 3.1 the pin builds with no source change | both tiers, `--deny-warnings` | both tiers, no change (`logs/pin.status`, at `7859c3e`) | held |
+| 3.1 at the bare pin | corpus 880/0/80, sessions 201/0/19, every gate as at trunk | **880/0/80 (3)** on native, release and both under `taskset -c 0-3`; **201/0/19** on both tiers and both under `taskset`; every gate 0 (`logs/pin.status`), as trunk (`logs/base.status`) | held |
+| 3.1 behaviour at the prompt unchanged at the bare pin | `IXON`/`IEXTEN` kept | the four new `edit-witness` rows red on the pin's binary exactly as on trunk's (`logs/red-edit-witness-pin.log`), and the eleven new sessions 1 pass / 10 fail on it as on trunk's (`logs/red-new-cases-pin.log`, `red-new-cases-base.log`) | held |
+| 3.2 the width from `os_term_size`; one report, not two | 15 → 4 bytes before a prompt | `ed_query` writes `ESC[6n` only (`src/sh/edit.lu`); the sessions' screens, which the harness's terminal answers, are unchanged | held (read from the code and the screens; the byte count was not captured by a tool) |
+| 3.2 resize mid-edit | `resize` row red at trunk, green at the head; `c_ed_resize_narrow` green | red at trunk and the pin ("redrawn after the resize False"), green at the head on both tiers and under `taskset` (redrawn in 10.2 ms on kasumi, 89.6 ms on macOS CI); `c_ed_resize_narrow` green on kasumi and both CI hosts, red at trunk; `c_ed_resize_trap` green (and green at trunk too: the trap never depended on the editor) | held |
+| 3.3 idle context switches | trunk ~10/s, head 0 | trunk **96 in 10 s** (9.6/s), the plant 96–101; the head **0 in 10 s** on both tiers, under `taskset -c 0-3`, and on macOS CI (`top -stats csw`) | held |
+| 3.3 `kill -INT` latency | trunk median ~50 ms, head < 5 ms | trunk median **106 ms** (max 109), the pin 106; the head **1.1 ms** median on kasumi (the harness's own 1 ms pump is the floor), 7.3 ms on macOS CI | head held; **trunk's figure missed**: about one tenth of a second, not half (each `kill` lands in a fresh `VTIME` read started by the previous prompt, so the wait is nearly the whole read, not a uniform part of it) |
+| 3.3 the other witness rows unchanged | as trunk | as trunk, except `hangup`: status **−1** (SIGHUP) at the head where trunk exited 0 | **changed, not predicted**: the hang-up's SIGHUP now ends the wait before the empty read is seen; pelt then dies of it with the mode put back, as it already did for a `kill -HUP` (dash dies of SIGHUP on a hang-up too) |
+| 3.4 `FLOW`/`EXTENDED` off while editing, back after | `flags` red at trunk, green at the head | red at trunk, the pin and the plant ("while editing (True, True)"); green at the head on both tiers, `taskset`, and macOS CI | held |
+| 3.4 the stty characters, against dash | each red at the bare pin, green at the head | `c_ed_stty_intr`, `c_vi_stty_intr`, `c_ed_stty_erase`, `c_vi_stty_erase`, `c_ed_stty_kill`, `c_ed_stty_werase`, `c_ed_stty_eof`, `c_ed_stty_lnext`: all red at trunk and the pin, all green at the head | held |
+| 3.4 Ctrl-S | red at the bare pin, green at the head | `c_ed_flow_stop` red at trunk and the pin on linux and in the plant on linux CI; green at the head everywhere. **On macOS the plant's run passed it**: macOS did not hold pelt in the mode's restore with output stopped | held on linux; **not red on macOS** |
+| 3.4 the three `lnext` cases pass on macOS | pending leaves on both hosts | they reach the editor on macOS now, and **then failed on macOS for another reason**: macOS's `od -c` pads its columns, which no run had shown because the key never arrived (CI 38745068019). Re-recorded from dash with the blanks taken out (`198cb96`); green on both hosts | held, after a test fix |
+| 3.5 sessions | (204 + new)/0/16 | **215/0/16** (11 new) on both tiers and under `taskset`, kasumi and CI | held |
+| 3.5 statements | 451 of 545 | **451 of 545 (83.5%)** | held |
+| 3.5 corpus | 880/0/80 | **880/0/80 (3)** on both tiers and under `taskset` | held |
+| 3.5 real scripts | verdict for verdict as trunk | trunk (`sc/pelt-base`, the static build of `00e15ca`): unaided 76 same / 3 differ / 1 unstable, aided the same. Head (`9acf62c`): aided **76 / 3 / 1, verdict for verdict as trunk**; unaided printed **75 same / 5 differ**, the two moved rows being `configure-sed` (its filesystem-timestamp-resolution line, sh14's coin) and `pfetch` (its memory-in-use line; dash agreed with itself that run, so it was not called unstable). Re-run three times at the head: `configure-sed` same, same, differs; `pfetch` unstable all three (`scripts/sc-head-recheck.txt`) | held in substance (the three real differences are trunk's: xzgrep, zgrep, zdiff, a process per pipeline stage); **missed as printed** on the unaided pass, for the two known timing coins |
+| 3.7 lupin and the checked machine | unchanged; lupin also refuses the three builtins | the checked machine: `unsupported`, "home-module method calls in checked execution", `phase_reached mem`; lupin: `unsupported` at resolve naming `os_signal_default` (`logs/machines.txt`) | held in kind; lupin names the first refusal it meets, which is still `os_signal_default`, so its refusal of the three terminal builtins is not seen through pelt |
+| 3.8 the plant | `flags`, `idle`, `int-latency` red both tiers both hosts; `c_ed_flow_stop`; the `lnext` cases on macOS | CI 38745143567 (`ci/plant-38745143567.txt`): `flags`, `idle`, `int-latency` **and `resize`** red on both tiers of linux and macOS (the plant's timed-read fallback does not poll `RESIZE`); `c_ed_flow_stop` and `c_ed_resize_narrow` red on linux; on macOS `c_ed_resize_narrow` and the four Ctrl-V cases red (those four were also red at the unplanted head then, for `od`'s padding, so on macOS they do not isolate the plant) | held, with `resize` red too and Ctrl-S not red on macOS |
+
+**Not predicted.**
+
+- **A hang-up ends pelt by SIGHUP now** (above).
+- **macOS's `od -c` pads**: the Ctrl-V cases had never produced output on
+  macOS before.
+- **A plant with `FLOW` on does not hang on macOS** when Ctrl-S is typed
+  (linux: the restore's drain waits for ever; macOS: it went on).
+- **dash needs an empty line after an interrupt at its prompt** before a
+  following line is read cleanly (the first recording of
+  `c_ed_stty_intr` ran `echo st=$?` and the next line together); the
+  cases type one, as sh11's `ctrl_c_prompt` does.
+
+## 4. Evidence index
+
+- **The prediction:** `2f644d4`, before the pin (`7859c3e`) and the
+  first change under `tools/` (`26cf3fa`) and `src/` (`f436961`).
+- **The toolchain:** `notes/sh15-evidence/logs/fetch6.log` (six archives
+  hashed twice, the version lines, `STD-REV`).
+- **The gauntlets** (`notes/sh15-evidence/logs/`): `base.status` (trunk
+  `00e15ca` on 0.2.29), `pin.status` (`7859c3e`), `head.status`
+  (`9acf62c`, the code of the head): fmt, both builds, `wolf test`, the
+  clause census, the width table, difftest on both tiers and both under
+  `taskset -c 0-3`, the difftest plant, sessions on both tiers and both
+  under `taskset`, the session plant, glob-rss, loop-rss, shape-rss,
+  exec-witness, edit-witness on both tiers and both under `taskset`,
+  hist-witness, signal-witness on both tiers and both under `taskset`,
+  `oracle-record --check`, the static build: every exit status 0. The
+  sessions again at `198cb96` (the `od` re-recording):
+  `final-sess-*.log`, `final.status`.
+- **Seen red:** `red-edit-witness-pin.log` (the pin's binary),
+  `red-new-cases-base.log` and `red-new-cases-pin.log` (the eleven new
+  sessions on trunk's and the pin's binaries: 1 pass, 10 fail),
+  `plant-edit-release.log` (the plant on kasumi), and CI run
+  38745143567 on `sh15-plant` (`ci/plant-38745143567.txt`).
+- **The machines:** `logs/machines.txt`.
+- **The census:** `notes/sh15-evidence/scripts/` — `base-*` and `head-*` (`.tsv`, `.log`, `.bin`: the static binary's digest), the head re-checks of the two coins.
+- **CI:** PR wolffe-lang/pelt#29; run 38749457787 green at `198cb96` on all three jobs (linux x86-64 and macOS arm64: corpus 880/0/80, sessions 215/0/16 on both tiers, edit-witness 10 of 10 on both tiers: idle 0 switches, `kill -INT` median 1.1 ms linux / 7.2–8.0 ms macOS; linux aarch64: both tiers still refused by name at 0.2.30). The PR run at `a0ab931` (38745068019) was red on macOS for the four Ctrl-V cases (`od`), fixed in `198cb96`.
+
+## 5. Done-when
+
+- Branch `sh15`, PR #29 open and unmerged, CI green at the head;
+  `wolf/tools/lane-audit.sh pelt sh15 29` run from the org directory,
+  its exit status read directly.
+- pelt issues: **none closes** (§2: none of the open issues is about the
+  terminal). wolf-lang#719 (W05) was closed by s234.
+
+## 6. Wolf findings
+
+No defect found in wolf 0.2.30's terminal surface: every call answered
+as `[os.term.size]`, `[os.term.chars]`, `[os.signal.wait.fd]` and
+`[os.term.mode]` say, on linux and macOS, both tiers. Observations, not
+filed:
+
+1. **wolf-std `fd6bcdc` still has no wrappers** for `os_term_size`,
+   `os_term_chars` and `os_signal_wait_fd` (owed at the next std pin,
+   the CHANGELOG says); pelt calls the builtins.
+2. **lupin names `os_signal_default` first** when it refuses pelt, so
+   ruling #73 R6's refusals of the three terminal builtins are not
+   visible through pelt.
+3. **The checked machine still refuses pelt** ("home-module method
+   calls"), as at 0.2.28 and 0.2.29.
+4. **`os_signal_wait_fd` with an empty set** was not asked; pelt never
+   passes one (it falls back to timed reads if the set would be empty,
+   which needs every one of `HUP`, `INT` and `RESIZE` ignored at start).
+
+## 7. Not verified, and inferred
+
+- **A reflowing terminal** (VTE, kitty, iTerm2 rewrap rows on a resize):
+  the redraw assumes the rows stay as they were (xterm, the harness's
+  `Screen`). On a reflowing terminal a wrapped line can leave a stale
+  row above or below after a resize. No real emulator was driven by a
+  person.
+- **Two resizes inside one escape sequence or one UTF-8 character**: the
+  redraw runs between bytes and the key in progress is finished after
+  it; not typed by any case.
+- **The timed-read fallback** (a host where `os_signal_wait_fd` fails)
+  runs only in the plant; it does not redraw on a resize.
+- **`COLUMNS` set and a resize**: the width stays `COLUMNS` (XBD 8.3) and
+  nothing is redrawn; read from the code, no case.
+- **The height** is read and kept beside the width; nothing in the
+  layout uses it yet.
+- **Reprint and discard** (Ctrl-R, Ctrl-O on most terminals) are not
+  taken from `os_term_chars`; Ctrl-O reaching the editor is shown by
+  `EXTENDED` being off (`flags`), not by a key typed.
+- **macOS** by CI only (no build on nomad-1). The census scripts are
+  linux-only. linux aarch64: no tier builds at 0.2.30 either (asserted
+  in CI).
+- **The bytes before a prompt** (15 → 4) are read from the code.
+- **bash was not run** by this lane; the sh11 cases recorded from bash
+  keep their transcripts, except the three Ctrl-V cases, now dash's.
