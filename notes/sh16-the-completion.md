@@ -204,3 +204,137 @@ tiers of linux and macOS; nothing else.
 `pax/tools/mkpelt` at pax trunk, inside an Ubuntu 24.04 container on
 kasumi, against this branch's head: an `ET_EXEC` with no `PT_INTERP`;
 its sha256 in the report for PAX's next pin.
+
+### 3.7 The result against the prediction
+
+Measured on kasumi (linux x86-64, CachyOS, 16 cpus; the oracles of
+record) and in CI (linux x86-64, macOS arm64, linux aarch64). **trunk**
+is `7dd3304` built in its own worktree (`logs/base.status`), **head**
+`d8d420c` in its own (`logs/head.status`), both by
+`notes/sh16-evidence`'s gauntlet: every gate's exit status 0 on both.
+
+| prediction | predicted | measured | held? |
+|---|---|---|---|
+| the two pending cases leave pending | pass against bash | `c_ed_complete_command`, `c_ed_complete_file` pass on both tiers, kasumi and CI | held |
+| sessions | (217 + new)/0/14 | **241/0/14** (24 new) on both tiers and both under `taskset -c 0-3` (kasumi), both tiers on linux and macOS CI | held |
+| every new case red at trunk | — | trunk's release binary: 25 of the 26 completion cases fail (`logs/red-new-cases-trunk.log`); the 26th, `c_ed_complete_tilde_alone`, passed at trunk as first written (`ls ~` and `ls ~<tab>` both list `docs`), was rewritten (`d8d420c`) and is red at trunk now (`logs/red-tilde-alone-trunk.log`) | held after a fix to one case |
+| corpus | 880/0/80 | **880/0/80 (3)** both tiers and `taskset` (kasumi); 880/0/80 on both CI hosts | held |
+| statements | 451 of 545 | **451 of 545 (83.5%)**; kind X 30 → 35 (`ed/21`–`ed/25`) | held |
+| `edit-witness` | 10 rows green, idle 0 | **11 of 11** (the new `tab-latency` row) on both tiers and both under `taskset`; idle **0 context switches in 10 s**; `kill -INT` median 1.1 ms; trunk fails only `tab-latency` (no bell: the tab is inserted, `logs/red-edit-witness-trunk.log`) | held |
+| Tab at an empty command name | under 50 ms (release, kasumi `/usr/bin`) | 3,790 names: the bell median **11.7 ms** release, 9.6 ms native (kasumi); 15.0–16.1 ms ubuntu CI, 6.1–6.3 ms macOS CI; the question on the next Tab the same | held |
+| memory at the prompt | — (not predicted) | `tools/session-rss -n 20000`: trunk 3,276 → 4,876 KB, head 3,268 → 4,872 KB (`logs/rss-*.log`): the names a line copies die with its region | — |
+| real scripts | verdict for verdict as trunk | §3.8 | |
+| lupin, checked machine | unchanged | checked: `unsupported`, home-module method calls, `phase_reached mem`; lupin: `unsupported` at resolve naming `os_signal_default` (`logs/machines.txt`) | held |
+| the plant | every new case and the two former pending red, both tiers, linux and macOS; nothing else | CI 38797987258 on `sh16-plant` (`dc05d19`: `a8cc525` with Tab inserting itself): sessions **216/25/14** on linux and macOS (native; the release step does not run after a red), the 25 being every completion case of that head but the old `c_ed_complete_tilde_alone` (see above); `edit-witness` `tab-latency` red on both tiers of both hosts; nothing else red (`ci/plant-38797987258.txt`) | held, with `tab-latency` red too |
+| a static pelt for PAX | ET_EXEC, no PT_INTERP | pax `b7fb8d1`'s `tools/mkpelt` in Ubuntu 24.04 (gcc 13.3, clang 18.1.3, glibc 2.39) at pelt `d8d420c7055f…`: **sha256 `6774441ba446250e05065fd4dfa384d80bde593c2f4f612db073488b10c0a997`, 14,765,328 bytes**, ET_EXEC, no PT_INTERP, hashed twice; `-c` runs, Tab rings and asks (`logs/mkpelt.log`, `logs/mkpelt-sums.txt`) | held |
+
+**Not predicted.**
+
+- **A question answered left the row of Tabs open**: the first build
+  asked again on the very next Tab after `n` (the answer was read inside
+  the list, so the loop never saw a key end the row). The new
+  `tab-latency` row found it; the answer now ends the row (`ec0c1d6`),
+  so asking again takes two Tabs, as everywhere else.
+- **bash completes nothing inside a backquote** though it does after
+  `$(`: that step moved from the bash-recorded case to the hand-written
+  one.
+- **kasumi has `uname26`** beside `uname`, so `unam` is ambiguous there;
+  the cases use their own `PATH` directory and functions, never a
+  host's programs (except `/usr/bin` for the absolute path).
+- **The first baseline was contaminated**: the trunk gauntlet ran in the
+  tree the lane was editing, and a build mid-run replaced its binaries
+  and its static build (`logs/base-contaminated.status`, kept). It was
+  re-taken in a worktree of its own, as was the head's.
+
+### 3.8 The script census
+
+(filled when the census finishes)
+
+## 4. Evidence index
+
+- **The prediction:** `7edbe18`, before the first change under `tools/`
+  (`c6c0356`) and `src/` (`f706e3a`).
+- **The references:** `notes/sh16-evidence/probe/probe.py` (the driver),
+  `logs/probe-refs.txt`, `probe-refs2.txt`, `probe-mksh.txt` (bash 5.2,
+  mksh 59c, dash 0.5.12 in the Debian container), `probe-refs3.txt` and
+  `probe-bash53-lcp.txt` (the LCP-then-type row, container and kasumi).
+- **The cases:** `notes/sh16-evidence/cases/mkcases.py` writes every
+  new case's keys, meta and files; the bash ones were recorded by
+  `tools/session-record` (`logs/record3.log`; dash, the second opinion,
+  completes nothing); the `tr_by=hand` ones drafted by
+  `cases/hand-draft.py` from pelt and checked line by line against §3.1.
+- **The gauntlets:** `logs/base.status` (trunk), `logs/head.status`
+  (`d8d420c`) and every step's log beside them.
+- **Seen red:** `logs/red-new-cases-trunk.log`,
+  `logs/red-tilde-alone-trunk.log`, `logs/red-edit-witness-trunk.log`
+  (trunk's binary); `logs/selftest-plant.log` (a wrong table row fails
+  `wolf test`); CI run **38797987258** on `sh16-plant`
+  (`ci/plant-38797987258.txt`).
+- **CI green:** run 38797978346 at `a8cc525` (`ci/head-38797978346.txt`)
+  and the run at the PR's head (the PR body).
+- **The machines:** `logs/machines.txt`. **Memory:** `logs/rss-*.log`.
+- **PAX:** `logs/mkpelt.log`, `logs/mkpelt-sums.txt`.
+
+## 5. Done-when
+
+- Branch `sh16`, PR #30 open and unmerged, CI green at the head;
+  `wolf/tools/lane-audit.sh pelt sh16 30` run from the org directory,
+  its exit status read directly.
+- pelt issues: **none closes** (none of the open ones is about
+  completion; ruling #69 R3 had no issue). None filed.
+
+## 6. What Tab does, and whose behaviour it follows
+
+| case | pelt | follows |
+|---|---|---|
+| unique command, file, variable | completed; a space when nothing follows the cursor | bash, mksh (the space only at the end: bash) |
+| directory | `/`, no space | both |
+| several | the common prefix and the bell; the next Tab lists | the prefix and bell: bash; the list on the second Tab: the contract (bash needs a third after progress, mksh lists at once) |
+| list | columns down then across, width the widest + 2 cells, (width − 1) / that columns, then the whole prompt and the line again; `/` after directories, `$` before variables | bash's layout and counts; mksh's unpadded last column |
+| taller than the window | asked first (`list all N? (y or n)`, pelt's own words); `y`, `Y` or space lists; the answer ends the row | pelt: sized to `os_term_size`'s rows (bash asks above 100 items; mksh never) |
+| no match | the bell | both |
+| commands | built-ins, reserved words, functions, files with an execute bit on `PATH`; no aliases (pelt has none) | both offer reserved words and functions |
+| command position | line start, after `; & | ( )`, `$(`, backquote, an assignment, `if then else elif while until do ! {` | operators and `$(`: both; assignment, reserved words, backquote: pelt (XCU 2.9.1), neither reference |
+| a slash in the command word | directories and executables only | bash (mksh offers every file) |
+| `~`, `~/x` | from `HOME`, the tilde kept; a lone `~` → `~/`; `~user` nothing | bash keeps the tilde; the lone `~`: pelt (bash offers users, mksh expands) |
+| hidden files | only when the typed part starts with `.` | mksh and pathname expansion (bash offers them) |
+| quoting | backslashes outside quotes (blanks, `|&;<>()$\`\"'*?[`, a leading `~` or `#`); a newline as `'<NL>'`; inside `"…"` and `'…'` their own rules, the quote closed on a unique match | bash's backslashes and closing; the newline: mksh's shape |
+| `$name`, `${name`, `"$name` | completed; `}` and the quote closed | bash; anywhere in a word (bash only at its start; mksh never) |
+| mid-word | the text before the cursor; text after kept | bash (mksh rings) |
+| vi insert mode | completes | mksh, the contract (bash `--posix` inserts a tab) |
+| vi command `\` `*` `=` | sh11's pathname expansion, unchanged | POSIX (dash has no editor to measure) |
+| Ctrl-V Tab, `lnext` Tab | a tab | both |
+
+## 7. Wolf findings
+
+None. Every builtin used (`fs_read_dir`, `fs_stat`, `fs_is_dir`,
+`os_term_size` through sh15's width) answered as the spec at `v0.2.30`
+says; nothing filed.
+
+## 8. Not verified, and named out
+
+- **A typed unquoted `*`, `?` or `[` stays as typed**: completion only
+  appends, so `st*` + Tab gives `st*ar` (it reads back as a pattern that
+  matches the file) where bash rewrites it `st\*ar`. `st\*` gives
+  `st\*ar`.
+- **Executability in a listing** is any execute bit (`mode & 0111`); the
+  command search itself asks `may` with the shell's ids. A file only
+  root may run is offered to a user.
+- **`~login`** is not completed (pelt has no user lookup at the prompt).
+- **Programmable completion, aliases, `$(…)` inside double quotes,
+  `case` patterns, `for … in`**: none is special; the last two complete
+  files as any argument.
+- **A list with control characters in names** is drawn with `^X`
+  (sh11's `show_cp`); measured by the newline case's line, not by a
+  list screen.
+- **Bytes that are not UTF-8 in a name**: `text` turns them into `?`
+  before they are inserted, so such a name does not complete to itself
+  (W06, wolf strings are UTF-8).
+- **No person drove a real terminal emulator**; the screens are the
+  harness's ECMA-48 terminal. The bell is counted in the probes' raw
+  bytes, not judged by `tools/session`.
+- **bash in the container is 5.2, the oracle of record 5.3**; every
+  recorded transcript is 5.3's, and the probe rows that decided a
+  choice were the same on both where both were run (the LCP row).
+- **macOS** by CI only. linux aarch64 still builds no tier at 0.2.30
+  (asserted in CI).
