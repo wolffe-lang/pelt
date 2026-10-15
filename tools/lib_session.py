@@ -11,6 +11,9 @@ A session case is a set of files in tests/session/:
                 as raw keys with no newline after them: backslash-e is
                 ESC, backslash-xNN a byte, and backslash-r, -n, -t and
                 a doubled backslash as in C (an arrow key is ESC `[D`).
+                A line `\\size COLS ROWS` types nothing: it resizes the
+                terminal (`TIOCSWINSZ`, so the kernel sends `SIGWINCH`
+                to its foreground group) and the screen with it (sh15).
                 Every other line is typed followed by a newline.
   <name>.tr     the oracle's transcript (below), written by
                 tools/session-record from `dash -i +m`
@@ -89,9 +92,15 @@ is left out so the order cannot race). It answers a cursor-position
 report (`ESC[6n`) on the pty, as a terminal does. `last_screens` holds
 one snapshot per step.
 
-**The mode.** `last_mode` is whether the pty's local modes (ICANON,
-ECHO, ISIG) were what they were before the shell started when it ended
-(None when it was killed): a shell that leaves its terminal raw fails.
+**The mode.** `last_mode` is whether the pty's modes (ICANON, ECHO,
+ISIG, IEXTEN, and IXON since sh15, when the editor turns the last two
+off) were what they were before the shell started when it ended (None
+when it was killed): a shell that leaves its terminal raw fails.
+
+**A resize** (`\\size`) changes the window as an emulator does and the
+screen keeps its rows, cut at the new margin or widened with blanks
+(xterm's way: no reflow); the cursor keeps its row and is held inside
+the new margin.
 """
 
 import codecs
@@ -151,6 +160,27 @@ class Screen:
         if unicodedata.east_asian_width(ch) in ("W", "F") or 0x20000 <= cp <= 0x3FFFD:
             return 2
         return 1
+
+    def resize(self, cols, rows):
+        """The window changes size: rows are kept (no reflow), cut at
+        the new margin or widened; the cursor stays inside it."""
+        for i, row in enumerate(self.grid):
+            if len(row) > cols:
+                # a wide character cut in half leaves a blank
+                cut = row[:cols]
+                if cut and cut[-1] != "" and self.width(cut[-1][0]) == 2:
+                    cut[-1] = " "
+                self.grid[i] = cut
+            else:
+                self.grid[i] = row + [" "] * (cols - len(row))
+        self.cols = cols
+        while len(self.grid) < self.top + rows:
+            self.grid.append([" "] * cols)
+        self.rows = rows
+        if self.r > self.top + rows - 1:
+            self.top = self.r - rows + 1
+        self.c = min(self.c, cols - 1)
+        self.pend = False
 
     def _row(self, r):
         while r >= len(self.grid):
@@ -328,14 +358,29 @@ def write_screen(path, screens, spec):
                 fh.write(ln + "\n")
 
 
-_LMODES = termios.ICANON | termios.ECHO | termios.ISIG
+_LMODES = termios.ICANON | termios.ECHO | termios.ISIG | termios.IEXTEN
+_IMODES = termios.IXON
 
 
 def _lmode(fd):
+    """The modes a shell must give back: the local ones and IXON, as
+    one number (the input flag shifted above the local ones)."""
     try:
-        return termios.tcgetattr(fd)[3] & _LMODES
+        a = termios.tcgetattr(fd)
     except (termios.error, OSError):
         return None
+    return (a[3] & _LMODES) | ((a[0] & _IMODES) << 32)
+
+
+def flags_of(mode):
+    """`_lmode`'s number as words, for a log."""
+    if mode is None:
+        return "unreadable"
+    names = [("icanon", termios.ICANON), ("echo", termios.ECHO), ("isig", termios.ISIG),
+             ("iexten", termios.IEXTEN)]
+    out = [("" if mode & bit else "-") + n for n, bit in names]
+    out.append(("" if (mode >> 32) & termios.IXON else "-") + "ixon")
+    return " ".join(out)
 
 
 def term_lmode(master, hold):
@@ -395,6 +440,8 @@ def keystrokes(path):
                 out.append(("^Z", b"\x1a"))
             elif line.startswith("\\k "):
                 out.append((line, _raw_keys(line[3:])))
+            elif line.startswith("\\size "):
+                out.append((line, None))
             else:
                 out.append((line, line.encode() + b"\n"))
     return out
@@ -653,7 +700,12 @@ def _session(argv, keys, env, cwd, expect, meta=None):
         st = Step(label)
         start_row = scr.r
         try:
-            if SLOW > 0:
+            if data is None:
+                # `\size COLS ROWS`: the window changes, nothing is typed
+                cols, nrows = (int(x) for x in label.split()[1:3])
+                fcntl.ioctl(hold, termios.TIOCSWINSZ, struct.pack("HHHH", nrows, cols, 0, 0))
+                scr.resize(cols, nrows)
+            elif SLOW > 0:
                 # a slow line: one byte at a time, as a serial console
                 # at a low rate delivers them
                 for i in range(len(data)):

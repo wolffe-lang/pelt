@@ -14,7 +14,7 @@ A case with a `<name>.screen` file (and `screen=N` in its meta) is also
 judged on the screen: what a terminal shows of each step from N on
 (tools/lib_session.py's `Screen`), against the recorded rows and
 cursor. And every pelt session must leave the terminal's modes as it
-found them (ICANON, ECHO, ISIG): a shell that exits with its terminal
+found them (ICANON, ECHO, ISIG, IEXTEN, IXON): a shell that exits with its terminal
 raw fails, whatever its transcript says.
 
 A case marked `pending=` needs a primitive pelt does not have yet. It
