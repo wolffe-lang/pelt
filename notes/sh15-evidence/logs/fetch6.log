@@ -1,0 +1,20 @@
+Thu Oct 15 12:59:31 PM UTC 2026
+# read 1
+997b71a5b44a5799becb954b0a287e184f322fbe02d54f319e6b439a75c4f219  lupin-0.1.53-aarch64-apple-darwin.tar.gz
+7874ec272a2c11d2295dbeb1c12344c7ea0d081a61f9a1087467b86473526ef1  lupin-0.1.53-aarch64-unknown-linux-gnu.tar.gz
+5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa  lupin-0.1.53-x86_64-unknown-linux-gnu.tar.gz
+f3257e742ba06addfba4baf5438858f4fd6e2caa16c6d2faeef123a48b39118f  wolf-0.2.30-aarch64-apple-darwin.tar.gz
+34237d4a8d4977b67ee43d9a11c993b172e1e1cd3fdaddf997998ebc6874b4bd  wolf-0.2.30-aarch64-unknown-linux-gnu.tar.gz
+4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89  wolf-0.2.30-x86_64-unknown-linux-gnu.tar.gz
+# read 2
+997b71a5b44a5799becb954b0a287e184f322fbe02d54f319e6b439a75c4f219  lupin-0.1.53-aarch64-apple-darwin.tar.gz
+7874ec272a2c11d2295dbeb1c12344c7ea0d081a61f9a1087467b86473526ef1  lupin-0.1.53-aarch64-unknown-linux-gnu.tar.gz
+5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa  lupin-0.1.53-x86_64-unknown-linux-gnu.tar.gz
+f3257e742ba06addfba4baf5438858f4fd6e2caa16c6d2faeef123a48b39118f  wolf-0.2.30-aarch64-apple-darwin.tar.gz
+34237d4a8d4977b67ee43d9a11c993b172e1e1cd3fdaddf997998ebc6874b4bd  wolf-0.2.30-aarch64-unknown-linux-gnu.tar.gz
+4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89  wolf-0.2.30-x86_64-unknown-linux-gnu.tar.gz
+# version lines
+wolf 0.2.30 (wolfgang, pin 1b37f36)
+paired with lupin 0.1.53 (reference interpreter), pin 294d626
+lupin 0.1.53 (wolf-interp, reference interpreter at pin 294d626)
+std/STD-REV fd6bcdcb1dfe03ea5092f10316b7abe81f2df41e
