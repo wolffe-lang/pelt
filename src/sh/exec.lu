@@ -68,6 +68,19 @@ fn is_regular_builtin(name: str) -> bool {
         name == "type"
 }
 
+/// Every built-in by name, special and regular, in the order of the
+/// two tests above (Tab completes them as command names; `sh.selftest`
+/// checks each answers one of the tests).
+fn builtin_names() -> List[str] {
+    var o = List[str]()
+    let all = ": . break continue eval exec exit export readonly return set shift trap unset times " +
+        "echo printf test [ true false pwd cd command read local getopts wait umask kill fc alias unalias type"
+    for w in all.split(" ") {
+        (mut o).push(w)
+    }
+    o
+}
+
 /// Run node `n`; answers the status, which is also left in `sh.status`.
 /// A compound command's redirections are applied around it.
 fn run(mut sh: Sh, n: int) -> int {
