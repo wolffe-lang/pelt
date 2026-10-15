@@ -1,0 +1,4 @@
+step 2
+| $ echo aaaaaaaaaabbb
+| bbbbbbbcccccccccc
+cursor 1 17

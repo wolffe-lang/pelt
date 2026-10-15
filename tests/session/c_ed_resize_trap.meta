@@ -1,0 +1,2 @@
+compare=stdout
+why=a WINCH trap still runs when the window changes while a line is edited: the editor gives the resize back to the trap (sh15)

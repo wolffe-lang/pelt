@@ -1,0 +1,4 @@
+\k echo aaaaaaaaaabbbbbbbbbbcccccccccc
+\size 20 24
+\k dd\r
+exit

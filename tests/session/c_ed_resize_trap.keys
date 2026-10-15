@@ -1,0 +1,5 @@
+trap 'echo winch' WINCH
+\k echo x
+\size 30 24
+\k \r
+exit

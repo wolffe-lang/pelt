@@ -1,0 +1,20 @@
+step 0
+err no
+prompt "$ "
+step 1 "trap 'echo winch' WINCH"
+err no
+prompt "$ "
+step 2 "\\k echo x"
+err no
+prompt ""
+step 3 "\\size 30 24"
+err no
+prompt ""
+step 4 "\\k \\r"
+out "winch\nx\n"
+err no
+prompt "$ "
+step 5 "exit"
+err no
+prompt ""
+exit 0 at step 5
