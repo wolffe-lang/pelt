@@ -1,0 +1,635 @@
+//! sh.complete — what Tab completes at an interactive prompt: command
+//! names, file names and variable names (ruling #69 R3; not
+//! programmable).
+//!
+//! References consulted: POSIX.1-2024 XCU 2.2 (quoting: which characters
+//! a name must have quoted to read back as itself), 2.3 (where a word
+//! ends), 2.4 (reserved words), 2.6.1 (tilde), 2.9.1 (which word of a
+//! simple command is its name), 2.14.3 (a leading period), XCU `sh`
+//! (Command Line Editing; vi-mode `\`); black-box sessions of `bash
+//! --posix -i` 5.2 and 5.3, `mksh` 59c and `dash` 0.5.12/0.5.13.4 as a
+//! user sees them (`notes/sh16-evidence/probe/`, the table in
+//! `notes/sh16-the-completion.md` §2.1). No shell's or line-editing
+//! library's source.
+//!
+//! **The word.** `comp_ctx` reads the line from its start to the cursor
+//! as the shell's lexer would, enough to know where the word being
+//! typed starts, what it means once its quotes are taken off, which
+//! quote is open at the cursor, and whether it is a command name.
+//! Blanks end a word; `;`, `&`, `|`, `(`, `)` and a backquote end one
+//! and put the next word in command position (`)` takes it away); `<`
+//! and `>` end one and make the next a file name. A backslash, `'…'`
+//! and `"…"` quote as XCU 2.2 says. Command position survives an
+//! assignment word (`FOO=1 cmd`) and the reserved words a command
+//! follows (`if then else elif while until do ! {`): there the word is
+//! the command name (XCU 2.9.1), though neither bash nor mksh completes
+//! it as one.
+//!
+//! **What it completes.** A word ending in `$name` or `${name`
+//! (unquoted or inside `"…"`) completes a variable's name. Otherwise a
+//! word in command position with no `/` completes a command: pelt's
+//! built-ins, the reserved words, the functions, and every file with an
+//! execute bit in a `PATH` directory (the search itself asks `may`; a
+//! listing asks the mode only). Anything else completes a file: the
+//! directory part as typed (`~` and `~/` from `HOME`, the tilde kept in
+//! the line), names that start with the rest, names starting with `.`
+//! only when the rest does (pathname expansion's rule), and only
+//! directories and executables for a command word with a `/`. After
+//! `NAME=` in command position the value completes as a file.
+//!
+//! **What it inserts.** Only what follows the text already typed, so
+//! the user's own quoting is kept: quoted as the quote open at the
+//! cursor needs (`comp_quote`), then for a single match a `/` after a
+//! directory, or else `}` closing `${`, the quote the word opened, and
+//! a space when nothing follows the cursor.
+
+const CK_NONE: int = 0
+
+const CK_CMD: int = 1
+
+const CK_FILE: int = 2
+
+const CK_VAR: int = 3
+
+/// What `comp_ctx` decided about the word at the cursor.
+struct Ctx {
+    kind: int,
+    /// The text to complete, its quotes taken off: a command or variable
+    /// name's start, or a path as typed (its `~` still there).
+    lit: str,
+    /// The quote open at the cursor: 0, `'` (39) or `"` (34).
+    q: int,
+    /// A variable written `${`.
+    brace: bool,
+    /// A file named as a command (a `/` in the command word):
+    /// directories and executables only.
+    exec_only: bool,
+    /// Nothing of the word typed yet, unquoted: a `~` or `#` inserted
+    /// first is quoted.
+    lead: bool,
+}
+
+/// The names a word can become, sorted by byte; `base` is the part of
+/// each that is already typed.
+struct Found {
+    names: List[str],
+    dirs: List[bool],
+    base: str,
+}
+
+fn no_ctx() -> Ctx {
+    Ctx { kind: CK_NONE, lit: "", q: 0, brace: false, exec_only: false, lead: false }
+}
+
+fn is_name_cp(v: int, first: bool) -> bool {
+    v >= 65 && v <= 90 || v >= 97 && v <= 122 || v == 95 || !first && v >= 48 && v <= 57
+}
+
+/// A reserved word after which the next word is a command name.
+fn leads_command(w: str) -> bool {
+    w == "if" ||
+        w == "then" ||
+        w == "else" ||
+        w == "elif" ||
+        w == "while" ||
+        w == "until" ||
+        w == "do" ||
+        w == "!" ||
+        w == "{{"
+}
+
+/// XCU 2.4's reserved words, offered as command names.
+fn reserved_words() -> List[str] {
+    var o = List[str]()
+    for w in "! {{ }} case do done elif else esac fi for if in then until while".split(" ") {
+        (mut o).push(w)
+    }
+    o
+}
+
+/// The text of code points `cps` as a `str`.
+fn cps_text(cps: List[int]) -> str {
+    var o = List[byte]()
+    encode_into(mut o, cps, 0, cps.len)
+    text(Buf { b: o })
+}
+
+/// Read the line `cps` (its start up to the cursor) and say what the
+/// word at its end is (module doc).
+fn comp_ctx(cps: List[int]) -> Ctx {
+    let n = cps.len
+    var q = 0
+    var cmdpos = true
+    var redir = false
+    var in_word = false
+    var word_cmd = true
+    var lit = List[int]()
+    var quoted = false
+    var eq = -1
+    var dol = -1
+    var dbrace = false
+    var dname = List[int]()
+    var i = 0
+    while i < n {
+        let c = cps[i]
+        if q == 39 {
+            if c == 39 {
+                q = 0
+            } else {
+                (mut lit).push(c)
+            }
+            dol = -1
+            i += 1
+            continue
+        }
+        if q == 0 &&
+            (
+                c == 32 ||
+                    c == 9 ||
+                    c == 10 ||
+                    c == 59 ||
+                    c == 38 ||
+                    c == 124 ||
+                    c == 40 ||
+                    c == 41 ||
+                    c == 96 ||
+                    c == 60 ||
+                    c == 62
+            ) {
+            // the word (if any) ends here
+            if in_word {
+                if redir {
+                    redir = false
+                } else if word_cmd {
+                    let w = cps_text(lit)
+                    cmdpos = eq >= 0 || !quoted && leads_command(w)
+                }
+                in_word = false
+            }
+            if c == 60 || c == 62 {
+                redir = true
+            } else if c != 32 && c != 9 && c != 10 {
+                cmdpos = c != 41
+                redir = false
+            }
+            dol = -1
+            i += 1
+            continue
+        }
+        if !in_word {
+            in_word = true
+            word_cmd = cmdpos && !redir
+            lit = List[int]()
+            quoted = false
+            eq = -1
+            dol = -1
+        }
+        if c == 92 {
+            if i + 1 >= n {
+                // a backslash just before the cursor: what follows it is
+                // the user's to type
+                return no_ctx()
+            }
+            let d = cps[i + 1]
+            if q == 34 && !(d == 36 || d == 96 || d == 34 || d == 92 || d == 10) {
+                (mut lit).push(c)
+                dol = -1
+                i += 1
+                continue
+            }
+            (mut lit).push(d)
+            quoted = true
+            dol = -1
+            i += 2
+            continue
+        }
+        if q == 34 && c == 34 {
+            q = 0
+            dol = -1
+            i += 1
+            continue
+        }
+        if q == 0 && (c == 39 || c == 34) {
+            q = c
+            quoted = true
+            dol = -1
+            i += 1
+            continue
+        }
+        // a character of the word: track a `$name` it may end in
+        if c == 36 {
+            dol = i
+            dbrace = false
+            dname = List[int]()
+        } else if dol >= 0 {
+            if c == 123 && i == dol + 1 {
+                dbrace = true
+            } else if is_name_cp(c, dname.len == 0) {
+                (mut dname).push(c)
+            } else {
+                dol = -1
+            }
+        }
+        (mut lit).push(c)
+        if c == 61 &&
+            eq < 0 &&
+            q == 0 &&
+            !quoted &&
+            is_name(cps_text(slice_of(lit, 0, lit.len - 1))) {
+            eq = lit.len
+        }
+        i += 1
+    }
+    if q != 39 && dol >= 0 && in_word {
+        return Ctx {
+            kind: CK_VAR,
+            lit: cps_text(dname),
+            q: q,
+            brace: dbrace,
+            exec_only: false,
+            lead: false,
+        }
+    }
+    if !in_word {
+        word_cmd = cmdpos && !redir
+        lit = List[int]()
+    }
+    let lead = !in_word
+    if word_cmd && eq >= 0 {
+        let value = cps_text(slice_of(lit, eq, lit.len))
+        return Ctx { kind: CK_FILE, lit: value, q: q, brace: false, exec_only: false, lead: false }
+    }
+    let t = cps_text(lit)
+    if word_cmd && !t.contains("/") {
+        return Ctx { kind: CK_CMD, lit: t, q: q, brace: false, exec_only: false, lead: lead }
+    }
+    Ctx { kind: CK_FILE, lit: t, q: q, brace: false, exec_only: word_cmd, lead: lead }
+}
+
+/// A byte that must be quoted outside quotes to read back as itself
+/// (XCU 2.2: the metacharacters, the quotes and `$`, and the pattern
+/// characters so a name is not expanded).
+fn needs_backslash(b: int) -> bool {
+    b == 32 ||
+        b == 9 ||
+        b == 124 ||
+        b == 38 ||
+        b == 59 ||
+        b == 60 ||
+        b == 62 ||
+        b == 40 ||
+        b == 41 ||
+        b == 36 ||
+        b == 96 ||
+        b == 92 ||
+        b == 34 ||
+        b == 39 ||
+        b == 42 ||
+        b == 63 ||
+        b == 91
+}
+
+/// `s` written to be read back as itself with quote `q` open at the
+/// insertion point (0 none, 39 `'`, 34 `"`); `lead`: it starts a word,
+/// where `~` and `#` are special too. A newline outside quotes is
+/// written `'<newline>'` (a backslash-newline would be a continuation).
+fn comp_quote(s: str, q: int, lead: bool) -> str {
+    var o = buf()
+    var first = true
+    for x in s.bytes() {
+        let b = x as int
+        if q == 39 {
+            if b == 39 {
+                put(mut o, "'\\''")
+            } else {
+                putb(mut o, b)
+            }
+        } else if q == 34 {
+            if b == 36 || b == 96 || b == 34 || b == 92 {
+                putb(mut o, 92)
+            }
+            putb(mut o, b)
+        } else if b == 10 {
+            put(mut o, "'\n'")
+        } else if needs_backslash(b) || first && lead && (b == 126 || b == 35) {
+            putb(mut o, 92)
+            putb(mut o, b)
+        } else {
+            putb(mut o, b)
+        }
+        first = false
+    }
+    text(o)
+}
+
+/// pelt's built-ins, the reserved words, the functions `fnames` and
+/// the executable files of `path`'s directories whose names start with
+/// `pre`, sorted, each once.
+fn find_commands(pre: str, fnames: List[str], path: str) -> List[str] {
+    var all = List[str]()
+    for w in builtin_names() {
+        if w.starts_with(pre) {
+            (mut all).push(w)
+        }
+    }
+    for w in reserved_words() {
+        if w.starts_with(pre) {
+            (mut all).push(w)
+        }
+    }
+    for w in fnames {
+        if w.starts_with(pre) {
+            (mut all).push(w)
+        }
+    }
+    let dots = pre.starts_with(".")
+    for dir in path.split(":") {
+        let d = if dir.len == 0 then "." else dir
+        let names = fs_read_dir(d) else |_| List[str]()
+        for name in names {
+            if !name.starts_with(pre) || name.starts_with(".") && !dots {
+                continue
+            }
+            let st = stat_of(join_path(d, name), false)
+            if st.len > 4 && st[0] == K_FILE && st[4] & 73 != 0 {
+                (mut all).push(name)
+            }
+        }
+    }
+    uniq_sorted(sort_strs(all))
+}
+
+/// A sorted list with its repeats taken out.
+fn uniq_sorted(xs: List[str]) -> List[str] {
+    var o = List[str]()
+    for x in xs {
+        if o.len == 0 || o[o.len - 1] != x {
+            (mut o).push(x)
+        }
+    }
+    o
+}
+
+/// The names in directory `dir` (as written, "" for the working
+/// directory) that start with `base`.
+fn find_files(dir: str, base: str, exec_only: bool) -> Found {
+    let d = if dir.len == 0 then "." else dir
+    let got = fs_read_dir(d) else |_| List[str]()
+    let dots = base.starts_with(".")
+    var keep = List[str]()
+    for name in got {
+        if name == "." || name == ".." || name.starts_with(".") && !dots {
+            continue
+        }
+        if name.starts_with(base) {
+            (mut keep).push(name)
+        }
+    }
+    var names = List[str]()
+    var dirs = List[bool]()
+    for name in sort_strs(keep) {
+        let full = join_path(dir, name)
+        let isdir = fs_is_dir(full)
+        if exec_only && !isdir {
+            let st = stat_of(full, false)
+            if st.len <= 4 || st[0] != K_FILE || st[4] & 73 == 0 {
+                continue
+            }
+        }
+        (mut names).push(name)
+        (mut dirs).push(isdir)
+    }
+    Found { names: names, dirs: dirs, base: base }
+}
+
+/// Everything the word `c` can become. `fnames` are the shell's
+/// functions, `vnames` its variables, `path` and `home` the values of
+/// `PATH` and `HOME`.
+fn comp_find(c: Ctx, fnames: List[str], vnames: List[str], path: str, home: str) -> Found {
+    if c.kind == CK_VAR {
+        var names = List[str]()
+        var dirs = List[bool]()
+        for v in sort_strs(vnames) {
+            if v.starts_with(c.lit) {
+                (mut names).push(v)
+                (mut dirs).push(false)
+            }
+        }
+        return Found { names: names, dirs: dirs, base: c.lit }
+    }
+    if c.kind == CK_CMD {
+        let names = find_commands(c.lit, fnames, path)
+        var dirs = List[bool]()
+        for _x in names {
+            (mut dirs).push(false)
+        }
+        return Found { names: names, dirs: dirs, base: c.lit }
+    }
+    if c.kind != CK_FILE {
+        return Found { names: List[str](), dirs: List[bool](), base: "" }
+    }
+    var look = c.lit
+    if look.starts_with("~") {
+        if look == "~" {
+            // the home directory itself: a lone `~` becomes `~/`
+            var names = List[str]()
+            var dirs = List[bool]()
+            if home.len > 0 && fs_is_dir(home) {
+                (mut names).push("")
+                (mut dirs).push(true)
+            }
+            return Found { names: names, dirs: dirs, base: "" }
+        }
+        if !look.starts_with("~/") || home.len == 0 {
+            // `~login`: pelt does not look users up (bash offers login
+            // names; mksh nothing)
+            return Found { names: List[str](), dirs: List[bool](), base: "" }
+        }
+        look = home + look[1..look.len]
+    }
+    let slash = look.rfind("/") else -1
+    let dir = if slash >= 0 then look[0..slash + 1] else ""
+    let base = if slash >= 0 then look[slash + 1..look.len] else look
+    find_files(dir, base, c.exec_only)
+}
+
+/// What a unique match `name` (a directory when `isdir`) adds to the
+/// word: the rest of the name, quoted, then what ends it. `at_end`: the
+/// cursor is at the end of the line.
+fn comp_unique(c: Ctx, base: str, name: str, isdir: bool, at_end: bool) -> str {
+    var t = comp_quote(name[base.len..name.len], c.q, c.lead && base.len == 0)
+    if c.kind == CK_FILE && isdir {
+        return t + "/"
+    }
+    if c.kind == CK_VAR && c.brace {
+        t = t + "}}"
+    }
+    if c.q == 39 {
+        t = t + "'"
+    } else if c.q == 34 {
+        t = t + "\""
+    }
+    if at_end {
+        t = t + " "
+    }
+    t
+}
+
+/// How a match is shown in a list: a directory with `/`, a variable
+/// with its `$`.
+fn comp_shown(c: Ctx, name: str, isdir: bool) -> str {
+    if c.kind == CK_VAR {
+        return "$" + name
+    }
+    if isdir {
+        return name + "/"
+    }
+    name
+}
+
+/// The cells `s` takes on the screen (`sh.edit`'s `cells`).
+fn text_cells(s: str) -> int {
+    var w = 0
+    for v in cps_of(s) {
+        w += cells(v)
+    }
+    w
+}
+
+/// The list's shape for `n` items whose widest takes `widest` cells, in
+/// `cols` cells: (rows, columns, the width of a column). Columns are the
+/// widest plus 2, as many as fit in `cols - 1` (at least one); names go
+/// down each column, then across.
+fn comp_layout(n: int, widest: int, cols: int) -> (int, int, int) {
+    let colw = widest + 2
+    var ncol = (cols - 1) / colw
+    if ncol < 1 {
+        ncol = 1
+    }
+    let nrow = (n + ncol - 1) / ncol
+    var used = (n + nrow - 1) / nrow
+    if used < 1 {
+        used = 1
+    }
+    (nrow, used, colw)
+}
+
+/// The shell's variables by name (`sh.vals`' keys that are names).
+fn var_names(sh: Sh) -> List[str] {
+    var o = List[str]()
+    for k in sh.vals.keys() {
+        if is_name(k) {
+            (mut o).push(k)
+        }
+    }
+    o
+}
+
+// ------------------------------------------------------------ at the editor
+
+/// Tab in emacs mode or vi insert mode. `again`: the key before was a
+/// Tab that found several names, so this one lists them.
+fn ed_complete(mut e: Ed, again: bool) {
+    let c = comp_ctx(slice_of(e.buf, 0, e.cur))
+    if c.kind == CK_NONE {
+        bell(mut e)
+        return
+    }
+    let f = comp_find(c, e.fnames, e.vnames, e.cpath, e.home)
+    if f.names.len == 0 {
+        bell(mut e)
+        return
+    }
+    if f.names.len == 1 {
+        let t = comp_unique(c, f.base, f.names[0], f.dirs[0], e.cur == e.buf.len)
+        if t.len > 0 {
+            insert(mut e, cps_of(t))
+        }
+        return
+    }
+    e.tabs = 1
+    if again {
+        ed_list(mut e, c, f)
+        return
+    }
+    let common = common_prefix(f.names)
+    if common.len > f.base.len {
+        insert(
+            mut e,
+            cps_of(comp_quote(common[f.base.len..common.len], c.q, c.lead && f.base.len == 0)),
+        )
+    }
+    bell(mut e)
+}
+
+/// Write `s` as the editor shows text (`show_cp`: `^X` for a control).
+fn put_shown(mut e: Ed, s: str) {
+    for v in cps_of(s) {
+        show_cp(mut e.out, v)
+    }
+}
+
+/// The matches in columns below the line, then the prompt and the line
+/// again (module doc). A list taller than the window less a row is
+/// asked about first.
+fn ed_list(mut e: Ed, c: Ctx, f: Found) {
+    var shown = List[str]()
+    var widest = 0
+    var i = 0
+    while i < f.names.len {
+        let s = comp_shown(c, f.names[i], f.dirs[i])
+        let w = text_cells(s)
+        if w > widest {
+            widest = w
+        }
+        (mut shown).push(s)
+        i += 1
+    }
+    let n = shown.len
+    let (nrow, ncol, colw) = comp_layout(n, widest, e.cols)
+    let (r, col) = pos_at(e, e.buf.len)
+    move_to(mut e, r, col)
+    put_s(mut e, "\r\n")
+    let high = if e.rows > 0 then e.rows else 24
+    if nrow > high - 1 {
+        put_s(mut e, "list all {n}? (y or n) ")
+        flush_out(mut e)
+        let k = next_key(mut e)
+        put_s(mut e, "\r\n")
+        if k == K_HUP || k == K_EOF {
+            ends_line(mut e, k)
+            return
+        }
+        if k == K_INTR || k == 3 && !e.int_ignored {
+            redraw_all(mut e, false)
+            ends_line(mut e, k)
+            return
+        }
+        if !(k == 121 || k == 89 || k == 32) {
+            redraw_all(mut e, false)
+            return
+        }
+    }
+    var row = 0
+    while row < nrow {
+        var cl = 0
+        while cl < ncol {
+            let at = cl * nrow + row
+            if at >= n {
+                break
+            }
+            put_shown(mut e, shown[at])
+            if (cl + 1) * nrow + row < n {
+                var pad = colw - text_cells(shown[at])
+                while pad > 0 {
+                    put_s(mut e, " ")
+                    pad -= 1
+                }
+            }
+            cl += 1
+        }
+        put_s(mut e, "\r\n")
+        row += 1
+    }
+    redraw_all(mut e, false)
+}
