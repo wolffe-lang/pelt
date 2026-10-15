@@ -77,6 +77,10 @@
 //! they were (xterm's way); one that reflows them on a resize is not
 //! modelled.
 //!
+//! **Tab** completes a command, file or variable name (`sh.complete`)
+//! in emacs mode and vi insert mode; Ctrl-V (or the terminal's
+//! literal-next character) then Tab inserts a tab.
+//!
 //! **History** is `sh.hist`'s list (the file, numbers and `fc` live
 //! there): walked by Up and Down and by vi's `k j - + G / ? n N`, and
 //! searched by Ctrl-R in emacs mode (`isearch`: a plain substring, the
@@ -572,6 +576,14 @@ struct Ed {
     prev_line: str,
     /// vi `v`'s count.
     vnum: int,
+    /// Tab (`sh.complete`): 1 when the key before was a Tab that found
+    /// several names; the shell's functions and variables by name, and
+    /// `PATH` and `HOME`, as the line began.
+    tabs: int,
+    fnames: List[str],
+    vnames: List[str],
+    cpath: str,
+    home: str,
 }
 
 /// What a line hands back (`copy region`'s value).
@@ -649,6 +661,11 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         cmd_count: 0,
         prev_line: prev,
         vnum: 0,
+        tabs: 0,
+        fnames: sh.funcs.keys(),
+        vnames: var_names(sh),
+        cpath: sh.vals["PATH"] else "",
+        home: sh.vals["HOME"] else "",
     }
     e.h = e.hist.len
     var k = 0
@@ -1721,6 +1738,8 @@ fn emacs_loop(mut e: Ed) {
         }
         let was_kill = e.last_kill
         e.last_kill = false
+        let again = e.tabs > 0
+        e.tabs = 0
         if k == 13 || k == 10 {
             finish(mut e, ED_OK)
         } else if k == 3 {
@@ -1838,6 +1857,8 @@ fn emacs_loop(mut e: Ed) {
             var one = List[int]()
             (mut one).push(utf8_rest(mut e, b))
             insert(mut e, one)
+        } else if k == 9 {
+            ed_complete(mut e, again)
         } else if is_char_key(k) {
             var one = List[int]()
             (mut one).push(k)
@@ -2112,11 +2133,14 @@ fn vi_loop(mut e: Ed) {
 /// Insert mode (XCU vi Line Editing Insert Mode); `replace` for `R`.
 /// Returns when ESC goes back to command mode or the line ends.
 fn vi_insert(mut e: Ed, replace: bool) {
+    e.tabs = 0
     while e.done < 0 {
         let k = next_key(mut e)
         if ends_line(mut e, k) {
             return
         }
+        let again = e.tabs > 0
+        e.tabs = 0
         if k == 13 || k == 10 {
             finish(mut e, ED_OK)
             return
@@ -2214,6 +2238,8 @@ fn vi_insert(mut e: Ed, replace: bool) {
             }
         } else if k == 12 {
             redraw_all(mut e, true)
+        } else if k == 9 {
+            ed_complete(mut e, again)
         } else if is_char_key(k) {
             var one = List[int]()
             (mut one).push(k)
@@ -2237,7 +2263,8 @@ fn save_dot(mut e: Ed) {
     e.mem_set = true
 }
 
-/// A key that is a character to insert (a tab included).
+/// A key that is a character to insert (a tab too, though Tab itself
+/// completes: a tab reaches the line through Ctrl-V).
 fn is_char_key(k: int) -> bool {
     k >= 32 && k != 127 && k < K_RAW + 256 || k == 9
 }
