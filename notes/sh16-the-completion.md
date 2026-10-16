@@ -223,7 +223,7 @@ is `7dd3304` built in its own worktree (`logs/base.status`), **head**
 | `edit-witness` | 10 rows green, idle 0 | **11 of 11** (the new `tab-latency` row) on both tiers and both under `taskset`; idle **0 context switches in 10 s**; `kill -INT` median 1.1 ms; trunk fails only `tab-latency` (no bell: the tab is inserted, `logs/red-edit-witness-trunk.log`) | held |
 | Tab at an empty command name | under 50 ms (release, kasumi `/usr/bin`) | 3,790 names: the bell median **11.7 ms** release, 9.6 ms native (kasumi); 15.0–16.1 ms ubuntu CI, 6.1–6.3 ms macOS CI; the question on the next Tab the same | held |
 | memory at the prompt | — (not predicted) | `tools/session-rss -n 20000`: trunk 3,276 → 4,876 KB, head 3,268 → 4,872 KB (`logs/rss-*.log`): the names a line copies die with its region | — |
-| real scripts | verdict for verdict as trunk | §3.8 | |
+| real scripts | verdict for verdict as trunk | 76/3/1 unaided and aided, base and head, verdict for verdict (§3.8) | held |
 | lupin, checked machine | unchanged | checked: `unsupported`, home-module method calls, `phase_reached mem`; lupin: `unsupported` at resolve naming `os_signal_default` (`logs/machines.txt`) | held |
 | the plant | every new case and the two former pending red, both tiers, linux and macOS; nothing else | CI 38797987258 on `sh16-plant` (`dc05d19`: `a8cc525` with Tab inserting itself): sessions **216/25/14** on linux and macOS (native; the release step does not run after a red), the 25 being every completion case of that head but the old `c_ed_complete_tilde_alone` (see above); `edit-witness` `tab-latency` red on both tiers of both hosts; nothing else red (`ci/plant-38797987258.txt`) | held, with `tab-latency` red too |
 | a static pelt for PAX | ET_EXEC, no PT_INTERP | pax `b7fb8d1`'s `tools/mkpelt` in Ubuntu 24.04 (gcc 13.3, clang 18.1.3, glibc 2.39) at pelt `d8d420c7055f…`: **sha256 `6774441ba446250e05065fd4dfa384d80bde593c2f4f612db073488b10c0a997`, 14,765,328 bytes**, ET_EXEC, no PT_INTERP, hashed twice; `-c` runs, Tab rings and asks (`logs/mkpelt.log`, `logs/mkpelt-sums.txt`) | held |
@@ -248,7 +248,14 @@ is `7dd3304` built in its own worktree (`logs/base.status`), **head**
 
 ### 3.8 The script census
 
-(filled when the census finishes)
+`tools/script-census` with trunk's static build (`sc/pelt-base`,
+`3392efba…`) and the head's (`sc/pelt-head`, `360e32f9…`), each
+unaided and aided (`notes/sh16-evidence/scripts/`): **76 same, 3
+differ, 1 unstable of 80 in all four passes, verdict for verdict as
+trunk** (the `id`/`verdict` columns of base and head compared with
+`diff`, empty both ways). The three that differ are trunk's (xzgrep,
+zgrep, zdiff: a process per pipeline stage); pfetch is the known
+coin. Held.
 
 ## 4. Evidence index
 
@@ -270,8 +277,12 @@ is `7dd3304` built in its own worktree (`logs/base.status`), **head**
   (trunk's binary); `logs/selftest-plant.log` (a wrong table row fails
   `wolf test`); CI run **38797987258** on `sh16-plant`
   (`ci/plant-38797987258.txt`).
-- **CI green:** run 38797978346 at `a8cc525` (`ci/head-38797978346.txt`)
-  and the run at the PR's head (the PR body).
+- **CI green:** run 38797978346 at `a8cc525` (`ci/head-38797978346.txt`),
+  run 38800017361 at `d8d420c`, the last code commit
+  (`ci/head-38800017361.txt`), and the run at the PR's head (the PR
+  body).
+- **The census:** `notes/sh16-evidence/scripts/` (four `.tsv`, logs,
+  the binaries' digests).
 - **The machines:** `logs/machines.txt`. **Memory:** `logs/rss-*.log`.
 - **PAX:** `logs/mkpelt.log`, `logs/mkpelt-sums.txt`.
 
