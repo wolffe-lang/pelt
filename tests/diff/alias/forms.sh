@@ -3,7 +3,8 @@ alias 'a/b=c' 2>/dev/null; echo "st=$?"
 alias '=c' 2>/dev/null; echo "st=$?"
 alias 'a$b=c' 2>/dev/null; echo "st=$?"
 alias 'a=b=c'; alias a
-alias e=; alias e; e echo still; echo "st=$?"
+alias e=; alias e
+e echo still; echo "st=$?"
 alias -p 2>/dev/null; echo "p=$?"
 alias -- q=1 2>/dev/null; alias q
 unalias 2>/dev/null; echo "none=$?"

@@ -4,7 +4,8 @@ st=1
 st=2
 'a=b=c'
 'e='
-st=127
+still
+st=0
 p=1
 'q=1'
 none=0
