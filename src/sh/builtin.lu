@@ -353,15 +353,29 @@ fn bi_set(mut sh: Sh, args: List[str]) -> int {
                 i += 2
                 continue
             }
+            // letters in one cluster; an `o` among them takes the next
+            // operand as an option's name (`set -euo pipefail`, as dash)
+            var taken = 0
             var k = 1
             while k < a.len {
-                if !option_letter(mut sh, ch(a, k), on) {
+                if ch(a, k) == 'o' {
+                    if i + 1 + taken >= args.len {
+                        print_options(mut sh, !on)
+                    } else {
+                        let oname = args[i + 1 + taken]
+                        if !option_name(mut sh, oname, on) {
+                            fatal(mut sh, "set: {oname}: no such option", 2)
+                            return 2
+                        }
+                        taken += 1
+                    }
+                } else if !option_letter(mut sh, ch(a, k), on) {
                     fatal(mut sh, "set: -{ch(a, k)}: no such option", 2)
                     return 2
                 }
                 k += 1
             }
-            i += 1
+            i += 1 + taken
             continue
         }
         break
