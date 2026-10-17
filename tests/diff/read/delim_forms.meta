@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+oracle=bash
+why=read -d is new in POSIX.1-2024; dash 0.5.13.4 has no -d (read/c_delim)
+dash=differs
