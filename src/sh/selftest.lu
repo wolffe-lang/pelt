@@ -6,6 +6,7 @@
 //! fast path), `umask`'s operand reader, the history (`sh.hist`):
 //! `fc`'s operands, its list format and the history file's lines, Tab's
 //! reading of a line, its quoting and its list's shape (`sh.complete`),
+//! `read`'s split of a line into its variables,
 //! and what pelt#19's memory work keeps in place: a subshell's frame and
 //! journal, the tree's recycled slots and a word's text as a view.
 //! `src/sh_test.lu` runs them under `wolf test`.
@@ -758,7 +759,41 @@ pub fn self_test() -> List[str] {
     want_mask_texts(mut bad)
     want_hist(mut bad)
     want_complete(mut bad)
+    want_read(mut bad, ":", "a:b:c:", 3, "[a][b][c]")
+    want_read(mut bad, ":", "a:b:c::", 3, "[a][b][c::]")
+    want_read(mut bad, ": ", "a:b:c :", 3, "[a][b][c]")
+    want_read(mut bad, ":", "a:", 1, "[a]")
+    want_read(mut bad, ":", "a::", 1, "[a::]")
+    want_read(mut bad, ":", ":", 1, "[]")
+    want_read(mut bad, ",", "a,b,,", 2, "[a][b,,]")
+    want_read(mut bad, " \t\n", " c d  ", 1, "[c d]")
+    want_read(mut bad, " \t\n", "c  ", 1, "[c]")
     bad
+}
+
+/// `read`'s split of `line` (no backslashes) into the first `n` of the
+/// variables `a`, `b`, `c` under `IFS` `ifs_value` (`sh.builtin`'s
+/// `assign_fields`), as `[a][b]…`.
+fn want_read(mut bad: List[str], ifs_value: str, line: str, n: int, want: str) {
+    var sh = new_sh("selftest")
+    sh.vals["IFS"] = ifs_value
+    var m = buf()
+    putb(mut m, RB)
+    for b in line.bytes() {
+        lit(mut m, b as int)
+    }
+    putb(mut m, RE)
+    let all = ["a", "b", "c"]
+    let names = all[0..n]
+    let ok = assign_fields(mut sh, names, text(m))
+    var o = buf()
+    for name in names {
+        put(mut o, "[{sh.vals[name] else "?"}]")
+    }
+    let got = text(o)
+    if !ok || got != want {
+        (mut bad).push("read {escaped(line)} on IFS {escaped(ifs_value)} = {got}, want {want}")
+    }
 }
 
 // --------------------------------------------------------- the history
