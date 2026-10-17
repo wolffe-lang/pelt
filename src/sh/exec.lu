@@ -2294,7 +2294,8 @@ fn job_of(sh: Sh, id: int) -> int {
 /// compound command) runs as a subshell, to the end: if it is not the
 /// last, what it writes is caught and becomes the next stage's input
 /// (`input_from`), so pelt never blocks writing a pipe nobody drains.
-/// The status is the last stage's.
+/// The status is the last stage's, or under `pipefail` the rightmost
+/// failing stage's.
 fn run_pipeline(mut sh: Sh, n: int) -> int {
     flush(mut sh)
     let count = sh.ast.nodes[n].kids.len
@@ -2343,8 +2344,11 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         if own_in {
             fs_close(input) else |_| {}
         }
+        // each earlier stage's child and status (-1 while a child
+        // runs), for `pipefail`
+        (mut sh.istk).push(child)
+        (mut sh.istk).push(if child >= 0 then -1 else _st)
         if child >= 0 {
-            (mut sh.istk).push(child)
             input = r
         } else {
             fs_close(r) else |_| {}
@@ -2353,14 +2357,27 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         own_in = true
         i += 1
     }
+    // with `set -o pipefail` (XCU 2.9.2) the status is the rightmost
+    // stage's that failed, or 0; the option is read as the pipeline
+    // ends, which no stage of it can have changed (each is a subshell)
+    var failed = 0
     var k = kbase
-    while k < sh.istk.len {
+    while k + 1 < sh.istk.len {
         let h = sh.istk[k]
-        let _s = reap(mut sh, h)
-        k += 1
+        var s = sh.istk[k + 1]
+        if h >= 0 {
+            s = reap(mut sh, h)
+        }
+        if s != 0 {
+            failed = s
+        }
+        k += 2
     }
     cut_istk(mut sh, kbase)
     read_pending_caps(mut sh)
+    if sh.opt_pipefail && st == 0 {
+        return failed
+    }
     st
 }
 
