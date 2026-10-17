@@ -50,6 +50,32 @@ struct P {
     err: str,
     err_line: int,
     more: bool,
+    /// Where the token just lexed starts in `src`.
+    tstart: int,
+    /// Alias substitution (XCU 2.3.1, `alias_at`). A word replaced by
+    /// its alias's value makes a new text: the value, then the rest of
+    /// the word's line; the text it came from waits here, with where to
+    /// go on in it (the line's end), the line number, and where in the
+    /// new text the copied rest begins (`ast_base`) and where it came from
+    /// (`ast_from`).
+    ast_src: List[str],
+    ast_pos: List[int],
+    ast_line: List[int],
+    ast_base: List[int],
+    ast_from: List[int],
+    /// The aliases being expanded, each with where its text ends in the
+    /// text of level `al_lvl` (the depth of `ast_src`): a word starting
+    /// before that end is inside it, and is not substituted again.
+    al_name: List[str],
+    al_end: List[int],
+    al_lvl: List[int],
+    /// A value ending in a blank ended here (-1: none): the next token
+    /// is a candidate for substitution too (`cand`, when it is a word).
+    blank_end: int,
+    cand: bool,
+    /// Above 0: no substitution (the lexer's own parse of `$(…)`, which
+    /// only finds where it ends).
+    no_alias: int,
 }
 
 fn new_parser(src: str, line: int) -> P {
@@ -71,6 +97,18 @@ fn new_parser(src: str, line: int) -> P {
         err: "",
         err_line: 0,
         more: false,
+        tstart: 0,
+        ast_src: List[str](),
+        ast_pos: List[int](),
+        ast_line: List[int](),
+        ast_base: List[int](),
+        ast_from: List[int](),
+        al_name: List[str](),
+        al_end: List[int](),
+        al_lvl: List[int](),
+        blank_end: -1,
+        cand: false,
+        no_alias: 0,
     }
 }
 
@@ -94,6 +132,22 @@ fn reset_parser(mut p: P, src: str, line: int) {
     p.err = ""
     p.err_line = 0
     p.more = false
+    alias_reset(mut p)
+}
+
+/// No alias text open, none being expanded.
+fn alias_reset(mut p: P) {
+    (mut p.ast_src).clear()
+    (mut p.ast_pos).clear()
+    (mut p.ast_line).clear()
+    (mut p.ast_base).clear()
+    (mut p.ast_from).clear()
+    (mut p.al_name).clear()
+    (mut p.al_end).clear()
+    (mut p.al_lvl).clear()
+    p.blank_end = -1
+    p.cand = false
+    p.no_alias = 0
 }
 
 fn fail(mut p: P, msg: str) {
@@ -112,7 +166,9 @@ fn fail(mut p: P, msg: str) {
 /// interactive shell reads another line (`PS2`) rather than report it;
 /// `P.more` says so.
 fn fail_eof(mut p: P, msg: str) {
-    if p.err.len == 0 {
+    // inside an alias's text the end is not the input's: more lines
+    // would not help
+    if p.err.len == 0 && p.ast_src.len == 0 {
         p.more = true
     }
     fail(mut p, msg)
@@ -149,7 +205,22 @@ fn at(p: P, i: int) -> char {
 // ---------------------------------------------------------------- lexer
 
 fn lex(mut p: P, mut a: Ast) {
+    lex_one(mut p, mut a)
+    // the token after a value ending in a blank (XCU 2.3.1)
+    p.cand = false
+    if p.blank_end >= 0 && p.tstart >= p.blank_end {
+        p.cand = p.tk == T_WORD
+        p.blank_end = -1
+    }
+}
+
+fn lex_one(mut p: P, mut a: Ast) {
     loop {
+        if p.pos >= p.src.len && p.ast_src.len > 0 {
+            // an alias's text ends: on in the text it replaced a word of
+            alias_pop(mut p)
+            continue
+        }
         let c = at(p, p.pos)
         if p.pos < p.src.len && (c == ' ' || c == '\t') {
             p.pos += 1
@@ -175,6 +246,7 @@ fn lex(mut p: P, mut a: Ast) {
     p.tdoc = -1
     p.tq = false
     p.tx = ""
+    p.tstart = p.pos
     if p.pos >= p.src.len {
         p.tk = T_EOF
         return
@@ -526,9 +598,14 @@ fn scan_cmdsub(mut p: P, mut a: Ast) {
         return
     }
     let saved_want = p.want_doc
+    let saved_blank = p.blank_end
     p.want_doc = 0
     p.have = false
+    // only where it ends is wanted here: its text is parsed again when
+    // it runs (`sh.expand`'s `cmdsub_at`), with the aliases then
+    p.no_alias += 1
     let _body = parse_clist(mut p, mut a)
+    p.no_alias -= 1
     if p.err.len > 0 {
         return
     }
@@ -543,6 +620,7 @@ fn scan_cmdsub(mut p: P, mut a: Ast) {
     }
     p.have = false
     p.want_doc = saved_want
+    p.blank_end = saved_blank
 }
 
 fn scan_brace(mut p: P, mut a: Ast) {
@@ -717,6 +795,135 @@ fn read_docs(mut p: P, mut a: Ast) {
     (mut p.pend).clear()
     (mut p.pend_delim).clear()
     (mut p.pend_strip).clear()
+}
+
+// --------------------------------------------------------------- aliases
+
+/// Whether a word starting at `p.tstart` lies inside the text of alias
+/// `name`, now being expanded (XCU 2.3.1: an alias is not substituted
+/// again within its own substitution).
+fn alias_active(p: P, name: str) -> bool {
+    let lvl = p.ast_src.len
+    var k = 0
+    while k < p.al_name.len {
+        if p.al_lvl[k] == lvl && p.al_name[k] == name && p.tstart < p.al_end[k] {
+            return true
+        }
+        k += 1
+    }
+    false
+}
+
+/// Replace the word token just lexed (`p.tstart` to `p.pos`) by `value`:
+/// the lexer goes on in a new text, the value and then the rest of the
+/// word's line, and comes back to the line's end when it is read (so a
+/// `#` in the value takes the rest of the line, as dash's does).
+fn alias_splice(mut p: P, name: str, value: str) {
+    let t = p.pos
+    var e = t
+    while e < p.src.len && byte_at(p.src, e) != 10 {
+        e += 1
+    }
+    let lvl = p.ast_src.len
+    let base = value.len
+    // the aliases whose text holds the word hold its value too (`a=b
+    // b=a`: inside `b`'s value, `a` is still being expanded), and as
+    // much of the copied line as they held; the others are done at
+    // this level
+    let n = p.al_name.len
+    var k = 0
+    while k < n {
+        if p.al_lvl[k] == lvl && p.al_end[k] > p.tstart {
+            let end = if p.al_end[k] < e then p.al_end[k] else e
+            (mut p.al_name).push(p.al_name[k])
+            (mut p.al_end).push(if end > t then base + end - t else base)
+            (mut p.al_lvl).push(lvl + 1)
+        }
+        k += 1
+    }
+    (mut p.al_name).push(name)
+    (mut p.al_end).push(base)
+    (mut p.al_lvl).push(lvl + 1)
+    if p.blank_end > t {
+        p.blank_end = base + p.blank_end - t
+    }
+    (mut p.ast_src).push(p.src)
+    (mut p.ast_pos).push(e)
+    (mut p.ast_line).push(p.line)
+    (mut p.ast_base).push(base)
+    (mut p.ast_from).push(t)
+    p.src = value + p.src[t..e]
+    p.pos = 0
+    p.have = false
+    if base > 0 && (byte_at(value, base - 1) == 32 || byte_at(value, base - 1) == 9) {
+        p.blank_end = base
+    }
+}
+
+/// An alias's text is read to its end: back to the text it came from,
+/// at the end of the line the word was on.
+fn alias_pop(mut p: P) {
+    let lvl = p.ast_src.len
+    let base = (mut p.ast_base).pop() else 0
+    let from = (mut p.ast_from).pop() else 0
+    p.src = (mut p.ast_src).pop() else ""
+    p.pos = (mut p.ast_pos).pop() else 0
+    p.line = (mut p.ast_line).pop() else p.line
+    while p.al_lvl.len > 0 && p.al_lvl[p.al_lvl.len - 1] >= lvl {
+        let _n = (mut p.al_name).pop() else ""
+        let _e = (mut p.al_end).pop() else 0
+        let _l = (mut p.al_lvl).pop() else 0
+    }
+    if p.blank_end >= 0 {
+        p.blank_end = if p.blank_end >= base then from + p.blank_end - base else from
+    }
+}
+
+/// `p.pos`, in the text of level `lvl` (an outer one): the texts above
+/// it closed and the lexer back in it; false when the position lies in
+/// an alias's value, which no outer text holds. What a parse inside a
+/// word needs to know where the word's `)` is (`scan_cmdsub`,
+/// `sh.expand`'s `cmdsub_at`).
+fn alias_unwind(mut p: P, lvl: int) -> bool {
+    var ok = true
+    while p.ast_src.len > lvl {
+        let top = p.ast_src.len - 1
+        let base = p.ast_base[top]
+        let from = p.ast_from[top]
+        let pos = p.pos
+        alias_pop(mut p)
+        if pos >= base {
+            p.pos = from + pos - base
+        } else {
+            ok = false
+        }
+    }
+    p.blank_end = -1
+    ok
+}
+
+/// XCU 2.3.1: the word token at hand is replaced by its alias's value
+/// when it is unquoted, names an alias not already being expanded, and
+/// stands where a command name may (`cmd`), or right after a value
+/// ending in a blank. True when it was (the next `peek` reads the
+/// value).
+fn alias_at(mut p: P, mut a: Ast, cmd: bool) -> bool {
+    if a.aliases.len == 0 || p.no_alias > 0 || p.err.len > 0 {
+        return false
+    }
+    if peek(mut p, mut a) != T_WORD || p.tq || !(cmd || p.cand) {
+        return false
+    }
+    p.cand = false
+    let name = p.tx
+    let value = a.aliases[name] else {
+        return false
+    }
+    if alias_active(p, name) {
+        return false
+    }
+    alias_splice(mut p, name, value)
+    true
 }
 
 // --------------------------------------------------------------- parser
@@ -986,7 +1193,11 @@ fn at_redir(mut p: P, mut a: Ast) -> bool {
 }
 
 fn parse_command(mut p: P, mut a: Ast) -> int {
-    let k = peek(mut p, mut a)
+    var k = peek(mut p, mut a)
+    // a reserved word in its place is never an alias's name
+    while k == T_WORD && !is_reserved(p.tx) && alias_at(mut p, mut a, true) {
+        k = peek(mut p, mut a)
+    }
     var n = -1
     if k == T_OP && p.tx == "(" {
         n = add(mut a, K_SUBSHELL, "", p.tl)
@@ -1068,6 +1279,12 @@ fn parse_simple(mut p: P, mut a: Ast) -> int {
         }
         if peek(mut p, mut a) != T_WORD {
             break
+        }
+        // the command name after assignments or redirections, or the word
+        // after a value ending in a blank, may be an alias
+        let named = !seen_cmd && !is_assignment(p.tx) && (nassign > 0 || a.nodes[n].redirs.len > 0)
+        if (named || p.cand) && alias_at(mut p, mut a, named) {
+            continue
         }
         let w = p.tx
         if !seen_cmd && is_assignment(w) {
