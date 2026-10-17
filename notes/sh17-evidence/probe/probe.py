@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """probe.py — sh17's black-box rows, run under each shell named.
 
-usage: probe.py ROWS NAME=SHELL [NAME=SHELL ...]
+usage: probe.py [--diff] ROWS NAME=SHELL [NAME=SHELL ...]
+
+--diff prints only the rows where the shells part (exit, stderr presence,
+stdout), then the count of rows alike.
 
 ROWS is a text file of blocks, each starting `### name`; the block is a
 script written to <scratch>/s.sh and run as `SHELL ../s.sh` from
@@ -68,7 +71,28 @@ def run(shell, script):
 
 
 def main(argv):
+    only_diff = argv[:1] == ["--diff"]
+    if only_diff:
+        argv = argv[1:]
     shells = [a.split("=", 1) for a in argv[1:]]
+    if only_diff:
+        # print only the rows where the shells do not all answer alike
+        same = 0
+        for name, script in rows(argv[0]):
+            got = [run(os.path.abspath(sh) if os.sep in sh else shutil.which(sh), script)
+                   for _, sh in shells]
+            keys = [None if g is None else g[:3] for g in got]
+            if all(k == keys[0] for k in keys):
+                same += 1
+                continue
+            print(f"### {name}")
+            for (sname, _), g in zip(shells, got):
+                if g is None:
+                    print(f"  {sname:5} TIMEOUT")
+                else:
+                    print(f"  {sname:5} exit={g[0]} err={'yes' if g[1] else 'no'} out={g[2]!r}")
+        print(f"probe: {same} rows alike")
+        return 0
     for name, script in rows(argv[0]):
         print(f"### {name}")
         for sname, sh in shells:
