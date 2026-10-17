@@ -369,6 +369,8 @@ const J_TRAP: int = 5
 
 const J_HASH: int = 6
 
+const J_ALIAS: int = 7
+
 /// The options as one number: what a frame keeps of them.
 fn opts_bits(sh: Sh) -> int {
     var b = 0
@@ -644,6 +646,9 @@ fn jot(mut sh: Sh, tab: int, name: str) {
     } else if tab == J_HASH {
         s = sh.hash[name] else ""
         had = s.len > 0
+    } else if tab == J_ALIAS {
+        s = sh.ast.aliases[name] else ""
+        had = alias_set(sh, name)
     } else if tab == J_EXP {
         had = marked(sh.exported, name)
         let e = sh.exported[name] else false
@@ -663,6 +668,14 @@ fn jot(mut sh: Sh, tab: int, name: str) {
 /// Whether the mark map `m` has an entry for `name` (true or false).
 fn marked(m: Map[str, bool], name: str) -> bool {
     let _b = m[name] else {
+        return false
+    }
+    true
+}
+
+/// Whether `name` is an alias (its value may be empty).
+fn alias_set(sh: Sh, name: str) -> bool {
+    let _a = sh.ast.aliases[name] else {
         return false
     }
     true
@@ -707,6 +720,12 @@ fn journal_back(mut sh: Sh, base: int) {
             } else {
                 let _h = (mut sh.hash).remove(name) else ""
             }
+        } else if tab == J_ALIAS {
+            if had == 1 {
+                sh.ast.aliases[name] = s
+            } else {
+                let _a = (mut sh.ast.aliases).remove(name) else ""
+            }
         } else if tab == J_EXP {
             if had == 1 {
                 sh.exported[name] = i == 1
@@ -721,7 +740,7 @@ fn journal_back(mut sh: Sh, base: int) {
     }
 }
 
-// The writers: every write to the five tables goes through one of these.
+// The writers: every write to the tables goes through one of these.
 
 fn vset(mut sh: Sh, name: str, v: str) {
     jot(mut sh, J_VAL, name)
@@ -761,6 +780,16 @@ fn fnset(mut sh: Sh, name: str, body: int) {
 fn fndel(mut sh: Sh, name: str) {
     jot(mut sh, J_FN, name)
     let _f = (mut sh.funcs).remove(name) else 0
+}
+
+fn aset(mut sh: Sh, name: str, value: str) {
+    jot(mut sh, J_ALIAS, name)
+    sh.ast.aliases[name] = value
+}
+
+fn adel(mut sh: Sh, name: str) {
+    jot(mut sh, J_ALIAS, name)
+    let _a = (mut sh.ast.aliases).remove(name) else ""
 }
 
 fn tset(mut sh: Sh, name: str, action: str) {
