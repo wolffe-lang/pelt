@@ -1,0 +1,73 @@
+### ec
+../sh -ec 'false; echo no'; echo "st=$?"
+### uc
+../sh -uc 'echo ${x-ok}'; echo "st=$?"
+../sh -uc 'echo $x' 2>/dev/null; echo "st=$?"
+### c_then_e
+../sh -c -e 'false; echo no' 2>/dev/null; echo "st=$?"
+### o_errexit_c
+../sh -o errexit -c 'false; echo no'; echo "st=$?"
+### ce_order
+../sh -ce 'false; echo no' 2>/dev/null; echo "st=$?"
+### xc
+../sh -xc 'echo hi' 2>/dev/null; echo "st=$?"
+### c_name_args
+../sh -c 'echo "[$0] [$1] [$2] $#"' nm a b
+../sh -c 'echo "[$0] $#"'
+### c_dashdash
+../sh -c -- 'echo "[$0] [$1]"' nm a; echo "st=$?"
+### ec_dashdash
+../sh -ec -- 'echo "[$0] [$1]"' nm a; echo "st=$?"
+### dashdash_c
+../sh -- -c 2>/dev/null; echo "dashdash=$?"
+### missing_script
+../sh ./nonexistent 2>/dev/null; echo "missing=$?"
+../sh -- ./nonexistent 2>/dev/null; echo "missing2=$?"
+### dashdash_script
+printf 'echo "s [$0] [$1]"\n' > s1
+../sh -- s1 x; echo "st=$?"
+### e_script
+printf 'false\necho no\n' > s2
+../sh -e s2; echo "st=$?"
+### s_dash
+echo 'echo "dash-operand [$1] $#"' | ../sh -s - x
+### s_dashdash
+echo 'echo "[$1] $#"' | ../sh -s -- -x y
+### s_args
+echo 'echo "$# $1 $2"' | ../sh -s a b
+### s_e
+echo 'false; echo no' | ../sh -se; echo "st=$?"
+echo 'false; echo no' | ../sh -es; echo "st=$?"
+### lone_dash_script
+printf 'echo "ld [$0] [$1]"\n' > s3
+../sh - s3 y; echo "st=$?"
+### bad_letter
+../sh -Z -c 'echo no' 2>/dev/null; echo "st=$?"
+### bad_o
+../sh -o nonsense -c 'echo no' 2>/dev/null; echo "st=$?"
+### plus_e
+../sh +e -c 'false; echo yes'; echo "st=$?"
+### plus_o
+../sh -e +o errexit -c 'false; echo yes'; echo "st=$?"
+### dollar_minus
+../sh -c 'echo $-'
+../sh -ec 'echo $-'
+../sh -fuc 'echo $-'
+echo 'echo $-' | ../sh -s
+echo 'echo $-' | ../sh -es
+### c_no_string
+../sh -c 2>/dev/null; echo "st=$?"
+### n_c
+../sh -nc 'echo no'; echo "st=$?"
+../sh -n -c 'echo no'; echo "st=$?"
+### c_twice
+../sh -c -c 'echo "[$0]"' 2>/dev/null; echo "st=$?"
+### cs
+echo 'echo stdin' | ../sh -cs 'echo string' 2>/dev/null; echo "st=$?"
+### o_noarg
+../sh -o 2>/dev/null </dev/null | head -1 | cut -c1-9; echo "st=$?"
+### o_pipefail_cmdline
+../sh -o pipefail -c 'false | true; echo $?'
+### dash_letter_after_operand
+printf 'echo "a [$1]"\n' > s4
+../sh s4 -e; echo "st=$?"

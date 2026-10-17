@@ -1,0 +1,162 @@
+### after_assign
+  dash  exit=0 err=no out=b'hello there\nhello there\nst=0\n'
+  bash  exit=0 err=no out=b'hello there\nhello there\nst=0\n'
+### after_redir
+  dash  exit=0 err=no out=b'st=0\nhello there\n'
+  bash  exit=0 err=no out=b'st=0\nhello there\n'
+### reserved_alias
+  dash  exit=0 err=no out=b'then\nend\n'
+  bash  exit=0 err=no out=b'then\nend\n'
+### reserved_alias_list
+  dash  exit=0 err=no out=b"'if=echo IF'\n'fi=echo FI'\n"
+  bash  exit=0 err=no out=b"if='echo IF'\nfi='echo FI'\n"
+### alias_of_brace
+  dash  exit=0 err=no out=b'inbrace\n'
+  bash  exit=0 err=no out=b'inbrace\n'
+### alias_value_reserved
+  dash  exit=0 err=no out=b'yes\n'
+  bash  exit=0 err=no out=b'yes\n'
+### alias_func_def
+  dash  exit=0 err=no out=b'infunc\n'
+  bash  exit=0 err=no out=b'infunc\n'
+### alias_in_func_body_late
+  dash  exit=0 err=no out=b'st=127\n'
+  bash  exit=0 err=no out=b'st=127\n'
+### alias_cmdsub_same_line
+  dash  exit=0 err=yes out=b'\nst=0\n'
+  bash  exit=0 err=yes out=b'\nst=0\n'
+### alias_cmdsub_next_line
+  dash  exit=0 err=no out=b'Q hi\n'
+  bash  exit=0 err=no out=b'Q hi\n'
+### alias_backquote_same_line
+  dash  exit=0 err=yes out=b'\nst=0\n'
+  bash  exit=0 err=no out=b'Q hi\nst=0\n'
+### alias_backquote_next_line
+  dash  exit=0 err=no out=b'Q hi\n'
+  bash  exit=0 err=no out=b'Q hi\n'
+### alias_eval_same_line
+  dash  exit=0 err=no out=b'Q hi\n'
+  bash  exit=0 err=no out=b'Q hi\n'
+### alias_dot
+  dash  exit=0 err=no out=b'Q dotted\n'
+  bash  exit=0 err=no out=b'Q dotted\n'
+### alias_dot_defined_inside
+  dash  exit=0 err=no out=b'R inside\nR after\n'
+  bash  exit=0 err=no out=b'R inside\nR after\n'
+### alias_case_body
+  dash  exit=0 err=no out=b'hello case\n'
+  bash  exit=0 err=no out=b'hello case\n'
+### alias_case_pattern
+  dash  exit=0 err=no out=b'patx\n'
+  bash  exit=0 err=no out=b'patx\n'
+### alias_for_word
+  dash  exit=0 err=no out=b'a\n'
+  bash  exit=0 err=no out=b'a\n'
+### alias_trailing_chain
+  dash  exit=0 err=no out=b'B C\n'
+  bash  exit=0 err=no out=b'B C\n'
+### alias_trailing_quoted_next
+  dash  exit=0 err=no out=b'w w\n'
+  bash  exit=0 err=no out=b'w WORD\n'
+### alias_trailing_tab
+  dash  exit=0 err=no out=b'WORD\n'
+  bash  exit=0 err=no out=b'WORD\n'
+### alias_trailing_redir
+  dash  exit=0 err=no out=b'w\n'
+  bash  exit=0 err=no out=b'w\n'
+### alias_trailing_then_assign
+  dash  exit=1 err=no out=b'0\n'
+  bash  exit=1 err=no out=b'0\n'
+### alias_ends_newline
+  dash  exit=0 err=no out=b'one\ntwo three\n'
+  bash  exit=0 err=no out=b'one\ntwo three\n'
+### alias_ends_semicolon
+  dash  exit=0 err=no out=b's\nt\n'
+  bash  exit=0 err=no out=b's\nt\n'
+### alias_with_pipe
+  dash  exit=0 err=no out=b'PIPED\n'
+  bash  exit=0 err=no out=b'PIPED\n'
+### alias_comment
+  dash  exit=0 err=no out=b'a\n'
+  bash  exit=0 err=no out=b'a\n'
+### alias_recursion_ls
+  dash  exit=0 err=no out=b'usr\n'
+  bash  exit=0 err=no out=b'usr\n'
+### alias_mutual_three
+  dash  exit=0 err=no out=b'st=127\n'
+  bash  exit=0 err=no out=b'st=127\n'
+### alias_self_value_trailing
+  dash  exit=0 err=no out=b'st=127\n'
+  bash  exit=0 err=no out=b'st=127\n'
+### alias_bad_names
+  dash  exit=0 err=no out=b"st=2\nst=0\nst=1\nst=2\n'a=b=c'\n"
+  bash  exit=0 err=no out=b"st=1\nst=1\nst=1\nst=1\na='b=c'\n"
+### alias_list_order
+  dash  exit=0 err=no out=b"'c=3'\n'a=1'\n'b=2'\n"
+  bash  exit=0 err=no out=b"a='1'\nb='2'\nc='3'\n"
+### alias_empty_value
+  dash  exit=0 err=no out=b"'e='\nstill\nst=0\n"
+  bash  exit=0 err=no out=b"e=''\nstill\nst=0\n"
+### alias_dash_p
+  dash  exit=0 err=no out=b'st=1\n'
+  bash  exit=0 err=no out=b"alias q='1'\nst=0\n"
+### alias_dashdash
+  dash  exit=0 err=yes out=b"'q=1'\nst=0\n"
+  bash  exit=0 err=no out=b"q='1'\nst=0\n"
+### unalias_none
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=2\n'
+### unalias_partial
+  dash  exit=0 err=no out=b'st=1\n0\n'
+  bash  exit=0 err=no out=b'st=1\n0\n'
+### unalias_bad_opt
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+### alias_in_subshell_define
+  dash  exit=0 err=no out=b'st=127\n'
+  bash  exit=0 err=no out=b'st=127\n'
+### alias_in_cmdsub_define
+  dash  exit=0 err=no out=b'st=127\n'
+  bash  exit=0 err=no out=b'st=127\n'
+### unalias_in_subshell
+  dash  exit=0 err=no out=b'Q\n'
+  bash  exit=0 err=no out=b'Q\n'
+### alias_command_v_kinds
+  dash  exit=0 err=no out=b"alias 'q=echo x'\n an alias for echo x\n"
+  bash  exit=0 err=no out=b"alias q='echo x'\n aliased to `echo x'\n"
+### command_alias_not_expanded
+  dash  exit=0 err=no out=b'st=127\n'
+  bash  exit=0 err=no out=b'st=127\n'
+### alias_after_bang
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+### alias_after_time_word
+  dash  exit=0 err=no out=b'hello\n'
+  bash  exit=0 err=no out=b'hello\n'
+### alias_loop_split
+  dash  exit=0 err=no out=b'1\n2\n'
+  bash  exit=0 err=no out=b'1\n2\n'
+### alias_heredoc
+  dash  exit=0 err=no out=b'doc\n'
+  bash  exit=0 err=no out=b'doc\n'
+### alias_in_function_name_position
+  dash  exit=2 err=yes out=b''
+  bash  exit=2 err=yes out=b''
+### alias_quoted_part
+  dash  exit=0 err=no out=b'no\nno2\n'
+  bash  exit=0 err=no out=b'no\nno2\n'
+### alias_value_expansion
+  dash  exit=0 err=no out=b'late\n'
+  bash  exit=0 err=no out=b'late\n'
+### alias_set_minus_x
+  dash  exit=0 err=yes out=b'hello\n'
+  bash  exit=0 err=yes out=b'hello\n'
+### alias_print_special_chars
+  dash  exit=0 err=no out=b'\'q=a"b\'"\'"\'c$d\\e\'\n'
+  bash  exit=0 err=no out=b'q=\'a"b\'\\\'\'c$d\\e\'\n'
+### alias_print_newline
+  dash  exit=0 err=no out=b"'n=a\nb'\n"
+  bash  exit=0 err=no out=b"n='a\nb'\n"
+### alias_long_list_after_define
+  dash  exit=0 err=no out=b"'aa=2'\n'mm=3'\n'zz=1'\n"
+  bash  exit=0 err=no out=b"aa='2'\nmm='3'\nzz='1'\n"

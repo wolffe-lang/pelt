@@ -1,0 +1,53 @@
+### pf_basic
+set -o pipefail
+false | true; echo $?
+(exit 3) | (exit 4) | true; echo $?
+true | true; echo $?
+! false | true; echo $?
+set +o pipefail
+false | true; echo $?
+### pf_listing
+set +o | grep pipefail
+set -o pipefail; set +o | grep pipefail
+set -o | grep pipefail
+### pf_minus
+set -o pipefail; echo "[$-]"
+### pf_rightmost
+set -o pipefail
+(exit 3) | true | (exit 5) | true; echo $?
+(exit 3) | (exit 5) | (exit 0); echo $?
+### pf_last_failing
+set -o pipefail
+true | (exit 7); echo $?
+### pf_signal
+set -o pipefail
+yes | head -1 >/dev/null; echo $?
+### pf_external
+set -o pipefail
+sh -c 'exit 2' | cat; echo $?
+cat /nonexistent 2>/dev/null | cat; echo $?
+### pf_errexit
+set -eo pipefail
+false | true
+echo not-reached
+### pf_errexit_tested
+set -eo pipefail
+if false | true; then echo yes; else echo no; fi
+false | true || echo or
+echo end
+### pf_subshell_scope
+(set -o pipefail; false | true; echo "in $?"); false | true; echo "out $?"
+### pf_function_scope
+f() { set -o pipefail; }; f; false | true; echo $?
+### pf_single
+set -o pipefail; false; echo $?; ! false; echo $?
+### pf_pipestatus_cmdsub
+set -o pipefail; x=$(false | true); echo $?
+### pf_bg
+set -o pipefail; false | true & wait $!; echo $?
+### pf_cmdline_c
+../sh -o pipefail -c 'false | true; echo $?'
+### pf_set_plus_o_reinput
+set -o pipefail; o=$(set +o); set +o pipefail; eval "$o"; false | true; echo $?
+### pf_status_of_while
+set -o pipefail; while false | true; do echo in; break; done; echo done

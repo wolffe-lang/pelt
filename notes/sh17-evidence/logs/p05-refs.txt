@@ -1,0 +1,116 @@
+### ds_plain
+  dash  exit=0 err=no out=b'a b $HOME "q" *\n'
+  bash  exit=0 err=no out=b'a b $HOME "q" *\n'
+  pelt  exit=0 err=no out=b'$a b $$HOME $"q" $*\n'
+### ds_escapes
+  dash  exit=0 err=no out=b'22275c\n07081b0c0a0d090b\n'
+  bash  exit=0 err=no out=b'22275c\n07081b0c0a0d090b\n'
+  pelt  exit=2 err=yes out=b''
+### ds_E
+  dash  exit=0 err=no out=b'5c45\n'
+  bash  exit=0 err=no out=b'1b\n'
+  pelt  exit=0 err=no out=b'245c45\n'
+### ds_question
+  dash  exit=0 err=no out=b'5c3f\n'
+  bash  exit=0 err=no out=b'3f\n'
+  pelt  exit=0 err=no out=b'245c3f\n'
+### ds_unknown
+  dash  exit=0 err=no out=b'5c715c7a5c38\n'
+  bash  exit=0 err=no out=b'5c715c7a5c38\n'
+  pelt  exit=0 err=no out=b'245c715c7a5c38\n'
+### ds_hex
+  dash  exit=0 err=no out=b'417a5a09\n4134\n\n'
+  bash  exit=0 err=no out=b'417a5a09\n4134\n5c7867\n'
+  pelt  exit=0 err=no out=b'245c7834315c7837615a5c7839\n245c78343134\n245c7867\n'
+### ds_octal
+  dash  exit=0 err=no out=b'41413207780831\n\n'
+  bash  exit=0 err=no out=b'41413207780831\n\n'
+  pelt  exit=0 err=no out=b'245c3130315c313031325c37785c30313031\n245c343030\n'
+### ds_control
+  dash  exit=0 err=no out=b'011a1b017f1c\n'
+  bash  exit=0 err=no out=b'011a1b017f1c\n'
+  pelt  exit=0 err=no out=b'245c63415c635a5c635b5c63615c633f5c635c5c\n'
+### ds_nul
+  dash  exit=0 err=no out=b'6162\n616278\n'
+  bash  exit=0 err=no out=b'6162\n616278\n'
+  pelt  exit=0 err=no out=b'2461625c306364\n2461625c783030636478\n'
+### ds_u
+  dash  exit=0 err=no out=b'c3a9\n'
+  bash  exit=0 err=no out=b'c3a9\n'
+  pelt  exit=0 err=no out=b'24c3a9\n'
+### ds_highbyte
+  dash  exit=0 err=no out=b'c3a9\nc383c2a9\n'
+  bash  exit=0 err=no out=b'e9\nc3a9\n'
+  pelt  exit=0 err=no out=b'245c786539\n245c7863335c786139\n'
+### ds_in_dq
+  dash  exit=0 err=no out=b"$'a\tb'\n"
+  bash  exit=0 err=no out=b"$'a\\tb'\n"
+  pelt  exit=0 err=no out=b"$'a\tb'\n"
+### ds_in_braces_word
+  dash  exit=0 err=no out=b" a \\t b \\n\n$'x'\n"
+  bash  exit=0 err=no out=b" a \\t b \\n\n$'x'\n"
+  pelt  exit=0 err=no out=b" $ a \\t b \\n\n$'x'\n"
+### ds_assign
+  dash  exit=0 err=no out=b"it's\na\nb\n"
+  bash  exit=0 err=no out=b"it's\na\nb\n"
+  pelt  exit=2 err=yes out=b''
+### ds_embedded
+  dash  exit=0 err=no out=b'a\tbcd\n'
+  bash  exit=0 err=no out=b'a\tbcd\n'
+  pelt  exit=0 err=no out=b'a$\tbc$d\n'
+### ds_split
+  dash  exit=0 err=no out=b'1\n'
+  bash  exit=0 err=no out=b'1\n'
+  pelt  exit=0 err=no out=b'1\n'
+### ds_case
+  dash  exit=0 err=no out=b'literal\nmatched\ntab\n'
+  bash  exit=0 err=no out=b'literal\nmatched\ntab\n'
+  pelt  exit=0 err=no out=b'tab\n'
+### ds_glob
+  dash  exit=0 err=no out=b'ab\n*\n'
+  bash  exit=0 err=no out=b'ab\n*\n'
+  pelt  exit=0 err=no out=b'$a*\n$*\n'
+### ds_heredoc_delim
+  dash  exit=0 err=no out=b'body $HOME\n'
+  bash  exit=0 err=no out=b'body $HOME\n'
+  pelt  exit=0 err=no out=b'body $HOME\nE\n'
+### ds_heredoc_body
+  dash  exit=0 err=no out=b"$'a\\tb'\n"
+  bash  exit=0 err=no out=b"$'a\\tb'\n"
+  pelt  exit=0 err=no out=b"$'a\\tb'\n"
+### ds_empty
+  dash  exit=0 err=no out=b'1\n2\n'
+  bash  exit=0 err=no out=b'1\n2\n'
+  pelt  exit=0 err=no out=b'1\n2\n'
+### ds_backquote_inside
+  dash  exit=0 err=no out=b'`echo no` $(echo no)\n'
+  bash  exit=0 err=no out=b'`echo no` $(echo no)\n'
+  pelt  exit=0 err=no out=b'$`echo no` $$(echo no)\n'
+### ds_unterminated
+  dash  exit=2 err=no out=b''
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=2 err=no out=b''
+### ds_cmdsub
+  dash  exit=0 err=no out=b' a \\t b \\n\n'
+  bash  exit=0 err=no out=b' a \\t b \\n\n'
+  pelt  exit=0 err=no out=b' $ a \\t b \\n\n'
+### ds_tilde
+  dash  exit=0 err=no out=b'~\n'
+  bash  exit=0 err=no out=b'~\n'
+  pelt  exit=0 err=no out=b'$~\n'
+### ds_dollar_in_middle
+  dash  exit=0 err=no out=b'a$xb\n'
+  bash  exit=0 err=no out=b'a$xb\n'
+  pelt  exit=0 err=no out=b'a$$xb\n'
+### ds_alias_value
+  dash  exit=127 err=yes out=b''
+  bash  exit=127 err=yes out=b''
+  pelt  exit=127 err=yes out=b''
+### ds_param_pattern
+  dash  exit=0 err=no out=b'b\na\n'
+  bash  exit=0 err=no out=b'b\na\n'
+  pelt  exit=0 err=no out=b'a*b\na*b\n'
+### ds_export
+  dash  exit=0 err=no out=b'a b\n'
+  bash  exit=0 err=no out=b'a b\n'
+  pelt  exit=0 err=no out=b'$a b\n'

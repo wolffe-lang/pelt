@@ -1,0 +1,120 @@
+### ec
+  dash  exit=0 err=no out=b'st=1\n'
+  bash  exit=0 err=no out=b'st=1\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### uc
+  dash  exit=0 err=no out=b'ok\nst=0\nst=2\n'
+  bash  exit=0 err=no out=b'ok\nst=0\nst=127\n'
+  pelt  exit=0 err=yes out=b'st=127\nst=127\n'
+### c_then_e
+  dash  exit=0 err=no out=b'st=1\n'
+  bash  exit=0 err=no out=b'st=1\n'
+  pelt  exit=0 err=no out=b'st=1\n'
+### o_errexit_c
+  dash  exit=0 err=no out=b'st=1\n'
+  bash  exit=0 err=no out=b'st=1\n'
+  pelt  exit=0 err=no out=b'st=1\n'
+### ce_order
+  dash  exit=0 err=no out=b'st=1\n'
+  bash  exit=0 err=no out=b'st=1\n'
+  pelt  exit=0 err=no out=b'st=127\n'
+### xc
+  dash  exit=0 err=no out=b'hi\nst=0\n'
+  bash  exit=0 err=no out=b'hi\nst=0\n'
+  pelt  exit=0 err=no out=b'st=127\n'
+### c_name_args
+  dash  exit=0 err=no out=b'[nm] [a] [b] 2\n[../sh] 0\n'
+  bash  exit=0 err=no out=b'[nm] [a] [b] 2\n[../sh] 0\n'
+  pelt  exit=0 err=no out=b'[nm] [a] [b] 2\n[pelt] 0\n'
+### c_dashdash
+  dash  exit=0 err=no out=b'[nm] [a]\nst=0\n'
+  bash  exit=0 err=no out=b'[nm] [a]\nst=0\n'
+  pelt  exit=0 err=no out=b'[nm] [a]\nst=0\n'
+### ec_dashdash
+  dash  exit=0 err=no out=b'[nm] [a]\nst=0\n'
+  bash  exit=0 err=no out=b'[nm] [a]\nst=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### dashdash_c
+  dash  exit=0 err=no out=b'dashdash=2\n'
+  bash  exit=0 err=no out=b'dashdash=127\n'
+  pelt  exit=0 err=no out=b'dashdash=127\n'
+### missing_script
+  dash  exit=0 err=no out=b'missing=2\nmissing2=2\n'
+  bash  exit=0 err=no out=b'missing=127\nmissing2=127\n'
+  pelt  exit=0 err=no out=b'missing=127\nmissing2=127\n'
+### dashdash_script
+  dash  exit=0 err=no out=b's [s1] [x]\nst=0\n'
+  bash  exit=0 err=no out=b's [s1] [x]\nst=0\n'
+  pelt  exit=0 err=no out=b's [s1] [x]\nst=0\n'
+### e_script
+  dash  exit=0 err=no out=b'st=1\n'
+  bash  exit=0 err=no out=b'st=1\n'
+  pelt  exit=0 err=no out=b'st=1\n'
+### s_dash
+  dash  exit=0 err=no out=b'dash-operand [x] 1\n'
+  bash  exit=0 err=no out=b'dash-operand [x] 1\n'
+  pelt  exit=0 err=no out=b'dash-operand [-] 2\n'
+### s_dashdash
+  dash  exit=0 err=no out=b'[-x] 2\n'
+  bash  exit=0 err=no out=b'[-x] 2\n'
+  pelt  exit=0 err=no out=b'[-x] 2\n'
+### s_args
+  dash  exit=0 err=no out=b'2 a b\n'
+  bash  exit=0 err=no out=b'2 a b\n'
+  pelt  exit=0 err=no out=b'2 a b\n'
+### s_e
+  dash  exit=0 err=no out=b'st=1\nst=1\n'
+  bash  exit=0 err=no out=b'st=1\nst=1\n'
+  pelt  exit=0 err=no out=b'st=1\nst=1\n'
+### lone_dash_script
+  dash  exit=0 err=no out=b'ld [s3] [y]\nst=0\n'
+  bash  exit=0 err=no out=b'ld [s3] [y]\nst=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### bad_letter
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=2\n'
+### bad_o
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=2\n'
+### plus_e
+  dash  exit=0 err=no out=b'yes\nst=0\n'
+  bash  exit=0 err=no out=b'yes\nst=0\n'
+  pelt  exit=0 err=no out=b'yes\nst=0\n'
+### plus_o
+  dash  exit=0 err=no out=b'yes\nst=0\n'
+  bash  exit=0 err=no out=b'yes\nst=0\n'
+  pelt  exit=0 err=no out=b'yes\nst=0\n'
+### dollar_minus
+  dash  exit=0 err=no out=b'\ne\nuf\ns\nse\n'
+  bash  exit=0 err=no out=b'hBc\nehBc\nfhuBc\nhBs\nehBs\n'
+  pelt  exit=0 err=yes out=b'\ns\nse\n'
+### c_no_string
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=2\n'
+### n_c
+  dash  exit=0 err=no out=b'st=0\nst=0\n'
+  bash  exit=0 err=no out=b'st=0\nst=0\n'
+  pelt  exit=0 err=yes out=b'st=127\nst=0\n'
+### c_twice
+  dash  exit=0 err=no out=b'[../sh]\nst=0\n'
+  bash  exit=0 err=no out=b'[../sh]\nst=0\n'
+  pelt  exit=0 err=no out=b'[pelt]\nst=0\n'
+### cs
+  dash  exit=0 err=no out=b'string\nstdin\nst=0\n'
+  bash  exit=0 err=no out=b'string\nst=0\n'
+  pelt  exit=0 err=no out=b'st=2\n'
+### o_noarg
+  dash  exit=0 err=no out=b'Current o\nst=0\n'
+  bash  exit=0 err=no out=b'allexport\nst=0\n'
+  pelt  exit=0 err=no out=b'allexport\nst=0\n'
+### o_pipefail_cmdline
+  dash  exit=0 err=no out=b'1\n'
+  bash  exit=0 err=no out=b'1\n'
+  pelt  exit=0 err=no out=b'0\n'
+### dash_letter_after_operand
+  dash  exit=0 err=no out=b'a [-e]\nst=0\n'
+  bash  exit=0 err=no out=b'a [-e]\nst=0\n'
+  pelt  exit=0 err=no out=b'a [-e]\nst=0\n'

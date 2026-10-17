@@ -1,0 +1,4 @@
+### alias_name_chars
+for c in "!" "%" "," "-" "@" "." "/" ":" "+" "^" "~" "#" "*" "?" "[" "]" "{" "}" "=" "&" ";" "|" "<" ">" "(" ")" "\\" "\"" "'" "\$" "\`" " "; do alias "a${c}b=x" 2>/dev/null; printf "%s:%s " "$c" "$?"; done; echo
+### alias_name_leading
+for c in "-" "+" "#" "~" "1" "!" "%"; do alias "${c}a=x" 2>/dev/null; printf "%s:%s " "$c" "$?"; done; echo

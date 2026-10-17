@@ -1,0 +1,106 @@
+### type_kinds
+f() { :; }; alias a='echo x'
+type f; echo "f=$?"
+type cd; echo "cd=$?"
+type exit; echo "exit=$?"
+type if; echo "if=$?"
+type a; echo "a=$?"
+type ls | sed 's,/usr/bin/ls,LS,'; echo "ls=$?"
+### type_missing
+type nonexistent-xyz; echo "missing=$?"
+type nonexistent-xyz 2>/dev/null; echo "missing2=$?"
+type nonexistent-xyz >/dev/null; echo "missing3=$?"
+### type_many
+type ls nonexistent-xyz cd 2>/dev/null; echo "st=$?"
+### type_hashed
+ls / >/dev/null; type ls
+### type_slash
+type /usr/bin/ls; echo "st=$?"
+type ./nope; echo "st=$?"
+: > plain; type ./plain; echo "st=$?"
+### type_nothing
+type; echo "st=$?"
+### type_dashdash
+type -- cd; echo "st=$?"
+### type_option
+type -p ls 2>&1; echo "st=$?"
+### hash_empty
+hash; echo "st=$?"
+### hash_after_run
+ls / >/dev/null; cat </dev/null; hash
+### hash_name
+hash cat; echo "st=$?"; hash
+### hash_builtin
+hash echo; echo "st=$?"; hash
+hash cd; echo "st=$?"
+### hash_func
+f() { :; }; hash f; echo "st=$?"; hash
+### hash_r
+ls / >/dev/null; hash -r; hash; echo "st=$?"
+### hash_missing
+hash nonexistent-xyz; echo "st=$?"
+hash cat nonexistent-xyz ls; echo "st=$?"; hash
+### hash_slash
+hash /usr/bin/ls; echo "st=$?"; hash
+### hash_path_reset
+ls / >/dev/null; PATH=/usr/bin:/bin; hash; echo "st=$?"
+### hash_path_same_value
+ls / >/dev/null; PATH=$PATH; hash; echo "st=$?"
+### hash_path_prefix
+PATH=/bin ls / >/dev/null; hash; echo "st=$?"
+### hash_subshell
+(ls / >/dev/null); hash; echo "st=$?"
+### hash_cmdsub
+x=$(ls / ); hash; echo "st=$?"
+### hash_pipeline_stage
+ls / | cat >/dev/null; hash
+### hash_command_v
+command -v ls >/dev/null; hash
+### hash_type
+type ls >/dev/null; hash
+### hash_stale
+mkdir a b; printf '#!/bin/sh\necho a\n' > a/prog; printf '#!/bin/sh\necho b\n' > b/prog; chmod +x a/prog b/prog
+PATH=$PWD/a:$PWD/b:$PATH; prog; rm a/prog; prog; hash | sed "s,$PWD,W,"
+### hash_shadowed_new
+mkdir a b; printf '#!/bin/sh\necho b\n' > b/prog; chmod +x b/prog
+PATH=$PWD/a:$PWD/b:$PATH; prog; printf '#!/bin/sh\necho a\n' > a/prog; chmod +x a/prog; prog
+### hash_noexec_now
+mkdir a; printf '#!/bin/sh\necho a\n' > a/prog; chmod +x a/prog
+PATH=$PWD/a:$PATH; prog; chmod -x a/prog; prog 2>/dev/null; echo "st=$?"
+### hash_bad_opt
+hash -z 2>/dev/null; echo "st=$?"
+### hash_v
+ls />/dev/null; hash -v 2>/dev/null; echo "st=$?"
+### hash_dashdash
+hash -- cat; echo "st=$?"; hash
+### hash_r_names
+hash -r cat; echo "st=$?"; hash
+### command_p
+PATH=/nonexistent
+command -p ls / >/dev/null; echo "st=$?"
+command -p -v ls; echo "v=$?"
+command -p -V ls; echo "V=$?"
+ls / >/dev/null 2>&1; echo "plain=$?"
+### command_p_hash
+PATH=/nonexistent
+command -p ls / >/dev/null; PATH=/usr/bin:/bin; hash
+### command_p_env
+PATH=/nonexistent
+command -p env | grep '^PATH='
+### command_p_sh_builtin
+PATH=/nonexistent
+command -p echo hi; command -p cd /; pwd
+### command_v_kinds
+f() { :; }
+command -v f cd if ls 2>&1; echo "st=$?"
+### command_V
+command -V cd; command -V exit; command -V if; command -V ls | sed 's,/usr/bin/ls,LS,'
+### command_v_nonexec
+: > plain; command -v ./plain; echo "st=$?"; chmod +x plain; command -v ./plain; echo "st=$?"
+mkdir d; command -v ./d; echo "d=$?"
+### command_v_rel_path
+mkdir bin; printf '#!/bin/sh\n' > bin/p; chmod +x bin/p; PATH=bin:$PATH; command -v p; echo "st=$?"
+### path_search_relative_dir
+mkdir bin; printf '#!/bin/sh\necho rel\n' > bin/p; chmod +x bin/p; PATH=bin; p; cd bin; p 2>/dev/null; echo "st=$?"
+### path_empty_component
+printf '#!/bin/sh\necho here\n' > p; chmod +x p; PATH=:/usr/bin; p; PATH=/usr/bin:; p; PATH=/usr/bin::/bin; p

@@ -1,0 +1,36 @@
+### set_plus_o_all
+  dash  exit=0 err=no out=b'set +o errexit\nset +o noglob\nset +o ignoreeof\nset +o interactive\nset +o monitor\nset +o noexec\nset +o stdin\nset +o xtrace\nset +o verbose\nset +o vi\nset +o emacs\nset +o noclobber\nset +o allexport\nset +o notify\nset +o nounset\nset +o nolog\nset +o pipefail\nset +o debug\n'
+  bash  exit=0 err=no out=b'set +o allexport\nset -o braceexpand\nset +o emacs\nset +o errexit\nset +o errtrace\nset +o functrace\nset -o hashall\nset +o histexpand\nset +o history\nset +o ignoreeof\nset -o interactive-comments\nset +o keyword\nset +o monitor\nset +o noclobber\nset +o noexec\nset +o noglob\nset +o nolog\nset +o notify\nset +o nounset\nset +o onecmd\nset +o physical\nset +o pipefail\nset -o posix\nset +o privileged\nset +o verbose\nset +o vi\nset +o xtrace\n'
+  pelt  exit=0 err=no out=b'set +o allexport\nset +o emacs\nset +o errexit\nset +o noclobber\nset +o noexec\nset +o noglob\nset +o nounset\nset +o verbose\nset +o vi\nset +o xtrace\n'
+### set_minus_o_all
+  dash  exit=0 err=no out=b'Current option settings\nerrexit         off\nnoglob          off\nignoreeof       off\ninteractive     off\nmonitor         off\nnoexec          off\nstdin           off\nxtrace          off\nverbose         off\nvi              off\nemacs           off\nnoclobber       off\nallexport       off\nnotify          off\nnounset         off\nnolog           off\npipefail        off\ndebug           off\n'
+  bash  exit=0 err=no out=b'allexport      \toff\nbraceexpand    \ton\nemacs          \toff\nerrexit        \toff\nerrtrace       \toff\nfunctrace      \toff\nhashall        \ton\nhistexpand     \toff\nhistory        \toff\nignoreeof      \toff\ninteractive-comments\ton\nkeyword        \toff\nmonitor        \toff\nnoclobber      \toff\nnoexec         \toff\nnoglob         \toff\nnolog          \toff\nnotify         \toff\nnounset        \toff\nonecmd         \toff\nphysical       \toff\npipefail       \toff\nposix          \ton\nprivileged     \toff\nverbose        \toff\nvi             \toff\nxtrace         \toff\n'
+  pelt  exit=0 err=no out=b'allexport\toff\nemacs\toff\nerrexit\toff\nnoclobber\toff\nnoexec\toff\nnoglob\toff\nnounset\toff\nverbose\toff\nvi\toff\nxtrace\toff\n'
+### set_eo
+  dash  exit=0 err=no out=b'set -o errexit\nset -o pipefail\n'
+  bash  exit=0 err=no out=b'set -o errexit\nset -o pipefail\n'
+  pelt  exit=2 err=yes out=b''
+### set_oe_cluster
+  dash  exit=0 err=no out=b'set -o errexit\nset -o pipefail\n'
+  bash  exit=0 err=no out=b'set -o errexit\nset -o pipefail\n'
+  pelt  exit=0 err=no out=b'set -o errexit\n'
+### cmdline_eo
+  dash  exit=0 err=no out=b'set -o errexit\nset -o pipefail\n'
+  bash  exit=0 err=no out=b'set -o errexit\nset -o pipefail\n'
+  pelt  exit=127 err=yes out=b''
+### rd_readonly_then_more
+  dash  exit=0 err=yes out=b'st=2 b=[]\n'
+  bash  exit=0 err=yes out=b'st=2 b=[]\n'
+  pelt  exit=0 err=no out=b'st=0 b=[y]\n'
+### rd_bad_then_more
+  dash  exit=0 err=yes out=b'st=2 b=[]\n'
+  bash  exit=0 err=yes out=b'st=1 b=[]\n'
+  pelt  exit=0 err=no out=b'st=0 b=[y]\n'
+### ds_U
+  dash  exit=0 err=no out=b'c3a9\ne282ac\n\n'
+  bash  exit=0 err=no out=b'5c7530304539\ne282ac\n5c75\n'
+  pelt  exit=0 err=no out=b'245c553030303030306539\n24e282ac\n245c75\n'
+### getopts_bad_name
+  dash  exit=0 err=yes out=b'st=2\n'
+  bash  exit=0 err=yes out=b'st=1\n'
+  pelt  exit=0 err=no out=b'st=0\n'

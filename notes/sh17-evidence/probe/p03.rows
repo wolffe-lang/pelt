@@ -1,0 +1,173 @@
+### after_assign
+alias hi='echo hello'
+x=1 hi there
+x=1 hi there 2>/dev/null; echo "st=$?"
+### after_redir
+alias hi='echo hello'
+>/dev/null hi gone; echo "st=$?"
+2>/dev/null hi there
+### reserved_alias
+alias if='echo IF'
+if true; then echo then; fi
+alias while='echo W'; echo end
+### reserved_alias_list
+alias if='echo IF' fi='echo FI'
+alias if fi
+### alias_of_brace
+alias b='{'
+b echo inbrace; }
+### alias_value_reserved
+alias t='if true; then echo yes; fi'
+t
+### alias_func_def
+alias f='g'
+f() { echo infunc; }
+g
+### alias_in_func_body_late
+fn() { hi; }
+alias hi='echo late'
+fn 2>/dev/null || echo "st=$?"
+### alias_cmdsub_same_line
+alias q='echo Q'; echo "$(q hi)" 2>/dev/null; echo "st=$?"
+### alias_cmdsub_next_line
+alias q='echo Q'
+echo "$(q hi)"
+### alias_backquote_same_line
+alias q='echo Q'; echo "`q hi`" 2>/dev/null; echo "st=$?"
+### alias_backquote_next_line
+alias q='echo Q'
+echo "`q hi`"
+### alias_eval_same_line
+alias q='echo Q'; eval 'q hi'
+### alias_dot
+alias q='echo Q'
+printf 'q dotted\n' > d1
+. ./d1
+### alias_dot_defined_inside
+printf 'alias r="echo R"\nr inside\n' > d2
+. ./d2
+r after
+### alias_case_body
+alias hi='echo hello'
+case x in x) hi case;; esac
+### alias_case_pattern
+alias x='y'
+case x in x) echo patx;; y) echo paty;; esac
+### alias_for_word
+alias hi='echo hello'
+for hi in a; do echo "$hi"; done
+### alias_trailing_chain
+alias a='echo ' b='B ' c='C'
+a b c
+### alias_trailing_quoted_next
+alias e='echo ' w='WORD'
+e 'w' w
+### alias_trailing_tab
+alias e='echo	' w='WORD'
+e w
+### alias_trailing_redir
+alias e='echo ' w='WORD'
+e >/dev/stdout w
+### alias_trailing_then_assign
+alias e='env ' w='WORD'
+e X=1 w 2>/dev/null | grep -c WORD
+### alias_ends_newline
+alias nl='echo one
+echo two'
+nl three
+### alias_ends_semicolon
+alias s='echo s;'
+s echo t
+### alias_with_pipe
+alias p='echo piped |'
+p tr a-z A-Z
+### alias_comment
+alias c='echo a # hidden'
+c b
+### alias_recursion_ls
+alias ls='ls -d'
+cd /; ls usr
+### alias_mutual_three
+alias a=b b=c c=a
+a 2>/dev/null; echo "st=$?"
+### alias_self_value_trailing
+alias e='e '
+alias x=y
+e x 2>/dev/null; echo "st=$?"
+### alias_bad_names
+alias 'a b=c' 2>/dev/null; echo "st=$?"
+alias 'a/b=c' 2>/dev/null; echo "st=$?"
+alias '=c' 2>/dev/null; echo "st=$?"
+alias 'a$b=c' 2>/dev/null; echo "st=$?"
+alias 'a=b=c'; alias a
+### alias_list_order
+alias b=2 a=1 c=3
+alias
+### alias_empty_value
+alias e=
+alias e
+e echo still; echo "st=$?"
+### alias_dash_p
+alias q=1
+alias -p 2>/dev/null; echo "st=$?"
+### alias_dashdash
+alias -- q=1; alias q; echo "st=$?"
+### unalias_none
+unalias 2>/dev/null; echo "st=$?"
+### unalias_partial
+alias a=1 b=2
+unalias a nope b 2>/dev/null; echo "st=$?"; alias | wc -l | tr -d ' '
+### unalias_bad_opt
+alias a=1
+unalias -z a 2>/dev/null; echo "st=$?"
+### alias_in_subshell_define
+(alias q='echo Q'); q 2>/dev/null; echo "st=$?"
+### alias_in_cmdsub_define
+x=$(alias q='echo Q'); q 2>/dev/null; echo "st=$?"
+### unalias_in_subshell
+alias q='echo Q'
+(unalias q); q
+### alias_command_v_kinds
+alias q='echo x'
+command -v q
+command -V q 2>&1 | sed 's/.*is//' | head -1
+### command_alias_not_expanded
+alias hi='echo hello'
+command hi 2>/dev/null; echo "st=$?"
+### alias_after_bang
+alias f='false'
+! f; echo "st=$?"
+### alias_after_time_word
+alias hi='echo hello'
+{ hi; } | cat
+### alias_loop_split
+alias loop='for i in 1 2; do'
+loop echo $i; done
+### alias_heredoc
+alias c='cat'
+c <<E
+doc
+E
+### alias_in_function_name_position
+alias hi='echo hello'
+hi() { echo func; } 2>/dev/null; hi; echo "st=$?"
+### alias_quoted_part
+alias hi='echo hello'
+h"i" 2>/dev/null || echo no
+hi\ there 2>/dev/null || echo no2
+### alias_value_expansion
+alias v='echo $X'
+X=late; v
+### alias_set_minus_x
+alias hi='echo hello'
+set -x; hi 2>&1; set +x
+### alias_print_special_chars
+alias q='a"b'"'"'c$d\e'
+alias q
+### alias_print_newline
+alias n='a
+b'
+alias n
+### alias_long_list_after_define
+alias zz=1 aa=2 mm=3
+alias | sort

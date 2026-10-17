@@ -1,0 +1,164 @@
+### type_kinds
+  dash  exit=0 err=no out=b'f is a shell function\nf=0\ncd is a shell builtin\ncd=0\nexit is a special shell builtin\nexit=0\nif is a shell keyword\nif=0\na is an alias for echo x\na=0\nls is LS\nls=0\n'
+  bash  exit=0 err=no out=b"f is a function\nf () \n{ \n    :\n}\nf=0\ncd is a shell builtin\ncd=0\nexit is a special shell builtin\nexit=0\nif is a shell keyword\nif=0\na is aliased to `echo x'\na=0\nls is LS\nls=0\n"
+  pelt  exit=0 err=yes out=b'f=2\ncd=2\nexit=2\nif=2\na=2\nls=0\n'
+### type_missing
+  dash  exit=0 err=no out=b'nonexistent-xyz: not found\nmissing=127\nnonexistent-xyz: not found\nmissing2=127\nmissing3=127\n'
+  bash  exit=0 err=yes out=b'missing=1\nmissing2=1\nmissing3=1\n'
+  pelt  exit=0 err=yes out=b'missing=2\nmissing2=2\nmissing3=2\n'
+### type_many
+  dash  exit=0 err=no out=b'ls is /usr/bin/ls\nnonexistent-xyz: not found\ncd is a shell builtin\nst=127\n'
+  bash  exit=0 err=no out=b'ls is /usr/bin/ls\ncd is a shell builtin\nst=1\n'
+  pelt  exit=0 err=no out=b'st=2\n'
+### type_hashed
+  dash  exit=0 err=no out=b'ls is a tracked alias for /usr/bin/ls\n'
+  bash  exit=0 err=no out=b'ls is hashed (/usr/bin/ls)\n'
+  pelt  exit=2 err=yes out=b''
+### type_slash
+  dash  exit=0 err=no out=b'/usr/bin/ls is /usr/bin/ls\nst=0\n./nope: not found\nst=127\n./plain: not found\nst=127\n'
+  bash  exit=0 err=yes out=b'/usr/bin/ls is /usr/bin/ls\nst=0\nst=1\nst=1\n'
+  pelt  exit=0 err=yes out=b'st=2\nst=2\nst=2\n'
+### type_nothing
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=2\n'
+### type_dashdash
+  dash  exit=0 err=no out=b'cd is a shell builtin\nst=0\n'
+  bash  exit=0 err=no out=b'cd is a shell builtin\nst=0\n'
+  pelt  exit=0 err=yes out=b'st=2\n'
+### type_option
+  dash  exit=0 err=no out=b'../s.sh: 1: type: Illegal option -p\nst=2\n'
+  bash  exit=0 err=no out=b'/usr/bin/ls\nst=0\n'
+  pelt  exit=0 err=no out=b'pelt: ../s.sh: line 1: type: not supported yet\nst=2\n'
+### hash_empty
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### hash_after_run
+  dash  exit=0 err=no out=b'/usr/bin/cat\n/usr/bin/ls\n'
+  bash  exit=0 err=no out=b'hits\tcommand\n   1\t/usr/bin/ls\n   1\t/usr/bin/cat\n'
+  pelt  exit=127 err=yes out=b''
+### hash_name
+  dash  exit=0 err=no out=b'st=0\n/usr/bin/cat\n'
+  bash  exit=0 err=no out=b'st=0\nhits\tcommand\n   0\t/usr/bin/cat\n'
+  pelt  exit=127 err=yes out=b'st=127\n'
+### hash_builtin
+  dash  exit=0 err=no out=b'st=0\nst=0\n'
+  bash  exit=0 err=no out=b'st=0\nst=0\n'
+  pelt  exit=0 err=yes out=b'st=127\nst=127\n'
+### hash_func
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=127 err=yes out=b'st=127\n'
+### hash_r
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### hash_missing
+  dash  exit=0 err=yes out=b'st=1\nst=1\n/usr/bin/cat\n/usr/bin/ls\n'
+  bash  exit=0 err=yes out=b'st=1\nst=1\nhits\tcommand\n   0\t/usr/bin/ls\n   0\t/usr/bin/cat\n'
+  pelt  exit=127 err=yes out=b'st=127\nst=127\n'
+### hash_slash
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=127 err=yes out=b'st=127\n'
+### hash_path_reset
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### hash_path_same_value
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### hash_path_prefix
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### hash_subshell
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### hash_cmdsub
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\n'
+  pelt  exit=0 err=yes out=b'st=127\n'
+### hash_pipeline_stage
+  dash  exit=0 err=no out=b'/usr/bin/cat\n/usr/bin/ls\n'
+  bash  exit=0 err=no out=b''
+  pelt  exit=127 err=yes out=b''
+### hash_command_v
+  dash  exit=0 err=no out=b'/usr/bin/ls\n'
+  bash  exit=0 err=no out=b''
+  pelt  exit=127 err=yes out=b''
+### hash_type
+  dash  exit=0 err=no out=b'/usr/bin/ls\n'
+  bash  exit=0 err=no out=b''
+  pelt  exit=127 err=yes out=b''
+### hash_stale
+  dash  exit=0 err=no out=b'a\nb\nW/a/prog\n/usr/bin/rm\n'
+  bash  exit=0 err=no out=b'a\nb\nhits\tcommand\n   1\tW/b/prog\n   1\t/usr/bin/rm\n'
+  pelt  exit=0 err=yes out=b'a\nb\n'
+### hash_shadowed_new
+  dash  exit=0 err=no out=b'b\nb\n'
+  bash  exit=0 err=no out=b'b\nb\n'
+  pelt  exit=0 err=no out=b'b\na\n'
+### hash_noexec_now
+  dash  exit=0 err=no out=b'a\nst=126\n'
+  bash  exit=0 err=no out=b'a\nst=126\n'
+  pelt  exit=0 err=no out=b'a\nst=127\n'
+### hash_bad_opt
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=127\n'
+### hash_v
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=127\n'
+### hash_dashdash
+  dash  exit=0 err=no out=b'st=0\n/usr/bin/cat\n'
+  bash  exit=0 err=no out=b'st=0\nhits\tcommand\n   0\t/usr/bin/cat\n'
+  pelt  exit=127 err=yes out=b'st=127\n'
+### hash_r_names
+  dash  exit=0 err=no out=b'st=0\n'
+  bash  exit=0 err=no out=b'st=0\nhits\tcommand\n   0\t/usr/bin/cat\n'
+  pelt  exit=127 err=yes out=b'st=127\n'
+### command_p
+  dash  exit=0 err=no out=b'st=0\n/usr/sbin/ls\nv=0\nls is /usr/sbin/ls\nV=0\nplain=127\n'
+  bash  exit=0 err=no out=b'st=0\n/bin/ls\nv=0\nls is hashed (/bin/ls)\nV=0\nplain=0\n'
+  pelt  exit=0 err=yes out=b'st=127\nv=127\nV=127\nplain=127\n'
+### command_p_hash
+  dash  exit=0 err=no out=b''
+  bash  exit=0 err=no out=b''
+  pelt  exit=127 err=yes out=b''
+### command_p_env
+  dash  exit=127 err=yes out=b''
+  bash  exit=127 err=yes out=b''
+  pelt  exit=127 err=yes out=b''
+### command_p_sh_builtin
+  dash  exit=0 err=no out=b'hi\n/\n'
+  bash  exit=0 err=no out=b'hi\n/\n'
+  pelt  exit=0 err=no out=b'hi\n/\n'
+### command_v_kinds
+  dash  exit=0 err=no out=b'f\nst=0\n'
+  bash  exit=0 err=no out=b'f\ncd\nif\n/usr/bin/ls\nst=0\n'
+  pelt  exit=0 err=no out=b'f\nst=0\n'
+### command_V
+  dash  exit=0 err=no out=b'cd is a shell builtin\nexit is a special shell builtin\nif is a shell keyword\nls is LS\n'
+  bash  exit=0 err=no out=b'cd is a shell builtin\nexit is a special shell builtin\nif is a shell keyword\nls is LS\n'
+  pelt  exit=0 err=no out=b'cd\nexit\nif\nLS\n'
+### command_v_nonexec
+  dash  exit=0 err=no out=b'st=127\n./plain\nst=0\nd=127\n'
+  bash  exit=0 err=no out=b'st=1\n./plain\nst=0\nd=1\n'
+  pelt  exit=0 err=no out=b'./plain\nst=0\n./plain\nst=0\nd=127\n'
+### command_v_rel_path
+  dash  exit=0 err=no out=b'bin/p\nst=0\n'
+  bash  exit=0 err=no out=b'/home/mfwolffe/lanes/sh17/tmp/sh17-probe.zopshu31/w/bin/p\nst=0\n'
+  pelt  exit=0 err=no out=b'bin/p\nst=0\n'
+### path_search_relative_dir
+  dash  exit=0 err=no out=b'rel\nst=127\n'
+  bash  exit=0 err=no out=b'rel\nst=127\n'
+  pelt  exit=0 err=no out=b'rel\nst=127\n'
+### path_empty_component
+  dash  exit=0 err=no out=b'here\nhere\nhere\n'
+  bash  exit=0 err=no out=b'here\nhere\nhere\n'
+  pelt  exit=0 err=no out=b'here\nhere\nhere\n'

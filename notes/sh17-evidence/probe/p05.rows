@@ -1,0 +1,73 @@
+### ds_plain
+echo $'a b' $'$HOME' $'"q"' $'*'
+### ds_escapes
+printf '%s' $'\"\'\\' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'\a\b\e\f\n\r\t\v' | od -An -tx1 | tr -d ' \n'; echo
+### ds_E
+printf '%s' $'\E' | od -An -tx1 | tr -d ' \n'; echo
+### ds_question
+printf '%s' $'\?' | od -An -tx1 | tr -d ' \n'; echo
+### ds_unknown
+printf '%s' $'\q\z\8' | od -An -tx1 | tr -d ' \n'; echo
+### ds_hex
+printf '%s' $'\x41\x7aZ\x9' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'\x414' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'\xg' | od -An -tx1 | tr -d ' \n'; echo
+### ds_octal
+printf '%s' $'\101\1012\7x\0101' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'\400' | od -An -tx1 | tr -d ' \n'; echo
+### ds_control
+printf '%s' $'\cA\cZ\c[\ca\c?\c\\' | od -An -tx1 | tr -d ' \n'; echo
+### ds_nul
+printf '%s' $'ab\0cd' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'ab\x00cd'x | od -An -tx1 | tr -d ' \n'; echo
+### ds_u
+printf '%s' $'é' | od -An -tx1 | tr -d ' \n'; echo
+### ds_highbyte
+printf '%s' $'\xe9' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'\xc3\xa9' | od -An -tx1 | tr -d ' \n'; echo
+### ds_in_dq
+echo "$'a\tb'"
+### ds_in_braces_word
+unset u; echo ${u-$'a\tb'} | od -An -c | tr -s ' '
+echo "${u-$'x'}"
+### ds_assign
+x=$'it\'s'; echo "$x"
+x=$'a\nb'; echo "$x"
+### ds_embedded
+echo a$'\t'b"c"$'d'
+### ds_split
+set -- $'a b\tc *'; echo $#
+### ds_case
+case $'*' in '*') echo literal;; esac
+case a in $'a') echo matched;; esac
+case $'\t' in $'\t') echo tab;; esac
+### ds_glob
+: > ab; echo $'a'*; echo $'*'
+### ds_heredoc_delim
+cat <<$'E'
+body $HOME
+E
+### ds_heredoc_body
+cat <<E
+$'a\tb'
+E
+### ds_empty
+set -- $''; echo $#
+set -- $'' x; echo $#
+### ds_backquote_inside
+echo $'`echo no`' $'$(echo no)'
+### ds_unterminated
+eval "echo \$'abc" 2>/dev/null; echo "st=$?"
+### ds_cmdsub
+echo "$(echo $'a\tb')" | od -An -c | tr -s ' '
+### ds_tilde
+echo $'~'
+### ds_dollar_in_middle
+x=1; echo a$'$x'b
+### ds_alias_value
+alias t=$'echo\ttab'; t ok
+### ds_param_pattern
+v='a*b'; echo ${v#$'a*'}; echo ${v%$'*b'}
+### ds_export
+export x=$'a b'; sh -c 'echo "$x"' 2>/dev/null || printenv x

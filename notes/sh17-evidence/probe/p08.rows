@@ -1,0 +1,78 @@
+### rd_fields
+echo ' a  b   c d  ' | { read x y z; echo "[$x][$y][$z]"; }
+echo 'only' | { read x y; echo "[$x][$y]"; }
+echo '' | { read x y; echo "[$x][$y] $?"; }
+echo 'a:b::c:' | { IFS=: read x y z; echo "[$x][$y][$z]"; }
+echo 'a:b:c:' | { IFS=: read x y z; echo "[$x][$y][$z]"; }
+echo ' a : b ' | { IFS=' :' read x y; echo "[$x][$y]"; }
+### rd_trailing_more
+echo 'a:b:c::' | { IFS=: read x y z; echo "[$x][$y][$z]"; }
+echo 'a:b:c: ' | { IFS=': ' read x y z; echo "[$x][$y][$z]"; }
+echo 'a:b:c :' | { IFS=': ' read x y z; echo "[$x][$y][$z]"; }
+echo 'a:b' | { IFS=: read x y z; echo "[$x][$y][$z]"; }
+echo 'a:' | { IFS=: read x; echo "[$x]"; }
+echo 'a::' | { IFS=: read x; echo "[$x]"; }
+echo ':' | { IFS=: read x; echo "[$x]"; }
+echo 'a,b,' | { IFS=, read x y; echo "[$x][$y]"; }
+echo 'a,b,,' | { IFS=, read x y; echo "[$x][$y]"; }
+echo 'a\:b:' | { IFS=: read x; echo "[$x]"; }
+echo 'a:b\:' | { IFS=: read x y; echo "[$x][$y]"; }
+### rd_readonly
+readonly r=1
+echo x | { read r; echo "st=$?"; }
+echo "r=$r"
+### rd_readonly_second
+readonly r=1
+echo x y | { read a r; echo "st=$? a=$a"; }
+### rd_readonly_ends
+readonly r=1
+echo x | { read r; echo "after"; }; echo "outer=$?"
+### rd_bad_name
+echo x | { read 1bad; echo "st=$?"; }
+echo x | { read a-b; echo "st=$?"; }
+echo x | { read good 1bad; echo "st=$? [$good]"; }
+### rd_no_var
+echo x | { read; echo "st=$? [$REPLY]"; }
+### rd_delim
+printf 'a,b,c' | { read -d , x; echo "[$x] $?"; read -d , y; echo "[$y] $?"; read -d , z; echo "[$z] $?"; }
+### rd_delim_empty
+printf 'one\ntwo\0rest' | { read -r -d '' x; echo "[$x] $?"; read -r -d '' y; echo "[$y] $?"; }
+### rd_delim_multi
+printf 'axbyc' | { read -d xy v; echo "[$v]"; }
+### rd_delim_backslash
+printf 'a\\,b,c' | { read -d , v; echo "[$v]"; }
+printf 'a\\\nb,c' | { read -d , v; echo "[$v]"; }
+### rd_delim_newline_in
+printf 'a\nb,c' | { read -d , v; echo "[$v]"; }
+### rd_delim_split
+printf 'a b c;' | { read -d ';' x y; echo "[$x][$y]"; }
+### rd_delim_attached
+printf 'a;b' | { read -d';' x; echo "[$x] $?"; }
+### rd_delim_eof
+printf 'abc' | { read -d , x; echo "[$x] $?"; }
+### rd_delim_r
+printf 'a\\b,' | { read -r -d , x; echo "[$x]"; }
+### rd_r_combined
+printf 'a\\b\n' | { read -rd '' x 2>/dev/null; echo "[$x] $?"; }
+### rd_bad_opt
+echo x | { read -z v 2>/dev/null; echo "st=$?"; }
+### rd_d_missing_arg
+echo x | { read -d 2>/dev/null; echo "st=$?"; }
+### getopts_readonly
+readonly r=1
+getopts a r -a; echo "st=$?"
+### getopts_readonly_ends
+readonly r=1
+(getopts a r -a; echo "getopts-st=$?") 2>/dev/null; echo "getopts=$?"
+### readonly_everywhere
+readonly r=1
+(echo x | { read r; echo "read-st=$?"; }) 2>/dev/null
+(for r in a b; do echo no; done; echo no) 2>/dev/null; echo "for=$?"
+(: $((r=5)); echo no) 2>/dev/null; echo "arith=$?"
+(: ${r:=5}; echo "default-kept $r") 2>/dev/null
+(getopts a r -a; echo "getopts-st=$?") 2>/dev/null; echo "getopts=$?"
+echo "$r"
+### rd_backslash_cont
+printf 'a\\\nb\n' | { read x; echo "[$x]"; }
+### rd_ifs_empty
+echo '  a b  ' | { IFS= read x; echo "[$x]"; }

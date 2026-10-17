@@ -1,0 +1,21 @@
+### set_plus_o_all
+set +o
+### set_minus_o_all
+set -o
+### set_eo
+set -eo pipefail; set +o | grep -e errexit -e pipefail
+### set_oe_cluster
+set -o errexit -o pipefail; set +o | grep -e errexit -e pipefail
+### cmdline_eo
+../sh -eo pipefail -c 'set +o | grep -e errexit -e pipefail'
+### rd_readonly_then_more
+readonly r=1
+echo x y | { read r b; echo "st=$? b=[$b]"; }
+### rd_bad_then_more
+echo x y | { read 1bad b; echo "st=$? b=[$b]"; }
+### ds_U
+printf '%s' $'\U000000e9' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'€' | od -An -tx1 | tr -d ' \n'; echo
+printf '%s' $'\u' | od -An -tx1 | tr -d ' \n'; echo
+### getopts_bad_name
+getopts a 1bad -a; echo "st=$?"

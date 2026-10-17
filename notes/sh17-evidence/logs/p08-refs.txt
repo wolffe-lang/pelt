@@ -1,0 +1,96 @@
+### rd_fields
+  dash  exit=0 err=no out=b'[a][b][c d]\n[only][]\n[][] 0\n[a][b][:c:]\n[a][b][c]\n[a][b]\n'
+  bash  exit=0 err=no out=b'[a][b][c d]\n[only][]\n[][] 0\n[a][b][:c:]\n[a][b][c]\n[a][b]\n'
+  pelt  exit=0 err=no out=b'[a][b][c d]\n[only][]\n[][] 0\n[a][b][:c:]\n[a][b][c:]\n[a][b]\n'
+### rd_trailing_more
+  dash  exit=0 err=no out=b'[a][b][c::]\n[a][b][c]\n[a][b][c]\n[a][b][]\n[a]\n[a::]\n[]\n[a][b]\n[a][b,,]\n[a:b]\n[a][b:]\n'
+  bash  exit=0 err=no out=b'[a][b][c::]\n[a][b][c]\n[a][b][c]\n[a][b][]\n[a]\n[a::]\n[]\n[a][b]\n[a][b,,]\n[a:b]\n[a][b:]\n'
+  pelt  exit=0 err=no out=b'[a][b][c::]\n[a][b][c:]\n[a][b][c :]\n[a][b][]\n[a:]\n[a::]\n[:]\n[a][b,]\n[a][b,,]\n[a:b:]\n[a][b:]\n'
+### rd_readonly
+  dash  exit=0 err=yes out=b'st=2\nr=1\n'
+  bash  exit=0 err=yes out=b'st=1\nr=1\n'
+  pelt  exit=0 err=no out=b'st=0\nr=1\n'
+### rd_readonly_second
+  dash  exit=0 err=yes out=b'st=2 a=x\n'
+  bash  exit=0 err=yes out=b'st=1 a=x\n'
+  pelt  exit=0 err=no out=b'st=0 a=x\n'
+### rd_readonly_ends
+  dash  exit=0 err=yes out=b'after\nouter=0\n'
+  bash  exit=0 err=yes out=b'after\nouter=0\n'
+  pelt  exit=0 err=no out=b'after\nouter=0\n'
+### rd_bad_name
+  dash  exit=0 err=yes out=b'st=2\nst=2\nst=2 [x]\n'
+  bash  exit=0 err=yes out=b'st=1\nst=1\nst=1 [x]\n'
+  pelt  exit=0 err=no out=b'st=0\nst=0\nst=0 [x]\n'
+### rd_no_var
+  dash  exit=0 err=yes out=b'st=2 []\n'
+  bash  exit=0 err=no out=b'st=0 [x]\n'
+  pelt  exit=0 err=no out=b'st=0 [x]\n'
+### rd_delim
+  dash  exit=0 err=yes out=b'[] 2\n[] 2\n[] 2\n'
+  bash  exit=0 err=no out=b'[a] 0\n[b] 0\n[c] 1\n'
+  pelt  exit=0 err=yes out=b'[] 2\n[] 2\n[] 2\n'
+### rd_delim_empty
+  dash  exit=0 err=yes out=b'[] 2\n[] 2\n'
+  bash  exit=0 err=no out=b'[one\ntwo] 0\n[rest] 1\n'
+  pelt  exit=0 err=yes out=b'[] 2\n[] 2\n'
+### rd_delim_multi
+  dash  exit=0 err=yes out=b'[]\n'
+  bash  exit=0 err=no out=b'[a]\n'
+  pelt  exit=0 err=yes out=b'[]\n'
+### rd_delim_backslash
+  dash  exit=0 err=yes out=b'[]\n[]\n'
+  bash  exit=0 err=no out=b'[a,b]\n[ab]\n'
+  pelt  exit=0 err=yes out=b'[]\n[]\n'
+### rd_delim_newline_in
+  dash  exit=0 err=yes out=b'[]\n'
+  bash  exit=0 err=no out=b'[a\nb]\n'
+  pelt  exit=0 err=yes out=b'[]\n'
+### rd_delim_split
+  dash  exit=0 err=yes out=b'[][]\n'
+  bash  exit=0 err=no out=b'[a][b c]\n'
+  pelt  exit=0 err=yes out=b'[][]\n'
+### rd_delim_attached
+  dash  exit=0 err=yes out=b'[] 2\n'
+  bash  exit=0 err=no out=b'[a] 0\n'
+  pelt  exit=0 err=yes out=b'[] 2\n'
+### rd_delim_eof
+  dash  exit=0 err=yes out=b'[] 2\n'
+  bash  exit=0 err=no out=b'[abc] 1\n'
+  pelt  exit=0 err=yes out=b'[] 2\n'
+### rd_delim_r
+  dash  exit=0 err=yes out=b'[]\n'
+  bash  exit=0 err=no out=b'[a\\b]\n'
+  pelt  exit=0 err=yes out=b'[]\n'
+### rd_r_combined
+  dash  exit=0 err=no out=b'[] 2\n'
+  bash  exit=0 err=no out=b'[a\\b] 1\n'
+  pelt  exit=0 err=no out=b'[] 2\n'
+### rd_bad_opt
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=2\n'
+### rd_d_missing_arg
+  dash  exit=0 err=no out=b'st=2\n'
+  bash  exit=0 err=no out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=2\n'
+### getopts_readonly
+  dash  exit=0 err=yes out=b'st=2\n'
+  bash  exit=0 err=yes out=b'st=2\n'
+  pelt  exit=0 err=no out=b'st=0\n'
+### getopts_readonly_ends
+  dash  exit=0 err=no out=b'getopts-st=2\ngetopts=0\n'
+  bash  exit=0 err=no out=b'getopts-st=2\ngetopts=0\n'
+  pelt  exit=0 err=no out=b'getopts-st=0\ngetopts=0\n'
+### readonly_everywhere
+  dash  exit=0 err=no out=b'read-st=2\nfor=2\narith=2\ndefault-kept 1\ngetopts-st=2\ngetopts=0\n1\n'
+  bash  exit=0 err=no out=b'read-st=1\nfor=1\narith=1\ndefault-kept 1\ngetopts-st=2\ngetopts=0\n1\n'
+  pelt  exit=0 err=no out=b'read-st=0\nfor=2\narith=2\ndefault-kept 1\ngetopts-st=0\ngetopts=0\n1\n'
+### rd_backslash_cont
+  dash  exit=0 err=no out=b'[ab]\n'
+  bash  exit=0 err=no out=b'[ab]\n'
+  pelt  exit=0 err=no out=b'[ab]\n'
+### rd_ifs_empty
+  dash  exit=0 err=no out=b'[  a b  ]\n'
+  bash  exit=0 err=no out=b'[  a b  ]\n'
+  pelt  exit=0 err=no out=b'[  a b  ]\n'

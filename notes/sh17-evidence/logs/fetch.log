@@ -1,0 +1,31 @@
+api1 wolf-0.2.30-aarch64-apple-darwin.tar.gz sha256:f3257e742ba06addfba4baf5438858f4fd6e2caa16c6d2faeef123a48b39118f
+api1 wolf-0.2.30-aarch64-unknown-linux-gnu.tar.gz sha256:34237d4a8d4977b67ee43d9a11c993b172e1e1cd3fdaddf997998ebc6874b4bd
+api1 wolf-0.2.30-x86_64-pc-windows-msvc.tar.gz sha256:2772a997729f89a71aa5d88c80a0a5b36cb82ab85056a99d2b5527a3ec02f6c0
+api1 wolf-0.2.30-x86_64-unknown-linux-gnu.tar.gz sha256:4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89
+tag1 wolf-lang v0.2.30 ffb7c5b3fd292272111ad7ba14c43fca13cdd30a -> 1b37f368228db92eca505c8c4cd3c531ea60be48
+api1 lupin-0.1.53-aarch64-apple-darwin.tar.gz sha256:997b71a5b44a5799becb954b0a287e184f322fbe02d54f319e6b439a75c4f219
+api1 lupin-0.1.53-aarch64-unknown-linux-gnu.tar.gz sha256:7874ec272a2c11d2295dbeb1c12344c7ea0d081a61f9a1087467b86473526ef1
+api1 lupin-0.1.53-x86_64-unknown-linux-gnu.tar.gz sha256:5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa
+tag1 wolf-interp v0.1.53 83631915ce44608eb94d0f3c6950aa45d99723c6 -> 7896eddc17fd9e3e015b025b354ccf62a766734b
+api2 wolf-0.2.30-aarch64-apple-darwin.tar.gz sha256:f3257e742ba06addfba4baf5438858f4fd6e2caa16c6d2faeef123a48b39118f
+api2 wolf-0.2.30-aarch64-unknown-linux-gnu.tar.gz sha256:34237d4a8d4977b67ee43d9a11c993b172e1e1cd3fdaddf997998ebc6874b4bd
+api2 wolf-0.2.30-x86_64-pc-windows-msvc.tar.gz sha256:2772a997729f89a71aa5d88c80a0a5b36cb82ab85056a99d2b5527a3ec02f6c0
+api2 wolf-0.2.30-x86_64-unknown-linux-gnu.tar.gz sha256:4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89
+tag2 wolf-lang v0.2.30 ffb7c5b3fd292272111ad7ba14c43fca13cdd30a -> 1b37f368228db92eca505c8c4cd3c531ea60be48
+api2 lupin-0.1.53-aarch64-apple-darwin.tar.gz sha256:997b71a5b44a5799becb954b0a287e184f322fbe02d54f319e6b439a75c4f219
+api2 lupin-0.1.53-aarch64-unknown-linux-gnu.tar.gz sha256:7874ec272a2c11d2295dbeb1c12344c7ea0d081a61f9a1087467b86473526ef1
+api2 lupin-0.1.53-x86_64-unknown-linux-gnu.tar.gz sha256:5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa
+tag2 wolf-interp v0.1.53 83631915ce44608eb94d0f3c6950aa45d99723c6 -> 7896eddc17fd9e3e015b025b354ccf62a766734b
+fetch-toolchain: https://github.com/wolffe-lang/wolf-lang/releases/download/v0.2.30/wolf-0.2.30-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-interp/releases/download/v0.1.53/lupin-0.1.53-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa OK
+fetch-toolchain: the archive bundles std fd6bcdcb1dfe03ea5092f10316b7abe81f2df41e; staging the pin instead
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at fd6bcdcb1dfe03ea5092f10316b7abe81f2df41e
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89  w1.tgz
+5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa  l1.tgz
+4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89  w2.tgz
+5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa  l2.tgz
+wolf 0.2.30 (wolfgang, pin 1b37f36)
+paired with lupin 0.1.53 (reference interpreter), pin 294d626
