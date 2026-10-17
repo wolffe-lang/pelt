@@ -1,0 +1,13 @@
+empty=0
+cat ls 
+st=0
+sort 
+builtin=0
+function=0
+slash=0
+sort 
+missing=1
+sort tr wc 
+head sort tr wc 
+cut head sort tr uniq wc 
+cat cut head ls sort tr uniq wc 

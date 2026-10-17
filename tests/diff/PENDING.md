@@ -25,9 +25,7 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 |---|---|---|---|
 | **host-dir-size** | nothing pelt lacks: the case's `-s` row asks whether an empty directory has a size, and the oracle was recorded on kasumi's btrfs, where it has none; on ext4 (the linux runners) and APFS (macOS) an empty directory has a size, so dash there answers `-s` true for it as pelt does (sh07). PEND-ok on btrfs | the oracle's host | `test/c_files` |
 | **alias** | `alias`, `unalias`, alias substitution (XCU 2.3.1), and `command -v` of an alias or of a file that is not executable | pelt (P03) | `alias/c_after_reserved`, `alias/c_alias_missing`, `alias/c_alias_names`, `alias/c_alias_print`, `alias/c_basic`, `alias/c_no_self_recursion`, `alias/c_not_inherited`, `alias/c_parse_time`, `alias/c_position`, `alias/c_quoted_not`, `alias/c_subshell`, `alias/c_takes_effect_next`, `alias/c_trailing_blank`, `alias/c_unalias`, `alias/c_value_tokens`, `command/c_v` |
-| **type** | `type` | pelt (P04) | `type/c_type`, `type/c_type_path` |
-| **hash** | `hash` | pelt (P04) | `hash/c_hash` |
-| **command-p** | `command -p` | pelt (P04) | `command/c_p` |
+| **type** | `type a` of an alias (the rest of `type` since sh17) | pelt (P03) | `type/c_type` |
 | **command-special** | `command .`/`command set`/`command exec` with an error still ends the shell (XCU 2.8.1 note 1) | pelt (P09) | `builtin/c_special_error_command` |
 | **builtin-dashdash** | `export -- name` and `printf -- format`: `--` is taken as an operand | pelt (P09) | `builtin/c_export_invalid`, `printf/c_usage` |
 | **exit-in-exit-trap** | `exit` with no operand inside an EXIT trap action uses the action's last status, not the status from before the trap | pelt (P09) | `builtin/c_exit_in_trap_status` |
