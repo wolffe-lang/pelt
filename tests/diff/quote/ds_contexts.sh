@@ -1,5 +1,5 @@
 echo "$'a\tb'"
-unset u; echo ${u-$'a\tb'} | od -An -c | tr -s ' '
+unset u; echo ${u-$'a\tb'} | od -An -tx1 | tr -d ' \n'; echo
 echo "${u-$'x'}"
 cat <<$'E'
 body $HOME
@@ -17,4 +17,4 @@ export e=$'a b'; ../sh -c 'echo "$e"'
 : > ab; echo $'a'*; echo $'*'
 x=$'it\'s'; echo "$x"
 x=$'a\nb'; echo "$x"
-echo "$(echo $'c\td')" | od -An -c | tr -s ' '
+echo "$(echo $'c\td')" | od -An -tx1 | tr -d ' \n'; echo
