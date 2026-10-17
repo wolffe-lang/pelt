@@ -210,6 +210,10 @@ fn paren_skip(w: str, i: int) -> int {
             j += 2
             continue
         }
+        if c == '$' && ch(w, j + 1) == '\'' {
+            j = ds_end(w, j)
+            continue
+        }
         if c == '\'' {
             j += 1
             while j < w.len && ch(w, j) != '\'' {
@@ -250,6 +254,10 @@ fn brace_end(w: str, i: int) -> int {
         let c = ch(w, j)
         if c == '\\' {
             j += 2
+            continue
+        }
+        if c == '$' && ch(w, j + 1) == '\'' {
+            j = ds_end(w, j)
             continue
         }
         if c == '\'' {
@@ -463,6 +471,10 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
                 lit(mut o, 92)
                 i += 1
             }
+            continue
+        }
+        if c == '$' && ch(w, i + 1) == '\'' {
+            i = ds_put(w, i, mut o)
             continue
         }
         if c == '$' {
