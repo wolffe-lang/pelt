@@ -1,0 +1,86 @@
+session: pelt = /home/mfwolffe/lanes/sh17/base/target/release/pelt
+FAIL alias_prompt_forms
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "alias ll='echo listed'"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "ll a | cat"
+     ! pelt err yes
+       dash out "listed a\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "alias w='echo '"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "alias w='echo '"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "w ll"
+       dash prompt "$ "
+     ! pelt out " 08:08:58 up 20:26,  7 users,  load average: 1.60, 1.01, 1.17\nUSER     TTY       LOGIN@   IDLE   JCPU   PCPU  WHAT\n"
+       dash step 4 "w ll"
+     ! pelt err no
+       dash out "echo listed\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "unalias ll w"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 5 "unalias ll w"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "ll"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 6 "ll"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 7 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 127 at step 7
+       dash prompt ""
+     ! pelt <none>
+       dash exit 127 at step 7
+FAIL c_alias_interactive
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "alias hi='echo hello'"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "hi there"
+     ! pelt err yes
+       dash out "hello there\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "unalias hi"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "unalias hi"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "hi"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 4 "hi"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 127 at step 5
+       dash prompt ""
+     ! pelt <none>
+       dash exit 127 at step 5
+session: pass 0  fail 2  pending 0 (0)

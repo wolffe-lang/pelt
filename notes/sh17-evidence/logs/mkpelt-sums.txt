@@ -1,0 +1,9 @@
+# pax 5c36560 tools/mkpelt in ubuntu:24.04 with clang 18.1.3, lld 18.1.3 (ld.lld on PATH), gcc 13.3, glibc 2.39
+07bb5156919c1b9ceb2e97c755a377a33aee10910969d713f2d0faf3f75c2819  mkpelt/out/pelt
+af7351d1eee039dd0a3320e733d7b5cf755776c222cba89a821479fe57180ab3  mkpelt/out-trunk/pelt
+07bb5156919c1b9ceb2e97c755a377a33aee10910969d713f2d0faf3f75c2819  mkpelt/out/pelt
+af7351d1eee039dd0a3320e733d7b5cf755776c222cba89a821479fe57180ab3  mkpelt/out-trunk/pelt
+bytes 15047176 head, 15002424 trunk
+  Type:                              EXEC (Executable file)
+PT_INTERP lines: 0
+trunk 06223a8 rebuilt the same way: af7351d1..., the digest px47 pinned

@@ -1,0 +1,6 @@
+test ./sh_test.lu::main ... FAILED (trap(assert) [native])
+  stderr: read a:b:c: on IFS : = [a][b][c], want [a][b][c:]
+  stderr: ds($'\\q') = \\q end 5, want q end 5
+  stderr: wolf-trap: assert
+  stderr:   at ./sh_test.lu:11:5
+wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out

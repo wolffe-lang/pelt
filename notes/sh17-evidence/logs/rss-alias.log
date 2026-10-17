@@ -1,0 +1,16 @@
+no-alias
+commands      0  rss_kb 3340
+commands   5000  rss_kb 3800
+commands  10000  rss_kb 4192
+commands  15000  rss_kb 4584
+commands  20000  rss_kb 4972
+x = 20000  (1.189 s)
+with-alias
+commands      0  rss_kb 3372
+commands   5000  rss_kb 3816
+commands  10000  rss_kb 4208
+commands  15000  rss_kb 4600
+commands  20000  rss_kb 4988
+x = 20000  (1.180 s)
+# ENV check: printf alias | ENV=alias.env pelt -i prints:
+'q=:'
