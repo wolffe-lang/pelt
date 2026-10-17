@@ -1,6 +1,6 @@
 //! sh.parse — the lexer and the parser, XCU 2.3 and 2.10.
 //!
-//! References consulted: POSIX.1-2024 XCU 2.2 (quoting), 2.3 (token
+//! References consulted: POSIX.1-2024 XCU 2.2 (quoting, 2.2.4's `$'…'`), 2.3 (token
 //! recognition), 2.7.4 (here-documents), 2.9 (commands) and 2.10 (the
 //! grammar); black-box runs of `dash` 0.5.13.4 for where it refuses.
 //! No shell's source.
@@ -325,6 +325,14 @@ fn scan_word(mut p: P, mut a: Ast, mut quoted: bool) {
             }
             continue
         }
+        if c == '$' && at(p, p.pos + 1) == '\'' {
+            quoted = true
+            scan_ds(mut p)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
         if c == '$' {
             scan_dollar(mut p, mut a)
             if p.err.len > 0 {
@@ -338,6 +346,35 @@ fn scan_word(mut p: P, mut a: Ast, mut quoted: bool) {
                 return
             }
             continue
+        }
+        p.pos += 1
+    }
+}
+
+/// `$'…'` (XCU 2.2.4): to the single quote no backslash quotes. Its
+/// escapes are read by expansion (`sh.dsquote`); outside double quotes
+/// only, where a `$'` is not special.
+fn scan_ds(mut p: P) {
+    p.pos += 2
+    loop {
+        if p.pos >= p.src.len {
+            fail_eof(mut p, "unterminated quote")
+            return
+        }
+        let c = at(p, p.pos)
+        if c == '\'' {
+            p.pos += 1
+            return
+        }
+        if c == '\\' && p.pos + 1 < p.src.len {
+            if at(p, p.pos + 1) == '\n' {
+                p.line += 1
+            }
+            p.pos += 2
+            continue
+        }
+        if c == '\n' {
+            p.line += 1
         }
         p.pos += 1
     }
@@ -557,6 +594,13 @@ fn scan_brace(mut p: P, mut a: Ast) {
             }
             continue
         }
+        if c == '$' && at(p, p.pos + 1) == '\'' {
+            scan_ds(mut p)
+            if p.err.len > 0 {
+                return
+            }
+            continue
+        }
         if c == '$' {
             scan_dollar(mut p, mut a)
             if p.err.len > 0 {
@@ -611,6 +655,13 @@ fn unquote_delim(w: str) -> str {
     var i = 0
     while i < w.len {
         let c = ch(w, i)
+        if c == '$' && ch(w, i + 1) == '\'' {
+            // `<<$'E'`: the delimiter is `E`, decoded
+            var t = buf()
+            i = ds_put(w, i, mut t)
+            put(mut o, unmark(text(t)))
+            continue
+        }
         if c == '\\' && i + 1 < w.len {
             putb(mut o, byte_at(w, i + 1))
             i += 2
