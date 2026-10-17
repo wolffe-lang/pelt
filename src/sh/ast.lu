@@ -86,10 +86,21 @@ struct Ast {
     /// Every node below this is kept: something outside the tree names
     /// one of them (`keep`).
     pin: int,
+    /// The aliases (XCU 2.3.1): kept with the tree, because the parser
+    /// substitutes them (`sh.parse`'s `alias_at`); `alias` and `unalias`
+    /// write them through the state's journal (`sh.state`'s `J_ALIAS`).
+    aliases: Map[str, str],
 }
 
 fn new_ast() -> Ast {
-    Ast { nodes: List[Node](), docs: List[str](), top: 0, dtop: 0, pin: 0 }
+    Ast {
+        nodes: List[Node](),
+        docs: List[str](),
+        top: 0,
+        dtop: 0,
+        pin: 0,
+        aliases: Map[str, str](),
+    }
 }
 
 fn add(mut a: Ast, kind: int, text: str, line: int) -> int {
