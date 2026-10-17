@@ -6,7 +6,7 @@
 //! fast path), `umask`'s operand reader, the history (`sh.hist`):
 //! `fc`'s operands, its list format and the history file's lines, Tab's
 //! reading of a line, its quoting and its list's shape (`sh.complete`),
-//! `read`'s split of a line into its variables,
+//! `read`'s split of a line into its variables, `$'…'`'s escapes,
 //! and what pelt#19's memory work keeps in place: a subshell's frame and
 //! journal, the tree's recycled slots and a word's text as a view.
 //! `src/sh_test.lu` runs them under `wolf test`.
@@ -768,7 +768,27 @@ pub fn self_test() -> List[str] {
     want_read(mut bad, ",", "a,b,,", 2, "[a][b,,]")
     want_read(mut bad, " \t\n", " c d  ", 1, "[c d]")
     want_read(mut bad, " \t\n", "c  ", 1, "[c]")
+    want_ds(mut bad, "$'a\\tb'", "a\tb", 7)
+    want_ds(mut bad, "$'it\\'s'x", "it's", 8)
+    want_ds(mut bad, "$'\\x41\\1012'", "AA2", 12)
+    want_ds(mut bad, "$'ab\\0cd'", "ab", 9)
+    want_ds(mut bad, "$'\\q'", "\\q", 5)
+    want_ds(mut bad, "$'\\u00e9'", "é", 9)
+    want_ds(mut bad, "$''", "", 3)
     bad
+}
+
+/// The `$'…'` at the start of `w` decoded (`sh.dsquote`): its text with
+/// the quoting removed, and where it ends.
+fn want_ds(mut bad: List[str], w: str, want: str, want_end: int) {
+    var o = buf()
+    let e = ds_put(w, 0, mut o)
+    let got = unmark(text(o))
+    if got != want || e != want_end {
+        (mut bad).push(
+            "ds({escaped(w)}) = {escaped(got)} end {e}, want {escaped(want)} end {want_end}",
+        )
+    }
 }
 
 /// `read`'s split of `line` (no backslashes) into the first `n` of the
