@@ -274,11 +274,11 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
         }
         return true
     }
-    name == "notify" ||
-        name == "monitor" ||
-        name == "ignoreeof" ||
-        name == "nolog" ||
-        name == "pipefail"
+    if name == "pipefail" {
+        sh.opt_pipefail = on
+        return true
+    }
+    name == "notify" || name == "monitor" || name == "ignoreeof" || name == "nolog"
 }
 
 fn print_options(mut sh: Sh, reinput: bool) {
@@ -290,12 +290,13 @@ fn print_options(mut sh: Sh, reinput: bool) {
         "noexec",
         "noglob",
         "nounset",
+        "pipefail",
         "verbose",
         "vi",
         "xtrace",
     ]
     // a letter for the options `$-` shows; '-' for the editing modes
-    let letters = ['a', '-', 'e', 'C', 'n', 'f', 'u', 'v', '-', 'x']
+    let letters = ['a', '-', 'e', 'C', 'n', 'f', 'u', '-', 'v', '-', 'x']
     let flags = dash_flags(sh)
     var i = 0
     while i < names.len {
@@ -304,6 +305,8 @@ fn print_options(mut sh: Sh, reinput: bool) {
             on = sh.opt_emacs
         } else if names[i] == "vi" {
             on = sh.opt_vi
+        } else if names[i] == "pipefail" {
+            on = sh.opt_pipefail
         }
         if reinput {
             emit(mut sh, "set {if on then "-o" else "+o"} {names[i]}\n")
