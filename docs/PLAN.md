@@ -20,7 +20,9 @@ filed.
   sh07 (S1, below); since sh11 the table has 544 statements, and
   since sh13 (S4) 431 of them are met; since sh12 (H3b) 439 of 545;
   since sh14 (the signals, wolf 0.2.29) 450 of 545; since sh15 (the
-  terminal, wolf 0.2.30) 451 of 545.
+  terminal, wolf 0.2.30) 451 of 545; since sh17 (the POSIX gaps:
+  aliases, `$'…'`, `pipefail`, `type`, `hash`, `command -p`, `read`,
+  the command line) 487 of 545.
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
@@ -31,6 +33,8 @@ filed.
 - **Interactive pelt is a prompt, not yet a place to work.** `PS1`,
   `PS2`, `ENV`, Ctrl-C and Ctrl-D behave as dash's do. There is no line
   editor, no history, no completion, no job control and no aliases.
+  (Since sh11, sh12 and sh16 it has the editor, the history and
+  completion; since sh17, aliases.)
 - **PAX already runs pelt as pid 1** (pax `5afb903`), threads and
   signals included. H4's milestone is met in substance, ahead of H3.
 - **Speed.** Running programs costs about 1.5 times what dash does.
@@ -59,14 +63,14 @@ counts the 80 in `tools/script-census`.
 | 6 | **done in sh07**: unquoted `$*` in an assignment joins with nothing: **a silent wrong answer** (`host_os=linuxgnu`) | 3 scripts | pelt |
 | 7 | no process for a subshell or an in-process pipeline stage: stages run one after another, a descriptor written from a stage is lost, an endless producer never ends | 3 scripts, 7 statements | wolf-lang or pelt, by ruling R1 (to be filed: W01) |
 | 8 | **UTF-8 half done in sh07**: bytes above 0x7f become `?` on their way out: **a silent wrong answer** (a certificate with a non-ASCII name is left out of the bundle) | 1 script; every non-ASCII file name | pelt; bytes that are not UTF-8 need wolf byte strings (to be filed: W06) |
-| 9 | aliases | 17 statements; daily use | pelt |
+| 9 | **done in sh17**: aliases | 17 statements; daily use | pelt |
 | 10 | job control | 14 statements; daily use | wolf-lang (to be filed: W03; #680: a wait a signal can cut short, stop reporting, a signal to a process group), then pelt; PAX for PAX. `kill` and the signals themselves are in (sh14) |
 | 11 | line editing and history | daily use; 7 statements (`fc`, vi mode, `!` in `PS1`) | pelt; the terminal's size, resize, a wait a signal ends and the special characters are in (sh15, wolf 0.2.30) |
-| 12 | `$'…'` (new in POSIX.1-2024) | 7 statements | pelt |
+| 12 | **done in sh17**: `$'…'` (new in POSIX.1-2024) | 7 statements | pelt |
 | 13 | **done in sh14** (wolf 0.2.29): `kill` built in, `$$`/`PPID` everywhere | 8 statements | done; a signal to a process group (`kill 0`, `kill -- -N`) waits on job control |
 | 14 | `ulimit` | 4 statements | wolf-lang (to be filed: W02) |
-| 15 | about forty corners, one or two statements each (`type`, `hash`, `command -p`, `pipefail`, declaration utilities, `read -d`, `trap -p`, `set -v`, `PS4`, `.` of a FIFO, …) | 53 statements | pelt |
-| 16 | speed: the interpreter's per-command allocation; 57 system calls per program started; a `PATH` search per command | 3.9× and 10× dash on expansion loops | pelt; a cheaper spawn (to be filed: W08) |
+| 15 | about forty corners, one or two statements each (`type`, `hash`, `command -p`, `pipefail`, declaration utilities, `read -d`, `trap -p`, `set -v`, `PS4`, `.` of a FIFO, …); **sh17 did `type`, `hash`, `command -p`, `pipefail`, `read` and the command line** (P02–P06, P08); P09 and P10 remain | 53 statements | pelt |
+| 16 | speed: the interpreter's per-command allocation; 57 system calls per program started; a `PATH` search per command (**gone in sh17**: a table of found utilities, as `hash` lists) | 3.9× and 10× dash on expansion loops | pelt; a cheaper spawn (to be filed: W08) |
 
 Each gap has a pending case named in `tests/diff/PENDING.md` or
 `tests/session/PENDING.md`. When a case passes, the commit that makes
@@ -95,6 +99,9 @@ needs the least from upstream.
 - **S3, the small built-ins and corners:** gap 15, `type`, `hash` (it
   also removes the per-command `PATH` search), aliases (gap 9) and
   `$'…'` (gap 12). Done when those cases leave `PENDING.md`.
+  **Landed in sh17** for P02–P06 and P08 (`notes/sh17-the-posix-gaps.md`):
+  every one of their cases left `PENDING.md`; P09's and P10's corners
+  are what is left of S3.
 - **S4, when the release carrying s230 lands:** `umask` (gap 2). Done
   when the census is 80 of 80, or each script left is named with what
   it waits on. **Landed in sh13 on wolf 0.2.28 at 76 of 80**: the ten
@@ -124,7 +131,7 @@ needs the least from upstream.
   vi `[number]v`, `!` in `PS1`; the file across shells is
   `tools/hist-witness` (`notes/sh12-the-history.md`).
 - **H3c, the prompt's own:** aliases at the prompt, `ignoreeof`,
-  `MAIL`. Nothing upstream.
+  `MAIL`. Nothing upstream. Aliases at the prompt landed in sh17.
 - **H3d, completion and vi mode,** after rulings R3 and R2. vi mode is
   POSIX (`set -o vi`). Completion is not POSIX. **Landed in sh16**
   (ruling #69 R3: files, commands, variables, not programmable): Tab in
