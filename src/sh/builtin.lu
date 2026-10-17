@@ -1046,7 +1046,25 @@ fn bi_getopts(mut sh: Sh, args: List[str]) -> int {
     }
     let spec = args[0]
     let var_name = args[1]
+    if !is_name(var_name) {
+        diag(mut sh, "getopts: {var_name}: not a valid name")
+        return 2
+    }
     let params = if args.len > 2 then args[2..args.len] else copy sh.pos
+    // a read-only name is not changed (XCU `readonly`) and fails the
+    // command with 2, `OPTIND` moved on all the same (dash, black-box)
+    let ro = is_ronly(sh, var_name)
+    let st = getopts_step(mut sh, spec, var_name, params)
+    if ro {
+        diag(mut sh, "getopts: {var_name}: is read-only")
+        return 2
+    }
+    st
+}
+
+/// One step of `getopts` over `params`: the option found goes to
+/// `var_name`, `OPTIND` and `OPTARG` are moved on.
+fn getopts_step(mut sh: Sh, spec: str, var_name: str, params: List[str]) -> int {
     let silent = spec.len > 0 && ch(spec, 0) == ':'
     var ind = to_int(value_of(sh, "OPTIND")) else 1
     if ind < 1 {
