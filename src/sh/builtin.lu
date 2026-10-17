@@ -90,9 +90,10 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
         st = bi_type(mut sh, args)
     } else if name == "hash" {
         st = bi_hash(mut sh, args)
-    } else if name == "alias" || name == "unalias" {
-        diag(mut sh, "{name}: not supported yet")
-        st = 2
+    } else if name == "alias" {
+        st = bi_alias(mut sh, args)
+    } else if name == "unalias" {
+        st = bi_unalias(mut sh, args)
     }
     if sh.out.len > 0 && fd_get(sh, 1) == FD_CLOSED {
         // output to a closed descriptor is a write error (dash: status 1)
@@ -742,6 +743,10 @@ fn may_run(mut sh: Sh, path: str) -> bool {
 /// path of a program; 127 for none (a file with a `/` must be one this
 /// shell may execute).
 fn show_one(mut sh: Sh, name: str, via: str) -> int {
+    if !is_reserved(name) && alias_set(sh, name) {
+        emit(mut sh, "alias {squote("{name}={sh.ast.aliases[name] else ""}")}\n")
+        return 0
+    }
     if sh.funcs.has(name) ||
         is_special_builtin(name) ||
         is_regular_builtin(name) ||
@@ -771,6 +776,10 @@ fn show_one(mut sh: Sh, name: str, via: str) -> int {
 fn type_one(mut sh: Sh, name: str, via: str) -> int {
     if is_reserved(name) {
         emit(mut sh, "{name} is a reserved word\n")
+        return 0
+    }
+    if alias_set(sh, name) {
+        emit(mut sh, "{name} is an alias for {sh.ast.aliases[name] else ""}\n")
         return 0
     }
     if is_special_builtin(name) {
@@ -865,6 +874,112 @@ fn bi_hash(mut sh: Sh, args: List[str]) -> int {
             diag(mut sh, "hash: {n}: not found")
             st = 1
         }
+    }
+    st
+}
+
+/// Whether `name` may be an alias's (XCU `alias`: the portable
+/// characters and `! % , @`, and as an extension what dash takes: every
+/// printable byte but a blank, `}` and the ones the lexer gives a
+/// meaning, `& ; | < > ( ) \ " ' $` and backquote).
+fn alias_name_ok(name: str) -> bool {
+    if name.len == 0 {
+        return false
+    }
+    for b in name.bytes() {
+        let c = b as int
+        if c <= 32 ||
+            c == 125 ||
+            c == 38 ||
+            c == 59 ||
+            c == 124 ||
+            c == 60 ||
+            c == 62 ||
+            c == 40 ||
+            c == 41 ||
+            c == 92 ||
+            c == 34 ||
+            c == 39 ||
+            c == 36 ||
+            c == 96 {
+            return false
+        }
+    }
+    true
+}
+
+/// `alias [name[=value]…]` (XCU `alias`): defines each `name=value`;
+/// writes each `name` as the `alias` operand that makes it again, quoted
+/// whole as dash quotes it (`'q=echo x'`), and with no operand writes
+/// every alias, by name. A name with no alias fails with 1, one that
+/// cannot be an alias's with 2; the other operands are still done. The
+/// new alias is in effect from the next complete command the shell
+/// parses (the parser substitutes, `sh.parse`'s `alias_at`).
+fn bi_alias(mut sh: Sh, args: List[str]) -> int {
+    var i = 0
+    if i < args.len && args[i] == "--" {
+        // no options; `--` is still taken (XCU 1.4)
+        i += 1
+    }
+    if i >= args.len {
+        for k in sort_strs(sh.ast.aliases.keys()) {
+            emit(mut sh, "{squote("{k}={sh.ast.aliases[k] else ""}")}\n")
+        }
+        return 0
+    }
+    var st = 0
+    while i < args.len {
+        let a = args[i]
+        i += 1
+        let eq = a.find("=") else -1
+        if eq > 0 {
+            let name = a[0..eq]
+            if !alias_name_ok(name) {
+                diag(mut sh, "alias: {name}: not a valid alias name")
+                st = 2
+                continue
+            }
+            aset(mut sh, name, a[eq + 1..a.len])
+            continue
+        }
+        if !alias_set(sh, a) {
+            diag(mut sh, "alias: {a}: no such alias")
+            if st == 0 {
+                st = 1
+            }
+            continue
+        }
+        emit(mut sh, "{squote("{a}={sh.ast.aliases[a] else ""}")}\n")
+    }
+    st
+}
+
+/// `unalias name…`, `unalias -a` (XCU `unalias`): a name with no alias
+/// fails with 1, the others still removed; no operand is 0 (dash).
+fn bi_unalias(mut sh: Sh, args: List[str]) -> int {
+    var i = 0
+    if i < args.len && args[i] == "-a" {
+        for k in sh.ast.aliases.keys() {
+            adel(mut sh, k)
+        }
+        return 0
+    }
+    if i < args.len && args[i] == "--" {
+        i += 1
+    } else if i < args.len && args[i].len > 1 && ch(args[i], 0) == '-' {
+        diag(mut sh, "unalias: {args[i]}: no such option")
+        return 2
+    }
+    var st = 0
+    while i < args.len {
+        let n = args[i]
+        i += 1
+        if !alias_set(sh, n) {
+            diag(mut sh, "unalias: {n}: no such alias")
+            st = 1
+            continue
+        }
+        adel(mut sh, n)
     }
     st
 }
