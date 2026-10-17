@@ -92,6 +92,9 @@ struct Sh {
     opt_v: bool,
     opt_a: bool,
     opt_bigc: bool,
+    /// `set -o pipefail` (XCU 2.9.2): a pipeline answers its rightmost
+    /// failing stage's status.
+    opt_pipefail: bool,
     /// The editing modes (`sh.edit`): at most one is on.
     opt_vi: bool,
     opt_emacs: bool,
@@ -250,6 +253,7 @@ fn new_sh(name: str) -> Sh {
         opt_v: false,
         opt_a: false,
         opt_bigc: false,
+        opt_pipefail: false,
         opt_vi: false,
         opt_emacs: false,
         ed: new_edkeep(),
@@ -380,6 +384,9 @@ fn opts_bits(sh: Sh) -> int {
     if sh.opt_emacs {
         b = b | 512
     }
+    if sh.opt_pipefail {
+        b = b | 1024
+    }
     b
 }
 
@@ -394,6 +401,7 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_bigc = b & 128 != 0
     sh.opt_vi = b & 256 != 0
     sh.opt_emacs = b & 512 != 0
+    sh.opt_pipefail = b & 1024 != 0
 }
 
 /// Where a frame's record keeps its fields on `istk`, from the record's
