@@ -1,0 +1,11 @@
+# CI run 39029075072, PR #31 at 1102498: ubuntu and arm green; macOS red on one case (BSD od -c pads differently), fixed in 06fe9fe
+the differential corpus, native tier	FAIL quote/ds_contexts: stdout
+the differential corpus, native tier	     pelt stdout: b"$'a\tb'\n a \\t b \\n \n\n$'x'\nbody $HOME\n$'a\\tb'\n1\n2\n`echo no` $(echo no)\n~\na$xb\nb\na\na b\nab\n*\nit's\na\nb\n c \\t d \\n \n\n"
+the differential corpus, native tier	     want stdout: b"$'a\tb'\n a \\t b \\n\n$'x'\nbody $HOME\n$'a\\tb'\n1\n2\n`echo no` $(echo no)\n~\na$xb\nb\na\na b\nab\n*\nit's\na\nb\n c \\t d \\n\n"
+the differential corpus, native tier	difftest: total        949     1    44 (2)
+the differential corpus, native tier	##[error]Process completed with exit code 1.
+the differential corpus, release tier	FAIL quote/ds_contexts: stdout
+the differential corpus, release tier	     pelt stdout: b"$'a\tb'\n a \\t b \\n \n\n$'x'\nbody $HOME\n$'a\\tb'\n1\n2\n`echo no` $(echo no)\n~\na$xb\nb\na\na b\nab\n*\nit's\na\nb\n c \\t d \\n \n\n"
+the differential corpus, release tier	     want stdout: b"$'a\tb'\n a \\t b \\n\n$'x'\nbody $HOME\n$'a\\tb'\n1\n2\n`echo no` $(echo no)\n~\na$xb\nb\na\na b\nab\n*\nit's\na\nb\n c \\t d \\n\n"
+the differential corpus, release tier	difftest: total        949     1    44 (2)
+the differential corpus, release tier	##[error]Process completed with exit code 1.

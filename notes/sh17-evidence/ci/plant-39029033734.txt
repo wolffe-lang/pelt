@@ -1,0 +1,58 @@
+# CI run 39029033734, branch sh17-plant at 15a725d (head 1102498 + the plant: alias_at never substitutes, the pipefail status ignored; matrix narrowed to ubuntu-latest), workflow_dispatch
+# the FAIL lines, totals and exit codes, from gh run view --log
+the differential corpus, native tier	2026-10-17T11:40:31.0061509Z FAIL alias/c_after_reserved: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0098902Z FAIL alias/c_alias_names: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0149684Z FAIL alias/c_basic: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0169229Z FAIL alias/c_no_self_recursion: stdout
+the differential corpus, native tier	2026-10-17T11:40:31.0216657Z FAIL alias/c_parse_time: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0235715Z FAIL alias/c_position: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0276200Z FAIL alias/c_subshell: stdout, stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0294413Z FAIL alias/c_takes_effect_next: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0313434Z FAIL alias/c_trailing_blank: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0361689Z FAIL alias/c_value_tokens: stdout, exit 2 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0386264Z FAIL alias/command_position: stdout, stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0451664Z FAIL alias/function_name_error: stdout, exit 0 (oracle 2), stderr absent
+the differential corpus, native tier	2026-10-17T11:40:31.0470627Z FAIL alias/function_names: stdout, stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0491937Z FAIL alias/parse_time_more: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0518392Z FAIL alias/recursion_more: stdout
+the differential corpus, native tier	2026-10-17T11:40:31.0536186Z FAIL alias/reserved_words: stdout, exit 2 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0563075Z FAIL alias/scope: stdout, stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0589084Z FAIL alias/trailing_more: stdout, stderr present
+the differential corpus, native tier	2026-10-17T11:40:31.0618271Z FAIL alias/value_text: stdout, exit 2 (oracle 0), stderr present
+the differential corpus, native tier	2026-10-17T11:40:49.3424317Z FAIL option/pipefail_cluster: stdout
+the differential corpus, native tier	2026-10-17T11:40:52.6340130Z FAIL pipe/c_pipefail: stdout
+the differential corpus, native tier	2026-10-17T11:40:53.6554542Z FAIL pipe/pipefail_compound: stdout
+the differential corpus, native tier	2026-10-17T11:40:53.6574195Z FAIL pipe/pipefail_errexit: stdout, exit 0 (oracle 1)
+the differential corpus, native tier	2026-10-17T11:40:53.6623358Z FAIL pipe/pipefail_programs: stdout
+the differential corpus, native tier	2026-10-17T11:40:53.6643537Z FAIL pipe/pipefail_rightmost: stdout
+the differential corpus, native tier	2026-10-17T11:40:53.6664155Z FAIL pipe/pipefail_scope: stdout
+the differential corpus, native tier	2026-10-17T11:41:09.6004528Z difftest: total        924    26    44 (1)
+the differential corpus, native tier	2026-10-17T11:41:09.6062828Z ##[error]Process completed with exit code 1.
+the differential corpus, release tier	2026-10-17T11:41:09.6452705Z FAIL alias/c_after_reserved: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6492172Z FAIL alias/c_alias_names: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6545978Z FAIL alias/c_basic: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6565169Z FAIL alias/c_no_self_recursion: stdout
+the differential corpus, release tier	2026-10-17T11:41:09.6608297Z FAIL alias/c_parse_time: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6626540Z FAIL alias/c_position: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6663334Z FAIL alias/c_subshell: stdout, stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6682361Z FAIL alias/c_takes_effect_next: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6701104Z FAIL alias/c_trailing_blank: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6746491Z FAIL alias/c_value_tokens: stdout, exit 2 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6772818Z FAIL alias/command_position: stdout, stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6844714Z FAIL alias/function_name_error: stdout, exit 0 (oracle 2), stderr absent
+the differential corpus, release tier	2026-10-17T11:41:09.6863173Z FAIL alias/function_names: stdout, stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6883368Z FAIL alias/parse_time_more: stdout, exit 127 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6909980Z FAIL alias/recursion_more: stdout
+the differential corpus, release tier	2026-10-17T11:41:09.6929478Z FAIL alias/reserved_words: stdout, exit 2 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6956084Z FAIL alias/scope: stdout, stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.6984586Z FAIL alias/trailing_more: stdout, stderr present
+the differential corpus, release tier	2026-10-17T11:41:09.7011632Z FAIL alias/value_text: stdout, exit 2 (oracle 0), stderr present
+the differential corpus, release tier	2026-10-17T11:41:25.4872141Z FAIL option/pipefail_cluster: stdout
+the differential corpus, release tier	2026-10-17T11:41:28.7707578Z FAIL pipe/c_pipefail: stdout
+the differential corpus, release tier	2026-10-17T11:41:29.0362517Z FAIL pipe/pipefail_compound: stdout
+the differential corpus, release tier	2026-10-17T11:41:29.0381952Z FAIL pipe/pipefail_errexit: stdout, exit 0 (oracle 1)
+the differential corpus, release tier	2026-10-17T11:41:29.0432021Z FAIL pipe/pipefail_programs: stdout
+the differential corpus, release tier	2026-10-17T11:41:29.0452132Z FAIL pipe/pipefail_rightmost: stdout
+the differential corpus, release tier	2026-10-17T11:41:29.0471950Z FAIL pipe/pipefail_scope: stdout
+the differential corpus, release tier	2026-10-17T11:41:44.9083370Z difftest: total        924    26    44 (1)
+the differential corpus, release tier	2026-10-17T11:41:44.9131270Z ##[error]Process completed with exit code 1.

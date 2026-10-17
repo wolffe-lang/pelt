@@ -1,0 +1,46 @@
+# CI run 39032079480, PR #31 at 06fe9fe: totals of every corpus, session and witness step, from gh run view --log
+gauntlet (ubuntu-24.04-arm, false)	clause-census: total                                545  487   51    2      5  90.2%
+gauntlet (ubuntu-24.04-arm, false)	wolf build: note: ld.lld not found on PATH — linking with the system linker (lld ships with the toolchain; packaging is c13)
+gauntlet (ubuntu-24.04-arm, false)	wolf build: this host cannot run the native tier: native codegen targets linux/x86-64, macOS/aarch64, and windows/x86-64 (s28 + s59 + s60a; the rest of D35's matrix is c13) — host: aarch64-unknown-linux-gnu
+gauntlet (ubuntu-24.04-arm, false)	wolf build: note: ld.lld not found on PATH — linking with the system linker (lld ships with the toolchain; packaging is c13)
+gauntlet (ubuntu-24.04-arm, false)	wolf build: this host cannot run the release tier: the release tier targets linux/x86-64 and macOS/aarch64 (s41 + s127; c13 owns the matrix) — this host is neither, and further platforms follow as their own sprints
+gauntlet (macos-latest, true)	clause-census: total                                545  487   51    2      5  90.2%
+gauntlet (macos-latest, true)	wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+gauntlet (macos-latest, true)	glob-rss: ok (2752 KB with 64 files, 2752 KB empty, bound 5075)
+gauntlet (macos-latest, true)	glob-rss: ok (2144 KB with 64 files, 2144 KB empty, bound 4406)
+gauntlet (macos-latest, true)	loop-rss: ok (10000 more turns grew 320 KB, about 32 B a turn; bound 2000 KB)
+gauntlet (macos-latest, true)	loop-rss: ok (10000 more turns grew 320 KB, about 32 B a turn; bound 2000 KB)
+gauntlet (macos-latest, true)	shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (macos-latest, true)	shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (macos-latest, true)	signal-witness: reap    ok   0 misses of 5000 (exit 0; shell '')
+gauntlet (macos-latest, true)	signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (macos-latest, true)	signal-witness: reap    ok   0 misses of 5000 (exit 0; shell '')
+gauntlet (macos-latest, true)	signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (macos-latest, true)	difftest: total        950     0    44 (2)
+gauntlet (macos-latest, true)	difftest: total        950     0    44 (2)
+gauntlet (macos-latest, true)	session: pass 243  fail 0  pending 13 (0)
+gauntlet (macos-latest, true)	session: pass 243  fail 0  pending 13 (0)
+gauntlet (macos-latest, true)	edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (macos-latest, true)	edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (macos-latest, true)	hist-witness: 6 of 6 hold
+gauntlet (macos-latest, true)	hist-witness: 6 of 6 hold
+gauntlet (ubuntu-latest, true)	clause-census: total                                545  487   51    2      5  90.2%
+gauntlet (ubuntu-latest, true)	wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+gauntlet (ubuntu-latest, true)	glob-rss: ok (11572 KB with 64 files, 11560 KB empty, bound 14764)
+gauntlet (ubuntu-latest, true)	glob-rss: ok (11584 KB with 64 files, 11580 KB empty, bound 14786)
+gauntlet (ubuntu-latest, true)	loop-rss: ok (10000 more turns grew 416 KB, about 42 B a turn; bound 2000 KB)
+gauntlet (ubuntu-latest, true)	loop-rss: ok (10000 more turns grew 296 KB, about 30 B a turn; bound 2000 KB)
+gauntlet (ubuntu-latest, true)	shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (ubuntu-latest, true)	shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (ubuntu-latest, true)	signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+gauntlet (ubuntu-latest, true)	signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (ubuntu-latest, true)	signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+gauntlet (ubuntu-latest, true)	signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (ubuntu-latest, true)	difftest: total        950     0    44 (1)
+gauntlet (ubuntu-latest, true)	difftest: total        950     0    44 (1)
+gauntlet (ubuntu-latest, true)	session: pass 243  fail 0  pending 13 (0)
+gauntlet (ubuntu-latest, true)	session: pass 243  fail 0  pending 13 (0)
+gauntlet (ubuntu-latest, true)	edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	hist-witness: 6 of 6 hold
+gauntlet (ubuntu-latest, true)	hist-witness: 6 of 6 hold
