@@ -30,7 +30,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **hash** | `hash` | pelt (P04) | `hash/c_hash` |
 | **command-p** | `command -p` | pelt (P04) | `command/c_p` |
 | **dollar-single-quote** | `$'…'` (XCU 2.2.4, new in POSIX.1-2024) | pelt (P05) | `quote/c_ds_control`, `quote/c_ds_embedded`, `quote/c_ds_escapes`, `quote/c_ds_hex`, `quote/c_ds_octal`, `quote/c_ds_plain`, `quote/c_ds_quoted` |
-| **pipefail** | `set -o pipefail` is accepted and does nothing (XCU 2.9.2) | pelt (P06) | `option/c_pipefail_option`, `pipe/c_pipefail` |
 | **read-trailing-delimiter** | `IFS=: read a b c` on `a:b:c:` leaves the trailing delimiter in the last variable | pelt (P08) | `read/c_fields` |
 | **readonly-read-getopts** | `read` and `getopts` into a readonly variable, and `read` into an invalid name, answer 0 | pelt (P08) | `builtin/c_readonly_everywhere`, `read/c_bad_target` |
 | **read-d** | `read -d delim` (new in POSIX.1-2024) | pelt (P08) | `read/c_delim` |

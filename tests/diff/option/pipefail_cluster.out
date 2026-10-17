@@ -1,0 +1,7 @@
+set -o errexit
+set -o pipefail
+set +o errexit
+set +o pipefail
+set -o errexit
+set -o pipefail
+reinput 1
