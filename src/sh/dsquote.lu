@@ -1,0 +1,189 @@
+//! sh.dsquote — dollar-single-quotes, `$'…'` (XCU 2.2.4, new in
+//! POSIX.1-2024).
+//!
+//! References consulted: POSIX.1-2024 XCU 2.2.4; black-box runs of
+//! `dash` 0.5.13.4 and `bash --posix` 5.3 (`notes/sh17-the-posix-gaps.md`
+//! §2.1). No shell's source.
+//!
+//! The lexer keeps `$'…'` in the word's text as written (`sh.parse`'s
+//! `scan_ds`); expansion turns it into quoted bytes here, so the result
+//! is neither split nor a pattern. The escapes are POSIX's — `\"`,
+//! `\'`, `\\`, `\a`, `\b`, `\e`, `\f`, `\n`, `\r`, `\t`, `\v`, `\cX`,
+//! `\x` with one or two hexadecimal digits, `\` with one to three
+//! octal digits — and dash's `\u` and `\U` (a code point, written as
+//! UTF-8). Any other backslash is kept with the character after it, as
+//! both references keep it. A NUL, from any escape, ends the string:
+//! what follows up to the closing quote is dropped (POSIX lets either
+//! happen; dash and bash drop it). A byte that is not UTF-8 cannot
+//! leave pelt (W06, pelt#20): `\xe9` alone becomes `?`, while `\xc3\xa9`
+//! is `é`.
+
+/// The index just past the `'` closing the `$'` at `i`, or `w.len` when
+/// it is not closed. A backslash quotes the byte after it.
+fn ds_end(w: str, i: int) -> int {
+    var j = i + 2
+    while j < w.len {
+        let c = ch(w, j)
+        if c == '\\' {
+            j += 2
+            continue
+        }
+        if c == '\'' {
+            return j + 1
+        }
+        j += 1
+    }
+    w.len
+}
+
+fn hex_digit_of(c: char) -> int {
+    if c >= '0' && c <= '9' {
+        return c as int - 48
+    }
+    if c >= 'a' && c <= 'f' {
+        return c as int - 87
+    }
+    if c >= 'A' && c <= 'F' {
+        return c as int - 55
+    }
+    -1
+}
+
+/// Up to `max` hexadecimal digits of `w` from `j`: their value and the
+/// index past them (no digit: the value -1).
+fn hex_run(w: str, j: int, end: int, max: int) -> (int, int) {
+    var v = 0
+    var k = j
+    while k < end && k - j < max {
+        let d = hex_digit_of(ch(w, k))
+        if d < 0 {
+            break
+        }
+        v = v * 16 + d
+        k += 1
+    }
+    if k == j {
+        return (-1, j)
+    }
+    (v, k)
+}
+
+/// Code point `cp` as UTF-8 bytes onto `o` (none for a surrogate or a
+/// value past U+10FFFF).
+fn put_utf8(mut o: Buf, cp: int) {
+    if cp < 128 {
+        qlit(mut o, cp)
+    } else if cp < 2048 {
+        putb(mut o, 192 + cp / 64)
+        putb(mut o, 128 + cp % 64)
+    } else if cp < 65536 {
+        if cp >= 55296 && cp < 57344 {
+            return
+        }
+        putb(mut o, 224 + cp / 4096)
+        putb(mut o, 128 + cp / 64 % 64)
+        putb(mut o, 128 + cp % 64)
+    } else if cp < 1114112 {
+        putb(mut o, 240 + cp / 262144)
+        putb(mut o, 128 + cp / 4096 % 64)
+        putb(mut o, 128 + cp / 64 % 64)
+        putb(mut o, 128 + cp % 64)
+    }
+}
+
+/// The `$'…'` at `i` of `w`, decoded onto `o` as quoted bytes (an empty
+/// one as `EQ`, so that it still makes a field); answers the index past
+/// its closing quote.
+fn ds_put(w: str, i: int, mut o: Buf) -> int {
+    let e = ds_end(w, i)
+    // the closing quote, when there is one, is not text
+    let end = if e > i + 2 && ch(w, e - 1) == '\'' then e - 1 else e
+    let mark = o.b.len
+    var j = i + 2
+    while j < end {
+        let c = ch(w, j)
+        if c != '\\' || j + 1 >= end {
+            qlit(mut o, byte_at(w, j))
+            j += 1
+            continue
+        }
+        let n = ch(w, j + 1)
+        var v = -2
+        var next = j + 2
+        if n == '"' || n == '\'' || n == '\\' {
+            v = n as int
+        } else if n == 'a' {
+            v = 7
+        } else if n == 'b' {
+            v = 8
+        } else if n == 'e' {
+            v = 27
+        } else if n == 'f' {
+            v = 12
+        } else if n == 'n' {
+            v = 10
+        } else if n == 'r' {
+            v = 13
+        } else if n == 't' {
+            v = 9
+        } else if n == 'v' {
+            v = 11
+        } else if n == 'c' && j + 2 < end {
+            let x = ch(w, j + 2)
+            next = j + 3
+            if x == '?' {
+                v = 127
+            } else {
+                if x == '\\' && next < end && ch(w, next) == '\\' {
+                    // `\c\\`: the backslash is written escaped
+                    next += 1
+                }
+                v = byte_at(w, j + 2) % 32
+            }
+        } else if n == 'x' {
+            let (h, k) = hex_run(w, j + 2, end, 2)
+            // no digit: dash makes it a NUL
+            v = if h < 0 then 0 else h
+            next = k
+        } else if n == 'u' || n == 'U' {
+            let (h, k) = hex_run(w, j + 2, end, if n == 'u' then 4 else 8)
+            next = k
+            if h <= 0 {
+                v = 0
+            } else {
+                put_utf8(mut o, h)
+                j = next
+                continue
+            }
+        } else if n >= '0' && n <= '7' {
+            var k = j + 1
+            var oct = 0
+            while k < end && k - (j + 1) < 3 && ch(w, k) >= '0' && ch(w, k) <= '7' {
+                oct = oct * 8 + (ch(w, k) as int - 48)
+                k += 1
+            }
+            v = oct % 256
+            next = k
+        }
+        if v == -2 {
+            // not an escape: the backslash stays, and so does the byte
+            qlit(mut o, 92)
+            j += 1
+            continue
+        }
+        if v == 0 {
+            // a NUL ends the string
+            break
+        }
+        if v < 128 {
+            qlit(mut o, v)
+        } else {
+            putb(mut o, v)
+        }
+        j = next
+    }
+    if o.b.len == mark {
+        putb(mut o, EQ)
+    }
+    e
+}
