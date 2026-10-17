@@ -1,8 +1,9 @@
 //! sh.main — the command line: which input, which mode.
 //!
 //! References consulted: POSIX.1-2024 XCU `sh` (OPTIONS, OPERANDS,
-//! STDIN); black-box runs of `dash` 0.5.13.4 for `-c`, `-i`, `-s` and
-//! the `$0` it reports.
+//! STDIN); black-box runs of `dash` 0.5.13.4 for `-c`, `-i`, `-s`,
+//! option letters in one argument (`-ec`, `-eo pipefail`), a lone `-`,
+//! and the `$0` it reports.
 
 /// The whole shell: parse the command line `args` (argv without argv[0]),
 /// run what it names, and answer the exit status.
@@ -35,37 +36,45 @@ pub fn run_main(args: List[str]) -> int {
             i += 1
             continue
         }
-        if (a == "-o" || a == "+o") && i + 1 < args.len {
-            (mut opts).push(a)
-            (mut opts).push(args[i + 1])
-            i += 2
-            continue
+        if a == "-" {
+            // a lone hyphen ends the options and is dropped (XCU `sh`
+            // OPERANDS): `sh -s - x` has `$1` x
+            i += 1
+            break
         }
-        if a.len > 1 && ch(a, 0) == '-' {
-            // `-i` and `-s` are the command line's alone (`set` has
-            // neither); the other letters go to `set`
+        let c0 = ch(a, 0)
+        if a.len > 1 && (c0 == '-' || c0 == '+') {
+            // one cluster of letters (`-ec`, `-xc`, `-eo pipefail`):
+            // `c`, `i` and `s` are the command line's alone (`set` has
+            // none of them), an `o` takes the next operand as an
+            // option's name, and the other letters go to `set`
+            let on = c0 == '-'
             var o = buf()
+            var taken = 0
             var k = 1
             while k < a.len {
                 let c = ch(a, k)
-                if c == 'i' {
+                if on && c == 'c' {
+                    cmd_string = true
+                } else if on && c == 'i' {
                     force_i = true
-                } else if c == 's' {
+                } else if on && c == 's' {
                     read_stdin = true
+                } else if c == 'o' {
+                    (mut opts).push(if on then "-o" else "+o")
+                    if i + 1 + taken < args.len {
+                        (mut opts).push(args[i + 1 + taken])
+                        taken += 1
+                    }
                 } else {
                     putc(mut o, c)
                 }
                 k += 1
             }
             if o.b.len > 0 {
-                (mut opts).push("-{text(o)}")
+                (mut opts).push("{c0}{text(o)}")
             }
-            i += 1
-            continue
-        }
-        if a.len > 1 && ch(a, 0) == '+' {
-            (mut opts).push(a)
-            i += 1
+            i += 1 + taken
             continue
         }
         break
@@ -124,7 +133,10 @@ pub fn run_main(args: List[str]) -> int {
     if parse_only {
         return check_all(src, name)
     }
-    run_source(src, name, rest, opts, cmd_string)
+    // `-c` with `-s`: the string, then standard input (unspecified by
+    // POSIX; dash, black-box: `echo 'echo b' | sh -cs 'echo a'` prints
+    // both)
+    run_source(src, name, rest, opts, cmd_string && read_stdin)
 }
 
 fn report(name: str, line: int, msg: str) {
@@ -167,7 +179,7 @@ fn check_all(src: str, name: str) -> int {
     0
 }
 
-fn run_source(src: str, name: str, rest: List[str], opts: List[str], cmd_string: bool) -> int {
+fn run_source(src: str, name: str, rest: List[str], opts: List[str], then_stdin: bool) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
     sh.pos = copy rest
@@ -181,6 +193,10 @@ fn run_source(src: str, name: str, rest: List[str], opts: List[str], cmd_string:
     // the script's parser, reset for it (`sh.exec`'s `eval_top`)
     var p = new_parser("", 1)
     var st = eval_top(mut sh, mut p, src, 1)
+    if then_stdin && sh.flow == F_NONE {
+        sh.from_stdin = true
+        st = run_lines(mut sh)
+    }
     if sh.flow == F_EXIT {
         st = sh.status
     }
