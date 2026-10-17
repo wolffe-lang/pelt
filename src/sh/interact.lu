@@ -127,10 +127,14 @@ fn delim_of(fd: int, d: int, raw: bool) -> (str, int) {
 /// Whether `src` stops short of a complete command only because it
 /// ended (`P.more`). Parsed in a scratch region: nothing it builds is
 /// kept.
-fn needs_more(src: str) -> bool {
+fn needs_more(src: str, aliases: Map[str, str]) -> bool {
     var more = false
     region scratch {
         var a = new_ast()
+        if aliases.len > 0 {
+            // an alias's value may open what the next line closes
+            a.aliases = copy aliases
+        }
         var p = new_parser(src, 1)
         loop {
             let n = parse_complete(mut p, mut a)
@@ -356,7 +360,7 @@ fn run_lines(mut sh: Sh) -> int {
                 break
             }
             first = false
-            if !needs_more(if joined then text(o) else src) {
+            if !needs_more(if joined then text(o) else src, sh.ast.aliases) {
                 break
             }
         }
@@ -416,7 +420,14 @@ fn run_lines(mut sh: Sh) -> int {
         // asked first, in a region of its own whose answer is a `bool`,
         // so any other line costs nothing to ask about (pelt#19)
         var one = false
-        if !fast && sh.interactive && !sh.opt_n && !sh.opt_v && fast_ok(sh) {
+        // (a line whose first word may be an alias is parsed with the
+        // aliases, in the shell's own tree)
+        if !fast &&
+            sh.interactive &&
+            !sh.opt_n &&
+            !sh.opt_v &&
+            fast_ok(sh) &&
+            sh.ast.aliases.len == 0 {
             one = copy region ask {
                 turn_simple(src, line) >= 0
             }

@@ -205,7 +205,7 @@ fn hist_enter_text(mut sh: Sh, body: str) {
         put(mut o, line)
         any = true
         let so_far = copy region hq {
-            needs_more("{text(o)}\n")
+            needs_more("{text(o)}\n", sh.ast.aliases)
         }
         if !so_far {
             let cmd = text(o)
