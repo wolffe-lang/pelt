@@ -1,0 +1,111 @@
+script-census: building sh06-arch
+warning: zlib-1:1.3.2-3 is up to date -- skipping
+warning: openssl-3.6.5-1 is up to date -- skipping
+892b5bf44b7037ba5323911cb457de1f338df1236148651037b60366965a4938
+script-census: building sh06-debian
+3924f5c005fbd96474a3243e687507b53f863ad65126d3be0fe074375be5b185
+script-census: building sh06-alpine
+*
+* If you need ICU with non-English locales and legacy charset support, install
+* package icu-data-full.
+*
+be4757b8382099bfe51a94986224e2bc6b76da50d62ab88a300d0be53e7ba691
+script-census: pelt = /home/mfwolffe/lanes/sh17/sc/pelt-base sha256 360e32f913921e4acce9d3455af7afef951a96d7592ff7b9e2fe829692f43e25
+script-census: https://ftp.gnu.org/gnu/hello/hello-2.12.2.tar.gz
+same     configure-hello  dash 0  pelt 0
+script-census: https://ftp.gnu.org/gnu/sed/sed-4.9.tar.xz
+same     configure-sed  dash 0  pelt 0
+script-census: https://ftp.gnu.org/gnu/gzip/gzip-1.14.tar.xz
+same     configure-gzip  dash 0  pelt 0
+script-census: https://zlib.net/fossils/zlib-1.3.1.tar.gz
+same     configure-zlib  dash 0  pelt 0
+script-census: https://ftp.gnu.org/gnu/automake/automake-1.18.1.tar.xz
+same     install-sh  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     config.guess  dash 0,0  pelt 0,0
+same     config.sub  dash 0,0,0,0,0,1,1  pelt 0,0,0,0,0,1,1
+same     missing  dash 0,0,0,127,1  pelt 0,0,0,127,1
+same     compile  dash 0,0,0,1  pelt 0,0,0,1
+same     depcomp  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     mkinstalldirs  dash 0,0,0,0  pelt 0,0,0,0
+same     mdate-sh  dash 0,0,1  pelt 0,0,1
+same     test-driver  dash 0,0,0,0  pelt 0,0,0,0
+same     ylwrap  dash 0,0,1  pelt 0,0,1
+same     ar-lib  dash 0,1,1  pelt 0,1,1
+same     tap-driver.sh  dash 0,0  pelt 0,0
+script-census: https://ftp.gnu.org/gnu/libtool/libtool-2.5.4.tar.xz
+same     ltmain.sh  dash 0,0,0,63,63,63  pelt 0,0,0,63,63,63
+script-census: https://www.kernel.org/pub/software/scm/git/git-2.56.0.tar.xz
+script-census: preparing git in sh06-arch (network off)
+same     git-test-lib  dash 0  pelt 0
+same     git-t0000-basic  dash 0  pelt 0
+same     deb-cron.postinst  dash 0,0,0  pelt 0,0,0
+same     deb-cron-daemon-common.postinst  dash 0,0  pelt 0,0
+same     deb-rsync.postinst  dash 0,0  pelt 0,0
+same     deb-openssh-server.postinst  dash 1,1  pelt 1,1
+same     deb-openssh-server.prerm  dash 1,1  pelt 1,1
+same     deb-openssh-client.postinst  dash 1,1  pelt 1,1
+same     deb-procps.postinst  dash 1,1  pelt 1,1
+same     deb-ca-certificates.postinst  dash 0,0  pelt 0,0
+same     deb-base-files.postinst  dash 0,0  pelt 0,0
+same     deb-base-passwd.preinst  dash 0,0  pelt 0,0
+same     deb-libc6.postinst  dash 0,0  pelt 0,0
+same     deb-libc6.preinst  dash 2,2  pelt 2,2
+same     deb-util-linux.postinst  dash 0,0  pelt 0,0
+same     deb-adduser.preinst  dash 0,0  pelt 0,0
+same     deb-dpkg.postinst  dash 0,0  pelt 0,0
+same     deb-tzdata.postinst  dash 0  pelt 0
+same     dpkg-maintscript-helper  dash 1,1,0,0,1  pelt 1,1,0,0,1
+same     init-cron  dash 3,2,2  pelt 3,2,2
+same     init-rsync  dash 3,0,1,1  pelt 3,0,1,1
+same     init-ssh  dash 3,1,1  pelt 3,1,1
+same     init-procps  dash 0,3,3  pelt 0,3,3
+same     service  dash 0,0,3,1,1  pelt 0,0,3,1,1
+same     invoke-rc.d  dash 0,101,4,0,103  pelt 0,101,4,0,103
+same     update-ca-certificates  dash 0,0,0,0  pelt 0,0,0,0
+same     apk-nginx.pre-install  dash 0  pelt 0
+same     apk-nginx.post-install  dash 0  pelt 0
+same     apk-nginx.post-upgrade  dash 0  pelt 0
+same     apk-dbus.pre-install  dash 0  pelt 0
+same     apk-dbus.post-install  dash 0  pelt 0
+same     apk-alpine-baselayout.pre-install  dash 0  pelt 0
+same     apk-alpine-baselayout.post-install  dash 0  pelt 0
+same     apk-chrony.pre-install  dash 0  pelt 0
+same     apk-postfix.pre-install  dash 0  pelt 0
+same     apk-openrc.post-install  dash 0  pelt 0
+same     apk-openssh-server.post-upgrade  dash 0  pelt 0
+same     setup-hostname  dash 0,0,1  pelt 0,0,1
+same     setup-timezone  dash 0,1,1  pelt 0,1,1
+same     setup-dns  dash 0,0  pelt 0,0
+same     update-conf  dash 0,0,0  pelt 0,0,0
+same     lbu  dash 0,0,0,1  pelt 0,0,0,1
+same     gunzip  dash 0,0,0,0,1  pelt 0,0,0,0,1
+same     zcat  dash 0,0,1  pelt 0,0,1
+same     zcmp  dash 1,0,0  pelt 1,0,0
+same     zforce  dash 0,0,0  pelt 0,0,0
+same     uncompress  dash 0,0  pelt 0,0
+same     ssh-copy-id  dash 1,1,1,1  pelt 1,1,1,1
+same     ssh-argv0  dash 1,1  pelt 1,1
+same     select-editor  dash 1,1,1  pelt 1,1,1
+same     sensible-editor  dash 0,1,1,1  pelt 0,1,1,1
+same     sensible-pager  dash 0,0,0  pelt 0,0,0
+script-census: https://github.com/dylanaraps/pfetch/archive/refs/tags/0.6.0.tar.gz
+unstable pfetch  dash 0,0,0  pelt 0,0,0
+         run 2: dash disagrees with itself (out); exit and stderr only
+same     which.debianutils  dash 1,0,1,2  pelt 1,0,1,2
+same     savelog  dash 0,0,0,1  pelt 0,0,0,1
+same     add-shell  dash 0,1  pelt 0,1
+same     gettext.sh  dash 0,0,1  pelt 0,0,1
+differs  xzgrep  dash 0,0,1,0,2  pelt 2,2,2,0,2
+         run 0 [b f.xz]: exit 2 (dash 0)
+         run 1 [-c . f.xz g.xz]: exit 2 (dash 0), stdout
+         run 2 [zzz f.xz]: exit 2 (dash 1)
+same     xzdiff  dash 1,0,0  pelt 1,0,0
+differs  zgrep  dash 0,0,1,0  pelt 0,0,1,0
+         run 0 [b f.gz]: stderr present
+         run 1 [-n -e a -e c f.gz g.gz]: stderr present
+         run 2 [zzz f.gz]: stderr present
+differs  zdiff  dash 1,0,0  pelt 1,2,0
+         run 1 [f.gz]: exit 2 (dash 0), stdout, stderr present
+same     lesspipe  dash 0,0,0  pelt 0,0,0
+same     xdg-mime  dash 0,0,0,0,1  pelt 0,0,0,0,1
+script-census: differs 3  same 76  unstable 1  of 80  (/home/mfwolffe/lanes/sh17/sc/base-unaided.tsv)
