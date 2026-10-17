@@ -65,7 +65,8 @@ fn is_regular_builtin(name: str) -> bool {
         name == "fc" ||
         name == "alias" ||
         name == "unalias" ||
-        name == "type"
+        name == "type" ||
+        name == "hash"
 }
 
 /// Every built-in by name, special and regular, in the order of the
@@ -74,7 +75,7 @@ fn is_regular_builtin(name: str) -> bool {
 fn builtin_names() -> List[str] {
     var o = List[str]()
     let all = ": . break continue eval exec exit export readonly return set shift trap unset times " +
-        "echo printf test [ true false pwd cd command read local getopts wait umask kill fc alias unalias type"
+        "echo printf test [ true false pwd cd command read local getopts wait umask kill fc alias unalias type hash"
     for w in all.split(" ") {
         (mut o).push(w)
     }
@@ -937,7 +938,8 @@ fn enc_text(enc: Buf) -> str {
 }
 
 /// One write for the real state onto `enc`: `op` (`=` assign, `L` a
-/// `local` declaration), the name, NUL, the value, NUL.
+/// `local` declaration, `H` a utility the command search found), the
+/// name, NUL, the value, NUL.
 fn put_op(mut enc: Buf, op: char, name: str, value: str) {
     putc(mut enc, op)
     put(mut enc, name)
@@ -1133,10 +1135,23 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     let cmd = fields[0]
     var path = cmd
     if (cmd.find("/") else -1) < 0 {
-        path = find_in(mut t, search_path(t, names, values), cmd)
-        if path.len == 0 {
-            close_opened(t)
-            return slow()
+        let own = own_path(names)
+        if !own {
+            // the table is the real state's, read here; a new find is
+            // written there after (`commit_fast`'s `H`)
+            path = hash_get(sh, cmd)
+        }
+        if path.len == 0 || own {
+            path = find_in(mut t, search_path(t, names, values), cmd)
+            if path.len == 0 {
+                close_opened(t)
+                return slow()
+            }
+            if !own {
+                var h = buf()
+                put_op(mut h, 'H', cmd, path)
+                r.enc = r.enc + text(h)
+            }
         }
     }
     var capped = false
@@ -1351,6 +1366,8 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
         let name = r.enc[at + 1..z]
         if op == 76 {
             local_push(mut sh, name)
+        } else if op == 72 {
+            hash_put(mut sh, name, r.enc[z + 1..z2])
         } else if !set_var(mut sh, name, r.enc[z + 1..z2]) {
             fatal(mut sh, "{name}: is read-only", 2)
             return 2
@@ -1518,7 +1535,7 @@ fn run_fields(mut sh: Sh, n: int, na: int, fields: List[str], nowait: bool) -> i
             k -= 1
         }
     } else {
-        st = run_external(mut sh, fields, names, values, nowait)
+        st = run_external(mut sh, fields, names, values, nowait, "")
     }
     end_redirs(mut sh)
     st
@@ -1762,6 +1779,87 @@ fn pop_locals(mut sh: Sh) {
     }
 }
 
+/// The default `PATH` of `command -p` (XCU `command`): one that finds
+/// the standard utilities on linux and macOS. pelt's choice; wolf has no
+/// `confstr` (dash's begins `/usr/sbin`, bash's `/bin`).
+fn default_path() -> str {
+    "/usr/bin:/bin:/usr/sbin:/sbin"
+}
+
+/// Whether a write to the table is journaled: inside a frame, unless it
+/// is a simple command's pipeline stage (`Sh.hash_keep`).
+fn hash_jots(sh: Sh) -> bool {
+    sh.fr_top >= 0 && !(sh.fr_top == sh.hash_keep && sh.fdepth == sh.hash_keep_depth)
+}
+
+/// Forget every utility the command search found (inside a frame,
+/// through the journal, so a subshell's `hash -r` ends with it).
+fn hash_clear(mut sh: Sh) {
+    if sh.hash.len == 0 {
+        return
+    }
+    if hash_jots(sh) {
+        for k in sh.hash.keys() {
+            jot(mut sh, J_HASH, k)
+        }
+    }
+    sh.hash = Map[str, str]()
+}
+
+/// Forget `name`.
+fn hash_del(mut sh: Sh, name: str) {
+    if hash_jots(sh) {
+        jot(mut sh, J_HASH, name)
+    }
+    let _h = (mut sh.hash).remove(name) else ""
+}
+
+/// The table made right for the shell's `PATH` now: found under another
+/// value (a subshell's, which put its own back), it is forgotten.
+fn hash_valid(mut sh: Sh) {
+    let path = sh.vals["PATH"] else ""
+    if path != sh.hash_path {
+        hash_clear(mut sh)
+        sh.hash_path = path
+    }
+}
+
+/// Where `name` (no `/`) was found before, for the `PATH` now, or "".
+fn hash_get(sh: Sh, name: str) -> str {
+    let path = sh.vals["PATH"] else ""
+    if path != sh.hash_path {
+        return ""
+    }
+    sh.hash[name] else ""
+}
+
+/// Remember that the search for `name` under the shell's `PATH` found
+/// `path`.
+fn hash_put(mut sh: Sh, name: str, path: str) {
+    hash_valid(mut sh)
+    if hash_jots(sh) {
+        jot(mut sh, J_HASH, name)
+    }
+    sh.hash[name] = path
+}
+
+/// The command search through the table (XCU 2.9.1.4: a shell may
+/// remember where it found a utility, and `hash` lists it): a name found
+/// before is not searched for again until `PATH` changes or `hash -r`;
+/// one searched for and found is remembered (dash, black-box: a run,
+/// `command -v`, `type` and `hash` all remember). "" when not found.
+fn hash_find(mut sh: Sh, name: str) -> str {
+    let got = hash_get(sh, name)
+    if got.len > 0 {
+        return got
+    }
+    let path = find_in_path(mut sh, name)
+    if path.len > 0 && !sh.shadow {
+        hash_put(mut sh, name, path)
+    }
+    path
+}
+
 /// The command search of XCU 2.9.1.4 for a name with no `/`: the first
 /// `PATH` directory holding a regular file of that name this shell may
 /// execute (`sh.util`'s `may`), or "". A file it may not execute is
@@ -1784,6 +1882,17 @@ fn search_path(sh: Sh, names: List[str], values: List[str]) -> str {
         k += 1
     }
     path
+}
+
+/// Whether a command's own assignments set `PATH`: it searches that,
+/// and nothing it finds is remembered (dash, black-box).
+fn own_path(names: List[str]) -> bool {
+    for n in names {
+        if n == "PATH" {
+            return true
+        }
+    }
+    false
 }
 
 /// `find_in_path` over the directories of `path`.
@@ -1951,7 +2060,14 @@ fn read_pending_caps(mut sh: Sh) {
 /// the stage's own capture goes to the stage's pipe (`stage_w`) and any
 /// other to a temporary file read back when the pipeline ends. Answers
 /// the child's handle, or -1 and the status (the failure reported).
-fn start_child(mut sh: Sh, cmd: str, path: str, args: List[str], nowait: bool) -> (int, int) {
+fn start_child(
+    mut sh: Sh,
+    cmd: str,
+    path: str,
+    args: List[str],
+    nowait: bool,
+    quiet_missing: bool,
+) -> (int, int) {
     flush(mut sh)
     var map = List[int]()
     var cap_r = -1
@@ -2025,7 +2141,9 @@ fn start_child(mut sh: Sh, cmd: str, path: str, args: List[str], nowait: bool) -
             fs_close(cap_r) else |_| {}
         }
         if hd == -127 {
-            diag(mut sh, "{cmd}: not found")
+            if !quiet_missing {
+                diag(mut sh, "{cmd}: not found")
+            }
         } else {
             diag(mut sh, "{cmd}: cannot be run")
         }
@@ -2037,18 +2155,32 @@ fn start_child(mut sh: Sh, cmd: str, path: str, args: List[str], nowait: bool) -
     (hd, 0)
 }
 
+/// Run the program `fields[0]` with the command's own assignments
+/// `names`/`values` exported to it. A name with no `/` is searched for
+/// in `via` when it is not "" (`command -p`), else through the table
+/// (`hash_find`), and a remembered path that is gone is searched for
+/// again (XCU 2.9.1.4; dash, black-box).
 fn run_external(
     mut sh: Sh,
     fields: List[str],
     names: List[str],
     values: List[str],
     nowait: bool,
+    via: str,
 ) -> int {
     let cmd = fields[0]
     var path = cmd
+    var remembered = false
     sh.started = false
     if (cmd.find("/") else -1) < 0 {
-        path = find_in(mut sh, search_path(sh, names, values), cmd)
+        if via.len > 0 {
+            path = find_in(mut sh, via, cmd)
+        } else if own_path(names) {
+            path = find_in(mut sh, search_path(sh, names, values), cmd)
+        } else {
+            remembered = hash_get(sh, cmd).len > 0
+            path = hash_find(mut sh, cmd)
+        }
         if path.len == 0 {
             diag(mut sh, "{cmd}: not found")
             sh.status = 127
@@ -2064,7 +2196,21 @@ fn run_external(
         env_set(names[k], values[k]) else |_| {}
         k += 1
     }
-    let (h, failed) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait)
+    let (h1, f1) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait, remembered)
+    var h = h1
+    var failed = f1
+    if h < 0 && failed == 127 && remembered {
+        // the remembered file is gone: search again
+        hash_del(mut sh, cmd)
+        path = hash_find(mut sh, cmd)
+        if path.len == 0 {
+            diag(mut sh, "{cmd}: not found")
+        } else {
+            let (h2, f2) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait, false)
+            h = h2
+            failed = f2
+        }
+    }
     var st = failed
     if h >= 0 {
         sh.started = true
@@ -2163,7 +2309,7 @@ fn run_exec(
     }
     var st = 0
     if here {
-        st = run_external(mut sh, args, names, values, false)
+        st = run_external(mut sh, args, names, values, false, "")
         if sh.started {
             // the program ran in the subshell's place: no `EXIT` trap
             traps_clear(mut sh)
@@ -2308,7 +2454,7 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
     while i < count {
         let node = sh.ast.nodes[n].kids[i]
         if i == count - 1 {
-            st = run_stage(mut sh, node, input, false)
+            st = run_stage_kept(mut sh, node, input, false)
             if own_in {
                 fs_close(input) else |_| {}
             }
@@ -2326,7 +2472,7 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         sh.stage_child = -1
         sh.stage_in = -1
         let simple = sh.ast.nodes[node].kind == K_SIMPLE
-        let _st = run_stage(mut sh, node, input, simple)
+        let _st = run_stage_kept(mut sh, node, input, simple)
         let child = sh.stage_child
         let given = sh.stage_in
         sh.stage_child = -1
@@ -2378,6 +2524,24 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
     if sh.opt_pipefail && st == 0 {
         return failed
     }
+    st
+}
+
+/// `run_stage`, a simple command's stage keeping what its own command
+/// search finds (dash, black-box: `ls | cat; hash` lists both; what a
+/// function or a compound command run as a stage finds is not kept).
+fn run_stage_kept(mut sh: Sh, node: int, input: int, nowait: bool) -> int {
+    let saved = sh.hash_keep
+    let saved_depth = sh.hash_keep_depth
+    // the frame `run_subshell` opens starts where the stack ends now;
+    // a pipeline inside a subshell keeps nothing (dash's subshell is a
+    // process)
+    let own = sh.ast.nodes[node].kind == K_SIMPLE && sh.fr_top < 0
+    sh.hash_keep = if own then sh.istk.len else -1
+    sh.hash_keep_depth = sh.fdepth
+    let st = run_stage(mut sh, node, input, nowait)
+    sh.hash_keep = saved
+    sh.hash_keep_depth = saved_depth
     st
 }
 

@@ -79,6 +79,18 @@ struct Sh {
     exported: Map[str, bool],
     ronly: Map[str, bool],
     funcs: Map[str, int],
+    /// The utilities the command search found (XCU 2.9.1.4, `hash`):
+    /// name → path, for the value of `PATH` in `hash_path` (`sh.exec`'s
+    /// `hash_find`).
+    hash: Map[str, str],
+    hash_path: str,
+    /// The frame of a pipeline stage that is a simple command of the
+    /// shell itself (no enclosing frame), and the function depth it runs
+    /// at: what that command's search finds outlives the stage (dash
+    /// looks such a command up before it forks); every other frame's
+    /// finds are journaled and end with it.
+    hash_keep: int,
+    hash_keep_depth: int,
     pos: List[str],
     arg0: str,
     status: int,
@@ -240,6 +252,10 @@ fn new_sh(name: str) -> Sh {
         exported: Map[str, bool](),
         ronly: Map[str, bool](),
         funcs: Map[str, int](),
+        hash: Map[str, str](),
+        hash_path: "",
+        hash_keep: -1,
+        hash_keep_depth: 0,
         pos: List[str](),
         arg0: name,
         status: 0,
@@ -350,6 +366,8 @@ const J_RO: int = 3
 const J_FN: int = 4
 
 const J_TRAP: int = 5
+
+const J_HASH: int = 6
 
 /// The options as one number: what a frame keeps of them.
 fn opts_bits(sh: Sh) -> int {
@@ -623,6 +641,9 @@ fn jot(mut sh: Sh, tab: int, name: str) {
     } else if tab == J_FN {
         i = sh.funcs[name] else -1
         had = i >= 0
+    } else if tab == J_HASH {
+        s = sh.hash[name] else ""
+        had = s.len > 0
     } else if tab == J_EXP {
         had = marked(sh.exported, name)
         let e = sh.exported[name] else false
@@ -679,6 +700,12 @@ fn journal_back(mut sh: Sh, base: int) {
                 sh.funcs[name] = i
             } else {
                 let _f = (mut sh.funcs).remove(name) else 0
+            }
+        } else if tab == J_HASH {
+            if had == 1 {
+                sh.hash[name] = s
+            } else {
+                let _h = (mut sh.hash).remove(name) else ""
             }
         } else if tab == J_EXP {
             if had == 1 {
@@ -853,6 +880,11 @@ fn set_var(mut sh: Sh, name: str, value: str) -> bool {
     if is_ronly(sh, name) {
         return false
     }
+    if name == "PATH" {
+        // a new `PATH`, even the same value, forgets what was found
+        // (dash, black-box: `PATH=$PATH; hash` lists nothing)
+        hash_clear(mut sh)
+    }
     vset(mut sh, name, value)
     if sh.opt_a {
         xset(mut sh, name, true)
@@ -871,6 +903,9 @@ fn unset_var(mut sh: Sh, name: str) -> bool {
     }
     if is_ronly(sh, name) {
         return false
+    }
+    if name == "PATH" {
+        hash_clear(mut sh)
     }
     vdel(mut sh, name)
     xdel(mut sh, name)
