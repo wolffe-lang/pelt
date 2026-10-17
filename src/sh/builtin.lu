@@ -770,68 +770,110 @@ fn bi_local(mut sh: Sh, args: List[str]) -> int {
     0
 }
 
-/// `read [-r] var…` (XCU `read`): one line of standard input, split
-/// on `IFS` into the variables, the last taking the rest. The line is
-/// read byte by byte through the handle the shell reads its own
-/// commands from (`sh.interact`), so a `read` at the prompt takes the
-/// next line typed and nothing more. A final line with no newline is
-/// assigned and answers 1, as the utility's end-of-file status says.
+/// `read [-r] [-d delim] var…` (XCU `read`): one line of standard
+/// input — or, with `-d`, the bytes up to the delimiter (its first byte;
+/// `-d ''` a NUL) — split on `IFS` into the variables, the last taking
+/// the rest. The line is read byte by byte through the handle the shell
+/// reads its own commands from (`sh.interact`), so a `read` at the
+/// prompt takes the next line typed and nothing more. A final line with
+/// no newline is assigned and answers 1, as the utility's end-of-file
+/// status says. Without `-r` a backslash quotes the next byte and
+/// backslash-newline continues the line, the delimiter's included. A
+/// variable that cannot be assigned (read-only, or not a name) fails
+/// the command with 2 there, the ones before it assigned (dash).
 fn bi_read(mut sh: Sh, args: List[str]) -> int {
     var raw = false
+    var delim = 10
     var i = 0
-    while i < args.len && ch(args[i], 0) == '-' {
-        if args[i] == "-r" {
-            raw = true
-        } else if args[i] == "--" {
+    while i < args.len && ch(args[i], 0) == '-' && args[i].len > 1 {
+        let a = args[i]
+        if a == "--" {
             i += 1
             break
-        } else {
-            diag(mut sh, "read: {args[i]}: no such option")
+        }
+        // letters in one cluster (`-rd ''`); `d` takes the rest of the
+        // argument, or the next one
+        var k = 1
+        var next = false
+        while k < a.len {
+            let c = ch(a, k)
+            if c == 'r' {
+                raw = true
+                k += 1
+                continue
+            }
+            if c == 'd' {
+                var d = a[k + 1..a.len]
+                if d.len == 0 {
+                    if i + 1 >= args.len {
+                        diag(mut sh, "read: -d needs a delimiter")
+                        return 2
+                    }
+                    d = args[i + 1]
+                    next = true
+                }
+                delim = if d.len == 0 then 0 else byte_at(d, 0)
+                break
+            }
+            diag(mut sh, "read: -{c}: no such option")
             return 2
         }
-        i += 1
+        i += if next then 2 else 1
     }
-    var names = args[i..args.len]
+    let names = args[i..args.len]
     if names.len == 0 {
-        names = ["REPLY"]
+        // POSIX names at least one variable; dash refuses none
+        diag(mut sh, "read: a variable name is needed")
+        return 2
     }
     flush(mut sh)
     var line = buf()
     var eof = false
-    loop {
-        let (got, how) = read_raw_line(mut sh)
-        var piece = got
-        if how == 0 {
-            piece = got[0..got.len - 1]
-        } else {
-            eof = true
-        }
-        if eof {
+    if delim != 10 {
+        let (got, how) = read_raw_delim(mut sh, delim, raw)
+        put(mut line, got)
+        eof = how != 0
+    } else {
+        loop {
+            let (got, how) = read_raw_line(mut sh)
+            var piece = got
+            if how == 0 {
+                piece = got[0..got.len - 1]
+            } else {
+                eof = true
+            }
+            if eof {
+                put(mut line, piece)
+                break
+            }
+            if !raw && piece.len > 0 && ch(piece, piece.len - 1) == '\\' {
+                put_range(mut line, piece, 0, piece.len - 1)
+                continue
+            }
             put(mut line, piece)
             break
         }
-        if !raw && piece.len > 0 && ch(piece, piece.len - 1) == '\\' {
-            put_range(mut line, piece, 0, piece.len - 1)
-            continue
-        }
-        put(mut line, piece)
-        break
     }
     let s = text(line)
     if eof && s.len == 0 {
         for n in names {
-            let _ok = set_var(mut sh, n, "")
+            if !read_target(mut sh, n, "") {
+                return 2
+            }
         }
         return 1
     }
-    // the line as a marked string: escaped bytes are literal
+    // the line as a marked string: escaped bytes are literal, and a
+    // backslash-newline (kept by the delimiter reader) is removed
     var m = buf()
     putb(mut m, RB)
     var k = 0
     while k < s.len {
         let b = byte_at(s, k)
         if !raw && b == 92 && k + 1 < s.len {
-            qlit(mut m, byte_at(s, k + 1))
+            if byte_at(s, k + 1) != 10 {
+                qlit(mut m, byte_at(s, k + 1))
+            }
             k += 2
             continue
         }
@@ -840,14 +882,78 @@ fn bi_read(mut sh: Sh, args: List[str]) -> int {
     }
     putb(mut m, RE)
     let marked = text(m)
-    assign_fields(mut sh, names, marked)
+    if !assign_fields(mut sh, names, marked) {
+        return 2
+    }
     if eof then 1 else 0
+}
+
+/// Assign `value` to `read`'s variable `name`; false, said, when it is
+/// not a name or is read-only.
+fn read_target(mut sh: Sh, name: str, value: str) -> bool {
+    if !is_name(name) {
+        diag(mut sh, "read: {name}: not a valid name")
+        return false
+    }
+    if !set_var(mut sh, name, value) {
+        diag(mut sh, "read: {name}: is read-only")
+        return false
+    }
+    true
+}
+
+/// Whether the marked byte at `i` is an unquoted `IFS` character.
+fn ifs_at(marked: str, i: int, f: str) -> bool {
+    let b = byte_at(marked, i)
+    b != Q && b != RB && b != RE && in_ifs(f, b)
+}
+
+/// Where the rest of a marked line from `i` holds exactly one field
+/// followed only by its delimiter, the end of that field; else -1. The
+/// last variable of `read` takes such a field without its delimiter
+/// (POSIX.1-2024 `read`; dash: `a:b:c:` gives `c`, `c::` stays `c::`).
+fn lone_field_end(marked: str, from: int, f: str) -> int {
+    var i = from
+    while i < marked.len {
+        let b = byte_at(marked, i)
+        if b == Q {
+            i += 2
+            continue
+        }
+        if ifs_at(marked, i, f) {
+            break
+        }
+        i += 1
+    }
+    let end = i
+    if end >= marked.len {
+        return -1
+    }
+    // the delimiter: white space, at most one other IFS character, and
+    // white space again
+    while i < marked.len && ifs_at(marked, i, f) && is_ifs_ws(byte_at(marked, i)) {
+        i += 1
+    }
+    if i < marked.len && ifs_at(marked, i, f) && !is_ifs_ws(byte_at(marked, i)) {
+        i += 1
+    }
+    while i < marked.len && ifs_at(marked, i, f) && is_ifs_ws(byte_at(marked, i)) {
+        i += 1
+    }
+    while i < marked.len && (byte_at(marked, i) == RB || byte_at(marked, i) == RE) {
+        i += 1
+    }
+    if i < marked.len {
+        return -1
+    }
+    end
 }
 
 /// Split a marked line for `read`: each variable but the last takes one
 /// field; the last takes the rest of the line with surrounding `IFS`
-/// white space removed.
-fn assign_fields(mut sh: Sh, names: List[str], marked: str) {
+/// white space removed, or one field alone without the delimiter after
+/// it. False when a variable could not be assigned (said already).
+fn assign_fields(mut sh: Sh, names: List[str], marked: str) -> bool {
     let f = ifs(sh)
     var i = 0
     var n = 0
@@ -866,25 +972,29 @@ fn assign_fields(mut sh: Sh, names: List[str], marked: str) {
             break
         }
         if n == names.len - 1 {
-            // the rest, trailing IFS white space trimmed
-            var end = marked.len
-            loop {
-                if end <= i {
+            var end = lone_field_end(marked, i, f)
+            if end < 0 {
+                // the rest, trailing IFS white space trimmed
+                end = marked.len
+                loop {
+                    if end <= i {
+                        break
+                    }
+                    let b = byte_at(marked, end - 1)
+                    if b == RE {
+                        end -= 1
+                        continue
+                    }
+                    if in_ifs(f, b) &&
+                        is_ifs_ws(b) &&
+                        !(end >= 2 && byte_at(marked, end - 2) == Q) {
+                        end -= 1
+                        continue
+                    }
                     break
                 }
-                let b = byte_at(marked, end - 1)
-                if b == RE {
-                    end -= 1
-                    continue
-                }
-                if in_ifs(f, b) && is_ifs_ws(b) && !(end >= 2 && byte_at(marked, end - 2) == Q) {
-                    end -= 1
-                    continue
-                }
-                break
             }
-            let _ok = set_var(mut sh, names[n], unmark(marked[i..end]))
-            return
+            return read_target(mut sh, names[n], unmark(marked[i..end]))
         }
         var cur = buf()
         while i < marked.len {
@@ -920,9 +1030,12 @@ fn assign_fields(mut sh: Sh, names: List[str], marked: str) {
             putb(mut cur, b)
             i += 1
         }
-        let _ok = set_var(mut sh, names[n], unmark(text(cur)))
+        if !read_target(mut sh, names[n], unmark(text(cur))) {
+            return false
+        }
         n += 1
     }
+    true
 }
 
 /// `getopts optstring name [arg…]` (XCU `getopts`).
