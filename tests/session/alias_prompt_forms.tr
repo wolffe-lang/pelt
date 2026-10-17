@@ -1,0 +1,27 @@
+step 0
+err no
+prompt "$ "
+step 1 "alias ll='echo listed'"
+err no
+prompt "$ "
+step 2 "ll a | cat"
+out "listed a\n"
+err no
+prompt "$ "
+step 3 "alias w='echo '"
+err no
+prompt "$ "
+step 4 "w ll"
+out "echo listed\n"
+err no
+prompt "$ "
+step 5 "unalias ll w"
+err no
+prompt "$ "
+step 6 "ll"
+err yes
+prompt "$ "
+step 7 "exit"
+err no
+prompt ""
+exit 127 at step 7

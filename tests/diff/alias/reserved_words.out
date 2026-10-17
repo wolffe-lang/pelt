@@ -1,0 +1,5 @@
+then
+'if=echo IF'
+'fi=echo FI'
+inbrace
+yes

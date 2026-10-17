@@ -1,0 +1,4 @@
+alias 'q=echo x'
+V=0
+type=0
+if

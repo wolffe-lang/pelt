@@ -14,7 +14,6 @@ The census cases (sh06, `c_*`; `docs/CENSUS.md`), by what they wait on.
 
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
-| **alias** | `alias` and alias substitution | pelt (P03) | `c_alias_interactive` |
 | **ignoreeof** | `set -o ignoreeof` is accepted and Ctrl-D still ends the shell | pelt (P10) | `c_ignoreeof` |
 | **mail** | `MAIL`, `MAILCHECK`, `MAILPATH`: no notice before the prompt | pelt (P10); the file's time is `fs_stat` | `c_mail` |
 | **job control** | no job control: `set -m` is accepted and does nothing — no process group per job, no terminal handoff, Ctrl-Z stops nothing the shell can report, no `jobs`, `fg`, `bg`, no job numbers or completion notices. Recorded from `dash -i -m` | wolf-lang W03 (stop reporting, `SIGCONT`, a signal to a group) and #680 (a wait that a signal or a second child can end), #141 (`kill` built in); then pelt (sh12, sh13) | `c_jc_background_group`, `c_jc_background_job`, `c_jc_bg`, `c_jc_bg_ttin`, `c_jc_ctrl_z`, `c_jc_done_message`, `c_jc_fg`, `c_jc_fg_number`, `c_jc_foreground_group`, `c_jc_jobs_list`, `c_jc_jobs_states` |

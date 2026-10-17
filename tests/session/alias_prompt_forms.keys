@@ -1,0 +1,7 @@
+alias ll='echo listed'
+ll a | cat
+alias w='echo '
+w ll
+unalias ll w
+ll
+exit
