@@ -1,0 +1,19 @@
+$'a	b'
+ a \t b \n
+$'x'
+body $HOME
+$'a\tb'
+1
+2
+`echo no` $(echo no)
+~
+a$xb
+b
+a
+a b
+ab
+*
+it's
+a
+b
+ c \t d \n

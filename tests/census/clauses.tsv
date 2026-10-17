@@ -12,7 +12,7 @@ id	kind	statement	cases	note
 2.2.3/6	T	Inside double quotes a backquote introduces command substitution, ended by the next unescaped backquote	quote/c_dq_backquote	
 2.2.3/7	T	Inside double quotes backslash is an escape only before $ ` " backslash and newline	quote/special_chars quote/c_dq_backslash	
 2.2.3/8	T	The literal value of the result of an expansion in double quotes is preserved (no splitting, no globbing)	split/quoted quote/c_dq_result_literal	
-2.2.4/1	T	$'...' preserves characters literally up to the terminating unescaped single quote	quote/dollar_single quote/c_ds_plain	dash 0.5.13.4 has no dollar-single-quotes; POSIX.1-2024 requires them, so bash --posix is the oracle
+2.2.4/1	T	$'...' preserves characters literally up to the terminating unescaped single quote	quote/dollar_single quote/c_ds_plain	POSIX.1-2024 requires them; recorded with bash --posix as the oracle, and dash 0.5.13.4 agrees on every case (sh17 measured that it has them)
 2.2.4/2	T	$'...' escapes \" \' \\ \a \b \e \f \n \r \t \v yield their characters	quote/c_ds_escapes	
 2.2.4/3	T	$'\cX' yields the control character for X	quote/c_ds_control	
 2.2.4/4	T	$'\xXX' yields the byte with that hexadecimal value, ended by the first non-hex character	quote/c_ds_hex	

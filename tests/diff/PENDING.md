@@ -28,7 +28,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **type** | `type` | pelt (P04) | `type/c_type`, `type/c_type_path` |
 | **hash** | `hash` | pelt (P04) | `hash/c_hash` |
 | **command-p** | `command -p` | pelt (P04) | `command/c_p` |
-| **dollar-single-quote** | `$'…'` (XCU 2.2.4, new in POSIX.1-2024) | pelt (P05) | `quote/c_ds_control`, `quote/c_ds_embedded`, `quote/c_ds_escapes`, `quote/c_ds_hex`, `quote/c_ds_octal`, `quote/c_ds_plain`, `quote/c_ds_quoted` |
 | **command-special** | `command .`/`command set`/`command exec` with an error still ends the shell (XCU 2.8.1 note 1) | pelt (P09) | `builtin/c_special_error_command` |
 | **builtin-dashdash** | `export -- name` and `printf -- format`: `--` is taken as an operand | pelt (P09) | `builtin/c_export_invalid`, `printf/c_usage` |
 | **exit-in-exit-trap** | `exit` with no operand inside an EXIT trap action uses the action's last status, not the status from before the trap | pelt (P09) | `builtin/c_exit_in_trap_status` |

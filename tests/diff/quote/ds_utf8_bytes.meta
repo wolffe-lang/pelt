@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+oracle=bash
+why=\xXX yields the byte (XCU 2.2.4): two escapes that spell UTF-8 make that character; dash 0.5.13.4 writes each byte as a Latin-1 code point in UTF-8
+dash=differs
