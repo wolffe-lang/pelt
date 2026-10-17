@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+oracle=bash
+why=after `--` the operand `-c` is a command file that cannot be found: 127 (XCU sh, EXIT STATUS); dash 0.5.13.4 answers 2, as for any missing file (sh/c_command_file_missing)
+dash=differs

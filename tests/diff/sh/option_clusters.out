@@ -1,0 +1,11 @@
+ce=1
+hi
+xc=0
+nc=0
+ok
+uc=0
+[nm] [a]
+ec--=0
+set -o errexit
+set -o pipefail
+[uf]

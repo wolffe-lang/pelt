@@ -24,7 +24,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
 | **host-dir-size** | nothing pelt lacks: the case's `-s` row asks whether an empty directory has a size, and the oracle was recorded on kasumi's btrfs, where it has none; on ext4 (the linux runners) and APFS (macOS) an empty directory has a size, so dash there answers `-s` true for it as pelt does (sh07). PEND-ok on btrfs | the oracle's host | `test/c_files` |
-| **sh-option-parsing** | `sh -ec 'cmd'` (option letters joined with `c`), `--`, and `-s -` | pelt (P02) | `sh/c_combined_options`, `sh/c_dash_s` |
 | **alias** | `alias`, `unalias`, alias substitution (XCU 2.3.1), and `command -v` of an alias or of a file that is not executable | pelt (P03) | `alias/c_after_reserved`, `alias/c_alias_missing`, `alias/c_alias_names`, `alias/c_alias_print`, `alias/c_basic`, `alias/c_no_self_recursion`, `alias/c_not_inherited`, `alias/c_parse_time`, `alias/c_position`, `alias/c_quoted_not`, `alias/c_subshell`, `alias/c_takes_effect_next`, `alias/c_trailing_blank`, `alias/c_unalias`, `alias/c_value_tokens`, `command/c_v` |
 | **type** | `type` | pelt (P04) | `type/c_type`, `type/c_type_path` |
 | **hash** | `hash` | pelt (P04) | `hash/c_hash` |

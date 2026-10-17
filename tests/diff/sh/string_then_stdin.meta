@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+bash=differs
+why=-c and -s together are unspecified (XCU sh); dash runs the string and then standard input, bash only the string

@@ -412,7 +412,7 @@ sh/2	T	sh -c with an empty string exits zero	sh/c_dash_c_empty
 sh/3	T	sh -c reads no commands from standard input, which stays available to the commands	sh/c_dash_c_stdin	
 sh/4	T	sh file args runs the file with $0 the file name and the operands as positional parameters; the file need not be executable	exec/argv0 sh/c_command_file	
 sh/5	T	A command file with no slash is looked for in the current directory first	sh/c_command_file_cwd	
-sh/6	T	A command file that cannot be found gives status 127	sh/c_command_file_missing	dash 0.5.13.4 exits 2; the sh page says 127, so bash --posix is the oracle
+sh/6	T	A command file that cannot be found gives status 127	sh/c_command_file_missing sh/c_dashdash_operand	dash 0.5.13.4 exits 2; the sh page says 127, so bash --posix is the oracle
 sh/7	T	sh -s reads commands from standard input and takes operands as positional parameters; no operands and no -c means -s	stdin/program_takes_rest sh/c_dash_s	
 sh/8	T	The shell does not read ahead on standard input: a command it starts reads the bytes after its own line	stdin/read_takes_next_line stdin/program_takes_rest sh/c_no_read_ahead sh/c_no_read_ahead_file	
 sh/9	T	A script of only blank lines and comments exits zero; the status is otherwise that of the last command	parse/comments_ok sh/c_exit_status	
