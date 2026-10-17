@@ -341,7 +341,9 @@ fn cmdsub_at(mut sh: Sh, w: str, i: int) -> (int, int) {
         p.pos = i + 2
         node = parse_clist(mut p, mut sh.ast)
         let k = peek(mut p, mut sh.ast)
-        if p.err.len > 0 || k != T_OP || p.tx != ")" {
+        // the `)` back in the word's own text when an alias's value
+        // was being read (`sh.parse`'s `alias_unwind`)
+        if p.err.len > 0 || k != T_OP || p.tx != ")" || !alias_unwind(mut p, 0) {
             fatal(mut sh, "syntax error in command substitution", 2)
             return (-1, w.len)
         }
