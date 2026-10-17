@@ -13,12 +13,12 @@ id	kind	statement	cases	note
 2.2.3/7	T	Inside double quotes backslash is an escape only before $ ` " backslash and newline	quote/special_chars quote/c_dq_backslash	
 2.2.3/8	T	The literal value of the result of an expansion in double quotes is preserved (no splitting, no globbing)	split/quoted quote/c_dq_result_literal	
 2.2.4/1	T	$'...' preserves characters literally up to the terminating unescaped single quote	quote/dollar_single quote/c_ds_plain	POSIX.1-2024 requires them; recorded with bash --posix as the oracle, and dash 0.5.13.4 agrees on every case (sh17 measured that it has them)
-2.2.4/2	T	$'...' escapes \" \' \\ \a \b \e \f \n \r \t \v yield their characters	quote/c_ds_escapes	
+2.2.4/2	T	$'...' escapes \" \' \\ \a \b \e \f \n \r \t \v yield their characters	quote/c_ds_escapes quote/ds_more_escapes	
 2.2.4/3	T	$'\cX' yields the control character for X	quote/c_ds_control	
 2.2.4/4	T	$'\xXX' yields the byte with that hexadecimal value, ended by the first non-hex character	quote/c_ds_hex	
 2.2.4/5	T	$'\ddd' yields the byte with that octal value, one to three digits	quote/c_ds_octal	
 2.2.4/6	T	An escaped single quote does not end a $'...' sequence, and the sequence joins with adjacent word parts	quote/c_ds_embedded	
-2.2.4/7	T	$'...' escapes are processed before word expansion: the result is quoted (not split, not globbed)	quote/c_ds_quoted	
+2.2.4/7	T	$'...' escapes are processed before word expansion: the result is quoted (not split, not globbed)	quote/c_ds_quoted quote/ds_contexts	
 2.3/1	T	Operators are formed greedily from unquoted characters (&& || ;; ;& << >> <& >& <> <<- >|)	parse/redirs_ok parse/compound_ok parse/c_operators_adjacent	
 2.3/2	T	A quote does not delimit a token: adjacent quoted and unquoted parts form one word	quote/mixed parse/c_quotes_join	
 2.3/3	T	An unquoted blank delimits a token and is discarded	parse/c_blanks	
@@ -27,16 +27,16 @@ id	kind	statement	cases	note
 2.3/6	T	A here-document body starts after the next newline token; tokens after the operator on the same line are kept	parse/heredoc_ok redir/heredoc parse/c_heredoc_rest_of_line	
 2.3/7	T	Each complete command is executed before the next is tokenized and parsed	parse/c_exec_before_parse parse/c_exec_before_parse_cd	
 2.3/8	T	The token at end of input is delimited (a last line with no newline runs)	parse/c_no_final_newline	
-2.3.1/1	T	An unquoted command-name token that names an alias is replaced by the alias value	alias/c_basic	dash and bash --posix agree; alias takes effect for the next complete command
+2.3.1/1	T	An unquoted command-name token that names an alias is replaced by the alias value	alias/c_basic alias/command_position	dash and bash --posix agree; alias takes effect for the next complete command
 2.3.1/2	T	A token with any quoting character is not subject to alias substitution	alias/c_quoted_not	
 2.3.1/3	T	Only a token in command-name position is substituted, not an argument	alias/c_position	
-2.3.1/4	T	An alias is not expanded again inside its own expansion (no recursion on the same name)	alias/c_no_self_recursion	
-2.3.1/5	T	An alias value ending in a blank makes the next token subject to alias substitution	alias/c_trailing_blank	
-2.3.1/6	T	The alias value is tokenized as input: it may hold several tokens, operators and reserved words	alias/c_value_tokens	
+2.3.1/4	T	An alias is not expanded again inside its own expansion (no recursion on the same name)	alias/c_no_self_recursion alias/recursion_more	
+2.3.1/5	T	An alias value ending in a blank makes the next token subject to alias substitution	alias/c_trailing_blank alias/trailing_more	
+2.3.1/6	T	The alias value is tokenized as input: it may hold several tokens, operators and reserved words	alias/c_value_tokens alias/value_text alias/reserved_words	
 2.3.1/7	T	A change to an alias takes effect no later than the end of the complete command that made it	alias/c_takes_effect_next	
 2.3.1/8	T	Aliases are not inherited by a separately invoked shell	alias/c_not_inherited	
 2.3.1/10	S	At the prompt an alias defined on one line is in effect on the next	session:c_alias_interactive	
-2.3.1/9	T	Aliases are part of the environment a subshell duplicates	alias/c_subshell	
+2.3.1/9	T	Aliases are part of the environment a subshell duplicates	alias/c_subshell alias/scope	
 2.4/1	T	Reserved words are recognized only unquoted and in command position	parse/compound_ok parse/c_reserved_quoted	
 2.4/2	T	Reserved words are recognized after another reserved word (if/then/else/do/{/!)	parse/c_reserved_after_reserved	
 2.4/3	T	In is the only reserved word recognized as the third word of case and for	parse/c_in_third_word	
@@ -213,7 +213,7 @@ id	kind	statement	cases	note
 2.9.2/2	T	The pipe is assigned before the command's own redirections	pipe/c_redirect_overrides	
 2.9.2/3	T	The pipeline's status is the last command's	pipe/status_last pipe/pipeline_status pipe/c_status_last	
 2.9.2/4	T	! inverts the status of the pipeline	pipe/negation control/not pipe/c_bang	
-2.9.2/5	T	With set -o pipefail the status is the last non-zero status in the pipeline, zero if all succeed	pipe/c_pipefail	new in POSIX.1-2024; dash 0.5.13.4 has `set -o pipefail`? recorded from both, POSIX decides
+2.9.2/5	T	With set -o pipefail the status is the last non-zero status in the pipeline, zero if all succeed	pipe/c_pipefail pipe/pipefail_rightmost pipe/pipefail_programs pipe/pipefail_compound	new in POSIX.1-2024; dash 0.5.13.4 has `set -o pipefail` (sh17 measured), recorded from it
 2.9.2/6	T	The pipefail setting used is the one in effect when the pipeline starts	pipe/c_pipefail_at_start	
 2.9.2/7	T	Each command of a multi-command pipeline runs in a subshell environment (or the current one, as an extension, for some)	pipe/stage_is_subshell pipe/cd_in_stage pipe/exit_in_stage pipe/c_stage_environment	
 2.9.2/8	T	The shell waits for the last command of a foreground pipeline; stages run concurrently	pipe/sigpipe_producer pipe/large_in_process pipe/c_concurrent_stages	
@@ -354,7 +354,7 @@ export/3	T	export of a readonly variable with a new value fails	builtin/c_export
 export/4	T	export -- and invalid names	builtin/c_export_invalid	
 readonly/1	T	readonly name makes later assignment and unset fail	builtin/readonly_error builtin/unset_readonly builtin/c_readonly	
 readonly/2	T	readonly -p writes readonly name=value lines suitable for reinput	builtin/readonly_p builtin/c_readonly_p	
-readonly/3	T	A readonly variable cannot be changed by read, getopts, for, export, or an arithmetic assignment	builtin/c_readonly_everywhere	
+readonly/3	T	A readonly variable cannot be changed by read, getopts, for, export, or an arithmetic assignment	builtin/c_readonly_everywhere getopts/readonly_target	
 return/1	T	return n ends the function with status n; without n, with the last status	builtin/return_status builtin/c_return	
 return/2	T	return in a trap action with no operand uses the status from before the trap	builtin/c_return_in_trap	
 return/3	X	return outside a function or dot script (recorded from dash; unspecified by POSIX)	builtin/return_top	
@@ -379,7 +379,7 @@ set/17	T	set -x writes each expanded command to standard error before running it
 set/18	T	set -o name and set +o name are the long forms of the option letters	option/set_o option/c_long_names	
 set/19	T	set +o writes commands that restore the current option settings; set -o lists them	option/c_plus_o	
 set/20	T	set -o ignoreeof, nolog, vi are accepted	option/c_up_options	
-set/21	T	set -o pipefail is accepted and reported (new in 2024)	option/c_pipefail_option	
+set/21	T	set -o pipefail is accepted and reported (new in 2024)	option/c_pipefail_option option/pipefail_cluster	
 set/22	T	set -h and set -b are accepted	option/c_h_b	dash 0.5.13.4 refuses -h; POSIX requires it be accepted, so bash --posix is the oracle
 set/23	T	An invalid option is an error: a non-interactive shell exits	option/bad_option	
 set/24	T	Options given on the sh command line are set, and appear in $-	sh/c_options_on_command_line	
@@ -413,12 +413,12 @@ sh/3	T	sh -c reads no commands from standard input, which stays available to the
 sh/4	T	sh file args runs the file with $0 the file name and the operands as positional parameters; the file need not be executable	exec/argv0 sh/c_command_file	
 sh/5	T	A command file with no slash is looked for in the current directory first	sh/c_command_file_cwd	
 sh/6	T	A command file that cannot be found gives status 127	sh/c_command_file_missing sh/c_dashdash_operand	dash 0.5.13.4 exits 2; the sh page says 127, so bash --posix is the oracle
-sh/7	T	sh -s reads commands from standard input and takes operands as positional parameters; no operands and no -c means -s	stdin/program_takes_rest sh/c_dash_s	
+sh/7	T	sh -s reads commands from standard input and takes operands as positional parameters; no operands and no -c means -s	stdin/program_takes_rest sh/c_dash_s sh/lone_hyphen	
 sh/8	T	The shell does not read ahead on standard input: a command it starts reads the bytes after its own line	stdin/read_takes_next_line stdin/program_takes_rest sh/c_no_read_ahead sh/c_no_read_ahead_file	
 sh/9	T	A script of only blank lines and comments exits zero; the status is otherwise that of the last command	parse/comments_ok sh/c_exit_status	
 sh/10	T	A syntax error in a non-interactive shell gives a status from 1 to 125	sh/c_syntax_status	
 sh/11	T	A shell given -i, or reading standard input with input and error on a terminal, is interactive; otherwise not	session:default_interactive stdin/no_prompt sh/c_not_interactive	
-sh/12	T	-c and -s combine with option letters in one argument and with -o	sh/c_combined_options	
+sh/12	T	-c and -s combine with option letters in one argument and with -o	sh/c_combined_options sh/option_clusters	
 sh/13	T	Input lines may be of any length	sh/c_long_line	
 sh/14	T	The shell's own exit: the EXIT status is that of the last command when input ends	sh/c_eof_status	
 sh/15	S	An interactive shell ignores SIGQUIT and SIGTERM and survives SIGINT	session:ctrl_c_prompt session:term_at_prompt	
@@ -445,23 +445,23 @@ sh/37	S	vi v edits the line with vi in a temporary file, then runs it	session:c_
 sh/38	S	SIGINT while a line is edited ends the line and reissues the prompt on the next line	session:c_vi_ctrl_c session:c_ed_ctrl_c session:c_ed_ctrl_c_continued	
 sh/22	U	ENV is ignored when the real and effective user or group IDs differ		needs a set-user-ID shell; not built by the corpus (and wolf has no uid surface, wolf-lang#633)
 sh/23	U	A FIFO or terminal standard input set non-blocking is put back to blocking reads		needs a descriptor inherited with O_NONBLOCK; measured by hand (docs/CENSUS.md)
-alias/1	T	alias name=value defines an alias; alias name writes it as name=value quoted for reinput; alias alone writes all	alias/c_alias_print	
+alias/1	T	alias name=value defines an alias; alias name writes it as name=value quoted for reinput; alias alone writes all	alias/c_alias_print alias/forms	
 alias/2	T	alias for a name with no definition fails with a message, and other operands are still processed	alias/c_alias_missing	
 alias/3	T	unalias name removes it; unalias -a removes all; removing a missing alias fails	alias/c_unalias	
-alias/4	T	An alias may name a reserved word position and aliases apply after reserved words that take a command	alias/c_after_reserved	
-alias/5	T	An alias defined in a function or compound command is not in effect for the rest of that already-parsed command	alias/c_parse_time	
+alias/4	T	An alias may name a reserved word position and aliases apply after reserved words that take a command	alias/c_after_reserved alias/function_names	
+alias/5	T	An alias defined in a function or compound command is not in effect for the rest of that already-parsed command	alias/c_parse_time alias/parse_time_more	
 alias/6	T	Alias names may contain ! % , @ and the portable filename characters	alias/c_alias_names	
 command/1	T	command name runs the utility ignoring functions	builtin/command_bypass command/c_bypass_function	
-command/2	T	command -v name writes how the name would be run: a path, the name of a built-in or function, an alias definition, a reserved word	builtin/command_v command/c_v	
+command/2	T	command -v name writes how the name would be run: a path, the name of a built-in or function, an alias definition, a reserved word	builtin/command_v command/c_v command/v_forms command/v_alias	
 command/3	T	command -V name writes a description in words for each kind	command/c_big_v	
 command/4	T	command -p uses a default PATH that finds the standard utilities	command/c_p	
 command/5	T	command before a special built-in removes its special properties: errors do not exit, assignments do not persist	builtin/command_bypass command/c_special_properties	
 command/6	T	The status of command is that of the utility; 127 not found, 126 not executable	command/c_status	
 command/7	T	command is not a declaration utility by itself, but command export keeps assignment context	command/c_declaration	
-type/1	T	type name writes how each name would be interpreted, and fails for a name that is not found	type/c_type	
+type/1	T	type name writes how each name would be interpreted, and fails for a name that is not found	type/c_type type/statuses	
 type/2	T	type's output names the path of a utility found in PATH	type/c_type_path	
-hash/1	T	hash name remembers the utility's location; hash alone lists; hash -r forgets; a missing utility fails	hash/c_hash	
-hash/2	T	A remembered location that stops working is searched for again	hash/c_stale	
+hash/1	T	hash name remembers the utility's location; hash alone lists; hash -r forgets; a missing utility fails	hash/c_hash hash/remembers hash/forgets	
+hash/2	T	A remembered location that stops working is searched for again	hash/c_stale hash/kept_path	
 cd/1	T	cd with no operand goes to HOME; with HOME unset or empty it fails or does nothing as recorded	cd/home cd/c_home_forms	
 cd/2	T	cd - goes to OLDPWD and writes the new directory	cd/minus cd/oldpwd cd/c_minus	
 cd/3	T	cd sets PWD and OLDPWD, and they are what a later child sees when exported	cd/oldpwd cd/child_sees_it cd/c_pwd_oldpwd	
@@ -499,13 +499,13 @@ printf/7	T	A bad numeric operand gives a diagnostic and a non-zero status, and o
 printf/8	T	Floating conversions %e %f %g %a (required when the system has them: recorded from dash)	printf/c_floats	
 printf/9	T	printf with no format operand fails; -- ends options	printf/c_usage	
 printf/10	X	Numbered argument conversions %n$ (new in 2024)	printf/c_numbered	POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 implements it; recorded, not counted
-read/1	T	read assigns fields split by IFS to the variables; the last gets the rest, trimmed of IFS white space	builtin/read builtin/read_ifs read/c_fields	
+read/1	T	read assigns fields split by IFS to the variables; the last gets the rest, trimmed of IFS white space	builtin/read builtin/read_ifs read/c_fields read/trailing_delimiter	
 read/2	T	Without -r a backslash escapes the next character and backslash-newline continues the line; with -r backslash is literal	builtin/read_raw read/c_backslash	
 read/3	T	read returns non-zero at end-of-file, having assigned what it read	read/c_eof	
 read/4	T	read reads exactly one line, leaving the rest of the input for the next reader	read/c_one_line	
 read/5	X	read with no variable name: REPLY as an extension, or an error (recorded from dash)	read/c_no_var	POSIX requires at least one var operand; behaviour without one is unspecified
-read/6	T	read -d delim reads up to the delimiter; -d '' reads up to a NUL (new in 2024)	read/c_delim	POSIX.1-2024 addition; dash 0.5.13.4 has no -d; bash --posix is the oracle
-read/7	T	read into a readonly variable or an invalid name fails	read/c_bad_target	
+read/6	T	read -d delim reads up to the delimiter; -d '' reads up to a NUL (new in 2024)	read/c_delim read/delim_forms	POSIX.1-2024 addition; dash 0.5.13.4 has no -d; bash --posix is the oracle
+read/7	T	read into a readonly variable or an invalid name fails	read/c_bad_target read/target_order	
 read/8	T	read uses the shell's IFS when none is given for the command, and does not expand what it reads	read/c_no_expansion	
 read/9	T	read from a descriptor other than 0 through redirection, and from a here-document	redir/heredoc_read redir/read_fd	
 getopts/1	T	getopts walks options, setting the variable and OPTIND; returns non-zero at the end with the variable set to ?	builtin/getopts getopts/c_basic	dash 0.5.13.4 sets OPTARG to the empty string for an option with no argument, and restarts oddly after OPTIND=1; the page says unset, so bash --posix is the oracle for the getopts cases that show OPTARG
