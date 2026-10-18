@@ -1,0 +1,8 @@
+echo A >&2; sleep 5 & kill %1; wait; echo "st=$?"
+echo B >&2; sleep 5 & p=$!; kill $p; wait; echo "st=$?"
+echo C >&2; sleep 5 & p=$!; jobs >/dev/null; kill $p; wait; echo "st=$?"
+echo D >&2; sleep 5 & p=$!; x=$(jobs -p); kill $p; wait; echo "st=$?"
+echo E >&2; sleep 5 & p=$!; jobs | grep -c sleep; kill $p; wait; echo "st=$?"
+echo F >&2; sleep 5 & p=$!; kill $p; wait $p; echo "st=$?"
+echo G >&2; sleep 5 & p=$!; kill $p; sleep 0.2; wait; echo "st=$?"
+echo H >&2; sleep 5 & p=$!; kill $p; sleep 0.2; jobs; echo "st=$?"
