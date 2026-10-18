@@ -178,8 +178,14 @@ fn next_line(mut sh: Sh, first: bool) -> (str, int) {
     if r.mem_set {
         sh.ed.mem = txt_mem(r.mem)
     }
+    sh.ed.resume = ""
     if r.how == ED_INTR {
         return ("", ED_INTR)
+    }
+    if r.how == ED_CHILD {
+        sh.ed.resume = r.line
+        sh.ed.resume_at = r.num
+        return ("", ED_CHILD)
     }
     if r.how == ED_VISUAL {
         sh.ed.vnum = r.num
@@ -331,6 +337,11 @@ fn run_lines(mut sh: Sh) -> int {
         sh.exit_warned = false
         loop {
             let (got, how) = next_line(mut sh, first)
+            if how == ED_CHILD {
+                // `set -b`: the notice now, then the line again
+                jc_notify(mut sh)
+                continue
+            }
             if how == ED_INTR {
                 intr = true
                 break

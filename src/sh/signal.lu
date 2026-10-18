@@ -226,6 +226,11 @@ fn m_quit() -> int {
     signal.quit()
 }
 
+/// A child changed (`SIGCHLD`): a job's wait, and `set -b` at the prompt.
+fn m_child() -> int {
+    signal.child()
+}
+
 /// A window resized (`SIGWINCH`): the line editor draws its line again.
 fn m_resize() -> int {
     signal.resize()

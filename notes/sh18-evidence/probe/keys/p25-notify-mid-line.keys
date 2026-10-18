@@ -1,0 +1,7 @@
+set -b
+sleep 1 &
+\k echo par
+\k t
+\k ial
+\k \r
+exit

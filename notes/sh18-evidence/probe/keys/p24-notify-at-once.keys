@@ -1,0 +1,9 @@
+set -b
+sleep 0.2 &
+\k echo par
+\k tial
+\k \r
+set +b
+sleep 0.2 &
+echo after
+exit

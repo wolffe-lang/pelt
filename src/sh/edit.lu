@@ -102,6 +102,11 @@ const ED_INTR: int = 3
 /// vi `v`: the line goes to vi through `fc` (`hist_visual`).
 const ED_VISUAL: int = 4
 
+/// `set -b`: a job changed while the line was edited; the line so far
+/// comes back (`EdOut.line`, `ints_txt` of it, the cursor in `num`) for
+/// the shell to write the notice and edit it again (`sh.jobs`).
+const ED_CHILD: int = 5
+
 /// Keys that are not characters. A character key is its code point; a
 /// byte that is not UTF-8 is `K_RAW + b`; Alt (ESC first) is `K_ALT + c`.
 const K_RAW: int = 2097152
@@ -133,6 +138,9 @@ const K_EOF: int = -2
 const K_INTR: int = -3
 
 const K_HUP: int = -4
+
+/// A child changed, under `set -b` (`ED_CHILD`).
+const K_CHILD: int = -5
 
 /// The mode bits (`[os.term.mode]`).
 const TM_CANON: int = 1
@@ -192,6 +200,10 @@ struct EdKeep {
     cpr: int,
     /// The count before vi's `v` when a line ended with it (0: none).
     vnum: int,
+    /// A line `set -b`'s notice cut short, edited again (`ED_CHILD`):
+    /// its characters (`ints_txt`) and the cursor; "" for none.
+    resume: str,
+    resume_at: int,
 }
 
 fn new_edmem() -> EdMem {
@@ -213,6 +225,8 @@ fn new_edkeep() -> EdKeep {
         mem: new_edmem(),
         cpr: 0,
         vnum: 0,
+        resume: "",
+        resume_at: 0,
     }
 }
 
@@ -580,6 +594,8 @@ struct Ed {
     /// several names; the shell's functions and variables by name, and
     /// `PATH` and `HOME`, as the line began.
     tabs: int,
+    /// `set -b`: the wait ends for a job's change too.
+    wait_child: bool,
     fnames: List[str],
     vnames: List[str],
     cpath: str,
@@ -662,6 +678,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         prev_line: prev,
         vnum: 0,
         tabs: 0,
+        wait_child: false,
         fnames: sh.funcs.keys(),
         vnames: var_names(sh),
         cpath: sh.vals["PATH"] else "",
@@ -688,15 +705,22 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         }
     }
     let rs_heard = e.rs_listen || sh.sig_listen & m_resize() != 0
+    // `set -b` (XCU 2.11): a job's change ends the wait too, while a
+    // job has a process to change
+    e.wait_child = sh.opt_b && sh.jc_on && sh.sig_listen & m_child() != 0 && jobs_live(sh)
     e.wait_set = (if e.poll_hup then m_hup() else 0) |
         (if e.poll_int then m_int() else 0) |
-        (if rs_heard then m_resize() else 0)
+        (if rs_heard then m_resize() else 0) |
+        (if e.wait_child then m_child() else 0)
     e.wait_ok = e.wait_set != 0
     os_term_set_mode(0, raw_mode(old)) else |_| {
         ed_unlisten(e)
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     start_line(mut e)
+    if sh.ed.resume.len > 0 {
+        set_line(mut e, txt_ints(sh.ed.resume), sh.ed.resume_at)
+    }
     flush_out(mut e)
     if e.vi {
         vi_loop(mut e)
@@ -720,6 +744,15 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     var line = ""
+    if e.done == ED_CHILD {
+        return EdOut {
+            line: ints_txt(e.buf),
+            how: ED_CHILD,
+            mem: if e.mem_set then mem_txt(e.mem) else "",
+            mem_set: e.mem_set,
+            num: e.cur,
+        }
+    }
     if e.done == ED_OK || e.done == ED_VISUAL {
         var o = List[byte]()
         encode_into(mut o, e.buf, 0, e.buf.len)
@@ -1354,6 +1387,8 @@ fn next_byte(mut e: Ed) -> int {
                 e.wait_ok = false
             } else if got & m_hup() != 0 {
                 return K_HUP
+            } else if got & m_child() != 0 {
+                return K_CHILD
             } else if got & m_int() != 0 {
                 return K_INTR
             } else if got & m_resize() != 0 {
@@ -1669,7 +1704,7 @@ fn finish(mut e: Ed, how: int) {
             put_s(mut e, "^C")
         }
         put_s(mut e, "\r\n")
-    } else if how == ED_OK || how == ED_VISUAL {
+    } else if how == ED_OK || how == ED_VISUAL || how == ED_CHILD {
         let (r, c) = pos_at(e, e.buf.len)
         move_to(mut e, r, c)
         if !(c == 0 && r > e.r0) {
@@ -1687,6 +1722,10 @@ fn ends_line(mut e: Ed, k: int) -> bool {
     }
     if k == K_EOF {
         e.done = ED_EOF
+        return true
+    }
+    if k == K_CHILD {
+        finish(mut e, ED_CHILD)
         return true
     }
     if k == K_INTR || k == 3 && !e.int_ignored {
@@ -1934,7 +1973,7 @@ fn isearch(mut e: Ed) -> bool {
     loop {
         let k = next_key(mut e)
         var again = false
-        if k == K_HUP || k == K_EOF || k == K_INTR || k == 3 && !e.int_ignored {
+        if k == K_HUP || k == K_EOF || k == K_INTR || k == K_CHILD || k == 3 && !e.int_ignored {
             // the line ends; what is shown is the match
             leave_search(mut e, keep, keep_cur, at, pos, pat)
             let _ended = ends_line(mut e, k)
