@@ -16,8 +16,15 @@ The census cases (sh06, `c_*`; `docs/CENSUS.md`), by what they wait on.
 |---|---|---|---|
 | **ignoreeof** | `set -o ignoreeof` is accepted and Ctrl-D still ends the shell | pelt (P10) | `c_ignoreeof` |
 | **mail** | `MAIL`, `MAILCHECK`, `MAILPATH`: no notice before the prompt | pelt (P10); the file's time is `fs_stat` | `c_mail` |
-| **job control** | no job control: `set -m` is accepted and does nothing — no process group per job, no terminal handoff, Ctrl-Z stops nothing the shell can report, no `jobs`, `fg`, `bg`, no job numbers or completion notices. Recorded from `dash -i -m` | wolf-lang W03 (stop reporting, `SIGCONT`, a signal to a group) and #680 (a wait that a signal or a second child can end), #141 (`kill` built in); then pelt (sh12, sh13) | `c_jc_background_group`, `c_jc_background_job`, `c_jc_bg`, `c_jc_bg_ttin`, `c_jc_ctrl_z`, `c_jc_done_message`, `c_jc_fg`, `c_jc_fg_number`, `c_jc_foreground_group`, `c_jc_jobs_list`, `c_jc_jobs_states` |
 <!-- census:end -->
+
+**Cleared by sh18 (wolf 0.2.32, job control):** `c_jc_background_group`,
+`c_jc_background_job`, `c_jc_bg`, `c_jc_bg_ttin`, `c_jc_ctrl_z`,
+`c_jc_done_message`, `c_jc_fg`, `c_jc_fg_number`, `c_jc_foreground_group`,
+`c_jc_jobs_list`, `c_jc_jobs_states`: a pipeline of programs in a group of
+its own, the terminal handed over and taken back, stops reported by
+`os_wait_poll`, `jobs`, `fg`, `bg`, the notices. pelt is given `+m`
+in every session dash is (`tools/lib_session.py`'s `argv_for`).
 
 **Cleared by sh16 (the completion):** `c_ed_complete_command`,
 `c_ed_complete_file` (Tab completes commands, files and variables,
@@ -49,11 +56,11 @@ polls for it after the line is read and after the child is reaped).
 
 **Gaps with no session case**, because the harness cannot type them:
 
-- **job control** — `jobs`, `fg`, `bg`, Ctrl-Z: wolf 0.2.27 has the
-  process group, the terminal's foreground group and `SUSPEND`, and
-  not yet a stopped child's report, `SIGCONT` or a signal to a group
-  (`[os.term.note]`), so the sessions stay `dash -i +m` (pelt H3). `&`
-  and `wait` work (`background`, `background_status`).
+- **`set -b`'s notice while a line is typed** (2.11/11) — the harness
+  types when the shell is quiet and cannot place a notice between two
+  keys; and dash 0.5.13.4 writes it at the next prompt anyway (sh18,
+  black-box p11), where POSIX and bash write it at once, as pelt does
+  (`notes/sh18-evidence/probe/keys/p24`, `p25`).
 - **the history file across shells** — a session is one shell, so
   `HISTFILE` written by one shell and read by the next, two shells
   sharing one file at once, and the file cut to `HISTSIZE` are asked
