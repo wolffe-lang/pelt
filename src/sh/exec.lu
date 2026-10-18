@@ -665,7 +665,7 @@ fn eval_top(mut sh: Sh, mut p: P, src: str, line: int) -> int {
         }
         if sh.jc_on && !sh.interactive {
             // `set -m` in a script: the notices after each command
-            jc_notify(mut sh)
+            jc_notify(mut sh, true)
         }
         if p.pend.len == 0 && p.want_doc == 0 {
             recycle(mut sh.ast, top, dtop)

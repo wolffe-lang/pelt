@@ -1,9 +1,0 @@
-sleep 30
-^Z
-kill %1
-sleep 0.3
-jobs
-kill -CONT %1
-sleep 0.3
-jobs
-exit

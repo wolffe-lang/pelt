@@ -375,7 +375,7 @@ fn jc_listen(mut sh: Sh) {
 /// Every change of a child `os_wait_poll` has to report, written into
 /// the table (module doc). Answers whether anything changed.
 fn jc_poll(mut sh: Sh) -> bool {
-    var any = false
+    var any = jc_apply(mut sh)
     loop {
         let (h, st) = os_wait_poll() else (-1, 0)
         if h < 0 {
@@ -385,6 +385,44 @@ fn jc_poll(mut sh: Sh) -> bool {
         jc_record(mut sh, h, st)
     }
     any
+}
+
+/// The poll taken as a line is read at the prompt (`jc_take`): what the
+/// jobs did while the line was typed, written into the table only when
+/// the next thing that reads the table asks (a poll, a notice, `jobs`)
+/// and not before the line has run. So `exit` reads the table as it
+/// stood (dash, black-box: c_jc_ctrl_z), and a notice comes at the
+/// prompt after the line during which it was seen, whatever the host's
+/// timing (a job `kill` ends is told after the next line, not at the
+/// prompt right after `kill`, as on linux dash; macOS ends it before
+/// that prompt).
+fn jc_take(mut sh: Sh) {
+    if !sh.jc_on || !jobs_live(sh) {
+        return
+    }
+    loop {
+        let (h, st) = os_wait_poll() else (-1, 0)
+        if h < 0 {
+            break
+        }
+        (mut sh.def_h).push(h)
+        (mut sh.def_st).push(st)
+    }
+}
+
+/// What `jc_take` kept, written into the table; whether there was any.
+fn jc_apply(mut sh: Sh) -> bool {
+    if sh.def_h.len == 0 {
+        return false
+    }
+    var k = 0
+    while k < sh.def_h.len {
+        jc_record(mut sh, sh.def_h[k], sh.def_st[k])
+        k += 1
+    }
+    (mut sh.def_h).clear()
+    (mut sh.def_st).clear()
+    true
 }
 
 fn jc_record(mut sh: Sh, h: int, st: int) {
@@ -924,11 +962,12 @@ fn job_line(sh: Sh, j: int, long: bool) -> str {
 /// last told of, most recently used first, on standard error; an ended
 /// one is forgotten as it is told, so the next takes its mark (dash,
 /// black-box: p01).
-fn jc_notify(mut sh: Sh) {
+fn jc_notify(mut sh: Sh, fresh: bool) {
     if !sh.jc_on || sh.sub > 0 || sh.shadow {
         return
     }
-    if jobs_live(sh) {
+    let _a = jc_apply(mut sh)
+    if fresh && jobs_live(sh) {
         let _p = jc_poll(mut sh)
     }
     // a list pelt ran itself is told of a line later, when a program's

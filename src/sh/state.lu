@@ -195,6 +195,9 @@ struct Sh {
     /// a blocking wait is still owed): its handle and status.
     stash_h: List[int],
     stash_st: List[int],
+    /// The poll taken as a line was read (`sh.jobs`'s `jc_take`).
+    def_h: List[int],
+    def_st: List[int],
     /// `$!`: the last asynchronous list's id, or 0 for none.
     last_bg: int,
     /// Signals (`sh.signal`): the meanings the process now listens for
@@ -375,6 +378,8 @@ fn new_sh(name: str) -> Sh {
         pr_text: List[str](),
         stash_h: List[int](),
         stash_st: List[int](),
+        def_h: List[int](),
+        def_st: List[int](),
         last_bg: 0,
         sig_listen: 0,
         sig_ignore: 0,

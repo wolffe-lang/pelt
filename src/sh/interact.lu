@@ -330,8 +330,9 @@ fn run_lines(mut sh: Sh) -> int {
         var intr = false
         var visual = false
         if sh.interactive && sh.jc_on {
-            // XCU 2.11: what the jobs did since, before the prompt
-            jc_notify(mut sh)
+            // XCU 2.11: what the jobs did since, before the prompt, as
+            // far as the shell has looked (`sh.jobs`'s `jc_take`)
+            jc_notify(mut sh, false)
         }
         sh.exit_warned_prev = sh.exit_warned
         sh.exit_warned = false
@@ -339,7 +340,7 @@ fn run_lines(mut sh: Sh) -> int {
             let (got, how) = next_line(mut sh, first)
             if how == ED_CHILD {
                 // `set -b`: the notice now, then the line again
-                jc_notify(mut sh)
+                jc_notify(mut sh, true)
                 continue
             }
             if how == ED_INTR {
@@ -421,6 +422,8 @@ fn run_lines(mut sh: Sh) -> int {
         if sh.interactive {
             // the command about to run is the history's newest entry
             hist_add(mut sh, src)
+            // what the jobs did while it was typed (`sh.jobs`)
+            jc_take(mut sh)
         }
         // a signal that came while the line was being typed: its trap
         // runs now, before the line does (dash, black-box); Ctrl-C with
