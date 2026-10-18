@@ -141,7 +141,7 @@ struct Sh {
     /// foreground job (a handle, -1 for none), the shell's own group,
     /// the group it was started in when it moved out of it (-1 if it
     /// did not), and the meanings it ignores for itself and gives back
-    /// to its children (`SUSPEND`, `BG_READ`, `BG_WRITE`).
+    /// to its children (`SUSPEND`, `BG_WRITE`).
     jc_on: bool,
     jc_tty: int,
     jc_pgid: int,

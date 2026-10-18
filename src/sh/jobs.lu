@@ -290,8 +290,8 @@ fn job_of(sh: Sh, id: int) -> int {
 /// What a job id names (XBD 3 "Job ID"): its slot, `-1` for none,
 /// `-2` for a `%string` or `%?string` more than one job's command
 /// matches. `%%`, `%+` and `%` are the current job, `%-` the previous
-/// one, `%n` job n, `%string` the job whose command begins with it,
-/// `%?string` the one whose command holds it.
+/// one, `%n` job n, `%string` the job whose (first) command begins with
+/// it, `%?string` the one whose (first) command holds it.
 fn job_index(sh: Sh, spec: str) -> int {
     if spec.len == 0 || ch(spec, 0) != '%' {
         return -1
@@ -322,7 +322,7 @@ fn job_index(sh: Sh, spec: str) -> int {
     var j = 0
     while j < sh.jb_state.len {
         if sh.jb_state[j] != JB_FREE && sh.jb_text[j].len > 0 {
-            let t = sh.jb_text[j]
+            let t = first_text(sh, j)
             let hit = if inside then t.contains(want) else t.starts_with(want)
             if hit {
                 if found >= 0 {
@@ -334,6 +334,20 @@ fn job_index(sh: Sh, spec: str) -> int {
         j += 1
     }
     found
+}
+
+/// The text `%string` and `%?string` look in: the job's first
+/// process's (dash, black-box: `%?cat` names no job `sleep 31 | cat`,
+/// c_jc_job_ids), or the job's when it has no process.
+fn first_text(sh: Sh, j: int) -> str {
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j && sh.pr_text[k].len > 0 {
+            return sh.pr_text[k]
+        }
+        k += 1
+    }
+    sh.jb_text[j]
 }
 
 /// The word for a bad job id: `-2` ambiguous, else no such job.
@@ -596,9 +610,9 @@ fn jc_sync(mut sh: Sh) {
 /// waits until its group is the terminal's foreground one (stopping
 /// itself with `BG_READ` while it is not, as a shell started in the
 /// background must), leads a group of its own (`os_set_pgid(0)`) and
-/// takes the terminal; it ignores `SUSPEND`, `BG_READ` and `BG_WRITE`.
-/// A non-interactive one ignores `SUSPEND` and `BG_WRITE` (dash,
-/// black-box: s01) and hands no terminal on.
+/// takes the terminal. Either kind ignores `SUSPEND` and `BG_WRITE`,
+/// not `BG_READ` (dash, black-box: its `SigIgn` in a session and in
+/// s01), and a non-interactive one hands no terminal on.
 fn jc_enable(mut sh: Sh) {
     sig_boot(mut sh)
     sh.jc_on = true
@@ -633,10 +647,8 @@ fn jc_enable(mut sh: Sh) {
             os_term_set_foreground(tty, sh.jc_pgid) else |_| {}
             sh.jc_tty = tty
         }
-        sh.jc_ign = signal.suspend() | signal.bg_read() | signal.bg_write()
-    } else {
-        sh.jc_ign = signal.suspend() | signal.bg_write()
     }
+    sh.jc_ign = signal.suspend() | signal.bg_write()
     sh.jc_child = true
     sig_apply(mut sh)
 }
