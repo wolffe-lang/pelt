@@ -1,5 +1,3 @@
 exit=0
 stderr=no
 bash=agree
-pending=interruptible wait
-why=no child wait in wolf 0.2.27 is non-blocking or interruptible: the action runs after the jobs end and wait answers 0

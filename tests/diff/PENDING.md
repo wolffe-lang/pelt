@@ -9,7 +9,6 @@ makes it pass.
 
 | primitive pelt waits on | where it comes from | cases |
 |---|---|---|
-| **an interruptible wait** — `wait` cut short by a trapped signal | `os_wait_status` blocks until the child ends and nothing waits for "a child or a signal" (`[os.term.note]` leaves stop reporting and the rest to the next job-control lane): the action runs after the jobs end and `wait` answers 0, where dash runs it at once and answers 128+N (wolf-lang#680) | `pending/wait_interrupted` |
 | **fork** — a process for a subshell | none planned: pelt runs `( … )` in-process, so a signal sent to "the subshell" (`$PPID` of its child) reaches the shell itself, whose trap then runs where dash's subshell would have died | `pending/subshell_signal` |
 | **user database** — `~login` | no `getpwnam` surface in wolf 0.2.27; not filed until a lane needs it beyond this case | `tilde/user` |
 
@@ -39,17 +38,13 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **ps4-expansion** | `PS4` is written as is, not parameter-expanded (XCU 2.5.3) | pelt (P10) | `option/c_ps4` |
 | **xtrace-assignment** | `set -x` does not trace a command that is only assignments | pelt (P10) | `option/c_xtrace_forms` |
 | **verbose** | `set -v` writes nothing | pelt#6 | `option/c_verbose`, `option/c_verbose_stderr` |
-| **notify-flag** | `set -o notify` does not put `b` in `$-` | pelt (P10) | `option/c_long_names` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
 | **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13); `(echo … >fifo &)` opens the FIFO for writing inside the shell, which waits for a reader that comes only after it, so `builtin/c_s_dot_special_file` times out (its `. /dev/null` line passes since sh07, and `builtin/dot_fifo_program` reads a FIFO a program writes); and `signal/c_trap_ignore_pipe` (since sh14 `trap '' PIPE` is honoured, `signal/trap_ignore_pipe_fifo`; this case's writer is a brace group in a pipeline, which runs to its end before the reader starts, so its write meets a pipe that still has a reader) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `builtin/c_s_dot_special_file`, `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell`, `signal/c_trap_ignore_pipe` |
 | **ulimit** | `ulimit` | wolf-lang: no `getrlimit`/`setrlimit` surface (W02) | `ulimit/c_bad`, `ulimit/c_enforced`, `ulimit/c_file_size`, `ulimit/c_resources` |
-| **jobs** | `jobs`, `jobs -p` | pelt (P12); job states need wolf-lang W03 | `jobsctl/c_jobs_script` |
-| **job-control** | `set -m`: a process group per job | wolf-lang: stop reporting, `SIGCONT`, a signal to a group, an interruptible wait (W03, wolf-lang#680) | `jobsctl/c_fg_bg_no_monitor`, `jobsctl/c_monitor_script_pgid` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
 | **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
 | **non-utf8-bytes** | a byte that is not UTF-8 (`a\377b` from a command substitution) cannot be a program's argument, since a wolf `str` is UTF-8: it reaches the program as `?`. Valid UTF-8 passes unchanged everywhere since sh07 (`quote/utf8_bytes`); this case's other lines pass | wolf-lang W06 (byte strings) | `quote/c_s_high_bytes` |
-| **interruptible wait** | `wait` cut short by a trapped signal | wolf-lang#680 | `signal/c_wait_interrupted_term` |
 | **user database** | `~login` | wolf-lang: no `getpwnam` surface (W04) | `tilde/c_user_root` |
 <!-- census:end -->
 
@@ -60,20 +55,32 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
   (`while :; do echo y; done | head -1`) does not end as it does under
   dash; and `exec cmd` inside a subshell starts `cmd` as a child of
   pelt rather than replacing a subshell process.
-- `kill 0`, `kill -- -N` (a process group): refused by name with
-  status 1. `os_signal_send` takes one process, and a signal to a group
-  is job control's (`[os.term.note]`; the job-control row above). No
-  case, here or under the oracle: it would signal the harness's own
-  group.
+- `kill 0`, `kill -- -N` (a process group) and `kill -1`: since sh18
+  sent through `os_signal_send_group` and `os_signal_send_all`. No case
+  here, under the oracle or pelt: `kill 0` and `kill -1` would signal
+  the harness's own group or every process the user may signal; a
+  group a session made is signalled in the session corpus instead
+  (`c_jc_kill_group`).
 - `kill` and `trap` for a signal POSIX does not name (linux's `IO`,
   `PWR`, `STKFLT`, 16, the real-time signals, by name or number): wolf
   has a meaning for the signals POSIX names and no other, so pelt
   refuses these (status 2 from `kill`, 1 from `trap`) where dash takes
   them. `kill -l` lists the 28 names wolf has.
-- A job id is the job's place among the asynchronous lists the shell
-  has started (`%1` the first, `%%` the newest); dash and bash give a
-  finished job's number to the next job, pelt does not. `%name` and
-  `%?text` name no job (pelt keeps no job's command text).
+- A job id (sh18): a job's number is the lowest one free, as dash's;
+  `%name` and `%?text` match the job's command text, which with job
+  control off is empty, as dash's (black-box: s02), so they name no job
+  in a script.
+
+**Cleared by sh18 (wolf 0.2.32), job control:** `jobsctl/c_jobs_script`
+(`jobs`, `-p`), `jobsctl/c_fg_bg_no_monitor`, `jobsctl/c_monitor_script_pgid`
+(`set -m`: a group per job), `option/c_long_names` (`b` in `$-`), and the
+two interruptible waits, `pending/wait_interrupted` (now
+`signal/wait_interrupted`) and `signal/c_wait_interrupted_term`: `wait`
+polls the children (`os_wait_poll`) and parks in `os_signal_wait` on
+`CHILD` and the trapped signals, so a trapped signal cuts it short with
+`128 + N`. `c_wait_interrupted_term`'s sender is `( … ) &`, which pelt
+still runs in-process to its end before `wait`: its signal is pending
+when `wait` looks, so the answer is dash's, by another order.
 
 **Cleared by sh14 (wolf 0.2.29), `kill`:** `kill/c_bad`,
 `kill/c_job_id`, `kill/c_list`, `kill/c_send` and `wait/c_job_id`.
