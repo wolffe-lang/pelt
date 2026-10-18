@@ -22,7 +22,8 @@ filed.
   since sh14 (the signals, wolf 0.2.29) 450 of 545; since sh15 (the
   terminal, wolf 0.2.30) 451 of 545; since sh17 (the POSIX gaps:
   aliases, `$'…'`, `pipefail`, `type`, `hash`, `command -p`, `read`,
-  the command line) 487 of 545.
+  the command line) 487 of 545; since sh18 (job control, wolf 0.2.32)
+  505 of 546.
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
@@ -34,7 +35,7 @@ filed.
   `PS2`, `ENV`, Ctrl-C and Ctrl-D behave as dash's do. There is no line
   editor, no history, no completion, no job control and no aliases.
   (Since sh11, sh12 and sh16 it has the editor, the history and
-  completion; since sh17, aliases.)
+  completion; since sh17, aliases; since sh18, job control.)
 - **PAX already runs pelt as pid 1** (pax `5afb903`), threads and
   signals included. H4's milestone is met in substance, ahead of H3.
 - **Speed.** Running programs costs about 1.5 times what dash does.
@@ -64,10 +65,10 @@ counts the 80 in `tools/script-census`.
 | 7 | no process for a subshell or an in-process pipeline stage: stages run one after another, a descriptor written from a stage is lost, an endless producer never ends | 3 scripts, 7 statements | wolf-lang or pelt, by ruling R1 (to be filed: W01) |
 | 8 | **UTF-8 half done in sh07**: bytes above 0x7f become `?` on their way out: **a silent wrong answer** (a certificate with a non-ASCII name is left out of the bundle) | 1 script; every non-ASCII file name | pelt; bytes that are not UTF-8 need wolf byte strings (to be filed: W06) |
 | 9 | **done in sh17**: aliases | 17 statements; daily use | pelt |
-| 10 | job control | 14 statements; daily use | wolf-lang (to be filed: W03; #680: a wait a signal can cut short, stop reporting, a signal to a process group), then pelt; PAX for PAX. `kill` and the signals themselves are in (sh14) |
+| 10 | **done in sh18** (wolf 0.2.32: `os_wait_poll`, the group sends, `os_set_pgid`): job control on linux and macOS. What is left waits on gap 7: a subshell, a compound command after `&` and a pipeline stage pelt runs itself are not processes, so they are not jobs | 14 statements; daily use | done; gap 7 for the rest; PAX's own is px48's |
 | 11 | line editing and history | daily use; 7 statements (`fc`, vi mode, `!` in `PS1`) | pelt; the terminal's size, resize, a wait a signal ends and the special characters are in (sh15, wolf 0.2.30) |
 | 12 | **done in sh17**: `$'…'` (new in POSIX.1-2024) | 7 statements | pelt |
-| 13 | **done in sh14** (wolf 0.2.29): `kill` built in, `$$`/`PPID` everywhere | 8 statements | done; a signal to a process group (`kill 0`, `kill -- -N`) waits on job control |
+| 13 | **done in sh14** (wolf 0.2.29): `kill` built in, `$$`/`PPID` everywhere; **sh18**: `kill %job`, `kill 0`, `kill -- -N` and `kill -1` reach groups | 8 statements | done |
 | 14 | `ulimit` | 4 statements | wolf-lang (to be filed: W02) |
 | 15 | about forty corners, one or two statements each (`type`, `hash`, `command -p`, `pipefail`, declaration utilities, `read -d`, `trap -p`, `set -v`, `PS4`, `.` of a FIFO, …); **sh17 did `type`, `hash`, `command -p`, `pipefail`, `read` and the command line** (P02–P06, P08); P09 and P10 remain | 53 statements | pelt |
 | 16 | speed: the interpreter's per-command allocation; 57 system calls per program started; a `PATH` search per command (**gone in sh17**: a table of found utilities, as `hash` lists) | 3.9× and 10× dash on expansion loops | pelt; a cheaper spawn (to be filed: W08) |
@@ -144,9 +145,15 @@ needs the least from upstream.
   0.2.29:** `kill` built in, with job ids for the shell's own `&` lists
   (#141); signals ignored on entry left alone (#681); the poll race
   gone and pelt's barrier with it (#691, `tools/signal-witness`); a
-  trap for every signal POSIX names (#679). Still to come: `jobs`,
-  `fg`, `bg`, Ctrl-Z, job numbers, notices, `set -b`.
-  Proved by the eleven `c_jc_*` sessions under `dash -i -m`.
+  trap for every signal POSIX names (#679). **Landed in sh18 on wolf
+  0.2.32** (`notes/sh18-job-control.md`): each pipeline of programs in
+  a group of its own, the terminal handed over and taken back, the
+  wait on `os_wait_poll` and `os_signal_wait`, stops as `128 + N`,
+  `jobs` (`-l`, `-p`), `fg`, `bg`, Ctrl-Z, every job id, the notices,
+  `set -b` (at once, as POSIX), `kill`'s groups, an interruptible
+  `wait`, `exit` with stopped jobs. Proved by the eleven `c_jc_*`
+  sessions and eleven new ones under `dash -i -m`. Pending on H3f: a
+  subshell, `{ … } &` and an in-process pipeline stage are not jobs.
 - **H3f, subshells as processes.** Gap 7, by ruling R1: either wolf
   gains a fork (W01), or pelt starts itself again for a subshell and
   hands it the state it needs. Until then, job control's "a pipeline is
@@ -207,7 +214,7 @@ Each of these is a ruling first. None is started before POSIX is met.
 | S4 `umask` | done: wolf 0.2.28's `os_umask` (sh13) | `umask(2)` on PAX (px27 lists it) |
 | H3a editor | done: wolf 0.2.30's `os_term_size`, `os_term_chars`, `os_signal_wait_fd`, `FLOW`/`EXTENDED` (sh15); restoring after SIGKILL is out by rule | a console that answers `TIOCGWINSZ` (px19's framebuffer does) |
 | H3b history | — | px27 (a writable tree) for `HISTFILE` |
-| H3e job control | W03, #680 (#141, #681, #691 done in wolf 0.2.29) | process groups, sessions, `tcsetpgrp`, stopped processes (a pax lane) |
+| H3e job control | done: wolf 0.2.31's `os_wait_poll`, `os_signal_send_group`, `os_signal_send_all`, `os_set_pgid` (sh18, at 0.2.32) | process groups, sessions, `tcsetpgrp`, stopped processes (px48, done) |
 | H3f subshells | W01, or nothing under R1(B) | `clone` without `CLONE_VM` if W01 is a real fork |
 | `kill`, `$$`, `PPID` | done: wolf 0.2.29's `os_signal_send`, `os_signal_number`, `os_pid`, `os_ppid` (sh14) | `kill(2)` to any pid, `getppid`, and `rt_sigaction` asked what a signal's disposition is |
 | `trap` for every signal | done: wolf 0.2.29's twenty meanings and `os_signal_ignored` (sh14) | the signals already delivered (px26); every one POSIX names, and a poll that changes the thread's mask (`rt_sigprocmask`) |
