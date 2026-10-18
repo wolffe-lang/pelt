@@ -2633,6 +2633,13 @@ fn proc_status(sh: Sh, j: int, h: int) -> int {
 /// The status is the last stage's, or under `pipefail` the rightmost
 /// failing stage's.
 fn run_pipeline(mut sh: Sh, n: int) -> int {
+    let held = sh.jc_hold
+    let st = run_pipeline_in(mut sh, n)
+    sh.jc_hold = held
+    st
+}
+
+fn run_pipeline_in(mut sh: Sh, n: int) -> int {
     flush(mut sh)
     // with job control, a pipeline at the top level is a foreground job:
     // its programs, the last one too, are started into one group and
@@ -2640,7 +2647,11 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
     // background job the same way and is not waited for
     var job = -1
     if jc_here(sh) {
-        job = jc_begin(mut sh, true, n)
+        if pipe_is_job(sh, n) {
+            job = jc_begin(mut sh, true, n)
+        } else {
+            sh.jc_hold = true
+        }
     }
     let building = sh.jc_build >= 0
     var last_child = -1

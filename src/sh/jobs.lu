@@ -800,7 +800,60 @@ fn jc_leave(mut sh: Sh) {
 /// The meanings a child gets back at the default: the ones the shell
 /// ignores for job control and was not started ignoring.
 fn jc_defaults(sh: Sh) -> int {
-    less(sh.jc_ign, if sh.sig_ign0 > 0 then sh.sig_ign0 else 0)
+    let back = less(sh.jc_ign, if sh.sig_ign0 > 0 then sh.sig_ign0 else 0)
+    if sh.jc_hold {
+        // a pipeline with a stage the shell runs itself is no job: its
+        // programs keep `SUSPEND` ignored, so Ctrl-Z cannot stop them
+        // under a shell that waits on their pipe (`pipe_is_job`)
+        return less(back, signal.suspend())
+    }
+    back
+}
+
+/// Whether `w` is an alias (a lookup, not `std.map`'s `has`, which
+/// builds a list per call).
+fn is_alias(a: Ast, w: str) -> bool {
+    let _v = a.aliases[w] else {
+        return false
+    }
+    true
+}
+
+/// Whether every stage of pipeline `n` looks like a program, so the
+/// pipeline can be one job: a simple command whose command word is a
+/// literal naming no built-in, function or alias (a word with an
+/// expansion or a quote is taken for a program). A pipeline with a
+/// stage pelt runs itself is not one: pelt has no fork, so that stage
+/// runs in the shell, which would wait on a pipe its stopped programs
+/// never fill (ruling #69 R1; `tests/session/PENDING.md`).
+fn pipe_is_job(sh: Sh, n: int) -> bool {
+    for k in sh.ast.nodes[n].kids {
+        if sh.ast.nodes[k].kind != K_SIMPLE {
+            return false
+        }
+        let na = sh.ast.nodes[k].ints[0]
+        if sh.ast.nodes[k].words.len <= na {
+            return false
+        }
+        let w = sh.ast.nodes[k].words[na]
+        var plain = true
+        for b in w.bytes() {
+            let c = b as int
+            if c == 36 || c == 96 || c == 39 || c == 34 || c == 92 {
+                plain = false
+            }
+        }
+        if plain {
+            if is_special_builtin(w) || is_regular_builtin(w) {
+                return false
+            }
+            let f = sh.funcs[w] else -1
+            if f >= 0 || is_alias(sh.ast, w) {
+                return false
+            }
+        }
+    }
+    true
 }
 
 /// Start a program as `os_spawn_fds` does, or, while a job is built or

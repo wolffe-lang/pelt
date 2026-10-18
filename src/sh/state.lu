@@ -163,6 +163,8 @@ struct Sh {
     /// The next simple command is a job's last stage: a program there is
     /// started and not waited for (`run_pipeline`).
     jc_last: bool,
+    /// Inside a pipeline that is no job (`sh.jobs`'s `pipe_is_job`).
+    jc_hold: bool,
     jc_node: int,
     /// The job table (`sh.jobs`): slot k is job number k + 1; a slot is
     /// `JB_FREE` or a job's state, its group (0 for none), the number
@@ -360,6 +362,7 @@ fn new_sh(name: str) -> Sh {
         jc_build: -1,
         jc_give: -1,
         jc_last: false,
+        jc_hold: false,
         jc_node: -1,
         jb_state: List[int](),
         jb_pgid: List[int](),
