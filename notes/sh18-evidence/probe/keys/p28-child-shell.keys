@@ -1,0 +1,2 @@
+echo in=$$ pg=$(ps -o pgid= -p $$ | tr -d ' ') tp=$(ps -o tpgid= -p $$ | tr -d ' ')
+exit
