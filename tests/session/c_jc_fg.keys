@@ -1,7 +1,6 @@
-cat
+sh -c 'read x && echo "$x"'
 ^Z
 fg
 typed after fg
-^D
 echo st=$?
 exit
