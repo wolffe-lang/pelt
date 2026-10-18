@@ -1,0 +1,10 @@
+sh -c 'read x && echo "got $x"'
+^Z
+fg
+typed after fg
+echo st=$?
+head -1
+^Z
+fg
+typed again
+exit

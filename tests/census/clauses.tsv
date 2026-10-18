@@ -532,7 +532,6 @@ kill/4	T	kill is built in: it signals by job ID (%1), and works on the shell's o
 kill/5	T	kill with a bad signal name or no operand fails	kill/c_bad kill/refused	
 kill/6	T	kill accepts several pids, a negative pid for a process group, and -- before it	kill/c_multiple	no differential case sends to a group, under the oracle or pelt: the corpus runs in the harness's own group; a group a session made is signalled in kill/7 (sh18: `os_signal_send_group`)
 kill/7	S	With job control kill %job signals the job's process group, and kill -- -N group N	session:c_jc_kill_group	
-kill/8	X	SIGTERM to a stopped job leaves it stopped until it is continued	session:c_jc_stopped_term	the host's rule (a stopped process takes the signal when continued); dash sends no SIGCONT with it (black-box p06)
 umask/1	T	umask writes the mask as octal; umask -S symbolically; umask mode sets it for the shell and its children	umask/c_umask	
 umask/2	T	umask accepts a symbolic mode	umask/c_symbolic	
 umask/3	T	umask with an invalid mode fails	umask/c_bad	
