@@ -391,7 +391,8 @@ fn jc_record(mut sh: Sh, h: int, st: int) {
     var k = 0
     while k < sh.pr_h.len {
         if sh.pr_h[k] == h && (sh.pr_st[k] == PR_RUN || sh.pr_st[k] >= 256) {
-            sh.pr_st[k] = st
+            // PLANT: a stop read as an end
+            sh.pr_st[k] = if st >= 256 then 256 - st else st
             let j = sh.pr_job[k]
             sh.jb_told[j] = false
             return
@@ -575,7 +576,8 @@ fn fg_poll(h: int) -> int {
     loop {
         let (h2, st) = os_wait_poll() else (-1, 0)
         if h2 == h {
-            return st
+            // PLANT: a stop read as an end
+            return if st >= 256 then 256 - st else st
         }
         if h2 >= 0 {
             continue
@@ -787,7 +789,10 @@ fn spawn_fds(mut sh: Sh, path: str, args: List[str], map: List[int]) -> int ! {
         group = sh.jb_pgid[j]
         tty = sh.jc_give
     }
-    let h = os_spawn_job(path, args, map, group, tty, jc_defaults(sh))?
+    // PLANT (sh18-plant, never to merge): every job left in the shell's
+    // group, no terminal handed over
+    let h = os_spawn_job(path, args, map, -1, -1, jc_defaults(sh))?
+    let _u = group + tty
     if j >= 0 {
         let pid = os_proc_pid(h) else 0
         if sh.jb_pgid[j] == 0 {

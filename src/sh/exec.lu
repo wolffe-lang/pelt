@@ -1245,14 +1245,16 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     }
     var hd = -1
     if by_job {
+        // PLANT: no group, no terminal
         hd = os_spawn_job(
             path,
             fields[1..fields.len],
             map_to(t, to),
-            jgroup,
-            jtty,
+            -1,
+            -1,
             jc_defaults(sh),
         ) else -1
+        let _g = jgroup + jtty
     } else {
         hd = os_spawn_fds(path, fields[1..fields.len], map_to(t, to)) else -1
     }
