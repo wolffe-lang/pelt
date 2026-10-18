@@ -1,0 +1,6 @@
+# wolf conform-run --json --checked src/pelt.lu < script (wolf 0.2.32 (wolfgang, pin 72de141)) at 2676879; the script: sleep 0.1 & jobs; wait; echo ok
+{"commit":"72de141","diagnostics":[],"file":"src/pelt.lu","impl":"wolfgang","impl_version":"0.2.32","phase_reached":"run","protocol":1,"seeded":false,"stdout_inline":"[1] + Running                    \nok 0\n","stdout_sha256":"be35d9dc1bbe74884503261e8639a69b4a3081d06366d520f119630f95331d8e","verdict":"exit(0)","warnings":[]}
+exit 0
+# lupin run --json --std-root .wolf-bin/std src/pelt.lu (lupin 0.1.54 (wolf-interp, reference interpreter at pin 294d626)) < /dev/null
+{"protocol":1,"impl":"lupin","impl_version":"0.1.54","commit":"0e536e8","file":"src/pelt.lu","phase_reached":"resolve","seeded":false,"diagnostics":[],"warnings":[],"verdict":"unsupported","stdout_sha256":null,"stdout_inline":null,"x-unsupported":"`os_signal_default` sets a signal's disposition: this machine admits no `unsafe` and std has no `sigaction` ([os.signal.disp], [os.term.note] R8)","x-unsupported-at":"run"}
+exit 0

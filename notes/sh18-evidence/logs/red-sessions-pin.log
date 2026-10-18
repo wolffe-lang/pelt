@@ -1,0 +1,1029 @@
+session: pelt = /home/mfwolffe/lanes/sh18/pin/target/native/pelt
+FAIL c_jc_background_group
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sh -c 'a=$(ps -o pgid= -p $$ | tr -d \" \"); [ \"$a\" = \"$$\" ] && echo leader > out' &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "wait"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "cat out"
+     ! pelt err yes
+       dash out "leader\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 1 at step 4
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+FAIL c_jc_background_job
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "jobs"
+     ! pelt err yes
+       dash out "[1] + Running                    sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "kill %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "kill %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "wait"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 4 "wait"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 5 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=0\n"
+       dash step 5 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "jobs"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 6 "jobs"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 127 at step 7
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+FAIL c_jc_bg
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 1"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "bg"
+     ! pelt err yes
+       dash out "[1] sleep 1\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "wait"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "wait"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 5 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=0\n"
+       dash step 5 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "jobs"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 6 "jobs"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 127 at step 7
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+FAIL c_jc_bg_running
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "bg"
+     ! pelt err yes
+       dash out "[1] sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 3 "bg %1"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 3 "bg %1"
+     ! pelt prompt "$ "
+       dash out "[1] sleep 30\n"
+     ! pelt step 4 "echo st=$?"
+       dash err no
+     ! pelt out "st=127\n"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "echo st=$?"
+     ! pelt prompt "$ "
+       dash out "st=0\n"
+     ! pelt step 5 "fg %3"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 5 "fg %3"
+     ! pelt step 6 "echo st=$?"
+       dash err yes
+     ! pelt out "st=127\n"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "echo st=$?"
+     ! pelt prompt "$ "
+       dash out "st=2\n"
+     ! pelt step 7 "bg %3"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 7 "bg %3"
+     ! pelt step 8 "echo st=$?"
+       dash err yes
+     ! pelt out "st=127\n"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 8 "echo st=$?"
+     ! pelt prompt "$ "
+       dash out "st=2\n"
+     ! pelt step 9 "kill %1"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 9 "kill %1"
+     ! pelt step 10 "sleep 0.3"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 10 "sleep 0.3"
+     ! pelt step 11 "exit"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 11 "exit"
+     ! pelt exit 0 at step 11
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 11
+FAIL c_jc_bg_ttin
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "cat &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "echo next"
+       pelt out "next\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "jobs"
+     ! pelt err yes
+       dash out "[1] + Stopped (tty input)        cat\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "kill -9 %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "kill -9 %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 0 at step 5
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 6 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+     (c_jc_ctrl_c_job_only: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_jc_ctrl_c_job_only
+     (c_jc_ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_jc_ctrl_c_loop
+FAIL c_jc_ctrl_z
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "echo st=$(kill -l $?)"
+     ! pelt err no
+       dash out "st=TSTP\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "jobs"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "jobs"
+     ! pelt prompt ""
+       dash out "[1] + Stopped                    sleep 30\n"
+     ! pelt step 5 "kill -9 %1"
+       dash err no
+     ! pelt out "st=\n"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 5 "kill -9 %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 0 at step 6
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 7 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+FAIL c_jc_done_message
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "true &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 0.3"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo next"
+       pelt out "next\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL c_jc_exit_stopped
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "exit"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 4 "jobs"
+     ! pelt err no
+       dash out "[1] + Stopped                    sleep 30\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt exit 0 at step 5
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 6 "kill -9 %1"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 7 "sleep 0.2"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 8 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 8
+FAIL c_jc_fg
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sh -c 'read x && echo \"$x\"'"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "fg"
+     ! pelt out "fg\n"
+       dash out "sh -c \"read x && echo \\\"\\$x\\\"\"\n"
+       pelt err no
+     ! pelt prompt "$ "
+       dash prompt ""
+       pelt step 4 "typed after fg"
+     ! pelt err yes
+       dash out "typed after fg\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=127\n"
+       dash step 5 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL c_jc_fg_number
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 1 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "fg %2"
+     ! pelt err yes
+       dash out "sleep 1\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=127\n"
+       dash step 4 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "kill %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "kill %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+     (c_jc_fg_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+FAIL c_jc_fg_pipeline
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 | cat"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "jobs"
+     ! pelt err no
+       dash out "[1] + Stopped                    sleep 30 | cat\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "fg"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "fg"
+     ! pelt prompt ""
+       dash out "sleep 30 | cat\n"
+     ! pelt step 5 "^C"
+       dash err no
+     ! pelt err no
+       dash prompt ""
+     ! pelt prompt "$ "
+       dash step 5 "^C"
+     ! pelt step 6 "echo st=$?"
+       dash err no
+     ! pelt out "st=130\n"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "echo st=$?"
+     ! pelt prompt "$ "
+       dash out "st=130\n"
+     ! pelt step 7 "jobs"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 7 "jobs"
+     ! pelt step 8 "exit"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 8 "exit"
+     ! pelt exit 127 at step 8
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 8
+FAIL c_jc_foreground_group
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sh -c 'a=$(ps -o pgid= -p $$ | tr -d \" \"); b=$(ps -o tpgid= -p $$ | tr -d \" \"); [ \"$a\" = \"$b\" ] && echo foreground; [ \"$a\" != \"$(ps -o pgid= -p $PPID | tr -d \" \")\" ] && echo own-group'"
+     ! pelt out "foreground\n"
+       dash out "foreground\nown-group\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "exit"
+       pelt err no
+       pelt prompt ""
+     ! pelt exit 1 at step 2
+       dash exit 0 at step 2
+FAIL c_jc_job_ids
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 31 | cat &"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "jobs %?31"
+     ! pelt err no
+       dash out "[2] + Running                    sleep 31 | cat\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 4 "jobs %?cat"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 4 "jobs %?cat"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 5 "jobs %-"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 5 "jobs %-"
+     ! pelt prompt "$ "
+       dash out "[1] - Running                    sleep 30\n"
+     ! pelt step 6 "jobs %+"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 6 "jobs %+"
+     ! pelt step 7 "jobs %sleep"
+       dash out "[2] + Running                    sleep 31 | cat\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+     ! pelt step 8 "echo st=$?"
+       dash step 7 "jobs %sleep"
+     ! pelt out "st=127\n"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 8 "echo st=$?"
+     ! pelt step 9 "jobs %9"
+       dash out "st=2\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+     ! pelt step 10 "echo st=$?"
+       dash step 9 "jobs %9"
+     ! pelt out "st=127\n"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 10 "echo st=$?"
+     ! pelt step 11 "jobs -p | wc -l | tr -d \" \""
+       dash out "st=2\n"
+     ! pelt out "0\n"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 11 "jobs -p | wc -l | tr -d \" \""
+     ! pelt step 12 "kill %1 %2"
+       dash out "2\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+     ! pelt step 13 "sleep 0.3"
+       dash step 12 "kill %1 %2"
+       pelt err no
+       pelt prompt "$ "
+     ! pelt step 14 "exit"
+       dash step 13 "sleep 0.3"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt exit 0 at step 14
+       dash step 14 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 14
+FAIL c_jc_jobs_l_pipeline
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 | cat &"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 2 "jobs -l | sed 's/[0-9][0-9]*/N/g; s/  */ /g'"
+     ! pelt err no
+       dash out "[N] + N Running sleep N |\n N cat\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 3 "jobs"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 3 "jobs"
+     ! pelt prompt ""
+       dash out "[1] + Running                    sleep 30 | cat\n"
+     ! pelt step 4 "kill %1"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 4 "kill %1"
+     ! pelt step 5 "sleep 0.3"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 5 "sleep 0.3"
+     ! pelt step 6 "exit"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 6 "exit"
+     ! pelt exit 0 at step 6
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL c_jc_jobs_list
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 31 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "jobs"
+     ! pelt err yes
+       dash out "[2] + Running                    sleep 31\n[1] - Running                    sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "jobs -l | wc -l | tr -d \" \""
+       dash prompt "$ "
+     ! pelt out "0\n"
+       dash step 4 "jobs -l | wc -l | tr -d \" \""
+     ! pelt err yes
+       dash out "2\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "jobs -p | wc -l | tr -d \" \""
+       dash prompt "$ "
+     ! pelt out "0\n"
+       dash step 5 "jobs -p | wc -l | tr -d \" \""
+     ! pelt err yes
+       dash out "2\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "kill %1 %2"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "kill %1 %2"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 7
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+FAIL c_jc_jobs_states
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sh -c 'exit 3' &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "sleep 0.3"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "jobs"
+     ! pelt err yes
+       dash out "[1] + Running                    sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "kill %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "kill %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL c_jc_kill_group
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sh -c 'sleep 30 & sleep 31; wait' &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 0.3"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "[ \"$(ps -o pgid= -p $! | tr -d ' ')\" = \"$!\" ] && echo group-is-pid"
+     ! pelt err no
+       dash out "group-is-pid\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 4 "kill -- -$!"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 4 "kill -- -$!"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "sleep 0.3"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "sleep 0.3"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 6 "jobs"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 6 "jobs"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "sleep 30 &"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "sleep 30 &"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 8 "kill -s KILL -- -$!"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 8 "kill -s KILL -- -$!"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 9 "sleep 0.3"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 9 "sleep 0.3"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 10 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=0\n"
+       dash step 10 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 11 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 11 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 11
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 11
+PEND-fail c_jc_mixed_pipeline (waits on fork)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 1 | while read x; do :; done"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo after"
+       pelt out "after\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "jobs"
+     ! pelt err yes
+       dash out "[1] + Stopped                    sleep 1 | while read x; do :; done\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 5 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "exit"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt exit 127 at step 5
+       dash prompt "$ "
+     ! pelt <none>
+       dash alive at step 5
+FAIL c_jc_numbering
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sleep 31 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "sleep 32 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "kill %2"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "sleep 0.3"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 6 "sleep 33 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "jobs"
+     ! pelt err yes
+       dash out "[2] + Running                    sleep 33\n[3] - Running                    sleep 32\n[1]   Running                    sleep 30\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 8 "kill %1 %2 %3"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 8 "kill %1 %2 %3"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 9 "sleep 0.3"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 9 "sleep 0.3"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 10 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 10 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 10
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 10
+ok   c_jc_shell_ignores_tstp
+ok   c_jc_shell_is_leader
+FAIL c_jc_states
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sh -c 'kill -TERM $$'"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 2 "echo st=$?"
+       pelt out "st=143\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "sh -c 'kill -STOP $$'"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 4 "echo st=$(kill -l $?)"
+     ! pelt err no
+       dash out "st=STOP\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "sh -c 'kill -TSTP $$'"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "sh -c 'kill -TSTP $$'"
+     ! pelt prompt ""
+       dash err yes
+     ! pelt step 6 "echo st=$(kill -l $?)"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 6 "echo st=$(kill -l $?)"
+     ! pelt prompt ""
+       dash out "st=TSTP\n"
+     ! pelt step 7 "sh -c 'exit 3' &"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 7 "sh -c 'exit 3' &"
+     ! pelt step 8 "sleep 0.3"
+       dash err no
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 8 "sleep 0.3"
+     ! pelt step 9 "jobs"
+       dash err yes
+     ! pelt err no
+       dash prompt "$ "
+     ! pelt prompt ""
+       dash step 9 "jobs"
+     ! pelt step 10 "kill -9 %1 %2"
+       dash out "[2] + Stopped                    sh -c \"kill -TSTP \\$\\$\"\n[1] - Stopped (signal)           sh -c \"kill -STOP \\$\\$\"\n"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt step 11 "sleep 0.3"
+       dash step 10 "kill -9 %1 %2"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt step 12 "exit"
+       dash step 11 "sleep 0.3"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt alive at step 12
+       dash step 12 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 12
+ok   c_jc_terminal_back
+FAIL c_jc_wait_stopped
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "sleep 30"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 3 "wait"
+       pelt err no
+     ! pelt prompt ""
+       dash prompt "$ "
+       pelt step 4 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "wait %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 5 "wait %1"
+     ! pelt prompt "$ $ "
+       dash err no
+     ! pelt step 6 "echo st=$(kill -l $?)"
+       dash prompt "$ "
+     ! pelt out "st=\n"
+       dash step 6 "echo st=$(kill -l $?)"
+     ! pelt err yes
+       dash out "st=TSTP\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 7 "sleep 1 &"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 7 "sleep 1 &"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 8 "wait %2"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 8 "wait %2"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 9 "echo st=$?"
+       dash prompt "$ "
+     ! pelt out "st=2\n"
+       dash step 9 "echo st=$?"
+     ! pelt err no
+       dash out "st=0\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 10 "kill -9 %1"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 10 "kill -9 %1"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 11 "sleep 0.2"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 11 "sleep 0.2"
+     ! pelt prompt "$ "
+       dash err yes
+     ! pelt step 12 "exit"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 12 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 12
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 12
+session: pass 5  fail 20  pending 1 (0)

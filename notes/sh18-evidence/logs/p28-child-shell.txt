@@ -1,0 +1,10 @@
+$ sh -c echo outer=$$; /home/mfwolffe/lanes/sh18/head/target/release/pelt -i; echo after pg=$(ps -o pgid= -p $$ | tr -d ' ') tp=$(ps -o tpgid= -p $$ | tr -d ' ')  < p28-child-shell.keys
+step 0 null
+  out "outer=1377708\n"
+  err "$ "
+step 1 "echo in=$$ pg=$(ps -o pgid= -p $$ | tr -d ' ') tp=$(ps -o tpgid= -p $$ | tr -d ' ')"
+  out "in=1377709 pg=1377709 tp=1377709\n"
+  err "$ "
+step 2 "exit"
+  out "after pg=1377708 tp=1377708\n"
+exit 0 at step 2
