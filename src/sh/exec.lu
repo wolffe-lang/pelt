@@ -724,16 +724,18 @@ fn run_simple(mut sh: Sh, n: int) -> int {
     sh.cs_ran = false
     let nowait = sh.nowait
     sh.nowait = false
-    if fast_ok(sh) && (!nowait || stage_fast(sh)) {
+    let last = sh.jc_last
+    sh.jc_last = false
+    if fast_ok(sh) && (!nowait || stage_fast(sh) || last) {
         flush(mut sh)
         let r = copy region turn {
-            run_fast(sh, sh.ast, n, nowait)
+            run_fast(sh, sh.ast, n, nowait || last)
         }
         if r.kind != R_SLOW {
             return commit_fast(mut sh, r)
         }
     }
-    run_slow(mut sh, n, nowait)
+    run_slow(mut sh, n, nowait || last)
 }
 
 // ------------------------------------------------------ the fast path
@@ -749,6 +751,10 @@ const R_STAGE: int = 2
 /// A pipeline stage's built-in: what it wrote, ready to be read by the
 /// next stage, behind the handle `Fast.child`.
 const R_FEED: int = 3
+
+/// A foreground job that stopped (job control): its handle is
+/// `Fast.child`, its status `Fast.stop`, its text the `J` op.
+const R_STOP: int = 4
 
 /// What a simple command run in the shadow state leaves for the real
 /// one: only scalars and one `str`, so that copying it out of the
@@ -780,6 +786,11 @@ struct Fast {
     flow_n: int,
     abort: bool,
     shift: int,
+    /// A foreground job of its own (job control): an end by `SIGINT` is
+    /// answered as the shell's interrupt; `R_STOP`'s status as the poll
+    /// spelled it (`256 + N`).
+    jc: bool,
+    stop: int,
 }
 
 fn slow() -> Fast {
@@ -796,6 +807,8 @@ fn slow() -> Fast {
         flow_n: 0,
         abort: false,
         shift: 0,
+        jc: false,
+        stop: 0,
     }
 }
 
@@ -1151,12 +1164,33 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
         return r
     }
     // a program: found, and started with any capture going to a pipe of
-    // its own (read here to its end) or to the stage's pipe; with job
-    // control on it is the ordinary path's (`sh.jobs`: a group, the
-    // terminal, the signals it gets back)
-    if sh.jc_on || sh.jc_build >= 0 {
-        close_opened(t)
-        return slow()
+    // its own (read here to its end) or to the stage's pipe. With job
+    // control (`sh.jobs`) it is started by `os_spawn_job`: into the job
+    // being built, or, run at the top level, as a foreground job of its
+    // own, waited for here by the poll; a stop comes back as `R_STOP`
+    // for the real state to keep. A foreground job beside a live job's
+    // process, or under a trap on `CHLD`, goes the ordinary way (the
+    // poll would answer for them too).
+    var jgroup = -1
+    var jtty = -1
+    var fgjob = false
+    let by_job = sh.jc_on || sh.jc_build >= 0
+    if sh.jc_build >= 0 {
+        let bj = sh.jc_build
+        if !nowait || sh.jb_pgid[bj] < -1 {
+            close_opened(t)
+            return slow()
+        }
+        jgroup = sh.jb_pgid[bj]
+        jtty = if jgroup >= 0 then sh.jc_give else -1
+    } else if !nowait && jc_here(sh) {
+        if jobs_live(sh) || sh.sig_mine & m_child() != 0 || sh.stash_h.len > 0 {
+            close_opened(t)
+            return slow()
+        }
+        jgroup = 0
+        jtty = sh.jc_tty
+        fgjob = true
     }
     let cmd = fields[0]
     var path = cmd
@@ -1209,7 +1243,19 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
         env_set(names[k], values[k]) else |_| {}
         k += 1
     }
-    let hd = os_spawn_fds(path, fields[1..fields.len], map_to(t, to)) else -1
+    var hd = -1
+    if by_job {
+        hd = os_spawn_job(
+            path,
+            fields[1..fields.len],
+            map_to(t, to),
+            jgroup,
+            jtty,
+            jc_defaults(sh),
+        ) else -1
+    } else {
+        hd = os_spawn_fds(path, fields[1..fields.len], map_to(t, to)) else -1
+    }
     if cap_w >= 0 {
         fs_close(cap_w) else |_| {}
     }
@@ -1222,7 +1268,21 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     }
     var st = 0
     var sig = 0
-    if hd >= 0 && !nowait {
+    var stop = 0
+    if hd >= 0 && fgjob {
+        let raw = fg_poll(hd)
+        if jtty >= 0 {
+            os_term_set_foreground(jtty, sh.jc_pgid) else |_| {}
+        }
+        if raw >= 256 {
+            stop = raw
+            st = raw_status(raw)
+        } else {
+            let (code, signo) = status_of(raw)
+            st = code
+            sig = signo
+        }
+    } else if hd >= 0 && !nowait {
         let (code, signo) = wait_child(hd)
         st = code
         sig = signo
@@ -1235,9 +1295,20 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     r.status = st
     r.sig = sig
     r.reads = t.dir_reads
+    r.jc = fgjob
     if nowait {
         r.kind = R_STAGE
         r.child = hd
+    }
+    if stop > 0 {
+        // the job's text for its notice and `jobs`, in the one `str` the
+        // result carries (`J`), only when it stopped
+        r.kind = R_STOP
+        r.child = hd
+        r.stop = stop
+        var jt = buf()
+        put_op(mut jt, 'J', node_text(a, n), "")
+        r.enc = r.enc + text(jt)
     }
     if got.len > 0 {
         set_out(mut r, got)
@@ -1385,12 +1456,15 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
         report_signal(mut sh, r.sig)
     }
     var at = 0
+    var jtext = ""
     while at < ops_end {
         let op = byte_at(r.enc, at)
         let z = nul_at(r.enc, at + 1)
         let z2 = nul_at(r.enc, z + 1)
         let name = r.enc[at + 1..z]
-        if op == 76 {
+        if op == 74 {
+            jtext = name
+        } else if op == 76 {
             local_push(mut sh, name)
         } else if op == 72 {
             hash_put(mut sh, name, r.enc[z + 1..z2])
@@ -1406,6 +1480,12 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
     if r.kind == R_STAGE {
         sh.stage_child = r.child
         sh.started = true
+        if sh.jc_build >= 0 {
+            jb_join(mut sh, sh.jc_build, r.child)
+        }
+    } else if r.kind == R_STOP {
+        sh.started = true
+        jb_stopped(mut sh, r.child, r.stop, jtext)
     } else if r.kind == R_FEED {
         sh.stage_in = r.child
     }
@@ -1414,6 +1494,9 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
         sh.flow = r.flow
         sh.flow_n = r.flow_n
         sh.abort = r.abort
+    }
+    if r.jc && r.sig > 0 {
+        jc_heard_int(sh, r.sig)
     }
     r.status
 }
@@ -2572,12 +2655,11 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         let node = sh.ast.nodes[n].kids[i]
         if i == count - 1 {
             sh.stage_child = -1
-            st = run_stage_kept(
-                mut sh,
-                node,
-                input,
-                building && sh.ast.nodes[node].kind == K_SIMPLE,
-            )
+            // the job's last program is started and not waited for too;
+            // a built-in there still runs the fast way (`jc_last`)
+            sh.jc_last = building && sh.ast.nodes[node].kind == K_SIMPLE
+            st = run_stage_kept(mut sh, node, input, false)
+            sh.jc_last = false
             last_child = sh.stage_child
             sh.stage_child = -1
             if own_in {

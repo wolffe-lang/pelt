@@ -160,14 +160,18 @@ struct Sh {
     /// text is read from.
     jc_build: int,
     jc_give: int,
+    /// The next simple command is a job's last stage: a program there is
+    /// started and not waited for (`run_pipeline`).
+    jc_last: bool,
     jc_node: int,
     /// The job table (`sh.jobs`): slot k is job number k + 1; a slot is
     /// `JB_FREE` or a job's state, its group (0 for none), the number
     /// `$!` gave it (a process id, or for a list pelt ran itself a
     /// number no process has, `NO_PID_BASE` and up), the status of a
     /// list pelt ran itself, whether its last change was told, and its
-    /// command text ("" with job control off). `jb_order` holds the
-    /// slots most recently used first: `+` is the first, `-` the second.
+    /// command text ("" with job control off). `jb_order` is each
+    /// slot's last use (a stamp of `jb_clock`, 0 for none): `+` is the
+    /// most recent, `-` the one before.
     jb_state: List[int],
     jb_pgid: List[int],
     jb_id: List[int],
@@ -178,6 +182,7 @@ struct Sh {
     jb_late: List[bool],
     jb_order: List[int],
     jb_seq: int,
+    jb_clock: int,
     /// The processes of the jobs: the slot, the child's handle and
     /// process id, its status (`PR_RUN`, or as `os_wait_poll` answered
     /// it: an exit code, `-N`, `256 + N` for a stop), its command text.
@@ -351,6 +356,7 @@ fn new_sh(name: str) -> Sh {
         exit_warned_prev: false,
         jc_build: -1,
         jc_give: -1,
+        jc_last: false,
         jc_node: -1,
         jb_state: List[int](),
         jb_pgid: List[int](),
@@ -361,6 +367,7 @@ fn new_sh(name: str) -> Sh {
         jb_late: List[bool](),
         jb_order: List[int](),
         jb_seq: 0,
+        jb_clock: 0,
         pr_job: List[int](),
         pr_h: List[int](),
         pr_pid: List[int](),

@@ -33,9 +33,11 @@
 //!
 //! **The table.** A job's number is the lowest one free (dash,
 //! black-box: p02); the slots are kept and reused, so the table holds
-//! no more than the jobs alive at once. `jb_order` keeps the slots most
-//! recently used first: the current job (`+`) and the previous one
-//! (`-`). A job that has ended is forgotten once the shell has told of
+//! no more than the jobs alive at most at once (nothing is popped: a
+//! list that shrank and grew again would take a new buffer from the
+//! root region each time, pelt#19). Each slot carries the stamp of its
+//! last use (`jb_order`): the most recent is the current job (`+`), the
+//! one before the previous (`-`). A job that has ended is forgotten once the shell has told of
 //! it (a notice, or a line of `jobs`); with job control off, where no
 //! notice is written, `wait` with no operand forgets the ended ones.
 
@@ -71,6 +73,7 @@ fn jb_new(mut sh: Sh) -> int {
         (mut sh.jb_told).push(true)
         (mut sh.jb_text).push("")
         (mut sh.jb_late).push(false)
+        (mut sh.jb_order).push(0)
     } else {
         sh.jb_state[j] = JB_RUN
         sh.jb_pgid[j] = -1
@@ -84,7 +87,10 @@ fn jb_new(mut sh: Sh) -> int {
     j
 }
 
-/// Forget job `j`: its slot and its processes.
+/// Forget job `j`: its slot and its processes. Nothing is popped: a
+/// list the root region holds that shrank and grew again would take a
+/// new buffer each time (pelt#19), so slots and process entries are
+/// marked free and reused.
 fn jb_free(mut sh: Sh, j: int) {
     if j < 0 || j >= sh.jb_state.len {
         return
@@ -93,71 +99,62 @@ fn jb_free(mut sh: Sh, j: int) {
     sh.jb_text[j] = ""
     order_drop(mut sh, j)
     var k = 0
-    var w = 0
     while k < sh.pr_job.len {
-        if sh.pr_job[k] != j {
-            sh.pr_job[w] = sh.pr_job[k]
-            sh.pr_h[w] = sh.pr_h[k]
-            sh.pr_pid[w] = sh.pr_pid[k]
-            sh.pr_st[w] = sh.pr_st[k]
-            sh.pr_text[w] = sh.pr_text[k]
-            w += 1
+        if sh.pr_job[k] == j {
+            sh.pr_job[k] = -1
+            sh.pr_h[k] = -1
+            sh.pr_pid[k] = 0
+            sh.pr_st[k] = 0
+            sh.pr_text[k] = ""
         }
         k += 1
     }
-    while sh.pr_job.len > w {
-        let _a = (mut sh.pr_job).pop() else 0
-        let _b = (mut sh.pr_h).pop() else 0
-        let _c = (mut sh.pr_pid).pop() else 0
-        let _d = (mut sh.pr_st).pop() else 0
-        let _e = (mut sh.pr_text).pop() else ""
-    }
-    // the free slots at the end go, so the table is as long as its
-    // highest job
-    while sh.jb_state.len > 0 && sh.jb_state[sh.jb_state.len - 1] == JB_FREE {
-        let _s = (mut sh.jb_state).pop() else 0
-        let _g = (mut sh.jb_pgid).pop() else 0
-        let _i = (mut sh.jb_id).pop() else 0
-        let _t = (mut sh.jb_status).pop() else 0
-        let _o = (mut sh.jb_told).pop() else false
-        let _x = (mut sh.jb_text).pop() else ""
-        let _l = (mut sh.jb_late).pop() else false
-    }
 }
 
+/// Job `j` is no one's current or previous job.
 fn order_drop(mut sh: Sh, j: int) {
-    var k = 0
-    var w = 0
-    while k < sh.jb_order.len {
-        if sh.jb_order[k] != j {
-            sh.jb_order[w] = sh.jb_order[k]
-            w += 1
-        }
-        k += 1
-    }
-    while sh.jb_order.len > w {
-        let _x = (mut sh.jb_order).pop() else 0
-    }
+    sh.jb_order[j] = 0
 }
 
-/// Job `j` becomes the current job.
+/// Job `j` becomes the current job: the most recent use.
 fn order_front(mut sh: Sh, j: int) {
-    order_drop(mut sh, j)
-    (mut sh.jb_order).push(j)
-    var k = sh.jb_order.len - 1
-    while k > 0 {
-        sh.jb_order[k] = sh.jb_order[k - 1]
-        k -= 1
+    sh.jb_clock += 1
+    sh.jb_order[j] = sh.jb_clock
+}
+
+/// The job used `n` places before the most recent (0: the current job,
+/// 1: the previous one), or -1.
+fn nth_recent(sh: Sh, n: int) -> int {
+    var below = -1
+    var pick = -1
+    var i = 0
+    while i <= n {
+        pick = -1
+        var best = 0
+        var j = 0
+        while j < sh.jb_order.len {
+            let t = sh.jb_order[j]
+            if t > best && (below < 0 || t < below) {
+                best = t
+                pick = j
+            }
+            j += 1
+        }
+        if pick < 0 {
+            return -1
+        }
+        below = best
+        i += 1
     }
-    sh.jb_order[0] = j
+    pick
 }
 
 /// `+` for the current job, `-` for the previous one, else a blank.
 fn jb_mark(sh: Sh, j: int) -> char {
-    if sh.jb_order.len > 0 && sh.jb_order[0] == j {
+    if nth_recent(sh, 0) == j {
         return '+'
     }
-    if sh.jb_order.len > 1 && sh.jb_order[1] == j {
+    if nth_recent(sh, 1) == j {
         return '-'
     }
     ' '
@@ -165,6 +162,18 @@ fn jb_mark(sh: Sh, j: int) -> char {
 
 /// A child of job `j`.
 fn jb_add_proc(mut sh: Sh, j: int, h: int, pid: int) {
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] < 0 {
+            sh.pr_job[k] = j
+            sh.pr_h[k] = h
+            sh.pr_pid[k] = pid
+            sh.pr_st[k] = PR_RUN
+            sh.pr_text[k] = ""
+            return
+        }
+        k += 1
+    }
     (mut sh.pr_job).push(j)
     (mut sh.pr_h).push(h)
     (mut sh.pr_pid).push(pid)
@@ -298,16 +307,10 @@ fn job_index(sh: Sh, spec: str) -> int {
     }
     let rest = spec[1..spec.len]
     if rest.len == 0 || rest == "%" || rest == "+" {
-        if sh.jb_order.len > 0 {
-            return sh.jb_order[0]
-        }
-        return -1
+        return nth_recent(sh, 0)
     }
     if rest == "-" {
-        if sh.jb_order.len > 1 {
-            return sh.jb_order[1]
-        }
-        return -1
+        return nth_recent(sh, 1)
     }
     if is_digits(rest) {
         let n = to_int(rest) else 0
@@ -552,10 +555,71 @@ fn jc_fg_wait(mut sh: Sh, j: int, node: int) -> int {
     }
     let (st, sig) = status_of(raw)
     report_signal(mut sh, sig)
+    jc_heard_int(sh, sig)
+    st
+}
+
+/// A foreground job ended by signal `sig`: when that was `SIGINT`, the
+/// shell answers it as an interrupt it heard (it did not: the job's
+/// group had the terminal), so a loop is abandoned or a trap runs.
+fn jc_heard_int(sh: Sh, sig: int) {
     if sig > 0 && sig == (signal.number(m_int()) else 0) && sh.sig_listen & m_int() != 0 {
         signal.raise(m_int()) else |_| {}
     }
-    st
+}
+
+/// The fast path's foreground wait (`sh.exec`'s `run_fast`): the poll's
+/// answer for child `h`, waiting on `CHILD` between looks; no other job
+/// has a process, so any other answer is no one's.
+fn fg_poll(h: int) -> int {
+    loop {
+        let (h2, st) = os_wait_poll() else (-1, 0)
+        if h2 == h {
+            return st
+        }
+        if h2 >= 0 {
+            continue
+        }
+        let got = os_signal_wait(m_child()) else -1
+        if got < 0 {
+            return os_wait_status(h) else 1
+        }
+    }
+    0
+}
+
+/// Child `h`, started by the fast path, joins job `j` (a pipeline being
+/// built): the group's leader when it is the first.
+fn jb_join(mut sh: Sh, j: int, h: int) {
+    let pid = os_proc_pid(h) else 0
+    if sh.jb_pgid[j] == 0 {
+        sh.jb_pgid[j] = pid
+    }
+    jb_add_proc(mut sh, j, h, pid)
+    sh.jb_id[j] = pid
+}
+
+/// A foreground job the fast path ran stopped: it becomes a job, told
+/// of at once, the current one (as `jc_fg_wait`).
+fn jb_stopped(mut sh: Sh, h: int, raw: int, text: str) {
+    let j = jb_new(mut sh)
+    let pid = os_proc_pid(h) else 0
+    sh.jb_pgid[j] = pid
+    jb_add_proc(mut sh, j, h, pid)
+    sh.jb_id[j] = pid
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            sh.pr_st[k] = raw
+            sh.pr_text[k] = if sh.opt_m then text else ""
+        }
+        k += 1
+    }
+    if sh.opt_m {
+        sh.jb_text[j] = text
+    }
+    sh.jb_told[j] = true
+    write_fd(mut sh, 2, "{job_line(sh, j, false)}\n")
 }
 
 /// Job `j`'s command text, and each process's, from node `n` (a
@@ -867,22 +931,30 @@ fn jc_notify(mut sh: Sh) {
     if jobs_live(sh) {
         let _p = jc_poll(mut sh)
     }
+    // a list pelt ran itself is told of a line later, when a program's
+    // ending would first be seen (dash, black-box: c_jc_done_message)
+    var j0 = 0
+    while j0 < sh.jb_late.len {
+        if sh.jb_late[j0] {
+            sh.jb_late[j0] = false
+            sh.jb_order[j0] = 0 - sh.jb_order[j0]
+        }
+        j0 += 1
+    }
     loop {
         var pick = -1
-        for j in sh.jb_order {
-            if sh.jb_late[j] {
-                // a list pelt ran itself is told of a line later, when a
-                // program's ending would first be seen (dash, black-box:
-                // c_jc_done_message)
-                sh.jb_late[j] = false
-                continue
-            }
-            if pick < 0 && !sh.jb_told[j] {
+        var best = 0
+        var j = 0
+        while j < sh.jb_state.len {
+            let t = sh.jb_order[j]
+            if t > best && sh.jb_state[j] != JB_FREE && !sh.jb_told[j] {
                 let s = jb_state_of(sh, j)
                 if s == JB_DONE || s == JB_STOP {
                     pick = j
+                    best = t
                 }
             }
+            j += 1
         }
         if pick < 0 {
             break
@@ -893,6 +965,14 @@ fn jc_notify(mut sh: Sh) {
         } else {
             sh.jb_told[pick] = true
         }
+    }
+    // the late ones keep their place
+    j0 = 0
+    while j0 < sh.jb_order.len {
+        if sh.jb_order[j0] < 0 {
+            sh.jb_order[j0] = 0 - sh.jb_order[j0]
+        }
+        j0 += 1
     }
 }
 
@@ -949,10 +1029,16 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
     var pick = List[int]()
     var st = 0
     if i >= args.len {
-        for j in sh.jb_order {
+        var n = 0
+        loop {
+            let j = nth_recent(sh, n)
+            if j < 0 {
+                break
+            }
             if j != sh.jc_build {
                 (mut pick).push(j)
             }
+            n += 1
         }
     } else {
         while i < args.len {
@@ -1009,11 +1095,11 @@ fn fgbg_job(mut sh: Sh, name: str, spec: str) -> int {
         return -1
     }
     if spec.len == 0 {
-        if sh.jb_order.len == 0 {
+        if nth_recent(sh, 0) < 0 {
             diag(mut sh, "{name}: no current job")
             return -1
         }
-        return sh.jb_order[0]
+        return nth_recent(sh, 0)
     }
     let j = job_index(sh, spec)
     if j < 0 {
