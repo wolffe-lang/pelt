@@ -1,0 +1,81 @@
+id	group	package	version	sha256	licence	dash_exit	pelt_exit	verdict	notes
+configure-hello	configure	GNU hello	2.12.2	9dea585fdd754e9de6eb830c790d979eeed7d41695e209904064b439a2048fc6	GPL-3.0-or-later	0	0	same	
+configure-sed	configure	GNU sed	4.9	6adefe585116988fe0916cb127a398ab21bf2c37e82136834016f7dbf7747d89	GPL-3.0-or-later	0	0	differs	run 0 []: stdout
+configure-gzip	configure	GNU gzip	1.14	c110e404bf3f1dc8277eeeebae3b4d1099eaf69134c9b24e6d0767b151ea99a7	GPL-3.0-or-later	0	0	same	
+configure-zlib	configure	zlib	1.3.1	f7c0050f218691ee1cae28311144a703bfa3515df903d537d6a5cb4bd3dcd8cd	Zlib	0	0	same	
+install-sh	helper	automake	1.18.1	776876b3909b096439109a4c7642eb0f9100f6ba3fb42fa93d05351e50a0a7ef	X11	0,0,0,0,1	0,0,0,0,1	same	
+config.guess	helper	automake	1.18.1	e3d148130e9151735f8b9a8e69a70d06890ece51468a9762eb7ac0feddddcc2f	GPL-3.0-or-later WITH Autoconf-exception	0,0	0,0	same	
+config.sub	helper	automake	1.18.1	11c54f55c3ac99e5d2c3dc2bb0bcccbf69f8223cc68f6b2438daa806cf0d16d8	GPL-3.0-or-later WITH Autoconf-exception	0,0,0,0,0,1,1	0,0,0,0,0,1,1	same	
+missing	helper	automake	1.18.1	4f17c4a66ec5b8000d44573a576f6b5d9c0c84848e8fd1286f84a52f439db4e9	GPL-2.0-or-later WITH Autoconf-exception	0,0,0,127,1	0,0,0,127,1	same	
+compile	helper	automake	1.18.1	92ed7feeda61ad958dc3c4cc4efd724e1414482f1cad60b74b09e0633a93dfd6	GPL-2.0-or-later WITH Autoconf-exception	0,0,0,1	0,0,0,1	same	
+depcomp	helper	automake	1.18.1	ac3ae010382a83144ff6ec1a4c368a3f16a14ea2b12751aa73ddfb548d931574	GPL-2.0-or-later WITH Autoconf-exception	0,0,0,0,1	0,0,0,0,1	same	
+mkinstalldirs	helper	automake	1.18.1	13dd99b98c5265ad83a5d6c84371f5b492955cc783c5fb1716d0868d874fd76a	public-domain	0,0,0,0	0,0,0,0	same	
+mdate-sh	helper	automake	1.18.1	f2732aae7af4fe28dede21b163ccce328cc373922fff651cf0421b6e88ff9900	GPL-2.0-or-later WITH Autoconf-exception	0,0,1	0,0,1	same	
+test-driver	helper	automake	1.18.1	f5031431dfc824ee2f012950aef35530e5acf3eb412421c8050662b616deaded	GPL-2.0-or-later WITH Autoconf-exception	0,0,0,0	0,0,0,0	same	
+ylwrap	helper	automake	1.18.1	2429c34e7f0e95b15fa7ae944c42de4454447af7302586b123b7dff2d4e01cdc	GPL-2.0-or-later WITH Autoconf-exception	0,0,1	0,0,1	same	
+ar-lib	helper	automake	1.18.1	8e211dd0df621bf4985c1d3466548564a835e379acfc12dc0c1009ced4f90417	GPL-2.0-or-later WITH Autoconf-exception	0,1,1	0,1,1	same	
+tap-driver.sh	helper	automake	1.18.1	566f434c829e6c448c8e61f820567076b2febea7ccfe4edc0a72b6d248c257f1	GPL-2.0-or-later WITH Autoconf-exception	0,0	0,0	same	
+ltmain.sh	helper	libtool	2.5.4	30712e3401deb6e6d5255c71f7bd57f374429d220cfc199ba1f2376ab42c2e35	GPL-2.0-or-later WITH Libtool-exception	0,0,0,63,63,63	0,0,0,63,63,63	same	
+git-test-lib	git	git (t/test-lib.sh)	2.56.0	415f3af2a197cf4cb947019c0765b0e03a5dae7f91c7a7b3a1d58f28dfc5a6f1	GPL-2.0-only	0	0	same	
+git-t0000-basic	git	git (t/t0000-basic.sh)	2.56.0	c1f2bfa694fc7b2caa3ce0c9a0b3c7c22ed476ac01376e80885c02ad39471328	GPL-2.0-only	0	0	same	
+deb-cron.postinst	debian-maint	cron	3.0pl1-197	053ad0af6ecf458b754db5bbc5e44fc6956edc7675e7c322e173d510a6ae922d	GPL-2+ (packaging), Paul-Vixie's-license	0,0,0	0,0,0	same	
+deb-cron-daemon-common.postinst	debian-maint	cron-daemon-common	3.0pl1-197	4c926d4f2b02abc3107252f8dd3705c20990e7b9d8829a79c028b683fb379076	GPL-2+ (packaging), Paul-Vixie's-license	0,0	0,0	same	
+deb-rsync.postinst	debian-maint	rsync	3.4.1+ds1-5+deb13u4	dcee672c2d218fb51c990abbab770443f9f08d08843e0d0362fbfe8412bf008a	GPL-3+	0,0	0,0	same	
+deb-openssh-server.postinst	debian-maint	openssh-server	1:10.0p1-7+deb13u4	7beb9854ed70640a6f681602150cc6789dd81d7b611c961036b1dc1c5b844368	OpenSSH (BSD-style)	1,1	1,1	same	
+deb-openssh-server.prerm	debian-maint	openssh-server	1:10.0p1-7+deb13u4	a8ec5917bee83f1b02b845a839b2d3b4f6d404eb73eb50bfb825ced34c6665f6	OpenSSH (BSD-style)	1,1	1,1	same	
+deb-openssh-client.postinst	debian-maint	openssh-client	1:10.0p1-7+deb13u4	062c275d9c918c542989693a7a0e8def89cb776e0243e8e0d04b737e0637533b	OpenSSH (BSD-style)	1,1	1,1	same	
+deb-procps.postinst	debian-maint	procps	2:4.0.4-9	0f97b851e74c3ddff77d5f22698bafc46ba773ab38ee873b3c978b35a97b637a	GPL-2.0+	1,1	1,1	same	
+deb-ca-certificates.postinst	debian-maint	ca-certificates	20250419	bbad2df5d3c5e3d787789275830bc5b597fe6e9218a99516947a079dcae9e262	GPL-2+	0,0	0,0	same	
+deb-base-files.postinst	debian-maint	base-files	13.8+deb13u7	c3afcbe1aa12e56b62955e75bbf432f21446c4901e66f19468f68351791b08be	GPL-2+	0,0	0,0	same	
+deb-base-passwd.preinst	debian-maint	base-passwd	3.6.7	47f6f8ee55faa32f7ff23337772c05bfcc7c01aa0804e1ffeffd71ebff0e21b9	GPL-2	0,0	0,0	same	
+deb-libc6.postinst	debian-maint	libc6	2.41-12+deb13u4	ff2a3a7a0e74ceac331ca5ad22e7ef57c974a7b891a9b1e7f3def4377ec6f1b5	GPL-2+ (packaging)	0,0	0,0	same	
+deb-libc6.preinst	debian-maint	libc6	2.41-12+deb13u4	964a417b9c330f80213fe8aebb1f44eaea307203962aecb0de493742583bb454	GPL-2+ (packaging)	2,2	2,2	same	
+deb-util-linux.postinst	debian-maint	util-linux	2.41.5-0+deb13u1	d781477cac1b221378593aaacc180228b91cc8e17196a6f898e141b48dbd3109	GPL-2+	0,0	0,0	same	
+deb-adduser.preinst	debian-maint	adduser	3.152	7f6b6affc5b83a6bbe3c620457d13a96671b8482b9389ebfc393548dff92dff5	GPL-2+	0,0	0,0	same	
+deb-dpkg.postinst	debian-maint	dpkg	1.22.22	46dccfe29646a5cd280aefcb889c78fe64246dd7a9cc8f0303d4c317a95c585b	GPL-2+	0,0	0,0	same	
+deb-tzdata.postinst	debian-maint	tzdata	2026c-0+deb13u1	555ed6cfc95b70d0e209ffcbfbcef31670cf50bea5e9ff686f6f9c456acb0f46	public-domain	0	0	same	
+dpkg-maintscript-helper	debian-maint	dpkg	1.22.22	164ae6cd468674eea2f5dd7208f9ebac191b20bb0c0ac726560eb313b798d577	GPL-2+	1,1,0,0,1	1,1,0,0,1	same	
+init-cron	debian-init	cron	3.0pl1-197	662b774b0b4303dd4069238f5cd8de7dea3263df9ccbfd35b5015c7946eba614	GPL-2+ (packaging), Paul-Vixie's-license	3,2,2	3,2,2	same	
+init-rsync	debian-init	rsync	3.4.1+ds1-5+deb13u4	b70230b8cbc155ea41d1a67f30c0c361191e246f124c12a86988289f66bb2eb3	GPL-3+	3,0,1,1	3,0,1,1	same	
+init-ssh	debian-init	openssh-server	1:10.0p1-7+deb13u4	aa7a68603ff32afc694615fea4fc2781487acd88971dfd750d0f39b8c5cc1295	OpenSSH (BSD-style)	3,1,1	3,1,1	same	
+init-procps	debian-init	procps	2:4.0.4-9	82ceae8662bf1ce590db859943aa6150b1747ae1229dd680df858ef93f156083	GPL-2.0+	0,3,3	0,3,3	same	
+service	debian-init	init-system-helpers	1.69~deb13u1	6501bf7b91df132596d596d656f8618e61e9352df69bb08e0b48915983af7048	GPL-2+ / BSD-3-clause	0,0,3,1,1	0,0,3,1,1	same	
+invoke-rc.d	debian-init	init-system-helpers	1.69~deb13u1	1d389fa6f6297e77b2ba1d2df4a6ec60f4d4d37815b727889f38ba602e713f77	GPL-2+ / BSD-3-clause	0,101,4,0,103	0,101,4,0,103	same	
+update-ca-certificates	debian-init	ca-certificates	20250419	2cb06c85b5f01c4f6b72c3983d9f66d44aac0a7ac997ee55e7e429aedbc3934d	GPL-2+	0,0,0,0	0,0,0,0	same	
+apk-nginx.pre-install	alpine	nginx	1.28.3-r7 (Alpine 3.22)	db368afbbefa73128aed235df22846a93e899c82b787f156a0afe9898e98b863	BSD-2-Clause	0	0	same	
+apk-nginx.post-install	alpine	nginx	1.28.3-r7 (Alpine 3.22)	82229f20e0c476b8f5bd9766ae8f82eeec31721d05af925fa1cfac993de8413d	BSD-2-Clause	0	0	same	
+apk-nginx.post-upgrade	alpine	nginx	1.28.3-r7 (Alpine 3.22)	d0b9e5c5689395637629f1ba2a242d5f98a8cae2e40589ab783453f1873f276e	BSD-2-Clause	0	0	same	
+apk-dbus.pre-install	alpine	dbus	1.16.2-r1 (Alpine 3.22)	454dd79cd20873517ac27e36206425467cba21832382f2c16b26a4e61cafbfcb	AFL-2.1 OR GPL-2.0-or-later	0	0	same	
+apk-dbus.post-install	alpine	dbus	1.16.2-r1 (Alpine 3.22)	c8bce42a6db7e1ee4861effa66278f123c7f6224ed897e081f54234b4325475b	AFL-2.1 OR GPL-2.0-or-later	0	0	same	
+apk-alpine-baselayout.pre-install	alpine	alpine-baselayout	3.7.0-r0 (Alpine 3.22)	28ecff91a36f438ca26bc8cc08d857863378aa94eab399a1f413e52501b86f85	GPL-2.0-only	0	0	same	
+apk-alpine-baselayout.post-install	alpine	alpine-baselayout	3.7.0-r0 (Alpine 3.22)	dd30b63bfbe4f7d8085f57840e15b84015b3518d6f282a3e0924f73a61000016	GPL-2.0-only	0	0	same	
+apk-chrony.pre-install	alpine	chrony	4.6.1-r1 (Alpine 3.22)	06298ac6a19a24bfed58e1d2bd213e65df73854d7847e832f3f9b33f946f3d52	GPL-2.0-or-later	0	0	same	
+apk-postfix.pre-install	alpine	postfix	3.10.13-r0 (Alpine 3.22)	5168fdedb000d5d6d9bdf695c4f2f24178f53e3cbad2917a928a0417a52aec06	IPL-1.0 EPL-2.0	0	0	same	
+apk-openrc.post-install	alpine	openrc	0.62.6-r0 (Alpine 3.22)	72d3256022ea596805d1b76bbc161ca57033c10bc461c373be79d60042ef0a77	BSD-2-Clause	0	0	same	
+apk-openssh-server.post-upgrade	alpine	openssh-server	10.0_p1-r10 (Alpine 3.22)	dfb17d0362c0eae1230da18cf337a329c962e03cde8ce6690c5af4851c352a68	SSH-OpenSSH	0	0	same	
+setup-hostname	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)	a6fff6ba6a4af86ae88f38dd0b4235d064315f86bc16b52b23685b0f95cd8099	MIT	0,0,1	0,0,1	same	
+setup-timezone	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)	772502b5184a48557331ecf35c9c3345e79ff7a2ec5abd38ddfde39ae7e9ca1d	MIT	0,1,1	0,1,1	same	
+setup-dns	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)	7aba621fba98af38e49a7991c6997bcd89a15735af78ac2f9b74ba7bcf8f5158	MIT	0,0	0,0	same	
+update-conf	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)	9a790525a5c6020022a148efca7492399777e0354d00cd5f05852b244bbf05bd	MIT	0,0,0	0,0,0	same	
+lbu	alpine	alpine-conf	3.20.0-r2 (Alpine 3.22)	25531411dcf333760eacc4c3254913e326baf671d0c3c5fa10258d426530b524	MIT	0,0,0,1	0,0,0,1	same	
+gunzip	utility	gzip	1.13-1+deb13u1	852a4855a13856f24fb2c43be3476b45adb8d48ae5d8e9bc28e9dbd3750e6b1b	GPL-3+	0,0,0,0,1	0,0,0,0,1	same	
+zcat	utility	gzip	1.13-1+deb13u1	315569eed21318914bf6d7ab10130caece2decb813a447b34ede5e9b204b9a23	GPL-3+	0,0,1	0,0,1	same	
+zcmp	utility	gzip	1.13-1+deb13u1	2a433fe9999c3159b9619d8a1bd086ddb6c6f0c5e45112e64570e7bca8e3ff25	GPL-3+	1,0,0	1,0,0	same	
+zforce	utility	gzip	1.13-1+deb13u1	828b4c63a1388527cad5ee38b5b1143953de6eb30116fda5e3bc80fdd675814e	GPL-3+	0,0,0	0,0,0	same	
+uncompress	utility	gzip	1.13-1+deb13u1	852a4855a13856f24fb2c43be3476b45adb8d48ae5d8e9bc28e9dbd3750e6b1b	GPL-3+	0,0	0,0	same	
+ssh-copy-id	utility	openssh-client	1:10.0p1-7+deb13u4	d6666d3a3e50681936374efa7a3ae1000fffaffc57d597c6dfa7a75378927437	OpenSSH (BSD-style)	1,1,1,1	1,1,1,1	same	
+ssh-argv0	utility	openssh-client	1:10.0p1-7+deb13u4	fcf4ffdfab652a0882b7b2417a25265d07a936c4268e2d3f4dec14797a9e5734	OpenSSH (BSD-style)	1,1	1,1	same	
+select-editor	utility	sensible-utils	0.0.25	4dee992b7e04935cd8e315fd73930f134642dd0ab030e2a3496bb14f9759eb46	GPL-2+	1,1,1	1,1,1	same	
+sensible-editor	utility	sensible-utils	0.0.25	85f3c97a9a65381b3fa7f2176c0e7cbc6edf733d39d7e0b7985e9d82fe426ae7	GPL-2+	0,1,1,1	0,1,1,1	same	
+sensible-pager	utility	sensible-utils	0.0.25	a3b3a869949ed9663078d01d4e11100bbd479b941f1ac2f513b8f6ee2d776af0	GPL-2+	0,0,0	0,0,0	same	
+pfetch	utility	pfetch	0.6.0	8100a561cac5be6982ea81765d3db6721fb552d7db06b03ba6f77279ed612507	MIT	0,0,0	0,0,0	unstable	run 2: dash disagrees with itself (out); exit and stderr only
+which.debianutils	utility	debianutils	5.23.2	59e7cf8b9bd8711ae1aa6f7bbbd4132b61492409c3afe8e1505225efda1cb8f6	GPL-2+	1,0,1,2	1,0,1,2	same	
+savelog	utility	debianutils	5.23.2	6a0f55fea1a81f1930c86f534fb5570785b2f12f3da49709e76c3148a89e0197	GPL-2+	0,0,0,1	0,0,0,1	same	
+add-shell	utility	debianutils	5.23.2	5f1dfc6dd41bb0ef61e9de280b1ddecc6c3a23fa07a2eea293032fe1e488ea2d	GPL-2+	0,1	0,1	same	
+gettext.sh	utility	gettext-base	0.23.1-2	b9a1f374d5062febc69af3bc7c355ecebe5b6bb898a7c9b26130c5d727a42382	LGPL-2.1+ / GPL-3+	0,0,1	0,0,1	same	
+xzgrep	utility	xz-utils	5.8.1-1+deb13u1	7b69ef1a0bae2ff726a7f87d136a5c5a08339d0b1f4ed4920ac7fe091dd1bc96	0BSD / GPL-2+ (scripts)	0,0,1,0,2	2,2,2,0,2	differs	run 0 [b f.xz]: exit 2 (dash 0); run 1 [-c . f.xz g.xz]: exit 2 (dash 0), stdout; run 2 [zzz f.xz]: exit 2 (dash 1)
+xzdiff	utility	xz-utils	5.8.1-1+deb13u1	c5dfc509c890a09a7af6a33125e25607fcf5a13fd56af5a1c546425fdd6cd2a4	0BSD / GPL-2+ (scripts)	1,0,0	1,0,0	same	
+zgrep	utility	gzip	1.13-1+deb13u1	3604de2fcef4bcc90dc8551a12a99c19013981951a9a85d54286c86c682fc378	GPL-3+	0,0,1,0	0,0,1,0	differs	run 0 [b f.gz]: stderr present; run 1 [-n -e a -e c f.gz g.gz]: stderr present; run 2 [zzz f.gz]: stderr present
+zdiff	utility	gzip	1.13-1+deb13u1	e68c8d136b9e26c8a2a294282da47ec414acea777b6e9b266ddfdaa11fc331f2	GPL-3+	1,0,0	1,2,0	differs	run 1 [f.gz]: exit 2 (dash 0), stdout, stderr present
+lesspipe	utility	less	668-1	93fd34381ad0ba02987818df0f4e6dfdf47d3a606ffd28749e8df48aedde5a68	GPL-3+ (packaging)	0,0,0	0,0,0	same	
+xdg-mime	utility	xdg-utils	1.2.1-2	943c27d8bbae36b73b032f98fd63a93236f83f959b6868e760b444fe33682b36	Expat	0,0,0,0,1	0,0,0,0,1	same	

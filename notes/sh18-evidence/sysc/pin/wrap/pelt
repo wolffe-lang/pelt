@@ -1,0 +1,2 @@
+#!/bin/bash
+exec env -u SHLVL -u _ -u OLDPWD strace -f -ff -qq -o "/home/mfwolffe/lanes/sh18/sysc/pin/traces/r$$-$RANDOM$RANDOM" "/home/mfwolffe/lanes/sh18/pin/target/static/pelt" "$@"
