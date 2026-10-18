@@ -11,11 +11,11 @@ step 3 "jobs"
 out "[2] + Running                    sleep 31\n[1] - Running                    sleep 30\n"
 err no
 prompt "$ "
-step 4 "jobs -l | wc -l"
+step 4 "jobs -l | wc -l | tr -d \" \""
 out "2\n"
 err no
 prompt "$ "
-step 5 "jobs -p | wc -l"
+step 5 "jobs -p | wc -l | tr -d \" \""
 out "2\n"
 err no
 prompt "$ "
