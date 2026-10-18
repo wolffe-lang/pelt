@@ -1,0 +1,44 @@
+step 0
+err no
+prompt "$ "
+step 1 "sh -c 'kill -TERM $$'"
+err yes
+prompt "$ "
+step 2 "echo st=$?"
+out "st=143\n"
+err no
+prompt "$ "
+step 3 "sh -c 'kill -STOP $$'"
+err yes
+prompt "$ "
+step 4 "echo st=$?"
+out "st=147\n"
+err no
+prompt "$ "
+step 5 "sh -c 'kill -TSTP $$'"
+err yes
+prompt "$ "
+step 6 "echo st=$?"
+out "st=148\n"
+err no
+prompt "$ "
+step 7 "sh -c 'exit 3' &"
+err no
+prompt "$ "
+step 8 "sleep 0.3"
+err yes
+prompt "$ "
+step 9 "jobs"
+out "[2] + Stopped                    sh -c \"kill -TSTP \\$\\$\"\n[1] - Stopped (signal)           sh -c \"kill -STOP \\$\\$\"\n"
+err no
+prompt "$ "
+step 10 "kill -9 %1 %2"
+err no
+prompt "$ "
+step 11 "sleep 0.3"
+err yes
+prompt "$ "
+step 12 "exit"
+err no
+prompt ""
+exit 0 at step 12

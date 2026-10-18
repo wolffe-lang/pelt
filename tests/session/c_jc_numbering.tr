@@ -1,0 +1,35 @@
+step 0
+err no
+prompt "$ "
+step 1 "sleep 30 &"
+err no
+prompt "$ "
+step 2 "sleep 31 &"
+err no
+prompt "$ "
+step 3 "sleep 32 &"
+err no
+prompt "$ "
+step 4 "kill %2"
+err no
+prompt "$ "
+step 5 "sleep 0.3"
+err yes
+prompt "$ "
+step 6 "sleep 33 &"
+err no
+prompt "$ "
+step 7 "jobs"
+out "[2] + Running                    sleep 33\n[3] - Running                    sleep 32\n[1]   Running                    sleep 30\n"
+err no
+prompt "$ "
+step 8 "kill %1 %2 %3"
+err no
+prompt "$ "
+step 9 "sleep 0.3"
+err yes
+prompt "$ "
+step 10 "exit"
+err no
+prompt ""
+exit 0 at step 10

@@ -1,0 +1,31 @@
+step 0
+err no
+prompt "$ "
+step 1 "while :; do sleep 1; done"
+err no
+prompt ""
+step 2 "^C"
+err no
+prompt "$ "
+step 3 "echo st=$?"
+out "st=130\n"
+err no
+prompt "$ "
+step 4 "trap 'echo trapped' INT"
+err no
+prompt "$ "
+step 5 "sleep 5"
+err no
+prompt ""
+step 6 "^C"
+out "trapped\n"
+err no
+prompt "$ "
+step 7 "echo st=$?"
+out "st=130\n"
+err no
+prompt "$ "
+step 8 "exit"
+err no
+prompt ""
+exit 0 at step 8

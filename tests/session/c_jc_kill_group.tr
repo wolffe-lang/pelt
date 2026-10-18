@@ -1,0 +1,39 @@
+step 0
+err no
+prompt "$ "
+step 1 "sh -c 'sleep 30 & sleep 31; wait' &"
+err no
+prompt "$ "
+step 2 "sleep 0.3"
+err no
+prompt "$ "
+step 3 "[ \"$(ps -o pgid= -p $! | tr -d ' ')\" = \"$!\" ] && echo group-is-pid"
+out "group-is-pid\n"
+err no
+prompt "$ "
+step 4 "kill -- -$!"
+err no
+prompt "$ "
+step 5 "sleep 0.3"
+err yes
+prompt "$ "
+step 6 "jobs"
+err no
+prompt "$ "
+step 7 "sleep 30 &"
+err no
+prompt "$ "
+step 8 "kill -s KILL -- -$!"
+err no
+prompt "$ "
+step 9 "sleep 0.3"
+err yes
+prompt "$ "
+step 10 "echo st=$?"
+out "st=0\n"
+err no
+prompt "$ "
+step 11 "exit"
+err no
+prompt ""
+exit 0 at step 11
