@@ -15,6 +15,7 @@ The census cases (sh06, `c_*`; `docs/CENSUS.md`), by what they wait on.
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
 | **ignoreeof** | `set -o ignoreeof` is accepted and Ctrl-D still ends the shell | pelt (P10) | `c_ignoreeof` |
+| **fork** | a pipeline with a stage pelt runs itself (`… \| while read …`) is not stopped as one job: pelt has no fork, so that stage runs in the shell, and the pipeline's programs keep `SUSPEND` ignored, so Ctrl-Z stops nothing rather than leave the shell waiting on a pipe a stopped program never fills (`sh.jobs`'s `pipe_is_job`) | pelt re-executing itself for a subshell (ruling #69 R1) | `c_jc_mixed_pipeline` |
 | **mail** | `MAIL`, `MAILCHECK`, `MAILPATH`: no notice before the prompt | pelt (P10); the file's time is `fs_stat` | `c_mail` |
 <!-- census:end -->
 

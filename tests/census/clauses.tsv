@@ -287,6 +287,7 @@ id	kind	statement	cases	note
 2.11/15	S	The terminal's interrupt character reaches the foreground job and not the shell	session:c_jc_ctrl_c_job_only session:ctrl_c_child session:c_jc_ctrl_c_loop	
 2.11/16	X	With job control, exit with stopped jobs warns and the shell stays, unless the line before was an exit that warned	session:c_jc_exit_stopped	XCU 2.11 lets the shell warn; dash does (black-box p07, p08)
 2.11/17	X	A new job takes the lowest job number no job holds	session:c_jc_numbering	unspecified by POSIX; dash, black-box p02
+2.11/18	S	Ctrl-Z stops a whole foreground pipeline, the stages the shell runs itself included, as one job	session:c_jc_mixed_pipeline	
 2.11/13	T	set -m in a non-interactive shell puts each asynchronous list in its own process group	jobsctl/c_monitor_script_pgid	
 2.11/14	T	With job control off, a background command stays in the shell's process group	jobsctl/c_no_monitor_pgid	
 2.12/1	T	With job control off, commands of an asynchronous list start with SIGINT and SIGQUIT ignored	signal/background_ignores_int signal/c_async_ignores_quit	
