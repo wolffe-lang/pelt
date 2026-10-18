@@ -64,6 +64,10 @@ SHAPES = [
     ("typed-brace", "typed", "{ true; }"),
     ("typed-if", "typed", "if true; then :; fi"),
     ("typed-substitution", "typed", "x=$(true)"),
+    # sh18: with job control (on in an interactive shell) every program
+    # is a job of its own, and an ended job leaves the table
+    ("typed-program", "typed", "env true"),
+    ("typed-pipeline-program", "typed", "echo x | cat >/dev/null"),
 ]
 
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
