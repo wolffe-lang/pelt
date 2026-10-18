@@ -1,0 +1,20 @@
+$ dash -i -m  < p17-bg-stdin.keys
+step 0 null
+  err "$ "
+step 1 "cat &"
+  err "$ "
+step 2 "sleep 0.3"
+  err "[1] + Stopped (tty input)        cat\n$ "
+step 3 "jobs"
+  out "[1] + Stopped (tty input)        cat\n"
+  err "$ "
+step 4 "read x < /dev/null &"
+  err "$ "
+step 5 "sleep 0.2"
+  err "[2] - Done(1)                    read x 0</dev/null\n$ "
+step 6 "kill -9 %1"
+  err "$ "
+step 7 "sleep 0.2"
+  err "[1] + Killed                     cat\n$ "
+step 8 "exit"
+exit 0 at step 8

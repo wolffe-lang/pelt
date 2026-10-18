@@ -1,0 +1,18 @@
+$ dash -i -m  < p22-stopped-bg-ttou.keys
+step 0 null
+  err "$ "
+step 1 "stty tostop"
+  err "$ "
+step 2 "sh -c 'echo out' &"
+  out "out\n"
+  err "$ "
+step 3 "sleep 0.3"
+  err "[1] + Done                       sh -c \"echo out\"\n$ "
+step 4 "jobs"
+  err "$ "
+step 5 "fg"
+  err "dash: 5: fg: No current job\n$ "
+step 6 "stty -tostop"
+  err "$ "
+step 7 "exit"
+exit 0 at step 7

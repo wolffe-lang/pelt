@@ -1,0 +1,15 @@
+sleep 30 &
+sleep 31 &
+sleep 32 &
+kill %2
+sleep 0.3
+sleep 33 &
+jobs
+kill %1
+sleep 0.3
+jobs
+sleep 34 &
+jobs
+kill %1 %2 %3
+sleep 0.3
+exit

@@ -1,0 +1,7 @@
+$ dash s04-wait-trap
+--out
+t
+st=143
+st2=0
+--err
+exit=0

@@ -1,0 +1,9 @@
+sleep 1 | cat &
+fg
+echo st=$?
+sleep 0.5 &
+bg %1
+echo st=$?
+fg %1
+echo st=$?
+exit

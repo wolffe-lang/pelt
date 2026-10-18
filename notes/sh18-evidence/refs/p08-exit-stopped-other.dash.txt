@@ -1,0 +1,14 @@
+$ dash -i -m  < p08-exit-stopped-other.keys
+step 0 null
+  err "$ "
+step 1 "sleep 30"
+step 2 "^Z"
+  err "[1] + Stopped                    sleep 30\n$ "
+step 3 "exit"
+  err "You have stopped jobs.\n$ "
+step 4 "echo between"
+  out "between\n"
+  err "$ "
+step 5 "exit"
+  err "You have stopped jobs.\n$ "
+alive at step 5

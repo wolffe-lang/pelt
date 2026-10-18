@@ -1,0 +1,16 @@
+sleep 30
+^Z
+kill %1
+sleep 0.3
+jobs
+echo next
+jobs
+sleep 31
+^Z
+kill -CONT %1
+jobs
+sleep 0.3
+jobs
+kill %1
+sleep 0.3
+exit

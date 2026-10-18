@@ -1,0 +1,15 @@
+$ dash -i -m  < p10-ctrl-z-loop.keys
+step 0 null
+  err "$ "
+step 1 "for i in 1 2; do sleep 2; echo i=$i; done"
+step 2 "^Z"
+  out "i=1\n"
+step 3 "echo st=$?"
+step 4 "jobs"
+step 5 "kill -9 %1 %2"
+  out "i=2\nst=0\n[1] + Stopped                    sleep 2\n"
+  err "[1] + Stopped                    sleep 2\n$ $ $ dash: 4: kill: No such job: %2\n$ "
+step 6 "sleep 0.3"
+  err "[1] + Killed                     sleep 2\n$ "
+step 7 "exit"
+exit 0 at step 7

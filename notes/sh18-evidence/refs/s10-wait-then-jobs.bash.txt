@@ -1,0 +1,12 @@
+$ bash --posix s10-wait-then-jobs
+--out
+--pipe
+0
+--top
+--top2
+--top3
+--top4
+[1]+  Done                       sleep 0.1
+--top5
+--err
+exit=0

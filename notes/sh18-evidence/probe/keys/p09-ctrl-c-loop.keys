@@ -1,0 +1,11 @@
+while :; do sleep 1; done
+^C
+echo st=$?
+trap 'echo trapped' INT
+sleep 5
+^C
+echo st=$?
+while :; do sleep 1; done
+^C
+echo st=$?
+exit

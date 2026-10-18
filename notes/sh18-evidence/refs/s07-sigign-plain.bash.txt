@@ -1,0 +1,6 @@
+$ bash --posix s07-sigign-plain
+--out
+SigIgn:	0000000000000004
+SigIgn:	0000000000000006
+--err
+exit=0

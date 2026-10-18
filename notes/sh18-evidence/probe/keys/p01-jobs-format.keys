@@ -1,0 +1,22 @@
+sleep 30 &
+sleep 31 | cat &
+(sleep 32) &
+{ sleep 33; } &
+sleep   34 >/dev/null 2>&1 &
+a=1 sleep 35 &
+sleep 36 && true &
+if true; then sleep 37; fi &
+jobs
+jobs -l
+jobs -p
+jobs %1
+jobs %sl
+jobs %?33
+jobs %+
+jobs %-
+jobs %9
+echo st=$?
+kill %1 %2 %3 %4 %5 %6 %7 %8
+sleep 0.3
+jobs
+exit

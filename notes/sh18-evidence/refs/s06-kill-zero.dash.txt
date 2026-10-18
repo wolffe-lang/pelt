@@ -1,0 +1,8 @@
+$ dash s06-kill-zero
+--out
+got-term
+got-term
+after st=0
+waited=0
+--err
+exit=0

@@ -1,0 +1,10 @@
+$ dash s01-set-m-notty
+--out
+dash-m=m
+bg-own-group
+fg-own-group
+SigIgn:	0000000000280000
+bg-shell-group-after-plus-m
+--err
+[1] + Done                       sh -c "ps -o pgid= -p \$\$ | tr -d \" \"" 1>bg1
+exit=0

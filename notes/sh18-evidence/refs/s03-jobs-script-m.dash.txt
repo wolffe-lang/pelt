@@ -1,0 +1,13 @@
+$ dash s03-jobs-script-m
+--out
+--jobs
+[1] + Running                    sleep 2
+--pipe
+[1] + Running                    sleep 2
+--l
+[1] + PID Running                sleep 2
+--after kill
+end
+--err
+[1] + Terminated                 sleep 2
+exit=0

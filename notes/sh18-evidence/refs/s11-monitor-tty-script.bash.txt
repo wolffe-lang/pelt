@@ -1,0 +1,6 @@
+$ bash --posix s11-monitor-tty-script
+--out
+    211      -1
+$-=hmB
+--err
+exit=0

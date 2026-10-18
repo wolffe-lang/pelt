@@ -1,0 +1,25 @@
+sh -c 'kill -TERM $$'
+echo st=$?
+sh -c 'kill -9 $$'
+echo st=$?
+sh -c 'kill -SEGV $$'
+echo st=$?
+sh -c 'kill -INT $$'
+echo st=$?
+sh -c 'kill -PIPE $$'
+echo st=$?
+sh -c 'kill -STOP $$'
+echo st=$?
+jobs
+sh -c 'kill -TSTP $$'
+echo st=$?
+sh -c 'kill -TTIN $$'
+echo st=$?
+sh -c 'kill -TTOU $$'
+echo st=$?
+jobs
+jobs -l
+kill -9 %1 %2 %3 %4
+sleep 0.2
+jobs
+exit

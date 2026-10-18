@@ -1,0 +1,10 @@
+set -b
+echo $-
+sleep 0.2 &
+echo after
+sleep 1
+set +b
+sleep 0.2 &
+echo after2
+sleep 1
+exit

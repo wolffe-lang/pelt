@@ -1,0 +1,9 @@
+$ bash --posix s01-set-m-notty
+--out
+dash-m=hmB
+bg-own-group
+fg-own-group
+SigIgn:	0000000000000004
+bg-shell-group-after-plus-m
+--err
+exit=0

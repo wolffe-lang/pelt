@@ -1,0 +1,8 @@
+sleep 30 &
+jobs | cat
+(jobs)
+x=$(jobs); echo "[$x]"
+echo $(jobs -p) | wc -w
+kill %1
+sleep 0.2
+exit

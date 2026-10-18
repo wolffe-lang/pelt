@@ -1,0 +1,23 @@
+$ bash --posix -i -m  < p16-jobs-subshell.keys
+step 0 null
+  err "bash-5.3$ "
+step 1 "sleep 30 &"
+  err "sleep 30 &\n[1] 258\nbash-5.3$ "
+step 2 "jobs | cat"
+  out "[1]+  Running                    sleep 30 &\n"
+  err "jobs | cat\nbash-5.3$ "
+step 3 "(jobs)"
+  err "(jobs)\nbash-5.3$ "
+step 4 "x=$(jobs); echo \"[$x]\""
+  out "[[1]+  Running                    sleep 30 &]\n"
+  err "x=$(jobs); echo \"[$x]\"\nbash-5.3$ "
+step 5 "echo $(jobs -p) | wc -w"
+  out "1\n"
+  err "echo $(jobs -p) | wc -w\nbash-5.3$ "
+step 6 "kill %1"
+  err "kill %1\nbash-5.3$ "
+step 7 "sleep 0.2"
+  err "sleep 0.2\n[1]+  Terminated                 sleep 30\nbash-5.3$ "
+step 8 "exit"
+  err "exit\nexit\n"
+exit 0 at step 8

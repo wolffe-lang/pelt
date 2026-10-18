@@ -1,0 +1,14 @@
+$ dash s10-wait-then-jobs
+--out
+--pipe
+0
+--top
+--top2
+--top3
+[1] + Terminated                 
+--top4
+[1] + Done                       
+--top5
+--err
+Terminated
+exit=0

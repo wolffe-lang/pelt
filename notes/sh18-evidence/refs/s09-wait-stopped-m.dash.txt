@@ -1,0 +1,8 @@
+$ dash s09-wait-stopped-m
+--out
+[1] + Stopped (signal)           sh -c "kill -STOP \$\$"
+st=147
+--err
+[1] + Stopped (signal)           sh -c "kill -STOP \$\$"
+You have stopped jobs.
+exit=0

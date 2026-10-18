@@ -1,0 +1,7 @@
+$ dash s11-monitor-tty-script
+--out
+    202      -1
+$-=m
+--err
+[1] + Done                       sh -c "ps -o pgid=,tpgid= -p \$\$"
+exit=0

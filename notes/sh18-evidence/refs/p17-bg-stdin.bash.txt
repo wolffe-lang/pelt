@@ -1,0 +1,21 @@
+$ bash --posix -i -m  < p17-bg-stdin.keys
+step 0 null
+  err "bash-5.3$ "
+step 1 "cat &"
+  err "cat &\n[1] 277\nbash-5.3$ "
+step 2 "sleep 0.3"
+  err "sleep 0.3\n\n[1]+  Stopped(SIGTTIN)           cat\nbash-5.3$ "
+step 3 "jobs"
+  out "[1]+  Stopped(SIGTTIN)           cat\n"
+  err "jobs\nbash-5.3$ "
+step 4 "read x < /dev/null &"
+  err "read x < /dev/null &\n[2] 279\nbash-5.3$ "
+step 5 "sleep 0.2"
+  err "sleep 0.2\n[2]-  Done(1)                    read x < /dev/null\nbash-5.3$ "
+step 6 "kill -9 %1"
+  err "kill -9 %1\n\n[1]+  Stopped(SIGTTIN)           cat\nbash-5.3$ "
+step 7 "sleep 0.2"
+  err "sleep 0.2\n[1]+  Killed                     cat\nbash-5.3$ "
+step 8 "exit"
+  err "exit\nexit\n"
+exit 0 at step 8

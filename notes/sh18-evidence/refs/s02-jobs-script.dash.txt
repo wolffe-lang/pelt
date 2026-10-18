@@ -1,0 +1,23 @@
+$ dash s02-jobs-script
+--out
+--jobs
+[1] + Running                    
+--pipe
+[1] + Running                    
+--sub
+[1] + Running                    
+--cmdsub
+[[1] + Running                    ]
+--l
+[1] + PID Running                
+--p
+pid
+--pct
+[1] + Running                    
+--after
+[1] + Terminated                 
+end
+--err
+/home/mfwolffe/lanes/sh18/ev/probe/scripts/s02-jobs-script.sh: 8: jobs: No such job: %sl
+/home/mfwolffe/lanes/sh18/ev/probe/scripts/s02-jobs-script.sh: 8: jobs: No such job: %?2
+exit=0

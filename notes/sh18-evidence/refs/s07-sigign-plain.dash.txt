@@ -1,0 +1,6 @@
+$ dash s07-sigign-plain
+--out
+SigIgn:	0000000000000000
+SigIgn:	0000000000000006
+--err
+exit=0

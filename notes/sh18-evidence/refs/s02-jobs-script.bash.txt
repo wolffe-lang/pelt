@@ -1,0 +1,21 @@
+$ bash --posix s02-jobs-script
+--out
+--jobs
+[1]+  Running                    sleep 2 &
+--pipe
+[1]+  Running                    sleep 2 &
+--sub
+--cmdsub
+[[1]+  Running                    sleep 2 &]
+--l
+[1]+   PID Running                    sleep 2 &
+--p
+pid
+--pct
+[1]+  Running                    sleep 2 &
+[1]+  Running                    sleep 2 &
+[1]+  Running                    sleep 2 &
+--after
+end
+--err
+exit=0

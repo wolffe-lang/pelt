@@ -1,0 +1,15 @@
+$ bash --posix -i -m  < p07-exit-stopped.keys
+step 0 null
+  err "bash-5.3$ "
+step 1 "sleep 30"
+  err "sleep 30\n"
+step 2 "^Z"
+  err "\n[1]+  Stopped(SIGTSTP)           sleep 30\nbash-5.3$ "
+step 3 "exit"
+  err "exit\nexit\nThere are stopped jobs.\nbash-5.3$ "
+step 4 "jobs"
+  out "[1]+  Stopped(SIGTSTP)           sleep 30\n"
+  err "jobs\nbash-5.3$ "
+step 5 "exit"
+  err "exit\nexit\n"
+exit 0 at step 5

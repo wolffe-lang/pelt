@@ -1,0 +1,9 @@
+$ bash --posix s08-fg-bg-nom
+--out
+fg=1
+bg=1
+jobsx=0
+--err
+/home/mfwolffe/lanes/sh18/ev/probe/scripts/s08-fg-bg-nom.sh: line 2: fg: no job control
+/home/mfwolffe/lanes/sh18/ev/probe/scripts/s08-fg-bg-nom.sh: line 3: bg: no job control
+exit=0

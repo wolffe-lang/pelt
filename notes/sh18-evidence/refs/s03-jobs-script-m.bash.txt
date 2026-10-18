@@ -1,0 +1,13 @@
+$ bash --posix s03-jobs-script-m
+--out
+--jobs
+[1]+  Running                    sleep 2 &
+--pipe
+[1]+  Running                    sleep 2 &
+--l
+[1]+   PID Running                    sleep 2 &
+--after kill
+[1]+  Terminated                 sleep 2
+end
+--err
+exit=0

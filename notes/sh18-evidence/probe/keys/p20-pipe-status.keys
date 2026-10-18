@@ -1,0 +1,12 @@
+sh -c 'exit 3' | sh -c 'exit 0' &
+sh -c 'exit 0' | sh -c 'exit 4' &
+sh -c 'kill -TERM $$' | sleep 0.2 &
+sleep 0.2 | sh -c 'kill -TERM $$' &
+sleep 0.5
+jobs
+sleep 30 | sleep 31
+^Z
+jobs
+kill -9 %1
+sleep 0.2
+exit

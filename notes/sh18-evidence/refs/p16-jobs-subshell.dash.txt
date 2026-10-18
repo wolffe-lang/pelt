@@ -1,0 +1,23 @@
+$ dash -i -m  < p16-jobs-subshell.keys
+step 0 null
+  err "$ "
+step 1 "sleep 30 &"
+  err "$ "
+step 2 "jobs | cat"
+  out "[1] + Running                    sleep 30\n"
+  err "$ "
+step 3 "(jobs)"
+  out "[1] + Running                    sleep 30\n"
+  err "$ "
+step 4 "x=$(jobs); echo \"[$x]\""
+  out "[[1] + Running                    sleep 30]\n"
+  err "$ "
+step 5 "echo $(jobs -p) | wc -w"
+  out "0\n"
+  err "$ "
+step 6 "kill %1"
+  err "$ "
+step 7 "sleep 0.2"
+  err "[1] + Terminated                 sleep 30\n$ "
+step 8 "exit"
+exit 0 at step 8

@@ -1,0 +1,5 @@
+sleep 30
+^Z
+exit
+echo between
+exit

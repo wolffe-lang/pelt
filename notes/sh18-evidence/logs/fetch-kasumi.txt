@@ -1,0 +1,5 @@
+c435b9a notes/sh17: result against prediction, evidence, each issue, not verified
+175df23880cd5bb993b778e5c8fdd7d0d96c176696802e640f6fc87d3dab40dd  d1-lupin-0.1.54-x86_64-unknown-linux-gnu.tar.gz
+4c37f9c5dc3d8830c06810948027d38bdbc375dc5524ab23127b0ada0907d851  d1-wolf-0.2.32-x86_64-unknown-linux-gnu.tar.gz
+175df23880cd5bb993b778e5c8fdd7d0d96c176696802e640f6fc87d3dab40dd  d2-lupin-0.1.54-x86_64-unknown-linux-gnu.tar.gz
+4c37f9c5dc3d8830c06810948027d38bdbc375dc5524ab23127b0ada0907d851  d2-wolf-0.2.32-x86_64-unknown-linux-gnu.tar.gz

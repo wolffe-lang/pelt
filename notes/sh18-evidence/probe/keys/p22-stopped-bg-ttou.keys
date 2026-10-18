@@ -1,0 +1,7 @@
+stty tostop
+sh -c 'echo out' &
+sleep 0.3
+jobs
+fg
+stty -tostop
+exit

@@ -1,0 +1,7 @@
+for i in 1 2; do sleep 2; echo i=$i; done
+^Z
+echo st=$?
+jobs
+kill -9 %1 %2
+sleep 0.3
+exit

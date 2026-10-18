@@ -1,0 +1,10 @@
+$ dash s08-fg-bg-nom
+--out
+fg=2
+bg=2
+/home/mfwolffe/lanes/sh18/ev/probe/scripts/s08-fg-bg-nom.sh: 4: jobs: Illegal option -x
+jobsx=2
+--err
+/home/mfwolffe/lanes/sh18/ev/probe/scripts/s08-fg-bg-nom.sh: 2: fg: job (null) not created under job control
+/home/mfwolffe/lanes/sh18/ev/probe/scripts/s08-fg-bg-nom.sh: 3: bg: job (null) not created under job control
+exit=0

@@ -1,0 +1,6 @@
+$ bash --posix s05-wait-trap-pid
+--out
+t
+st=138
+--err
+exit=0

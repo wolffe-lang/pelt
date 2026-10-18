@@ -1,0 +1,19 @@
+$ bash --posix -i -m  < p22-stopped-bg-ttou.keys
+step 0 null
+  err "bash-5.3$ "
+step 1 "stty tostop"
+  err "stty tostop\nbash-5.3$ "
+step 2 "sh -c 'echo out' &"
+  out "out\n"
+  err "sh -c 'echo out' &\n[1] 150\nbash-5.3$ "
+step 3 "sleep 0.3"
+  err "sleep 0.3\n[1]+  Done                       sh -c 'echo out'\nbash-5.3$ "
+step 4 "jobs"
+  err "jobs\nbash-5.3$ "
+step 5 "fg"
+  err "fg\nbash: fg: current: no such job\nbash-5.3$ "
+step 6 "stty -tostop"
+  err "stty -tostop\nbash-5.3$ "
+step 7 "exit"
+  err "exit\nexit\n"
+exit 0 at step 7

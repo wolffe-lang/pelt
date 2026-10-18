@@ -1,0 +1,6 @@
+$ bash --posix s09-wait-stopped-m
+--out
+[1]+  Stopped(SIGSTOP)           sh -c 'kill -STOP $$'
+st=0
+--err
+exit=0

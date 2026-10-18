@@ -1,0 +1,15 @@
+sh -c 'sleep 30 & sleep 31; wait' &
+sleep 0.3
+ps -o pgid= -p $! | tr -d ' ' > g
+[ "$(cat g)" = "$!" ] && echo group-is-pid
+kill -- -$!
+sleep 0.3
+jobs
+echo st=$?
+sleep 30 &
+kill -s KILL -- -$!
+sleep 0.2
+jobs
+kill -9 -999999
+echo st=$?
+exit
