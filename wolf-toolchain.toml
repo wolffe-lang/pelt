@@ -86,26 +86,37 @@
 # `std.signal` and sc61's `std.term`); it has no wrappers for the three
 # builtins, which pelt calls from the prelude.
 
+# ## The seventh pin: 0.2.32 / 0.1.54 (sh18, 2026-10-18)
+#
+# Digests read twice from the release API (wolf-lang release 416327027,
+# wolf-interp release 415937354) and the linux x86-64 pair hashed twice
+# after download on kasumi (notes/sh18-evidence/logs/digests.txt,
+# fetch-kasumi.txt). 0.2.31 carries the job wait (`os_wait_poll`, a stop
+# as 256 + N), the group sends (`os_signal_send_group`,
+# `os_signal_send_all`) and `os_set_pgid`, which job control adopts;
+# 0.2.32 keeps a closed standard descriptor closed (#778). The std pin
+# moves to the commit the archive bundles, wolf-std d37c911.
+
 [wolf]
-version = "0.2.30"
+version = "0.2.32"
 repo = "wolffe-lang/wolf-lang"
-rev = "1b37f368228db92eca505c8c4cd3c531ea60be48"
-version_line = "wolf 0.2.30 (wolfgang, pin 1b37f36)"
-aarch64-apple-darwin = "f3257e742ba06addfba4baf5438858f4fd6e2caa16c6d2faeef123a48b39118f"
-x86_64-unknown-linux-gnu = "4e55b39ed243d3e8ed3be24f716186529e1942935464476d47c4bc983329fe89"
-aarch64-unknown-linux-gnu = "34237d4a8d4977b67ee43d9a11c993b172e1e1cd3fdaddf997998ebc6874b4bd"
+rev = "72de141f624662fdff522e8beba459fab7c5cf66"
+version_line = "wolf 0.2.32 (wolfgang, pin 72de141)"
+aarch64-apple-darwin = "061ea7e5ca63449d5d933cdba2f4e3a717e3f8570455a0c31233e31da08cfec6"
+x86_64-unknown-linux-gnu = "4c37f9c5dc3d8830c06810948027d38bdbc375dc5524ab23127b0ada0907d851"
+aarch64-unknown-linux-gnu = "af27d4260e4e991dc0e44dc29b0e802c468c07da62db7adc17a551e0ffa9f017"
 
 [lupin]
-# The reference interpreter wolf 0.2.30 declares as its pairing:
-# `wolf --version` line 2 reads "paired with lupin 0.1.53 (reference
+# The reference interpreter wolf 0.2.32 declares as its pairing:
+# `wolf --version` line 2 reads "paired with lupin 0.1.54 (reference
 # interpreter), pin 294d626".
-version = "0.1.53"
+version = "0.1.54"
 repo = "wolffe-lang/wolf-interp"
-rev = "7896eddc17fd9e3e015b025b354ccf62a766734b"
-version_line = "lupin 0.1.53 (wolf-interp, reference interpreter at pin 294d626)"
-aarch64-apple-darwin = "997b71a5b44a5799becb954b0a287e184f322fbe02d54f319e6b439a75c4f219"
-x86_64-unknown-linux-gnu = "5db5533236578008625885c7e3ed0a21084b8fa064219808ae668dedb0edccaa"
-aarch64-unknown-linux-gnu = "7874ec272a2c11d2295dbeb1c12344c7ea0d081a61f9a1087467b86473526ef1"
+rev = "0e536e8fb4518eaa798ac426901ab81275db5c9f"
+version_line = "lupin 0.1.54 (wolf-interp, reference interpreter at pin 294d626)"
+aarch64-apple-darwin = "9cd14db71e32c277829b5e05cdae27bf60cd6f269a9a24f97a7dba67e28a4093"
+x86_64-unknown-linux-gnu = "175df23880cd5bb993b778e5c8fdd7d0d96c176696802e640f6fc87d3dab40dd"
+aarch64-unknown-linux-gnu = "5fb15e31289d810129b40a9a0af07417d85d5090e74045f66b1f7f4016d166e7"
 
 [std]
 # The tree is pinned by commit: git's object hash is the digest. From
@@ -113,4 +124,4 @@ aarch64-unknown-linux-gnu = "7874ec272a2c11d2295dbeb1c12344c7ea0d081a61f9a108746
 # archive bundles as `std/`; at 0.2.29 it was wolf-std's own 0.2.29 pin
 # (the header says why).
 repo = "wolffe-lang/wolf-std"
-rev = "fd6bcdcb1dfe03ea5092f10316b7abe81f2df41e"
+rev = "d37c911f12206c4bf5c8d3281a649bf31da3beef"

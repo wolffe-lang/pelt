@@ -38,7 +38,7 @@ jobs:
             builds: true
           - os: macos-latest
             builds: true
-          # wolf 0.2.24 through 0.2.30 build NO tier on linux aarch64: `wolf build`
+          # wolf 0.2.24 through 0.2.32 build NO tier on linux aarch64: `wolf build`
           # refuses the native tier ("native codegen targets linux/x86-64,
           # macOS/aarch64, and windows/x86-64 … c13") and the release
           # tier ("the release tier targets linux/x86-64 and
