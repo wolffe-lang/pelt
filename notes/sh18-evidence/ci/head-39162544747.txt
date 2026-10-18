@@ -1,0 +1,157 @@
+gauntlet (ubuntu-24.04-arm, false)	the clause table agrees with the corpus clause-census: total                                547  505   35    2      5  93.2%
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ##[group]Run set +e
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mset +e^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mtools/build --native >native.log 2>&1^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mn=$?^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mtools/build --release >release.log 2>&1^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mr=$?^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mset -e^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mcat native.log release.log^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mif [ "$n" = 0 ] || [ "$r" = 0 ]; then^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1m  echo "::error::a tier now builds on linux aarch64 (native $n, release $r); widen the matrix"^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1m  exit 1^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mfi^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mgrep -q "this host cannot run the native tier" native.log^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ^[[36;1mgrep -q "this host cannot run the release tier" release.log^[[0m
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) ##[endgroup]
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) wolf build: note: ld.lld not found on PATH — linking with the system linker (lld ships with the toolchain; packaging is c13)
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) wolf build: this host cannot run the native tier: native codegen targets linux/x86-64, macOS/aarch64, and windows/x86-64 (s2
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) wolf build: note: ld.lld not found on PATH — linking with the system linker (lld ships with the toolchain; packaging is c13)
+gauntlet (ubuntu-24.04-arm, false)	both tiers are refused on this host, by name (wolf-lang#614) wolf build: this host cannot run the release tier: the release tier targets linux/x86-64 and macOS/aarch64 (s41 + s127; c13 
+gauntlet (macos-latest, true)	the clause table agrees with the corpus clause-census: total                                547  505   35    2      5  93.2%
+gauntlet (macos-latest, true)	wolf test (the table checks) wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+gauntlet (macos-latest, true)	no directory read for a non-pattern word, native tier glob-rss: ok (2992 KB with 64 files, 2992 KB empty, bound 5339)
+gauntlet (macos-latest, true)	no directory read for a non-pattern word, release tier glob-rss: ok (2224 KB with 64 files, 2224 KB empty, bound 4494)
+gauntlet (macos-latest, true)	memory flat over a loop of commands, native tier loop-rss: ok (10000 more turns grew 336 KB, about 34 B a turn; bound 2000 KB)
+gauntlet (macos-latest, true)	memory flat over a loop of commands, release tier loop-rss: ok (10000 more turns grew 320 KB, about 32 B a turn; bound 2000 KB)
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   baseline                 loop    10000     3424 KB   20000     3904 KB  grew     480 KB (49 B a turn)  [:]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   pipeline                 loop    10000     3856 KB   20000     4496 KB  grew     640 KB (65 B a turn)  [true | true]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   pipeline-program         loop    10000     4672 KB   20000     5600 KB  grew     928 KB (95 B a turn)  [echo x | cat >/dev/null]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   substitution             loop    10000     3936 KB   20000     4752 KB  grew     816 KB (83 B a turn)  [x=$(true)]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   substitution-output      loop    10000     3952 KB   20000     4752 KB  grew     800 KB (81 B a turn)  [x=$(echo y)]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   backquote                loop    10000     3968 KB   20000     4752 KB  grew     784 KB (80 B a turn)  [x=`true`]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   substitution-pipeline    loop    10000     5040 KB   20000     6224 KB  grew    1184 KB (121 B a turn)  [x=$(echo a | cat)]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   subshell                 loop    10000     3520 KB   20000     4000 KB  grew     480 KB (49 B a turn)  [( true )]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   call                     loop    10000     3904 KB   20000     4656 KB  grew     752 KB (77 B a turn)  [f a b]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   call-local               loop    10000     4208 KB   20000     5296 KB  grew    1088 KB (111 B a turn)  [g a b]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   arith-assign             loop    10000     3472 KB   20000     3920 KB  grew     448 KB (45 B a turn)  [: $((j=j+1))]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   case                     loop    10000     3456 KB   20000     3936 KB  grew     480 KB (49 B a turn)  [case a in a) :;; esac]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   for                      loop    10000     3696 KB   20000     4336 KB  grew     640 KB (65 B a turn)  [for j in 1; do :; done]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-simple            script  10000     2864 KB   20000     2976 KB  grew     112 KB (11 B a turn)  [true]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-pipeline          script  10000     3280 KB   20000     3504 KB  grew     224 KB (22 B a turn)  [true | true]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-substitution      script  10000     3216 KB   20000     3408 KB  grew     192 KB (19 B a turn)  [x=$(true)]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-call              script  10000     3440 KB   20000     3952 KB  grew     512 KB (52 B a turn)  [f]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-pipeline           typed   10000     4752 KB   20000     6016 KB  grew    1264 KB (129 B a turn)  [true | true]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-and                typed   10000     4528 KB   20000     5792 KB  grew    1264 KB (129 B a turn)  [true && true]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-brace              typed   10000     4384 KB   20000     5472 KB  grew    1088 KB (111 B a turn)  [{ true; }]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-if                 typed   10000     4560 KB   20000     5824 KB  grew    1264 KB (129 B a turn)  [if true; then :; fi]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-substitution       typed   10000     4848 KB   20000     6240 KB  grew    1392 KB (142 B a turn)  [x=$(true)]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-program            typed   10000     5024 KB   20000     6352 KB  grew    1328 KB (135 B a turn)  [env true]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-pipeline-program   typed   10000     5856 KB   20000     7632 KB  grew    1776 KB (181 B a turn)  [echo x | cat >/dev/null]
+gauntlet (macos-latest, true)	memory flat over every shape, native tier shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   baseline                 loop    10000     2640 KB   20000     3136 KB  grew     496 KB (50 B a turn)  [:]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   pipeline                 loop    10000     2816 KB   20000     3456 KB  grew     640 KB (65 B a turn)  [true | true]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   pipeline-program         loop    10000     3520 KB   20000     4448 KB  grew     928 KB (95 B a turn)  [echo x | cat >/dev/null]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   substitution             loop    10000     2976 KB   20000     3776 KB  grew     800 KB (81 B a turn)  [x=$(true)]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   substitution-output      loop    10000     2992 KB   20000     3776 KB  grew     784 KB (80 B a turn)  [x=$(echo y)]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   backquote                loop    10000     2976 KB   20000     3776 KB  grew     800 KB (81 B a turn)  [x=`true`]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   substitution-pipeline    loop    10000     3840 KB   20000     5024 KB  grew    1184 KB (121 B a turn)  [x=$(echo a | cat)]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   subshell                 loop    10000     2640 KB   20000     3136 KB  grew     496 KB (50 B a turn)  [( true )]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   call                     loop    10000     2992 KB   20000     3760 KB  grew     768 KB (78 B a turn)  [f a b]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   call-local               loop    10000     3296 KB   20000     4384 KB  grew    1088 KB (111 B a turn)  [g a b]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   arith-assign             loop    10000     2688 KB   20000     3152 KB  grew     464 KB (47 B a turn)  [: $((j=j+1))]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   case                     loop    10000     2640 KB   20000     3136 KB  grew     496 KB (50 B a turn)  [case a in a) :;; esac]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   for                      loop    10000     2848 KB   20000     3472 KB  grew     624 KB (63 B a turn)  [for j in 1; do :; done]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-simple            script  10000     2224 KB   20000     2336 KB  grew     112 KB (11 B a turn)  [true]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-pipeline          script  10000     2416 KB   20000     2640 KB  grew     224 KB (22 B a turn)  [true | true]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-substitution      script  10000     2400 KB   20000     2592 KB  grew     192 KB (19 B a turn)  [x=$(true)]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-call              script  10000     2672 KB   20000     3200 KB  grew     528 KB (54 B a turn)  [f]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-pipeline           typed   10000     3504 KB   20000     4768 KB  grew    1264 KB (129 B a turn)  [true | true]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-and                typed   10000     3472 KB   20000     4736 KB  grew    1264 KB (129 B a turn)  [true && true]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-brace              typed   10000     3344 KB   20000     4432 KB  grew    1088 KB (111 B a turn)  [{ true; }]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-if                 typed   10000     3504 KB   20000     4768 KB  grew    1264 KB (129 B a turn)  [if true; then :; fi]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-substitution       typed   10000     3648 KB   20000     5040 KB  grew    1392 KB (142 B a turn)  [x=$(true)]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-program            typed   10000     3920 KB   20000     5248 KB  grew    1328 KB (135 B a turn)  [env true]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-pipeline-program   typed   10000     4400 KB   20000     6176 KB  grew    1776 KB (181 B a turn)  [echo x | cat >/dev/null]
+gauntlet (macos-latest, true)	memory flat over every shape, release tier shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier signal-witness: reap    ok   0 misses of 5000 (exit 0; shell '')
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, native tier signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier signal-witness: reap    ok   0 misses of 5000 (exit 0; shell '')
+gauntlet (macos-latest, true)	traps run on time; ignored at start stays ignored, release tier signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (macos-latest, true)	the differential corpus, native tier difftest: total        956     0    38 (1)
+gauntlet (macos-latest, true)	the differential corpus, release tier difftest: total        956     0    38 (1)
+gauntlet (macos-latest, true)	the session corpus, native tier session: pass 264  fail 0  pending 3 (0)
+gauntlet (macos-latest, true)	the session corpus, release tier session: pass 264  fail 0  pending 3 (0)
+gauntlet (macos-latest, true)	the editor restores the terminal, native tier edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (macos-latest, true)	the editor restores the terminal, release tier edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (macos-latest, true)	the history file across shells, native tier hist-witness: 6 of 6 hold
+gauntlet (macos-latest, true)	the history file across shells, release tier hist-witness: 6 of 6 hold
+gauntlet (ubuntu-latest, true)	the clause table agrees with the corpus clause-census: total                                547  505   35    2      5  93.2%
+gauntlet (ubuntu-latest, true)	wolf test (the table checks) wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+gauntlet (ubuntu-latest, true)	no directory read for a non-pattern word, native tier glob-rss: ok (11516 KB with 64 files, 11520 KB empty, bound 14720)
+gauntlet (ubuntu-latest, true)	no directory read for a non-pattern word, release tier glob-rss: ok (11504 KB with 64 files, 11504 KB empty, bound 14702)
+gauntlet (ubuntu-latest, true)	memory flat over a loop of commands, native tier loop-rss: ok (10000 more turns grew 560 KB, about 57 B a turn; bound 2000 KB)
+gauntlet (ubuntu-latest, true)	memory flat over a loop of commands, release tier loop-rss: ok (10000 more turns grew 408 KB, about 41 B a turn; bound 2000 KB)
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   baseline                 loop    10000     5048 KB   20000     5420 KB  grew     372 KB (38 B a turn)  [:]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   pipeline                 loop    10000     5364 KB   20000     6052 KB  grew     688 KB (70 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   pipeline-program         loop    10000     5576 KB   20000     6524 KB  grew     948 KB (97 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   substitution             loop    10000     5320 KB   20000     6280 KB  grew     960 KB (98 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   substitution-output      loop    10000     5392 KB   20000     6188 KB  grew     796 KB (81 B a turn)  [x=$(echo y)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   backquote                loop    10000     5548 KB   20000     6100 KB  grew     552 KB (56 B a turn)  [x=`true`]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   substitution-pipeline    loop    10000     6256 KB   20000     7556 KB  grew    1300 KB (133 B a turn)  [x=$(echo a | cat)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   subshell                 loop    10000     4940 KB   20000     5548 KB  grew     608 KB (62 B a turn)  [( true )]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   call                     loop    10000     5488 KB   20000     6232 KB  grew     744 KB (76 B a turn)  [f a b]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   call-local               loop    10000     5792 KB   20000     6940 KB  grew    1148 KB (117 B a turn)  [g a b]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   arith-assign             loop    10000     4896 KB   20000     5380 KB  grew     484 KB (49 B a turn)  [: $((j=j+1))]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   case                     loop    10000     4956 KB   20000     5404 KB  grew     448 KB (45 B a turn)  [case a in a) :;; esac]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   for                      loop    10000     5420 KB   20000     5832 KB  grew     412 KB (42 B a turn)  [for j in 1; do :; done]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-simple            script  10000     4472 KB   20000     4612 KB  grew     140 KB (14 B a turn)  [true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-pipeline          script  10000     4996 KB   20000     5116 KB  grew     120 KB (12 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-substitution      script  10000     4752 KB   20000     4924 KB  grew     172 KB (17 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   script-call              script  10000     4936 KB   20000     5676 KB  grew     740 KB (75 B a turn)  [f]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-pipeline           typed   10000     6628 KB   20000     7876 KB  grew    1248 KB (127 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-and                typed   10000     6388 KB   20000     7640 KB  grew    1252 KB (128 B a turn)  [true && true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-brace              typed   10000     6228 KB   20000     7324 KB  grew    1096 KB (112 B a turn)  [{ true; }]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-if                 typed   10000     6288 KB   20000     7536 KB  grew    1248 KB (127 B a turn)  [if true; then :; fi]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-substitution       typed   10000     6672 KB   20000     8080 KB  grew    1408 KB (144 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-program            typed   10000     6880 KB   20000     8248 KB  grew    1368 KB (140 B a turn)  [env true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok   typed-pipeline-program   typed   10000     7568 KB   20000     9324 KB  grew    1756 KB (179 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   baseline                 loop    10000     3440 KB   20000     3924 KB  grew     484 KB (49 B a turn)  [:]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   pipeline                 loop    10000     3684 KB   20000     4232 KB  grew     548 KB (56 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   pipeline-program         loop    10000     3948 KB   20000     4832 KB  grew     884 KB (90 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   substitution             loop    10000     3692 KB   20000     4468 KB  grew     776 KB (79 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   substitution-output      loop    10000     3692 KB   20000     4612 KB  grew     920 KB (94 B a turn)  [x=$(echo y)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   backquote                loop    10000     3804 KB   20000     4464 KB  grew     660 KB (67 B a turn)  [x=`true`]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   substitution-pipeline    loop    10000     4404 KB   20000     5816 KB  grew    1412 KB (144 B a turn)  [x=$(echo a | cat)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   subshell                 loop    10000     3560 KB   20000     3944 KB  grew     384 KB (39 B a turn)  [( true )]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   call                     loop    10000     3792 KB   20000     4468 KB  grew     676 KB (69 B a turn)  [f a b]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   call-local               loop    10000     4196 KB   20000     5096 KB  grew     900 KB (92 B a turn)  [g a b]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   arith-assign             loop    10000     3436 KB   20000     3816 KB  grew     380 KB (38 B a turn)  [: $((j=j+1))]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   case                     loop    10000     3576 KB   20000     3948 KB  grew     372 KB (38 B a turn)  [case a in a) :;; esac]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   for                      loop    10000     3688 KB   20000     4340 KB  grew     652 KB (66 B a turn)  [for j in 1; do :; done]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-simple            script  10000     3184 KB   20000     3304 KB  grew     120 KB (12 B a turn)  [true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-pipeline          script  10000     3416 KB   20000     3556 KB  grew     140 KB (14 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-substitution      script  10000     3292 KB   20000     3500 KB  grew     208 KB (21 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   script-call              script  10000     3572 KB   20000     4076 KB  grew     504 KB (51 B a turn)  [f]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-pipeline           typed   10000     4276 KB   20000     5524 KB  grew    1248 KB (127 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-and                typed   10000     4312 KB   20000     5564 KB  grew    1252 KB (128 B a turn)  [true && true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-brace              typed   10000     4104 KB   20000     5200 KB  grew    1096 KB (112 B a turn)  [{ true; }]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-if                 typed   10000     4308 KB   20000     5556 KB  grew    1248 KB (127 B a turn)  [if true; then :; fi]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-substitution       typed   10000     4472 KB   20000     5880 KB  grew    1408 KB (144 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-program            typed   10000     4660 KB   20000     6028 KB  grew    1368 KB (140 B a turn)  [env true]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok   typed-pipeline-program   typed   10000     5096 KB   20000     6852 KB  grew    1756 KB (179 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, native tier signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+gauntlet (ubuntu-latest, true)	traps run on time; ignored at start stays ignored, release tier signal-witness: self    ok   0 misses of 5000 (exit 0)
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier difftest: total        956     0    38 (0)
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier difftest: total        956     0    38 (0)
+gauntlet (ubuntu-latest, true)	the session corpus, native tier session: pass 264  fail 0  pending 3 (0)
+gauntlet (ubuntu-latest, true)	the session corpus, release tier session: pass 264  fail 0  pending 3 (0)
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, native tier edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	the editor restores the terminal, release tier edit-witness: 11 ok, 0 failed, 0 skipped
+gauntlet (ubuntu-latest, true)	the history file across shells, native tier hist-witness: 6 of 6 hold
+gauntlet (ubuntu-latest, true)	the history file across shells, release tier hist-witness: 6 of 6 hold

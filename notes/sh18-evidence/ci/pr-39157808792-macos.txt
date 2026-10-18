@@ -1,0 +1,27 @@
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_background_group
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_background_job
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_bg
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_bg_running
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_bg_ttin
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_ctrl_c_job_only
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_ctrl_c_loop
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_ctrl_z
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_done_message
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_exit_stopped
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_jc_fg
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_fg_number
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_fg_pipeline
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_foreground_group
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_jc_job_ids
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_jobs_l_pipeline
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_jc_jobs_list
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_jobs_states
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_kill_group
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_jc_numbering
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_shell_ignores_tstp
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_shell_is_leader
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_states
+gauntlet (macos-latest, true)	the session corpus, native tier FAIL c_jc_stopped_term
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_terminal_back
+gauntlet (macos-latest, true)	the session corpus, native tier ok   c_jc_wait_stopped
+gauntlet (macos-latest, true)	the session corpus, native tier session: pass 260  fail 5  pending 2 (0)
