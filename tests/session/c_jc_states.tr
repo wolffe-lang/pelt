@@ -11,15 +11,15 @@ prompt "$ "
 step 3 "sh -c 'kill -STOP $$'"
 err yes
 prompt "$ "
-step 4 "echo st=$?"
-out "st=147\n"
+step 4 "echo st=$(kill -l $?)"
+out "st=STOP\n"
 err no
 prompt "$ "
 step 5 "sh -c 'kill -TSTP $$'"
 err yes
 prompt "$ "
-step 6 "echo st=$?"
-out "st=148\n"
+step 6 "echo st=$(kill -l $?)"
+out "st=TSTP\n"
 err no
 prompt "$ "
 step 7 "sh -c 'exit 3' &"

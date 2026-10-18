@@ -7,8 +7,8 @@ prompt ""
 step 2 "^Z"
 err yes
 prompt "$ "
-step 3 "echo st=$?"
-out "st=148\n"
+step 3 "echo st=$(kill -l $?)"
+out "st=TSTP\n"
 err no
 prompt "$ "
 step 4 "jobs"

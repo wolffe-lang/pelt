@@ -1,9 +1,9 @@
 sh -c 'kill -TERM $$'
 echo st=$?
 sh -c 'kill -STOP $$'
-echo st=$?
+echo st=$(kill -l $?)
 sh -c 'kill -TSTP $$'
-echo st=$?
+echo st=$(kill -l $?)
 sh -c 'exit 3' &
 sleep 0.3
 jobs

@@ -17,8 +17,8 @@ prompt "$ "
 step 5 "wait %1"
 err no
 prompt "$ "
-step 6 "echo st=$?"
-out "st=148\n"
+step 6 "echo st=$(kill -l $?)"
+out "st=TSTP\n"
 err no
 prompt "$ "
 step 7 "sleep 1 &"

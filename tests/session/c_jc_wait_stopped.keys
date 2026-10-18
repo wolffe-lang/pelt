@@ -3,7 +3,7 @@ sleep 30
 wait
 echo st=$?
 wait %1
-echo st=$?
+echo st=$(kill -l $?)
 sleep 1 &
 wait %2
 echo st=$?
