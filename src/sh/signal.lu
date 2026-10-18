@@ -315,6 +315,14 @@ fn sig_apply(mut sh: Sh) {
             k += 1
         }
     }
+    // job control (`sh.jobs`): `CHILD` heard for the waits, and the
+    // three stop signals ignored for the shell itself unless trapped
+    if sh.jc_child {
+        listen = listen | signal.child()
+    }
+    if sh.jc_ign != 0 {
+        ignore = ignore | less(sh.jc_ign, listen)
+    }
     if sh.sub > 0 {
         listen = listen | less(sh.sig_listen, ignore)
         ignore = ignore | less(sh.sig_ignore, listen)
@@ -384,6 +392,11 @@ fn poll_traps(mut sh: Sh) {
             return
         }
         var taken = take_waiting(sh.sig_mine)
+        if sh.chld_owed {
+            // a `CHILD` a job's wait took (`sh.jobs`'s `jc_wait`)
+            taken = taken | signal.child()
+            sh.chld_owed = false
+        }
         if taken == 0 {
             return
         }

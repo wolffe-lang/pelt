@@ -66,7 +66,10 @@ fn is_regular_builtin(name: str) -> bool {
         name == "alias" ||
         name == "unalias" ||
         name == "type" ||
-        name == "hash"
+        name == "hash" ||
+        name == "jobs" ||
+        name == "fg" ||
+        name == "bg"
 }
 
 /// Every built-in by name, special and regular, in the order of the
@@ -75,7 +78,7 @@ fn is_regular_builtin(name: str) -> bool {
 fn builtin_names() -> List[str] {
     var o = List[str]()
     let all = ": . break continue eval exec exit export readonly return set shift trap unset times " +
-        "echo printf test [ true false pwd cd command read local getopts wait umask kill fc alias unalias type hash"
+        "echo printf test [ true false pwd cd command read local getopts wait umask kill fc alias unalias type hash jobs fg bg"
     for w in all.split(" ") {
         (mut o).push(w)
     }
@@ -660,6 +663,10 @@ fn eval_top(mut sh: Sh, mut p: P, src: str, line: int) -> int {
         if !sh.opt_n {
             st = run(mut sh, n)
         }
+        if sh.jc_on && !sh.interactive {
+            // `set -m` in a script: the notices after each command
+            jc_notify(mut sh)
+        }
         if p.pend.len == 0 && p.want_doc == 0 {
             recycle(mut sh.ast, top, dtop)
         }
@@ -711,6 +718,9 @@ fn split_assign(a: str) -> (str, str) {
 /// way (`run_slow`), from the start.
 fn run_simple(mut sh: Sh, n: int) -> int {
     sh.line = sh.ast.nodes[n].line
+    if sh.jc_build < 0 {
+        sh.jc_node = n
+    }
     sh.cs_ran = false
     let nowait = sh.nowait
     sh.nowait = false
@@ -870,6 +880,8 @@ fn shadow_of(sh: Sh) -> Sh {
     t.opt_v = sh.opt_v
     t.opt_a = sh.opt_a
     t.opt_bigc = sh.opt_bigc
+    t.opt_m = sh.opt_m
+    t.opt_b = sh.opt_b
     t.fds = copy sh.fds
     t.line = sh.line
     t.interactive = sh.interactive
@@ -908,6 +920,8 @@ fn shadow_read(sh: Sh) -> Sh {
     t.opt_v = sh.opt_v
     t.opt_a = sh.opt_a
     t.opt_bigc = sh.opt_bigc
+    t.opt_m = sh.opt_m
+    t.opt_b = sh.opt_b
     t.line = sh.line
     t.interactive = sh.interactive
     t.from_stdin = sh.from_stdin
@@ -1048,6 +1062,12 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
         r.reads = t.dir_reads
         return r
     }
+    if bk == B_FLOW && fields[0] == "exit" && sh.jc_on {
+        // `exit` reads the job table (stopped jobs), which the shadow
+        // has none of
+        close_opened(t)
+        return slow()
+    }
     if bk == B_FLOW || bk == B_SHIFT {
         let st = builtin(mut t, fields)
         close_opened(t)
@@ -1131,7 +1151,13 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
         return r
     }
     // a program: found, and started with any capture going to a pipe of
-    // its own (read here to its end) or to the stage's pipe
+    // its own (read here to its end) or to the stage's pipe; with job
+    // control on it is the ordinary path's (`sh.jobs`: a group, the
+    // terminal, the signals it gets back)
+    if sh.jc_on || sh.jc_build >= 0 {
+        close_opened(t)
+        return slow()
+    }
     let cmd = fields[0]
     var path = cmd
     if (cmd.find("/") else -1) < 0 {
@@ -2023,7 +2049,8 @@ fn wait_child(h: int) -> (int, int) {
 /// `wait_child`, and the shell's word on standard error when a signal
 /// ended the child.
 fn reap(mut sh: Sh, h: int) -> int {
-    let (st, sig) = wait_child(h)
+    let kept = stash_take(mut sh, h)
+    let (st, sig) = if kept != PR_RUN then status_of(kept) else wait_child(h)
     report_signal(mut sh, sig)
     st
 }
@@ -2114,7 +2141,7 @@ fn start_child(
         }
         k += 1
     }
-    var hd = os_spawn_fds(path, args, map) else |e| match e {
+    var hd = spawn_fds(mut sh, path, args, map) else |e| match e {
         not_found => { -127 },
         denied => { -126 },
         invalid => { -126 },
@@ -2127,7 +2154,7 @@ fn start_child(
         hd = -126
         if is_script(path) {
             let me = os_exe() else ""
-            hd = os_spawn_fds(me, script_args(path, args), map) else -126
+            hd = spawn_fds(mut sh, me, script_args(path, args), map) else -126
         }
     }
     if cap_w >= 0 {
@@ -2196,6 +2223,12 @@ fn run_external(
         env_set(names[k], values[k]) else |_| {}
         k += 1
     }
+    // with job control, a program the shell waits for at its top level
+    // is a foreground job of its own (`sh.jobs`)
+    var job = -1
+    if !nowait && jc_here(sh) {
+        job = jc_begin(mut sh, true, sh.jc_node)
+    }
     let (h1, f1) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait, remembered)
     var h = h1
     var failed = f1
@@ -2211,15 +2244,26 @@ fn run_external(
             failed = f2
         }
     }
+    if job >= 0 {
+        jc_end_build(mut sh)
+    }
     var st = failed
     if h >= 0 {
         sh.started = true
         if nowait {
             sh.stage_child = h
             st = 0
+        } else if job >= 0 {
+            st = jc_fg_wait(mut sh, job, sh.jc_node)
+            if jb_state_of(sh, job) == JB_DONE {
+                jb_free(mut sh, job)
+            }
         } else {
             st = reap(mut sh, h)
         }
+    } else if job >= 0 {
+        jc_take_tty(sh)
+        jb_free(mut sh, job)
     }
     env_back(sh, names)
     sh.status = st
@@ -2339,6 +2383,9 @@ fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
     flush(mut sh)
     let env = exec_env(sh, names)
     let map = child_map(sh)
+    // the terminal, the group and the three job-control signals go back
+    // first: the program is the shell's process from here on
+    jc_leave(mut sh)
     var st = try_exec(path, args, env, map)
     if st == 125 {
         st = 126
@@ -2365,23 +2412,40 @@ fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
 
 // ------------------------------------------------- asynchronous lists
 
-/// `list &` (XCU 2.9.3.1): standard input is the null device before the
-/// list's own redirections. A simple command that runs a program is
-/// started and not waited for; anything else pelt runs itself, to the
-/// end, as a subshell (no fork), and records as a finished job. `$!` is
-/// the program's process id (`os_proc_pid`), or for a list pelt ran
-/// itself a number no process has. With job control off the program
-/// starts with `SIGINT` and `SIGQUIT` ignored (XCU 2.11): the two are
-/// ignored in pelt across the spawn, which is what a child inherits,
-/// and put back after.
+/// `list &` (XCU 2.9.3.1). A simple command that runs a program, or a
+/// pipeline, becomes a background job (`sh.jobs`): its programs are
+/// started and not waited for, with job control on in a group of their
+/// own; anything else pelt runs itself, to the end, as a subshell (no
+/// fork), and records as a finished job. `$!` is the last program's
+/// process id, or for a list pelt ran itself a number no process has.
+/// With job control off standard input is the null device before the
+/// list's own redirections, and the programs start with `SIGINT` and
+/// `SIGQUIT` ignored (XCU 2.11): the two are ignored in pelt across the
+/// spawn, which is what a child inherits, and put back after.
 fn run_async(mut sh: Sh, node: int) -> int {
     flush(mut sh)
+    let jc = sh.jc_on && sh.sub == 0 && sh.jc_build < 0 && sh.caps.len == 0
+    let target = async_target(sh.ast, node)
+    let tk = sh.ast.nodes[target].kind
+    let as_job = sh.caps.len == 0 &&
+        sh.jc_build < 0 &&
+        (tk == K_SIMPLE || tk == K_PIPE && sh.ast.nodes[target].kids.len > 1)
     let saved_in = fd_get(sh, 0)
-    let null = fs_open("/dev/null") else FD_CLOSED
-    fd_set(mut sh, 0, null)
+    var null = FD_CLOSED
+    if !jc {
+        null = fs_open("/dev/null") else FD_CLOSED
+        fd_set(mut sh, 0, null)
+    }
+    var j = -1
+    if as_job {
+        j = jb_new(mut sh)
+        sh.jb_pgid[j] = if jc then 0 else -1
+        sh.jc_build = j
+        sh.jc_give = -1
+    }
     sh.stage_child = -1
-    sh.nowait = sh.ast.nodes[node].kind == K_SIMPLE && sh.caps.len == 0
-    if sh.nowait {
+    sh.nowait = as_job && tk == K_SIMPLE
+    if as_job && !jc {
         sig_boot(mut sh)
         let two = m_int() | m_quit()
         os_signal_ignore(two) else |_| {}
@@ -2390,45 +2454,88 @@ fn run_async(mut sh: Sh, node: int) -> int {
     }
     let st = run_subshell(mut sh, node)
     sh.nowait = false
-    let child = sh.stage_child
+    jc_end_build(mut sh)
     sh.stage_child = -1
     sig_apply(mut sh)
     fd_set(mut sh, 0, saved_in)
     if null >= 3 && !names_handle(sh.fds, null) {
         fs_close(null) else |_| {}
     }
-    var id = NO_PID_BASE + sh.jobs.len
-    if child >= 0 {
-        id = os_proc_pid(child) else id
+    if j < 0 {
+        j = jb_new(mut sh)
     }
-    (mut sh.jobs).push(child)
-    (mut sh.job_st).push(if child >= 0 then -1 else st)
-    (mut sh.job_id).push(id)
-    sh.last_bg = id
+    if jb_procs(sh, j) == 0 {
+        // a list pelt ran itself has ended by now
+        sh.jb_state[j] = JB_DONE
+        sh.jb_status[j] = st
+        sh.jb_id[j] = NO_PID_BASE + sh.jb_seq
+        sh.jb_seq += 1
+        sh.jb_told[j] = !sh.jc_on
+        sh.jb_late[j] = sh.jc_on
+    }
+    if sh.jc_on {
+        jb_fill_text(mut sh, j, node)
+    }
+    sh.last_bg = sh.jb_id[j]
     sh.status = 0
     0
 }
 
-/// Job `i`'s status, waiting for it if it still runs.
-fn wait_job(mut sh: Sh, i: int) -> int {
-    if sh.job_st[i] >= 0 {
-        return sh.job_st[i]
+/// The command `&` makes a job of: `node` without the and-or list and
+/// the pipeline that hold it alone.
+fn async_target(a: Ast, node: int) -> int {
+    var n = node
+    loop {
+        let k = a.nodes[n].kind
+        if k == K_ANDOR && a.nodes[n].kids.len == 1 {
+            n = a.nodes[n].kids[0]
+        } else if k == K_PIPE && a.nodes[n].kids.len == 1 && a.nodes[n].ints[0] == 0 {
+            n = a.nodes[n].kids[0]
+        } else {
+            return n
+        }
     }
-    let st = reap(mut sh, sh.jobs[i])
-    sh.job_st[i] = st
+    n
+}
+
+/// Job `j`'s status, waiting for it if it still runs (`wait`,
+/// `sh.builtin`); an end by signal is said unless `quiet` (dash says
+/// nothing for `wait` with no operand, black-box: s10).
+fn wait_job(mut sh: Sh, j: int, quiet: bool) -> int {
+    if jb_procs(sh, j) == 0 {
+        return sh.jb_status[j]
+    }
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j && sh.pr_st[k] == PR_RUN {
+            let kept = stash_take(mut sh, sh.pr_h[k])
+            if kept != PR_RUN {
+                sh.pr_st[k] = kept
+            } else {
+                sh.pr_st[k] = os_wait_status(sh.pr_h[k]) else 1
+            }
+        }
+        k += 1
+    }
+    let raw = jb_raw(sh, j)
+    let (st, sig) = status_of(raw)
+    if !quiet {
+        report_signal(mut sh, sig)
+    }
     st
 }
 
-/// The job `$!` named `id`, or -1.
-fn job_of(sh: Sh, id: int) -> int {
-    var i = sh.jobs.len - 1
-    while i >= 0 {
-        if sh.job_id[i] == id {
-            return i
+/// The status a child of the table answered, as `$?`; 0 for a handle no
+/// job holds.
+fn proc_status(sh: Sh, j: int, h: int) -> int {
+    var k = 0
+    while k < sh.pr_h.len {
+        if sh.pr_job[k] == j && sh.pr_h[k] == h {
+            return raw_status(sh.pr_st[k])
         }
-        i -= 1
+        k += 1
     }
-    -1
+    0
 }
 
 // ------------------------------------------------------------ pipelines
@@ -2444,6 +2551,16 @@ fn job_of(sh: Sh, id: int) -> int {
 /// failing stage's.
 fn run_pipeline(mut sh: Sh, n: int) -> int {
     flush(mut sh)
+    // with job control, a pipeline at the top level is a foreground job:
+    // its programs, the last one too, are started into one group and
+    // waited for together (`sh.jobs`); a pipeline `&` builds a
+    // background job the same way and is not waited for
+    var job = -1
+    if jc_here(sh) {
+        job = jc_begin(mut sh, true, n)
+    }
+    let building = sh.jc_build >= 0
+    var last_child = -1
     let count = sh.ast.nodes[n].kids.len
     var input = fd_get(sh, 0)
     var own_in = false
@@ -2454,7 +2571,15 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
     while i < count {
         let node = sh.ast.nodes[n].kids[i]
         if i == count - 1 {
-            st = run_stage_kept(mut sh, node, input, false)
+            sh.stage_child = -1
+            st = run_stage_kept(
+                mut sh,
+                node,
+                input,
+                building && sh.ast.nodes[node].kind == K_SIMPLE,
+            )
+            last_child = sh.stage_child
+            sh.stage_child = -1
             if own_in {
                 fs_close(input) else |_| {}
             }
@@ -2503,6 +2628,34 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         own_in = true
         i += 1
     }
+    var started = last_child >= 0
+    var q = kbase
+    while q + 1 < sh.istk.len {
+        if sh.istk[q] >= 0 {
+            started = true
+        }
+        q += 2
+    }
+    if building && job < 0 && started {
+        // a background job's: the shell does not wait (`run_async`)
+        cut_istk(mut sh, kbase)
+        read_pending_caps(mut sh)
+        return 0
+    }
+    if job >= 0 {
+        jc_end_build(mut sh)
+        if jb_procs(sh, job) > 0 {
+            let fst = jc_fg_wait(mut sh, job, n)
+            if jb_state_of(sh, job) == JB_STOP {
+                cut_istk(mut sh, kbase)
+                read_pending_caps(mut sh)
+                return fst
+            }
+        }
+        if last_child >= 0 {
+            st = proc_status(sh, job, last_child)
+        }
+    }
     // with `set -o pipefail` (XCU 2.9.2) the status is the rightmost
     // stage's that failed, or 0; the option is read as the pipeline
     // ends, which no stage of it can have changed (each is a subshell)
@@ -2512,12 +2665,15 @@ fn run_pipeline(mut sh: Sh, n: int) -> int {
         let h = sh.istk[k]
         var s = sh.istk[k + 1]
         if h >= 0 {
-            s = reap(mut sh, h)
+            s = if job >= 0 then proc_status(sh, job, h) else reap(mut sh, h)
         }
         if s != 0 {
             failed = s
         }
         k += 2
+    }
+    if job >= 0 {
+        jb_free(mut sh, job)
     }
     cut_istk(mut sh, kbase)
     read_pending_caps(mut sh)

@@ -50,6 +50,7 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
         st = bi_break(mut sh, name, args)
     } else if name == "set" {
         st = bi_set(mut sh, args)
+        jc_sync(mut sh)
     } else if name == "shift" {
         st = bi_shift(mut sh, args)
     } else if name == "export" || name == "readonly" {
@@ -94,6 +95,12 @@ fn builtin(mut sh: Sh, fields: List[str]) -> int {
         st = bi_alias(mut sh, args)
     } else if name == "unalias" {
         st = bi_unalias(mut sh, args)
+    } else if name == "jobs" {
+        st = bi_jobs(mut sh, args)
+    } else if name == "fg" {
+        st = bi_fg(mut sh, args)
+    } else if name == "bg" {
+        st = bi_bg(mut sh, args)
     }
     if sh.out.len > 0 && fd_get(sh, 1) == FD_CLOSED {
         // output to a closed descriptor is a write error (dash: status 1)
@@ -127,6 +134,15 @@ fn bi_exit(mut sh: Sh, args: List[str]) -> int {
             fatal(mut sh, "exit: {args[0]}: not a number", 2)
             return 2
         }
+    }
+    if sh.jc_on && sh.interactive && sh.sub == 0 && !sh.exit_warned_prev && jobs_stopped(sh) {
+        // XCU 2.11: a stopped job keeps an interactive shell for one
+        // more `exit`; the next line's `exit` leaves (dash, black-box:
+        // p07, p08). The table is read as it stands, not polled first,
+        // as dash reads it (c_jc_ctrl_z)
+        write_fd(mut sh, 2, "pelt: there are stopped jobs\n")
+        sh.exit_warned = true
+        return sh.status
     }
     sh.status = code & 255
     sh.flow = F_EXIT
@@ -231,8 +247,13 @@ fn option_letter(mut sh: Sh, c: char, on: bool) -> bool {
         sh.opt_a = on
     } else if c == 'C' {
         sh.opt_bigc = on
-    } else if c == 'b' || c == 'm' || c == 'h' {
-        // job notification, monitor and hashing: accepted, nothing to do
+    } else if c == 'm' {
+        // job control (`sh.jobs`): takes effect when `set` is done
+        sh.opt_m = on
+    } else if c == 'b' {
+        sh.opt_b = on
+    } else if c == 'h' {
+        // hashing: the command search always remembers (`hash`)
     } else {
         return false
     }
@@ -283,7 +304,13 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
         sh.opt_pipefail = on
         return true
     }
-    name == "notify" || name == "monitor" || name == "ignoreeof" || name == "nolog"
+    if name == "monitor" {
+        return option_letter(mut sh, 'm', on)
+    }
+    if name == "notify" {
+        return option_letter(mut sh, 'b', on)
+    }
+    name == "ignoreeof" || name == "nolog"
 }
 
 fn print_options(mut sh: Sh, reinput: bool) {
@@ -1520,20 +1547,46 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
 
 // ---------------------------------------------------------------- wait
 
-/// `wait [pid…]` (XCU `wait`): with no operand, wait for every job and
-/// answer 0; otherwise each operand's status, 127 for a process id
-/// pelt does not know. A job is named by the number `$!` gave
-/// (`sh.exec`'s `run_async`) or by a job id (`%1`, `%%`: `sh.kill`'s
+/// `wait [pid…]` (XCU `wait`): with no operand, wait for every job
+/// that runs and answer 0; otherwise each operand's status, 127 for a
+/// process id pelt does not know. A job is named by the number `$!`
+/// gave it, any of its processes' ids, or a job id (`sh.jobs`'s
 /// `job_index`); a job id no job has is an error (status 2, dash). A
-/// trapped signal does not cut the wait short: no child wait in wolf
-/// 0.2.29 is interruptible (wolf-lang#680, PENDING).
+/// stopped job is not waited for: its status is `128 + N` (dash,
+/// black-box: p12). With job control on, or a trap set, the wait is a
+/// poll and a park on `CHILD` and the trapped signals (`sh.jobs`'s
+/// `jc_wait`), so a trapped signal cuts it short: `wait` answers
+/// `128 + N` and the action runs after it (XCU 2.11, `wait`). With job
+/// control off `wait` with no operand forgets the jobs that ended
+/// (dash, black-box: s10).
 fn bi_wait(mut sh: Sh, args: List[str]) -> int {
     flush(mut sh)
+    let cut = sh.sig_mine
+    let polled = sh.jc_on || cut != 0
     if args.len == 0 {
-        var i = 0
-        while i < sh.jobs.len {
-            let _st = wait_job(mut sh, i)
-            i += 1
+        if polled {
+            let got = jc_wait(mut sh, -1, cut)
+            if got != 0 {
+                return wait_cut(sh, got)
+            }
+        } else {
+            var j = 0
+            while j < sh.jb_state.len {
+                if sh.jb_state[j] != JB_FREE {
+                    let _st = wait_job(mut sh, j, true)
+                }
+                j += 1
+            }
+        }
+        if !sh.jc_on {
+            var j = 0
+            while j < sh.jb_state.len {
+                if sh.jb_state[j] != JB_FREE && jb_state_of(sh, j) == JB_DONE {
+                    jb_free(mut sh, j)
+                    continue
+                }
+                j += 1
+            }
         }
         return 0
     }
@@ -1543,7 +1596,7 @@ fn bi_wait(mut sh: Sh, args: List[str]) -> int {
         if a.len > 0 && ch(a, 0) == '%' {
             j = job_index(sh, a)
             if j < 0 {
-                diag(mut sh, "wait: {a}: no such job")
+                diag(mut sh, "wait: {job_word(a, j)}")
                 st = 2
                 continue
             }
@@ -1555,7 +1608,18 @@ fn bi_wait(mut sh: Sh, args: List[str]) -> int {
                 continue
             }
         }
-        st = wait_job(mut sh, j)
+        if polled {
+            let got = jc_wait(mut sh, j, cut)
+            if got != 0 {
+                return wait_cut(sh, got)
+            }
+        }
+        let s = jb_state_of(sh, j)
+        if s == JB_STOP || sh.jc_on {
+            st = raw_status(jb_raw(sh, j))
+        } else {
+            st = wait_job(mut sh, j, false)
+        }
     }
     st
 }

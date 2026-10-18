@@ -190,6 +190,7 @@ fn run_source(src: str, name: str, rest: List[str], opts: List[str], then_stdin:
             return sh.status
         }
     }
+    jc_sync(mut sh)
     // the script's parser, reset for it (`sh.exec`'s `eval_top`)
     var p = new_parser("", 1)
     var st = eval_top(mut sh, mut p, src, 1)
@@ -204,6 +205,7 @@ fn run_source(src: str, name: str, rest: List[str], opts: List[str], then_stdin:
     sh.line = 0
     st = run_exit_trap(mut sh, st)
     flush(mut sh)
+    jc_leave(mut sh)
     st
 }
 
@@ -217,7 +219,9 @@ fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int 
     sh.from_stdin = true
     sh.interactive = force_i || on_terminal()
     // an interactive shell edits its lines in emacs mode (ruling #69 R2)
+    // and has job control on (XCU `set -m`, `sh.jobs`)
     sh.opt_emacs = sh.interactive
+    sh.opt_m = sh.interactive
     sig_apply(mut sh)
     if opts.len > 0 {
         let _st = bi_set(mut sh, opts)
@@ -226,6 +230,7 @@ fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int 
             return sh.status
         }
     }
+    jc_sync(mut sh)
     var st = run_stdin(mut sh)
     if sh.flow == F_EXIT {
         st = sh.status
@@ -234,6 +239,7 @@ fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int 
     sh.line = 0
     st = run_exit_trap(mut sh, st)
     flush(mut sh)
+    jc_leave(mut sh)
     st
 }
 

@@ -537,16 +537,94 @@ fn want_conditions(mut bad: List[str]) {
 /// first, and an id no job has is -1.
 fn want_jobs(mut bad: List[str]) {
     var sh = new_sh("selftest")
-    for id in [4242, NO_PID_BASE + 1, 4242] {
-        (mut sh.jobs).push(-1)
-        (mut sh.job_st).push(0)
-        (mut sh.job_id).push(id)
+    for id in [4242, NO_PID_BASE + 1, 4343] {
+        let j = jb_new(mut sh)
+        sh.jb_state[j] = JB_DONE
+        sh.jb_id[j] = id
     }
-    if job_of(sh, 4242) != 2 || job_of(sh, NO_PID_BASE + 1) != 1 || job_of(sh, 7) != -1 {
+    if job_of(sh, 4343) != 2 || job_of(sh, NO_PID_BASE + 1) != 1 || job_of(sh, 7) != -1 {
         (mut bad).push(
-            "job_of: {job_of(sh, 4242)} {job_of(sh, NO_PID_BASE + 1)} {job_of(sh, 7)}, want 2 1 -1",
+            "job_of: {job_of(sh, 4343)} {job_of(sh, NO_PID_BASE + 1)} {job_of(sh, 7)}, want 2 1 -1",
         )
     }
+    // the lowest free number, and the marks (dash, black-box: p02)
+    jb_free(mut sh, 1)
+    let again = jb_new(mut sh)
+    if again != 1 || jb_mark(sh, 1) != '+' || jb_mark(sh, 2) != '-' || jb_mark(sh, 0) != ' ' {
+        (mut bad).push(
+            "jb_new after a free: {again}, marks {jb_mark(sh, 1)}{jb_mark(sh, 2)}{jb_mark(sh, 0)}",
+        )
+    }
+    if job_index(sh, "%2") != 1 ||
+        job_index(sh, "%+") != 1 ||
+        job_index(sh, "%-") != 2 ||
+        job_index(sh, "%9") != -1 {
+        (mut bad).push(
+            "job_index: %2 %+ %- %9 gave {job_index(sh, "%2")} {job_index(sh, "%+")} {job_index(sh, "%-")} {job_index(sh, "%9")}",
+        )
+    }
+    sh.jb_text[0] = "sleep 30"
+    sh.jb_text[2] = "sleep 31 | cat"
+    if job_index(sh, "%sl") != -2 || job_index(sh, "%?cat") != 2 || job_index(sh, "%cat") != -1 {
+        (mut bad).push(
+            "job_index by text: %sl %?cat %cat gave {job_index(sh, "%sl")} {job_index(sh, "%?cat")} {job_index(sh, "%cat")}",
+        )
+    }
+    // a job's line, the command at column 33 (p01)
+    sh.jb_state[0] = JB_RUN
+    let line = job_line(sh, 0, false)
+    if line != "[1]   Running                    sleep 30" {
+        (mut bad).push("job_line: [{line}]")
+    }
+    for (raw, want) in [(0, 0), (3, 3), (-15, 143), (256 + 20, 148)] {
+        if raw_status(raw) != want {
+            (mut bad).push("raw_status({raw}) = {raw_status(raw)}, want {want}")
+        }
+    }
+}
+
+/// A command as a job line writes it (dash, black-box: p01, p19).
+fn want_node_text(mut bad: List[str], src: str, want: str) {
+    var a = new_ast()
+    var p = new_parser(src, 1)
+    let n = parse_complete(mut p, mut a)
+    if n < 0 {
+        (mut bad).push("node_text: {src} did not parse")
+        return
+    }
+    let got = node_text(a, n)
+    if got != want {
+        (mut bad).push("node_text({src}) = [{got}], want [{want}]")
+    }
+}
+
+fn want_node_texts(mut bad: List[str]) {
+    want_node_text(mut bad, "sleep 30", "sleep 30")
+    want_node_text(mut bad, "sleep 31 | cat", "sleep 31 | cat")
+    want_node_text(mut bad, "(sleep 32)", "(sleep 32)")
+    want_node_text(mut bad, "{{ sleep 33; }}", "sleep 33")
+    want_node_text(mut bad, "sleep   34 >/dev/null 2>&1", "sleep 34 1>/dev/null 2>&1")
+    want_node_text(mut bad, "a=1 sleep 35", "a=1 sleep 35")
+    want_node_text(mut bad, "sleep 36 && true", "sleep 36 && true")
+    want_node_text(mut bad, "if true; then sleep 37; fi", "if true; then sleep 37; fi")
+    want_node_text(mut bad, "sh -c 'exit 3'", "sh -c \"exit 3\"")
+    want_node_text(mut bad, "sh -c 'kill -9 $$'", "sh -c \"kill -9 \\$\\$\"")
+    want_node_text(
+        mut bad,
+        "true ${{x}} $x \"${{x}}\" $(echo y) `echo z`",
+        "true ${{x}} ${{x}} \"${{x}}\" $(...) $(...)",
+    )
+    want_node_text(mut bad, "read x < /dev/null", "read x 0</dev/null")
+    want_node_text(mut bad, "! true", "!true")
+    want_node_text(mut bad, "for i in 1 2; do true; done", "for i in 1 2; do true; done")
+    want_node_text(mut bad, "while false; do true; done", "while false; do true; done")
+    want_node_text(mut bad, "{{ true; false; }}", "true; false")
+    want_node_text(mut bad, "true $((1+2))", "true $((1+2))")
+    want_node_text(
+        mut bad,
+        "if true; then :; elif false; then :; else :; fi",
+        "if true; then :; else if false; then :; else :; fi; fi",
+    )
 }
 
 /// `umask`'s operand reader and its two answers (`sh.umask`); -1 for a
@@ -739,6 +817,7 @@ pub fn self_test() -> List[str] {
     want_exec_env(mut bad)
     want_conditions(mut bad)
     want_jobs(mut bad)
+    want_node_texts(mut bad)
     want_mask(mut bad, 0o027, "022", 0o022)
     want_mask(mut bad, 0o027, "7777", 0o777)
     want_mask(mut bad, 0o027, "", 0o027)

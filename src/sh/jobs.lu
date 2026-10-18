@@ -1,0 +1,1394 @@
+//! sh.jobs — job control (XCU 2.11): process groups, the terminal, the
+//! job table, the waits that see a stop, `jobs`, `fg`, `bg`, job ids,
+//! and the notices.
+//!
+//! References consulted: POSIX.1-2024 XCU 2.11 "Job Control", 2.9.3.1,
+//! the `jobs`, `fg`, `bg`, `kill`, `wait` and `set` pages, XBD 3 "Job
+//! ID" and XBD 11; wolf's `spec/11-os.md` at v0.2.32 (`[os.proc.job]`,
+//! `[os.proc.poll]`, `[os.term]`, `[os.term.group]`,
+//! `[os.signal.send.group]`); black-box runs of `dash -i -m` 0.5.13.4
+//! (`notes/sh18-evidence/refs/`). No shell's source; the messages are
+//! pelt's own.
+//!
+//! **A job is the programs of a pipeline.** With job control on (`set
+//! -m`, which an interactive shell starts with), each program of a
+//! pipeline the shell runs at its top level, or of `cmd &`, is started
+//! by `os_spawn_job` into one new process group: the first leads it, the
+//! rest join it, and a foreground job is handed the terminal. A stage
+//! pelt runs itself (a built-in, a function, a compound command) stays in
+//! the shell: pelt has no fork, and a subshell is not yet a process
+//! (ruling #69 R1). Inside a subshell pelt runs in-process there is no
+//! job control, as in dash's subshells.
+//!
+//! **The wait.** wolf answers a child's change by `os_wait_poll`: an
+//! exit code, `-N` for an end by signal N, `256 + N` for a stop, or
+//! `(-1, n)` for nothing new. pelt listens for `CHILD` before it first
+//! needs to wait, polls until nothing is new, and then parks in
+//! `os_signal_wait` on `CHILD` (and, for the `wait` built-in, the
+//! trapped signals), so a stop, an end, or a trapped signal wakes it and
+//! an idle wait costs nothing (`[os.proc.poll]`). Every answer the poll
+//! gives is written into the table, whichever job it is about; one for
+//! a child no job holds (a pipeline stage some blocking wait is still
+//! owed) is kept aside for that wait (`stash_take`).
+//!
+//! **The table.** A job's number is the lowest one free (dash,
+//! black-box: p02); the slots are kept and reused, so the table holds
+//! no more than the jobs alive at once. `jb_order` keeps the slots most
+//! recently used first: the current job (`+`) and the previous one
+//! (`-`). A job that has ended is forgotten once the shell has told of
+//! it (a notice, or a line of `jobs`); with job control off, where no
+//! notice is written, `wait` with no operand forgets the ended ones.
+
+use std.signal
+
+const JB_FREE: int = 0
+
+const JB_RUN: int = 1
+
+const JB_STOP: int = 2
+
+const JB_DONE: int = 3
+
+/// A process that has not changed since it started (or was continued).
+const PR_RUN: int = 100000
+
+/// Where the command column of a `jobs` line starts (dash, black-box).
+const JOB_COL: int = 33
+
+// ------------------------------------------------------------ the table
+
+/// A new job: the lowest free slot, made current.
+fn jb_new(mut sh: Sh) -> int {
+    var j = 0
+    while j < sh.jb_state.len && sh.jb_state[j] != JB_FREE {
+        j += 1
+    }
+    if j == sh.jb_state.len {
+        (mut sh.jb_state).push(JB_RUN)
+        (mut sh.jb_pgid).push(-1)
+        (mut sh.jb_id).push(0)
+        (mut sh.jb_status).push(0)
+        (mut sh.jb_told).push(true)
+        (mut sh.jb_text).push("")
+        (mut sh.jb_late).push(false)
+    } else {
+        sh.jb_state[j] = JB_RUN
+        sh.jb_pgid[j] = -1
+        sh.jb_id[j] = 0
+        sh.jb_status[j] = 0
+        sh.jb_told[j] = true
+        sh.jb_text[j] = ""
+        sh.jb_late[j] = false
+    }
+    order_front(mut sh, j)
+    j
+}
+
+/// Forget job `j`: its slot and its processes.
+fn jb_free(mut sh: Sh, j: int) {
+    if j < 0 || j >= sh.jb_state.len {
+        return
+    }
+    sh.jb_state[j] = JB_FREE
+    sh.jb_text[j] = ""
+    order_drop(mut sh, j)
+    var k = 0
+    var w = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] != j {
+            sh.pr_job[w] = sh.pr_job[k]
+            sh.pr_h[w] = sh.pr_h[k]
+            sh.pr_pid[w] = sh.pr_pid[k]
+            sh.pr_st[w] = sh.pr_st[k]
+            sh.pr_text[w] = sh.pr_text[k]
+            w += 1
+        }
+        k += 1
+    }
+    while sh.pr_job.len > w {
+        let _a = (mut sh.pr_job).pop() else 0
+        let _b = (mut sh.pr_h).pop() else 0
+        let _c = (mut sh.pr_pid).pop() else 0
+        let _d = (mut sh.pr_st).pop() else 0
+        let _e = (mut sh.pr_text).pop() else ""
+    }
+    // the free slots at the end go, so the table is as long as its
+    // highest job
+    while sh.jb_state.len > 0 && sh.jb_state[sh.jb_state.len - 1] == JB_FREE {
+        let _s = (mut sh.jb_state).pop() else 0
+        let _g = (mut sh.jb_pgid).pop() else 0
+        let _i = (mut sh.jb_id).pop() else 0
+        let _t = (mut sh.jb_status).pop() else 0
+        let _o = (mut sh.jb_told).pop() else false
+        let _x = (mut sh.jb_text).pop() else ""
+        let _l = (mut sh.jb_late).pop() else false
+    }
+}
+
+fn order_drop(mut sh: Sh, j: int) {
+    var k = 0
+    var w = 0
+    while k < sh.jb_order.len {
+        if sh.jb_order[k] != j {
+            sh.jb_order[w] = sh.jb_order[k]
+            w += 1
+        }
+        k += 1
+    }
+    while sh.jb_order.len > w {
+        let _x = (mut sh.jb_order).pop() else 0
+    }
+}
+
+/// Job `j` becomes the current job.
+fn order_front(mut sh: Sh, j: int) {
+    order_drop(mut sh, j)
+    (mut sh.jb_order).push(j)
+    var k = sh.jb_order.len - 1
+    while k > 0 {
+        sh.jb_order[k] = sh.jb_order[k - 1]
+        k -= 1
+    }
+    sh.jb_order[0] = j
+}
+
+/// `+` for the current job, `-` for the previous one, else a blank.
+fn jb_mark(sh: Sh, j: int) -> char {
+    if sh.jb_order.len > 0 && sh.jb_order[0] == j {
+        return '+'
+    }
+    if sh.jb_order.len > 1 && sh.jb_order[1] == j {
+        return '-'
+    }
+    ' '
+}
+
+/// A child of job `j`.
+fn jb_add_proc(mut sh: Sh, j: int, h: int, pid: int) {
+    (mut sh.pr_job).push(j)
+    (mut sh.pr_h).push(h)
+    (mut sh.pr_pid).push(pid)
+    (mut sh.pr_st).push(PR_RUN)
+    (mut sh.pr_text).push("")
+}
+
+fn jb_procs(sh: Sh, j: int) -> int {
+    var n = 0
+    for x in sh.pr_job {
+        if x == j {
+            n += 1
+        }
+    }
+    n
+}
+
+/// Job `j`'s state from its processes: ended when all have, stopped
+/// when every one not ended is stopped, else running. A job with no
+/// process (a list pelt ran itself) keeps the state it was given.
+fn jb_state_of(sh: Sh, j: int) -> int {
+    if sh.jb_state[j] == JB_FREE {
+        return JB_FREE
+    }
+    var any = false
+    var live = false
+    var stopped = false
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            any = true
+            let s = sh.pr_st[k]
+            if s == PR_RUN {
+                live = true
+            } else if s >= 256 {
+                stopped = true
+            }
+        }
+        k += 1
+    }
+    if !any {
+        return sh.jb_state[j]
+    }
+    if live {
+        return JB_RUN
+    }
+    if stopped {
+        return JB_STOP
+    }
+    JB_DONE
+}
+
+/// The status job `j` answers as `os_wait_poll` spells it: its last
+/// process's (dash, black-box: p20), or for a stopped job the signal of
+/// a stopped process (`256 + N`); a list pelt ran itself, its status.
+fn jb_raw(sh: Sh, j: int) -> int {
+    var last = PR_RUN
+    var stop = 0
+    var k = 0
+    var any = false
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            any = true
+            last = sh.pr_st[k]
+            if sh.pr_st[k] >= 256 && sh.pr_st[k] != PR_RUN {
+                stop = sh.pr_st[k]
+            }
+        }
+        k += 1
+    }
+    if !any {
+        return sh.jb_status[j]
+    }
+    let state = jb_state_of(sh, j)
+    if state == JB_STOP && stop > 0 {
+        return stop
+    }
+    if state == JB_DONE && sh.opt_pipefail && last == 0 {
+        // `set -o pipefail` (XCU 2.9.2): the rightmost failing process
+        var k2 = 0
+        while k2 < sh.pr_job.len {
+            if sh.pr_job[k2] == j && sh.pr_st[k2] != 0 {
+                last = sh.pr_st[k2]
+            }
+            k2 += 1
+        }
+    }
+    last
+}
+
+/// A raw status as `$?`: the exit code, or `128 + N` for an end or a
+/// stop by signal N (XCU 2.8.2, 2.11).
+fn raw_status(raw: int) -> int {
+    if raw >= 256 && raw != PR_RUN {
+        return 128 + raw - 256
+    }
+    if raw < 0 {
+        return 128 - raw
+    }
+    raw
+}
+
+/// The job `$!` named `id`, or the job that holds the process `id`, or
+/// -1.
+fn job_of(sh: Sh, id: int) -> int {
+    var j = 0
+    while j < sh.jb_state.len {
+        if sh.jb_state[j] != JB_FREE && sh.jb_id[j] == id {
+            return j
+        }
+        j += 1
+    }
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_pid[k] == id {
+            return sh.pr_job[k]
+        }
+        k += 1
+    }
+    -1
+}
+
+/// What a job id names (XBD 3 "Job ID"): its slot, `-1` for none,
+/// `-2` for a `%string` or `%?string` more than one job's command
+/// matches. `%%`, `%+` and `%` are the current job, `%-` the previous
+/// one, `%n` job n, `%string` the job whose command begins with it,
+/// `%?string` the one whose command holds it.
+fn job_index(sh: Sh, spec: str) -> int {
+    if spec.len == 0 || ch(spec, 0) != '%' {
+        return -1
+    }
+    let rest = spec[1..spec.len]
+    if rest.len == 0 || rest == "%" || rest == "+" {
+        if sh.jb_order.len > 0 {
+            return sh.jb_order[0]
+        }
+        return -1
+    }
+    if rest == "-" {
+        if sh.jb_order.len > 1 {
+            return sh.jb_order[1]
+        }
+        return -1
+    }
+    if is_digits(rest) {
+        let n = to_int(rest) else 0
+        if n >= 1 && n <= sh.jb_state.len && sh.jb_state[n - 1] != JB_FREE {
+            return n - 1
+        }
+        return -1
+    }
+    let inside = ch(rest, 0) == '?'
+    let want = if inside then rest[1..rest.len] else rest
+    var found = -1
+    var j = 0
+    while j < sh.jb_state.len {
+        if sh.jb_state[j] != JB_FREE && sh.jb_text[j].len > 0 {
+            let t = sh.jb_text[j]
+            let hit = if inside then t.contains(want) else t.starts_with(want)
+            if hit {
+                if found >= 0 {
+                    return -2
+                }
+                found = j
+            }
+        }
+        j += 1
+    }
+    found
+}
+
+/// The word for a bad job id: `-2` ambiguous, else no such job.
+fn job_word(spec: str, why: int) -> str {
+    if why == -2 {
+        return "{spec}: more than one job matches"
+    }
+    "{spec}: no such job"
+}
+
+// ------------------------------------------------------------- the poll
+
+/// `CHILD` listened for from now on, so a wait can park on it.
+fn jc_listen(mut sh: Sh) {
+    if sh.jc_child {
+        return
+    }
+    sh.jc_child = true
+    sig_apply(mut sh)
+}
+
+/// Every change of a child `os_wait_poll` has to report, written into
+/// the table (module doc). Answers whether anything changed.
+fn jc_poll(mut sh: Sh) -> bool {
+    var any = false
+    loop {
+        let (h, st) = os_wait_poll() else (-1, 0)
+        if h < 0 {
+            break
+        }
+        any = true
+        jc_record(mut sh, h, st)
+    }
+    any
+}
+
+fn jc_record(mut sh: Sh, h: int, st: int) {
+    var k = 0
+    while k < sh.pr_h.len {
+        if sh.pr_h[k] == h && (sh.pr_st[k] == PR_RUN || sh.pr_st[k] >= 256) {
+            sh.pr_st[k] = st
+            let j = sh.pr_job[k]
+            sh.jb_told[j] = false
+            return
+        }
+        k += 1
+    }
+    if st >= 256 {
+        // a stop of a child no job holds: nothing waits to hear it
+        return
+    }
+    (mut sh.stash_h).push(h)
+    (mut sh.stash_st).push(st)
+}
+
+/// What a poll kept aside for child `h`, taken; `PR_RUN` for nothing.
+fn stash_take(mut sh: Sh, h: int) -> int {
+    var k = 0
+    while k < sh.stash_h.len {
+        if sh.stash_h[k] == h {
+            let st = sh.stash_st[k]
+            var i = k
+            while i + 1 < sh.stash_h.len {
+                sh.stash_h[i] = sh.stash_h[i + 1]
+                sh.stash_st[i] = sh.stash_st[i + 1]
+                i += 1
+            }
+            let _a = (mut sh.stash_h).pop() else 0
+            let _b = (mut sh.stash_st).pop() else 0
+            return st
+        }
+        k += 1
+    }
+    PR_RUN
+}
+
+/// Whether some job has a process that has not ended.
+fn jobs_live(sh: Sh) -> bool {
+    for s in sh.pr_st {
+        if s == PR_RUN || s >= 256 {
+            return true
+        }
+    }
+    false
+}
+
+/// Wait until job `j` (every job when `j` is -1) is no longer running,
+/// or a meaning in `also` is delivered: that meaning, or 0. With `j` -1
+/// a stopped job counts as not running (XCU `wait`; dash, p12).
+fn jc_wait(mut sh: Sh, j: int, also: int) -> int {
+    jc_listen(mut sh)
+    loop {
+        let _p = jc_poll(mut sh)
+        if !still_running(sh, j) {
+            return 0
+        }
+        let got = os_signal_wait(signal.child() | also) else -1
+        if got < 0 {
+            // no wait on signals here: block on the first live child
+            // of the job; a stop is then seen only when it ends
+            if !block_on_one(mut sh, j) {
+                return 0
+            }
+            continue
+        }
+        if got & signal.child() != 0 && sh.sig_mine & signal.child() != 0 {
+            sh.chld_owed = true
+        }
+        let other = less(got, signal.child())
+        if other != 0 {
+            return other
+        }
+    }
+    0
+}
+
+fn still_running(sh: Sh, j: int) -> bool {
+    if j >= 0 {
+        return jb_state_of(sh, j) == JB_RUN
+    }
+    var i = 0
+    while i < sh.jb_state.len {
+        if jb_state_of(sh, i) == JB_RUN {
+            return true
+        }
+        i += 1
+    }
+    false
+}
+
+/// The fallback of `jc_wait` with no signal wait: one blocking wait for
+/// a running child of job `j` (any job for -1). False when none runs.
+fn block_on_one(mut sh: Sh, j: int) -> bool {
+    var k = 0
+    while k < sh.pr_h.len {
+        if (j < 0 || sh.pr_job[k] == j) && sh.pr_st[k] == PR_RUN {
+            let raw = os_wait_status(sh.pr_h[k]) else 1
+            sh.pr_st[k] = raw
+            sh.jb_told[sh.pr_job[k]] = false
+            return true
+        }
+        k += 1
+    }
+    false
+}
+
+// ------------------------------------------------- the foreground job
+
+/// Whether a command run now becomes a job of its own: job control on,
+/// at the shell's top level, no job being built, no capture open.
+fn jc_here(sh: Sh) -> bool {
+    sh.jc_on && sh.sub == 0 && sh.jc_build < 0 && !sh.shadow && sh.caps.len == 0
+}
+
+/// Begin a job the next spawns join: a new group, handed the terminal
+/// when `fg`.
+fn jc_begin(mut sh: Sh, fg: bool, node: int) -> int {
+    let j = jb_new(mut sh)
+    if fg {
+        // a foreground job is no one's current job until it stops
+        order_drop(mut sh, j)
+    }
+    sh.jb_pgid[j] = 0
+    sh.jc_build = j
+    sh.jc_give = if fg then sh.jc_tty else -1
+    sh.jc_node = node
+    j
+}
+
+fn jc_end_build(mut sh: Sh) {
+    sh.jc_build = -1
+    sh.jc_give = -1
+}
+
+/// The terminal back to the shell's own group.
+fn jc_take_tty(sh: Sh) {
+    if sh.jc_on && sh.jc_tty >= 0 && sh.jc_pgid > 0 {
+        os_term_set_foreground(sh.jc_tty, sh.jc_pgid) else |_| {}
+    }
+}
+
+/// Wait for foreground job `j` until it ends or stops, and take the
+/// terminal back. A stopped job keeps its slot, becomes current, and is
+/// told of at once; `$?` is `128 + N` (XCU 2.11). An ended job's slot is
+/// the caller's to free (it may read each process's status first). A job
+/// that died of `SIGINT` is answered as an interrupt the shell heard
+/// (dash, black-box: p09): with no trap the command is abandoned, with
+/// one the action runs.
+fn jc_fg_wait(mut sh: Sh, j: int, node: int) -> int {
+    let _w = jc_wait(mut sh, j, 0)
+    jc_take_tty(sh)
+    let s = jb_state_of(sh, j)
+    let raw = jb_raw(sh, j)
+    if s == JB_STOP {
+        if node >= 0 {
+            jb_fill_text(mut sh, j, node)
+        }
+        order_front(mut sh, j)
+        sh.jb_told[j] = true
+        write_fd(mut sh, 2, "{job_line(sh, j, false)}\n")
+        return raw_status(raw)
+    }
+    let (st, sig) = status_of(raw)
+    report_signal(mut sh, sig)
+    if sig > 0 && sig == (signal.number(m_int()) else 0) && sh.sig_listen & m_int() != 0 {
+        signal.raise(m_int()) else |_| {}
+    }
+    st
+}
+
+/// Job `j`'s command text, and each process's, from node `n` (a
+/// pipeline, or one command): only with job control on (dash keeps no
+/// text without it, black-box: s02).
+fn jb_fill_text(mut sh: Sh, j: int, n: int) {
+    if !sh.opt_m || n < 0 {
+        return
+    }
+    sh.jb_text[j] = node_text(sh.ast, n)
+    var stages = List[int]()
+    var m = n
+    if sh.ast.nodes[m].kind == K_ANDOR && sh.ast.nodes[m].kids.len == 1 {
+        m = sh.ast.nodes[m].kids[0]
+    }
+    if sh.ast.nodes[m].kind == K_PIPE && sh.ast.nodes[m].ints[0] == 0 {
+        for k in sh.ast.nodes[m].kids {
+            if sh.ast.nodes[k].kind == K_SIMPLE {
+                (mut stages).push(k)
+            }
+        }
+    }
+    var k = 0
+    var i = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            sh.pr_text[k] = if i < stages.len then node_text(sh.ast, stages[i]) else sh.jb_text[j]
+            i += 1
+        }
+        k += 1
+    }
+}
+
+// ------------------------------------------------------- start and end
+
+/// `set -m` or `set +m` takes effect (`sh.builtin` after `set`, and at
+/// start). Inside a subshell pelt runs in-process only the option moves.
+fn jc_sync(mut sh: Sh) {
+    if sh.sub > 0 || sh.shadow {
+        return
+    }
+    if sh.opt_m && !sh.jc_on {
+        jc_enable(mut sh)
+    } else if !sh.opt_m && sh.jc_on {
+        sh.jc_on = false
+        sh.jc_ign = 0
+        sig_apply(mut sh)
+    }
+}
+
+/// Job control on (module doc). An interactive shell with a terminal
+/// waits until its group is the terminal's foreground one (stopping
+/// itself with `BG_READ` while it is not, as a shell started in the
+/// background must), leads a group of its own (`os_set_pgid(0)`) and
+/// takes the terminal; it ignores `SUSPEND`, `BG_READ` and `BG_WRITE`.
+/// A non-interactive one ignores `SUSPEND` and `BG_WRITE` (dash,
+/// black-box: s01) and hands no terminal on.
+fn jc_enable(mut sh: Sh) {
+    sig_boot(mut sh)
+    sh.jc_on = true
+    sh.jc_pgid = os_pgid() else 0
+    if sh.interactive {
+        let tty = jc_open_tty()
+        if tty >= 0 {
+            var tries = 0
+            while tries < 1000 {
+                let fg = os_term_foreground(tty) else -1
+                let me = os_pgid() else 0
+                if fg <= 0 || fg == me || me <= 1 {
+                    break
+                }
+                os_signal_send_group(me, signal.bg_read()) else |_| {
+                    break
+                }
+                tries += 1
+            }
+            let pid = os_pid()
+            let pg = os_pgid() else 0
+            if pid > 0 && pg != pid {
+                var moved = true
+                os_set_pgid(0) else |_| {
+                    moved = false
+                }
+                if moved {
+                    sh.jc_orig = pg
+                }
+            }
+            sh.jc_pgid = os_pgid() else pid
+            os_term_set_foreground(tty, sh.jc_pgid) else |_| {}
+            sh.jc_tty = tty
+        }
+        sh.jc_ign = signal.suspend() | signal.bg_read() | signal.bg_write()
+    } else {
+        sh.jc_ign = signal.suspend() | signal.bg_write()
+    }
+    sh.jc_child = true
+    sig_apply(mut sh)
+}
+
+/// The controlling terminal: `/dev/tty`, else descriptor 2 or 0 when it
+/// is one; -1 for none.
+fn jc_open_tty() -> int {
+    let h = fs_open_mode("/dev/tty", 3) else -1
+    if h >= 0 {
+        let t = os_isatty(h) else false
+        if t {
+            return h
+        }
+        fs_close(h) else |_| {}
+    }
+    let e = os_isatty(2) else false
+    if e {
+        return 2
+    }
+    let i = os_isatty(0) else false
+    if i {
+        return 0
+    }
+    -1
+}
+
+/// What the shell gives back as it ends or is replaced (`exit`, `exec`):
+/// the terminal and the group it was started in, and the three signals
+/// it ignored for itself.
+fn jc_leave(mut sh: Sh) {
+    if !sh.jc_on {
+        return
+    }
+    if sh.jc_orig > 0 {
+        if sh.jc_tty >= 0 {
+            os_term_set_foreground(sh.jc_tty, sh.jc_orig) else |_| {}
+        }
+        os_set_pgid(sh.jc_orig) else |_| {}
+        sh.jc_orig = -1
+    }
+    let back = less(sh.jc_ign, if sh.sig_ign0 > 0 then sh.sig_ign0 else 0)
+    if back != 0 {
+        signal.reset(back) else |_| {}
+    }
+}
+
+/// The meanings a child gets back at the default: the ones the shell
+/// ignores for job control and was not started ignoring.
+fn jc_defaults(sh: Sh) -> int {
+    less(sh.jc_ign, if sh.sig_ign0 > 0 then sh.sig_ign0 else 0)
+}
+
+/// Start a program as `os_spawn_fds` does, or, while a job is built or
+/// job control is on, as `os_spawn_job` does: into the job's group (the
+/// first program leads it), the terminal handed to it for a foreground
+/// job, and the signals the shell ignores for job control back at their
+/// defaults. The child is the job's.
+fn spawn_fds(mut sh: Sh, path: str, args: List[str], map: List[int]) -> int ! {
+    denied,
+    invalid,
+    io,
+    not_found,
+    unsupported,
+} {
+    let j = sh.jc_build
+    if j < 0 && sh.jc_ign == 0 {
+        return os_spawn_fds(path, args, map)?
+    }
+    var group = -1
+    var tty = -1
+    if j >= 0 && sh.jb_pgid[j] >= 0 {
+        group = sh.jb_pgid[j]
+        tty = sh.jc_give
+    }
+    let h = os_spawn_job(path, args, map, group, tty, jc_defaults(sh))?
+    if j >= 0 {
+        let pid = os_proc_pid(h) else 0
+        if sh.jb_pgid[j] == 0 {
+            sh.jb_pgid[j] = pid
+        }
+        jb_add_proc(mut sh, j, h, pid)
+        sh.jb_id[j] = pid
+    }
+    h
+}
+
+// ---------------------------------------------------------- the words
+
+/// pelt's words for signal `n`'s end, as a job line shows it: glibc's
+/// in the C locale (what dash prints on linux, black-box: p03), on
+/// every host, so a line reads the same wherever it is written.
+fn sig_text(n: int) -> str {
+    match sig_by_number(n) {
+        0 => "Hangup",
+        1 => "Terminated",
+        2 => "Quit",
+        3 => "User defined signal 2",
+        4 => "Interrupt",
+        5 => "Stopped",
+        6 => "Stopped (tty input)",
+        7 => "Stopped (tty output)",
+        8 => "Child exited",
+        9 => "User defined signal 1",
+        10 => "Alarm clock",
+        11 => "Broken pipe",
+        12 => "Aborted",
+        13 => "Continued",
+        14 => "Window changed",
+        15 => "Urgent I/O condition",
+        16 => "Virtual timer expired",
+        17 => "Profiling timer expired",
+        18 => "CPU time limit exceeded",
+        19 => "File size limit exceeded",
+        20 => "Killed",
+        21 => "Stopped (signal)",
+        22 => "Segmentation fault",
+        23 => "Bus error",
+        24 => "Floating point exception",
+        25 => "Illegal instruction",
+        26 => "Trace/breakpoint trap",
+        27 => "Bad system call",
+        _ => "Signal {n}",
+    }
+}
+
+/// A job's state as `jobs` writes it (dash, black-box: p03, p04).
+fn state_word(sh: Sh, j: int) -> str {
+    let s = jb_state_of(sh, j)
+    if s == JB_RUN {
+        return "Running"
+    }
+    let raw = jb_raw(sh, j)
+    if s == JB_STOP {
+        return sig_text(raw - 256)
+    }
+    if raw == 0 {
+        return "Done"
+    }
+    if raw > 0 && raw < 256 {
+        return "Done({raw})"
+    }
+    sig_text(0 - raw)
+}
+
+/// `s` with blanks to column `JOB_COL`, or one blank past it.
+fn to_col(mut o: Buf, used: int) {
+    var n = used
+    if n >= JOB_COL {
+        putc(mut o, ' ')
+        return
+    }
+    while n < JOB_COL {
+        putc(mut o, ' ')
+        n += 1
+    }
+}
+
+/// One job's line: `[n] M state command`, the command at column 33
+/// (dash, black-box: p01). With `long` (`jobs -l`) each process's id
+/// comes before the state, a pipeline one line a process.
+fn job_line(sh: Sh, j: int, long: bool) -> str {
+    var o = buf()
+    put(mut o, "[{j + 1}] {jb_mark(sh, j)} ")
+    let head = o.b.len
+    let st = state_word(sh, j)
+    if !long {
+        put(mut o, st)
+        to_col(mut o, o.b.len)
+        put(mut o, sh.jb_text[j])
+        return text(o)
+    }
+    let count = jb_procs(sh, j)
+    if count == 0 {
+        put(mut o, "{sh.jb_id[j]} {st}")
+        to_col(mut o, o.b.len)
+        put(mut o, sh.jb_text[j])
+        return text(o)
+    }
+    var i = 0
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            let start = o.b.len
+            if i > 0 {
+                putc(mut o, '\n')
+                var b = 0
+                while b < head {
+                    putc(mut o, ' ')
+                    b += 1
+                }
+                put(mut o, "{sh.pr_pid[k]}")
+            } else {
+                put(mut o, "{sh.pr_pid[k]} {st}")
+            }
+            let line_start = if i > 0 then start + 1 else 0
+            to_col(mut o, o.b.len - line_start)
+            put(mut o, if count > 1 then sh.pr_text[k] else sh.jb_text[j])
+            if i < count - 1 {
+                put(mut o, " |")
+            }
+            i += 1
+        }
+        k += 1
+    }
+    text(o)
+}
+
+/// The notices (XCU 2.11): every job that ended or stopped since it was
+/// last told of, most recently used first, on standard error; an ended
+/// one is forgotten as it is told, so the next takes its mark (dash,
+/// black-box: p01).
+fn jc_notify(mut sh: Sh) {
+    if !sh.jc_on || sh.sub > 0 || sh.shadow {
+        return
+    }
+    if jobs_live(sh) {
+        let _p = jc_poll(mut sh)
+    }
+    loop {
+        var pick = -1
+        for j in sh.jb_order {
+            if sh.jb_late[j] {
+                // a list pelt ran itself is told of a line later, when a
+                // program's ending would first be seen (dash, black-box:
+                // c_jc_done_message)
+                sh.jb_late[j] = false
+                continue
+            }
+            if pick < 0 && !sh.jb_told[j] {
+                let s = jb_state_of(sh, j)
+                if s == JB_DONE || s == JB_STOP {
+                    pick = j
+                }
+            }
+        }
+        if pick < 0 {
+            break
+        }
+        write_fd(mut sh, 2, "{job_line(sh, pick, false)}\n")
+        if jb_state_of(sh, pick) == JB_DONE {
+            jb_free(mut sh, pick)
+        } else {
+            sh.jb_told[pick] = true
+        }
+    }
+}
+
+/// Whether a job is stopped (`exit` warns, `sh.builtin`).
+fn jobs_stopped(sh: Sh) -> bool {
+    var j = 0
+    while j < sh.jb_state.len {
+        if jb_state_of(sh, j) == JB_STOP {
+            return true
+        }
+        j += 1
+    }
+    false
+}
+
+// --------------------------------------------------------- the built-ins
+
+/// `jobs [-l | -p] [job…]` (XCU `jobs`): each job's line, most recently
+/// used first, or only the named ones; `-p` each job's process group
+/// leader (its first process). An ended job is written once and
+/// forgotten. With job control off a job has no command text (dash,
+/// black-box: s02).
+fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
+    var long = false
+    var pids = false
+    var i = 0
+    while i < args.len {
+        let a = args[i]
+        if a == "--" {
+            i += 1
+            break
+        }
+        if a.len < 2 || ch(a, 0) != '-' {
+            break
+        }
+        var k = 1
+        while k < a.len {
+            let c = ch(a, k)
+            if c == 'l' {
+                long = true
+            } else if c == 'p' {
+                pids = true
+            } else {
+                diag(mut sh, "jobs: -{c}: no such option")
+                return 2
+            }
+            k += 1
+        }
+        i += 1
+    }
+    if jobs_live(sh) {
+        let _p = jc_poll(mut sh)
+    }
+    var pick = List[int]()
+    var st = 0
+    if i >= args.len {
+        for j in sh.jb_order {
+            if j != sh.jc_build {
+                (mut pick).push(j)
+            }
+        }
+    } else {
+        while i < args.len {
+            let j = job_index(sh, args[i])
+            if j < 0 {
+                diag(mut sh, "jobs: {job_word(args[i], j)}")
+                st = 2
+            } else {
+                (mut pick).push(j)
+            }
+            i += 1
+        }
+    }
+    for j in pick {
+        if pids {
+            emit(mut sh, "{jb_leader(sh, j)}\n")
+        } else {
+            emit(mut sh, "{job_line(sh, j, long)}\n")
+        }
+    }
+    if !pids {
+        for j in pick {
+            if sh.jb_state[j] == JB_FREE {
+                continue
+            }
+            let s = jb_state_of(sh, j)
+            if s == JB_DONE {
+                jb_free(mut sh, j)
+            } else if s == JB_STOP {
+                sh.jb_told[j] = true
+            }
+        }
+    }
+    st
+}
+
+/// A job's group leader: its first process (`jobs -p`), or the id `$!`
+/// gave it.
+fn jb_leader(sh: Sh, j: int) -> int {
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            return sh.pr_pid[k]
+        }
+        k += 1
+    }
+    sh.jb_id[j]
+}
+
+/// The job `fg` or `bg` names: its slot, or -1 with the message written.
+fn fgbg_job(mut sh: Sh, name: str, spec: str) -> int {
+    if !sh.jc_on {
+        diag(mut sh, "{name}: no job control")
+        return -1
+    }
+    if spec.len == 0 {
+        if sh.jb_order.len == 0 {
+            diag(mut sh, "{name}: no current job")
+            return -1
+        }
+        return sh.jb_order[0]
+    }
+    let j = job_index(sh, spec)
+    if j < 0 {
+        diag(mut sh, "{name}: {job_word(spec, j)}")
+        return -1
+    }
+    j
+}
+
+/// Every stopped process of job `j` continued: `CONTINUE` to its group
+/// (or to each process when it has none), and the table says running.
+fn jb_continue(mut sh: Sh, j: int) {
+    if sh.jb_pgid[j] > 1 {
+        os_signal_send_group(sh.jb_pgid[j], signal.continued()) else |_| {}
+    } else {
+        var k = 0
+        while k < sh.pr_job.len {
+            if sh.pr_job[k] == j && sh.pr_st[k] >= 256 && sh.pr_st[k] != PR_RUN {
+                os_signal_send(sh.pr_pid[k], signal.continued()) else |_| {}
+            }
+            k += 1
+        }
+    }
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j && sh.pr_st[k] >= 256 && sh.pr_st[k] != PR_RUN {
+            sh.pr_st[k] = PR_RUN
+        }
+        k += 1
+    }
+    if jb_procs(sh, j) > 0 {
+        sh.jb_told[j] = true
+    }
+}
+
+/// `fg [job]` (XCU `fg`): the job's command on standard output, the
+/// terminal handed to its group, `CONTINUE` sent to it (also when it
+/// runs: dash, black-box), and the shell waits for it as for a
+/// foreground job. Without job control, or with no such job, 2.
+fn bi_fg(mut sh: Sh, args: List[str]) -> int {
+    let j = fgbg_job(mut sh, "fg", if args.len > 0 then args[0] else "")
+    if j < 0 {
+        return 2
+    }
+    emit(mut sh, "{sh.jb_text[j]}\n")
+    flush(mut sh)
+    order_front(mut sh, j)
+    if sh.jc_tty >= 0 && sh.jb_pgid[j] > 0 {
+        os_term_set_foreground(sh.jc_tty, sh.jb_pgid[j]) else |_| {}
+    }
+    jb_continue(mut sh, j)
+    let st = jc_fg_wait(mut sh, j, -1)
+    if jb_state_of(sh, j) == JB_DONE {
+        jb_free(mut sh, j)
+    }
+    st
+}
+
+/// `bg [job…]` (XCU `bg`): each job's `[n] command` on standard output
+/// and `CONTINUE` to it, running or not (dash, black-box: p05).
+fn bi_bg(mut sh: Sh, args: List[str]) -> int {
+    var specs = List[str]()
+    if args.len == 0 {
+        (mut specs).push("")
+    } else {
+        for a in args {
+            (mut specs).push(a)
+        }
+    }
+    var st = 0
+    for spec in specs {
+        let j = fgbg_job(mut sh, "bg", spec)
+        if j < 0 {
+            st = 2
+            continue
+        }
+        emit(mut sh, "[{j + 1}] {sh.jb_text[j]}\n")
+        flush(mut sh)
+        jb_continue(mut sh, j)
+    }
+    st
+}
+
+// ------------------------------------------------------- command text
+
+/// A command as dash writes it in a job line (black-box: p01, p19):
+/// words with quoted parts in double quotes, `$x` as `${x}`, a command
+/// substitution as `$(...)`, every redirection with its descriptor, a
+/// here-document as `<<...`, `{ … }` as its body.
+fn node_text(a: Ast, n: int) -> str {
+    var o = buf()
+    put_node(mut o, a, n)
+    text(o)
+}
+
+fn put_node(mut o: Buf, a: Ast, n: int) {
+    if n < 0 {
+        return
+    }
+    let k = a.nodes[n].kind
+    if k == K_SIMPLE {
+        var first = true
+        for w in a.nodes[n].words {
+            if !first {
+                putc(mut o, ' ')
+            }
+            put_word(mut o, w)
+            first = false
+        }
+        put_redirs(mut o, a, n, first)
+        return
+    }
+    if k == K_LIST {
+        var i = 0
+        for kid in a.nodes[n].kids {
+            if i > 0 {
+                put(mut o, "; ")
+            }
+            put_node(mut o, a, kid)
+            if a.nodes[n].ints[i] == 1 {
+                put(mut o, " &")
+            }
+            i += 1
+        }
+    } else if k == K_ANDOR {
+        var i = 0
+        for kid in a.nodes[n].kids {
+            if i > 0 {
+                put(mut o, if a.nodes[n].ints[i - 1] == 1 then " && " else " || ")
+            }
+            put_node(mut o, a, kid)
+            i += 1
+        }
+    } else if k == K_PIPE {
+        if a.nodes[n].ints[0] == 1 {
+            putc(mut o, '!')
+        }
+        var i = 0
+        for kid in a.nodes[n].kids {
+            if i > 0 {
+                put(mut o, " | ")
+            }
+            put_node(mut o, a, kid)
+            i += 1
+        }
+    } else if k == K_SUBSHELL {
+        putc(mut o, '(')
+        put_node(mut o, a, a.nodes[n].kids[0])
+        putc(mut o, ')')
+    } else if k == K_BRACE {
+        put_node(mut o, a, a.nodes[n].kids[0])
+    } else if k == K_IF {
+        put_if(mut o, a, n, 0)
+    } else if k == K_WHILE || k == K_UNTIL {
+        put(mut o, if k == K_WHILE then "while " else "until ")
+        put_node(mut o, a, a.nodes[n].kids[0])
+        put(mut o, "; do ")
+        put_node(mut o, a, a.nodes[n].kids[1])
+        put(mut o, "; done")
+    } else if k == K_FOR {
+        put(mut o, "for {a.nodes[n].text}")
+        if a.nodes[n].ints.len > 0 && a.nodes[n].ints[0] == 1 {
+            put(mut o, " in")
+            for w in a.nodes[n].words {
+                putc(mut o, ' ')
+                put_word(mut o, w)
+            }
+        }
+        put(mut o, "; do ")
+        put_node(mut o, a, a.nodes[n].kids[0])
+        put(mut o, "; done")
+    } else if k == K_CASE {
+        put(mut o, "case ")
+        put_word(mut o, a.nodes[n].text)
+        put(mut o, " in")
+        for item in a.nodes[n].kids {
+            putc(mut o, ' ')
+            var i = 0
+            for p in a.nodes[item].words {
+                if i > 0 {
+                    putc(mut o, '|')
+                }
+                put_word(mut o, p)
+                i += 1
+            }
+            put(mut o, ") ")
+            if a.nodes[item].kids.len > 0 && a.nodes[item].kids[0] >= 0 {
+                put_node(mut o, a, a.nodes[item].kids[0])
+            }
+            put(
+                mut o,
+                if a.nodes[item].ints.len > 0 && a.nodes[item].ints[0] == 1 then ";&" else ";;",
+            )
+        }
+        put(mut o, " esac")
+    } else if k == K_FUNC {
+        put(mut o, "{a.nodes[n].text}() {{ ")
+        put_node(mut o, a, a.nodes[n].kids[0])
+        put(mut o, "; }}")
+    }
+    put_redirs(mut o, a, n, false)
+}
+
+/// `if`, its `elif`s written as dash writes them: `else if …; fi`.
+fn put_if(mut o: Buf, a: Ast, n: int, from: int) {
+    let count = a.nodes[n].kids.len
+    let has_else = a.nodes[n].ints.len > 0 && a.nodes[n].ints[0] == 1
+    let pairs = (count - (if has_else then 1 else 0)) / 2
+    var i = from
+    put(mut o, "if ")
+    put_node(mut o, a, a.nodes[n].kids[2 * i])
+    put(mut o, "; then ")
+    put_node(mut o, a, a.nodes[n].kids[2 * i + 1])
+    i += 1
+    if i < pairs {
+        put(mut o, "; else ")
+        put_if(mut o, a, n, i)
+    } else if has_else {
+        put(mut o, "; else ")
+        put_node(mut o, a, a.nodes[n].kids[count - 1])
+    }
+    put(mut o, "; fi")
+}
+
+fn put_redirs(mut o: Buf, a: Ast, n: int, first: bool) {
+    var lead = !first
+    for r in a.nodes[n].redirs {
+        if lead {
+            putc(mut o, ' ')
+        }
+        lead = true
+        let op = a.nodes[r].text
+        if op == "<<" || op == "<<-" {
+            put(mut o, "<<...")
+            continue
+        }
+        var fd = a.nodes[r].ints[0]
+        if fd < 0 {
+            fd = if ch(op, 0) == '<' then 0 else 1
+        }
+        put(mut o, "{fd}{op}")
+        put_word(mut o, a.nodes[r].words[0])
+    }
+}
+
+/// One word as dash writes it (`node_text`).
+fn put_word(mut o: Buf, w: str) {
+    var i = 0
+    while i < w.len {
+        let c = ch(w, i)
+        if c == '\\' && i + 1 < w.len {
+            put_range(mut o, w, i + 1, i + 2)
+            i += 2
+        } else if c == '\'' {
+            putc(mut o, '"')
+            i += 1
+            while i < w.len && ch(w, i) != '\'' {
+                let d = ch(w, i)
+                if d == '$' || d == '"' {
+                    putc(mut o, '\\')
+                }
+                put_range(mut o, w, i, i + 1)
+                i += 1
+            }
+            putc(mut o, '"')
+            i += 1
+        } else if c == '"' {
+            putc(mut o, '"')
+            i += 1
+            while i < w.len && ch(w, i) != '"' {
+                let d = ch(w, i)
+                if d == '\\' && i + 1 < w.len {
+                    put_range(mut o, w, i + 1, i + 2)
+                    i += 2
+                } else if d == '$' || d == '`' {
+                    i = put_dollar(mut o, w, i)
+                } else {
+                    put_range(mut o, w, i, i + 1)
+                    i += 1
+                }
+            }
+            putc(mut o, '"')
+            i += 1
+        } else if c == '$' || c == '`' {
+            i = put_dollar(mut o, w, i)
+        } else {
+            put_range(mut o, w, i, i + 1)
+            i += 1
+        }
+    }
+}
+
+/// An expansion at `w[i]` (`$…` or a backquote): written, and the index
+/// past it answered.
+fn put_dollar(mut o: Buf, w: str, i: int) -> int {
+    if ch(w, i) == '`' {
+        var j = i + 1
+        while j < w.len && ch(w, j) != '`' {
+            if ch(w, j) == '\\' {
+                j += 1
+            }
+            j += 1
+        }
+        put(mut o, "$(...)")
+        return j + 1
+    }
+    if i + 1 >= w.len {
+        putc(mut o, '$')
+        return i + 1
+    }
+    let c = ch(w, i + 1)
+    if c == '(' {
+        let end = close_paren(w, i + 1)
+        if i + 2 < w.len && ch(w, i + 2) == '(' {
+            put_range(mut o, w, i, end)
+        } else {
+            put(mut o, "$(...)")
+        }
+        return end
+    }
+    if c == '{' {
+        var j = i + 2
+        var depth = 1
+        while j < w.len && depth > 0 {
+            if ch(w, j) == '{' {
+                depth += 1
+            } else if ch(w, j) == '}' {
+                depth -= 1
+            }
+            j += 1
+        }
+        put_range(mut o, w, i, j)
+        return j
+    }
+    if is_alpha(c) || c == '_' {
+        var j = i + 1
+        while j < w.len && (is_alnum(ch(w, j)) || ch(w, j) == '_') {
+            j += 1
+        }
+        put(mut o, "${{")
+        put_range(mut o, w, i + 1, j)
+        putc(mut o, '}')
+        return j
+    }
+    if is_digit(c) ||
+        c == '?' ||
+        c == '$' ||
+        c == '!' ||
+        c == '#' ||
+        c == '@' ||
+        c == '*' ||
+        c == '-' {
+        put(mut o, "${{")
+        put_range(mut o, w, i + 1, i + 2)
+        putc(mut o, '}')
+        return i + 2
+    }
+    putc(mut o, '$')
+    i + 1
+}
+
+/// The index past the parenthesis that closes the one at `w[i]`.
+fn close_paren(w: str, i: int) -> int {
+    var depth = 0
+    var j = i
+    while j < w.len {
+        let c = ch(w, j)
+        if c == '(' {
+            depth += 1
+        } else if c == ')' {
+            depth -= 1
+            if depth == 0 {
+                return j + 1
+            }
+        } else if c == '\\' {
+            j += 1
+        }
+        j += 1
+    }
+    w.len
+}
+
+/// A trapped signal cut `wait` short: it goes back on the queue for
+/// its action (`poll_traps`, after the built-in), and `wait` answers
+/// `128 + N`.
+fn wait_cut(sh: Sh, got: int) -> int {
+    signal.raise(got) else |_| {}
+    let k = lowest_numbered(got)
+    128 + sig_number(k)
+}

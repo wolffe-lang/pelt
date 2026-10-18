@@ -133,13 +133,63 @@ struct Sh {
     rs_open: List[int],
     rs_frames: List[int],
     rs_oframes: List[int],
-    /// Asynchronous lists (`&`): a child handle, or -1 for a list pelt
-    /// ran itself; its status once known, or -1; and the number `$!`
-    /// gave it — the child's process id (`os_proc_pid`), or for a list
-    /// pelt ran itself a number no process has (`NO_PID_BASE` and up).
-    jobs: List[int],
-    job_st: List[int],
-    job_id: List[int],
+    /// `set -m` and `set -b` (XCU 2.11): job control, and a job's
+    /// notice written as soon as it changes.
+    opt_m: bool,
+    opt_b: bool,
+    /// Job control in force (`sh.jobs`): the terminal it hands to a
+    /// foreground job (a handle, -1 for none), the shell's own group,
+    /// the group it was started in when it moved out of it (-1 if it
+    /// did not), and the meanings it ignores for itself and gives back
+    /// to its children (`SUSPEND`, `BG_READ`, `BG_WRITE`).
+    jc_on: bool,
+    jc_tty: int,
+    jc_pgid: int,
+    jc_orig: int,
+    jc_ign: int,
+    /// `CHILD` is listened for (a wait for a job, `sh.jobs`); a `CHILD`
+    /// a wait took that a trap on `CHLD` is owed.
+    jc_child: bool,
+    chld_owed: bool,
+    /// `exit` with stopped jobs warned at this line, and at the line
+    /// before (the second `exit` in a row leaves).
+    exit_warned: bool,
+    exit_warned_prev: bool,
+    /// The job a spawn joins (a slot, -1 for none), the terminal handed
+    /// to its group (-1 for none), and the node a new job's command
+    /// text is read from.
+    jc_build: int,
+    jc_give: int,
+    jc_node: int,
+    /// The job table (`sh.jobs`): slot k is job number k + 1; a slot is
+    /// `JB_FREE` or a job's state, its group (0 for none), the number
+    /// `$!` gave it (a process id, or for a list pelt ran itself a
+    /// number no process has, `NO_PID_BASE` and up), the status of a
+    /// list pelt ran itself, whether its last change was told, and its
+    /// command text ("" with job control off). `jb_order` holds the
+    /// slots most recently used first: `+` is the first, `-` the second.
+    jb_state: List[int],
+    jb_pgid: List[int],
+    jb_id: List[int],
+    jb_status: List[int],
+    jb_told: List[bool],
+    jb_text: List[str],
+    /// A list pelt ran itself after `&`: told of one line later.
+    jb_late: List[bool],
+    jb_order: List[int],
+    jb_seq: int,
+    /// The processes of the jobs: the slot, the child's handle and
+    /// process id, its status (`PR_RUN`, or as `os_wait_poll` answered
+    /// it: an exit code, `-N`, `256 + N` for a stop), its command text.
+    pr_job: List[int],
+    pr_h: List[int],
+    pr_pid: List[int],
+    pr_st: List[int],
+    pr_text: List[str],
+    /// What a poll answered for a child no job holds (a pipeline stage
+    /// a blocking wait is still owed): its handle and status.
+    stash_h: List[int],
+    stash_st: List[int],
     /// `$!`: the last asynchronous list's id, or 0 for none.
     last_bg: int,
     /// Signals (`sh.signal`): the meanings the process now listens for
@@ -288,9 +338,36 @@ fn new_sh(name: str) -> Sh {
         rs_open: List[int](),
         rs_frames: List[int](),
         rs_oframes: List[int](),
-        jobs: List[int](),
-        job_st: List[int](),
-        job_id: List[int](),
+        opt_m: false,
+        opt_b: false,
+        jc_on: false,
+        jc_tty: -1,
+        jc_pgid: 0,
+        jc_orig: -1,
+        jc_ign: 0,
+        jc_child: false,
+        chld_owed: false,
+        exit_warned: false,
+        exit_warned_prev: false,
+        jc_build: -1,
+        jc_give: -1,
+        jc_node: -1,
+        jb_state: List[int](),
+        jb_pgid: List[int](),
+        jb_id: List[int](),
+        jb_status: List[int](),
+        jb_told: List[bool](),
+        jb_text: List[str](),
+        jb_late: List[bool](),
+        jb_order: List[int](),
+        jb_seq: 0,
+        pr_job: List[int](),
+        pr_h: List[int](),
+        pr_pid: List[int](),
+        pr_st: List[int](),
+        pr_text: List[str](),
+        stash_h: List[int](),
+        stash_st: List[int](),
         last_bg: 0,
         sig_listen: 0,
         sig_ignore: 0,
@@ -407,6 +484,12 @@ fn opts_bits(sh: Sh) -> int {
     if sh.opt_pipefail {
         b = b | 1024
     }
+    if sh.opt_m {
+        b = b | 2048
+    }
+    if sh.opt_b {
+        b = b | 4096
+    }
     b
 }
 
@@ -422,6 +505,8 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_vi = b & 256 != 0
     sh.opt_emacs = b & 512 != 0
     sh.opt_pipefail = b & 1024 != 0
+    sh.opt_m = b & 2048 != 0
+    sh.opt_b = b & 4096 != 0
 }
 
 /// Where a frame's record keeps its fields on `istk`, from the record's
@@ -966,8 +1051,14 @@ fn dash_flags(sh: Sh) -> str {
     if sh.opt_x {
         putc(mut o, 'x')
     }
+    if sh.opt_b {
+        putc(mut o, 'b')
+    }
     if sh.from_stdin {
         putc(mut o, 's')
+    }
+    if sh.opt_m {
+        putc(mut o, 'm')
     }
     if sh.interactive {
         putc(mut o, 'i')

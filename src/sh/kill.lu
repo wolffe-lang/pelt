@@ -23,85 +23,88 @@
 //! MEANING (`os_signal_send`), and those have none.
 //!
 //! **Which processes.** One process by its id, or one of the shell's
-//! own asynchronous lists by job id: `%1` the first started, `%%`, `%+`
-//! and `%` the newest, `%-` the one before it. pelt keeps no job's
-//! command text, so `%name` and `%?text` name no job. A process GROUP
-//! (a pid of 0 or below) is refused by name: `os_signal_send` takes one
-//! process, and a signal to a group is job control's, which wolf does
-//! not have yet (`[os.term.note]`; `tests/diff/PENDING.md`, job
-//! control). An asynchronous list pelt ran itself (a compound command
-//! after `&`: no fork) has ended by the time `kill` can name it.
+//! own jobs by job id (`sh.jobs`'s `job_index`: `%n`, `%%`, `%+`, `%`,
+//! `%-`, `%string`, `%?string`). A job with a group of its own (job
+//! control on) is signalled as a group, `kill 0` is the shell's own
+//! group, `kill -- -N` group N (`os_signal_send_group`) and `kill -1`
+//! every process the shell may signal (`os_signal_send_all`). An
+//! asynchronous list pelt ran itself (a compound command after `&`: no
+//! fork) has ended by the time `kill` can name it.
 
-/// What `kill` and `wait` say a word names: a process id above 0;
-/// `P_GROUP` for 0 or a negative number (a process group); `P_NOT` for
-/// a word that is no number or names no job; `P_ENDED` for a job that
+/// What a `kill` operand names: a process (`T_PID`), a process group
+/// (`T_GROUP`), the processes of a job that has no group of its own
+/// (`T_JOB`, job control off), every process (`T_ALL`, `-1`); or
+/// `P_NOT` for a word that is no number or names no job, `P_AMBIG` for
+/// a job id more than one job matches, `P_ENDED` for a job or child that
 /// has no process any more.
-const P_GROUP: int = 0
+const T_PID: int = 1
+
+const T_GROUP: int = 2
+
+const T_JOB: int = 3
+
+const T_ALL: int = 4
 
 const P_NOT: int = -1
 
 const P_ENDED: int = -2
 
-/// The index in the job table a job id names (`%1`, `%%`, `%+`, `%`,
-/// `%-`), or -1.
-fn job_index(sh: Sh, spec: str) -> int {
-    if spec.len == 0 || ch(spec, 0) != '%' {
-        return -1
-    }
-    let rest = spec[1..spec.len]
-    let count = sh.jobs.len
-    if rest.len == 0 || rest == "%" || rest == "+" {
-        return count - 1
-    }
-    if rest == "-" {
-        if count >= 2 {
-            return count - 2
-        }
-        return -1
-    }
-    if is_digits(rest) {
-        let n = to_int(rest) else 0
-        if n >= 1 && n <= count {
-            return n - 1
-        }
-    }
-    -1
-}
+const P_AMBIG: int = -3
 
-/// The process a `kill` operand names (see `P_GROUP` and its fellows).
-/// A number may have blanks and a `+` before it, as dash takes it.
-fn kill_target(sh: Sh, word: str) -> int {
+/// The target a `kill` operand names, and its number (see `T_PID` and
+/// its fellows). A number may have blanks and a `+` before it, as dash
+/// takes it; `0` is the shell's own group, `-N` group N and `-1` every
+/// process (XCU `kill`).
+fn kill_target(sh: Sh, word: str) -> (int, int) {
     if word.len > 0 && ch(word, 0) == '%' {
         let j = job_index(sh, word)
+        if j == -2 {
+            return (P_AMBIG, 0)
+        }
         if j < 0 {
-            return P_NOT
+            return (P_NOT, 0)
         }
-        if sh.jobs[j] < 0 || sh.job_st[j] >= 0 {
-            return P_ENDED
+        if jb_state_of(sh, j) == JB_DONE {
+            return (P_ENDED, 0)
         }
-        return sh.job_id[j]
+        if sh.jb_pgid[j] > 1 {
+            return (T_GROUP, sh.jb_pgid[j])
+        }
+        return (T_JOB, j)
     }
     var w = word.trim()
     if w.len > 1 && ch(w, 0) == '+' {
         w = w[1..w.len]
     }
     if w.len > 1 && ch(w, 0) == '-' && is_digits(w[1..w.len]) {
-        return P_GROUP
+        let g = to_int(w[1..w.len]) else |_| { return (P_NOT, 0) }
+        if g == 1 {
+            return (T_ALL, 0)
+        }
+        return (T_GROUP, g)
     }
     if !is_digits(w) {
-        return P_NOT
+        return (P_NOT, 0)
     }
-    let pid = to_int(w) else |_| { return P_NOT }
+    let pid = to_int(w) else |_| { return (P_NOT, 0) }
     if pid == 0 {
-        return P_GROUP
+        let me = os_pgid() else 0
+        return (T_GROUP, me)
     }
     // a child the shell has already waited for: its id may be another
     // process's by now
-    let j = job_of(sh, pid)
-    if j >= 0 && sh.job_st[j] >= 0 {
-        return P_ENDED
+    var k = 0
+    while k < sh.pr_pid.len {
+        if sh.pr_pid[k] == pid && sh.pr_st[k] != PR_RUN && sh.pr_st[k] < 256 {
+            return (P_ENDED, 0)
+        }
+        k += 1
     }
-    pid
+    let j = job_of(sh, pid)
+    if j >= 0 && jb_procs(sh, j) == 0 {
+        return (P_ENDED, 0)
+    }
+    (T_PID, pid)
 }
 
 /// The meaning a signal operand names, 0 for signal 0, or -1.
@@ -193,8 +196,8 @@ fn bi_kill(mut sh: Sh, args: List[str]) -> int {
     while i < args.len {
         let word = args[i]
         i += 1
-        let pid = kill_target(sh, word)
-        if pid == P_NOT {
+        let (kind, what) = kill_target(sh, word)
+        if kind == P_NOT {
             if word.len > 0 && ch(word, 0) == '%' {
                 diag(mut sh, "kill: {word}: no such job")
             } else {
@@ -202,15 +205,30 @@ fn bi_kill(mut sh: Sh, args: List[str]) -> int {
             }
             return 2
         }
-        if pid == P_GROUP {
-            diag(mut sh, "kill: {word}: a process group cannot be signalled yet (no job control)")
-            return 1
+        if kind == P_AMBIG {
+            diag(mut sh, "kill: {word}: more than one job matches")
+            return 2
         }
-        if pid == P_ENDED {
+        if kind == P_ENDED {
             diag(mut sh, "kill: {word}: no such process")
             return 1
         }
-        let st = kill_send(mut sh, word, pid, meaning)
+        var st = 0
+        if kind == T_GROUP {
+            st = kill_group(mut sh, word, what, meaning)
+        } else if kind == T_ALL {
+            st = kill_all(mut sh, word, meaning)
+        } else if kind == T_JOB {
+            var k = 0
+            while k < sh.pr_job.len && st == 0 {
+                if sh.pr_job[k] == what && (sh.pr_st[k] == PR_RUN || sh.pr_st[k] >= 256) {
+                    st = kill_send(mut sh, word, sh.pr_pid[k], meaning)
+                }
+                k += 1
+            }
+        } else {
+            st = kill_send(mut sh, word, what, meaning)
+        }
         if st != 0 {
             return st
         }
@@ -231,6 +249,62 @@ fn kill_send(mut sh: Sh, word: str, pid: int, meaning: int) -> int {
         },
         invalid => {
             diag(mut sh, "kill: {word}: not a process id")
+            return 2
+        },
+        io => {
+            diag(mut sh, "kill: {word}: could not be signalled")
+            return 1
+        },
+        unsupported => {
+            diag(mut sh, "kill: this host has no signals to send")
+            return 1
+        },
+    }
+    0
+}
+
+/// Send `meaning` to process group `pgid` (`os_signal_send_group`,
+/// `[os.signal.send.group]`): 0, or the status and pelt's word why not.
+fn kill_group(mut sh: Sh, word: str, pgid: int, meaning: int) -> int {
+    os_signal_send_group(pgid, meaning) else |e| match e {
+        not_found => {
+            diag(mut sh, "kill: {word}: no such process")
+            return 1
+        },
+        denied => {
+            diag(mut sh, "kill: {word}: not permitted")
+            return 1
+        },
+        invalid => {
+            diag(mut sh, "kill: {word}: not a process group")
+            return 2
+        },
+        io => {
+            diag(mut sh, "kill: {word}: could not be signalled")
+            return 1
+        },
+        unsupported => {
+            diag(mut sh, "kill: this host has no signals to send")
+            return 1
+        },
+    }
+    0
+}
+
+/// Send `meaning` to every process this one may signal
+/// (`os_signal_send_all`, `kill -1`).
+fn kill_all(mut sh: Sh, word: str, meaning: int) -> int {
+    os_signal_send_all(meaning) else |e| match e {
+        not_found => {
+            diag(mut sh, "kill: {word}: no such process")
+            return 1
+        },
+        denied => {
+            diag(mut sh, "kill: {word}: not permitted")
+            return 1
+        },
+        invalid => {
+            diag(mut sh, "kill: {word}: not a signal to send")
             return 2
         },
         io => {
