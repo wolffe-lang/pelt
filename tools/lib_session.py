@@ -474,9 +474,15 @@ def _raw_keys(text):
 
 def argv_for(shell, meta, is_pelt):
     if is_pelt:
+        # pelt is given the oracle's job-control flag: `+m` unless the
+        # case runs the oracle with `-m` (sh18: an interactive pelt has
+        # job control on by default, as dash does)
         if "pelt_args" in meta:
-            return [shell] + meta["pelt_args"].split()
-        return [shell, "-i"] + meta.get("args", "").split()
+            args = meta["pelt_args"].split()
+            if args and "-m" not in args and "+m" not in args:
+                args = ["+m"] + args
+            return [shell] + args
+        return [shell, "-i", "+m"] + meta.get("args", "").split()
     if "oracle_args" in meta:
         return [a for a in shell if a not in ("-i", "+m")] + meta["oracle_args"].split()
     return list(shell) + meta.get("args", "").split()
