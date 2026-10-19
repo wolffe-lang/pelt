@@ -68,6 +68,21 @@ SHAPES = [
     # is a job of its own, and an ended job leaves the table
     ("typed-program", "typed", "env true"),
     ("typed-pipeline-program", "typed", "echo x | cat >/dev/null"),
+    # sh19 (pelt#33): a built-in the fast path does not serve runs the
+    # lean ordinary path (no list made a turn), the command after `&`
+    # starts on the fast path, `wait $!`'s job is forgotten at the next
+    # one, and a job's notice and text keep nothing but the text. At
+    # trunk `cc2fdc9` these kept 600 to 2,300 B a turn
+    # (notes/sh19-evidence/logs/base-bgshapes.log)
+    ("builtin-wait", "loop", "wait"),
+    ("builtin-export", "loop", "export X"),
+    ("builtin-kill", "loop", "kill -0 $$"),
+    ("background-wait", "loop", "env true & wait"),
+    ("background-builtin-wait", "loop", "true & wait"),
+    ("background-wait-pid", "loop", "env true & wait $!"),
+    ("script-background-wait", "script", "env true & wait"),
+    ("typed-background-wait", "typed", "env true & wait"),
+    ("typed-background-builtin-wait", "typed", "true & wait"),
 ]
 
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
