@@ -44,6 +44,7 @@ and reports.
 | pelt#34 | in-process stages are not jobs | open | — |
 | ruling #69 R1 | "R1 fork open" (inputs line) | `wave-53.md` 2026-10-11 and `sprints/pelt/index.md`: **R1 B**, pelt re-executes itself for a subshell; a wolf fork only if it can be sound with the runtime's threads | **the contract's inputs line is stale**; its body was corrected at `1f16faa` |
 | px17 | `clone3 CLONE_VM\|CLONE_VFORK` is spawn, not fork | pax `notes/px17-the-pipes.md` §3, P1: px17's own prediction of a vfork-like spawn was **falsified**: wolf's spawn **forks** (`clone(…, SIGCHLD)` without `CLONE_VM`, then a socketpair handshake), so PAX gained `fork` (an address-space copy, `paging.copy_user`) at px17; sh18's syscall census shows the same split at 0.2.32 (`clone` 1,252 = spawns, `clone3` 1,261 = threads) | the contract's reading of px17 is reversed; #34's note measures it again |
+| the contract's #34 | a fork-or-not note (`b860faa`) | re-worded at `1f16faa` (R1 B made: a re-exec implementation note) and at `a85d0e8` (ruling #90: wolf gets `os_fork`, s247, 0.2.34; a fork-adoption note for sh20) | **two re-scopes mid-lane**, §3.5 |
 | kasumi | `/home` ~27 GB | 24 GB free at the start; load 0.00 | — |
 
 ### 2.1 What is kept, measured (trunk `cc2fdc9`, kasumi)
@@ -197,37 +198,44 @@ already recorded).
 
 ### 3.5 #34 (a note; nothing implemented)
 
-Measured, not designed on paper (the note's §6 when it lands):
+**Re-scoped twice on 2026-10-19 by the orchestrator, both after §1–§3
+were first committed (`9556d3c`):** at `1f16faa` to an implementation
+note for ruling #69 R1 B (re-execute), then at `a85d0e8` by **ruling
+#90** (the maintainer: wolf gets a real `os_fork`, lane s247, in
+0.2.34) to **pelt's fork-adoption note for sh20**. The re-exec
+prediction this section held is withdrawn unmeasured; nothing of it was
+measured or written. This is the prediction for the note as it now
+stands, committed before any #34 measurement:
 
 - **Each in-process shape today**, linux on kasumi and macOS arm64 by
-  one dispatched diagnostic run (`sh19-macdiag`, never to merge):
-  `( … ) &` and `{ …; } &` run to their end before the next command
-  (predicted: `( sleep 1; echo a ) & echo b` prints `a` before `b`,
-  dash the reverse), `$$`/`$PPID`-visible ids are the shell's, a
-  pipeline with a stage pelt runs itself is no job, `cmd | { …; }` and a
-  function in a pipeline run the in-process stage to its end first.
-- **The state a re-executed pelt needs**, and its size in a format of
-  pelt's own (length-prefixed records on an inherited descriptor),
-  measured from pelt's own listings for a typical environment
-  (predicted: 4–16 KB) and a large one (predicted: ≥ 1 MB with a few
-  thousand variables and functions).
-- **The cost**: pelt's start (`pelt -c :` spawned 2,000 times) and an
-  image's read, against dash's fork for `( : )` and `x=$( … )`;
-  predicted a re-exec subshell **5–20× dash's fork** and **3–10× pelt's
-  in-process subshell** on `$( … )` in a loop, the worst case.
-- **The rows B clears**: from `tests/diff/PENDING.md` and
-  `tests/session/PENDING.md`, the ones whose recorded reason is the
-  in-process subshell, and `c_jc_mixed_pipeline`.
-- **Fork under the runtime's threads**: a running pelt's threads counted
-  (`/proc/PID/task`, predicted ≥ 2 on both compiling tiers from
-  `main`: the signal hub's drain thread, s243), and why no witness of a
-  sound wolf `fork` can be written today (wolf names no `fork`; the
-  checked machine runs inside the `wolf` driver).
-- **Recommendation**: B as ruled, a re-exec of `os_exe()` with the image
-  on an inherited descriptor, for `( … ) &`, `{ …; } &` and the
-  in-process stages of a job only, keeping in-process subshells where no
-  job control is asked (a foreground `( … )`, `$( … )`); measured before
-  it is written.
+  one dispatched diagnostic run on a branch never to merge: `( … )`
+  runs in pelt's process (a program started inside it has `$$` as its
+  parent, where dash's has the subshell's pid); `( … ) &` and `{ …; } &`
+  run to their end before the next command (`( sleep 0.3; echo a ) &
+  echo b` prints `a` before `b`, dash the reverse) and their `$!` is a
+  number no process has; `$( … )` is in-process with its output
+  captured; a pipeline stage pelt runs itself (a built-in, a compound
+  command, a function) runs to its end before the next stage starts,
+  so an endless in-process producer (`while :; do echo y; done | head
+  -n 1`) never ends; the same on both hosts.
+- **What the forked child must do first**, from XCU 2.11 and 2.12 and
+  the `trap` page, per shape; and **what pelt state must be sane in
+  it**, measured on a running pelt: its threads (`/proc/PID/task`:
+  predicted 2 from `main`, the signal hub's drain thread being the
+  second, s243), its descriptors (`/proc/PID/fd`: predicted 0–2, the
+  hub's pipe pair and, interactive, the terminal and the history file),
+  its signal dispositions (`SigCgt`/`SigIgn`/`SigBlk`).
+- **dash's cost per shape** on sh06's census loops (`tools/bench`) and
+  one loop per shape, on kasumi under `taskset -c 0-3`, beside pelt
+  today: predicted dash 100–400 µs a forked shape (`( : )`, `x=$( : )`,
+  `( : ) &` + `wait`, a stage it runs itself), pelt's in-process shapes
+  3–30 µs, so the in-process pelt is faster than dash on every
+  subshell-heavy loop and sh20's fork must not be slower than dash's.
+- **What fork clears**: the nine `pending=fork` corpus rows
+  (`tests/diff/PENDING.md`'s fork rows), `session:c_jc_mixed_pipeline`
+  and statements 2.11/18 and wait/7 (`tests/census/clauses.tsv`'s
+  `pending (fork)` rows), plus the recorded differences of §2.1 that are
+  the subshell's (`c_wait_interrupted_term`'s order).
 
 ### 3.6 A static pelt for PAX
 
