@@ -1528,7 +1528,12 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
     if !physical {
         if ch(cur, 0) != '/' {
             let base = if old.len > 0 && ch(old, 0) == '/' then old else (os_cwd() else "/")
-            target = canon("{base}/{cur}")
+            // a slash between them only when the base does not end in
+            // one, so `cd bin` from `/` is `/bin` and from `//` is
+            // `//bin`, as dash and bash (pelt#37); `canon` keeps an
+            // explicit leading `//`
+            let sep = if base.len > 0 && ch(base, base.len - 1) == '/' then "" else "/"
+            target = canon("{base}{sep}{cur}")
         } else {
             target = canon(cur)
         }
