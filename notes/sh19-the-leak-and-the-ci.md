@@ -1,4 +1,4 @@
-# sh19 — the leak, the skipped sessions, and what re-exec would take (pelt#33, #35, #34)
+# sh19 — the leak, the skipped sessions, and what a fork must do (pelt#33, #35, #34)
 
 Contract: `sprints/pelt/19-the-leak-and-the-ci/sh19-the-leak-and-the-ci.md`
 in the planning repo, authored at `b860faa` and corrected at `1f16faa`
@@ -243,3 +243,179 @@ pax trunk's `tools/mkpelt` in a throwaway Ubuntu 24.04 container on
 kasumi with `ld.lld`, as sh18; its sha256 in the report; trunk
 `cc2fdc9` rebuilt the same way must give sh18's `76f3fc40…`; the
 system-call set unchanged (the fixes call nothing new).
+
+## 6. #34: pelt's fork-adoption note, for sh20
+
+Ruling #90 (2026-10-19): wolf gets a user-visible `os_fork` whose child
+keeps running wolf code (s247, wolf 0.2.34), and pelt's sh20 makes its
+subshells processes after that pin. This section is what sh20 starts
+from. It designs nothing of `os_fork` itself (s247's) and discusses no
+alternative. Every row below was run; the commands are in
+`notes/sh19-evidence/probe/shapes/` and `probe/bench/`.
+
+### 6.1 What each in-process shape does today
+
+`probe/shapes/shapes.sh` under pelt at this branch (both tiers) on
+kasumi and on both CI hosts (dispatched runs **39305606803** and
+**39307007029** on `sh19-macdiag`, never to merge;
+`ci/diag-*.txt`), and under dash 0.5.13.4 and `bash --posix` 5.3.20 in
+the container (`refs/shapes/`). pelt answers **the same on linux and
+macOS, on both tiers**, row for row.
+
+| shape | pelt today (linux = macOS) | dash, bash (linux) |
+|---|---|---|
+| `( list )` | in pelt's process, its changes undone by a frame (`sh.state`'s `frame_open`/`frame_close`): a program started inside it, not as its last command, has **pelt** as its parent | a child process: such a program's parent is the subshell |
+| `( cmd )`, `$( cmd )`, one simple command | the program is pelt's child | **the same**: both shells run the last command of a subshell in the subshell's own process, so its parent is the shell (`w11`, and `shapes.sh` before its `; :` was added) |
+| `( list ) &`, `{ list; } &` | runs to its end **before** the next command (`( sleep 0.3; echo a ) & echo b` prints `a b`); `$!` is a number no process has (`kill -0 $!` fails); a finished job is recorded afterwards | concurrent (`b a`); `$!` a live process |
+| `$( list )` | in-process, its output caught in pelt's own buffer (`caps`/`cap_data`): a program inside it, not last, has **pelt** as its parent | a child process writing a pipe |
+| a pipeline stage pelt runs itself (a built-in, a compound command) | runs to its end before the next stage starts (`{ echo one; sleep 0.3; echo done >&2; } \| { read v; … }`: `producer-done` before `reader-got-one`), its output caught and fed on; a program stage after it is **pelt's** child; **an endless producer never ends**: `while :; do echo y; done \| head -n 1` prints nothing and is killed at 3 s on linux (exit 124) and macOS (exit 142), where dash and bash print `y`, 0 | concurrent; each stage a child |
+| a function in a pipeline | as a stage pelt runs itself (`f-done` before `reader-got-one`) | concurrent |
+| an assignment in any stage, the last included | not kept (`: \| z=1` leaves `z` 0) | not kept: dash and bash run the last stage in a subshell too (`w11`) |
+| `exec cmd` in a subshell | the shell goes on (pelt starts `cmd` as its child and waits) | the shell goes on (`cmd` replaces the subshell) |
+| job control | a pipeline with such a stage is **no job**: its programs keep `SUSPEND` ignored and Ctrl-Z does nothing (sh18 `9b06c8e`, `session:c_jc_mixed_pipeline` pending) | Ctrl-Z stops the whole pipeline |
+
+### 6.2 What the forked child must do first
+
+From POSIX.1-2024 XCU (numbered as in the 2024 text: 2.9.3.1
+Asynchronous AND-OR Lists, 2.11 Job Control, 2.12 Signals and Error
+Handling, 2.13 Shell Execution Environment) and the `trap` and `wait`
+pages; "dash" means a black-box run already recorded in `refs/`:
+
+1. **Traps**: every trap that is caught is set back to the default
+   action, every ignored one stays ignored (2.13, `trap`). The one
+   exception POSIX allows: a command substitution whose only command is
+   `trap` may list the parent's traps (`trap`); dash does
+   (`signal/c_trap_cmdsub_shows_parent`, pending `trap-in-cmdsub`), so
+   sh20 decides it by lexical look at the substitution, as the page
+   permits, before the reset. A trap set inside the child is the
+   child's; the parent's `EXIT` trap never runs in the child.
+2. **Not interactive** (2.13: the subshell of an interactive shell
+   behaves as a non-interactive one, `$-` may still show `i`): no
+   prompt, no line editor and so no `os_signal_wait_fd`, no history
+   written, no notices. The signals an interactive pelt catches for
+   itself go back to the default in the child unless a trap set them:
+   measured at pelt's prompt `SigCgt` = INT, QUIT, TERM, CHLD and
+   `SigIgn` = TSTP, TTOU (`logs/state-pelt.txt`); dash at its prompt
+   ignores QUIT, TERM, TSTP, TTOU (`SigIgn 0x284004`) and its subshells
+   take the defaults.
+3. **No job table**: the child's table starts empty and job control is
+   off in it (its children are not the parent's: `wait` in a subshell
+   cannot wait for the parent's children, `wait/7`; dash's `$(jobs)` is
+   empty, `w09`'s first form). The parent keeps every job and records
+   the child: for `&`, **`$!` is the child's pid, set in the parent**
+   (2.9.3.1); `$$` and `PPID` stay the shell's in the child (2.5.2,
+   `sub-dollar-dollar` above).
+4. **After `&` with job control off**: standard input `/dev/null`
+   unless redirected (2.9.3.1) and SIGINT and SIGQUIT ignored (2.12), in
+   the child before the list runs (pelt does both today around its
+   in-process run, `run_async`).
+5. **With job control on in the parent**: the child joins the job's
+   process group (the first stage leads it), set by both parent and
+   child as `os_spawn_job` does for programs; the parent hands a
+   foreground job the terminal and takes it back; the child changes no
+   group, takes no terminal and puts TSTP, TTIN and TTOU back to the
+   default, so Ctrl-Z stops it with the rest of the job (2.11; this is
+   what clears 2.11/18).
+6. **Leave by the child's own door**: the child's end is `os_exit` with
+   the list's status after the child's own `EXIT` trap, never pelt's
+   exit path (which gives the terminal and group back and restores the
+   terminal's mode: `tools/edit-witness` fails a session that leaves it
+   changed, and a child doing it would undo the parent's editor mode).
+7. **Before the fork, in the parent**: flush `sh.out` (pelt's own
+   buffered built-in output), or the child writes it a second time.
+
+### 6.3 What pelt state must be sane in the child
+
+Measured on a running pelt (`probe/shapes/state.py`; linux `/proc`,
+macOS `ps -M` and `lsof` in the diagnostic runs), both tiers, both
+hosts:
+
+| what a fork copies | pelt (linux = macOS) | dash | what the child does |
+|---|---|---|---|
+| threads | **2** in every situation (a script waiting on a program, with a trap, in `$( )`, in a pipeline; at the prompt; with a job running): `main` and the signal hub's drain thread (s243) | 1 | none of its own: a fork copies only the calling thread, so the hub must be made again in the child before its first listen, poll or wait. That is s247's (`os_fork`'s child re-initialisation), and sh20 must not call a signal or wait builtin before `os_fork` returns in the child |
+| descriptors | 0–2; **3–6**, two pipes with both ends each (the hub's); **7** a pipe end while a `$( )` or a pipeline runs (the capture's or the pipeline's own); **7** `/dev/tty` with job control | 0–2; `10` the tty; `3` a pipe end in `$( )` | the hub's four are s247's; pelt's own: the tty handle (`jc_tty`) closed, every pipe end that belongs to another stage or to the parent's capture closed (or a reader never sees its end of input: `pipe/c_shell_producer_ends`, 2.9.2/9), the history file never opened |
+| signal dispositions | script: `SigCgt` one runtime signal (33) only; with `trap … USR1 INT`: + INT, USR1; prompt: + INT, QUIT, TERM, CHLD, `SigIgn` TSTP, TTOU | caught only what is trapped | 6.2's items 1, 2, 5, from the reset trap table through `sig_apply` |
+| the state (`sh.state`'s `Sh`) | variables, exports, read-only marks, functions, aliases, options, `$@`, `$0`, the command hash, `umask`, the cwd: as they are | | kept: the fork's copy is the subshell environment (2.13) |
+| | the job table (`jb_*`, `pr_*`, `stash_*`, `def_*`), `jc_on`, `jc_tty`, `jc_pgid` | | emptied, off, closed (6.2 item 3) |
+| | the captures (`caps`, `cap_data`, `pend_cap`), the pipeline's `stage_*` | | not the child's: its standard output is the pipe it was given, and the parent alone reads the capture |
+| | `interactive`, `at_prompt`, the editor's state, `ed` | | off (6.2 item 2) |
+| | the frame stacks (`istk`, `sstk`, `ji`, `fr_top`) | | a fresh base: nothing is put back at the child's end, it exits |
+
+### 6.4 The cost: dash's per shape, the target
+
+`probe/bench/run` (sh06's `tools/bench/run` with a loop per shape
+beside the four census loops: 2,000 turns each, 9 runs, median wall
+time, every shell's output byte-identical or the row is refused), run
+in the container on kasumi **under `taskset -c 0-3`** at load 7.7
+(`logs/bench-pin0-3.txt`; also cpus 10–13 at load 9.2,
+`logs/bench-pin10-13.txt`, within 10% of it; an earlier pass on cpus
+0–3 while another lane's four busy loops held them is kept as
+`logs/bench-pin0-3-contended.txt` and not read). Per turn, loop counter
+included:
+
+| shape | dash | pelt today, release | pelt today, native |
+|---|---|---|---|
+| `( : )` | **100 µs** | 4.5 µs | 21 µs |
+| `x=$( : )` | **104 µs** | 5.5 µs | 27 µs |
+| `x=$(echo y)` | **104 µs** | 6.0 µs | 28 µs |
+| `( : ) & wait` | **103 µs** | 7.5 µs | 35 µs |
+| `{ :; } & wait` | **105 µs** | 7.5 µs | 32 µs |
+| `: \| :` (both stages the shell's) | **146 µs** | 9.0 µs | 36 µs |
+| `f \| :` (a function stage) | **146 µs** | 11 µs | 42 µs |
+| `echo x \| { read y; }` | **156 µs** | 12.5 µs | 45 µs |
+| `/bin/true` (control: a program) | 200 µs | **312 µs** | 339 µs |
+
+The census loops (seconds, 2,000 programs or 1,000 pipelines or
+200,000 expansions or 1,200 checks): fork dash 0.450, pelt 0.929;
+pipeline 0.645, 0.953; param 0.425, 2.092; configure-shaped 0.413,
+0.460. **Reading:** pelt's in-process subshells are 13–22× faster
+than dash's forks today, and its spawn (which forks pelt's address
+space and execs: px17) costs 1.56× dash's fork-and-exec. A fork of
+pelt is the first half of that spawn, so **sh20's target is dash's
+column**: each forked shape no slower per turn than dash's under
+`taskset -c 0-3`, measured by this bench with the census loops, and
+the shapes 6.5 keeps in-process no slower than they are today.
+
+### 6.5 What fork clears, and the shape to take
+
+**Cleared** (the subshell is a process): the nine `pending=fork` corpus
+rows (`builtin/c_s_dot_special_file`, `env/c_subshell_concurrent`,
+`pending/subshell_signal`, `pipe/c_concurrent_stages`,
+`pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`,
+`signal/c_subshell_trap_reset`, `signal/c_trap_ignore_pipe`,
+`wait/c_subshell`), the session `c_jc_mixed_pipeline`, and nine
+statements pending on fork: **2.9.2/8, 2.9.2/9, 2.11/18, 2.13/6,
+2.13/7, 2.13/11, 2.13/12, wait/7, dot/8** (`docs/CENSUS.md`'s
+`pending (fork)` rows); the two named without a case
+(`tests/diff/PENDING.md`: the endless producer, `exec` in a subshell);
+and two recorded differences, `signal/c_wait_interrupted_term`'s order
+(its sender becomes concurrent) and `$(jobs -p)` at an interactive
+prompt (sh18 §8: empty, as dash's, once the child's table is empty).
+**Not cleared by fork alone:** `signal/c_trap_cmdsub_shows_parent`
+(the lone-`trap` exception, 6.2 item 1, is sh20's choice).
+
+**Recommended shape for sh20.**
+- **Fork every shape POSIX names a subshell** (`( list )`, `$( list )`,
+  every list after `&`, every pipeline stage pelt runs itself, the last
+  included), through one place in `sh.exec` that flushes `sh.out`,
+  forks, and in the child runs 6.2's steps in order (traps, then the
+  dispositions, the job table, the descriptors, interactivity) before
+  the body, ending by 6.2 item 6. The parent's side is the one that
+  exists for programs today: a job in a group, the terminal handed
+  over, `os_wait_poll`.
+- **Keep in-process** a `( cmd )` or `$( cmd )` whose body is one
+  simple command the fast path finishes (`run_fast`: a program, a pure
+  built-in), with `-x` off and no trap on the conditions it could
+  raise: dash and bash run that command in the subshell's own process,
+  so what can be observed of it (its parent, its pid, the signals sent
+  to it) is what pelt's in-process run gives already (6.1, second
+  row), at today's 5–6 µs. Everything else forks.
+- **Gate**: the bench of 6.4 under `taskset -c 0-3` (each forked shape
+  at or below dash's per-turn time), the nine corpus rows, the session
+  and the nine statements met, `shape-rss` flat (a forked child's memory
+  is not the parent's, so a loop of forks must keep the parent flat),
+  and `tools/syscall-census`'s new calls listed for PAX (a fork is
+  `clone` without `CLONE_VM` on linux; PAX serves it since px17 as an
+  eager copy of every present user page, `paging.copy_user` at pax
+  `d6fbcdc`, so on PAX a fork's cost grows with pelt's resident size,
+  15 MB of static image and its heap: a px lane measures it).
