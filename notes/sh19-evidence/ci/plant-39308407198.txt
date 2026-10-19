@@ -1,0 +1,87 @@
+gauntlet (macos-latest, true)	wolf test (the table checks)	2026-10-19T19:09:18.7885250Z test ./sh_test.lu::main ... FAILED (trap(assert))
+gauntlet (macos-latest, true)	wolf test (the table checks)	2026-10-19T19:09:18.8285300Z wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out
+gauntlet (macos-latest, true)	wolf test (the table checks)	2026-10-19T19:09:18.8387750Z ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:17:42.1832010Z shape-rss: FAIL builtin-wait             loop    10000     9200 KB   20000    15312 KB  grew    6112 KB (625 B a turn) 
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:17:42.8914400Z shape-rss: FAIL builtin-export           loop    10000     9520 KB   20000    15968 KB  grew    6448 KB (660 B a turn) 
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:17:43.6465280Z shape-rss: FAIL builtin-kill             loop    10000    10448 KB   20000    17840 KB  grew    7392 KB (756 B a turn) 
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:20:01.3519220Z shape-rss: FAIL background-wait          loop    10000    21568 KB   20000    39392 KB  grew   17824 KB (1825 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:20:02.8563040Z shape-rss: FAIL background-builtin-wait  loop    10000    15024 KB   20000    26800 KB  grew   11776 KB (1205 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:22:34.9953510Z shape-rss: FAIL background-wait-pid      loop    10000    25648 KB   20000    47584 KB  grew   21936 KB (2246 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:24:48.4714520Z shape-rss: FAIL script-background-wait   script  10000    21408 KB   20000    39312 KB  grew   17904 KB (1833 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:26:32.4166420Z shape-rss: FAIL typed-background-wait    typed   10000    26496 KB   20000    49040 KB  grew   22544 KB (2308 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:26:42.0241930Z shape-rss: FAIL typed-background-builtin-wait typed   10000    20016 KB   20000    36512 KB  grew   16496 KB (1689 B a 
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:26:42.0249940Z shape-rss: FAIL 9: builtin-wait, builtin-export, builtin-kill, background-wait, background-builtin-wait, background-wai
+gauntlet (macos-latest, true)	memory flat over every shape, native tier	2026-10-19T19:26:42.0370080Z ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:33:05.3810440Z shape-rss: FAIL builtin-wait             loop    10000     8272 KB   20000    14384 KB  grew    6112 KB (625 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:33:05.5521360Z shape-rss: FAIL builtin-export           loop    10000     8592 KB   20000    15024 KB  grew    6432 KB (658 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:33:05.7598950Z shape-rss: FAIL builtin-kill             loop    10000     9536 KB   20000    16912 KB  grew    7376 KB (755 B a turn)
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:35:05.5026670Z shape-rss: FAIL background-wait          loop    10000    20304 KB   20000    38160 KB  grew   17856 KB (1828 B a turn
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:35:06.0179400Z shape-rss: FAIL background-builtin-wait  loop    10000    13920 KB   20000    25712 KB  grew   11792 KB (1207 B a turn
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:37:07.5325820Z shape-rss: FAIL background-wait-pid      loop    10000    24384 KB   20000    46272 KB  grew   21888 KB (2241 B a turn
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:38:59.4654380Z shape-rss: FAIL script-background-wait   script  10000    20272 KB   20000    38128 KB  grew   17856 KB (1828 B a turn
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:40:33.5594790Z shape-rss: FAIL typed-background-wait    typed   10000    25104 KB   20000    47648 KB  grew   22544 KB (2308 B a turn
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:40:41.0959100Z shape-rss: FAIL typed-background-builtin-wait typed   10000    18768 KB   20000    35264 KB  grew   16496 KB (1689 B a
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:40:41.0964740Z shape-rss: FAIL 9: builtin-wait, builtin-export, builtin-kill, background-wait, background-builtin-wait, background-wa
+gauntlet (macos-latest, true)	memory flat over every shape, release tier	2026-10-19T19:40:41.1061900Z ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-19T19:41:51.6042820Z FAIL wait/c_pid_forgotten: stdout
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-19T19:41:52.7233160Z difftest: total        957     1    38 (1)
+gauntlet (macos-latest, true)	the differential corpus, native tier	2026-10-19T19:41:52.7325400Z ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-19T19:42:32.3663890Z FAIL wait/c_pid_forgotten: stdout
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-19T19:42:33.5376710Z difftest: total        957     1    38 (1)
+gauntlet (macos-latest, true)	the differential corpus, release tier	2026-10-19T19:42:33.5434770Z ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-19T19:51:19.5421310Z session: pass 258  fail 6  pending 3 (0)
+gauntlet (macos-latest, true)	the session corpus, native tier	2026-10-19T19:51:19.5594790Z ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true)	the session corpus, release tier	2026-10-19T19:53:30.3626790Z ##[error]The operation was canceled.
+gauntlet (ubuntu-latest, true)	wolf test (the table checks)	2026-10-19T19:09:03.1977030Z test ./sh_test.lu::main ... FAILED (trap(assert))
+gauntlet (ubuntu-latest, true)	wolf test (the table checks)	2026-10-19T19:09:03.2276001Z wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out
+gauntlet (ubuntu-latest, true)	wolf test (the table checks)	2026-10-19T19:09:03.2393856Z ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:13:23.1416550Z shape-rss: FAIL builtin-wait             loop    10000    10712 KB   20000    16928 KB  grew    6216 KB (636 B a turn)
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:13:24.2075127Z shape-rss: FAIL builtin-export           loop    10000    11076 KB   20000    17408 KB  grew    6332 KB (648 B a turn)
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:13:25.4373515Z shape-rss: FAIL builtin-kill             loop    10000    12112 KB   20000    19404 KB  grew    7292 KB (746 B a turn)
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:14:15.0136342Z shape-rss: FAIL background-wait          loop    10000    22788 KB   20000    40780 KB  grew   17992 KB (1842 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:14:16.5876641Z shape-rss: FAIL background-builtin-wait  loop    10000    16660 KB   20000    28520 KB  grew   11860 KB (1214 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:15:42.4939248Z shape-rss: FAIL background-wait-pid      loop    10000    26896 KB   20000    48644 KB  grew   21748 KB (2226 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:16:32.3618468Z shape-rss: FAIL script-background-wait   script  10000    22800 KB   20000    40804 KB  grew   18004 KB (1843 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:17:29.9865873Z shape-rss: FAIL typed-background-wait    typed   10000    28460 KB   20000    50932 KB  grew   22472 KB (2301 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:17:47.3689961Z shape-rss: FAIL typed-background-builtin-wait typed   10000    22056 KB   20000    38480 KB  grew   16424 KB (1681 B a
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:17:47.3692291Z shape-rss: FAIL 9: builtin-wait, builtin-export, builtin-kill, background-wait, background-builtin-wait, background-wa
+gauntlet (ubuntu-latest, true)	memory flat over every shape, native tier	2026-10-19T19:17:47.3767346Z ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:21:31.2839887Z shape-rss: FAIL builtin-wait             loop    10000     9068 KB   20000    15168 KB  grew    6100 KB (624 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:21:31.5467944Z shape-rss: FAIL builtin-export           loop    10000     9456 KB   20000    15792 KB  grew    6336 KB (648 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:21:31.8898592Z shape-rss: FAIL builtin-kill             loop    10000    10476 KB   20000    17732 KB  grew    7256 KB (743 B a turn
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:22:18.5010998Z shape-rss: FAIL background-wait          loop    10000    20800 KB   20000    38456 KB  grew   17656 KB (1807 B a tur
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:22:18.9842513Z shape-rss: FAIL background-builtin-wait  loop    10000    14688 KB   20000    26488 KB  grew   11800 KB (1208 B a tur
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:23:10.9394130Z shape-rss: FAIL background-wait-pid      loop    10000    24772 KB   20000    46492 KB  grew   21720 KB (2224 B a tur
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:23:59.8860629Z shape-rss: FAIL script-background-wait   script  10000    20708 KB   20000    38648 KB  grew   17940 KB (1837 B a tur
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:24:55.2712457Z shape-rss: FAIL typed-background-wait    typed   10000    25816 KB   20000    48288 KB  grew   22472 KB (2301 B a tur
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:25:08.4780725Z shape-rss: FAIL typed-background-builtin-wait typed   10000    19456 KB   20000    35880 KB  grew   16424 KB (1681 B 
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:25:08.4784127Z shape-rss: FAIL 9: builtin-wait, builtin-export, builtin-kill, background-wait, background-builtin-wait, background-w
+gauntlet (ubuntu-latest, true)	memory flat over every shape, release tier	2026-10-19T19:25:08.4857204Z ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-19T19:25:58.7462642Z FAIL wait/c_pid_forgotten: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-19T19:25:59.7683739Z difftest: total        957     1    38 (0)
+gauntlet (ubuntu-latest, true)	the differential corpus, native tier	2026-10-19T19:25:59.7741464Z ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-19T19:26:32.8909940Z FAIL wait/c_pid_forgotten: stdout
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-19T19:26:33.9101577Z difftest: total        957     1    38 (0)
+gauntlet (ubuntu-latest, true)	the differential corpus, release tier	2026-10-19T19:26:33.9168951Z ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	the session corpus, native tier	2026-10-19T19:33:42.3865416Z session: pass 258  fail 6  pending 3 (0)
+gauntlet (ubuntu-latest, true)	the session corpus, native tier	2026-10-19T19:33:42.3942064Z ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true)	the session corpus, release tier	2026-10-19T19:40:50.5238537Z session: pass 258  fail 6  pending 3 (0)
+gauntlet (ubuntu-latest, true)	the session corpus, release tier	2026-10-19T19:40:50.5312894Z ##[error]Process completed with exit code 1.
+gauntlet (macos-latest, true) | the session corpus, native tier | FAIL c_jc_background_job
+gauntlet (macos-latest, true) | the session corpus, native tier | FAIL c_jc_job_ids
+gauntlet (macos-latest, true) | the session corpus, native tier | FAIL c_jc_jobs_l_pipeline
+gauntlet (macos-latest, true) | the session corpus, native tier | FAIL c_jc_jobs_list
+gauntlet (macos-latest, true) | the session corpus, native tier | FAIL c_jc_jobs_states
+gauntlet (macos-latest, true) | the session corpus, native tier | FAIL c_jc_numbering
+gauntlet (ubuntu-latest, true) | the session corpus, native tier | FAIL c_jc_background_job
+gauntlet (ubuntu-latest, true) | the session corpus, native tier | FAIL c_jc_job_ids
+gauntlet (ubuntu-latest, true) | the session corpus, native tier | FAIL c_jc_jobs_l_pipeline
+gauntlet (ubuntu-latest, true) | the session corpus, native tier | FAIL c_jc_jobs_list
+gauntlet (ubuntu-latest, true) | the session corpus, native tier | FAIL c_jc_jobs_states
+gauntlet (ubuntu-latest, true) | the session corpus, native tier | FAIL c_jc_numbering
+gauntlet (ubuntu-latest, true) | the session corpus, release tier | FAIL c_jc_background_job
+gauntlet (ubuntu-latest, true) | the session corpus, release tier | FAIL c_jc_job_ids
+gauntlet (ubuntu-latest, true) | the session corpus, release tier | FAIL c_jc_jobs_l_pipeline
+gauntlet (ubuntu-latest, true) | the session corpus, release tier | FAIL c_jc_jobs_list
+gauntlet (ubuntu-latest, true) | the session corpus, release tier | FAIL c_jc_jobs_states
+gauntlet (ubuntu-latest, true) | the session corpus, release tier | FAIL c_jc_numbering
