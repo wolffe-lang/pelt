@@ -1,0 +1,39 @@
+clause-census: part                               stmts  met pend  gap untest  share
+clause-census: 2.1 Introduction                       2    1    0    0      1  100%
+clause-census: 2.2 Quoting                           19   18    1    0      0  95%
+clause-census: 2.3 Token recognition and aliases     18   18    0    0      0  100%
+clause-census: 2.4 Reserved words                     3    3    0    0      0  100%
+clause-census: 2.5 Parameters and variables          34   31    2    0      1  94%
+clause-census: 2.6 Word expansions                   67   66    1    0      0  99%
+clause-census: 2.7 Redirection                       27   27    0    0      0  100%
+clause-census: 2.8 Exit status and errors            17   15    1    0      1  94%
+clause-census: 2.9 Shell commands                    68   65    3    0      0  96%
+clause-census: 2.10 Grammar                          15   15    0    0      0  100%
+clause-census: 2.11 Job control                      16   13    1    2      0  81%
+clause-census: 2.12 Signals                           5    5    0    0      0  100%
+clause-census: 2.13 Execution environment            12    8    4    0      0  67%
+clause-census: 2.14 Pattern matching                 17   17    0    0      0  100%
+clause-census: 2.15 Special built-ins                88   80    8    0      0  91%
+clause-census: `sh` (utility page)                   38   34    2    0      2  94%
+clause-census: `alias` (utility page)                 6    6    0    0      0  100%
+clause-census: `command` (utility page)               7    7    0    0      0  100%
+clause-census: `type` (utility page)                  2    2    0    0      0  100%
+clause-census: `hash` (utility page)                  2    2    0    0      0  100%
+clause-census: `cd` (utility page)                    8    7    1    0      0  88%
+clause-census: `pwd` (utility page)                   2    1    1    0      0  50%
+clause-census: `echo` (utility page)                  1    1    0    0      0  100%
+clause-census: `true` (utility page)                  1    1    0    0      0  100%
+clause-census: `test` (utility page)                 15   13    2    0      0  87%
+clause-census: `printf` (utility page)                9    6    3    0      0  67%
+clause-census: `read` (utility page)                  8    8    0    0      0  100%
+clause-census: `getopts` (utility page)               7    7    0    0      0  100%
+clause-census: `wait` (utility page)                  7    6    1    0      0  86%
+clause-census: `kill` (utility page)                  7    7    0    0      0  100%
+clause-census: `umask` (utility page)                 4    4    0    0      0  100%
+clause-census: `ulimit` (utility page)                4    0    4    0      0  0%
+clause-census: `fc` (utility page)                    5    5    0    0      0  100%
+clause-census: `jobs` (utility page)                  3    3    0    0      0  100%
+clause-census: `fg` (utility page)                    2    2    0    0      0  100%
+clause-census: `bg` (utility page)                    1    1    0    0      0  100%
+clause-census: total                                547  505   35    2      5  93.2%
+clause-census: not counted (kind X): 39; statements with a passing case older than the census: 318

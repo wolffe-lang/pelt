@@ -275,6 +275,103 @@ and `bin` from `//`) red before (its last line) and green after. Corpus
 digest moves (a `src/` change). Seen red: the cases pushed before the
 fix, so the PR's own run at that head is red on exactly them.
 
+### 3.8 The result against the prediction
+
+Measured on kasumi by `notes/sh19-evidence/gauntlet.sh` (sh18's, its
+paths moved; every gate's exit status in `logs/<tag>.status`): the
+**#33/#35 head** `a7d3455` (`head`: all 37 gates 0) and the **#37 head**
+`cd05c3b` (`head2`); trunk's own gauntlet is sh18's `head4` (`2676879`,
+the same `src/`, `tools/` and `tests/` as trunk `cc2fdc9`: all gates
+0); and in CI (§4).
+
+| prediction | predicted | measured | held? |
+|---|---|---|---|
+| #33's cause | the ordinary path's scratch in the root, twice a turn; `wait $!`'s slot | as predicted, and confirmed by the fix: each of the three commits removes its share (`logs/bg-a-bgshapes.log`) | held |
+| `env true & wait` | ≤ 100 B a turn, both tiers | 59, 88, 104 native; 76, 95, 105 release (three passes: `bg-a`, `bg-b`, the gauntlet, the trimmed rows) | under the gate's bound always (≈ 200 B at 10,000 turns); **≤ 100 not held in two of six** |
+| `true & wait` | ≤ 100 | 43–91 | held |
+| `env true & wait $!` | ≤ 100 | 51–103 | held but once (103) |
+| `wait` | ≤ 50 | 42–91 (the bare loop `:` alone keeps 46) | **not held** |
+| script of N lines | ≤ 100 | `env true & wait` 88–109, `true & wait` 20–74 | held but once (109) |
+| typed, after step 1 | still over, ≈ 300 B a job | 560–588 B a turn | held in kind (over), larger than predicted |
+| typed, after step 2 | ≤ 150 | `true & wait` 160, `env true & wait` 188 | **not held** (under the gate's bound) |
+| `export`, `unset`, `kill -0`, `jobs`, `umask` | ≤ 100 | 42–73, 47, 37–65, 109, 151 | held for three; **`jobs` 109 and `umask` 151 over** |
+| `set -- a`, `cd .`, `eval :`, `command true`, `read x </dev/null` | still over | 60, 575, 716, 189, 1,667 | held but **`set -- a` fell to 60** |
+| corpus | (958 + 0)/0/38 | **958/0/38** both tiers and both under `taskset -c 0-3` (`head`) | held |
+| sessions | 264/0/3 | **264/0/3** both tiers and under `taskset` | held |
+| every other gate | 0 | 0, all 37 (`logs/head.status`) | held |
+| the plant | red on exactly the new rows and the corpus's new case; sessions run and red after a red corpus | CI **39308407198** (`sh19-plant` `e6dafed`: the four `src/` fixes reverted, a running job's word `Going`): `shape-rss` red on exactly the nine sh19 rows, both tiers, linux and macOS; corpus red on exactly `wait/c_pid_forgotten`, both tiers, both hosts; **the session steps ran after the red corpus** and were red on exactly six `c_jc_*` sessions (native both hosts, release linux; macOS's release session step was cut by the job's 45-minute limit); **not predicted: `wolf test` red too** (its job-line table check reads `Running`) | held, with one more red than predicted |
+| #37 | three cases, two red then green, 961/0/38 | red on exactly `cd/c_root_relative` and `cd/c_double_slash_path` at `50d9354`, on kasumi and in the PR's run **39318541896** (linux job: 959/2/38 both tiers, and the sessions ran after it, 264/0/3: #35 again; `ci/red37-39318541896.txt`); at `cd05c3b` **961/0/38** both tiers and under `taskset` (`head2`) | held |
+| #34 | shapes as listed, the same on both hosts | as listed, row for row, linux and macOS, both tiers (§6.1) | held |
+| | threads 2; descriptors 0–2, the hub's pair, the terminal and the history file | threads 2 everywhere; the hub's **two pipes, both ends each** (3–6), the terminal (7); **no history file held open** (it is opened per write) | held but for the history file |
+| | dash 100–400 µs a forked shape; pelt 3–30 µs | dash 100–156 µs; pelt release 4.5–12.5, native 21–45 | dash held; pelt held on release, **native over 30 µs for five shapes** |
+| | nine corpus rows, the session, 2.11/18 and wait/7 | the nine, the session and **nine** statements (2.9.2/8, 2.9.2/9, 2.11/18, 2.13/6, 2.13/7, 2.13/11, 2.13/12, wait/7, dot/8) | held, more statements than predicted |
+| static pelt | trunk gives sh18's `76f3fc40…`; the system-call set unchanged | trunk rebuilt to **`76f3fc40…`**; the head's digest in §4 | held for the method (the calls: §4) |
+
+**Not predicted.**
+
+- **The first plant's word reached nothing.** `Done` → `Ended` turned
+  no corpus case and no session red on kasumi (notices go to standard
+  error, which both harnesses compare by presence only; no corpus
+  `.out` holds `Done`), so the plant used the `Running` word, which
+  six sessions read on standard output (`logs/plant/`).
+- **The new rows cost the macOS job its time.** Five program rows
+  (30,000 spawns each) took nine minutes a tier on the macOS runner
+  and the plant's job ran into its 45-minute limit; the rows were cut
+  to one program row and seven built-in rows (`11b8c5a`), each built-in
+  row seen red at trunk and green at the head on kasumi
+  (`logs/shape-rows-v2-trunk-head.log`). No limit was raised.
+- **A `set -m` script keeps a slot a job until its loop ends**: its
+  notices come after the complete command, so a loop's finished jobs
+  wait in the table (`logs/prof-b-setm.txt`: `jb_add_proc` growing);
+  not measured against dash, not gated, named in §8.
+
+## 4. Evidence index
+
+- **The prediction:** `9556d3c`, before the first change (`f57f901`);
+  #34's re-scoped prediction `da85a86`, before any #34 measurement;
+  #37's `2e51375`, before its cases (`f00797b`) and its fix (`cd05c3b`).
+- **The cause, measured at trunk:** `logs/base-bgshapes.log`,
+  `logs/dash-bgshapes.log`, `logs/base-builtins.log`,
+  `logs/dash-builtins.log` (`probe/bgshapes.py`); the heap profile
+  `logs/prof-base/` (`probe/heapprof.py`, `probe/profbg.sh`); one
+  list's cost `logs/listcost.txt` (`witness/listcost/main.lu`); the
+  references' job memory `refs/w01`–`w10` (`probe/scripts/`).
+- **Each fix's share:** `logs/bg-a-bgshapes.log`, `logs/bi-a-bgshapes.log`
+  (the three `src/` fixes), `logs/bg-b-bgshapes.log` and
+  `logs/prof-a-setm.txt`, `logs/prof-b-setm.txt` (the notice and text).
+- **Seen red:** trunk's binaries on the sh19 rows, every row FAIL on
+  both tiers (`logs/red-shape-*.log` for the first nine,
+  `logs/shape-rows-v2-trunk-head.log` for the eight that stand); the
+  plant in CI, run **39308407198** (`ci/plant-39308407198.txt`) and its
+  local twin (`logs/plant/`); #37's two cases at `50d9354` on kasumi
+  and in the PR's run **39318541896** at that head.
+- **The gauntlets:** `gauntlet.sh`; `logs/head.status` (`a7d3455`, all
+  37 gates 0) and `logs/head2.status` (`cd05c3b`, all 37 gates 0:
+  corpus **961/0/38** both tiers and both under `taskset -c 0-3`,
+  sessions 264/0/3, statements 505 of 547), every step's log in
+  `logs/gauntlet/`.
+- **CI green:** run **39316879930** at `4d01c75` (#33, #35 and #34's
+  head: every job and step success on linux x86-64 and macOS arm64,
+  aarch64's refusals asserted; the macOS job took 40 min 53 s of its
+  45); the run at the PR's final head is in the PR body.
+- **#34:** `probe/shapes/` (the shapes, `state.py`), `refs/shapes/`,
+  `logs/state-*.txt`, the diagnostic runs **39305606803** and
+  **39307007029** (`ci/diag-*.txt`, branch `sh19-macdiag`, never to
+  merge); `probe/bench/` and `logs/bench-pin0-3.txt`,
+  `logs/bench-pin10-13.txt`, `logs/bench-pin0-3-contended.txt`.
+- **PAX:** `mkpelt-job.sh`, `mkpelt-run.sh`; `logs/mkpelt-trunk.log`
+  (trunk `cc2fdc9` → `76f3fc40…`, sh18's digest), `logs/mkpelt-head.log`
+  (`914885b`, the #33 head → `2bc1c0c5…`), `logs/mkpelt-fix.log`
+  (`cd05c3b`, the last `src/` commit → **`7be05ec0…`**).
+
+## 5. Done-when
+
+- Branch `sh19`, PR #36 open and unmerged; the PR's run at the final
+  head (RULES.md §6: the lane hands back with its id); lane-audit from
+  the org directory, its exit status read directly.
+- pelt#33, #35, #37 close-ready; #34 answered by §6 (it stays open for
+  sh20). None filed or closed by the lane.
+
 ## 6. #34: pelt's fork-adoption note, for sh20
 
 Ruling #90 (2026-10-19): wolf gets a user-visible `os_fork` whose child
@@ -450,3 +547,48 @@ prompt (sh18 §8: empty, as dash's, once the child's table is empty).
   eager copy of every present user page, `paging.copy_user` at pax
   `d6fbcdc`, so on PAX a fork's cost grows with pelt's resident size,
   15 MB of static image and its heap: a px lane measures it).
+
+## 7. Findings
+
+- **Every built-in the fast path does not serve kept ~650 B a command**
+  in the root before this lane (`logs/base-builtins.log`); now the ones
+  with no assignment and no redirection keep only what they build. Still
+  over the bound at the head: `cd .` 575 B a turn (the `PWD` strings),
+  `eval :` 716 (its parse), `command true` 189, `umask 022` 151, `read
+  x </dev/null` 1,667 (a redirection sends it down the full ordinary
+  path, nine lists again). An issue to file (below).
+- **`cmd &` with no `wait` keeps a job a turn** in pelt, dash and bash
+  alike (5,000 `Done` lines, `w09`): POSIX keeps them known; pelt's slot
+  costs 231–347 B a turn against dash's few bytes. Recorded, not gated.
+- **The macOS job is at 41 of its 45 minutes** (run 39316879930): the
+  session corpus and `shape-rss` are the long steps; the next rows or a
+  slow runner will cut it. A ruling is owed on the limit or a split of
+  the job (this lane raised nothing).
+- **px17's spawn, re-read:** wolf's spawn forks (`clone` without
+  `CLONE_VM`), so PAX has served `fork` since px17, as an eager copy of
+  every present page (§6.5).
+
+## 8. Pending, not verified, named out
+
+- **Pending, unchanged:** the nine fork rows, `c_jc_mixed_pipeline`,
+  and the rest of `tests/diff/PENDING.md` (38 pending, as at trunk).
+- **Recorded differences left:** `wait` then `wait $p` (dash answers
+  4, pelt 127: pelt forgets at `wait`, dash at the next job, `w03`);
+  `jobs` marks for unwaited jobs (`w05`); `CDPATH=/` gives `//bin` as
+  dash does where bash gives `/bin` (`w12`).
+- **A `set -m` script's loop** keeps a slot per job until the loop's
+  complete command ends (the notices come after it): not measured
+  against dash.
+- **Not verified:** macOS by CI only (no build on nomad-1); linux
+  aarch64 still builds no tier at 0.2.32 (asserted in CI); the bench
+  ran on kasumi only, in the container, at load 7.7 (0–3) and 9.2
+  (10–13).
+- **Disclosed:** the harness refused my removing
+  `kasumi:/tmp/.sh_history` (30 bytes, written by `state.py` with
+  `HOME=/tmp` before it took `TMPDIR`); it is left for the orchestrator.
+  Two of my own static-build containers overlapped for about twenty
+  seconds after a launch with a short sha (both failed; the build was
+  run again once, `logs/mkpelt-fix.log`). Two sh18 processes have sat
+  idle on kasumi for 22 hours (`~/lanes/sh18/{pin,head}/target/static/pelt
+  ../s.sh`, pids 1370174 and 1540529): not mine, not touched. Branches
+  on origin never to merge: `sh19-plant`, `sh19-macdiag`.

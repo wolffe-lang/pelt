@@ -1,0 +1,20 @@
+# PR run 39318541896 at 50d9354 (#37's cases before the fix), job gauntlet (ubuntu-latest) 118286260133
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+shape-rss: ok (bound 2000 KB: 100 B a turn + 1 MiB)
+FAIL cd/c_double_slash_path: stdout
+     pelt stdout: b'//bin\n/bin\n'
+     want stdout: b'//bin\n//bin\n'
+FAIL cd/c_root_relative: stdout
+     pelt stdout: b'//bin\n//bin\n//bin\n//bin\n'
+     want stdout: b'/bin\n/bin\n/bin\n/bin\n'
+difftest: total        959     2    38 (0)
+FAIL cd/c_double_slash_path: stdout
+     pelt stdout: b'//bin\n/bin\n'
+     want stdout: b'//bin\n//bin\n'
+FAIL cd/c_root_relative: stdout
+     pelt stdout: b'//bin\n//bin\n//bin\n//bin\n'
+     want stdout: b'/bin\n/bin\n/bin\n/bin\n'
+difftest: total        959     2    38 (0)
+session: pass 264  fail 0  pending 3 (0)
+session: pass 264  fail 0  pending 3 (0)
