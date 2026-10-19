@@ -186,7 +186,7 @@ jobs:
 
       # The corpus steps run whatever came before, so that a break seen
       # only from outside (above) and one seen only by a script each
-      # report on their own.
+      # report on their own; so does every step after them.
       - name: the differential corpus, native tier
         if: ${{ matrix.builds && !cancelled() }}
         run: tools/difftest --bin target/native
@@ -196,23 +196,28 @@ jobs:
         run: tools/difftest --bin target/release
 
       - name: the harness sees a difference (the planted red)
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         run: tools/difftest-selftest target/release
 
       # The prompt: sessions typed into pelt through a pseudo-terminal
       # and compared with transcripts tools/session-record wrote from
       # `dash -i +m` (tests/session/, tools/lib_session.py).
+      # pelt#35, sh19: they run after a red corpus too (the job is red
+      # all the same), so a break the sessions see is seen here and not
+      # only on a lane's host: before, a plain `if: matrix.builds` meant
+      # "only if every step so far passed", and a plant whose corpus was
+      # red never showed its sessions (sh18's run 39160267977).
       # A session step that stops making progress is a failure, not a
       # 45-minute job timeout (trunk's push run 37953346374 hung here on
       # macOS and was cancelled with no verdict). 15 since sh11: the
       # corpus grew from 127 cases to 197 (macOS took 3 minutes for 127).
       - name: the session corpus, native tier
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 15
         run: tools/session --bin target/native
 
       - name: the session corpus, release tier
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 15
         run: tools/session --bin target/release
 
@@ -253,5 +258,5 @@ jobs:
         run: tools/hist-witness target/release/pelt
 
       - name: the session harness sees a difference (the planted red)
-        if: matrix.builds
+        if: ${{ matrix.builds && !cancelled() }}
         run: tools/session-selftest target/release
