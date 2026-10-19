@@ -726,15 +726,10 @@ fn run_simple(mut sh: Sh, n: int) -> int {
     sh.nowait = false
     let last = sh.jc_last
     sh.jc_last = false
-    // the command after `&` (`run_async`) is started on the fast path,
-    // not waited for, as a pipeline stage is: the ordinary path would
-    // keep its scratch in the root every time (pelt#33)
-    let bg = sh.bg_simple
-    sh.bg_simple = false
-    if fast_ok(sh) && (!nowait || stage_fast(sh) || last || bg) {
+    if fast_ok(sh) && (!nowait || stage_fast(sh) || last) {
         flush(mut sh)
         let r = copy region turn {
-            run_fast(sh, sh.ast, n, nowait || last, bg)
+            run_fast(sh, sh.ast, n, nowait || last)
         }
         if r.kind != R_SLOW {
             return commit_fast(mut sh, r)
@@ -984,10 +979,8 @@ fn put_op(mut enc: Buf, op: char, name: str, value: str) {
 /// redirected, and run when it is a program or a pure built-in. Under a
 /// capture (`caps_fast`) a built-in's output and a waited program's
 /// are handed back for the capture; a pipeline stage (`nowait`) is
-/// started on the stage's pipe, or its output made ready to read. `bg`
-/// is the command after `&`: the in-process subshell it runs in would
-/// take back what the command search finds, so nothing is written.
-fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
+/// started on the stage's pipe, or its output made ready to read.
+fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool) -> Fast {
     var t = shadow_of(sh)
     t.line = a.nodes[n].line
     let na = a.nodes[n].ints[0]
@@ -1214,7 +1207,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
                 close_opened(t)
                 return slow()
             }
-            if !own && !bg {
+            if !own {
                 var h = buf()
                 put_op(mut h, 'H', cmd, path)
                 r.enc = r.enc + text(h)
@@ -1399,7 +1392,7 @@ fn run_turn_fast(sh: Sh, src: str, line: int) -> Fast {
     if k < 0 {
         return slow()
     }
-    run_fast(sh, a, k, false, false)
+    run_fast(sh, a, k, false)
 }
 
 /// Whether `src` is one simple command and nothing else: its node in a
@@ -2566,7 +2559,6 @@ fn run_async(mut sh: Sh, node: int) -> int {
     }
     sh.stage_child = -1
     sh.nowait = as_job && tk == K_SIMPLE
-    sh.bg_simple = sh.nowait
     if as_job && !jc {
         sig_boot(mut sh)
         let two = m_int() | m_quit()
@@ -2576,7 +2568,6 @@ fn run_async(mut sh: Sh, node: int) -> int {
     }
     let st = run_subshell(mut sh, node)
     sh.nowait = false
-    sh.bg_simple = false
     jc_end_build(mut sh)
     sh.stage_child = -1
     sig_apply(mut sh)
