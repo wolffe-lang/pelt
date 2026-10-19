@@ -244,6 +244,37 @@ kasumi with `ld.lld`, as sh18; its sha256 in the report; trunk
 `cc2fdc9` rebuilt the same way must give sh18's `76f3fc40…`; the
 system-call set unchanged (the fixes call nothing new).
 
+### 3.7 pelt#37 (added by the orchestrator, 2026-10-19; prediction before the change)
+
+The maintainer found on PAX that from a cwd of `/`, `cd bin; pwd`
+prints `//bin`. Measured black-box (`probe/scripts/w12-cd-root.sh`,
+dash and `bash --posix` in the container, this branch's pelt on the
+host; `refs/w12-*`):
+
+| from | operand | dash | bash | pelt now |
+|---|---|---|---|---|
+| `/` | `bin`, `./bin`, `bin/` | `/bin` | `/bin` | **`//bin`** |
+| `/` | `//` | `//` | `//` | `//` |
+| `/` | `//bin` | `//bin` | `//bin` | `//bin` |
+| `//` | `bin` | `//bin` | `//bin` | **`/bin`** |
+| `/`, `CDPATH=/` | `bin` | `//bin` | `/bin` | `//bin` (dash's) |
+| `/usr/` | `bin` | `/usr/bin` | `/usr/bin` | `/usr/bin` |
+
+The cause is `bi_cd`'s relative join `canon("{base}/{cur}")`: a base
+ending in `/` gets a second one, so `/` + `bin` is `//bin`, which
+`canon` keeps (a leading `//` is implementation-defined and kept, as
+dash keeps it), and `//` + `bin` is `///bin`, which it folds to
+`/bin`. **The fix:** the join adds the `/` only when the base does not
+end in one; `canon` is unchanged, and so is the `CDPATH` join (pelt
+already answers dash's `//bin` there). **Predicted:** three new corpus
+cases recorded from dash: `cd/c_root_relative` (the first row) red at
+this branch's head before the fix and green after; `cd/c_double_slash`
+(`cd //`) green before and after; `cd/c_double_slash_path` (`cd //bin`,
+and `bin` from `//`) red before (its last line) and green after. Corpus
+958/0/38 → 961/0/38 on both tiers; nothing else moves; the static pelt's
+digest moves (a `src/` change). Seen red: the cases pushed before the
+fix, so the PR's own run at that head is red on exactly them.
+
 ## 6. #34: pelt's fork-adoption note, for sh20
 
 Ruling #90 (2026-10-19): wolf gets a user-visible `os_fork` whose child

@@ -1,0 +1,10 @@
+//bin
+PWD=//bin
+//
+//bin
+/bin
+//bin
+//bin
+//bin
+//bin
+/usr/bin
