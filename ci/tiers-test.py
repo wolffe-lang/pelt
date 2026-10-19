@@ -54,7 +54,6 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLAN = os.path.join(ROOT, "ci", "tiers.py")
 RED = os.path.join(ROOT, "ci", "nightly-red.sh")
-WORKFLOW = os.path.join(ROOT, ".github", "workflows", "ci.yml")
 ENV_KEYS = ("EVENT", "ACTION", "LABEL", "LABELS", "HEAD_SHA", "IN_TIER", "NEEDS")
 fails = 0
 
@@ -97,14 +96,20 @@ def is_code(f):
 
 
 MUST_FIND = ["tests/diff/ORACLE", "tests/census/clauses.tsv"]
-RULED = {}
+RULED = {}  # {prose root: {regex of a line that names something else: why}}
 
 
 def extra_t5(files, cls, say):
     shell = [p for p in files if p.startswith(("src/", "tests/", "tools/"))]
     say(len(shell) >= 1000 and all(cls.get(p) == "gauntlet" for p in shell),
         "T5 every tracked path under src/, tests/ and tools/ is the gauntlet's (%d paths)" % len(shell))
+WORKFLOW_FILE = "ci.yml"
+
+
+def extra_checks(say, plan, expect, blocks, wf):
+    pass
 # --- end of this repository's ------------------------------------------------------
+WORKFLOW = os.path.join(ROOT, ".github", "workflows", WORKFLOW_FILE)
 
 
 def clean_env(**more):
@@ -251,7 +256,8 @@ for j in JOBS:
 say(JOBS[:1] == ["plan"] and JOBS[-2:] == ["tier", "nightly-red"], "T4 the plan is the first job, the tier the last but the nightly's issue")
 for j in EVERY:
     b = blocks[j]
-    ok = re.search(r"^    needs: plan$", b, re.M) is not None
+    nd = re.search(r"^    needs: (plan|\[plan(, [A-Za-z0-9_-]+)*\])$", b, re.M)
+    ok = nd is not None
     ok = ok and ("    if: contains(fromJSON(needs.plan.outputs.jobs || '[]'), '%s')\n" % j) in b
     say(ok, "T4 %s needs the plan and runs only when the plan names it" % j)
     out = "matrix_" + j.replace("-", "_")
@@ -480,7 +486,8 @@ def patterns(p):
 
 def readers(code_files, paths):
     """{path: ["file:line", ...]}: the lines of code_files that read a file
-    (READS) and name the path (patterns). Comment lines are no reader."""
+    (READS) and name the path (patterns). Comment lines are no reader, nor a
+    line RULED says names something else (its regex, with its reason)."""
     pats = {p: patterns(p) for p in paths}
     hits = {p: [] for p in paths}
     for c in code_files:
@@ -492,7 +499,7 @@ def readers(code_files, paths):
             if line.lstrip().startswith(("#", "//")) or not READS.search(line):
                 continue
             for p in paths:
-                if any(x.search(line) for x in pats[p]):
+                if any(x.search(line) for x in pats[p]) and not any(re.search(rx, line) for rx in RULED.get(p, {})):
                     hits[p].append("%s:%d" % (c, n))
     return hits
 
@@ -509,7 +516,6 @@ if files:
         "%s (%s)" % (p, seen[p][0] if seen[p] else "NOTHING") for p in MUST_FIND))
     roots = sorted({p.split("/")[0] + ("/" if "/" in p else "") for p in prose})
     hit = {p: w for p, w in readers(code_files, roots).items() if w}
-    hit = {p: w for p, w in hit.items() if not all(x in RULED.get(p, ()) for x in w)}
     say(not hit, "T5 no line of %d code file(s) that reads a file names a prose root (%s): %s" % (
         len(code_files), " ".join(roots), "; ".join("%s at %s" % (p, " ".join(w[:3])) for p, w in sorted(hit.items())) or "none"))
     extra_t5(files, cls, say)
@@ -520,6 +526,8 @@ if files:
         print("tiers-test: PASS T5 every one of %d tracked paths has a rule" % len(files))
 else:
     say(False, "T5 not a git checkout: the tracked paths cannot be listed")
+
+extra_checks(say, plan, expect, blocks, wf)
 
 print("tiers-test: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 sys.exit(1 if fails else 0)
