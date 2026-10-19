@@ -223,6 +223,11 @@ struct Sh {
     /// the pipe its descriptor 1 goes to (the stage's capture level is
     /// `stage_cap`).
     nowait: bool,
+    /// Argument lists for the built-ins the ordinary path runs from
+    /// their fields' text (`sh.exec`'s `run_builtin_enc`): each taken,
+    /// filled and given back cleared, so a turn makes no list in the
+    /// root (pelt#33).
+    argpool: List[List[str]],
     stage_child: int,
     /// A stage's built-in run on the fast path: the read end its output
     /// waits behind for the next stage, or -1.
@@ -394,6 +399,7 @@ fn new_sh(name: str) -> Sh {
         at_prompt: false,
         started: false,
         nowait: false,
+        argpool: List[List[str]](),
         stage_child: -1,
         stage_in: -1,
         stage_w: -1,

@@ -22,8 +22,13 @@ fn args_of(fields: List[str]) -> List[str] {
 }
 
 fn builtin(mut sh: Sh, fields: List[str]) -> int {
-    let name = fields[0]
-    let args = args_of(fields)
+    builtin_args(mut sh, fields[0], args_of(fields))
+}
+
+/// `builtin` with the name and the arguments apart: the ordinary path's
+/// lean call (`sh.exec`'s `run_builtin_enc`) hands its arguments in a
+/// list from the state's pool, so no `args_of` copy is made (pelt#33).
+fn builtin_args(mut sh: Sh, name: str, args: List[str]) -> int {
     var st = 0
     if name == ":" || name == "true" {
         st = 0
