@@ -603,7 +603,7 @@ fn jc_fg_wait(mut sh: Sh, j: int, node: int) -> int {
         }
         order_front(mut sh, j)
         sh.jb_told[j] = true
-        notice(mut sh, j)
+        write_fd(mut sh, 2, "{job_line(sh, j, false)}\n")
         return raw_status(raw)
     }
     let (st, sig) = status_of(raw)
@@ -672,56 +672,38 @@ fn jb_stopped(mut sh: Sh, h: int, raw: int, text: str) {
         sh.jb_text[j] = text
     }
     sh.jb_told[j] = true
-    notice(mut sh, j)
+    write_fd(mut sh, 2, "{job_line(sh, j, false)}\n")
 }
 
 /// Job `j`'s command text, and each process's, from node `n` (a
 /// pipeline, or one command): only with job control on (dash keeps no
-/// text without it, black-box: s02). Each text is made in `copy region`,
-/// so only its bytes stay in the root, not the buffer it was built in,
-/// and the stages are found in place, no list made (pelt#33).
+/// text without it, black-box: s02).
 fn jb_fill_text(mut sh: Sh, j: int, n: int) {
     if !sh.opt_m || n < 0 {
         return
     }
-    sh.jb_text[j] = copy region jt {
-        node_text(sh.ast, n)
-    }
+    sh.jb_text[j] = node_text(sh.ast, n)
+    var stages = List[int]()
     var m = n
     if sh.ast.nodes[m].kind == K_ANDOR && sh.ast.nodes[m].kids.len == 1 {
         m = sh.ast.nodes[m].kids[0]
     }
-    let piped = sh.ast.nodes[m].kind == K_PIPE && sh.ast.nodes[m].ints[0] == 0
+    if sh.ast.nodes[m].kind == K_PIPE && sh.ast.nodes[m].ints[0] == 0 {
+        for k in sh.ast.nodes[m].kids {
+            if sh.ast.nodes[k].kind == K_SIMPLE {
+                (mut stages).push(k)
+            }
+        }
+    }
     var k = 0
     var i = 0
     while k < sh.pr_job.len {
         if sh.pr_job[k] == j {
-            let st = if piped then nth_simple(sh.ast, m, i) else -1
-            if st >= 0 {
-                sh.pr_text[k] = copy region pt {
-                    node_text(sh.ast, st)
-                }
-            } else {
-                sh.pr_text[k] = sh.jb_text[j]
-            }
+            sh.pr_text[k] = if i < stages.len then node_text(sh.ast, stages[i]) else sh.jb_text[j]
             i += 1
         }
         k += 1
     }
-}
-
-/// The `i`th simple command among pipeline `m`'s stages, or -1.
-fn nth_simple(a: Ast, m: int, i: int) -> int {
-    var c = 0
-    for k in a.nodes[m].kids {
-        if a.nodes[k].kind == K_SIMPLE {
-            if c == i {
-                return k
-            }
-            c += 1
-        }
-    }
-    -1
 }
 
 // ------------------------------------------------------- start and end
@@ -1084,7 +1066,7 @@ fn jc_notify(mut sh: Sh, fresh: bool) {
         if pick < 0 {
             break
         }
-        notice(mut sh, pick)
+        write_fd(mut sh, 2, "{job_line(sh, pick, false)}\n")
         if jb_state_of(sh, pick) == JB_DONE {
             jb_free(mut sh, pick)
         } else {
@@ -1099,22 +1081,6 @@ fn jc_notify(mut sh: Sh, fresh: bool) {
         }
         j0 += 1
     }
-}
-
-/// Job `j`'s line on standard error: a notice. Made and written inside
-/// a region when descriptor 2 is the shell's own, so a notice keeps
-/// nothing in the root (pelt#33: the line, its padding and its buffer
-/// stayed there, a job at a time); to a capture or a moved 2 as
-/// `write_fd` writes.
-fn notice(mut sh: Sh, j: int) {
-    flush(mut sh)
-    if fd_get(sh, 2) == 2 {
-        region nl {
-            eprint_raw("{job_line(sh, j, false)}\n")
-        }
-        return
-    }
-    write_fd(mut sh, 2, "{job_line(sh, j, false)}\n")
 }
 
 /// Whether a job is stopped (`exit` warns, `sh.builtin`).
