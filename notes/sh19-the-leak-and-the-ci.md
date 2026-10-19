@@ -305,7 +305,7 @@ the same `src/`, `tools/` and `tests/` as trunk `cc2fdc9`: all gates
 | | threads 2; descriptors 0–2, the hub's pair, the terminal and the history file | threads 2 everywhere; the hub's **two pipes, both ends each** (3–6), the terminal (7); **no history file held open** (it is opened per write) | held but for the history file |
 | | dash 100–400 µs a forked shape; pelt 3–30 µs | dash 100–156 µs; pelt release 4.5–12.5, native 21–45 | dash held; pelt held on release, **native over 30 µs for five shapes** |
 | | nine corpus rows, the session, 2.11/18 and wait/7 | the nine, the session and **nine** statements (2.9.2/8, 2.9.2/9, 2.11/18, 2.13/6, 2.13/7, 2.13/11, 2.13/12, wait/7, dot/8) | held, more statements than predicted |
-| static pelt | trunk gives sh18's `76f3fc40…`; the system-call set unchanged | trunk rebuilt to **`76f3fc40…`**; the head's digest in §4 | held for the method (the calls: §4) |
+| static pelt | trunk gives sh18's `76f3fc40…`; the system-call set unchanged | trunk rebuilt to **`76f3fc40…`**; at `cd05c3b` **`7be05ec0478f624dc296d7b5c2a27f2b5b9348563f1ea47ed15b745eb402d0ca`** (15,200,336 bytes, ET_EXEC, no PT_INTERP, hashed twice); `tools/syscall-census` at `cd05c3b`: **the same 50 calls by name as sh18's head** (`sysc/head2/census.txt`, `logs/sysc-head2.log`; the timing-sensitive cases part under strace, reported, not judged, as at sh18) | held |
 
 **Not predicted.**
 
@@ -353,7 +353,9 @@ the same `src/`, `tools/` and `tests/` as trunk `cc2fdc9`: all gates
 - **CI green:** run **39316879930** at `4d01c75` (#33, #35 and #34's
   head: every job and step success on linux x86-64 and macOS arm64,
   aarch64's refusals asserted; the macOS job took 40 min 53 s of its
-  45); the run at the PR's final head is in the PR body.
+  45); run **39321161832** at `cd05c3b` (the last `src/` commit, with
+  #37: every job and step success, macOS 37 min 51 s); the run at the
+  PR's final head is in the PR body.
 - **#34:** `probe/shapes/` (the shapes, `state.py`), `refs/shapes/`,
   `logs/state-*.txt`, the diagnostic runs **39305606803** and
   **39307007029** (`ci/diag-*.txt`, branch `sh19-macdiag`, never to
@@ -560,7 +562,8 @@ prompt (sh18 §8: empty, as dash's, once the child's table is empty).
 - **`cmd &` with no `wait` keeps a job a turn** in pelt, dash and bash
   alike (5,000 `Done` lines, `w09`): POSIX keeps them known; pelt's slot
   costs 231–347 B a turn against dash's few bytes. Recorded, not gated.
-- **The macOS job is at 41 of its 45 minutes** (run 39316879930): the
+- **The macOS job took 38 to 41 of its 45 minutes** (runs
+  39321161832, 39316879930): the
   session corpus and `shape-rss` are the long steps; the next rows or a
   slow runner will cut it. A ruling is owed on the limit or a split of
   the job (this lane raised nothing).
