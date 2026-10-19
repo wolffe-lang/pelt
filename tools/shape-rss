@@ -73,16 +73,17 @@ SHAPES = [
     # starts on the fast path, `wait $!`'s job is forgotten at the next
     # one, and a job's notice and text keep nothing but the text. At
     # trunk `cc2fdc9` these kept 600 to 2,300 B a turn
-    # (notes/sh19-evidence/logs/base-bgshapes.log)
+    # (notes/sh19-evidence/logs/base-bgshapes.log). One row starts a
+    # program (`env true`, 30,000 spawns: two minutes on a macOS runner);
+    # the rest are built-ins, which take the same paths
     ("builtin-wait", "loop", "wait"),
     ("builtin-export", "loop", "export X"),
     ("builtin-kill", "loop", "kill -0 $$"),
     ("background-wait", "loop", "env true & wait"),
     ("background-builtin-wait", "loop", "true & wait"),
-    ("background-wait-pid", "loop", "env true & wait $!"),
-    ("script-background-wait", "script", "env true & wait"),
-    ("typed-background-wait", "typed", "env true & wait"),
-    ("typed-background-builtin-wait", "typed", "true & wait"),
+    ("background-wait-pid", "loop", "true & wait $!"),
+    ("script-background-wait", "script", "true & wait"),
+    ("typed-background-wait", "typed", "true & wait"),
 ]
 
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
