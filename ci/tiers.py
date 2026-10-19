@@ -230,7 +230,19 @@ def plan(a):
     log = []
 
     def result(tier, chosen=None):
-        chosen = jobs_of(tier, every) if chosen is None else [j for j in every if j in chosen]
+        if chosen is None:
+            chosen = jobs_of(tier, every)
+        else:
+            # A chosen job brings the jobs it needs (a job whose need is
+            # skipped is skipped itself, and the verdict would say so).
+            closed, todo = set(chosen), list(chosen)
+            while todo:
+                for n in needs.get(todo.pop(), []):
+                    if n not in NOT_SELECTABLE and n not in closed:
+                        log.append("%s needs %s: chosen too" % (" ".join(j for j in every if j in closed and n in needs.get(j, [])), n))
+                        closed.add(n)
+                        todo.append(n)
+            chosen = [j for j in every if j in closed]
         return {"tier": tier, "jobs": chosen, "matrix": matrix_of(tier), "log": log}
 
     labels = [x for x in (a.labels or "").split(",") if x]
