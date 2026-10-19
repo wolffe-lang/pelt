@@ -4,6 +4,8 @@ would inherit: its threads, its open descriptors, its signal
 dispositions, read from outside while it waits in a known place.
 
 usage: state.py SHELL...   (linux: /proc; macOS: ps -M and lsof)
+The interactive shell's HOME (where it keeps its history) is $TMPDIR,
+else the current directory: never /tmp.
 Each row: shell, the situation, threads, descriptors (number -> what),
 and on linux SigBlk/SigIgn/SigCgt.
 """
@@ -76,7 +78,7 @@ def interactive(shell):
         fcntl.ioctl(0, termios.TIOCSCTTY, 0)
 
     p = subprocess.Popen([shell, "-i"], stdin=slave, stdout=slave, stderr=slave,
-                         env={"PATH": "/usr/bin:/bin", "HOME": os.environ.get("TMPDIR", "/tmp"),
+                         env={"PATH": "/usr/bin:/bin", "HOME": os.environ.get("TMPDIR") or os.getcwd(),
                               "TERM": "dumb", "PS1": "$ "},
                          preexec_fn=ctty)
     os.close(slave)

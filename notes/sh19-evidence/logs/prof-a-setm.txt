@@ -1,0 +1,18 @@
+heapprof: /home/mfwolffe/lanes/sh19/bin/pelt-a-native m1.sh: 10 chunk grabs after the first 20 (~640 KiB)
+-- innermost wolf frame
+     5  50.0%  [list_push]
+     5  50.0%  [list_new]
+-- innermost four frames
+     5  50.0%  [list_push] < putc < to_col < job_line
+     5  50.0%  [list_new] < buf < job_line < jc_notify
+-- on the stack at all
+    10 100.0%  jc_notify
+    10 100.0%  eval_top
+    10 100.0%  run_source
+    10 100.0%  job_line
+    10 100.0%  run_main
+     5  50.0%  putc
+     5  50.0%  [list_push]
+     5  50.0%  to_col
+     5  50.0%  [list_new]
+     5  50.0%  buf

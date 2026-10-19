@@ -1,0 +1,25 @@
+heapprof: /home/mfwolffe/lanes/sh19/bin/pelt-b-native m1.sh: 9 chunk grabs after the first 20 (~576 KiB)
+-- innermost wolf frame
+     6  66.7%  [list_push]
+     3  33.3%  [str_repeat]
+-- innermost four frames
+     5  55.6%  [list_push] < jb_add_proc < jb_join < commit_fast
+     3  33.3%  [str_repeat] < run_simple < run_node < run
+     1  11.1%  [list_push] < jb_new < run_async < run_list
+-- on the stack at all
+     9 100.0%  run
+     9 100.0%  eval_top
+     9 100.0%  run_loop
+     9 100.0%  run_node
+     9 100.0%  run_source
+     9 100.0%  run_list
+     9 100.0%  run_main
+     8  88.9%  run_simple
+     7  77.8%  run_async
+     6  66.7%  [list_push]
+     6  66.7%  run_subshell
+     5  55.6%  jb_add_proc
+     5  55.6%  jb_join
+     5  55.6%  commit_fast
+     3  33.3%  [str_repeat]
+     1  11.1%  jb_new

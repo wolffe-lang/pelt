@@ -1,0 +1,8 @@
+bgshapes: pelt-b-native          ctl-wait                 loop    10000     5584 KB  20000     5996 KB grew     412 KB (42 B a turn) ok [wait]
+bgshapes: pelt-b-native          bg-program-wait          loop    10000     6292 KB  20000     7152 KB grew     860 KB (88 B a turn) ok [env true & wait]
+bgshapes: pelt-b-native          typed-bg-program-wait    typed   10000     8176 KB  20000    10012 KB grew    1836 KB (188 B a turn) ok [env true & wait]
+bgshapes: pelt-b-native          typed-bg-builtin-wait    typed   10000     7688 KB  20000     9252 KB grew    1564 KB (160 B a turn) ok [true & wait]
+bgshapes: pelt-b-release         ctl-wait                 loop    10000     4012 KB  20000     4716 KB grew     704 KB (72 B a turn) ok [wait]
+bgshapes: pelt-b-release         bg-program-wait          loop    10000     4356 KB  20000     5100 KB grew     744 KB (76 B a turn) ok [env true & wait]
+bgshapes: pelt-b-release         typed-bg-program-wait    typed   10000     5592 KB  20000     7428 KB grew    1836 KB (188 B a turn) ok [env true & wait]
+bgshapes: pelt-b-release         typed-bg-builtin-wait    typed   10000     5100 KB  20000     6664 KB grew    1564 KB (160 B a turn) ok [true & wait]

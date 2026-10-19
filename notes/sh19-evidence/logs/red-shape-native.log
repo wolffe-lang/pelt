@@ -1,0 +1,10 @@
+shape-rss: FAIL builtin-wait             loop    10000    11128 KB   20000    17284 KB  grew    6156 KB (630 B a turn)  [wait]
+shape-rss: FAIL builtin-export           loop    10000    11560 KB   20000    17932 KB  grew    6372 KB (652 B a turn)  [export X]
+shape-rss: FAIL builtin-kill             loop    10000    12416 KB   20000    19668 KB  grew    7252 KB (742 B a turn)  [kill -0 $$]
+shape-rss: FAIL background-wait          loop    10000    23096 KB   20000    40488 KB  grew   17392 KB (1780 B a turn)  [env true & wait]
+shape-rss: FAIL background-builtin-wait  loop    10000    17292 KB   20000    28780 KB  grew   11488 KB (1176 B a turn)  [true & wait]
+shape-rss: FAIL background-wait-pid      loop    10000    26716 KB   20000    48568 KB  grew   21852 KB (2237 B a turn)  [env true & wait $!]
+shape-rss: FAIL script-background-wait   script  10000    23200 KB   20000    40708 KB  grew   17508 KB (1792 B a turn)  [env true & wait]
+shape-rss: FAIL typed-background-wait    typed   10000    28852 KB   20000    51324 KB  grew   22472 KB (2301 B a turn)  [env true & wait]
+shape-rss: FAIL typed-background-builtin-wait typed   10000    22456 KB   20000    38884 KB  grew   16428 KB (1682 B a turn)  [true & wait]
+shape-rss: FAIL 9: builtin-wait, builtin-export, builtin-kill, background-wait, background-builtin-wait, background-wait-pid, script-background-wait, typed-background-wait, typed-background-builtin-wait (bound 2000 KB: 100 B a turn + 1 MiB)

@@ -1,0 +1,6 @@
+state: dash       | script, waiting on a program     | threads 1 | fds 0->/dev/null 1->/dev/null 2->pipe:[299550063] | SigBlk=0 SigIgn=0 SigCgt=0
+state: dash       | script with a trap, waiting      | threads 1 | fds 0->/dev/null 1->/dev/null 2->pipe:[299550063] | SigBlk=0 SigIgn=0 SigCgt=10202
+state: dash       | script in $( ), waiting          | threads 1 | fds 0->/dev/null 1->/dev/null 2->pipe:[299550063] 3->pipe:[299561348] | SigBlk=0 SigIgn=0 SigCgt=10002
+state: dash       | script, a pipeline               | threads 1 | fds 0->/dev/null 1->/dev/null 2->pipe:[299550063] | SigBlk=0 SigIgn=0 SigCgt=10002
+state: dash       | interactive, at the prompt       | threads 1 | fds 0->/dev/pts/0 1->/dev/pts/0 2->/dev/pts/0 10->/dev/tty | SigBlk=0 SigIgn=284004 SigCgt=10002
+state: dash       | interactive, a job running       | threads 1 | fds 0->/dev/pts/0 1->/dev/pts/0 2->/dev/pts/0 10->/dev/tty | SigBlk=0 SigIgn=284004 SigCgt=10002

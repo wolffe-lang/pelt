@@ -1,0 +1,15 @@
+sub-child-parent: the shell
+sub-dollar-dollar: the shell's
+sub-assign-kept: 0
+bg-sub-order: a b 
+bg-brace-order: a b 
+bg-sub-pid: no process
+bg-brace-assign-kept: 0
+cmdsub-child-parent: the shell
+stage-order: producer-done reader-got-one 
+stage-program-parent: the shell
+func-stage-order: f-done reader-got-one 
+stage-assign-kept: 0
+sub-exec: the shell went on
+end
+exit=0

@@ -1,0 +1,100 @@
+(macos-latest) | == native endless.pelt.txt
+(macos-latest) | notes/sh19-evidence/probe/shapes/run.sh: line 7:  2189 Alarm clock: 14         perl -e 'alarm 3; exec @ARGV' "$@"
+(macos-latest) | exit=142
+(macos-latest) | == native shapes.pelt.txt
+(macos-latest) | sub-child-parent: the shell
+(macos-latest) | sub-dollar-dollar: the shell's
+(macos-latest) | sub-assign-kept: 0
+(macos-latest) | bg-sub-order: a b 
+(macos-latest) | bg-brace-order: a b 
+(macos-latest) | bg-sub-pid: no process
+(macos-latest) | bg-brace-assign-kept: 0
+(macos-latest) | cmdsub-child-parent: the shell
+(macos-latest) | stage-order: producer-done reader-got-one 
+(macos-latest) | stage-program-parent: the shell
+(macos-latest) | func-stage-order: f-done reader-got-one 
+(macos-latest) | stage-assign-kept: 0
+(macos-latest) | sub-exec: the shell went on
+(macos-latest) | end
+(macos-latest) | exit=0
+(macos-latest) | == release endless.pelt.txt
+(macos-latest) | notes/sh19-evidence/probe/shapes/run.sh: line 7:  2307 Alarm clock: 14         perl -e 'alarm 3; exec @ARGV' "$@"
+(macos-latest) | exit=142
+(macos-latest) | == release shapes.pelt.txt
+(macos-latest) | sub-child-parent: the shell
+(macos-latest) | sub-dollar-dollar: the shell's
+(macos-latest) | sub-assign-kept: 0
+(macos-latest) | bg-sub-order: a b 
+(macos-latest) | bg-brace-order: a b 
+(macos-latest) | bg-sub-pid: no process
+(macos-latest) | bg-brace-assign-kept: 0
+(macos-latest) | cmdsub-child-parent: the shell
+(macos-latest) | stage-order: producer-done reader-got-one 
+(macos-latest) | stage-program-parent: the shell
+(macos-latest) | func-stage-order: f-done reader-got-one 
+(macos-latest) | stage-assign-kept: 0
+(macos-latest) | sub-exec: the shell went on
+(macos-latest) | end
+(macos-latest) | exit=0
+(macos-latest) | Darwin iad20-fj924-0d93b6db-9648-4230-bb2d-e4f10fede142-9E00DC201E38.local 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:16:43 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_VMAPPLE arm64
+(macos-latest) | state: pelt       | script, waiting on a program     | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0xa498ca8deeab3025 4->PIPE:->0xb43c1c78c4cc3c3a 5->PIPE:->0x85c4a1260eb6dde 6->PIPE:->0x8fc5cfdc47a5fa38 | -
+(macos-latest) | state: pelt       | script with a trap, waiting      | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0xe4be5f4f7c8b2b0a 4->PIPE:->0x330b7074da8c91bb 5->PIPE:->0x21155e29fcb0cc3a 6->PIPE:->0x1bac2fb61be48b4d | -
+(macos-latest) | state: pelt       | script in $( ), waiting          | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0x490b06248ca7ea38 4->PIPE:->0xc1f51cdc0dec4388 5->PIPE:->0xf934ecea415dd4c0 6->PIPE:->0xb06185722e7b5032 7->PIPE:->0x8f65cb5722cfdf6 | -
+(macos-latest) | state: pelt       | script, a pipeline               | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0x73767967d330e9cc 4->PIPE:->0x1e5a3da9f51eb9cd 5->PIPE:->0xe164c3e2e6528b7e 6->PIPE:->0x8218cd903cd6077a 7->PIPE:->0x3263aec870cf43b3 | -
+(macos-latest) | state: pelt       | interactive, at the prompt       | threads 2 | fds 0->CHR:ttys000 1->CHR:ttys000 2->CHR:ttys000 3->PIPE:->0x5f0ff479b212be9e 4->PIPE:->0x9037b7e27e156094 5->PIPE:->0x48356870a97633b 6->PIPE:->0xc26283a011566201 7->CHR:tty | -
+(macos-latest) | state: pelt       | interactive, a job running       | threads 2 | fds 0->CHR:ttys000 1->CHR:ttys000 2->CHR:ttys000 3->PIPE:->0x5f0ff479b212be9e 4->PIPE:->0x9037b7e27e156094 5->PIPE:->0x48356870a97633b 6->PIPE:->0xc26283a011566201 7->CHR:tty | -
+(macos-latest) | state: pelt       | script, waiting on a program     | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0x3780317278b5de3a 4->PIPE:->0x32dd4af988224d3f 5->PIPE:->0x11227853ea61de48 6->PIPE:->0x8299acd14fb397ea | -
+(macos-latest) | state: pelt       | script with a trap, waiting      | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0xc5162f4d6ad5c30b 4->PIPE:->0x9caa2acd0bc6e804 5->PIPE:->0xf7337d231bd1ca1b 6->PIPE:->0x22b21c1ca19d295 | -
+(macos-latest) | state: pelt       | script in $( ), waiting          | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0x3ee5b7a71a742857 4->PIPE:->0xa5be3ebcd167af5e 5->PIPE:->0xa498ca8deeab3025 6->PIPE:->0xb43c1c78c4cc3c3a 7->PIPE:->0xc5162f4d6ad5c30b | -
+(macos-latest) | state: pelt       | script, a pipeline               | threads 2 | fds 0->CHR:null 1->CHR:null 2->PIPE:->0xfb90d1d62892f053 3->PIPE:->0x11807d76d9e1cc6c 4->PIPE:->0x4347b0eb1f687f47 5->PIPE:->0x4cda161ecd9a847 6->PIPE:->0xf76a446565c56826 7->PIPE:->0x95fa719e9efc2769 | -
+(macos-latest) | state: pelt       | interactive, at the prompt       | threads 2 | fds 0->CHR:ttys000 1->CHR:ttys000 2->CHR:ttys000 3->PIPE:->0xe4be5f4f7c8b2b0a 4->PIPE:->0x330b7074da8c91bb 5->PIPE:->0x21155e29fcb0cc3a 6->PIPE:->0x1bac2fb61be48b4d 7->CHR:tty | -
+(macos-latest) | state: pelt       | interactive, a job running       | threads 2 | fds 0->CHR:ttys000 1->CHR:ttys000 2->CHR:ttys000 3->PIPE:->0xe4be5f4f7c8b2b0a 4->PIPE:->0x330b7074da8c91bb 5->PIPE:->0x21155e29fcb0cc3a 6->PIPE:->0x1bac2fb61be48b4d 7->CHR:tty | -
+(ubuntu-latest) | == native endless.pelt.txt
+(ubuntu-latest) | exit=124
+(ubuntu-latest) | == native shapes.pelt.txt
+(ubuntu-latest) | sub-child-parent: the shell
+(ubuntu-latest) | sub-dollar-dollar: the shell's
+(ubuntu-latest) | sub-assign-kept: 0
+(ubuntu-latest) | bg-sub-order: a b 
+(ubuntu-latest) | bg-brace-order: a b 
+(ubuntu-latest) | bg-sub-pid: no process
+(ubuntu-latest) | bg-brace-assign-kept: 0
+(ubuntu-latest) | cmdsub-child-parent: the shell
+(ubuntu-latest) | stage-order: producer-done reader-got-one 
+(ubuntu-latest) | stage-program-parent: the shell
+(ubuntu-latest) | func-stage-order: f-done reader-got-one 
+(ubuntu-latest) | stage-assign-kept: 0
+(ubuntu-latest) | sub-exec: the shell went on
+(ubuntu-latest) | end
+(ubuntu-latest) | exit=0
+(ubuntu-latest) | == release endless.pelt.txt
+(ubuntu-latest) | exit=124
+(ubuntu-latest) | == release shapes.pelt.txt
+(ubuntu-latest) | sub-child-parent: the shell
+(ubuntu-latest) | sub-dollar-dollar: the shell's
+(ubuntu-latest) | sub-assign-kept: 0
+(ubuntu-latest) | bg-sub-order: a b 
+(ubuntu-latest) | bg-brace-order: a b 
+(ubuntu-latest) | bg-sub-pid: no process
+(ubuntu-latest) | bg-brace-assign-kept: 0
+(ubuntu-latest) | cmdsub-child-parent: the shell
+(ubuntu-latest) | stage-order: producer-done reader-got-one 
+(ubuntu-latest) | stage-program-parent: the shell
+(ubuntu-latest) | func-stage-order: f-done reader-got-one 
+(ubuntu-latest) | stage-assign-kept: 0
+(ubuntu-latest) | sub-exec: the shell went on
+(ubuntu-latest) | end
+(ubuntu-latest) | exit=0
+(ubuntu-latest) | Linux runnervm8k3b6 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+(ubuntu-latest) | state: pelt       | script, waiting on a program     | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[15399] 4->pipe:[15399] 5->pipe:[15400] 6->pipe:[15400] | SigBlk=0 SigIgn=0 SigCgt=100000000
+(ubuntu-latest) | state: pelt       | script with a trap, waiting      | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[13205] 4->pipe:[13205] 5->pipe:[13206] 6->pipe:[13206] | SigBlk=0 SigIgn=0 SigCgt=100000202
+(ubuntu-latest) | state: pelt       | script in $( ), waiting          | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[15432] 4->pipe:[15432] 5->pipe:[15433] 6->pipe:[15433] 7->pipe:[15434] | SigBlk=0 SigIgn=0 SigCgt=100000000
+(ubuntu-latest) | state: pelt       | script, a pipeline               | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[13224] 4->pipe:[13224] 5->pipe:[13225] 6->pipe:[13225] 7->pipe:[13226] | SigBlk=0 SigIgn=0 SigCgt=100000000
+(ubuntu-latest) | state: pelt       | interactive, at the prompt       | threads 2 | fds 0->/dev/pts/0 1->/dev/pts/0 2->/dev/pts/0 3->pipe:[15452] 4->pipe:[15452] 5->pipe:[15453] 6->pipe:[15453] 7->/dev/tty | SigBlk=0 SigIgn=280000 SigCgt=100014006
+(ubuntu-latest) | state: pelt       | interactive, a job running       | threads 2 | fds 0->/dev/pts/0 1->/dev/pts/0 2->/dev/pts/0 3->pipe:[15452] 4->pipe:[15452] 5->pipe:[15453] 6->pipe:[15453] 7->/dev/tty | SigBlk=0 SigIgn=280000 SigCgt=100014006
+(ubuntu-latest) | state: pelt       | script, waiting on a program     | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[15460] 4->pipe:[15460] 5->pipe:[15461] 6->pipe:[15461] | SigBlk=0 SigIgn=0 SigCgt=100000000
+(ubuntu-latest) | state: pelt       | script with a trap, waiting      | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[13260] 4->pipe:[13260] 5->pipe:[13261] 6->pipe:[13261] | SigBlk=0 SigIgn=0 SigCgt=100000202
+(ubuntu-latest) | state: pelt       | script in $( ), waiting          | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[15481] 4->pipe:[15481] 5->pipe:[15482] 6->pipe:[15482] 7->pipe:[15483] | SigBlk=0 SigIgn=0 SigCgt=100000000
+(ubuntu-latest) | state: pelt       | script, a pipeline               | threads 2 | fds 0->/dev/null 1->/dev/null 2->pipe:[13357] 3->pipe:[13279] 4->pipe:[13279] 5->pipe:[13280] 6->pipe:[13280] 7->pipe:[13281] | SigBlk=0 SigIgn=0 SigCgt=100000000
+(ubuntu-latest) | state: pelt       | interactive, at the prompt       | threads 2 | fds 0->/dev/pts/0 1->/dev/pts/0 2->/dev/pts/0 3->pipe:[15501] 4->pipe:[15501] 5->pipe:[15502] 6->pipe:[15502] 7->/dev/tty | SigBlk=0 SigIgn=280000 SigCgt=100014006
+(ubuntu-latest) | state: pelt       | interactive, a job running       | threads 2 | fds 0->/dev/pts/0 1->/dev/pts/0 2->/dev/pts/0 3->pipe:[15501] 4->pipe:[15501] 5->pipe:[15502] 6->pipe:[15502] 7->/dev/tty | SigBlk=0 SigIgn=280000 SigCgt=100014006
