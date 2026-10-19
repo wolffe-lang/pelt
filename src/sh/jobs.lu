@@ -933,7 +933,8 @@ fn sig_text(n: int) -> str {
 fn state_word(sh: Sh, j: int) -> str {
     let s = jb_state_of(sh, j)
     if s == JB_RUN {
-        return "Running"
+        // sh19-plant: a planted break the sessions see (never merge)
+        return "Going"
     }
     let raw = jb_raw(sh, j)
     if s == JB_STOP {
