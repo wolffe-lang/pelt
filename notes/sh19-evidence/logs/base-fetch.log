@@ -1,0 +1,7 @@
+fetch-toolchain: https://github.com/wolffe-lang/wolf-lang/releases/download/v0.2.32/wolf-0.2.32-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 4c37f9c5dc3d8830c06810948027d38bdbc375dc5524ab23127b0ada0907d851 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-interp/releases/download/v0.1.54/lupin-0.1.54-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 175df23880cd5bb993b778e5c8fdd7d0d96c176696802e640f6fc87d3dab40dd OK
+fetch-toolchain: the archive bundles std d37c911f12206c4bf5c8d3281a649bf31da3beef; staging the pin instead
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at d37c911f12206c4bf5c8d3281a649bf31da3beef
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/

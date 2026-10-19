@@ -1,0 +1,7 @@
+first=3
+second=127
+/home/mfwolffe/lanes/sh19/probe/scripts/w01-wait-pid-twice.sh: line 3: wait: pid 2 is not a child of this shell
+prog-first=0
+prog-second=127
+/home/mfwolffe/lanes/sh19/probe/scripts/w01-wait-pid-twice.sh: line 6: wait: pid 3 is not a child of this shell
+exit=0

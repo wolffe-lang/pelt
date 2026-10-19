@@ -1,0 +1,4 @@
+first=3
+/home/mfwolffe/lanes/sh19/probe/scripts/w08-wait-pid-then-next.sh: line 4: wait: pid 2 is not a child of this shell
+after-next=127
+exit=0

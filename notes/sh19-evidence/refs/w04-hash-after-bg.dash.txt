@@ -1,0 +1,3 @@
+--
+/usr/sbin/env
+exit=0

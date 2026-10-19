@@ -1,0 +1,29 @@
+== loop [true & wait]
+heapprof: /home/mfwolffe/lanes/sh19/bin/pelt-base-native l4.sh: 36 chunk grabs after the first 20 (~2304 KiB)
+-- innermost wolf frame
+    22  61.1%  [list_new]
+     7  19.4%  [str_repeat]
+     7  19.4%  [list_push]
+-- innermost four frames
+    15  41.7%  [list_new] < run_fields < run_slow < run_simple
+     7  19.4%  [str_repeat] < run_simple < run_node < run
+     7  19.4%  [list_push] < enc_fields < run_slow < run_simple
+     7  19.4%  [list_new] < redirs_of < run_fields < run_slow
+-- on the stack at all
+    36 100.0%  run_loop
+    36 100.0%  eval_top
+    36 100.0%  run_node
+    36 100.0%  run_source
+    36 100.0%  run
+    36 100.0%  run_list
+    36 100.0%  run_main
+    36 100.0%  run_simple
+    29  80.6%  run_slow
+    22  61.1%  [list_new]
+    22  61.1%  run_fields
+    15  41.7%  run_async
+    15  41.7%  run_subshell
+     7  19.4%  [str_repeat]
+     7  19.4%  [list_push]
+     7  19.4%  enc_fields
+     7  19.4%  redirs_of

@@ -1,0 +1,48 @@
+== loop [env true & wait $!]
+heapprof: /home/mfwolffe/lanes/sh19/bin/pelt-base-native l5.sh: 98 chunk grabs after the first 20 (~6272 KiB)
+-- innermost wolf frame
+    55  56.1%  [list_new]
+    19  19.4%  [fs_stat_record]
+    16  16.3%  [strbuf_finish]
+     8   8.2%  [list_push]
+-- innermost four frames
+    20  20.4%  [list_new] < run_fields < run_slow < run_simple
+    19  19.4%  [fs_stat_record] < stat_of < find_in < find_in_path
+    16  16.3%  [strbuf_finish] < find_in < find_in_path < hash_find
+    16  16.3%  [list_new] < enc_fields < run_slow < run_simple
+     9   9.2%  [list_new] < args_of < builtin < run_fields
+     8   8.2%  [list_new] < start_child < run_external < run_fields
+     3   3.1%  [list_push] < jb_new < run_async < run_list
+     2   2.0%  [list_push] < jb_add_proc < spawn_fds < start_child
+     2   2.0%  [list_push] < enc_fields < run_slow < run_simple
+     2   2.0%  [list_new] < stat_of < find_in < find_in_path
+     1   1.0%  [list_push] < args_of < builtin < run_fields
+-- on the stack at all
+    98 100.0%  run_loop
+    98 100.0%  run_node
+    98 100.0%  run_list
+    98 100.0%  run
+    95  96.9%  run_simple
+    95  96.9%  run_slow
+    79  80.6%  eval_top
+    77  78.6%  run_fields
+    77  78.6%  run_source
+    76  77.6%  run_main
+    68  69.4%  run_async
+    65  66.3%  run_subshell
+    55  56.1%  [list_new]
+    47  48.0%  run_external
+    37  37.8%  find_in
+    37  37.8%  hash_find
+    37  37.8%  find_in_path
+    21  21.4%  stat_of
+    19  19.4%  [fs_stat_record]
+    18  18.4%  enc_fields
+    16  16.3%  [strbuf_finish]
+    10  10.2%  start_child
+    10  10.2%  builtin
+    10  10.2%  args_of
+     8   8.2%  [list_push]
+     3   3.1%  jb_new
+     2   2.0%  spawn_fds
+     2   2.0%  jb_add_proc

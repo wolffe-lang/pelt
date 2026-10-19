@@ -1,0 +1,25 @@
+== loop [( true ) & wait]
+heapprof: /home/mfwolffe/lanes/sh19/bin/pelt-base-native l6.sh: 10 chunk grabs after the first 20 (~640 KiB)
+-- innermost wolf frame
+     7  70.0%  [list_new]
+     3  30.0%  [list_push]
+-- innermost four frames
+     4  40.0%  [list_new] < run_fields < run_slow < run_simple
+     3  30.0%  [list_new] < args_of < builtin < run_fields
+     3  30.0%  [list_push] < enc_fields < run_slow < run_simple
+-- on the stack at all
+    10 100.0%  run_list
+    10 100.0%  run_main
+    10 100.0%  run_node
+    10 100.0%  run_simple
+    10 100.0%  run_loop
+    10 100.0%  run
+    10 100.0%  run_slow
+    10 100.0%  eval_top
+    10 100.0%  run_source
+     7  70.0%  [list_new]
+     7  70.0%  run_fields
+     3  30.0%  builtin
+     3  30.0%  args_of
+     3  30.0%  [list_push]
+     3  30.0%  enc_fields

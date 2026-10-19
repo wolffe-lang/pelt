@@ -1,0 +1,4 @@
+all=0
+after-all=127
+/home/mfwolffe/lanes/sh19/probe/scripts/w03-wait-all-then-pid.sh: line 3: wait: pid 2 is not a child of this shell
+exit=0

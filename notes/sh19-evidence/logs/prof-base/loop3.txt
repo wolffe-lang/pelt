@@ -1,0 +1,39 @@
+== loop [env true &]
+heapprof: /home/mfwolffe/lanes/sh19/bin/pelt-base-native l3.sh: 64 chunk grabs after the first 20 (~4096 KiB)
+-- innermost wolf frame
+    27  42.2%  [strbuf_finish]
+    25  39.1%  [list_new]
+    10  15.6%  [fs_stat_record]
+     2   3.1%  [list_push]
+-- innermost four frames
+    27  42.2%  [strbuf_finish] < find_in < find_in_path < hash_find
+    25  39.1%  [list_new] < start_child < run_external < run_fields
+    10  15.6%  [fs_stat_record] < stat_of < find_in < find_in_path
+     1   1.6%  [list_push] < jb_new < run_async < run_list
+     1   1.6%  [list_push] < jb_add_proc < spawn_fds < start_child
+-- on the stack at all
+    64 100.0%  run_list
+    64 100.0%  run_node
+    64 100.0%  run_async
+    64 100.0%  run_loop
+    64 100.0%  run
+    63  98.4%  run_slow
+    63  98.4%  run_subshell
+    63  98.4%  run_external
+    63  98.4%  run_simple
+    63  98.4%  run_fields
+    54  84.4%  run_source
+    54  84.4%  eval_top
+    54  84.4%  run_main
+    37  57.8%  find_in_path
+    37  57.8%  find_in
+    37  57.8%  hash_find
+    27  42.2%  [strbuf_finish]
+    26  40.6%  start_child
+    25  39.1%  [list_new]
+    10  15.6%  stat_of
+    10  15.6%  [fs_stat_record]
+     2   3.1%  [list_push]
+     1   1.6%  jb_new
+     1   1.6%  spawn_fds
+     1   1.6%  jb_add_proc

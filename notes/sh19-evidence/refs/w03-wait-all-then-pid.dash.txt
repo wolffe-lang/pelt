@@ -1,0 +1,3 @@
+all=0
+after-all=4
+exit=0

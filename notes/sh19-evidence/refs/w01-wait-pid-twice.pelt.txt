@@ -1,0 +1,5 @@
+first=3
+second=3
+prog-first=0
+prog-second=0
+exit=0

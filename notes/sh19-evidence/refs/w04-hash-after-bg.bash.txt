@@ -1,0 +1,4 @@
+--
+hits	command
+   1	/usr/sbin/env
+exit=0

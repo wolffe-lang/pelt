@@ -1,0 +1,7 @@
+# peak RSS KB at 100,000 and 200,000 calls (witness/listcost/main.lu), wolf 0.2.32
+2316 2436   lc-native none
+7144 11676   lc-native empty
+19648 36808   lc-native one
+2416 2532   lc-release none
+7024 11892   lc-release empty
+19628 36768   lc-release one
