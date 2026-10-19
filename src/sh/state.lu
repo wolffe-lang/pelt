@@ -223,6 +223,9 @@ struct Sh {
     /// the pipe its descriptor 1 goes to (the stage's capture level is
     /// `stage_cap`).
     nowait: bool,
+    /// The simple command `run_async` starts after `&`: started, not
+    /// waited for, on the fast path as a stage is (`run_simple`).
+    bg_simple: bool,
     /// Argument lists for the built-ins the ordinary path runs from
     /// their fields' text (`sh.exec`'s `run_builtin_enc`): each taken,
     /// filled and given back cleared, so a turn makes no list in the
@@ -399,6 +402,7 @@ fn new_sh(name: str) -> Sh {
         at_prompt: false,
         started: false,
         nowait: false,
+        bg_simple: false,
         argpool: List[List[str]](),
         stage_child: -1,
         stage_in: -1,
