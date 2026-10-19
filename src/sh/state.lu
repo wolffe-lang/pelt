@@ -182,10 +182,6 @@ struct Sh {
     jb_text: List[str],
     /// A list pelt ran itself after `&`: told of one line later.
     jb_late: List[bool],
-    /// An ended job whose status `wait` with its id answered, with job
-    /// control off: forgotten when the next job starts (dash,
-    /// black-box: `notes/sh19-evidence/refs/w01`, `w08`).
-    jb_waited: List[bool],
     jb_order: List[int],
     jb_seq: int,
     jb_clock: int,
@@ -383,7 +379,6 @@ fn new_sh(name: str) -> Sh {
         jb_told: List[bool](),
         jb_text: List[str](),
         jb_late: List[bool](),
-        jb_waited: List[bool](),
         jb_order: List[int](),
         jb_seq: 0,
         jb_clock: 0,

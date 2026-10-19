@@ -59,20 +59,8 @@ const JOB_COL: int = 33
 
 // ------------------------------------------------------------ the table
 
-/// A new job: the lowest free slot, made current. With job control off
-/// an ended job `wait` answered by its id is forgotten first (dash,
-/// black-box: `notes/sh19-evidence/refs/w08`), so `cmd & wait $!` in a
-/// loop reuses one slot (pelt#33).
+/// A new job: the lowest free slot, made current.
 fn jb_new(mut sh: Sh) -> int {
-    if !sh.jc_on {
-        var w = 0
-        while w < sh.jb_waited.len {
-            if sh.jb_waited[w] && sh.jb_state[w] != JB_FREE {
-                jb_free(mut sh, w)
-            }
-            w += 1
-        }
-    }
     var j = 0
     while j < sh.jb_state.len && sh.jb_state[j] != JB_FREE {
         j += 1
@@ -85,7 +73,6 @@ fn jb_new(mut sh: Sh) -> int {
         (mut sh.jb_told).push(true)
         (mut sh.jb_text).push("")
         (mut sh.jb_late).push(false)
-        (mut sh.jb_waited).push(false)
         (mut sh.jb_order).push(0)
     } else {
         sh.jb_state[j] = JB_RUN
@@ -95,7 +82,6 @@ fn jb_new(mut sh: Sh) -> int {
         sh.jb_told[j] = true
         sh.jb_text[j] = ""
         sh.jb_late[j] = false
-        sh.jb_waited[j] = false
     }
     order_front(mut sh, j)
     j
@@ -111,7 +97,6 @@ fn jb_free(mut sh: Sh, j: int) {
     }
     sh.jb_state[j] = JB_FREE
     sh.jb_text[j] = ""
-    sh.jb_waited[j] = false
     order_drop(mut sh, j)
     var k = 0
     while k < sh.pr_job.len {

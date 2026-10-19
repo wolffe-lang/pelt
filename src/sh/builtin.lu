@@ -1624,11 +1624,6 @@ fn bi_wait(mut sh: Sh, args: List[str]) -> int {
             st = raw_status(jb_raw(sh, j))
         } else {
             st = wait_job(mut sh, j, false)
-            if jb_state_of(sh, j) == JB_DONE {
-                // its status is answered: forgotten when the next job
-                // starts (`jb_new`)
-                sh.jb_waited[j] = true
-            }
         }
     }
     st
