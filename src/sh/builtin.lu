@@ -1118,22 +1118,63 @@ fn bi_read(mut sh: Sh, args: List[str]) -> int {
         }
         i += if next then 2 else 1
     }
-    let names = args[i..args.len]
-    if names.len == 0 {
+    if i >= args.len {
         // POSIX names at least one variable; dash refuses none
         diag(mut sh, "read: a variable name is needed")
         return 2
     }
     flush(mut sh)
+    // the line read and split inside a region: only the values are kept,
+    // and the variables are set from views of them (pelt#39: `read`
+    // kept ~1,700 B a turn in the root)
+    let fd = fd_get(sh, 0)
+    let (how, enc) = copy region rr {
+        read_split(sh, delim, raw, args.len - i)
+    }
+    if how != 0 && fd == 0 {
+        sh.eof0 = true
+    }
+    if how == R_EOF_EMPTY {
+        var k = i
+        while k < args.len {
+            if !read_target(mut sh, args[k], "") {
+                return 2
+            }
+            k += 1
+        }
+        return 1
+    }
+    if !assign_enc(mut sh, args, i, enc) {
+        return 2
+    }
+    if how != 0 then 1 else 0
+}
+
+/// `read_split`'s answer for end of input before any byte.
+const R_EOF_EMPTY: int = 3
+
+/// What `read` reads (`bi_read`), from shell descriptor 0 up to the
+/// delimiter `delim` (a newline: lines joined at a backslash-newline
+/// unless `raw`), split for `n` variables: (0, the values) for a whole
+/// line, (1, the values) for one that end of input cut short, or
+/// (`R_EOF_EMPTY`, "") for end of input before any byte. The values are
+/// `n` pieces, each its length in decimal, a colon and its bytes
+/// (`enc_take`). Writes nothing to the state, so it runs inside a
+/// region.
+fn read_split(sh: Sh, delim: int, raw: bool, n: int) -> (int, str) {
+    let fd = fd_get(sh, 0)
+    let shut = fd < 0 || fd == 0 && sh.eof0
     var line = buf()
     var eof = false
-    if delim != 10 {
-        let (got, how) = read_raw_delim(mut sh, delim, raw)
+    if shut {
+        eof = true
+    } else if delim != 10 {
+        let (got, how) = delim_of(fd, delim, raw)
         put(mut line, got)
         eof = how != 0
     } else {
         loop {
-            let (got, how) = read_raw_line(mut sh)
+            let (got, how) = line_of(fd)
             var piece = got
             if how == 0 {
                 piece = got[0..got.len - 1]
@@ -1154,12 +1195,7 @@ fn bi_read(mut sh: Sh, args: List[str]) -> int {
     }
     let s = text(line)
     if eof && s.len == 0 {
-        for n in names {
-            if !read_target(mut sh, n, "") {
-                return 2
-            }
-        }
-        return 1
+        return (R_EOF_EMPTY, "")
     }
     // the line as a marked string: escaped bytes are literal, and a
     // backslash-newline (kept by the delimiter reader) is removed
@@ -1179,11 +1215,42 @@ fn bi_read(mut sh: Sh, args: List[str]) -> int {
         k += 1
     }
     putb(mut m, RE)
-    let marked = text(m)
-    if !assign_fields(mut sh, names, marked) {
-        return 2
+    (if eof then 1 else 0, split_fields(sh, n, text(m)))
+}
+
+/// Set `args[from..]` from `enc` (`read_split`'s values), each a view of
+/// it; false, said, when one could not be set.
+fn assign_enc(mut sh: Sh, args: List[str], from: int, enc: str) -> bool {
+    var at = 0
+    var k = from
+    while k < args.len {
+        let (v, next) = enc_take(enc, at)
+        if !read_target(mut sh, args[k], v) {
+            return false
+        }
+        at = next
+        k += 1
     }
-    if eof then 1 else 0
+    true
+}
+
+/// The piece of `enc` at `at` (its length in decimal, a colon, its
+/// bytes) and where the next begins.
+fn enc_take(enc: str, at: int) -> (str, int) {
+    var n = 0
+    var i = at
+    while i < enc.len && ch(enc, i) != ':' {
+        n = n * 10 + byte_at(enc, i) - 48
+        i += 1
+    }
+    let b = i + 1
+    (enc[b..b + n], b + n)
+}
+
+fn enc_put(mut o: Buf, v: str) {
+    put(mut o, "{v.len}")
+    putc(mut o, ':')
+    put(mut o, v)
 }
 
 /// Assign `value` to `read`'s variable `name`; false, said, when it is
@@ -1247,15 +1314,16 @@ fn lone_field_end(marked: str, from: int, f: str) -> int {
     end
 }
 
-/// Split a marked line for `read`: each variable but the last takes one
-/// field; the last takes the rest of the line with surrounding `IFS`
-/// white space removed, or one field alone without the delimiter after
-/// it. False when a variable could not be assigned (said already).
-fn assign_fields(mut sh: Sh, names: List[str], marked: str) -> bool {
+/// Split a marked line for `read`'s `count` variables: each but the last
+/// takes one field; the last takes the rest of the line with surrounding
+/// `IFS` white space removed, or one field alone without the delimiter
+/// after it. The values as `read_split` answers them (`enc_take`).
+fn split_fields(sh: Sh, count: int, marked: str) -> str {
     let f = ifs(sh)
+    var o = buf()
     var i = 0
     var n = 0
-    while n < names.len {
+    while n < count {
         // skip leading IFS white space
         while i < marked.len {
             let b = byte_at(marked, i)
@@ -1269,7 +1337,7 @@ fn assign_fields(mut sh: Sh, names: List[str], marked: str) -> bool {
             }
             break
         }
-        if n == names.len - 1 {
+        if n == count - 1 {
             var end = lone_field_end(marked, i, f)
             if end < 0 {
                 // the rest, trailing IFS white space trimmed
@@ -1292,7 +1360,8 @@ fn assign_fields(mut sh: Sh, names: List[str], marked: str) -> bool {
                     break
                 }
             }
-            return read_target(mut sh, names[n], unmark(marked[i..end]))
+            enc_put(mut o, unmark(marked[i..end]))
+            return text(o)
         }
         var cur = buf()
         while i < marked.len {
@@ -1328,10 +1397,23 @@ fn assign_fields(mut sh: Sh, names: List[str], marked: str) -> bool {
             putb(mut cur, b)
             i += 1
         }
-        if !read_target(mut sh, names[n], unmark(text(cur))) {
+        enc_put(mut o, unmark(text(cur)))
+        n += 1
+    }
+    text(o)
+}
+
+/// `split_fields` with its values assigned to `names`; false, said, when
+/// a variable could not be assigned (the selftest's way in).
+fn assign_fields(mut sh: Sh, names: List[str], marked: str) -> bool {
+    let enc = split_fields(sh, names.len, marked)
+    var at = 0
+    for name in names {
+        let (v, next) = enc_take(enc, at)
+        if !read_target(mut sh, name, v) {
             return false
         }
-        n += 1
+        at = next
     }
     true
 }
