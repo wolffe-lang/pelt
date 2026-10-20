@@ -2768,7 +2768,7 @@ fn proc_status(sh: Sh, j: int, h: int) -> int {
 /// run together. A stage pelt runs itself (a built-in, a function, a
 /// compound command) runs as a subshell, to the end: if it is not the
 /// last, what it writes is caught and becomes the next stage's input
-/// (`input_from`), so pelt never blocks writing a pipe nobody drains.
+/// (`sh.redir`'s `feed`), so pelt never blocks writing a pipe nobody drains.
 /// The status is the last stage's, or under `pipefail` the rightmost
 /// failing stage's.
 fn run_pipeline(mut sh: Sh, n: int) -> int {
