@@ -1667,10 +1667,11 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
 /// shell exactly as it is: `CDPATH` does not choose the directory and
 /// nothing is to be printed, the change of directory succeeds, and
 /// `PWD`, `OLDPWD` (exported) and the physical directory would each be
-/// set to the value it has; `set -a` would export nothing new. The
-/// directory is changed to on the way (to where the shell already is).
-/// Writes nothing to the state, so it runs inside a region; false sends
-/// `bi_cd` the ordinary way, which changes the directory again.
+/// set to the value it has; `set -a` would export nothing new. Writes
+/// nothing to the state, so it runs inside a region. It changes the
+/// directory only to an absolute path (to where the shell already is,
+/// unless that fails), so when it answers false `bi_cd`, which changes
+/// the directory again the ordinary way, goes to the same place.
 fn cd_stays(sh: Sh, dir: str, physical: bool, show: bool) -> bool {
     if show {
         return false
@@ -1684,29 +1685,33 @@ fn cd_stays(sh: Sh, dir: str, physical: bool, show: bool) -> bool {
         }
     }
     let old = value_of(sh, "PWD")
+    if old.len == 0 || !has_var(sh, "PWD") || sh.opt_a && !is_exported(sh, "PWD") {
+        return false
+    }
+    if !(value_of(sh, "OLDPWD") == old && is_exported(sh, "OLDPWD") && has_var(sh, "OLDPWD")) {
+        return false
+    }
     var target = dir
-    if !physical {
+    if physical {
         if first != '/' {
-            if old.len == 0 || ch(old, 0) != '/' {
-                return false
-            }
-            let sep = if ch(old, old.len - 1) == '/' then "" else "/"
-            target = canon("{old}{sep}{dir}")
-        } else {
-            target = canon(dir)
+            return false
         }
+    } else if first != '/' {
+        if ch(old, 0) != '/' {
+            return false
+        }
+        let sep = if ch(old, old.len - 1) == '/' then "" else "/"
+        target = canon("{old}{sep}{dir}")
+    } else {
+        target = canon(dir)
+    }
+    if !physical && target != old {
+        return false
     }
     os_chdir(target) else |_| {
         return false
     }
-    if !has_var(sh, "PWD") || sh.opt_a && !is_exported(sh, "PWD") {
-        return false
-    }
-    if old.len > 0 &&
-        !(value_of(sh, "OLDPWD") == old && is_exported(sh, "OLDPWD") && has_var(sh, "OLDPWD")) {
-        return false
-    }
-    if !physical && target == old && old == sh.phys {
+    if !physical && old == sh.phys {
         // the logical and the physical directory were one path at the
         // last look and the shell stays on it: `os_cwd()` is not asked,
         // since its answer outlives the region it is asked in (48 B a
