@@ -752,11 +752,23 @@ fn bi_command(mut sh: Sh, args: List[str]) -> int {
     if show {
         return show_one(mut sh, name, via)
     }
-    let rest = args[i..args.len]
     if is_special_builtin(name) || is_regular_builtin(name) {
-        return builtin(mut sh, rest)
+        // the built-in's operands in a list from the state's pool, given
+        // back cleared: no slice, no `args_of` copy (pelt#39)
+        var sub = (mut sh.argpool).pop() else List[str]()
+        (mut sub).clear()
+        var k = i + 1
+        while k < args.len {
+            (mut sub).push(args[k])
+            k += 1
+        }
+        let st = builtin_args(mut sh, name, sub)
+        (mut sub).clear()
+        (mut sh.argpool).push(take sub)
+        return st
     }
     // the utility, never a function: no `command_not_found_handle`
+    let rest = args[i..args.len]
     run_external(mut sh, rest, List[str](), List[str](), false, via, false)
 }
 
@@ -1649,6 +1661,61 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
         emit(mut sh, "{now}\n")
     }
     0
+}
+
+/// Whether `cd` to `dir` (`bi_cd`, after its options and `-`) leaves the
+/// shell exactly as it is: `CDPATH` does not choose the directory and
+/// nothing is to be printed, the change of directory succeeds, and
+/// `PWD`, `OLDPWD` (exported) and the physical directory would each be
+/// set to the value it has; `set -a` would export nothing new. The
+/// directory is changed to on the way (to where the shell already is).
+/// Writes nothing to the state, so it runs inside a region; false sends
+/// `bi_cd` the ordinary way, which changes the directory again.
+fn cd_stays(sh: Sh, dir: str, physical: bool, show: bool) -> bool {
+    if show {
+        return false
+    }
+    let first = ch(dir, 0)
+    let dotted = dir == "." || dir == ".." || dir.starts_with("./") || dir.starts_with("../")
+    if first != '/' && !dotted {
+        let cdpath = sh.vals["CDPATH"] else ""
+        if cdpath.len > 0 {
+            return false
+        }
+    }
+    let old = value_of(sh, "PWD")
+    var target = dir
+    if !physical {
+        if first != '/' {
+            if old.len == 0 || ch(old, 0) != '/' {
+                return false
+            }
+            let sep = if ch(old, old.len - 1) == '/' then "" else "/"
+            target = canon("{old}{sep}{dir}")
+        } else {
+            target = canon(dir)
+        }
+    }
+    os_chdir(target) else |_| {
+        return false
+    }
+    if !has_var(sh, "PWD") || sh.opt_a && !is_exported(sh, "PWD") {
+        return false
+    }
+    if old.len > 0 &&
+        !(value_of(sh, "OLDPWD") == old && is_exported(sh, "OLDPWD") && has_var(sh, "OLDPWD")) {
+        return false
+    }
+    if !physical && target == old && old == sh.phys {
+        // the logical and the physical directory were one path at the
+        // last look and the shell stays on it: `os_cwd()` is not asked,
+        // since its answer outlives the region it is asked in (48 B a
+        // call, `notes/sh22-evidence/witness/cwdregion`)
+        return true
+    }
+    let phys = os_cwd() else target
+    let now = if physical then phys else target
+    now == old && phys == sh.phys
 }
 
 // ---------------------------------------------------------------- wait
