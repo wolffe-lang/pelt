@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""reap-witness — a harness whose case times out ends everything the case
+started (pelt#27).
+
+`tests/reap/` is a corpus of one case, `hang/tree`, that times out on
+purpose: the shell writes its pid and those of a child, a job in a
+process group of its own and that job's child, then blocks. This runs it
+
+  difftest   through `tools/difftest` (the case's timeout, 10 s), and
+  census     on linux, through `tools/syscall-census --no-session` (the
+             same case with `strace` between the harness and the shell:
+             before pelt#27 the timeout ended `strace` and the shell went
+             on running)
+
+and after each asks, for every pid the case wrote, whether that process
+is still alive. A row is ok only when the case timed out, the harness
+said it ended at least as many processes as the case wrote (the census
+row: and 0 left), and none of them is left. A process found left is
+reported and then ended by its pid: the witness started it.
+
+usage: tools/reap-witness BIN_DIR    (BIN_DIR holds `pelt`)
+The census row needs linux and strace: without them it is a loud SKIP,
+counted. Exit 1 when a row fails, 2 when the witness cannot run.
+"""
+
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CORPUS = os.path.join(ROOT, "tests", "reap")
+
+
+def alive(pid):
+    """Whether `pid` is a live process (not a zombie)."""
+    if os.path.isdir("/proc/self"):
+        try:
+            with open(f"/proc/{pid}/stat") as fh:
+                st = fh.read()
+        except OSError:
+            return False
+        return st[st.rfind(")") + 2:].split()[0] != "Z"
+    out = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True,
+                         text=True).stdout.strip()
+    return out != "" and not out.startswith("Z")
+
+
+def recorded(tmp):
+    """The case's pids, each with what it is."""
+    path = os.path.join(tmp, "reap.pids")
+    rows = []
+    if os.path.exists(path):
+        for line in open(path).read().splitlines():
+            f = line.split()
+            if len(f) == 2 and f[0].isdigit():
+                rows.append((int(f[0]), f[1]))
+    return rows
+
+
+def row(name, cmd, env, tmp, said_re, need_left):
+    t0 = time.time()
+    r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=300)
+    took = time.time() - t0
+    out = r.stdout + r.stderr
+    # whatever the harness left a moment to go
+    time.sleep(0.5)
+    pids = recorded(tmp)
+    left = [(p, what) for p, what in pids if alive(p)]
+    m = re.search(said_re, out)
+    said = int(m.group(1)) if m else -1
+    left_said = None
+    if need_left:
+        lm = re.search(r"; (\d+) left", out)
+        left_said = int(lm.group(1)) if lm else -1
+    ok = (len(pids) == 4 and said >= len(pids) and not left
+          and (left_said is None or left_said == 0))
+    print(f"reap-witness: {'ok  ' if ok else 'FAIL'} {name:9} the case wrote {len(pids)} pids "
+          f"({', '.join(w for _p, w in pids)}); the harness said it ended "
+          f"{said if said >= 0 else 'nothing'}"
+          + ("" if left_said is None else f", {left_said if left_said >= 0 else '?'} left")
+          + f"; left running: {len(left)} ({took:.1f} s)", flush=True)
+    if not ok:
+        for line in out.splitlines()[-6:]:
+            print(f"reap-witness:      | {line}")
+    for p, what in left:
+        try:
+            os.kill(p, signal.SIGKILL)
+            print(f"reap-witness:      ended {what} {p}, which the harness left")
+        except OSError:
+            pass
+    return ok
+
+
+def main(argv):
+    if len(argv) != 1:
+        print(__doc__, file=sys.stderr)
+        return 2
+    bindir = os.path.abspath(argv[0])
+    if not os.access(os.path.join(bindir, "pelt"), os.X_OK):
+        print(f"reap-witness: no pelt in {bindir}", file=sys.stderr)
+        return 2
+    failed = 0
+    skipped = 0
+    # difftest's row
+    tmp = tempfile.mkdtemp(prefix="reap-witness.")
+    try:
+        env = dict(os.environ, PELT_DIFF_DIR=CORPUS, TMPDIR=tmp)
+        env.pop("PELT_REAP_LOG", None)
+        if not row("difftest", [os.path.join(ROOT, "tools", "difftest"), "--bin", bindir],
+                   env, tmp, r"FAIL hang/tree: timed out, ended (\d+) processes", False):
+            failed += 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    # the census's row
+    if not sys.platform.startswith("linux") or not shutil.which("strace"):
+        print("reap-witness: SKIP census    needs linux and strace "
+              f"({sys.platform}, strace {'found' if shutil.which('strace') else 'missing'})",
+              flush=True)
+        skipped += 1
+    else:
+        tmp = tempfile.mkdtemp(prefix="reap-witness.")
+        try:
+            env = dict(os.environ, PELT_DIFF_DIR=CORPUS, TMPDIR=tmp)
+            env.pop("PELT_REAP_LOG", None)
+            if not row("census", [os.path.join(ROOT, "tools", "syscall-census"), bindir,
+                                  os.path.join(tmp, "census"), "--no-session"],
+                       env, tmp, r"1 case timed out under strace; (\d+) processes ended", True):
+                failed += 1
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+    print(f"reap-witness: {'FAIL' if failed else 'ok'} ({failed} failed, {skipped} skipped)")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
