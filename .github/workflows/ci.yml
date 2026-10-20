@@ -226,6 +226,9 @@ jobs:
       # 22nd is the bare loop, for scale (tools/shape-rss). sh19 (pelt#33)
       # added `wait`, `export`, `kill`, and `cmd & wait` in a loop, a
       # script and at the prompt, which kept 600 to 2,300 B a turn before.
+      # sh22 (pelt#39) added `read` with a redirection, `eval`, `cd .`,
+      # `command`, `umask` and a job nobody waits for, which kept 131 to
+      # 1,700 B a turn.
       - name: memory flat over every shape, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 20
@@ -310,6 +313,26 @@ jobs:
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 8
         run: tools/hist-witness target/${{ matrix.tier }}/pelt
+
+      # pelt#27, sh22: a harness whose case times out ends everything the
+      # case started (tools/lib_reap.py), asked from outside: tests/reap's
+      # one case times out on purpose with a child, a job in a group of
+      # its own and the job's child, through tools/difftest and, on linux,
+      # under tools/syscall-census, whose timeout used to end `strace` and
+      # leave the shell it followed running (sh14 found three on kasumi).
+      # strace is the census row's; the linux runners do not carry it.
+      - name: strace, for the census row (linux)
+        if: ${{ matrix.builds && runner.os == 'Linux' && !cancelled() }}
+        run: |
+          if ! command -v strace; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq strace
+          fi
+
+      - name: a case that times out leaves nothing running, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/reap-witness target/${{ matrix.tier }}
 
       - name: the session harness sees a difference (the planted red)
         # The release leg's: the selftest runs the release build.
