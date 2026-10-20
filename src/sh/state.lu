@@ -1186,6 +1186,13 @@ fn write_fd(mut sh: Sh, fd: int, s: str) {
         }
         return
     }
+    write_handle(h, s)
+}
+
+/// `s` to handle `h` (not a capture): the process's standard error, a
+/// handle pelt opened, or nothing when the descriptor is closed. Writes
+/// nothing to the state, so it can run inside a region.
+fn write_handle(h: int, s: str) {
     if h == 2 {
         eprint_raw(s)
         return

@@ -1323,15 +1323,17 @@ fn jc_notify(mut sh: Sh, fresh: bool) {
 }
 
 /// Job `j`'s line on standard error: a notice. Made and written inside
-/// a region when descriptor 2 is the shell's own, so a notice keeps
-/// nothing in the root (pelt#33: the line, its padding and its buffer
-/// stayed there, a job at a time); to a capture or a moved 2 as
+/// a region unless descriptor 2 is a capture, so a notice keeps nothing
+/// in the root (pelt#33: the line, its padding and its buffer stayed
+/// there, a job at a time; pelt#41: so did every notice of a script
+/// that moved its descriptor 2, ~500 B a job); to a capture as
 /// `write_fd` writes.
 fn notice(mut sh: Sh, j: int) {
     flush(mut sh)
-    if fd_get(sh, 2) == 2 {
+    let h = fd_get(sh, 2)
+    if !is_cap(h) {
         region nl {
-            eprint_raw("{job_line(sh, j, false)}\n")
+            write_handle(h, "{job_line(sh, j, false)}\n")
         }
         return
     }
