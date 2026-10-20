@@ -613,7 +613,8 @@ fn jb_fold(mut sh: Sh, j: int) {
     if st == PR_RUN || st >= 256 {
         return
     }
-    set_slot_status(mut sh, j, st)
+    // plant B: the fold keeps no status
+    set_slot_status(mut sh, j, 0)
     set_slot_state(mut sh, j, JB_DONE)
     sh.pr_job[only] = -1
     sh.pr_h[only] = -1
