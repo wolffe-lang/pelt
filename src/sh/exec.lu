@@ -1526,17 +1526,24 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
         if pre.count == 0 {
             return run_assign_only(mut sh, n, na)
         }
-        if na == 0 && !sh.opt_x && sh.ast.nodes[n].redirs.len == 0 {
-            // a function called with no assignment or redirection: its
-            // operands become `$@` in place, no list built
+        if na == 0 && !sh.opt_x {
             let name = pre.enc[0..nul_at(pre.enc, 0)]
             let fnode = sh.funcs[name] else -1
-            if fnode >= 0 {
-                return call_enc(mut sh, fnode, pre.enc)
-            }
-            // and a built-in so called: its arguments in a pooled list
-            if name != "exec" && (is_special_builtin(name) || is_regular_builtin(name)) {
-                return run_builtin_enc(mut sh, name, pre.enc)
+            let bi = name != "exec" && (is_special_builtin(name) || is_regular_builtin(name))
+            if sh.ast.nodes[n].redirs.len == 0 {
+                // a function called with no assignment or redirection:
+                // its operands become `$@` in place, no list built
+                if fnode >= 0 {
+                    return call_enc(mut sh, fnode, pre.enc)
+                }
+                // and a built-in so called: its arguments in a pooled list
+                if bi {
+                    return run_builtin_enc(mut sh, n, name, pre.enc)
+                }
+            } else if bi && fnode < 0 {
+                // a built-in with redirections and no assignment: the
+                // same, its redirections applied from the tree (pelt#39)
+                return run_builtin_enc(mut sh, n, name, pre.enc)
             }
         }
         return run_fields(mut sh, n, na, enc_fields(pre.enc), nowait)
@@ -1557,16 +1564,20 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
     run_fields(mut sh, n, na, fields, nowait)
 }
 
-/// A built-in with no assignment and no redirection, from `pre_expand`'s
-/// fields (`enc`, NUL after each; `name` the first): its arguments in a
-/// list taken from the state's pool and given back cleared, its
-/// redirection frame opened and closed as `run_fields` does. The
-/// ordinary path built about nine lists for such a command, and every
-/// list made outside a region stays in the root (46 B empty, 176 B with
-/// one element: `notes/sh19-evidence/witness/listcost`), so `wait` kept
-/// ~600 B a turn (pelt#33). A built-in the call runs (`eval`, `.`,
-/// `command`) takes another list from the pool.
-fn run_builtin_enc(mut sh: Sh, name: str, enc: str) -> int {
+/// A built-in with no assignment, from `pre_expand`'s fields (`enc`, NUL
+/// after each; `name` the first) of simple command `n`: its arguments in
+/// a list taken from the state's pool and given back cleared, its
+/// redirections (if any) applied in the frame `run_fields` would open,
+/// straight from the tree. The ordinary path built about nine lists for
+/// such a command, and every list made outside a region stays in the
+/// root (46 B empty, 176 B with one element:
+/// `notes/sh19-evidence/witness/listcost`), so `wait` kept ~600 B a turn
+/// (pelt#33) and `read x </dev/null` ~1,700 (pelt#39: the redirection
+/// sent it down the whole ordinary path). A failed redirection is
+/// answered as `run_fields` answers it: a special built-in's ends a
+/// non-interactive shell, a regular one's is status 2. A built-in the
+/// call runs (`eval`, `.`, `command`) takes another list from the pool.
+fn run_builtin_enc(mut sh: Sh, n: int, name: str, enc: str) -> int {
     var args = (mut sh.argpool).pop() else List[str]()
     (mut args).clear()
     var at = name.len + 1
@@ -1576,6 +1587,23 @@ fn run_builtin_enc(mut sh: Sh, name: str, enc: str) -> int {
         at = z + 1
     }
     begin_frame(mut sh)
+    var k = 0
+    while k < sh.ast.nodes[n].redirs.len {
+        let rd = rd_of(sh.ast, sh.ast.nodes[n].redirs[k])
+        if !redir_one(mut sh, rd, true) {
+            end_redirs(mut sh)
+            (mut args).clear()
+            (mut sh.argpool).push(take args)
+            if is_special_builtin(name) {
+                return special_redir_failed(mut sh)
+            }
+            if sh.flow == F_NONE {
+                sh.status = 2
+            }
+            return sh.status
+        }
+        k += 1
+    }
     let st = builtin_args(mut sh, name, args)
     end_redirs(mut sh)
     (mut args).clear()

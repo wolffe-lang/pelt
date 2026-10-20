@@ -270,7 +270,11 @@ fn redir_one(mut sh: Sh, rd: Rd, framed: bool) -> bool {
         install(mut sh, fd, h, framed)
         return true
     }
-    let target = expand_one(mut sh, rd.word, X_TILDE)
+    // a literal or a lone parameter is its own expansion, built
+    // nowhere (`sh.exec`'s `plain_word`; a redirection's word is neither
+    // split nor globbed); anything else is expanded (pelt#39)
+    let (plain, pv) = plain_word(sh, rd.word)
+    let target = if plain then pv else expand_one(mut sh, rd.word, X_TILDE)
     if sh.flow != F_NONE {
         return false
     }
