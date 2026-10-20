@@ -760,11 +760,11 @@ def _session(argv, keys, env, cwd, expect, meta=None):
         ended = lr.end_tree(p.pid, before)
         p.wait()
         lr.note(f"session {' '.join(argv)}", ended)
-    lr.reap_adopted(before)
     elif rc < 0:
         exit_line = f"signal {-rc}"
     else:
         exit_line = f"exit {rc}"
+    lr.reap_adopted(before)
     for fd in list(open_fds):
         os.close(fd)
     # the master first, then the slave: on macOS closing a terminal can
