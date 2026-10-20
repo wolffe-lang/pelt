@@ -1,0 +1,11 @@
+shape-rss: ok   baseline                 loop    10000     3716 KB   20000     4284 KB  grew     568 KB (58 B a turn)  [:]
+shape-rss: ok   builtin-wait             loop    10000     3796 KB   20000     4508 KB  grew     712 KB (72 B a turn)  [wait]
+shape-rss: ok   background-wait          loop    10000     4440 KB   20000     5296 KB  grew     856 KB (87 B a turn)  [env true & wait]
+shape-rss: FAIL builtin-read-redir       loop    10000    19516 KB   20000    35804 KB  grew   16288 KB (1667 B a turn)  [read x </dev/null]
+shape-rss: FAIL builtin-eval             loop    10000    10352 KB   20000    17768 KB  grew    7416 KB (759 B a turn)  [eval :]
+shape-rss: FAIL builtin-cd               loop    10000     8776 KB   20000    14456 KB  grew    5680 KB (581 B a turn)  [cd .]
+shape-rss: FAIL builtin-command          loop   100000    20476 KB  200000    37520 KB  grew   17044 KB (174 B a turn)  [command true]
+shape-rss: FAIL builtin-umask            loop   100000    17340 KB  200000    31260 KB  grew   13920 KB (142 B a turn)  [umask 022]
+shape-rss: FAIL background-nowait        loop    20000     7344 KB   40000    11128 KB  grew    3784 KB (193 B a turn)  [true &]
+shape-rss: FAIL background-program-nowait loop    10000     6764 KB   20000    10356 KB  grew    3592 KB (367 B a turn)  [env true &]
+shape-rss: FAIL 7: builtin-read-redir, builtin-eval, builtin-cd, builtin-command, builtin-umask, background-nowait, background-program-nowait (bound 100 B a turn + 1 MiB over N turns)

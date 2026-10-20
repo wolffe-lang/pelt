@@ -1,0 +1,7 @@
+shapes22: dash                   bi-read-here             loop    10000     2512 KB  20000     2496 KB grew     -16 KB (-2 B a turn) ok ['read x <<E\nv\nE']
+shapes22: dash                   bi-eval-arg              loop    10000     2424 KB  20000     2508 KB grew      84 KB (8 B a turn) ok ["eval 'y=1'"]
+shapes22: dash                   bi-cd-dir                loop    10000     2536 KB  20000     2412 KB grew    -124 KB (-13 B a turn) ok ['cd /']
+shapes22: dash                   bi-command-v             loop    10000     2528 KB  20000     2472 KB grew     -56 KB (-6 B a turn) ok ['command -v true >/dev/null']
+shapes22: dash                   bi-umask-print           loop    10000     2408 KB  20000     2512 KB grew     104 KB (10 B a turn) ok ['umask >/dev/null']
+shapes22: dash                   bi-jobs                  loop    10000     2500 KB  20000     2496 KB grew      -4 KB (-1 B a turn) ok ['jobs']
+shapes22: dash                   bi-redir                 loop    10000     2532 KB  20000     2544 KB grew      12 KB (1 B a turn) ok ['true >/dev/null']

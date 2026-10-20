@@ -1,0 +1,7 @@
+pids limit: 4096
+keep: dash [env true &] x 6000: listed 6000, exit 0, stderr lines 0, first: 
+keep: dash [true &] x 6000: listed 6000, exit 0, stderr lines 0, first: 
+keep: pelt-head-release [env true &] x 6000: listed 6000, exit 0, stderr lines 0, first: 
+keep: pelt-head-release [true &] x 6000: listed 6000, exit 0, stderr lines 0, first: 
+keep: pelt-head-native [env true &] x 6000: listed 6000, exit 0, stderr lines 0, first: 
+keep: pelt-head-native [true &] x 6000: listed 6000, exit 0, stderr lines 0, first: 

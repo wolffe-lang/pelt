@@ -1,0 +1,118 @@
+# plant A, run 39489054798 (branch sh22-plant-a at d1c00bd: src/ and the harnesses' reaping at trunk 90d7c64), tier pr dispatch
+job: plan success; failed steps: []
+job: gauntlet (ubuntu-latest, true, native) failure; failed steps: ["memory flat over every shape, native tier","the differential corpus, native tier","a case that times out leaves nothing running, native tier"]
+job: gauntlet (ubuntu-latest, true, release) failure; failed steps: ["memory flat over every shape, release tier","the differential corpus, release tier","a case that times out leaves nothing running, release tier"]
+job: tier pr failure; failed steps: ["every chosen job succeeded, every other was skipped"]
+job: nightly red, an issue skipped; failed steps: []
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   baseline                 loop    10000     5564 KB   20000     6228 KB  grew     664 KB (67 B a turn)  [:]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   pipeline                 loop    10000     5836 KB   20000     6796 KB  grew     960 KB (98 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   pipeline-program         loop    10000     6032 KB   20000     7276 KB  grew    1244 KB (127 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   substitution             loop    10000     6020 KB   20000     6852 KB  grew     832 KB (85 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   substitution-output      loop    10000     6088 KB   20000     6684 KB  grew     596 KB (61 B a turn)  [x=$(echo y)]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   backquote                loop    10000     6180 KB   20000     6588 KB  grew     408 KB (41 B a turn)  [x=`true`]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   substitution-pipeline    loop    10000     6676 KB   20000     8552 KB  grew    1876 KB (192 B a turn)  [x=$(echo a | cat)]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   subshell                 loop    10000     5884 KB   20000     6268 KB  grew     384 KB (39 B a turn)  [( true )]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   call                     loop    10000     6460 KB   20000     6764 KB  grew     304 KB (31 B a turn)  [f a b]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   call-local               loop    10000     6524 KB   20000     7636 KB  grew    1112 KB (113 B a turn)  [g a b]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   arith-assign             loop    10000     5660 KB   20000     6392 KB  grew     732 KB (74 B a turn)  [: $((j=j+1))]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   case                     loop    10000     5848 KB   20000     6708 KB  grew     860 KB (88 B a turn)  [case a in a) :;; esac]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   for                      loop    10000     5740 KB   20000     6576 KB  grew     836 KB (85 B a turn)  [for j in 1; do :; done]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   script-simple            script  10000     5084 KB   20000     5204 KB  grew     120 KB (12 B a turn)  [true]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   script-pipeline          script  10000     5940 KB   20000     5724 KB  grew    -216 KB (-23 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   script-substitution      script  10000     5372 KB   20000     5752 KB  grew     380 KB (38 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   script-call              script  10000     5712 KB   20000     6276 KB  grew     564 KB (57 B a turn)  [f]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-pipeline           typed   10000     6884 KB   20000     8132 KB  grew    1248 KB (127 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-and                typed   10000     7140 KB   20000     8392 KB  grew    1252 KB (128 B a turn)  [true && true]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-brace              typed   10000     7016 KB   20000     8112 KB  grew    1096 KB (112 B a turn)  [{ true; }]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-if                 typed   10000     7180 KB   20000     8428 KB  grew    1248 KB (127 B a turn)  [if true; then :; fi]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-substitution       typed   10000     7032 KB   20000     8440 KB  grew    1408 KB (144 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-program            typed   10000     7548 KB   20000     8916 KB  grew    1368 KB (140 B a turn)  [env true]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-pipeline-program   typed   10000     7944 KB   20000     9700 KB  grew    1756 KB (179 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   builtin-wait             loop    10000     6184 KB   20000     6496 KB  grew     312 KB (31 B a turn)  [wait]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   builtin-export           loop    10000     5852 KB   20000     6636 KB  grew     784 KB (80 B a turn)  [export X]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   builtin-kill             loop    10000     5988 KB   20000     6880 KB  grew     892 KB (91 B a turn)  [kill -0 $$]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   background-wait          loop    10000     6632 KB   20000     7788 KB  grew    1156 KB (118 B a turn)  [env true & wait]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   background-builtin-wait  loop    10000     6404 KB   20000     7020 KB  grew     616 KB (63 B a turn)  [true & wait]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   background-wait-pid      loop    10000     6244 KB   20000     7100 KB  grew     856 KB (87 B a turn)  [true & wait $!]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   script-background-wait   script  10000     6220 KB   20000     6920 KB  grew     700 KB (71 B a turn)  [true & wait]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: ok   typed-background-wait    typed   10000     7244 KB   20000     8808 KB  grew    1564 KB (160 B a turn)  [true & wait]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL builtin-read-redir       loop    10000    21544 KB   20000    38192 KB  grew   16648 KB (1704 B a turn)  [read x </dev/null]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL builtin-eval             loop    10000    12516 KB   20000    19796 KB  grew    7280 KB (745 B a turn)  [eval :]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL builtin-cd               loop    10000     9572 KB   20000    13932 KB  grew    4360 KB (446 B a turn)  [cd .]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL builtin-command          loop   100000    22484 KB  200000    39468 KB  grew   16984 KB (173 B a turn)  [command true]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL builtin-umask            loop   100000    19296 KB  200000    33240 KB  grew   13944 KB (142 B a turn)  [umask 022]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL background-nowait        loop    20000     9772 KB   40000    13272 KB  grew    3500 KB (179 B a turn)  [true &]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL background-program-nowait loop    10000     8916 KB   20000    16512 KB  grew    7596 KB (777 B a turn)  [env true &]
+gauntlet (ubuntu-latest, true, native)	memory flat over every shape, native tier shape-rss: FAIL 7: builtin-read-redir, builtin-eval, builtin-cd, builtin-command, builtin-umask, background-nowait, background-program-nowait (bound 100 B a turn + 1 MiB over N turns)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier FAIL jobsctl/c_monitor_loop_builtin: stdout
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier difftest: total        965     1    38 (0)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier session: pass 273  fail 0  pending 3 (0)
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness: FAIL difftest  the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended nothing; left running: 3 (10.0 s)
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      | FAIL hang/tree: timed out
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      | difftest: total          0     1     0 (0)
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      ended child 174977, which the harness left
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      ended job 174978, which the harness left
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      ended grandchild 174980, which the harness left
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness: FAIL census    the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended nothing, ? left; left running: 4 (10.1 s)
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      | syscall-census: difftest under strace exit 1: difftest: total          0     1     0 (0)
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      ended shell 174986, which the harness left
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      ended child 174988, which the harness left
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      ended job 174989, which the harness left
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness:      ended grandchild 174991, which the harness left
+gauntlet (ubuntu-latest, true, native)	a case that times out leaves nothing running, native tier reap-witness: FAIL (2 failed, 0 skipped)
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   baseline                 loop    10000     3520 KB   20000     3792 KB  grew     272 KB (27 B a turn)  [:]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   pipeline                 loop    10000     3692 KB   20000     4312 KB  grew     620 KB (63 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   pipeline-program         loop    10000     3824 KB   20000     4780 KB  grew     956 KB (97 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   substitution             loop    10000     3768 KB   20000     4556 KB  grew     788 KB (80 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   substitution-output      loop    10000     3700 KB   20000     4484 KB  grew     784 KB (80 B a turn)  [x=$(echo y)]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   backquote                loop    10000     3812 KB   20000     4496 KB  grew     684 KB (70 B a turn)  [x=`true`]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   substitution-pipeline    loop    10000     4448 KB   20000     5816 KB  grew    1368 KB (140 B a turn)  [x=$(echo a | cat)]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   subshell                 loop    10000     3440 KB   20000     3928 KB  grew     488 KB (49 B a turn)  [( true )]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   call                     loop    10000     3784 KB   20000     4500 KB  grew     716 KB (73 B a turn)  [f a b]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   call-local               loop    10000     4188 KB   20000     5188 KB  grew    1000 KB (102 B a turn)  [g a b]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   arith-assign             loop    10000     3468 KB   20000     3916 KB  grew     448 KB (45 B a turn)  [: $((j=j+1))]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   case                     loop    10000     3536 KB   20000     3916 KB  grew     380 KB (38 B a turn)  [case a in a) :;; esac]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   for                      loop    10000     3684 KB   20000     4308 KB  grew     624 KB (63 B a turn)  [for j in 1; do :; done]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   script-simple            script  10000     3164 KB   20000     3272 KB  grew     108 KB (11 B a turn)  [true]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   script-pipeline          script  10000     3400 KB   20000     3420 KB  grew      20 KB (2 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   script-substitution      script  10000     3240 KB   20000     3512 KB  grew     272 KB (27 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   script-call              script  10000     3468 KB   20000     3884 KB  grew     416 KB (42 B a turn)  [f]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-pipeline           typed   10000     4288 KB   20000     5536 KB  grew    1248 KB (127 B a turn)  [true | true]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-and                typed   10000     4312 KB   20000     5564 KB  grew    1252 KB (128 B a turn)  [true && true]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-brace              typed   10000     4128 KB   20000     5224 KB  grew    1096 KB (112 B a turn)  [{ true; }]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-if                 typed   10000     4284 KB   20000     5532 KB  grew    1248 KB (127 B a turn)  [if true; then :; fi]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-substitution       typed   10000     4444 KB   20000     5852 KB  grew    1408 KB (144 B a turn)  [x=$(true)]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-program            typed   10000     4644 KB   20000     6012 KB  grew    1368 KB (140 B a turn)  [env true]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-pipeline-program   typed   10000     5124 KB   20000     6880 KB  grew    1756 KB (179 B a turn)  [echo x | cat >/dev/null]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   builtin-wait             loop    10000     3632 KB   20000     4268 KB  grew     636 KB (65 B a turn)  [wait]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   builtin-export           loop    10000     3664 KB   20000     4300 KB  grew     636 KB (65 B a turn)  [export X]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   builtin-kill             loop    10000     3620 KB   20000     4208 KB  grew     588 KB (60 B a turn)  [kill -0 $$]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   background-wait          loop    10000     4032 KB   20000     5048 KB  grew    1016 KB (104 B a turn)  [env true & wait]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   background-builtin-wait  loop    10000     3792 KB   20000     4552 KB  grew     760 KB (77 B a turn)  [true & wait]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   background-wait-pid      loop    10000     3744 KB   20000     4508 KB  grew     764 KB (78 B a turn)  [true & wait $!]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   script-background-wait   script  10000     3796 KB   20000     4440 KB  grew     644 KB (65 B a turn)  [true & wait]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: ok   typed-background-wait    typed   10000     4600 KB   20000     6164 KB  grew    1564 KB (160 B a turn)  [true & wait]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL builtin-read-redir       loop    10000    19184 KB   20000    35660 KB  grew   16476 KB (1687 B a turn)  [read x </dev/null]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL builtin-eval             loop    10000    10148 KB   20000    17448 KB  grew    7300 KB (747 B a turn)  [eval :]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL builtin-cd               loop    10000     7328 KB   20000    11840 KB  grew    4512 KB (462 B a turn)  [cd .]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL builtin-command          loop   100000    20212 KB  200000    37348 KB  grew   17136 KB (175 B a turn)  [command true]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL builtin-umask            loop   100000    16996 KB  200000    31136 KB  grew   14140 KB (144 B a turn)  [umask 022]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL background-nowait        loop    20000     7092 KB   40000    11032 KB  grew    3940 KB (201 B a turn)  [true &]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL background-program-nowait loop    10000     6352 KB   20000    13768 KB  grew    7416 KB (759 B a turn)  [env true &]
+gauntlet (ubuntu-latest, true, release)	memory flat over every shape, release tier shape-rss: FAIL 7: builtin-read-redir, builtin-eval, builtin-cd, builtin-command, builtin-umask, background-nowait, background-program-nowait (bound 100 B a turn + 1 MiB over N turns)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier FAIL jobsctl/c_monitor_loop_builtin: stdout
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier difftest: total        965     1    38 (0)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier session: pass 273  fail 0  pending 3 (0)
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness: FAIL difftest  the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended nothing; left running: 3 (10.0 s)
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      | FAIL hang/tree: timed out
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      | difftest: total          0     1     0 (0)
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      ended child 174968, which the harness left
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      ended job 174969, which the harness left
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      ended grandchild 174971, which the harness left
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness: FAIL census    the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended nothing, ? left; left running: 4 (10.1 s)
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      | syscall-census: difftest under strace exit 1: difftest: total          0     1     0 (0)
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      ended shell 174980, which the harness left
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      ended child 174982, which the harness left
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      ended job 174983, which the harness left
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness:      ended grandchild 174985, which the harness left
+gauntlet (ubuntu-latest, true, release)	a case that times out leaves nothing running, release tier reap-witness: FAIL (2 failed, 0 skipped)

@@ -1,0 +1,4 @@
+exec-witness: pid     ok   pid 347903 is 'sleep' with 0 children
+exec-witness: env     ok   ['HOME=/', 'KEPT=1', 'LC_ALL=C', 'MINE=3', 'PATH=/usr/bin:/bin']
+exec-witness: fds     ok   descriptor 3 wrote 'through\n' (exit 0, stderr '')
+exec-witness: status  ok   returncode -15 (want -15), stderr ''

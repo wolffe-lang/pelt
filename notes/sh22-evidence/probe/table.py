@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """table.py — lane-local (sh22): table.sh's logs as one markdown table,
 bytes a turn, the least and the most of the three passes."""
-import glob, os, re, sys
+import ast, glob, os, re, sys
 O = sys.argv[1]
 TAGS = ["trunk-native", "trunk-release", "head-native", "head-release", "dash"]
 rows = {}
@@ -16,7 +16,7 @@ for path in sorted(glob.glob(os.path.join(O, "*.log"))):
             m = re.match(r"shapes22: \S+\s+(\S+)\s+\S+\s+(\d+).*\((-?\d+) B a turn\) \S+ \[(.*)\]$", line.strip())
             if not m:
                 continue
-            name, n, per, text = m.group(1), m.group(2), int(m.group(3)), m.group(4).strip("'\"")
+            name, n, per, text = m.group(1), m.group(2), int(m.group(3)), ast.literal_eval(m.group(4)).replace("\n", "; ")
         key = (name, text, n)
         if key not in rows:
             rows[key] = {}

@@ -1,0 +1,7 @@
+shapes22: pelt                   bi-read-here             loop    10000     6020 KB  20000     6544 KB grew     524 KB (53 B a turn) ok ['read x <<E\nv\nE']
+shapes22: pelt                   bi-eval-arg              loop    10000     5784 KB  20000     6700 KB grew     916 KB (93 B a turn) ok ["eval 'y=1'"]
+shapes22: pelt                   bi-cd-dir                loop    10000     5664 KB  20000     6396 KB grew     732 KB (74 B a turn) ok ['cd /']
+shapes22: pelt                   bi-command-v             loop    10000     5780 KB  20000     6744 KB grew     964 KB (98 B a turn) ok ['command -v true >/dev/null']
+shapes22: pelt                   bi-umask-print           loop    10000     5896 KB  20000     6376 KB grew     480 KB (49 B a turn) ok ['umask >/dev/null']
+shapes22: pelt                   bi-jobs                  loop    10000     6448 KB  20000     7264 KB grew     816 KB (83 B a turn) ok ['jobs']
+shapes22: pelt                   bi-redir                 loop    10000     5388 KB  20000     6008 KB grew     620 KB (63 B a turn) ok ['true >/dev/null']
