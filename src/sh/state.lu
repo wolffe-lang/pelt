@@ -222,10 +222,6 @@ struct Sh {
     at_prompt: bool,
     /// Whether the last `run_external` started its program.
     started: bool,
-    /// Whether `command_not_found_handle` is running (pelt#42): a name
-    /// not found inside it is the plain not-found, so it is never called
-    /// again from within itself (`sh.exec`'s `unfound`).
-    in_cnf: bool,
     /// A pipeline stage's external command is started, not waited for
     /// (`nowait`); its handle lands in `stage_child`, and `stage_w` is
     /// the pipe its descriptor 1 goes to (the stage's capture level is
@@ -410,7 +406,6 @@ fn new_sh(name: str) -> Sh {
         intr: false,
         at_prompt: false,
         started: false,
-        in_cnf: false,
         nowait: false,
         bg_simple: false,
         argpool: List[List[str]](),
