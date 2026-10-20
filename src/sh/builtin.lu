@@ -752,7 +752,8 @@ fn bi_command(mut sh: Sh, args: List[str]) -> int {
     if is_special_builtin(name) || is_regular_builtin(name) {
         return builtin(mut sh, rest)
     }
-    run_external(mut sh, rest, List[str](), List[str](), false, via)
+    // the utility, never a function: no `command_not_found_handle`
+    run_external(mut sh, rest, List[str](), List[str](), false, via, false)
 }
 
 /// Where a name the command search reaches would be found: through the

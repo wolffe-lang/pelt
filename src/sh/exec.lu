@@ -1682,7 +1682,7 @@ fn run_fields(mut sh: Sh, n: int, na: int, fields: List[str], nowait: bool) -> i
             k -= 1
         }
     } else {
-        st = run_external(mut sh, fields, names, values, nowait, "")
+        st = run_external(mut sh, fields, names, values, nowait, "", true)
     }
     end_redirs(mut sh)
     st
@@ -2307,7 +2307,10 @@ fn start_child(
 /// `names`/`values` exported to it. A name with no `/` is searched for
 /// in `via` when it is not "" (`command -p`), else through the table
 /// (`hash_find`), and a remembered path that is gone is searched for
-/// again (XCU 2.9.1.4; dash, black-box).
+/// again (XCU 2.9.1.4; dash, black-box). A name found nowhere is
+/// `unfound`'s: `hook` when it is a simple command's own name (not
+/// `command`'s operand, not `exec`'s), which may call
+/// `command_not_found_handle` (pelt#42).
 fn run_external(
     mut sh: Sh,
     fields: List[str],
@@ -2315,6 +2318,7 @@ fn run_external(
     values: List[str],
     nowait: bool,
     via: str,
+    hook: bool,
 ) -> int {
     let cmd = fields[0]
     var path = cmd
@@ -2330,9 +2334,9 @@ fn run_external(
             path = hash_find(mut sh, cmd)
         }
         if path.len == 0 {
-            diag(mut sh, "{cmd}: not found")
-            sh.status = 127
-            return 127
+            let st = unfound(mut sh, fields, names, values, hook)
+            sh.status = st
+            return st
         }
     }
     flush(mut sh)
@@ -2353,12 +2357,13 @@ fn run_external(
     let (h1, f1) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait, remembered)
     var h = h1
     var failed = f1
+    var missing = false
     if h < 0 && failed == 127 && remembered {
         // the remembered file is gone: search again
         hash_del(mut sh, cmd)
         path = hash_find(mut sh, cmd)
         if path.len == 0 {
-            diag(mut sh, "{cmd}: not found")
+            missing = true
         } else {
             let (h2, f2) = start_child(mut sh, cmd, path, fields[1..fields.len], nowait, false)
             h = h2
@@ -2387,7 +2392,73 @@ fn run_external(
         jb_free(mut sh, job)
     }
     env_back(sh, names)
+    if missing {
+        // found nowhere now, as a name never found: once the job is
+        // given back and the environment put back
+        st = unfound(mut sh, fields, names, values, hook)
+    }
     sh.status = st
+    st
+}
+
+/// A simple command whose name (no `/`) command search found nowhere
+/// (XCU 2.9.1.4). When `hook`, the shell is interactive, a function
+/// `command_not_found_handle` is defined and this is not already inside
+/// it, the function is called (`run_cnf`) and its status is the
+/// command's; a 127 it returns is said as pelt's own not-found, unless
+/// the shell is leaving (an `exit`, an interrupt). Otherwise the
+/// not-found: said, 127. Inside the call every name not found is the
+/// plain not-found, so the function is never re-entered.
+fn unfound(mut sh: Sh, fields: List[str], names: List[str], values: List[str], hook: bool) -> int {
+    if hook && sh.interactive && !sh.in_cnf {
+        // bash's name for it, which fortsh shares (pelt#42)
+        let fnode = sh.funcs["command_not_found_handle"] else -1
+        if fnode >= 0 {
+            let st = run_cnf(mut sh, fnode, fields, names, values)
+            if st != 127 || sh.flow != F_NONE {
+                return st
+            }
+        }
+    }
+    diag(mut sh, "{fields[0]}: not found")
+    127
+}
+
+/// `command_not_found_handle` (body `fnode`) called for the command
+/// `fields` in the current shell environment, as a function is
+/// (`run_fields`): `$@` is every word, so `$1` is the name; the
+/// command's assignments are made for the call and undone after (XCU
+/// 2.9.1); its redirections are already in place around it.
+fn run_cnf(mut sh: Sh, fnode: int, fields: List[str], names: List[str], values: List[str]) -> int {
+    var old = List[str]()
+    var had = List[bool]()
+    var k = 0
+    while k < names.len {
+        (mut had).push(has_var(sh, names[k]))
+        (mut old).push(value_of(sh, names[k]))
+        if !set_var(mut sh, names[k], values[k]) {
+            fatal(mut sh, "{names[k]}: is read-only", 2)
+            return 2
+        }
+        k += 1
+    }
+    let was = sh.in_cnf
+    sh.in_cnf = true
+    let base = pos_push(mut sh)
+    for f in fields {
+        (mut sh.pos).push(f)
+    }
+    let st = call_body(mut sh, fnode, base)
+    sh.in_cnf = was
+    k = names.len - 1
+    while k >= 0 {
+        if had[k] {
+            let _ok = set_var(mut sh, names[k], old[k])
+        } else {
+            let _ok = unset_var(mut sh, names[k])
+        }
+        k -= 1
+    }
     st
 }
 
@@ -2474,7 +2545,7 @@ fn run_exec(
     }
     var st = 0
     if here {
-        st = run_external(mut sh, args, names, values, false, "")
+        st = run_external(mut sh, args, names, values, false, "", false)
         if sh.started {
             // the program ran in the subshell's place: no `EXIT` trap
             traps_clear(mut sh)
