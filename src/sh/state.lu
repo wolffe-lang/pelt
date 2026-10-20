@@ -186,6 +186,10 @@ struct Sh {
     /// that may be free: so starting a job is not a walk of the table.
     jb_nwaited: int,
     jb_free_lo: int,
+    /// When the next job's start polls the children (`sh.jobs`'s
+    /// `jb_reap`): after `jb_reap_at` more starts.
+    jb_reap_since: int,
+    jb_reap_at: int,
     jb_seq: int,
     jb_clock: int,
     /// The processes of the jobs: the slot, the child's handle and
@@ -390,6 +394,8 @@ fn new_sh(name: str) -> Sh {
         jb_text: List[str](),
         jb_nwaited: 0,
         jb_free_lo: 0,
+        jb_reap_since: 0,
+        jb_reap_at: 0,
         jb_seq: 0,
         jb_clock: 0,
         pr_job: List[int](),

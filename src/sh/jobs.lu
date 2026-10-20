@@ -220,8 +220,10 @@ fn set_slot_text(mut sh: Sh, j: int, t: str) {
 /// A new job: the lowest free slot, made current. With job control off
 /// an ended job `wait` answered by its id is forgotten first (dash,
 /// black-box: `notes/sh19-evidence/refs/w08`), so `cmd & wait $!` in a
-/// loop reuses one slot (pelt#33).
+/// loop reuses one slot (pelt#33). In a script the children that ended
+/// are reaped first (`jb_reap`).
 fn jb_new(mut sh: Sh) -> int {
+    jb_reap(mut sh)
     if !sh.jc_on && sh.jb_nwaited > 0 {
         var w = 0
         while w < slot_count(sh) {
@@ -551,6 +553,36 @@ fn jc_poll(mut sh: Sh) -> bool {
         jc_record(mut sh, h, st)
     }
     any
+}
+
+/// The children that ended, reaped and written into the table, before a
+/// job starts in a script (`jb_new`). Nothing else reaps a job nobody
+/// waits for until `wait`, so each one that ended held one of the host's
+/// process slots: a loop of 6,000 `cmd &` under a pids limit of 4,096
+/// could not start 1,910 of them, where dash reaps each as it ends
+/// (pelt#39, `notes/sh22-evidence/logs/keep-base-4096.txt`). The poll
+/// costs one `waitpid` a live child (`[os.proc.poll]`), so it is taken
+/// again only after as many starts as children were still live at the
+/// last one: a job's start costs O(1) polls however many jobs run. An
+/// interactive shell's table is read after each line (`jc_take`,
+/// `jc_notify`) and is left to that.
+fn jb_reap(mut sh: Sh) {
+    if sh.interactive || sh.shadow {
+        return
+    }
+    if sh.jb_reap_since < sh.jb_reap_at {
+        sh.jb_reap_since += 1
+        return
+    }
+    sh.jb_reap_since = 0
+    loop {
+        let (h, st) = os_wait_poll() else (-1, 0)
+        if h < 0 {
+            sh.jb_reap_at = st
+            return
+        }
+        jc_record(mut sh, h, st)
+    }
 }
 
 /// The poll taken as a line is read at the prompt (`jc_take`): what the
