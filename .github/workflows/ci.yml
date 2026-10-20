@@ -26,14 +26,15 @@
 # gauntlet runs only the legs the plan hands it, and the run's LAST job
 # says which tier it was:
 #
-#   tier full   the gauntlet on every host: linux x86-64, macOS arm64 and
-#               linux aarch64. A push to trunk, the nightly `schedule`, a
+#   tier full   the gauntlet on every host, linux x86-64, macOS arm64 and
+#               linux aarch64, each on both compiler tiers (one job a host
+#               and tier since pelt#40). A push to trunk, the nightly `schedule`, a
 #               `workflow_dispatch` (tier full, the default), a pull
 #               request labelled `full-matrix`; and a pull request with a
 #               changed path no rule of `ci/tiers.py` names, or whose
 #               change cannot be read.
 #   tier pr     any other pull-request run (and a dispatch with tier pr):
-#               the gauntlet on linux x86-64 alone.
+#               the gauntlet on linux x86-64 alone, both compiler tiers.
 #   tier noop   the plan and the verdict: a pull request whose changed
 #               paths are ALL prose (notes/, docs/, README.md, CLAUDE.md),
 #               or a label other than `full-matrix`.
@@ -128,10 +129,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The hosts are the plan's (ci/tiers.py MATRIX): linux x86-64, macOS
-        # arm64 and linux aarch64 (`builds: false`, where the job asserts both
-        # tiers are refused by name, wolf-lang#614) in the full tier; linux
-        # x86-64 alone in a pull request's.
+        # The legs are the plan's (ci/tiers.py MATRIX): each host on each
+        # compiler tier, `tier: native` and `tier: release` (pelt#40: one job
+        # ran both tiers' corpus and sessions, 38-41 of macOS's 45 minutes).
+        # Linux x86-64, macOS arm64 and linux aarch64 (`builds: false`, where
+        # the job asserts the tier is refused by name, wolf-lang#614) in the
+        # full tier; linux x86-64 alone in a pull request's.
         include: ${{ fromJSON(needs.plan.outputs.matrix_gauntlet || '[]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -142,6 +145,8 @@ jobs:
         run: tools/fetch-toolchain
 
       - name: wolf fmt --check
+        # Once a host, on the native leg: it needs no build and no tier.
+        if: matrix.tier == 'native'
         run: tools/check-fmt
 
       # sh06: tests/census/clauses.tsv lists POSIX.1-2024's testable
@@ -149,12 +154,16 @@ jobs:
       # with the tree (every case it names exists, every census case is
       # named); it needs no built pelt, so every host checks it.
       - name: the clause table agrees with the corpus
+        # Once a host, on the native leg: it needs no build and no tier.
+        if: matrix.tier == 'native'
         run: tools/clause-census
 
       # sh11: the line editor's width table is what tools/gen-width
       # makes from Unicode 16.0.0. A runner whose Python carries another
       # Unicode version says so here rather than in a session.
       - name: the width table is the generated one
+        # Once a host, on the native leg: it needs no build and no tier.
+        if: matrix.tier == 'native'
         run: |
           python3 -c "import unicodedata; print('runner Unicode', unicodedata.unidata_version)"
           if python3 -c "import unicodedata, sys; sys.exit(unicodedata.unidata_version != '16.0.0')"; then
@@ -163,30 +172,30 @@ jobs:
             echo "::notice::runner Python is not Unicode 16.0.0; the table is checked on kasumi (notes/sh11-the-line-editor.md)"
           fi
 
-      - name: build, both tiers
+      - name: build, the ${{ matrix.tier }} tier
         if: matrix.builds
-        run: tools/build --all
+        run: tools/build --${{ matrix.tier }}
 
-      - name: both tiers are refused on this host, by name (wolf-lang#614)
+      - name: the ${{ matrix.tier }} tier is refused on this host, by name (wolf-lang#614)
         if: ${{ !matrix.builds }}
         shell: bash
+        env:
+          TIER: ${{ matrix.tier }}
         run: |
           set +e
-          tools/build --native >native.log 2>&1
-          n=$?
-          tools/build --release >release.log 2>&1
-          r=$?
+          tools/build --"$TIER" >"$TIER.log" 2>&1
+          code=$?
           set -e
-          cat native.log release.log
-          if [ "$n" = 0 ] || [ "$r" = 0 ]; then
-            echo "::error::a tier now builds on linux aarch64 (native $n, release $r); widen the matrix"
+          cat "$TIER.log"
+          if [ "$code" = 0 ]; then
+            echo "::error::the $TIER tier now builds on linux aarch64; widen the matrix"
             exit 1
           fi
-          grep -q "this host cannot run the native tier" native.log
-          grep -q "this host cannot run the release tier" release.log
+          grep -q "this host cannot run the $TIER tier" "$TIER.log"
 
       - name: wolf test (the table checks)
-        if: matrix.builds
+        # tools/check-test runs the unit tests (on the native compiler): that leg's.
+        if: matrix.builds && matrix.tier == 'native'
         run: tools/check-test
 
       # pelt#3: a word that is not a pattern (`[`, `a]`, `[a`) reads no
@@ -194,26 +203,18 @@ jobs:
       # of 64 files must match an empty directory's (tools/glob-rss).
       # It runs even when `wolf test` is red, so the table check's count
       # and this measurement each report on their own.
-      - name: no directory read for a non-pattern word, native tier
+      - name: no directory read for a non-pattern word, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
-        run: tools/glob-rss target/native/pelt
-
-      - name: no directory read for a non-pattern word, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        run: tools/glob-rss target/release/pelt
+        run: tools/glob-rss target/${{ matrix.tier }}/pelt
 
       # wolf-lang#612, sh03: each command's scratch dies with it
       # (`copy region`), so a loop of commands keeps only what it
       # assigns. s216's loop at 10,000 and 20,000 turns; the larger may
       # peak at most 100 bytes a turn (plus 1 MiB) above the smaller
       # (tools/loop-rss; pelt before sh03 grew 7.4 KB a turn).
-      - name: memory flat over a loop of commands, native tier
+      - name: memory flat over a loop of commands, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
-        run: tools/loop-rss target/native/pelt
-
-      - name: memory flat over a loop of commands, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        run: tools/loop-rss target/release/pelt
+        run: tools/loop-rss target/${{ matrix.tier }}/pelt
 
       # pelt#19, sh08: and over every other shape a long script or session
       # repeats — a pipeline, a command substitution, a subshell, a
@@ -225,15 +226,10 @@ jobs:
       # 22nd is the bare loop, for scale (tools/shape-rss). sh19 (pelt#33)
       # added `wait`, `export`, `kill`, and `cmd & wait` in a loop, a
       # script and at the prompt, which kept 600 to 2,300 B a turn before.
-      - name: memory flat over every shape, native tier
+      - name: memory flat over every shape, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 20
-        run: tools/shape-rss target/native/pelt
-
-      - name: memory flat over every shape, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: 20
-        run: tools/shape-rss target/release/pelt
+        run: tools/shape-rss target/${{ matrix.tier }}/pelt
 
       # sh05: `exec cmd` replaces the shell (`os_exec`). The corpus sees
       # only what a script prints, and a shell that ran the program as
@@ -242,13 +238,9 @@ jobs:
       # environment handed over is exactly the exported variables, a
       # descriptor the shell opened is the program's, and a death by
       # signal reaches the shell's parent as one (tools/exec-witness).
-      - name: exec replaces the shell (same pid), native tier
+      - name: exec replaces the shell (same pid), ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
-        run: tools/exec-witness target/native/pelt
-
-      - name: exec replaces the shell (same pid), release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        run: tools/exec-witness target/release/pelt
+        run: tools/exec-witness target/${{ matrix.tier }}/pelt
 
       # sh14: a trap's action runs when the command the signal came
       # during ends, asked 5,000 times with a child as the sender and
@@ -259,29 +251,21 @@ jobs:
       # with signals ignored neither traps nor resets them, asked from
       # outside (the corpus harness starts every case with the
       # defaults) (tools/signal-witness).
-      - name: traps run on time; ignored at start stays ignored, native tier
+      - name: traps run on time; ignored at start stays ignored, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 8
-        run: tools/signal-witness target/native/pelt
-
-      - name: traps run on time; ignored at start stays ignored, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: 8
-        run: tools/signal-witness target/release/pelt
+        run: tools/signal-witness target/${{ matrix.tier }}/pelt
 
       # The corpus steps run whatever came before, so that a break seen
       # only from outside (above) and one seen only by a script each
       # report on their own; so does every step after them.
-      - name: the differential corpus, native tier
+      - name: the differential corpus, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
-        run: tools/difftest --bin target/native
-
-      - name: the differential corpus, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        run: tools/difftest --bin target/release
+        run: tools/difftest --bin target/${{ matrix.tier }}
 
       - name: the harness sees a difference (the planted red)
-        if: ${{ matrix.builds && !cancelled() }}
+        # The release leg's: the selftest runs the release build.
+        if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}
         run: tools/difftest-selftest target/release
 
       # The prompt: sessions typed into pelt through a pseudo-terminal
@@ -296,15 +280,10 @@ jobs:
       # 45-minute job timeout (trunk's push run 37953346374 hung here on
       # macOS and was cancelled with no verdict). 15 since sh11: the
       # corpus grew from 127 cases to 197 (macOS took 3 minutes for 127).
-      - name: the session corpus, native tier
+      - name: the session corpus, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 15
-        run: tools/session --bin target/native
-
-      - name: the session corpus, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: 15
-        run: tools/session --bin target/release
+        run: tools/session --bin target/${{ matrix.tier }}
 
       # sh11: the editor gives the terminal back, asked from outside: the
       # modes after SIGHUP (pelt dies of it, as dash), SIGTERM (ignored),
@@ -317,33 +296,24 @@ jobs:
       # rings within half a second, and the next Tab asks before a list.
       # Every session above also fails if pelt exits with the terminal's
       # ICANON, ECHO, ISIG, IEXTEN or IXON changed.
-      - name: the editor restores the terminal, native tier
+      - name: the editor restores the terminal, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 8
-        run: tools/edit-witness target/native/pelt
-
-      - name: the editor restores the terminal, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: 8
-        run: tools/edit-witness target/release/pelt
+        run: tools/edit-witness target/${{ matrix.tier }}/pelt
 
       # sh12: the history file, asked from outside (one session is one
       # shell): written as typed and read by the next shell, two shells
       # sharing one file, the file kept to HISTSIZE, a path that cannot
       # be made and a file that is not text left alone, $HOME/.sh_history
       # made 0600 (tools/hist-witness).
-      - name: the history file across shells, native tier
+      - name: the history file across shells, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 8
-        run: tools/hist-witness target/native/pelt
-
-      - name: the history file across shells, release tier
-        if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: 8
-        run: tools/hist-witness target/release/pelt
+        run: tools/hist-witness target/${{ matrix.tier }}/pelt
 
       - name: the session harness sees a difference (the planted red)
-        if: ${{ matrix.builds && !cancelled() }}
+        # The release leg's: the selftest runs the release build.
+        if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}
         run: tools/session-selftest target/release
 
   # The run's verdict, and its name: `tier full`, `tier pr` or `tier noop`.

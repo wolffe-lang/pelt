@@ -72,11 +72,13 @@ WORKFLOW_JOBS = ["plan", "gauntlet", "tier", "nightly-red"]
 FULL_JOBS = ["gauntlet"]
 PUSH_BRANCHES = "trunk"
 OTHER_HOST_JOBS = ()
-# The gauntlet's three legs before tl28 (.github/workflows/ci.yml at trunk cc2fdc9).
-BEFORE_HOSTS = {"matrix_gauntlet": [{"os": "ubuntu-latest", "builds": True}, {"os": "macos-latest", "builds": True},
-                                    {"os": "ubuntu-24.04-arm", "builds": False}]}
+# The gauntlet's three hosts before tl28 (.github/workflows/ci.yml at trunk
+# cc2fdc9), each now on both compiler tiers (pelt#40).
+_HOSTS = [{"os": "ubuntu-latest", "builds": True}, {"os": "macos-latest", "builds": True},
+          {"os": "ubuntu-24.04-arm", "builds": False}]
+BEFORE_HOSTS = {"matrix_gauntlet": [dict(h, tier=t) for h in _HOSTS for t in ("native", "release")]}
 ALL_HOSTS = BEFORE_HOSTS
-PR_HOSTS = {"matrix_gauntlet": [{"os": "ubuntu-latest", "builds": True}]}
+PR_HOSTS = {"matrix_gauntlet": [dict(_HOSTS[0], tier=t) for t in ("native", "release")]}
 CODE_PATH = ("src/main.lu", ["gauntlet"])
 PR_PATHS = [(p, ["gauntlet"]) for p in [
     "src/main.lu", "src/exec/exec.lu", "tests/diff/param/c_length_bytes_in_c.sh", "tests/session/PENDING.md",
@@ -109,7 +111,23 @@ WORKFLOW_FILE = "ci.yml"
 
 
 def extra_checks(say, plan, expect, blocks, wf):
-    pass
+    legs = plan(event="push")["matrix"]["matrix_gauntlet"]
+    hosts = []
+    for l in legs:
+        h = {k: v for k, v in l.items() if k != "tier"}
+        if h not in hosts:
+            hosts.append(h)
+    say(hosts == _HOSTS and all(sorted(l["tier"] for l in legs if {k: v for k, v in l.items() if k != "tier"} == h) == ["native", "release"]
+                                for h in _HOSTS), "T4 the full tier runs the three hosts before tl28, each on both compiler tiers (pelt#40)")
+    g = blocks["gauntlet"]
+    steps = [l for l in g.splitlines() if l.startswith(("      - name:", "        run:"))]
+    say(not [l for l in steps if "native" in l or "--all" in l], "T4 no step names a compiler tier: each takes its leg's (`matrix.tier`)")
+    say("        run: tools/build --${{ matrix.tier }}\n" in g and "tools/build --\"$TIER\"" in g, "T4 the build and the aarch64 refusal are the leg's tier")
+    say(g.count("        if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}\n") == 2,
+        "T4 the two planted-red selftests run on the release leg, as before on the release build")
+    say(g.count("        if: matrix.tier == 'native'\n") == 3 and "        if: matrix.builds && matrix.tier == 'native'\n" in g,
+        "T4 fmt, the clause table, the width table and wolf test run once a host, on the native leg")
+    say("    timeout-minutes: 45\n" in g, "T4 the job's 45-minute ceiling is unchanged")
 # --- end of this repository's ------------------------------------------------------
 WORKFLOW = os.path.join(ROOT, ".github", "workflows", WORKFLOW_FILE)
 NIGHTLY = NIGHTLY or ("full", FULL_JOBS)

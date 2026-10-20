@@ -13,19 +13,21 @@ ran them (tl28, ruling #92; wolf-lang's ci/tiers.py, tl21, cut to pelt).
 workflow's `plan` job passes the event in.
 
 THE TIERS. A job is a job of .github/workflows/ci.yml between `plan` and
-`tier`; a leg is one entry of its matrix (here: one host).
+`tier`; a leg is one entry of its matrix (here: one host on one compiler
+tier).
 
   full   every job on every leg: the gauntlet on linux x86-64, macOS arm64
          and linux aarch64 (where it asserts that no tier builds yet,
-         wolf-lang#614). A push to trunk, the nightly `schedule`, a
+         wolf-lang#614), each host on the native and the release compiler
+         tier. A push to trunk, the nightly `schedule`, a
          `workflow_dispatch` (its `tier` input full, the default), a pull
          request carrying the `full-matrix` label; and a pull request with
          a changed path no rule below names, or whose change cannot be
          read: what is not understood never shrinks a run.
   pr     any other pull-request run, and a dispatch with `tier` pr: the
-         gauntlet on linux x86-64 alone. It is one job: every step builds
-         or runs the same shell, so no path picks among them; the macOS
-         and aarch64 legs wait for the full tier.
+         gauntlet on linux x86-64 alone, on both compiler tiers. Every
+         step builds or runs the same shell, so no path picks among them;
+         the macOS and aarch64 legs wait for the full tier.
   noop   nothing but the plan and the verdict: a pull request whose changed
          paths are ALL prose, and a `labeled` event for a label other than
          `full-matrix`.
@@ -84,20 +86,24 @@ def special(a, every, log):
 # Every leg of every matrix job, in the workflow's order (pelt's three hosts,
 # as before tl28). The full tier runs them all; every other tier the legs
 # PR_LEG keeps.
+# pelt#40 (tl28): one leg a host AND a compiler tier. One job ran both tiers'
+# corpus and sessions, 38 to 41 of macOS's 45 minutes; each tier is its own
+# job now, on every host, and the full tier runs all six.
+HOSTS = [
+    {"os": "ubuntu-latest", "builds": True},
+    {"os": "macos-latest", "builds": True},
+    # wolf 0.2.24 through 0.2.32 build NO tier on linux aarch64: `wolf build`
+    # refuses the native tier ("native codegen targets linux/x86-64,
+    # macOS/aarch64, and windows/x86-64 … c13") and the release
+    # tier ("the release tier targets linux/x86-64 and
+    # macOS/aarch64 … c13 owns the matrix"), wolf-lang#614. This
+    # job fetches the pinned archive by digest and ASSERTS both
+    # refusals by name, so the day either tier arrives it goes red
+    # and the matrix is widened rather than left quietly narrow.
+    {"os": "ubuntu-24.04-arm", "builds": False},
+]
 MATRIX = {
-    "gauntlet": [
-        {"os": "ubuntu-latest", "builds": True},
-        {"os": "macos-latest", "builds": True},
-        # wolf 0.2.24 through 0.2.32 build NO tier on linux aarch64: `wolf build`
-        # refuses the native tier ("native codegen targets linux/x86-64,
-        # macOS/aarch64, and windows/x86-64 … c13") and the release
-        # tier ("the release tier targets linux/x86-64 and
-        # macOS/aarch64 … c13 owns the matrix"), wolf-lang#614. This
-        # job fetches the pinned archive by digest and ASSERTS both
-        # refusals by name, so the day either tier arrives it goes red
-        # and the matrix is widened rather than left quietly narrow.
-        {"os": "ubuntu-24.04-arm", "builds": False},
-    ],
+    "gauntlet": [dict(h, tier=t) for h in HOSTS for t in ("native", "release")],
 }
 
 
