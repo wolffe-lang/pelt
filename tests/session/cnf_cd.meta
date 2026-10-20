@@ -1,0 +1,2 @@
+tr_by=hand
+why=pelt#42: command_not_found_handle runs in the current shell environment, so its cd moves the shell (OLDPWD with it, cd - goes back) and what it assigns stays; in a subshell it moves only the subshell. dash calls no function for a command not found; bash runs its handler in a subshell, where the cd stays (black-box, notes/sh21-evidence/refs/base/bash-i/p01-cd.out); fish's fish_command_not_found moves the shell (fish-i/f01-cd.out). Written by hand

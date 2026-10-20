@@ -1,0 +1,2 @@
+tr_by=hand
+why=pelt#42: the handler is never re-entered: the name run again inside it is the plain not-found (said, 127), the handler's 127 is said again, and what it counted is the shell's. bash and fish call the handler again from inside it, each call deeper, to this case's bound of three (bash's in subshells, so its count stays 0; black-box to a bound of four: notes/sh21-evidence/refs/base/bash-i/p03-rerun.out, fish-i/f03-rerun.out); dash calls no function. Written by hand

@@ -1,0 +1,31 @@
+step 0
+err no
+prompt "$ "
+step 1 "mkdir there"
+err no
+prompt "$ "
+step 2 "command_not_found_handle() { cd -- \"$1\" || return 127; kept=$#; }"
+err no
+prompt "$ "
+step 3 "there a b"
+err no
+prompt "$ "
+step 4 "echo \"${PWD##*/} ${OLDPWD##*/} st=$? kept=$kept\""
+out "there w st=0 kept=3\n"
+err no
+prompt "$ "
+step 5 "cd - >/dev/null"
+err no
+prompt "$ "
+step 6 "echo \"${PWD##*/}\""
+out "w\n"
+err no
+prompt "$ "
+step 7 "(there); echo \"${PWD##*/} st=$?\""
+out "w st=0\n"
+err no
+prompt "$ "
+step 8 "exit"
+err no
+prompt ""
+exit 0 at step 8

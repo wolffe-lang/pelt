@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "n=0"
+err no
+prompt "$ "
+step 2 "command_not_found_handle() { n=$((n+1)); echo \"call $n: $*\"; [ \"$n\" -lt 3 ] || return 9; \"$@\"; }"
+err no
+prompt "$ "
+step 3 "nosuch a; echo \"st=$? n=$n\""
+out "call 1: nosuch a\nst=127 n=1\n"
+err yes
+prompt "$ "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

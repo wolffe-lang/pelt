@@ -1,0 +1,2 @@
+tr_by=hand
+why=pelt#42: a handler's 127 makes pelt say its own not-found message, through the command's redirections, and 127 is the status; any other status is the command's and nothing is said. bash says nothing when its handler returns 127 (black-box, notes/sh21-evidence/refs/base/bash-i/p02-status.out); dash calls no function. Written by hand

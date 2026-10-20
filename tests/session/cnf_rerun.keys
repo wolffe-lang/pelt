@@ -1,0 +1,4 @@
+n=0
+command_not_found_handle() { n=$((n+1)); echo "call $n: $*"; [ "$n" -lt 3 ] || return 9; "$@"; }
+nosuch a; echo "st=$? n=$n"
+exit
