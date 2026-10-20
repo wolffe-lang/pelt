@@ -1188,11 +1188,11 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
     let by_job = sh.jc_on || sh.jc_build >= 0
     if sh.jc_build >= 0 {
         let bj = sh.jc_build
-        if !nowait || sh.jb_pgid[bj] < -1 {
+        if !nowait || slot_pgid(sh, bj) < -1 {
             close_opened(t)
             return slow()
         }
-        jgroup = sh.jb_pgid[bj]
+        jgroup = slot_pgid(sh, bj)
         jtty = if jgroup >= 0 then sh.jc_give else -1
     } else if !nowait && jc_here(sh) {
         if jobs_live(sh) || sh.sig_mine & m_child() != 0 || sh.stash_h.len > 0 {
@@ -2663,7 +2663,7 @@ fn run_async(mut sh: Sh, node: int) -> int {
     var j = -1
     if as_job {
         j = jb_new(mut sh)
-        sh.jb_pgid[j] = if jc then 0 else -1
+        set_slot_pgid(mut sh, j, if jc then 0 else -1)
         sh.jc_build = j
         sh.jc_give = -1
     }
@@ -2692,17 +2692,17 @@ fn run_async(mut sh: Sh, node: int) -> int {
     }
     if jb_procs(sh, j) == 0 {
         // a list pelt ran itself has ended by now
-        sh.jb_state[j] = JB_DONE
-        sh.jb_status[j] = st
-        sh.jb_id[j] = NO_PID_BASE + sh.jb_seq
+        set_slot_state(mut sh, j, JB_DONE)
+        set_slot_status(mut sh, j, st)
+        set_slot_id(mut sh, j, NO_PID_BASE + sh.jb_seq)
         sh.jb_seq += 1
-        sh.jb_told[j] = !sh.jc_on
-        sh.jb_late[j] = sh.jc_on
+        set_slot_told(mut sh, j, !sh.jc_on)
+        set_slot_late(mut sh, j, sh.jc_on)
     }
     if sh.jc_on {
         jb_fill_text(mut sh, j, node)
     }
-    sh.last_bg = sh.jb_id[j]
+    sh.last_bg = slot_id(sh, j)
     sh.status = 0
     0
 }
@@ -2729,7 +2729,7 @@ fn async_target(a: Ast, node: int) -> int {
 /// nothing for `wait` with no operand, black-box: s10).
 fn wait_job(mut sh: Sh, j: int, quiet: bool) -> int {
     if jb_procs(sh, j) == 0 {
-        return sh.jb_status[j]
+        return slot_status(sh, j)
     }
     var k = 0
     while k < sh.pr_job.len {

@@ -166,27 +166,26 @@ struct Sh {
     /// Inside a pipeline that is no job (`sh.jobs`'s `pipe_is_job`).
     jc_hold: bool,
     jc_node: int,
-    /// The job table (`sh.jobs`): slot k is job number k + 1; a slot is
-    /// `JB_FREE` or a job's state, its group (0 for none), the number
-    /// `$!` gave it (a process id, or for a list pelt ran itself a
-    /// number no process has, `NO_PID_BASE` and up), the status of a
-    /// list pelt ran itself, whether its last change was told, and its
-    /// command text ("" with job control off). `jb_order` is each
-    /// slot's last use (a stamp of `jb_clock`, 0 for none): `+` is the
-    /// most recent, `-` the one before.
-    jb_state: List[int],
+    /// The job table (`sh.jobs`): slot k is job number k + 1. A slot is
+    /// two `int`s (pelt#39: nine parallel lists kept ~140 B a job in the
+    /// root, `notes/sh22-evidence/witness/jobcost`), read and written only
+    /// through `sh.jobs`'s `slot_*` accessors: `jb_a` packs its state
+    /// (`JB_FREE` or a job's), the status of a list pelt ran itself, and the
+    /// flags told, late, waited and held; `jb_b` packs the number `$!`
+    /// gave it (a process id, or for a list pelt ran itself a number no
+    /// process has, `NO_PID_BASE` and up) and its last use (a stamp of
+    /// `jb_clock`, 0 for none: `+` is the most recent, `-` the one
+    /// before). Its group (0 for none) and its command text ("" with job
+    /// control off) are in `jb_pgid` and `jb_text`, which grow only when
+    /// job control writes them: past their ends a slot's are -1 and "".
+    jb_a: List[int],
+    jb_b: List[int],
     jb_pgid: List[int],
-    jb_id: List[int],
-    jb_status: List[int],
-    jb_told: List[bool],
     jb_text: List[str],
-    /// A list pelt ran itself after `&`: told of one line later.
-    jb_late: List[bool],
-    /// An ended job whose status `wait` with its id answered, with job
-    /// control off: forgotten when the next job starts (dash,
-    /// black-box: `notes/sh19-evidence/refs/w01`, `w08`).
-    jb_waited: List[bool],
-    jb_order: List[int],
+    /// How many slots `wait` marked (the waited flag), and the lowest slot
+    /// that may be free: so starting a job is not a walk of the table.
+    jb_nwaited: int,
+    jb_free_lo: int,
     jb_seq: int,
     jb_clock: int,
     /// The processes of the jobs: the slot, the child's handle and
@@ -385,15 +384,12 @@ fn new_sh(name: str) -> Sh {
         jc_last: false,
         jc_hold: false,
         jc_node: -1,
-        jb_state: List[int](),
+        jb_a: List[int](),
+        jb_b: List[int](),
         jb_pgid: List[int](),
-        jb_id: List[int](),
-        jb_status: List[int](),
-        jb_told: List[bool](),
         jb_text: List[str](),
-        jb_late: List[bool](),
-        jb_waited: List[bool](),
-        jb_order: List[int](),
+        jb_nwaited: 0,
+        jb_free_lo: 0,
         jb_seq: 0,
         jb_clock: 0,
         pr_job: List[int](),

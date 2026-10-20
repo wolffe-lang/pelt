@@ -539,8 +539,8 @@ fn want_jobs(mut bad: List[str]) {
     var sh = new_sh("selftest")
     for id in [4242, NO_PID_BASE + 1, 4343] {
         let j = jb_new(mut sh)
-        sh.jb_state[j] = JB_DONE
-        sh.jb_id[j] = id
+        set_slot_state(mut sh, j, JB_DONE)
+        set_slot_id(mut sh, j, id)
     }
     if job_of(sh, 4343) != 2 || job_of(sh, NO_PID_BASE + 1) != 1 || job_of(sh, 7) != -1 {
         (mut bad).push(
@@ -563,15 +563,15 @@ fn want_jobs(mut bad: List[str]) {
             "job_index: %2 %+ %- %9 gave {job_index(sh, "%2")} {job_index(sh, "%+")} {job_index(sh, "%-")} {job_index(sh, "%9")}",
         )
     }
-    sh.jb_text[0] = "sleep 30"
-    sh.jb_text[2] = "sleep 31 | cat"
+    set_slot_text(mut sh, 0, "sleep 30")
+    set_slot_text(mut sh, 2, "sleep 31 | cat")
     if job_index(sh, "%sl") != -2 || job_index(sh, "%?cat") != 2 || job_index(sh, "%cat") != -1 {
         (mut bad).push(
             "job_index by text: %sl %?cat %cat gave {job_index(sh, "%sl")} {job_index(sh, "%?cat")} {job_index(sh, "%cat")}",
         )
     }
     // a job's line, the command at column 33 (p01)
-    sh.jb_state[0] = JB_RUN
+    set_slot_state(mut sh, 0, JB_RUN)
     let line = job_line(sh, 0, false)
     if line != "[1]   Running                    sleep 30" {
         (mut bad).push("job_line: [{line}]")

@@ -1749,8 +1749,8 @@ fn bi_wait(mut sh: Sh, args: List[str]) -> int {
             }
         } else {
             var j = 0
-            while j < sh.jb_state.len {
-                if sh.jb_state[j] != JB_FREE {
+            while j < slot_count(sh) {
+                if slot_state(sh, j) != JB_FREE {
                     let _st = wait_job(mut sh, j, true)
                 }
                 j += 1
@@ -1758,8 +1758,8 @@ fn bi_wait(mut sh: Sh, args: List[str]) -> int {
         }
         if !sh.jc_on {
             var j = 0
-            while j < sh.jb_state.len {
-                if sh.jb_state[j] != JB_FREE && jb_state_of(sh, j) == JB_DONE {
+            while j < slot_count(sh) {
+                if slot_state(sh, j) != JB_FREE && jb_state_of(sh, j) == JB_DONE {
                     jb_free(mut sh, j)
                     continue
                 }
@@ -1800,7 +1800,7 @@ fn bi_wait(mut sh: Sh, args: List[str]) -> int {
             if jb_state_of(sh, j) == JB_DONE {
                 // its status is answered: forgotten when the next job
                 // starts (`jb_new`)
-                sh.jb_waited[j] = true
+                set_slot_waited(mut sh, j, true)
             }
         }
     }
