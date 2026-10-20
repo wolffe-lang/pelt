@@ -1,0 +1,49 @@
+== set -m loop [true &]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-w2-native l.sh: 87 chunk grabs after the first 5 (~5568 KiB)
+-- innermost wolf frame
+    40  46.0%  [list_push]
+    16  18.4%  [list_new]
+    15  17.2%  [strbuf_finish]
+     8   9.2%  [str_repeat]
+     8   9.2%  [str_from_utf8]
+-- innermost four frames
+    16  18.4%  [list_push] < putc < to_col < job_line
+    15  17.2%  [list_push] < write_fd < notice < jc_notify
+     8   9.2%  [str_repeat] < run_simple < run_node < run
+     8   9.2%  [strbuf_finish] < notice < jc_notify < eval_top
+     8   9.2%  [list_new] < buf < job_line < notice
+     8   9.2%  [str_from_utf8] < text < job_line < notice
+     8   9.2%  [list_new] < write_fd < notice < jc_notify
+     7   8.0%  [strbuf_finish] < job_line < notice < jc_notify
+     4   4.6%  [list_push] < jb_new < run_async < run_list
+     2   2.3%  [list_push] < set_slot_pgid < run_async < run_list
+     2   2.3%  [list_push] < set_slot_text < jb_fill_text < run_async
+     1   1.1%  [list_push] < put < job_line < notice
+-- on the stack at all
+    87 100.0%  run_main
+    87 100.0%  run_source
+    87 100.0%  eval_top
+    71  81.6%  notice
+    71  81.6%  jc_notify
+    40  46.0%  [list_push]
+    40  46.0%  job_line
+    23  26.4%  write_fd
+    16  18.4%  run_list
+    16  18.4%  run
+    16  18.4%  run_loop
+    16  18.4%  run_node
+    16  18.4%  putc
+    16  18.4%  to_col
+    16  18.4%  [list_new]
+    15  17.2%  [strbuf_finish]
+     8   9.2%  run_simple
+     8   9.2%  [str_repeat]
+     8   9.2%  run_async
+     8   9.2%  buf
+     8   9.2%  [str_from_utf8]
+     8   9.2%  text
+     4   4.6%  jb_new
+     2   2.3%  set_slot_pgid
+     2   2.3%  jb_fill_text
+     2   2.3%  set_slot_text
+     1   1.1%  put

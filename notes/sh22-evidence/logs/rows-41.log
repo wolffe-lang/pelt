@@ -1,0 +1,17 @@
+== /home/mfwolffe/lanes/sh22/tmp/bin-base
+ok   jobsctl/c_monitor_list_notices
+FAIL jobsctl/c_monitor_loop_builtin: stdout
+     pelt stdout: b'turn 0\nturn 1\nturn 2\nthe loop has ended\n[3] + Done                       true\n[2] + Done                       true\n[1] + Done                       true\nthe next command\n'
+     want stdout: b'turn 0\nturn 1\nturn 2\n[3] + Done                       true\n[2] + Done                       true\n[1] + Done                       true\nthe loop has ended\nthe next command\n'
+ok   jobsctl/c_monitor_loop_notices
+ok   wait/c_unwaited_many_status
+== /home/mfwolffe/lanes/sh22/pelt/target/native
+ok   jobsctl/c_monitor_list_notices
+ok   jobsctl/c_monitor_loop_builtin
+ok   jobsctl/c_monitor_loop_notices
+ok   wait/c_unwaited_many_status
+== /home/mfwolffe/lanes/sh22/pelt/target/release
+ok   jobsctl/c_monitor_list_notices
+ok   jobsctl/c_monitor_loop_builtin
+ok   jobsctl/c_monitor_loop_notices
+ok   wait/c_unwaited_many_status

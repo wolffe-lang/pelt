@@ -1,0 +1,5 @@
+recorded jobsctl/c_monitor_list_notices: exit 0 (bash differs)
+recorded jobsctl/c_monitor_loop_builtin: exit 0 (bash differs)
+recorded jobsctl/c_monitor_loop_notices: exit 0 (bash differs)
+recorded wait/c_unwaited_many_status: exit 0 (bash differs)
+recorded wait/c_unwaited_many_status: exit 0 (bash differs)

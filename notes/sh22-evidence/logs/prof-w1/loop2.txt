@@ -1,0 +1,23 @@
+== loop [eval :]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-w1-native l2.sh: 20 chunk grabs after the first 5 (~1280 KiB)
+-- innermost wolf frame
+    20 100.0%  [str_repeat]
+-- innermost four frames
+    16  80.0%  [str_repeat] < run_simple < run_node < run
+     4  20.0%  [str_repeat] < run_slow < run_simple < run_node
+-- on the stack at all
+    20 100.0%  run
+    20 100.0%  run_loop
+    20 100.0%  run_node
+    20 100.0%  eval_top
+    20 100.0%  [str_repeat]
+    20 100.0%  run_list
+    20 100.0%  run_simple
+    16  80.0%  run_source
+    16  80.0%  run_main
+     8  40.0%  run_slow
+     4  20.0%  eval_from
+     4  20.0%  run_builtin_enc
+     4  20.0%  builtin_args
+     4  20.0%  eval_string
+     4  20.0%  bi_eval

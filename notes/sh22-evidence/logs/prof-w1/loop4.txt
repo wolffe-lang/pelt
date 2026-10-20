@@ -1,0 +1,16 @@
+== loop [:]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-w1-native l4.sh: 10 chunk grabs after the first 5 (~640 KiB)
+-- innermost wolf frame
+    10 100.0%  [str_repeat]
+-- innermost four frames
+    10 100.0%  [str_repeat] < run_simple < run_node < run
+-- on the stack at all
+    10 100.0%  run_main
+    10 100.0%  eval_top
+    10 100.0%  [str_repeat]
+    10 100.0%  run_node
+    10 100.0%  run_list
+    10 100.0%  run_source
+    10 100.0%  run_simple
+    10 100.0%  run
+    10 100.0%  run_loop

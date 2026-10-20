@@ -1,0 +1,20 @@
+== loop [jobs]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-w1-native l6.sh: 30 chunk grabs after the first 5 (~1920 KiB)
+-- innermost wolf frame
+    30 100.0%  [list_new]
+-- innermost four frames
+    30 100.0%  [list_new] < bi_jobs < builtin_args < run_builtin_enc
+-- on the stack at all
+    30 100.0%  run_list
+    30 100.0%  [list_new]
+    30 100.0%  run_simple
+    30 100.0%  run_node
+    30 100.0%  run
+    30 100.0%  run_builtin_enc
+    30 100.0%  run_main
+    30 100.0%  bi_jobs
+    30 100.0%  run_slow
+    30 100.0%  eval_top
+    30 100.0%  run_source
+    30 100.0%  run_loop
+    30 100.0%  builtin_args

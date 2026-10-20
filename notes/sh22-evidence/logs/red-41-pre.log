@@ -1,0 +1,20 @@
+== /home/mfwolffe/lanes/sh22/tmp/bin-base
+ok   jobsctl/c_monitor_list_notices
+FAIL jobsctl/c_monitor_loop_builtin: stdout
+     pelt stdout: b'turn 0\nturn 1\nturn 2\nthe loop has ended\n[3] + Done                       true\n[2] + Done                       true\n[1] + Done                       true\nthe next command\n'
+     want stdout: b'turn 0\nturn 1\nturn 2\n[3] + Done                       true\n[2] + Done                       true\n[1] + Done                       true\nthe loop has ended\nthe next command\n'
+ok   jobsctl/c_monitor_loop_notices
+FAIL wait/c_unwaited_many_status: stderr present
+     pelt stdout: b'first: 3\nmid: 143\nlisted: 302\n'
+     want stdout: b'first: 3\nmid: 143\nlisted: 302\n'
+     pelt stderr: b'pelt: ended by signal 15 (TERM)\n'
+== /home/mfwolffe/lanes/sh22/tmp/bin-head
+ok   jobsctl/c_monitor_list_notices
+FAIL jobsctl/c_monitor_loop_builtin: stdout
+     pelt stdout: b'turn 0\nturn 1\nturn 2\nthe loop has ended\n[3] + Done                       true\n[2] + Done                       true\n[1] + Done                       true\nthe next command\n'
+     want stdout: b'turn 0\nturn 1\nturn 2\n[3] + Done                       true\n[2] + Done                       true\n[1] + Done                       true\nthe loop has ended\nthe next command\n'
+ok   jobsctl/c_monitor_loop_notices
+FAIL wait/c_unwaited_many_status: stderr present
+     pelt stdout: b'first: 3\nmid: 143\nlisted: 302\n'
+     want stdout: b'first: 3\nmid: 143\nlisted: 302\n'
+     pelt stderr: b'pelt: ended by signal 15 (TERM)\n'

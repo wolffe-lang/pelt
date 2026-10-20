@@ -1,0 +1,8 @@
+setm-rss: pelt-w2-release [set -m] [env true &] 5000 6652 KB 10000 10636 KB  815 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-w2-release [:] [env true &] 5000 3448 KB 10000 3948 KB  102 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-w2-release [set -m] [true &] 5000 5900 KB 10000 8900 KB  614 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-w2-release [:] [true &] 5000 3772 KB 10000 4152 KB  77 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-w2-native [set -m] [env true &] 5000 8516 KB 10000 12172 KB  748 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-w2-native [:] [env true &] 5000 5756 KB 10000 6100 KB  70 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-w2-native [set -m] [true &] 5000 8188 KB 10000 10908 KB  557 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-w2-native [:] [true &] 5000 5704 KB 10000 6016 KB  63 B a job  (exit 0,0 out 5000,10000)

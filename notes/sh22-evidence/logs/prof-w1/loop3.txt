@@ -1,0 +1,22 @@
+== loop [read x </dev/null]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-w1-native l3.sh: 20 chunk grabs after the first 5 (~1280 KiB)
+-- innermost wolf frame
+    20 100.0%  [str_repeat]
+-- innermost four frames
+    12  60.0%  [str_repeat] < run_simple < run_node < run
+     4  20.0%  [str_repeat] < run_slow < run_simple < run_node
+     4  20.0%  [str_repeat] < bi_read < builtin_args < run_builtin_enc
+-- on the stack at all
+    20 100.0%  run_simple
+    20 100.0%  run_loop
+    20 100.0%  run_list
+    20 100.0%  run_source
+    20 100.0%  [str_repeat]
+    20 100.0%  run_node
+    20 100.0%  run
+    20 100.0%  run_main
+    20 100.0%  eval_top
+     8  40.0%  run_slow
+     4  20.0%  run_builtin_enc
+     4  20.0%  builtin_args
+     4  20.0%  bi_read

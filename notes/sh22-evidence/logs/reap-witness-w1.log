@@ -1,0 +1,33 @@
+== trunk harness, trunk pelt (release)
+reap-witness: FAIL difftest  the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended nothing; left running: 3 (10.0 s)
+reap-witness:      | difftest: pelt = /home/mfwolffe/lanes/sh22/snaps/reap-oldharness/target/release/pelt
+reap-witness:      | difftest: oracle = none: tools/reap-witness's corpus, a case that times out on purpose (pelt#27); no oracle is asked
+reap-witness:      | FAIL hang/tree: timed out
+reap-witness:      | difftest: area        pass  fail  pending (of which pass)
+reap-witness:      | difftest: hang           0     1     0 (0)
+reap-witness:      | difftest: total          0     1     0 (0)
+reap-witness:      ended child 7, which the harness left
+reap-witness:      ended job 8, which the harness left
+reap-witness:      ended grandchild 10, which the harness left
+reap-witness: FAIL census    the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended nothing, ? left; left running: 4 (10.1 s)
+reap-witness:      | syscall-census: difftest under strace exit 1: difftest: total          0     1     0 (0)
+reap-witness:      | syscall-census: 39 distinct system calls, 239 calls, 6 processes and threads -> /home/mfwolffe/lanes/sh22/tmp/reap-witness.sp0xk1ar/census/census.txt
+reap-witness:      ended shell 15, which the harness left
+reap-witness:      ended child 17, which the harness left
+reap-witness:      ended job 18, which the harness left
+reap-witness:      ended grandchild 20, which the harness left
+reap-witness: FAIL (2 failed, 0 skipped)
+exit 1
+== head harness, head pelt (native)
+reap-witness: ok   difftest  the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended 4; left running: 0 (10.1 s)
+reap-witness: ok   census    the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended 5, 0 left; left running: 0 (10.1 s)
+reap-witness: ok (0 failed, 0 skipped)
+exit 0
+== head harness, head pelt (release)
+reap-witness: ok   difftest  the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended 4; left running: 0 (10.1 s)
+reap-witness: ok   census    the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended 5, 0 left; left running: 0 (10.1 s)
+reap-witness: ok (0 failed, 0 skipped)
+exit 0
+== processes in the container now:
+      1       0 S<s  /run/podman-init -- /home/mfwolffe/lanes/sh22/rw.sh
+      2       1 S<   /bin/bash /home/mfwolffe/lanes/sh22/rw.sh

@@ -1,0 +1,6 @@
+cwdregion: native cwd (cwd 40 bytes) 100000 7056 KB 200000 11812 KB  48 B a call
+cwdregion: native interp (cwd 40 bytes) 100000 2412 KB 200000 2476 KB  0 B a call
+cwdregion: native none (cwd 40 bytes) 100000 2436 KB 200000 2456 KB  0 B a call
+cwdregion: release cwd (cwd 40 bytes) 100000 7032 KB 200000 11792 KB  48 B a call
+cwdregion: release interp (cwd 40 bytes) 100000 2448 KB 200000 2532 KB  0 B a call
+cwdregion: release none (cwd 40 bytes) 100000 2484 KB 200000 2412 KB  0 B a call

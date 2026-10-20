@@ -1,0 +1,42 @@
+== /home/mfwolffe/lanes/sh22/base/target/native/pelt
+shape-rss: FAIL builtin-read-redir       loop    10000    21012 KB   20000    37608 KB  grew   16596 KB (1699 B a turn)  [read x </dev/null]
+shape-rss: FAIL builtin-eval             loop    10000    12200 KB   20000    18952 KB  grew    6752 KB (691 B a turn)  [eval :]
+shape-rss: FAIL builtin-cd               loop    10000    10472 KB   20000    16152 KB  grew    5680 KB (581 B a turn)  [cd .]
+shape-rss: FAIL builtin-command          loop   100000    21856 KB  200000    38792 KB  grew   16936 KB (173 B a turn)  [command true]
+shape-rss: FAIL builtin-umask            loop   100000    18792 KB  200000    32564 KB  grew   13772 KB (141 B a turn)  [umask 022]
+shape-rss: FAIL background-nowait        loop    20000     8544 KB   40000    12368 KB  grew    3824 KB (195 B a turn)  [true &]
+shape-rss: FAIL background-program-nowait loop    10000    10400 KB   20000    27664 KB  grew   17264 KB (1767 B a turn)  [env true &]
+shape-rss:      background-program-nowait: wrong answer (exit 0 out '20000' stderr_bytes 508002)
+shape-rss: FAIL 7: builtin-read-redir, builtin-eval, builtin-cd, builtin-command, builtin-umask, background-nowait, background-program-nowait (bound 100 B a turn + 1 MiB over N turns)
+exit 1
+== /home/mfwolffe/lanes/sh22/base/target/release/pelt
+shape-rss: FAIL builtin-read-redir       loop    10000    19348 KB   20000    35640 KB  grew   16292 KB (1668 B a turn)  [read x </dev/null]
+shape-rss: FAIL builtin-eval             loop    10000    10412 KB   20000    17708 KB  grew    7296 KB (747 B a turn)  [eval :]
+shape-rss: FAIL builtin-cd               loop    10000     8980 KB   20000    14240 KB  grew    5260 KB (538 B a turn)  [cd .]
+shape-rss: FAIL builtin-command          loop   100000    20120 KB  200000    37164 KB  grew   17044 KB (174 B a turn)  [command true]
+shape-rss: FAIL builtin-umask            loop   100000    17096 KB  200000    31240 KB  grew   14144 KB (144 B a turn)  [umask 022]
+shape-rss: FAIL background-nowait        loop    20000     7108 KB   40000    11312 KB  grew    4204 KB (215 B a turn)  [true &]
+shape-rss: FAIL background-program-nowait loop    10000     8172 KB   20000    25116 KB  grew   16944 KB (1735 B a turn)  [env true &]
+shape-rss:      background-program-nowait: wrong answer (exit 0 out '20000' stderr_bytes 508002)
+shape-rss: FAIL 7: builtin-read-redir, builtin-eval, builtin-cd, builtin-command, builtin-umask, background-nowait, background-program-nowait (bound 100 B a turn + 1 MiB over N turns)
+exit 1
+== /home/mfwolffe/lanes/sh22/snaps/rows/target/native/pelt
+shape-rss: ok   builtin-read-redir       loop    10000     6352 KB   20000     7468 KB  grew    1116 KB (114 B a turn)  [read x </dev/null]
+shape-rss: ok   builtin-eval             loop    10000     6932 KB   20000     7872 KB  grew     940 KB (96 B a turn)  [eval :]
+shape-rss: ok   builtin-cd               loop    10000     6872 KB   20000     7564 KB  grew     692 KB (70 B a turn)  [cd .]
+shape-rss: ok   builtin-command          loop   100000    12132 KB  200000    18576 KB  grew    6444 KB (65 B a turn)  [command true]
+shape-rss: ok   builtin-umask            loop   100000    12624 KB  200000    18508 KB  grew    5884 KB (60 B a turn)  [umask 022]
+shape-rss: ok   background-nowait        loop    20000     7972 KB   40000     9876 KB  grew    1904 KB (97 B a turn)  [true &]
+shape-rss: ok   background-program-nowait loop    10000     6916 KB   20000     7984 KB  grew    1068 KB (109 B a turn)  [env true &]
+shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+exit 0
+== /home/mfwolffe/lanes/sh22/snaps/rows/target/release/pelt
+shape-rss: ok   builtin-read-redir       loop    10000     4024 KB   20000     4684 KB  grew     660 KB (67 B a turn)  [read x </dev/null]
+shape-rss: ok   builtin-eval             loop    10000     4052 KB   20000     4644 KB  grew     592 KB (60 B a turn)  [eval :]
+shape-rss: ok   builtin-cd               loop    10000     3656 KB   20000     4404 KB  grew     748 KB (76 B a turn)  [cd .]
+shape-rss: ok   builtin-command          loop   100000     9252 KB  200000    15736 KB  grew    6484 KB (66 B a turn)  [command true]
+shape-rss: ok   builtin-umask            loop   100000     9444 KB  200000    15520 KB  grew    6076 KB (62 B a turn)  [umask 022]
+shape-rss: ok   background-nowait        loop    20000     5028 KB   40000     6728 KB  grew    1700 KB (87 B a turn)  [true &]
+shape-rss: ok   background-program-nowait loop    10000     3764 KB   20000     4828 KB  grew    1064 KB (108 B a turn)  [env true &]
+shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+exit 0

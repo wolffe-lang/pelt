@@ -1,0 +1,30 @@
+// sh22 witness: does `os_cwd()`'s answer, asked inside a region, die with
+// the region? `main MODE X…`: N = 100,000 times the length of the second
+// argument; the lane reads the peak resident set at two N.
+//   cwd     `os_cwd()` inside `region`, its length kept
+//   interp  a `str` of the same length built by interpolation inside
+//           `region` (the control: the region frees it)
+//   none    the loop alone
+fn main() {
+    let args = env_args()
+    let mode = args[0]
+    let n = args[1].len * 100000
+    let here = os_cwd() else ""
+    var t = 0
+    var i = 0
+    while i < n {
+        if mode == "cwd" {
+            region r {
+                let c = os_cwd() else ""
+                t += c.len
+            }
+        } else if mode == "interp" {
+            region r {
+                let c = "{here}{i % 2}"
+                t += c.len
+            }
+        }
+        i += 1
+    }
+    print("{t}")
+}

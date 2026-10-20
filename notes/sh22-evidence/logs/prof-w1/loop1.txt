@@ -1,0 +1,21 @@
+== loop [cd .]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-w1-native l1.sh: 30 chunk grabs after the first 5 (~1920 KiB)
+-- innermost wolf frame
+    30 100.0%  [os_cwd]
+-- innermost four frames
+    30 100.0%  [os_cwd] < cd_stays < bi_cd < builtin_args
+-- on the stack at all
+    30 100.0%  cd_stays
+    30 100.0%  [os_cwd]
+    30 100.0%  eval_top
+    30 100.0%  run_list
+    30 100.0%  run_source
+    30 100.0%  builtin_args
+    30 100.0%  run_slow
+    30 100.0%  run
+    30 100.0%  run_builtin_enc
+    30 100.0%  run_node
+    30 100.0%  run_loop
+    30 100.0%  run_main
+    30 100.0%  bi_cd
+    30 100.0%  run_simple

@@ -1,0 +1,20 @@
+shapes22: pelt-w2-native         ctl-loop                 loop    10000     4956 KB  20000     5496 KB grew     540 KB (55 B a turn) ok [':']
+shapes22: pelt-w2-native         bg-builtin-nowait        loop    10000     6020 KB  20000     6736 KB grew     716 KB (73 B a turn) ok ['true &']
+shapes22: pelt-w2-native         bg-program-nowait        loop    10000     6104 KB  20000     7052 KB grew     948 KB (97 B a turn) ok ['env true &']
+shapes22: pelt-w2-native         script-bg-builtin-nowait script  10000     5548 KB  20000     6104 KB grew     556 KB (56 B a turn) ok ['true &']
+shapes22: pelt-w2-release        ctl-loop                 loop    10000     3660 KB  20000     3896 KB grew     236 KB (24 B a turn) ok [':']
+shapes22: pelt-w2-release        bg-builtin-nowait        loop    10000     4008 KB  20000     4748 KB grew     740 KB (75 B a turn) ok ['true &']
+shapes22: pelt-w2-release        bg-program-nowait        loop    10000     4204 KB  20000     4980 KB grew     776 KB (79 B a turn) ok ['env true &']
+shapes22: pelt-w2-release        script-bg-builtin-nowait script  10000     3888 KB  20000     4264 KB grew     376 KB (38 B a turn) ok ['true &']
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+setm-rss: pelt-w2-release [set -m] [env true &] 5000 1040 KB 10000 1040 KB  0 B a job  (exit 127,127 out ,)
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+setm-rss: pelt-w2-release [:] [env true &] 5000 1040 KB 10000 1040 KB  0 B a job  (exit 127,127 out ,)
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+setm-rss: pelt-w2-release [set -m] [true &] 5000 1040 KB 10000 1040 KB  0 B a job  (exit 127,127 out ,)
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+/usr/bin/time: cannot run bin/pelt-w2-release: No such file or directory
+setm-rss: pelt-w2-release [:] [true &] 5000 1036 KB 10000 1040 KB  0 B a job  (exit 127,127 out ,)

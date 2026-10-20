@@ -1,0 +1,4 @@
+diff-native=0 difftest: total        962     0    38 (2)
+sess-native=0 session: pass 273  fail 0  pending 3 (0)
+diff-release=0 difftest: total        962     0    38 (2)
+sess-release=0 session: pass 273  fail 0  pending 3 (0)
