@@ -1,0 +1,4 @@
+st=127
+file out: 
+file err: /home/mfwolffe/lanes/sh21/probe/sh/p04-redir.sh: 3: nosuch: not found
+st=127

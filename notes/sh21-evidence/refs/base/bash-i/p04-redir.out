@@ -1,0 +1,4 @@
+st=0
+file out: out: nosuch a b
+file err: err: nosuch a b
+st=0

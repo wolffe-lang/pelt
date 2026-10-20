@@ -1,0 +1,3 @@
+pelt: /home/mfwolffe/lanes/sh21/probe/sh/p07-command.sh: line 3: nosuch1: not found
+pelt: /home/mfwolffe/lanes/sh21/probe/sh/p07-command.sh: line 4: ./nosuch2: not found
+pelt: /home/mfwolffe/lanes/sh21/probe/sh/p07-command.sh: line 6: nosuch4: not found

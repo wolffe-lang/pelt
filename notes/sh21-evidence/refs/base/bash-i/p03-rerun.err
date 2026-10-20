@@ -1,0 +1,7 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # a handler that runs the name again: re-entered?
+bash-5.3$ n=0
+bash-5.3$ <"depth $n: $1"; [ "$n" -lt 4 ] || return 9; "$@"; }
+bash-5.3$ <; echo "st=$? n=$n err=$(wc -c <"$TMPDIR/p03.err")"
+bash-5.3$ exit

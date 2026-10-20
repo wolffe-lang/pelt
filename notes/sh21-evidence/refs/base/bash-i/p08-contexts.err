@@ -1,0 +1,9 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # a pipeline, a substitution, a function, a subshell
+bash-5.3$ <_handle() { echo "handler: $1 args=$#"; return 4; }
+bash-5.3$ nosuch1 | cat; echo "pipe st=$?"
+bash-5.3$ v=$(nosuch2); echo "sub: [$v] st=$?"
+bash-5.3$ f() { nosuch3 x y; echo "in f st=$? 1=$1"; }; f F
+bash-5.3$ (nosuch4); echo "paren st=$?"
+bash-5.3$ exit

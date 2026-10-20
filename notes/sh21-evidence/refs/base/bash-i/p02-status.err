@@ -1,0 +1,12 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # return 0, 3, 127: the command's status, and is anything said?
+bash-5.3$ command_not_found_handle() { return "$RET"; }
+bash-5.3$ RET=0; nosuch; echo "ret0 st=$?"
+bash-5.3$ RET=3; nosuch; echo "ret3 st=$?"
+bash-5.3$ <echo "ret127 st=$? err=$(wc -c <"$TMPDIR/p02.err")"
+bash-5.3$ command_not_found_handle() { :; }
+bash-5.3$ nosuch; echo "fall-off st=$?"
+bash-5.3$ command_not_found_handle() { false; }
+bash-5.3$ nosuch; echo "last-false st=$?"
+bash-5.3$ exit

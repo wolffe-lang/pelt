@@ -1,0 +1,27 @@
+handler: nosuch1 args=1
+/home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish (line 3): 
+nosuch1 | cat; echo "pipe st=$status"
+^~~~~~^
+handler: nosuch2 args=1
+/home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish (line 1): 
+nosuch2
+^~~~~~^
+in command substitution
+	called on line 4 of file /home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish
+/home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish (line 4): Unknown command
+set v (nosuch2); echo "sub: [$v] st=$status"
+      ^~~~~~~~^
+handler: nosuch3 args=3
+/home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish (line 5): 
+function f; nosuch3 x y; echo "in f st=$status"; end; f F
+            ^~~~~~^
+in function 'f' with arguments 'F'
+	called on line 5 of file /home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish
+handler: nosuch4 args=1
+/home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish (line 6): 
+command nosuch4; echo "command st=$status"
+        ^~~~~~^
+handler: ./nosuch5 args=1
+/home/mfwolffe/lanes/sh21/probe/fish/f06-contexts.fish (line 7): 
+./nosuch5; echo "slash st=$status"
+^~~~~~~~^

@@ -1,0 +1,2 @@
+in: FOO=bar env=1
+after: FOO=unset st=0

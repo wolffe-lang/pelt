@@ -1,0 +1,9 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # what the handler sets: kept? exit in it ends what?
+bash-5.3$ command_not_found_handle() { kept=yes; }
+bash-5.3$ nosuch; echo "kept=${kept-no}"
+bash-5.3$ command_not_found_handle() { exit 7; }
+bash-5.3$ nosuch; echo "after exit st=$?"
+exit
+bash-5.3$ exit

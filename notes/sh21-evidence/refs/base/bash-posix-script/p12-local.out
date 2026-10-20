@@ -1,0 +1,3 @@
+entry st=0 0=p12-local.sh
+v=in
+st=0 v=out

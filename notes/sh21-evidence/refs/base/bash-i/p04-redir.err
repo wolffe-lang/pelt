@@ -1,0 +1,9 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # the command's redirections around the call
+bash-5.3$ command_not_found_handle() { echo "out: $*"; echo "err: $*" >&2; }
+bash-5.3$ nosuch a b >"$TMPDIR/p04.out" 2>"$TMPDIR/p04.err"; echo "st=$?"
+bash-5.3$ <4.out")"; echo "file err: $(cat "$TMPDIR/p04.err")"
+bash-5.3$ nosuch c </dev/null >&2 2>/dev/null; echo "st=$?"
+out: nosuch c
+bash-5.3$ exit

@@ -1,0 +1,7 @@
+out: nosuch a b
+err: nosuch a b
+fish: 
+nosuch a b >$TMPDIR/f04.out 2>$TMPDIR/f04.err; echo "st=$status"
+^~~~~^
+cat: /home/mfwolffe/lanes/sh21/tmp/sh21-probe.0V42NW/tmp/f04.out: No such file or directory
+cat: /home/mfwolffe/lanes/sh21/tmp/sh21-probe.0V42NW/tmp/f04.err: No such file or directory

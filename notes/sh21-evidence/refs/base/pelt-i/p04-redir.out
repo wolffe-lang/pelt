@@ -1,0 +1,4 @@
+st=127
+file out: 
+file err: pelt: line 3: nosuch: not found
+st=127

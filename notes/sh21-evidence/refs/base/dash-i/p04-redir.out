@@ -1,0 +1,4 @@
+st=127
+file out: 
+file err: dash: 3: nosuch: not found
+st=127

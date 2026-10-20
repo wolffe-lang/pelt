@@ -1,0 +1,6 @@
+/home/mfwolffe/lanes/sh21/probe/fish/f05-state.fish (line 3): 
+nosuch; echo "kept=$kept"
+^~~~~^
+/home/mfwolffe/lanes/sh21/probe/fish/f05-state.fish (line 5): 
+nosuch; echo "after exit st=$status"
+^~~~~^

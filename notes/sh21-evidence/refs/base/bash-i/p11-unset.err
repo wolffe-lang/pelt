@@ -1,0 +1,8 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # defined, then unset: the plain not-found
+bash-5.3$ command_not_found_handle() { echo handler; }
+bash-5.3$ unset -f command_not_found_handle
+bash-5.3$ nosuch; echo "st=$?"
+bash: nosuch: command not found
+bash-5.3$ exit

@@ -1,0 +1,25 @@
+handler: nosuch1 args=1
+fish: 
+nosuch1 | cat; echo "pipe st=$status"
+^~~~~~^
+handler: nosuch2 args=1
+fish: 
+nosuch2
+^~~~~~^
+in command substitution
+fish: Unknown command
+set v (nosuch2); echo "sub: [$v] st=$status"
+      ^~~~~~~~^
+handler: nosuch3 args=3
+fish: 
+function f; nosuch3 x y; echo "in f st=$status"; end; f F
+            ^~~~~~^
+in function 'f' with arguments 'F'
+handler: nosuch4 args=1
+fish: 
+command nosuch4; echo "command st=$status"
+        ^~~~~~^
+handler: ./nosuch5 args=1
+fish: 
+./nosuch5; echo "slash st=$status"
+^~~~~~~~^

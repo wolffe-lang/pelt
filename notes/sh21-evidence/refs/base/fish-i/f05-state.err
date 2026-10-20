@@ -1,0 +1,6 @@
+fish: 
+nosuch; echo "kept=$kept"
+^~~~~^
+fish: 
+nosuch; echo "after exit st=$status"
+^~~~~^

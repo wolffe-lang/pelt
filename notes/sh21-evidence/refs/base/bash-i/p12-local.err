@@ -1,0 +1,7 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # local, $0, $? on entry, return with no operand
+bash-5.3$ false
+bash-5.3$ <l v=in 2>/dev/null; echo "v=${v-}"; true; return; }
+bash-5.3$ v=out; nosuch; echo "st=$? v=$v"
+bash-5.3$ exit

@@ -1,0 +1,4 @@
+in: there args=2 1=nosuch 2=a
+/home/mfwolffe/lanes/sh21/probe/fish/f01-cd.fish (line 4): 
+nosuch a
+^~~~~^

@@ -1,0 +1,11 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # command, a slash, type, exec in a subshell
+bash-5.3$ command_not_found_handle() { echo "handler: $1"; return 5; }
+bash-5.3$ command nosuch1; echo "command st=$?"
+bash-5.3$ ./nosuch2; echo "slash st=$?"
+bash: ./nosuch2: No such file or directory
+bash-5.3$ type nosuch3 >/dev/null 2>&1; echo "type st=$?"
+bash-5.3$ (exec nosuch4); echo "exec st=$?"
+bash: exec: nosuch4: not found
+bash-5.3$ exit

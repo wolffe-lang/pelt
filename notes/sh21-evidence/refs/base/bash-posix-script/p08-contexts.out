@@ -1,0 +1,7 @@
+handler: nosuch1 args=1
+pipe st=0
+sub: [handler: nosuch2 args=1] st=4
+handler: nosuch3 args=3
+in f st=4 1=F
+handler: nosuch4 args=1
+paren st=4

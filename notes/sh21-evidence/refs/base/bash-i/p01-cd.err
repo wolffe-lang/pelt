@@ -1,0 +1,8 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # a handler that cds: does the shell move?
+bash-5.3$ mkdir -p "$TMPDIR/p01/there" && cd "$TMPDIR/p01"
+bash-5.3$ <here; echo "in: ${PWD##*/} args=$# 1=$1 2=${2-}"; }
+bash-5.3$ nosuch a
+bash-5.3$ echo "after: ${PWD##*/} st=$?"
+bash-5.3$ exit

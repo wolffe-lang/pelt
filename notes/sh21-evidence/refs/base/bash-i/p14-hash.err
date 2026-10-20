@@ -1,0 +1,6 @@
+bash: cannot set terminal process group (1): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ # the hash table after a miss handled
+bash-5.3$ command_not_found_handle() { return 0; }
+bash-5.3$ nosuch; hash 2>&1 | grep -c nosuch
+bash-5.3$ exit

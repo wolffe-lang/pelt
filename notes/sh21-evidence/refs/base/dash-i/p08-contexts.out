@@ -1,0 +1,4 @@
+pipe st=0
+sub: [] st=127
+in f st=127 1=F
+paren st=127

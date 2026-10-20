@@ -1,0 +1,21 @@
+depth 1: nosuch
+depth 2: nosuch
+depth 3: nosuch
+depth 4: nosuch
+fish: 
+function fish_command_not_found; set -g n (math $n + 1); echo "depth $n: $argv[1]"; test $n -lt 4; or return 9; $argv; end
+                                                                                                                ^~~~^
+in function 'fish_command_not_found' with arguments 'nosuch'
+fish: 
+function fish_command_not_found; set -g n (math $n + 1); echo "depth $n: $argv[1]"; test $n -lt 4; or return 9; $argv; end
+                                                                                                                ^~~~^
+in function 'fish_command_not_found' with arguments 'nosuch'
+fish: 
+function fish_command_not_found; set -g n (math $n + 1); echo "depth $n: $argv[1]"; test $n -lt 4; or return 9; $argv; end
+                                                                                                                ^~~~^
+in function 'fish_command_not_found' with arguments 'nosuch a'
+fish: 
+nosuch a 2>$TMPDIR/f03.err; echo "st=$status n=$n err="(wc -c <$TMPDIR/f03.err)
+^~~~~^
+warning: An error occurred while redirecting file '/home/mfwolffe/lanes/sh21/tmp/sh21-probe.Hb1tok/tmp/f03.err'
+warning: Path '/home/mfwolffe/lanes/sh21/tmp/sh21-probe.Hb1tok/tmp/f03.err' does not exist

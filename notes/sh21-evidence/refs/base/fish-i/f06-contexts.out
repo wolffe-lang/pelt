@@ -1,0 +1,5 @@
+pipe st=127
+sub: [] st=127
+in f st=127
+command st=127
+slash st=127

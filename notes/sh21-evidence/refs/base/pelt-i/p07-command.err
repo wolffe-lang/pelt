@@ -1,0 +1,4 @@
+$ $ $ pelt: line 3: nosuch1: not found
+$ pelt: line 4: ./nosuch2: not found
+$ $ pelt: line 6: nosuch4: not found
+$ 

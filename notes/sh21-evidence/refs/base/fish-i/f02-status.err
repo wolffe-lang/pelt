@@ -1,0 +1,11 @@
+fish: 
+set RET 0; nosuch; echo "ret0 st=$status"
+           ^~~~~^
+fish: 
+set RET 3; nosuch; echo "ret3 st=$status"
+           ^~~~~^
+fish: 
+set RET 127; nosuch 2>$TMPDIR/f02.err; echo "ret127 st=$status err="(wc -c <$TMPDIR/f02.err)
+             ^~~~~^
+warning: An error occurred while redirecting file '/home/mfwolffe/lanes/sh21/tmp/sh21-probe.Ppx5Tu/tmp/f02.err'
+warning: Path '/home/mfwolffe/lanes/sh21/tmp/sh21-probe.Ppx5Tu/tmp/f02.err' does not exist

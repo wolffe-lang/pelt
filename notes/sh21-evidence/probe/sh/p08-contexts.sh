@@ -1,0 +1,6 @@
+# a pipeline, a substitution, a function, a subshell
+command_not_found_handle() { echo "handler: $1 args=$#"; return 4; }
+nosuch1 | cat; echo "pipe st=$?"
+v=$(nosuch2); echo "sub: [$v] st=$?"
+f() { nosuch3 x y; echo "in f st=$? 1=$1"; }; f F
+(nosuch4); echo "paren st=$?"

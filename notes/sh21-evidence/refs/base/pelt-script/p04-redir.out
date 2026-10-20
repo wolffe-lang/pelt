@@ -1,0 +1,4 @@
+st=127
+file out: 
+file err: pelt: /home/mfwolffe/lanes/sh21/probe/sh/p04-redir.sh: line 3: nosuch: not found
+st=127
