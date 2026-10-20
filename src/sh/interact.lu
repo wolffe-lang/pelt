@@ -85,10 +85,24 @@ fn line_of(fd: int) -> (str, int) {
     ("", 2)
 }
 
-/// `read -d`'s input (`sh.builtin`'s `read_split`, inside its region):
-/// the bytes of handle `fd` up to byte `d` (not kept), and how they
-/// ended, as `line_of`. Unless `raw`, a backslash and the byte after it
-/// are kept together, so an escaped delimiter does not end the read.
+/// `read -d`'s input (`sh.builtin`'s `bi_read`): the bytes of shell
+/// descriptor 0 up to byte `d` (not kept), and how they ended, as
+/// `read_raw_line`. Unless `raw`, a backslash and the byte after it are
+/// kept together, so an escaped delimiter does not end the read.
+fn read_raw_delim(mut sh: Sh, d: int, raw: bool) -> (str, int) {
+    let fd = fd_get(sh, 0)
+    if fd < 0 || fd == 0 && sh.eof0 {
+        return ("", 2)
+    }
+    let (got, how) = copy region rd {
+        delim_of(fd, d, raw)
+    }
+    if how != 0 && fd == 0 {
+        sh.eof0 = true
+    }
+    (got, how)
+}
+
 fn delim_of(fd: int, d: int, raw: bool) -> (str, int) {
     var o = buf()
     var escaped = false

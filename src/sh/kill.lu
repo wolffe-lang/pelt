@@ -67,8 +67,8 @@ fn kill_target(sh: Sh, word: str) -> (int, int) {
         if jb_state_of(sh, j) == JB_DONE {
             return (P_ENDED, 0)
         }
-        if slot_pgid(sh, j) > 1 {
-            return (T_GROUP, slot_pgid(sh, j))
+        if sh.jb_pgid[j] > 1 {
+            return (T_GROUP, sh.jb_pgid[j])
         }
         return (T_JOB, j)
     }

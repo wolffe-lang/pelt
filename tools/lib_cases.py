@@ -43,11 +43,7 @@ import re
 import shutil
 import signal
 import subprocess
-import sys
 import tempfile
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import lib_reap as lr  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # $PELT_DIFF_DIR points the tools at another corpus (the self-test's).
@@ -114,18 +110,10 @@ def _default_signals():
     signal.pthread_sigmask(signal.SIG_SETMASK, [])
 
 
-# How many processes the last case that timed out had running, all ended
-# (`lib_reap`): read by the report after `run` answers None.
-LAST = {"ended": 0}
-
-
 def run(shell, script, meta, timeout=10):
     """Run one case under `shell` (an argv prefix). Answers a dict with
     stdout, exit, stderr (bool), line (parse rows), or None on a
-    timeout, when every process the case had running has been ended
-    (`lib_reap.end_tree`) and `LAST["ended"]` says how many."""
-    lr.subreaper()
-    before = lr.children()
+    timeout."""
     holder = tempfile.mkdtemp(prefix="pelt-case.")
     try:
         s = os.path.join(holder, "s.sh")
@@ -147,30 +135,19 @@ def run(shell, script, meta, timeout=10):
             argv += ["../s.sh"] + meta.get("args", "").split()
         if "stdin" in meta and meta.get("mode") != "stdin":
             data = meta["stdin"].replace("\\n", "\n").encode()
-        p = subprocess.Popen(argv, cwd=w, env=dict(ENV),
-                             stdin=subprocess.PIPE if data is not None
-                             else subprocess.DEVNULL,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                             preexec_fn=_default_signals)
         try:
-            out, err = p.communicate(input=data, timeout=timeout)
+            p = subprocess.run(argv, cwd=w, env=dict(ENV), input=data,
+                               stdin=None if data is not None
+                               else subprocess.DEVNULL,
+                               capture_output=True, timeout=timeout,
+                               preexec_fn=_default_signals)
         except subprocess.TimeoutExpired:
-            # the case's whole tree, ended by pid (pelt#27): the shell, a
-            # tracer and what it follows, every job and child below them
-            ended = lr.end_tree(p.pid, before)
-            p.kill()
-            p.wait()
-            for fh in (p.stdin, p.stdout, p.stderr):
-                if fh is not None:
-                    fh.close()
-            LAST["ended"] = len(ended)
-            lr.note(os.path.relpath(script, ROOT), ended)
             return None
         code = p.returncode if p.returncode >= 0 else 128 - p.returncode
-        res = {"stdout": out, "exit": code, "stderr": bool(err), "err": err}
-        m = LINE.search(err)
+        res = {"stdout": p.stdout, "exit": code, "stderr": bool(p.stderr),
+               "err": p.stderr}
+        m = LINE.search(p.stderr)
         res["line"] = int(m.group(1)) if m else 0
         return res
     finally:
-        lr.reap_adopted(before)
         shutil.rmtree(holder, ignore_errors=True)

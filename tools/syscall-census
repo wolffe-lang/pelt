@@ -21,14 +21,6 @@ usage: tools/syscall-census BIN_DIR OUT_DIR [--no-session]
 Linux only; needs strace. Exit 0 when the census was taken; the corpus
 verdicts under strace are reported, not judged (strace slows the
 timing-sensitive cases).
-
-A case that times out under strace has its whole tree ended by the
-harness (tools/lib_reap.py: before pelt#27 the timeout ended `strace`
-alone and the shell it followed went on running). The census adds up
-what the harnesses ended (`OUT_DIR/reaped.txt`), is a child subreaper
-itself, and after the runs ends whatever process of theirs is still
-running, by pid, and says how many: `N cases timed out under strace;
-M processes ended; L left` (L is 0 unless a harness let one go).
 """
 
 import os
@@ -38,8 +30,6 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "tools"))
-import lib_reap as lr  # noqa: E402
 CALL = re.compile(r"^(?:\d+:\d+:\d+(?:\.\d+)? )?([a-z_0-9]+)\((.*)")
 RESUMED = re.compile(r"^<\.\.\. ([a-z_0-9]+) resumed>(.*)")
 FORKS = ("clone", "clone3", "fork", "vfork")
@@ -127,31 +117,11 @@ def main(argv):
     runs = [("difftest", [os.path.join(ROOT, "tools", "difftest"), "--bin", wdir])]
     if with_session:
         runs.append(("session", [os.path.join(ROOT, "tools", "session"), "--bin", wdir]))
-    # what the harnesses end on a timeout, said a line a case (pelt#27);
-    # and whatever escapes them comes up to this process
-    reaped = os.path.join(out, "reaped.txt")
-    open(reaped, "w").close()
-    env = dict(os.environ, PELT_REAP_LOG=reaped)
-    lr.subreaper()
-    before = lr.children()
     for name, cmd in runs:
         with open(os.path.join(out, f"{name}-under-strace.log"), "w") as log:
-            rc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, env=env).returncode
+            rc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT).returncode
         tail = open(os.path.join(out, f"{name}-under-strace.log")).read().splitlines()[-1:]
         print(f"syscall-census: {name} under strace exit {rc}: {tail[0] if tail else ''}")
-    lines = open(reaped).read().splitlines()
-    ended = sum(int(ln.split(" ended ")[1].split(":")[0]) for ln in lines if " ended " in ln)
-    left = set()
-    for p in lr.children() - before:
-        left |= lr.end_tree(p, before)
-        try:
-            os.waitpid(p, 0)
-        except ChildProcessError:
-            pass
-    print(f"syscall-census: {len(lines)} case{'' if len(lines) == 1 else 's'} timed out under strace; "
-          f"{ended} processes ended; {len(left)} left"
-          + (f" (ended now: {' '.join(str(p) for p in sorted(left))})" if left else "")
-          + f" -> {reaped}")
     counts = census_of(tdir)
     with open(os.path.join(out, "census.txt"), "w") as fh:
         for name in sorted(counts):

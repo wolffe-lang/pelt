@@ -57,196 +57,46 @@ const PR_RUN: int = 100000
 /// Where the command column of a `jobs` line starts (dash, black-box).
 const JOB_COL: int = 33
 
-// ------------------------------------------------------------- a slot
-
-// A slot is two `int`s (`sh.state`'s `jb_a`, `jb_b`; pelt#39): what nine
-// parallel lists held, at ~140 B a job in the root, held in ~36. No
-// shift is written (the checked machine refuses `<<`, wolf-lang#736):
-// the parts are packed by multiplication. `jb_a` = state (0..3) + the
-// four flags + (status + `SL_BIAS`) × `SL_STATUS`; `jb_b` = `$!`'s
-// number + use stamp × `SL_ID`.
-
-const SL_TOLD: int = 4
-
-const SL_LATE: int = 8
-
-const SL_WAITED: int = 16
-
-/// Kept out of one round of notices (`jc_notify`'s late ones).
-const SL_HELD: int = 32
-
-const SL_STATUS: int = 256
-
-/// A status may be below 0 (`-N`: an end by signal N, as `os_wait_poll`
-/// spells it).
-const SL_BIAS: int = 65536
-
-/// `$!`'s numbers are below 2^32 (a process id, or `NO_PID_BASE` = 2^30
-/// and up).
-const SL_ID: int = 4294967296
-
-fn slot_count(sh: Sh) -> int {
-    sh.jb_a.len
-}
-
-fn slot_state(sh: Sh, j: int) -> int {
-    sh.jb_a[j] % 4
-}
-
-fn set_slot_state(mut sh: Sh, j: int, v: int) {
-    let a = sh.jb_a[j]
-    sh.jb_a[j] = a - a % 4 + v
-}
-
-fn slot_flag(sh: Sh, j: int, f: int) -> bool {
-    sh.jb_a[j] / f % 2 == 1
-}
-
-fn set_slot_flag(mut sh: Sh, j: int, f: int, on: bool) {
-    let a = sh.jb_a[j]
-    let had = a / f % 2 == 1
-    if had && !on {
-        sh.jb_a[j] = a - f
-    } else if !had && on {
-        sh.jb_a[j] = a + f
-    }
-}
-
-fn slot_told(sh: Sh, j: int) -> bool {
-    slot_flag(sh, j, SL_TOLD)
-}
-
-fn set_slot_told(mut sh: Sh, j: int, on: bool) {
-    set_slot_flag(mut sh, j, SL_TOLD, on)
-}
-
-fn slot_late(sh: Sh, j: int) -> bool {
-    slot_flag(sh, j, SL_LATE)
-}
-
-fn set_slot_late(mut sh: Sh, j: int, on: bool) {
-    set_slot_flag(mut sh, j, SL_LATE, on)
-}
-
-fn slot_held(sh: Sh, j: int) -> bool {
-    slot_flag(sh, j, SL_HELD)
-}
-
-fn set_slot_held(mut sh: Sh, j: int, on: bool) {
-    set_slot_flag(mut sh, j, SL_HELD, on)
-}
-
-fn slot_waited(sh: Sh, j: int) -> bool {
-    slot_flag(sh, j, SL_WAITED)
-}
-
-/// The waited flag, counted (`jb_new` walks the table for it only when
-/// some slot has it).
-fn set_slot_waited(mut sh: Sh, j: int, on: bool) {
-    let had = slot_waited(sh, j)
-    if had && !on {
-        sh.jb_nwaited -= 1
-    } else if !had && on {
-        sh.jb_nwaited += 1
-    }
-    set_slot_flag(mut sh, j, SL_WAITED, on)
-}
-
-fn slot_status(sh: Sh, j: int) -> int {
-    sh.jb_a[j] / SL_STATUS - SL_BIAS
-}
-
-fn set_slot_status(mut sh: Sh, j: int, v: int) {
-    let a = sh.jb_a[j]
-    sh.jb_a[j] = a % SL_STATUS + (v + SL_BIAS) * SL_STATUS
-}
-
-fn slot_id(sh: Sh, j: int) -> int {
-    sh.jb_b[j] % SL_ID
-}
-
-fn set_slot_id(mut sh: Sh, j: int, v: int) {
-    let b = sh.jb_b[j]
-    sh.jb_b[j] = b - b % SL_ID + v
-}
-
-fn slot_order(sh: Sh, j: int) -> int {
-    sh.jb_b[j] / SL_ID
-}
-
-fn set_slot_order(mut sh: Sh, j: int, v: int) {
-    let b = sh.jb_b[j]
-    sh.jb_b[j] = b % SL_ID + v * SL_ID
-}
-
-/// A slot's process group: -1 past `jb_pgid`'s end (job control off).
-fn slot_pgid(sh: Sh, j: int) -> int {
-    if j < sh.jb_pgid.len then sh.jb_pgid[j] else -1
-}
-
-/// `jb_pgid` grows only for a group other than -1.
-fn set_slot_pgid(mut sh: Sh, j: int, v: int) {
-    if j >= sh.jb_pgid.len {
-        if v == -1 {
-            return
-        }
-        while sh.jb_pgid.len <= j {
-            (mut sh.jb_pgid).push(-1)
-        }
-    }
-    sh.jb_pgid[j] = v
-}
-
-/// A slot's command text: "" past `jb_text`'s end (job control off).
-fn slot_text(sh: Sh, j: int) -> str {
-    if j < sh.jb_text.len then sh.jb_text[j] else ""
-}
-
-/// `jb_text` grows only for a text other than "".
-fn set_slot_text(mut sh: Sh, j: int, t: str) {
-    if j >= sh.jb_text.len {
-        if t.len == 0 {
-            return
-        }
-        while sh.jb_text.len <= j {
-            (mut sh.jb_text).push("")
-        }
-    }
-    sh.jb_text[j] = t
-}
-
 // ------------------------------------------------------------ the table
 
 /// A new job: the lowest free slot, made current. With job control off
 /// an ended job `wait` answered by its id is forgotten first (dash,
 /// black-box: `notes/sh19-evidence/refs/w08`), so `cmd & wait $!` in a
-/// loop reuses one slot (pelt#33). In a script the children that ended
-/// are reaped first (`jb_reap`).
+/// loop reuses one slot (pelt#33).
 fn jb_new(mut sh: Sh) -> int {
-    jb_reap(mut sh)
-    if !sh.jc_on && sh.jb_nwaited > 0 {
+    if !sh.jc_on {
         var w = 0
-        while w < slot_count(sh) {
-            if slot_waited(sh, w) && slot_state(sh, w) != JB_FREE {
+        while w < sh.jb_waited.len {
+            if sh.jb_waited[w] && sh.jb_state[w] != JB_FREE {
                 jb_free(mut sh, w)
             }
             w += 1
         }
     }
-    var j = sh.jb_free_lo
-    while j < slot_count(sh) && slot_state(sh, j) != JB_FREE {
+    var j = 0
+    while j < sh.jb_state.len && sh.jb_state[j] != JB_FREE {
         j += 1
     }
-    if j == slot_count(sh) {
-        (mut sh.jb_a).push(0)
-        (mut sh.jb_b).push(0)
+    if j == sh.jb_state.len {
+        (mut sh.jb_state).push(JB_RUN)
+        (mut sh.jb_pgid).push(-1)
+        (mut sh.jb_id).push(0)
+        (mut sh.jb_status).push(0)
+        (mut sh.jb_told).push(true)
+        (mut sh.jb_text).push("")
+        (mut sh.jb_late).push(false)
+        (mut sh.jb_waited).push(false)
+        (mut sh.jb_order).push(0)
+    } else {
+        sh.jb_state[j] = JB_RUN
+        sh.jb_pgid[j] = -1
+        sh.jb_id[j] = 0
+        sh.jb_status[j] = 0
+        sh.jb_told[j] = true
+        sh.jb_text[j] = ""
+        sh.jb_late[j] = false
+        sh.jb_waited[j] = false
     }
-    sh.jb_free_lo = j + 1
-    // running, told, not late, waited or held, status 0, `$!` 0
-    sh.jb_a[j] = JB_RUN + SL_TOLD + SL_BIAS * SL_STATUS
-    set_slot_id(mut sh, j, 0)
-    set_slot_pgid(mut sh, j, -1)
-    set_slot_text(mut sh, j, "")
     order_front(mut sh, j)
     j
 }
@@ -256,15 +106,12 @@ fn jb_new(mut sh: Sh) -> int {
 /// new buffer each time (pelt#19), so slots and process entries are
 /// marked free and reused.
 fn jb_free(mut sh: Sh, j: int) {
-    if j < 0 || j >= slot_count(sh) {
+    if j < 0 || j >= sh.jb_state.len {
         return
     }
-    set_slot_waited(mut sh, j, false)
-    set_slot_state(mut sh, j, JB_FREE)
-    set_slot_text(mut sh, j, "")
-    if j < sh.jb_free_lo {
-        sh.jb_free_lo = j
-    }
+    sh.jb_state[j] = JB_FREE
+    sh.jb_text[j] = ""
+    sh.jb_waited[j] = false
     order_drop(mut sh, j)
     var k = 0
     while k < sh.pr_job.len {
@@ -281,13 +128,13 @@ fn jb_free(mut sh: Sh, j: int) {
 
 /// Job `j` is no one's current or previous job.
 fn order_drop(mut sh: Sh, j: int) {
-    set_slot_order(mut sh, j, 0)
+    sh.jb_order[j] = 0
 }
 
 /// Job `j` becomes the current job: the most recent use.
 fn order_front(mut sh: Sh, j: int) {
     sh.jb_clock += 1
-    set_slot_order(mut sh, j, sh.jb_clock)
+    sh.jb_order[j] = sh.jb_clock
 }
 
 /// The job used `n` places before the most recent (0: the current job,
@@ -300,8 +147,8 @@ fn nth_recent(sh: Sh, n: int) -> int {
         pick = -1
         var best = 0
         var j = 0
-        while j < slot_count(sh) {
-            let t = slot_order(sh, j)
+        while j < sh.jb_order.len {
+            let t = sh.jb_order[j]
             if t > best && (below < 0 || t < below) {
                 best = t
                 pick = j
@@ -363,7 +210,7 @@ fn jb_procs(sh: Sh, j: int) -> int {
 /// when every one not ended is stopped, else running. A job with no
 /// process (a list pelt ran itself) keeps the state it was given.
 fn jb_state_of(sh: Sh, j: int) -> int {
-    if slot_state(sh, j) == JB_FREE {
+    if sh.jb_state[j] == JB_FREE {
         return JB_FREE
     }
     var any = false
@@ -383,7 +230,7 @@ fn jb_state_of(sh: Sh, j: int) -> int {
         k += 1
     }
     if !any {
-        return slot_state(sh, j)
+        return sh.jb_state[j]
     }
     if live {
         return JB_RUN
@@ -413,7 +260,7 @@ fn jb_raw(sh: Sh, j: int) -> int {
         k += 1
     }
     if !any {
-        return slot_status(sh, j)
+        return sh.jb_status[j]
     }
     let state = jb_state_of(sh, j)
     if state == JB_STOP && stop > 0 {
@@ -448,8 +295,8 @@ fn raw_status(raw: int) -> int {
 /// -1.
 fn job_of(sh: Sh, id: int) -> int {
     var j = 0
-    while j < slot_count(sh) {
-        if slot_state(sh, j) != JB_FREE && slot_id(sh, j) == id {
+    while j < sh.jb_state.len {
+        if sh.jb_state[j] != JB_FREE && sh.jb_id[j] == id {
             return j
         }
         j += 1
@@ -482,7 +329,7 @@ fn job_index(sh: Sh, spec: str) -> int {
     }
     if is_digits(rest) {
         let n = to_int(rest) else 0
-        if n >= 1 && n <= slot_count(sh) && slot_state(sh, n - 1) != JB_FREE {
+        if n >= 1 && n <= sh.jb_state.len && sh.jb_state[n - 1] != JB_FREE {
             return n - 1
         }
         return -1
@@ -491,8 +338,8 @@ fn job_index(sh: Sh, spec: str) -> int {
     let want = if inside then rest[1..rest.len] else rest
     var found = -1
     var j = 0
-    while j < slot_count(sh) {
-        if slot_state(sh, j) != JB_FREE && slot_text(sh, j).len > 0 {
+    while j < sh.jb_state.len {
+        if sh.jb_state[j] != JB_FREE && sh.jb_text[j].len > 0 {
             let t = first_text(sh, j)
             let hit = if inside then t.contains(want) else t.starts_with(want)
             if hit {
@@ -518,7 +365,7 @@ fn first_text(sh: Sh, j: int) -> str {
         }
         k += 1
     }
-    slot_text(sh, j)
+    sh.jb_text[j]
 }
 
 /// The word for a bad job id: `-2` ambiguous, else no such job.
@@ -553,73 +400,6 @@ fn jc_poll(mut sh: Sh) -> bool {
         jc_record(mut sh, h, st)
     }
     any
-}
-
-/// The children that ended, reaped and written into the table, before a
-/// job starts in a script (`jb_new`). Nothing else reaps a job nobody
-/// waits for until `wait`, so each one that ended held one of the host's
-/// process slots: a loop of 6,000 `cmd &` under a pids limit of 4,096
-/// could not start 1,910 of them, where dash reaps each as it ends
-/// (pelt#39, `notes/sh22-evidence/logs/keep-base-4096.txt`). The poll
-/// costs one `waitpid` a live child (`[os.proc.poll]`), so it is taken
-/// again only after as many starts as children were still live at the
-/// last one: a job's start costs O(1) polls however many jobs run. An
-/// interactive shell's table is read after each line (`jc_take`,
-/// `jc_notify`) and is left to that.
-fn jb_reap(mut sh: Sh) {
-    if sh.interactive || sh.shadow {
-        return
-    }
-    if sh.jb_reap_since < sh.jb_reap_at {
-        sh.jb_reap_since += 1
-        return
-    }
-    sh.jb_reap_since = 0
-    loop {
-        let (h, st) = os_wait_poll() else (-1, 0)
-        if h < 0 {
-            sh.jb_reap_at = st
-            return
-        }
-        jc_record(mut sh, h, st)
-    }
-}
-
-/// With job control off, job `j` whose one process has ended keeps that
-/// process's status (as the poll spelled it) in its slot, as a list pelt
-/// ran itself keeps its own, and gives the process entry back: the
-/// process table then holds only the processes still live (pelt#39).
-/// `$!`'s number stays the slot's, and `wait`, `jobs`, `jobs -l`, `jobs
-/// -p` and `kill` read a slot with no process to the same answers.
-fn jb_fold(mut sh: Sh, j: int) {
-    if sh.jc_on {
-        return
-    }
-    var only = -1
-    var k = 0
-    while k < sh.pr_job.len {
-        if sh.pr_job[k] == j {
-            if only >= 0 {
-                return
-            }
-            only = k
-        }
-        k += 1
-    }
-    if only < 0 {
-        return
-    }
-    let st = sh.pr_st[only]
-    if st == PR_RUN || st >= 256 {
-        return
-    }
-    set_slot_status(mut sh, j, st)
-    set_slot_state(mut sh, j, JB_DONE)
-    sh.pr_job[only] = -1
-    sh.pr_h[only] = -1
-    sh.pr_pid[only] = 0
-    sh.pr_st[only] = 0
-    sh.pr_text[only] = ""
 }
 
 /// The poll taken as a line is read at the prompt (`jc_take`): what the
@@ -666,8 +446,7 @@ fn jc_record(mut sh: Sh, h: int, st: int) {
         if sh.pr_h[k] == h && (sh.pr_st[k] == PR_RUN || sh.pr_st[k] >= 256) {
             sh.pr_st[k] = st
             let j = sh.pr_job[k]
-            set_slot_told(mut sh, j, false)
-            jb_fold(mut sh, j)
+            sh.jb_told[j] = false
             return
         }
         k += 1
@@ -746,7 +525,7 @@ fn still_running(sh: Sh, j: int) -> bool {
         return jb_state_of(sh, j) == JB_RUN
     }
     var i = 0
-    while i < slot_count(sh) {
+    while i < sh.jb_state.len {
         if jb_state_of(sh, i) == JB_RUN {
             return true
         }
@@ -763,7 +542,7 @@ fn block_on_one(mut sh: Sh, j: int) -> bool {
         if (j < 0 || sh.pr_job[k] == j) && sh.pr_st[k] == PR_RUN {
             let raw = os_wait_status(sh.pr_h[k]) else 1
             sh.pr_st[k] = raw
-            set_slot_told(mut sh, sh.pr_job[k], false)
+            sh.jb_told[sh.pr_job[k]] = false
             return true
         }
         k += 1
@@ -787,7 +566,7 @@ fn jc_begin(mut sh: Sh, fg: bool, node: int) -> int {
         // a foreground job is no one's current job until it stops
         order_drop(mut sh, j)
     }
-    set_slot_pgid(mut sh, j, 0)
+    sh.jb_pgid[j] = 0
     sh.jc_build = j
     sh.jc_give = if fg then sh.jc_tty else -1
     sh.jc_node = node
@@ -823,7 +602,7 @@ fn jc_fg_wait(mut sh: Sh, j: int, node: int) -> int {
             jb_fill_text(mut sh, j, node)
         }
         order_front(mut sh, j)
-        set_slot_told(mut sh, j, true)
+        sh.jb_told[j] = true
         notice(mut sh, j)
         return raw_status(raw)
     }
@@ -866,11 +645,11 @@ fn fg_poll(h: int) -> int {
 /// built): the group's leader when it is the first.
 fn jb_join(mut sh: Sh, j: int, h: int) {
     let pid = os_proc_pid(h) else 0
-    if slot_pgid(sh, j) == 0 {
-        set_slot_pgid(mut sh, j, pid)
+    if sh.jb_pgid[j] == 0 {
+        sh.jb_pgid[j] = pid
     }
     jb_add_proc(mut sh, j, h, pid)
-    set_slot_id(mut sh, j, pid)
+    sh.jb_id[j] = pid
 }
 
 /// A foreground job the fast path ran stopped: it becomes a job, told
@@ -878,9 +657,9 @@ fn jb_join(mut sh: Sh, j: int, h: int) {
 fn jb_stopped(mut sh: Sh, h: int, raw: int, text: str) {
     let j = jb_new(mut sh)
     let pid = os_proc_pid(h) else 0
-    set_slot_pgid(mut sh, j, pid)
+    sh.jb_pgid[j] = pid
     jb_add_proc(mut sh, j, h, pid)
-    set_slot_id(mut sh, j, pid)
+    sh.jb_id[j] = pid
     var k = 0
     while k < sh.pr_job.len {
         if sh.pr_job[k] == j {
@@ -890,9 +669,9 @@ fn jb_stopped(mut sh: Sh, h: int, raw: int, text: str) {
         k += 1
     }
     if sh.opt_m {
-        set_slot_text(mut sh, j, text)
+        sh.jb_text[j] = text
     }
-    set_slot_told(mut sh, j, true)
+    sh.jb_told[j] = true
     notice(mut sh, j)
 }
 
@@ -905,10 +684,9 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
     if !sh.opt_m || n < 0 {
         return
     }
-    let jt = copy region jt {
+    sh.jb_text[j] = copy region jt {
         node_text(sh.ast, n)
     }
-    set_slot_text(mut sh, j, jt)
     var m = n
     if sh.ast.nodes[m].kind == K_ANDOR && sh.ast.nodes[m].kids.len == 1 {
         m = sh.ast.nodes[m].kids[0]
@@ -924,7 +702,7 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
                     node_text(sh.ast, st)
                 }
             } else {
-                sh.pr_text[k] = slot_text(sh, j)
+                sh.pr_text[k] = sh.jb_text[j]
             }
             i += 1
         }
@@ -1129,18 +907,18 @@ fn spawn_fds(mut sh: Sh, path: str, args: List[str], map: List[int]) -> int ! {
     }
     var group = -1
     var tty = -1
-    if j >= 0 && slot_pgid(sh, j) >= 0 {
-        group = slot_pgid(sh, j)
+    if j >= 0 && sh.jb_pgid[j] >= 0 {
+        group = sh.jb_pgid[j]
         tty = sh.jc_give
     }
     let h = os_spawn_job(path, args, map, group, tty, jc_defaults(sh))?
     if j >= 0 {
         let pid = os_proc_pid(h) else 0
-        if slot_pgid(sh, j) == 0 {
-            set_slot_pgid(mut sh, j, pid)
+        if sh.jb_pgid[j] == 0 {
+            sh.jb_pgid[j] = pid
         }
         jb_add_proc(mut sh, j, h, pid)
-        set_slot_id(mut sh, j, pid)
+        sh.jb_id[j] = pid
     }
     h
 }
@@ -1227,14 +1005,14 @@ fn job_line(sh: Sh, j: int, long: bool) -> str {
     if !long {
         put(mut o, st)
         to_col(mut o, o.b.len)
-        put(mut o, slot_text(sh, j))
+        put(mut o, sh.jb_text[j])
         return text(o)
     }
     let count = jb_procs(sh, j)
     if count == 0 {
-        put(mut o, "{slot_id(sh, j)} {st}")
+        put(mut o, "{sh.jb_id[j]} {st}")
         to_col(mut o, o.b.len)
-        put(mut o, slot_text(sh, j))
+        put(mut o, sh.jb_text[j])
         return text(o)
     }
     var i = 0
@@ -1255,7 +1033,7 @@ fn job_line(sh: Sh, j: int, long: bool) -> str {
             }
             let line_start = if i > 0 then start + 1 else 0
             to_col(mut o, o.b.len - line_start)
-            put(mut o, if count > 1 then sh.pr_text[k] else slot_text(sh, j))
+            put(mut o, if count > 1 then sh.pr_text[k] else sh.jb_text[j])
             if i < count - 1 {
                 put(mut o, " |")
             }
@@ -1279,13 +1057,12 @@ fn jc_notify(mut sh: Sh, fresh: bool) {
         let _p = jc_poll(mut sh)
     }
     // a list pelt ran itself is told of a line later, when a program's
-    // ending would first be seen (dash, black-box: c_jc_done_message):
-    // held this time, told the next
+    // ending would first be seen (dash, black-box: c_jc_done_message)
     var j0 = 0
-    while j0 < slot_count(sh) {
-        if slot_late(sh, j0) {
-            set_slot_late(mut sh, j0, false)
-            set_slot_held(mut sh, j0, true)
+    while j0 < sh.jb_late.len {
+        if sh.jb_late[j0] {
+            sh.jb_late[j0] = false
+            sh.jb_order[j0] = 0 - sh.jb_order[j0]
         }
         j0 += 1
     }
@@ -1293,9 +1070,9 @@ fn jc_notify(mut sh: Sh, fresh: bool) {
         var pick = -1
         var best = 0
         var j = 0
-        while j < slot_count(sh) {
-            let t = slot_order(sh, j)
-            if t > best && slot_state(sh, j) != JB_FREE && !slot_told(sh, j) && !slot_held(sh, j) {
+        while j < sh.jb_state.len {
+            let t = sh.jb_order[j]
+            if t > best && sh.jb_state[j] != JB_FREE && !sh.jb_told[j] {
                 let s = jb_state_of(sh, j)
                 if s == JB_DONE || s == JB_STOP {
                     pick = j
@@ -1311,29 +1088,29 @@ fn jc_notify(mut sh: Sh, fresh: bool) {
         if jb_state_of(sh, pick) == JB_DONE {
             jb_free(mut sh, pick)
         } else {
-            set_slot_told(mut sh, pick, true)
+            sh.jb_told[pick] = true
         }
     }
     // the late ones keep their place
     j0 = 0
-    while j0 < slot_count(sh) {
-        set_slot_held(mut sh, j0, false)
+    while j0 < sh.jb_order.len {
+        if sh.jb_order[j0] < 0 {
+            sh.jb_order[j0] = 0 - sh.jb_order[j0]
+        }
         j0 += 1
     }
 }
 
 /// Job `j`'s line on standard error: a notice. Made and written inside
-/// a region unless descriptor 2 is a capture, so a notice keeps nothing
-/// in the root (pelt#33: the line, its padding and its buffer stayed
-/// there, a job at a time; pelt#41: so did every notice of a script
-/// that moved its descriptor 2, ~500 B a job); to a capture as
+/// a region when descriptor 2 is the shell's own, so a notice keeps
+/// nothing in the root (pelt#33: the line, its padding and its buffer
+/// stayed there, a job at a time); to a capture or a moved 2 as
 /// `write_fd` writes.
 fn notice(mut sh: Sh, j: int) {
     flush(mut sh)
-    let h = fd_get(sh, 2)
-    if !is_cap(h) {
+    if fd_get(sh, 2) == 2 {
         region nl {
-            write_handle(h, "{job_line(sh, j, false)}\n")
+            eprint_raw("{job_line(sh, j, false)}\n")
         }
         return
     }
@@ -1343,7 +1120,7 @@ fn notice(mut sh: Sh, j: int) {
 /// Whether a job is stopped (`exit` warns, `sh.builtin`).
 fn jobs_stopped(sh: Sh) -> bool {
     var j = 0
-    while j < slot_count(sh) {
+    while j < sh.jb_state.len {
         if jb_state_of(sh, j) == JB_STOP {
             return true
         }
@@ -1425,14 +1202,14 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
     }
     if !pids {
         for j in pick {
-            if slot_state(sh, j) == JB_FREE {
+            if sh.jb_state[j] == JB_FREE {
                 continue
             }
             let s = jb_state_of(sh, j)
             if s == JB_DONE {
                 jb_free(mut sh, j)
             } else if s == JB_STOP {
-                set_slot_told(mut sh, j, true)
+                sh.jb_told[j] = true
             }
         }
     }
@@ -1449,7 +1226,7 @@ fn jb_leader(sh: Sh, j: int) -> int {
         }
         k += 1
     }
-    slot_id(sh, j)
+    sh.jb_id[j]
 }
 
 /// The job `fg` or `bg` names: its slot, or -1 with the message written.
@@ -1476,8 +1253,8 @@ fn fgbg_job(mut sh: Sh, name: str, spec: str) -> int {
 /// Every stopped process of job `j` continued: `CONTINUE` to its group
 /// (or to each process when it has none), and the table says running.
 fn jb_continue(mut sh: Sh, j: int) {
-    if slot_pgid(sh, j) > 1 {
-        os_signal_send_group(slot_pgid(sh, j), signal.continued()) else |_| {}
+    if sh.jb_pgid[j] > 1 {
+        os_signal_send_group(sh.jb_pgid[j], signal.continued()) else |_| {}
     } else {
         var k = 0
         while k < sh.pr_job.len {
@@ -1495,7 +1272,7 @@ fn jb_continue(mut sh: Sh, j: int) {
         k += 1
     }
     if jb_procs(sh, j) > 0 {
-        set_slot_told(mut sh, j, true)
+        sh.jb_told[j] = true
     }
 }
 
@@ -1508,11 +1285,11 @@ fn bi_fg(mut sh: Sh, args: List[str]) -> int {
     if j < 0 {
         return 2
     }
-    emit(mut sh, "{slot_text(sh, j)}\n")
+    emit(mut sh, "{sh.jb_text[j]}\n")
     flush(mut sh)
     order_front(mut sh, j)
-    if sh.jc_tty >= 0 && slot_pgid(sh, j) > 0 {
-        os_term_set_foreground(sh.jc_tty, slot_pgid(sh, j)) else |_| {}
+    if sh.jc_tty >= 0 && sh.jb_pgid[j] > 0 {
+        os_term_set_foreground(sh.jc_tty, sh.jb_pgid[j]) else |_| {}
     }
     jb_continue(mut sh, j)
     let st = jc_fg_wait(mut sh, j, -1)
@@ -1540,7 +1317,7 @@ fn bi_bg(mut sh: Sh, args: List[str]) -> int {
             st = 2
             continue
         }
-        emit(mut sh, "[{j + 1}] {slot_text(sh, j)}\n")
+        emit(mut sh, "[{j + 1}] {sh.jb_text[j]}\n")
         flush(mut sh)
         jb_continue(mut sh, j)
     }

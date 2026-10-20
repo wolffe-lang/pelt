@@ -75,6 +75,11 @@ fn why_failed() -> str {
 
 // ---------------------------------------------------- feeding bytes in
 
+/// A read handle that yields `data` and then end of file.
+fn input_from(mut sh: Sh, data: List[byte]) -> int {
+    feed_said(mut sh, feed(sh, data))
+}
+
 /// `feed`'s failures.
 const FEED_NO_TEMP: int = -2
 
@@ -161,25 +166,12 @@ fn temp_create(sh: Sh) -> (int, str) {
 /// `` ` ``, `\` and a newline) unless any part of the delimiter was
 /// quoted (XCU 2.7.4).
 fn doc_text(mut sh: Sh, rd: Rd) -> str {
-    if rd.quoted || doc_plain(rd.body) {
+    if rd.quoted {
         return rd.body
     }
     var o = buf()
     xw(mut sh, rd.body, 0, rd.body.len, X_DQ | X_DOC, mut o)
     unmark(text(o))
-}
-
-/// Whether an unquoted here-document's body is its own expansion: no
-/// `$`, `` ` `` or `\` (XCU 2.7.4 names no other), and no byte the
-/// expander would mark.
-fn doc_plain(body: str) -> bool {
-    for b in body.bytes() {
-        let c = b as int
-        if c < 7 || c == 36 || c == 96 || c == 92 {
-            return false
-        }
-    }
-    true
 }
 
 // ------------------------------------------------------------- applying
@@ -266,16 +258,11 @@ fn redir_one(mut sh: Sh, rd: Rd, framed: bool) -> bool {
         if sh.flow != F_NONE {
             return false
         }
-        // the bytes and the pipe made inside a region: only the handle
-        // is kept (pelt#39)
-        let fed = copy region hd {
-            var data = List[byte]()
-            for x in body.bytes() {
-                (mut data).push(x)
-            }
-            feed(sh, data)
+        var data = List[byte]()
+        for x in body.bytes() {
+            (mut data).push(x)
         }
-        let h = feed_said(mut sh, fed)
+        let h = input_from(mut sh, data)
         if h < 0 {
             return false
         }
@@ -283,11 +270,7 @@ fn redir_one(mut sh: Sh, rd: Rd, framed: bool) -> bool {
         install(mut sh, fd, h, framed)
         return true
     }
-    // a literal or a lone parameter is its own expansion, built
-    // nowhere (`sh.exec`'s `plain_word`; a redirection's word is neither
-    // split nor globbed); anything else is expanded (pelt#39)
-    let (plain, pv) = plain_word(sh, rd.word)
-    let target = if plain then pv else expand_one(mut sh, rd.word, X_TILDE)
+    let target = expand_one(mut sh, rd.word, X_TILDE)
     if sh.flow != F_NONE {
         return false
     }

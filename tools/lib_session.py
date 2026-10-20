@@ -122,10 +122,6 @@ import tempfile
 import termios
 import time
 import fcntl
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import lib_reap as lr  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SESS = os.environ.get("PELT_SESSION_DIR") or os.path.join(ROOT, "tests", "session")
@@ -590,8 +586,6 @@ def run(argv, keys_path, meta, expect=None):
 
 def _session(argv, keys, env, cwd, expect, meta=None):
     meta = meta or {}
-    lr.subreaper()
-    before = lr.children()
     cols = int(meta.get("cols") or 80)
     nrows = int(meta.get("rows") or 24)
     master, slave = pty.openpty()
@@ -754,17 +748,15 @@ def _session(argv, keys, env, cwd, expect, meta=None):
         last_mode = term_lmode(master, hold) == mode_before
     if rc is None:
         exit_line = "alive"
-        # the session's whole tree, ended by pid (pelt#27): a group
-        # signal missed every job the shell put in a group of its own,
-        # and under the census reached the tracer, not the shell
-        ended = lr.end_tree(p.pid, before)
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except OSError:
+            pass
         p.wait()
-        lr.note(f"session {' '.join(argv)}", ended)
     elif rc < 0:
         exit_line = f"signal {-rc}"
     else:
         exit_line = f"exit {rc}"
-    lr.reap_adopted(before)
     for fd in list(open_fds):
         os.close(fd)
     # the master first, then the slave: on macOS closing a terminal can

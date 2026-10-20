@@ -35,7 +35,7 @@ def die(msg):
 
 def verdict(meta, want_out, got):
     if got is None:
-        return False, f"timed out, ended {lc.LAST['ended']} processes"
+        return False, "timed out"
     if meta.get("mode") == "parse":
         want_exit = int(meta["exit"])
         if got["exit"] != want_exit:

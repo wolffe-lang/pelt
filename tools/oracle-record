@@ -52,7 +52,7 @@ def main(argv):
         d = lc.run(["dash"], script, meta)
         b = lc.run(["bash", "--posix"], script, meta)
         if d is None or b is None:
-            print(f"TIMEOUT {area}/{name} (ended {lc.LAST['ended']} processes)")
+            print(f"TIMEOUT {area}/{name}")
             changed += 1
             continue
         primary, second = (b, d) if meta.get("oracle") == "bash" else (d, b)

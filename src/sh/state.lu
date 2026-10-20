@@ -166,31 +166,27 @@ struct Sh {
     /// Inside a pipeline that is no job (`sh.jobs`'s `pipe_is_job`).
     jc_hold: bool,
     jc_node: int,
-    /// The job table (`sh.jobs`): slot k is job number k + 1. A slot is
-    /// two `int`s (pelt#39: nine parallel lists kept ~140 B a job in the
-    /// root, `notes/sh22-evidence/witness/jobcost`), read and written only
-    /// through `sh.jobs`'s `slot_*` accessors: `jb_a` packs its state
-    /// (`JB_FREE` or a job's), the status of a list pelt ran itself (or
-    /// of a job whose one process ended, with job control off), and the
-    /// flags told, late, waited and held; `jb_b` packs the number `$!`
-    /// gave it (a process id, or for a list pelt ran itself a number no
-    /// process has, `NO_PID_BASE` and up) and its last use (a stamp of
-    /// `jb_clock`, 0 for none: `+` is the most recent, `-` the one
-    /// before). Its group (0 for none) and its command text ("" with job
-    /// control off) are in `jb_pgid` and `jb_text`, which grow only when
-    /// job control writes them: past their ends a slot's are -1 and "".
-    jb_a: List[int],
-    jb_b: List[int],
+    /// The job table (`sh.jobs`): slot k is job number k + 1; a slot is
+    /// `JB_FREE` or a job's state, its group (0 for none), the number
+    /// `$!` gave it (a process id, or for a list pelt ran itself a
+    /// number no process has, `NO_PID_BASE` and up), the status of a
+    /// list pelt ran itself, whether its last change was told, and its
+    /// command text ("" with job control off). `jb_order` is each
+    /// slot's last use (a stamp of `jb_clock`, 0 for none): `+` is the
+    /// most recent, `-` the one before.
+    jb_state: List[int],
     jb_pgid: List[int],
+    jb_id: List[int],
+    jb_status: List[int],
+    jb_told: List[bool],
     jb_text: List[str],
-    /// How many slots `wait` marked (the waited flag), and the lowest slot
-    /// that may be free: so starting a job is not a walk of the table.
-    jb_nwaited: int,
-    jb_free_lo: int,
-    /// When the next job's start polls the children (`sh.jobs`'s
-    /// `jb_reap`): after `jb_reap_at` more starts.
-    jb_reap_since: int,
-    jb_reap_at: int,
+    /// A list pelt ran itself after `&`: told of one line later.
+    jb_late: List[bool],
+    /// An ended job whose status `wait` with its id answered, with job
+    /// control off: forgotten when the next job starts (dash,
+    /// black-box: `notes/sh19-evidence/refs/w01`, `w08`).
+    jb_waited: List[bool],
+    jb_order: List[int],
     jb_seq: int,
     jb_clock: int,
     /// The processes of the jobs: the slot, the child's handle and
@@ -243,11 +239,6 @@ struct Sh {
     /// filled and given back cleared, so a turn makes no list in the
     /// root (pelt#33).
     argpool: List[List[str]],
-    /// Parsers for the text `eval`, `.` and a trap's action run
-    /// (`sh.exec`'s `eval_from`): each taken, reset and given back, so a
-    /// turn makes no parser in the root (pelt#39: a fresh one is
-    /// thirteen lists, ~700 B an `eval`).
-    ppool: List[P],
     stage_child: int,
     /// A stage's built-in run on the fast path: the read end its output
     /// waits behind for the next stage, or -1.
@@ -389,14 +380,15 @@ fn new_sh(name: str) -> Sh {
         jc_last: false,
         jc_hold: false,
         jc_node: -1,
-        jb_a: List[int](),
-        jb_b: List[int](),
+        jb_state: List[int](),
         jb_pgid: List[int](),
+        jb_id: List[int](),
+        jb_status: List[int](),
+        jb_told: List[bool](),
         jb_text: List[str](),
-        jb_nwaited: 0,
-        jb_free_lo: 0,
-        jb_reap_since: 0,
-        jb_reap_at: 0,
+        jb_late: List[bool](),
+        jb_waited: List[bool](),
+        jb_order: List[int](),
         jb_seq: 0,
         jb_clock: 0,
         pr_job: List[int](),
@@ -422,7 +414,6 @@ fn new_sh(name: str) -> Sh {
         nowait: false,
         bg_simple: false,
         argpool: List[List[str]](),
-        ppool: List[P](),
         stage_child: -1,
         stage_in: -1,
         stage_w: -1,
@@ -1186,13 +1177,6 @@ fn write_fd(mut sh: Sh, fd: int, s: str) {
         }
         return
     }
-    write_handle(h, s)
-}
-
-/// `s` to handle `h` (not a capture): the process's standard error, a
-/// handle pelt opened, or nothing when the descriptor is closed. Writes
-/// nothing to the state, so it can run inside a region.
-fn write_handle(h: int, s: str) {
     if h == 2 {
         eprint_raw(s)
         return
