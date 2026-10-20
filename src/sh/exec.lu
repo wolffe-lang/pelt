@@ -635,8 +635,12 @@ fn eval_string(mut sh: Sh, src: str, what: str) -> int {
 /// input: what an interactive shell runs after each prompt, so its
 /// diagnostics count lines from the start of the session.
 fn eval_from(mut sh: Sh, src: str, line: int) -> int {
-    var p = new_parser(src, line)
-    eval_top(mut sh, mut p, src, line)
+    // a parser from the state's pool, given back after; an `eval` inside
+    // this one takes another (pelt#39)
+    var p = (mut sh.ppool).pop() else new_parser(src, line)
+    let st = eval_top(mut sh, mut p, src, line)
+    (mut sh.ppool).push(take p)
+    st
 }
 
 /// `eval_from` through parser `p`, reset in place for `src`: a shell's

@@ -239,6 +239,11 @@ struct Sh {
     /// filled and given back cleared, so a turn makes no list in the
     /// root (pelt#33).
     argpool: List[List[str]],
+    /// Parsers for the text `eval`, `.` and a trap's action run
+    /// (`sh.exec`'s `eval_from`): each taken, reset and given back, so a
+    /// turn makes no parser in the root (pelt#39: a fresh one is
+    /// thirteen lists, ~700 B an `eval`).
+    ppool: List[P],
     stage_child: int,
     /// A stage's built-in run on the fast path: the read end its output
     /// waits behind for the next stage, or -1.
@@ -414,6 +419,7 @@ fn new_sh(name: str) -> Sh {
         nowait: false,
         bg_simple: false,
         argpool: List[List[str]](),
+        ppool: List[P](),
         stage_child: -1,
         stage_in: -1,
         stage_w: -1,

@@ -505,6 +505,10 @@ fn bi_unset(mut sh: Sh, args: List[str]) -> int {
 }
 
 fn join_args(args: List[str]) -> str {
+    if args.len == 1 {
+        // one operand is its own text: nothing built (pelt#39)
+        return args[0]
+    }
     var o = buf()
     var k = 0
     for a in args {
