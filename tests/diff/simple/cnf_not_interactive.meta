@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+bash=differs
+why=pelt#42: the hook is called only in an interactive shell; bash calls its handler in scripts too

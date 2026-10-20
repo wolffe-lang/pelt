@@ -1,0 +1,3 @@
+script st=127
+-c st=127
+stdin st=127
