@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s
+oracle=bash
+dash=differs
+why=pelt#42: the handler's status is the command's (its return, or its last command's). bash's command_not_found_handle, whose status is the command's too, is the oracle; dash calls no function for a command not found. exec true ends both shells without bash's exit message

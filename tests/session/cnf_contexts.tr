@@ -1,0 +1,26 @@
+step 0
+err no
+prompt "$ "
+step 1 "command_not_found_handle() { echo \"handler: $1 $#\"; return 4; }"
+err no
+prompt "$ "
+step 2 "nosuch1 | cat; echo \"pipe st=$?\""
+out "handler: nosuch1 1\npipe st=0\n"
+err no
+prompt "$ "
+step 3 "v=$(nosuch2); echo \"sub: [$v] st=$?\""
+out "sub: [handler: nosuch2 1] st=4\n"
+err no
+prompt "$ "
+step 4 "f() { nosuch3 x y; echo \"in f st=$? 1=$1\"; }; f F"
+out "handler: nosuch3 3\nin f st=4 1=F\n"
+err no
+prompt "$ "
+step 5 "(nosuch4); echo \"paren st=$?\""
+out "handler: nosuch4 1\nparen st=4\n"
+err no
+prompt "$ "
+step 6 "exec true"
+err no
+prompt ""
+exit 0 at step 6

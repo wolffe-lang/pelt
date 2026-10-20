@@ -1,0 +1,32 @@
+step 0
+err no
+prompt "$ "
+step 1 "command_not_found_handle() { echo \"handled $1\"; return \"$want\"; }"
+err no
+prompt "$ "
+step 2 "want=0; nosuch; echo \"st=$?\""
+out "handled nosuch\nst=0\n"
+err no
+prompt "$ "
+step 3 "want=3; nosuch; echo \"st=$?\""
+out "handled nosuch\nst=3\n"
+err no
+prompt "$ "
+step 4 "command_not_found_handle() { :; }"
+err no
+prompt "$ "
+step 5 "nosuch; echo \"st=$?\""
+out "st=0\n"
+err no
+prompt "$ "
+step 6 "command_not_found_handle() { false; }"
+err no
+prompt "$ "
+step 7 "nosuch; echo \"st=$?\""
+out "st=1\n"
+err no
+prompt "$ "
+step 8 "exec true"
+err no
+prompt ""
+exit 0 at step 8

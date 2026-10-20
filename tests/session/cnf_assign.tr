@@ -1,0 +1,14 @@
+step 0
+err no
+prompt "$ "
+step 1 "command_not_found_handle() { echo \"in: ${FOO-unset}\"; }"
+err no
+prompt "$ "
+step 2 "FOO=bar nosuch; echo \"after: ${FOO-unset} st=$?\""
+out "in: bar\nafter: unset st=0\n"
+err no
+prompt "$ "
+step 3 "exec true"
+err no
+prompt ""
+exit 0 at step 3

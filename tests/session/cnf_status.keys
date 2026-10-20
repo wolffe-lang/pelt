@@ -1,0 +1,8 @@
+command_not_found_handle() { echo "handled $1"; return "$want"; }
+want=0; nosuch; echo "st=$?"
+want=3; nosuch; echo "st=$?"
+command_not_found_handle() { :; }
+nosuch; echo "st=$?"
+command_not_found_handle() { false; }
+nosuch; echo "st=$?"
+exec true

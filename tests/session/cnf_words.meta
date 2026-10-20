@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s
+oracle=bash
+dash=differs
+why=pelt#42: the handler's operands are the command's words after expansion, $1 the name. bash is the oracle; dash calls no function. exec true ends both shells without bash's exit message

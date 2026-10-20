@@ -1,0 +1,3 @@
+command_not_found_handle() { echo "in: ${FOO-unset}"; }
+FOO=bar nosuch; echo "after: ${FOO-unset} st=$?"
+exec true

@@ -1,0 +1,22 @@
+step 0
+err no
+prompt "$ "
+step 1 "command_not_found_handle() { echo \"out: $*\"; echo \"err: $*\" >&2; }"
+err no
+prompt "$ "
+step 2 "nosuch a b >o 2>e; echo \"st=$?\""
+out "st=0\n"
+err no
+prompt "$ "
+step 3 "cat o e"
+out "out: nosuch a b\nerr: nosuch a b\n"
+err no
+prompt "$ "
+step 4 "nosuch c 2>&1 | cat"
+out "out: nosuch c\nerr: nosuch c\n"
+err no
+prompt "$ "
+step 5 "exec true"
+err no
+prompt ""
+exit 0 at step 5

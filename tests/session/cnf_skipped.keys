@@ -1,0 +1,6 @@
+command_not_found_handle() { echo "handler: $1"; return 5; }
+command nosuch1; echo "command st=$?"
+./nosuch2; echo "slash st=$?"
+unset -f command_not_found_handle
+nosuch3; echo "unset st=$?"
+exit

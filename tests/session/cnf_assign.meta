@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s
+oracle=bash
+dash=differs
+why=pelt#42: the command's assignments are made for the handler's call and undone after it, as for a function's (XCU 2.9.1). bash is the oracle; dash calls no function. exec true ends both shells without bash's exit message

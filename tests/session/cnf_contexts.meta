@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s
+oracle=bash
+dash=differs
+why=pelt#42: the handler is called for a name not found in a pipeline, a command substitution, a function and a subshell of an interactive shell, as bash does (the oracle); dash calls no function. exec true ends both shells without bash's exit message

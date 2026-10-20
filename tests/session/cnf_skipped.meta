@@ -1,0 +1,2 @@
+bash=differs
+why=pelt#42: no handler for a name with a slash (no command search), for the operand of command (which asks for the utility, never a function: XCU command), or once the function is unset: each is the plain not-found, 127, as dash says it for every name. bash calls its handler for command's operand (black-box, notes/sh21-evidence/refs/base/bash-i/p07-command.out)

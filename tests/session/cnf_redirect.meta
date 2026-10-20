@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s
+oracle=bash
+dash=differs
+why=pelt#42: the command's redirections apply around the handler's call, as around any function's; in a pipeline it is the stage. bash is the oracle (its handler gets the command's redirections too); dash calls no function. exec true ends both shells without bash's exit message
