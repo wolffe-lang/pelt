@@ -1,0 +1,1 @@
+tests/diff/builtin/c_s_dot_special_file.sh ended 2: 11550 11552

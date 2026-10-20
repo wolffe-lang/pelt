@@ -45,8 +45,9 @@ and reports.
 | pelt#27 | the census leaves a shell behind | open; seen at trunk below | — |
 | kasumi | `/home` ~43 GB | 42 GB free at the start; load 2.2; podman 5, `archlinux:base-devel` present | — |
 
-The counts at trunk (kasumi, both tiers, in the container): the
-baseline gauntlet's `logs/base.status` (filled in §4).
+The counts at trunk (kasumi, both tiers and both under `taskset -c 0-3`,
+in the container; `logs/base.status`, every gate 0): corpus **962/0/38**,
+sessions **273/0/3**, statements **505 of 547**.
 
 ### 2.1 What is kept at trunk, measured
 
@@ -319,3 +320,238 @@ slot's fold keeping no status (item 3.2.2 broken): red on the corpus
 rows that read a folded job's status (`wait/c_unwaited_many_status`, a
 new case: 300 jobs nobody waits for, then `wait $first` and `jobs |
 wc -l`, recorded from dash), and nothing else.
+
+### 3.6 The result against the prediction
+
+Measured on kasumi, in the container, by `notes/sh22-evidence/gauntlet.sh`
+at the code head `868bce1` (every gate's exit status in
+`logs/head.status`, all 0; logs in `logs/gauntlet/head-*`), by
+`probe/table.sh` (three passes of `tools/shape-rss`'s own rows and of
+`probe/shapes22.py`'s neighbours over trunk's binaries and the head's,
+pinned to cpus 12–15; `logs/table/`, `logs/table.md`), and in CI (§4).
+After `868bce1` only `tools/lib_reap.py`'s macOS path changed (no
+process table read a case where nothing can be adopted, `eb34750`) and
+prose; the PR's `tier pr` run covers the final head.
+
+**The before/after table** (`tools/shape-rss`'s method: peak RSS at N
+and 2N turns, bytes a turn, the least and the most of three passes; the
+gate's rows at the gate's N; dash for scale):
+
+| row | shape | N | trunk native | trunk release | head native | head release | dash |
+|---|---|---:|---:|---:|---:|---:|---:|
+| baseline | `:` (the loop's own floor) | 10,000 | 15–54 | 39–58 | 36–44 | 46–59 | −13–4 |
+| builtin-wait | `wait` | 10,000 | 50–61 | 59–72 | 38–56 | 56–63 | 0–5 |
+| **builtin-read-redir** | `read x </dev/null` | 10,000 | **1,643–1,674** | **1,653–1,673** | **70–117** | **80–94** | 2–4 |
+| **builtin-eval** | `eval :` | 10,000 | **740–757** | **740–759** | **57–92** | **71–84** | 0–11 |
+| **builtin-cd** | `cd .` | 10,000 | **561–585** | **574–586** | **38–104** | **65–71** | −10–10 |
+| **builtin-command** | `command true` | 100,000 | **175–178** | **174–175** | **62–66** | **62–64** | −2–1 |
+| **builtin-umask** | `umask 022` | 100,000 | **139–145** | **142–144** | **61–64** | **61–65** | −2–−1 |
+| **background-nowait** | `true &` | 20,000 | **197–236** | **193–207** | **81–90** | **96–101** | 32–39 |
+| **background-program-nowait** | `env true &` | 10,000 | **335–409** | **358–371** | **124–130** | **65–106** | 35–47 |
+| background-wait | `env true & wait` (sh19's) | 10,000 | 72–131 | 87–141 | 93–120 | 85–102 | −4–1 |
+| bi-read-here | `read x <<E; v; E` | 10,000 | 1,870–1,880 | 1,882–1,888 | 53–107 | 66–85 | −16–6 |
+| bi-eval-arg | `eval 'y=1'` | 10,000 | 748–770 | 720–759 | 76–93 | 73–91 | −1–8 |
+| bi-cd-dir | `cd /` | 10,000 | 210–219 | 201–229 | 25–89 | 57–81 | −13–3 |
+| bi-command-v | `command -v true >/dev/null` | 10,000 | 1,538–1,549 | 1,542–1,548 | 58–98 | 77–95 | −6–4 |
+| bi-umask-print | `umask >/dev/null` | 10,000 | 1,404–1,456 | 1,406–1,457 | 43–52 | 60–92 | 3–10 |
+| bi-jobs | `jobs` | 10,000 | 105–128 | 97–104 | 65–114 | 95–104 | −1–3 |
+| bi-redir | `true >/dev/null` (the fast path) | 10,000 | 21–44 | 30–50 | 28–63 | 34–56 | −1–2 |
+
+Every row carries the loop's own 36–59 B a turn (the `baseline` row:
+the counter's new value is kept each turn, the old one is root
+garbage), against dash's ~0. **What each of the five built-ins keeps of
+its own, beyond the loop, is now 0–60 B a turn on both tiers** (dash:
+0–11), from 100–1,620; a job nobody waits for keeps ~40 B of the
+shell's memory (two packed `int`s and their growth) and, for a
+program, nothing of the host's once it ends.
+
+| prediction | predicted | measured | held? |
+|---|---|---|---|
+| 3.1 the five built-ins | ≤ 100 B a turn, both tiers | release 61–94 on all five; native 57–92 for `eval`, 62–66 `command`, 61–64 `umask`, **70–117 `read`, 38–104 `cd`** (one pass each above 100) | **held on release; on native two rows read above 100 once in three passes** (each is the loop's ~45 plus noise of the same size; the gate's bound, 100 B a turn + 1 MiB, held in every pass) |
+| 3.1 the neighbours by item 1 | `umask >/dev/null`, `command -v …` ≤ 100 | 43–98 | held |
+| 3.1 `eval 'y=1'`, `cd /` | ≤ 100 | 25–93 | held |
+| 3.1 `read x <<E` | still over, reported | **53–107**: `redir`'s plain-body and region change (`bf860c8`) took it down with the rest | **better than predicted** |
+| 3.1 `jobs` | unchanged, reported | 65–114 (was 97–128): the lean path's share went, its own `pick` list per call stays | held in kind |
+| 3.2 `true &` (no wait) | ≤ 100 B a turn, both tiers | 81–101 | **held but once** (101, release) |
+| 3.2 `env true &` (no wait) | ≤ 100, answering right at a pids limit of 4,096 | **124–130 native**, 65–106 release; answers right in every run | **not held on native** (the gate's bound held: ~1.3 MB over 10,000 turns against 2.0) |
+| 3.2 6,000 `env true &`, pids limit 4,096 | 0 "cannot be run" | **0**, both tiers; `jobs` lists 6,000 (`logs/keep-head-4096.txt`) | held |
+| 3.2 `probe/setm/rss.sh` without `set -m` | ≤ 60 B a job (dash 16–24) | `true &` 72–76, `env true &` 75–86 (the probe's loop floor included, as dash's is) | **not held** (dash's order, not ≤ 60) |
+| 3.2 the same after `set -m` | lower, still over | `true &` 715 → **111–112**, `env true &` 812 → **240–299** (dash −9–16, noisy at 5,000) | held, and lower than predicted: most of it was the notices themselves (§7) |
+| 3.3 #41's rows | `c_monitor_loop_builtin` red at trunk, the three green at the head | exactly that, both tiers (`logs/rows-41.log`; trunk prints the three notices after "the loop has ended") | held |
+| 3.4 #27 | the witness red at trunk's harness on both rows, green at the head on both tiers | red at trunk's harness: difftest left the child, the job and the grandchild; the census left **the shell** and all three (`logs/reap-witness-w1.log`); green at the head on both tiers: difftest ended 4, the census 5 (`strace` too), 0 left (`logs/gauntlet/head-reap-*.log`) | held |
+| 3.5 corpus | (962 + 3)/0/38 | **966/0/38** both tiers and both under `taskset -c 0-3` | **off by one**: the table counted the three #41 rows and left out the fourth new case, `wait/c_unwaited_many_status`, which §3.5's own plant paragraph names |
+| 3.5 sessions | 273/0/3 | **273/0/3** both tiers and under `taskset` | held |
+| 3.5 statements | 505 of 547 | **505 of 547**; one X row added (2.11/19), so 41 not counted | held |
+| 3.5 `shape-rss` | +7 rows, each red at trunk, ok at the head | red at trunk on all seven, both tiers, on kasumi (`logs/rows-trunk-head.log`) and in plant A's CI run; ok at the head in every pass; 32 rows → 39 (trunk had 32, not the 33 §3.5 printed) | held |
+| 3.5 every other gate | 0 | all 37 gates 0 at `868bce1` (trunk's 35 and the two reap-witness rows) | held |
+| plant A | red on exactly the seven rows, `c_monitor_loop_builtin`, both witness rows | **run 39489054798**: exactly that on both tiers; corpus 965/1/38, sessions 273/0/3 (`ci/plant-a-39489054798.txt`) | held |
+| plant B | red on `wait/c_unwaited_many_status` and nothing else | **run 39489058683**: the corpus red on exactly that case, both tiers (965/1/38); **and two sessions, `background_status` and `kill_job_prompt`** (271/2/3), both tiers (`ci/plant-b-39489058683.txt`) | **held, with two more reds than predicted**: the sessions run pelt `-i +m`, job control off, where the fold applies too (their `wait $!` reads a folded job); a third reader the prediction did not name |
+
+**Not predicted.**
+
+- **`os_cwd()`'s answer outlives the region it is asked in**: 48 B a call
+  kept in the root from inside `region { }`, both tiers, where an
+  interpolated string of the same length kept 0 (`witness/cwdregion/`,
+  `logs/cwdregion.txt`). The first `cd` stay check asked it every turn
+  and kept ~100 B; the check now does not ask it when the logical and
+  the physical directory were one path at the last look (`0397fcf`).
+  A wolf finding (§7).
+- **The first stay check broke `cd -P` with a relative operand**: it
+  changed the directory inside the region and the ordinary path then
+  changed it again, relative to the new one; the corpus caught it
+  (`cd/c_logical_physical`, `logs/quick/q1-diff-native.log`). Fixed by
+  changing the directory there only to an absolute path, and only for
+  where the shell already is (`17839bc`).
+- **A notice to a moved standard error kept ~500 B a job** (built in
+  the root through `write_fd`, where a notice to the shell's own
+  descriptor 2 was made in a region since sh19): `probe/setm/rss.sh`
+  redirects the notices, and that was most of what a `set -m` loop kept
+  a job (`logs/prof-w2-setm.txt`: 82% under `notice`). Now made and
+  written in a region unless descriptor 2 is a capture (`6084236`).
+- **`wait` says "ended by signal" for a job a signal ended long
+  before**, where dash, which reaped it as the next job started, says
+  nothing: trunk too (`logs/red-41-pre.log`); the new case sends that
+  message to `/dev/null` rather than pin a timing dash itself has.
+- **ea260cd broke every session tool** (a line put between an `if` and
+  its `elif` in `tools/lib_session.py`); the first head gauntlet's
+  `clause` gate caught it before any CI run (`868bce1` fixed it; that
+  gauntlet was stopped by its container's id and taken again).
+- **Two runs of mine read a moving tree**: the trunk gauntlet's and a
+  quick check's container halves were reading `~/lanes/sh22/pelt` when
+  it was rebuilt; both were stopped by container id and taken again
+  from trees of their own (`base`, `g1`, and `snap.sh`'s frozen copies
+  for quick checks). No number in this file comes from those runs.
+
+## 4. Evidence index
+
+- **The prediction:** `73cb5e9`, before the first change under `src/`
+  (`1fae880`), `tools/` (`4eab1f5`), `tests/` (`ebb4a81`) or `.github/`
+  (`df99177`).
+- **Trunk measured:** `logs/base-shapes.log`, `logs/base-shapes-bg.log`
+  (`probe/shapes22.py`); `logs/prof-base/`, `logs/prof-base-b/`
+  (`probe/heapprof.py`, `probe/prof22.sh`, `probe/prof22b.sh`); a slot's
+  cost `logs/jobcost.txt` (`witness/jobcost/`); `logs/keep-base-*.txt`
+  (`probe/jobs/keep.sh`); `logs/setm-rss-base.txt` (`probe/setm/rss.sh`);
+  dash's `set -m` `refs/setm-base/` (`probe/setm/m01`–`m08`, `run.sh`,
+  `ttyrun.py`); the census's leak `logs/reap-base.log`,
+  `logs/left-census.txt`, `logs/left-difftest.txt` (`probe/reap/leak.sh`);
+  the trunk gauntlet `logs/base.status`, `logs/gauntlet/base-*`.
+- **As the fixes landed:** `logs/w1-shapes.log`, `logs/prof-w1/`
+  (the built-ins), `logs/w2-jobs.log`, `logs/keep-w2-4096.txt`,
+  `logs/setm-rss-w2.txt`, `logs/prof-w2-setm.txt` (the slot),
+  `logs/cwdregion.txt` (`witness/cwdregion/`), `logs/quick/` (the corpus
+  and the sessions at the stages: `q-s1` the slot alone, `q3` slot, reap
+  and fold; `q1` the `cd -P` red).
+- **Seen red, locally:** the seven `shape-rss` rows on trunk's binaries,
+  both tiers, `logs/rows-trunk-head.log` (`rows.sh`); the #41 row at
+  trunk, `logs/rows-41.log`; the reap witness against trunk's harness,
+  `logs/reap-witness-w1.log` (`rw.sh`).
+- **Seen red in CI (RULES §7, `tier pr` dispatches):** plant A **run
+  39489054798** (`sh22-plant-a` at `d1c00bd`: `src/` and the harnesses'
+  reaping at trunk), `ci/plant-a-39489054798.txt`; plant B **run
+  39489058683** (`sh22-plant-b` at `04e770a`: the fold keeps status 0),
+  `ci/plant-b-39489058683.txt`. Both branches are never to merge.
+- **The head:** `logs/head.status` and `logs/gauntlet/head-*` (37 gates
+  0 at `868bce1`); the table `logs/table.md` from `logs/table/`
+  (`probe/table.sh`, `probe/table.py`); `logs/keep-head-4096.txt`;
+  `logs/setm-rss-head.txt`; the full census `logs/census/` (§6,
+  `probe/census.sh`).
+- **The lane's tools:** `ctr.sh` (the container), `launch.sh`,
+  `gauntlet.sh` and `gauntlet-ctr.sh`, `quick.sh`, `snap.sh`.
+
+## 5. Done-when
+
+- Branch `sh22`, its PR open and unmerged with the five sections, the
+  commits as bullets and a test checklist; `tier pr` green at the final
+  head and the `full-matrix` label added at that head (never at open);
+  `wolf/tools/lane-audit.sh pelt sh22 <PR>` from the org directory, its
+  exit status read directly; the hand-back names the full run's id.
+- pelt#39, #41 and #27 are answered by this branch (close-ready on the
+  merge); none is filed or closed by the lane.
+
+## 6. pelt#41, decided, and #27's census
+
+**#41: match dash, and say the number.** dash, black box, keeps every job
+a `set -m` script's loop starts until the loop (the complete command)
+ends, then tells them, newest first, the waited ones too, and reaps the
+processes as they end (§2.2). pelt now does exactly that: it told
+them at the same place before this lane but for the jobs it runs itself,
+which came one complete command late (fixed, `ba92174`), and it now
+reaps as the next job starts (`1e17b69`). The rows:
+`jobsctl/c_monitor_loop_notices`, `c_monitor_loop_builtin`,
+`c_monitor_list_notices` (2.11/19, X). **The difference left, with its
+number:** what such a loop keeps a job until it ends — pelt 111–112 B a
+job for `true &` and 240–299 for `env true &` (with job control a job
+keeps its process entry and its command texts, which notices and `jobs`
+print), against dash's ~0–16 at that size (`logs/setm-rss-head.txt`).
+
+**#27, the whole census** (`probe/census.sh` in the container: trunk's
+tree and the head's, each over the corpus under `strace`, every process
+left listed and then ended by pid; the head again with the sessions;
+`logs/census/`):
+
+| run | the corpus under strace (reported, not judged) | timed out | ended by the harness | left in the container after |
+|---|---|---|---|---|
+| trunk `90d7c64`, the corpus | 919/43/38 | 1 (`builtin/c_s_dot_special_file`) | — (the tool says nothing) | **1: `pelt ../s.sh`**, re-parented to the container's init, ended by the probe |
+| head `868bce1`, the corpus | 923/43/38 | 1, the same | 2 (`strace` and the shell) | **0**; the census says "1 case timed out under strace; 2 processes ended; 0 left" |
+| head, corpus and sessions | 923/43/38, sessions 270/3/3 | 1 (no session timed out) | 2 | **0** |
+
+The system calls pelt makes over the corpus (for PAX): 50 by name at
+trunk, **51 at the head**: `sched_yield` once in 219,781 calls (the
+runtime's, not pelt's own: pelt calls no yield), and more `wait4` (1,298
+→ 1,836: the poll as each job starts in a script), `clone` and
+`socketpair` (1,098 → 1,409: the new cases' ~300 children) and
+`restart_syscall` (38 → 229, not traced to a cause); nothing else new by
+name (`census/trunk/census.txt`, `census/head/census.txt`).
+
+## 7. Findings (texts for the orchestrator)
+
+1. **wolf: `os_cwd()`'s answer outlives the region it is asked in.**
+   Asked inside `region r { … }`, its string is kept in the root: 48 B
+   a call for a 39-byte path, native and release alike, where a string
+   of the same length built by interpolation in the same region keeps 0
+   (`notes/sh22-evidence/witness/cwdregion/main.lu`,
+   `logs/cwdregion.txt`). `[mem.region.copyout]` says every function
+   allocates in its caller's region; this builtin does not.
+2. **pelt: `jobs` keeps ~60 B a call of its own** (a `List[int]` of the
+   jobs to list, every call, in the root): 65–114 B a turn at the head.
+3. **pelt: a `set -m` script's loop keeps 111–299 B a job until it
+   ends**, dash ~0–16 (§6): the process entry and the texts job control
+   keeps. Matching dash's order would take folding a job-controlled
+   job's ended process too, which its foreground waits read.
+4. **pelt: `wait` for a job a signal ended long before says so on
+   standard error; dash says nothing** once it has reaped the job as the
+   next one started (black box, `wait/c_unwaited_many_status`'s first
+   recording, `logs/red-41-pre.log`); trunk does the same as the head.
+5. **pelt: the bare `while` loop keeps 36–59 B a turn** (its counter's
+   superseded values), against dash's ~0: the floor every `shape-rss`
+   row stands on, and why a built-in at 100 B a turn is the loop plus
+   ~50.
+6. The native tier's binary is not the same bytes from two checkouts of
+   one commit (`base/` and `pelt/` at `90d7c64`: `7fed8026…` and
+   `8fba42ee…`; release `0892af43…` both times): the path is in it.
+
+## 8. Not verified, and inferred
+
+- **macOS by CI only** (no build on nomad-1): the full tier's run is
+  the orchestrator's to watch. `tools/lib_reap.py` there reads the tree
+  from `ps` and has no subreaper: a process already orphaned before the
+  timeout is not found (the witness's tree is not orphaned, and its
+  census row is a loud SKIP there: no `strace`).
+- **The `cd` stay check skips `os_cwd()` when the logical and physical
+  paths agreed at the last look**: if a directory on that path is
+  replaced by a symbolic link meanwhile, `cd .` leaves the shell's
+  record of its physical directory as it was where trunk would read it
+  again; `pwd -P` asks the host itself and is unaffected; a subshell's
+  frame then changes back to that record, which still names the same
+  place. Inferred, not constructed.
+- **Reaping a script's ended jobs as the next starts** changes one thing
+  a script could see: `kill $!` for a job that ended and was reaped
+  answers "no such process" (as dash, which reaps as they end) where
+  trunk signalled the zombie and answered 0. No corpus case asks it.
+- **dash's per-job numbers at 5,000 jobs are noise-sized** (−9 to 90 B a
+  job between runs); its order (tens of bytes) is read from the
+  10,000-turn rows of the table.
+- The table's passes ran pinned to cpus 12–15 while other lanes shared
+  kasumi (load 7–15); RSS does not depend on load, the noise above is
+  page and chunk granularity.
