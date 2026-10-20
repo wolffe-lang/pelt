@@ -1591,6 +1591,15 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
             show = true
         }
     }
+    // a `cd` that leaves the shell where it is changes nothing it keeps:
+    // found (and the directory changed to) inside a region, so it keeps
+    // nothing (pelt#39: `cd .` kept ~560 B a turn)
+    let stays = copy region cs {
+        cd_stays(sh, dir, physical, show)
+    }
+    if stays {
+        return 0
+    }
     var cur = dir
     let first = ch(dir, 0)
     let dotted = dir == "." || dir == ".." || dir.starts_with("./") || dir.starts_with("../")
