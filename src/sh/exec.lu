@@ -2697,7 +2697,11 @@ fn run_async(mut sh: Sh, node: int) -> int {
         set_slot_id(mut sh, j, NO_PID_BASE + sh.jb_seq)
         sh.jb_seq += 1
         set_slot_told(mut sh, j, !sh.jc_on)
-        set_slot_late(mut sh, j, sh.jc_on)
+        // told a line later at a prompt (`sh.jobs`'s `jc_notify`); in a
+        // script with `set -m` with the others, after the complete
+        // command (dash, black-box: jobsctl/c_monitor_loop_builtin,
+        // pelt#41)
+        set_slot_late(mut sh, j, sh.jc_on && sh.interactive)
     }
     if sh.jc_on {
         jb_fill_text(mut sh, j, node)
