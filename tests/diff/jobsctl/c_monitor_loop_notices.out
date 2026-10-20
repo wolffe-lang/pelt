@@ -1,0 +1,8 @@
+turn 0 waited: 0
+turn 1 waited: 1
+turn 2 waited: 2
+[3] + Done(2)                    sh -c "exit ${i}"
+[2] + Done(1)                    sh -c "exit ${i}"
+[1] + Done                       sh -c "exit ${i}"
+the loop has ended
+the next command

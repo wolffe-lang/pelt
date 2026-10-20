@@ -1,0 +1,12 @@
+[1] + Done(4)                    sh -c "exit 4"
+after the first job's line
+inside the group
+[1] + Done(5)                    sh -c "exit 5"
+after the group
+f 6 returns
+[1] + Done(6)                    sh -c "exit ${1}"
+after f 6
+f 7 returns
+same line as f 7
+[1] + Done(7)                    sh -c "exit ${1}"
+the next line
