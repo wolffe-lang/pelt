@@ -1,0 +1,6 @@
+turn 0 waited: 0
+turn 1 waited: 1
+turn 2 waited: 2
+the loop has ended
+the next command
+exit 0

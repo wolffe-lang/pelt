@@ -1,0 +1,21 @@
+== loop [umask 022]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l2.sh: 40 chunk grabs after the first 5 (~2560 KiB)
+-- innermost wolf frame
+    40 100.0%  [str_chars]
+-- innermost four frames
+    40 100.0%  [str_chars] < mask_from < bi_umask < builtin_args
+-- on the stack at all
+    40 100.0%  run_slow
+    40 100.0%  mask_from
+    40 100.0%  run
+    40 100.0%  run_node
+    40 100.0%  [str_chars]
+    40 100.0%  run_simple
+    40 100.0%  bi_umask
+    40 100.0%  eval_top
+    40 100.0%  run_source
+    40 100.0%  run_list
+    40 100.0%  run_builtin_enc
+    40 100.0%  run_loop
+    40 100.0%  run_main
+    40 100.0%  builtin_args

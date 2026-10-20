@@ -1,0 +1,5 @@
+pids limit: 65536
+keep: dash [env true &] x 5000: listed 5000, exit 0, stderr lines 0, first: 
+keep: dash [true &] x 5000: listed 5000, exit 0, stderr lines 0, first: 
+keep: pelt-base-release [env true &] x 5000: listed 5000, exit 0, stderr lines 0, first: 
+keep: pelt-base-release [true &] x 5000: listed 5000, exit 0, stderr lines 0, first: 

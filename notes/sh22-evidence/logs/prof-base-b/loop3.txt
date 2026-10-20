@@ -1,0 +1,22 @@
+== loop [true &]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l3.sh: 32 chunk grabs after the first 5 (~2048 KiB)
+-- innermost wolf frame
+    18  56.2%  [list_push]
+    14  43.8%  [str_repeat]
+-- innermost four frames
+    18  56.2%  [list_push] < jb_new < run_async < run_list
+    14  43.8%  [str_repeat] < run_simple < run_node < run
+-- on the stack at all
+    32 100.0%  run_list
+    32 100.0%  run_main
+    32 100.0%  eval_top
+    32 100.0%  run_source
+    32 100.0%  run
+    32 100.0%  run_loop
+    32 100.0%  run_node
+    22  68.8%  run_async
+    18  56.2%  [list_push]
+    18  56.2%  jb_new
+    14  43.8%  [str_repeat]
+    14  43.8%  run_simple
+     4  12.5%  run_subshell

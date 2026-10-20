@@ -1,0 +1,20 @@
+== loop [cd .]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l5.sh: 167 chunk grabs after the first 5 (~10688 KiB)
+-- innermost wolf frame
+   167 100.0%  [strbuf_finish]
+-- innermost four frames
+   167 100.0%  [strbuf_finish] < bi_cd < builtin_args < run_builtin_enc
+-- on the stack at all
+   167 100.0%  bi_cd
+   167 100.0%  run_node
+   167 100.0%  run
+   167 100.0%  run_main
+   167 100.0%  run_list
+   167 100.0%  run_builtin_enc
+   167 100.0%  run_simple
+   167 100.0%  [strbuf_finish]
+   167 100.0%  builtin_args
+   167 100.0%  run_loop
+   167 100.0%  eval_top
+   167 100.0%  run_source
+   167 100.0%  run_slow

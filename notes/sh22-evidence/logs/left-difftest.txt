@@ -1,0 +1,4 @@
+-- processes left after difftest (but this script's own):
+     27       1       2 S<   /usr/bin/sleep 300
+     31      29       2 R<   ps -eo pid=,ppid=,pgid=,stat=,args=
+     32      29       2 S<   awk -v me=2 $1 != me && $2 != me && $1 != 1

@@ -1,0 +1,9 @@
+turn 0: jobs says:
+[1] + Done                       sh -c "exit ${i}"
+turn 1: jobs says:
+[1] + Done(1)                    sh -c "exit ${i}"
+turn 2: jobs says:
+[1] + Done(2)                    sh -c "exit ${i}"
+after the loop, jobs says:
+end
+exit 0

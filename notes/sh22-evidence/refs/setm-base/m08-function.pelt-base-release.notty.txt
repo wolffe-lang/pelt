@@ -1,0 +1,8 @@
+f 1 returns
+[1] + Done(1)                    sh -c "exit ${1}"
+after f 1
+f 2 returns
+same line as f 2
+[1] + Done(2)                    sh -c "exit ${1}"
+the next line
+exit 0

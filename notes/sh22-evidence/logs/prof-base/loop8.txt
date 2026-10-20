@@ -1,0 +1,5 @@
+== loop [env true &]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l8.sh: 0 chunk grabs after the first 20 (~0 KiB)
+-- innermost wolf frame
+-- innermost four frames
+-- on the stack at all

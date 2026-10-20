@@ -1,0 +1,6 @@
+iteration 0 ends
+iteration 1 ends
+iteration 2 ends
+the loop has ended
+the next command
+exit 0

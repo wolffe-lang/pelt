@@ -1,0 +1,5 @@
+-- processes left after syscall-census (but this script's own):
+     11       1       2 S<l  /home/mfwolffe/lanes/sh22/tmp/bin-base/pelt ../s.sh
+     13      11       2 S<   /usr/bin/sleep 300
+     18      16       2 R<   ps -eo pid=,ppid=,pgid=,stat=,args=
+     19      16       2 S<   awk -v me=2 $1 != me && $2 != me && $1 != 1

@@ -1,0 +1,20 @@
+== loop [cd .]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l3.sh: 6 chunk grabs after the first 20 (~384 KiB)
+-- innermost wolf frame
+     6 100.0%  [strbuf_finish]
+-- innermost four frames
+     6 100.0%  [strbuf_finish] < bi_cd < builtin_args < run_builtin_enc
+-- on the stack at all
+     6 100.0%  run_slow
+     6 100.0%  eval_top
+     6 100.0%  run
+     6 100.0%  bi_cd
+     6 100.0%  run_loop
+     6 100.0%  run_list
+     6 100.0%  run_simple
+     6 100.0%  run_source
+     6 100.0%  [strbuf_finish]
+     6 100.0%  run_builtin_enc
+     6 100.0%  builtin_args
+     6 100.0%  run_node
+     6 100.0%  run_main

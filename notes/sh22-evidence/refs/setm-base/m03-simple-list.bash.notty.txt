@@ -1,0 +1,6 @@
+after the first job's command
+inside the group
+after the group
+same line, after sleep
+the next line
+exit 0

@@ -1,0 +1,109 @@
+// sh22 witness: what a job table's growth costs in the process root, per
+// slot, laid out four ways. `main MODE X…`: N = 100,000 times the length
+// of the second argument. The lane reads the peak resident set at two N.
+//   nine   the table as pelt keeps it at trunk: nine parallel lists
+//          (six int, three bool) and one of str, each pushed per slot
+//   int1   one List[int], pushed per slot (one field, for scale)
+//   bool1  one List[bool]
+//   str1   one List[str] (every element the same literal)
+//   chunk  one field in chunks of 512 slots, each chunk a fresh full
+//          list cut from a template once (`tpl[0..512]`) and written by
+//          index, so no buffer is ever grown and abandoned
+fn nine(n: int) -> int {
+    var a = List[int]()
+    var b = List[int]()
+    var c = List[int]()
+    var d = List[int]()
+    var e = List[bool]()
+    var f = List[str]()
+    var g = List[bool]()
+    var h = List[bool]()
+    var k = List[int]()
+    var i = 0
+    while i < n {
+        (mut a).push(1)
+        (mut b).push(-1)
+        (mut c).push(i)
+        (mut d).push(0)
+        (mut e).push(true)
+        (mut f).push("")
+        (mut g).push(false)
+        (mut h).push(false)
+        (mut k).push(i)
+        i += 1
+    }
+    a.len + b.len + c.len + d.len + e.len + f.len + g.len + h.len + k.len
+}
+
+fn int1(n: int) -> int {
+    var a = List[int]()
+    var i = 0
+    while i < n {
+        (mut a).push(i)
+        i += 1
+    }
+    a.len
+}
+
+fn bool1(n: int) -> int {
+    var a = List[bool]()
+    var i = 0
+    while i < n {
+        (mut a).push(true)
+        i += 1
+    }
+    a.len
+}
+
+fn str1(n: int) -> int {
+    var a = List[str]()
+    var i = 0
+    while i < n {
+        (mut a).push("")
+        i += 1
+    }
+    a.len
+}
+
+fn chunk(n: int) -> int {
+    var tpl = List[int]()
+    var t = 0
+    while t < 512 {
+        (mut tpl).push(0)
+        t += 1
+    }
+    var chunks = List[List[int]]()
+    var i = 0
+    while i < n {
+        if i % 512 == 0 {
+            (mut chunks).push(tpl[0..512])
+        }
+        let c = i / 512
+        chunks[c][i % 512] = i
+        i += 1
+    }
+    var s = 0
+    for ch in chunks {
+        s += ch.len
+    }
+    s
+}
+
+fn main() {
+    let args = env_args()
+    let mode = args[0]
+    let n = args[1].len * 100000
+    var t = 0
+    if mode == "nine" {
+        t = nine(n)
+    } else if mode == "int1" {
+        t = int1(n)
+    } else if mode == "bool1" {
+        t = bool1(n)
+    } else if mode == "str1" {
+        t = str1(n)
+    } else if mode == "chunk" {
+        t = chunk(n)
+    }
+    print("{t}")
+}

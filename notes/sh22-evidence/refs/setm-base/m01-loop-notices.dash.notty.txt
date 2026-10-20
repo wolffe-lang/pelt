@@ -1,0 +1,9 @@
+iteration 0 ends
+iteration 1 ends
+iteration 2 ends
+[3] + Done(2)                    sh -c "exit ${i}"
+[2] + Done(1)                    sh -c "exit ${i}"
+[1] + Done                       sh -c "exit ${i}"
+the loop has ended
+the next command
+exit 0

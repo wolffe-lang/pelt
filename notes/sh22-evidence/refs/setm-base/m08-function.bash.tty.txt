@@ -1,0 +1,6 @@
+f 1 returns
+after f 1
+f 2 returns
+same line as f 2
+the next line
+exit 0

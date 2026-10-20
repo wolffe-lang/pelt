@@ -1,0 +1,9 @@
+[1] + Done(4)                    sh -c "exit 4"
+after the first job's command
+inside the group
+[1] + Done(5)                    sh -c "exit 5"
+after the group
+same line, after sleep
+[1] + Done(6)                    sh -c "exit 6"
+the next line
+exit 0

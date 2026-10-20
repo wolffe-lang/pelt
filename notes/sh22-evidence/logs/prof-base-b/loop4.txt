@@ -1,0 +1,26 @@
+== loop [env true &]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l4.sh: 50 chunk grabs after the first 5 (~3200 KiB)
+-- innermost wolf frame
+    35  70.0%  [list_push]
+    15  30.0%  [str_repeat]
+-- innermost four frames
+    19  38.0%  [list_push] < jb_new < run_async < run_list
+    16  32.0%  [list_push] < jb_add_proc < jb_join < commit_fast
+    15  30.0%  [str_repeat] < run_simple < run_node < run
+-- on the stack at all
+    50 100.0%  run_loop
+    50 100.0%  run_main
+    50 100.0%  run_source
+    50 100.0%  run_list
+    50 100.0%  eval_top
+    50 100.0%  run
+    50 100.0%  run_node
+    40  80.0%  run_async
+    35  70.0%  [list_push]
+    31  62.0%  run_simple
+    21  42.0%  run_subshell
+    19  38.0%  jb_new
+    16  32.0%  commit_fast
+    16  32.0%  jb_join
+    16  32.0%  jb_add_proc
+    15  30.0%  [str_repeat]

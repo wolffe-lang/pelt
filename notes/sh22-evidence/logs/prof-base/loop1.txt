@@ -1,0 +1,28 @@
+== loop [read x </dev/null]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l1.sh: 57 chunk grabs after the first 20 (~3648 KiB)
+-- innermost wolf frame
+    19  33.3%  [list_slice]
+    19  33.3%  [list_push]
+    19  33.3%  [list_new]
+-- innermost four frames
+    19  33.3%  [list_slice] < bi_read < builtin_args < builtin
+    19  33.3%  [list_push] < redirs_of < run_fields < run_slow
+    19  33.3%  [list_new] < run_fields < run_slow < run_simple
+-- on the stack at all
+    57 100.0%  eval_top
+    57 100.0%  run_list
+    57 100.0%  run_main
+    57 100.0%  run
+    57 100.0%  run_fields
+    57 100.0%  run_simple
+    57 100.0%  run_node
+    57 100.0%  run_source
+    57 100.0%  run_slow
+    57 100.0%  run_loop
+    19  33.3%  [list_slice]
+    19  33.3%  bi_read
+    19  33.3%  builtin_args
+    19  33.3%  builtin
+    19  33.3%  redirs_of
+    19  33.3%  [list_push]
+    19  33.3%  [list_new]

@@ -1,0 +1,8 @@
+setm-rss: dash [set -m] [env true &] 5000 2856 KB 10000 2936 KB  16 B a job  (exit 0,0 out 5000,10000)
+setm-rss: dash [:] [env true &] 5000 2688 KB 10000 2768 KB  16 B a job  (exit 0,0 out 5000,10000)
+setm-rss: dash [set -m] [true &] 5000 3020 KB 10000 3092 KB  14 B a job  (exit 0,0 out 5000,10000)
+setm-rss: dash [:] [true &] 5000 2824 KB 10000 2944 KB  24 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-base-release [set -m] [env true &] 5000 7108 KB 10000 11076 KB  812 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-base-release [:] [env true &] 5000 4844 KB 10000 6340 KB  306 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-base-release [set -m] [true &] 5000 6584 KB 10000 10076 KB  715 B a job  (exit 0,0 out 5000,10000)
+setm-rss: pelt-base-release [:] [true &] 5000 4240 KB 10000 5320 KB  221 B a job  (exit 0,0 out 5000,10000)

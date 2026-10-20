@@ -1,0 +1,18 @@
+== loop [umask >/dev/null]
+heapprof: /home/mfwolffe/lanes/sh22/bin/pelt-base-native l6.sh: 46 chunk grabs after the first 20 (~2944 KiB)
+-- innermost wolf frame
+    46 100.0%  [list_new]
+-- innermost four frames
+    46 100.0%  [list_new] < enc_fields < run_slow < run_simple
+-- on the stack at all
+    46 100.0%  run_main
+    46 100.0%  enc_fields
+    46 100.0%  run_simple
+    46 100.0%  run_list
+    46 100.0%  run
+    46 100.0%  run_loop
+    46 100.0%  eval_top
+    46 100.0%  run_slow
+    46 100.0%  [list_new]
+    46 100.0%  run_node
+    46 100.0%  run_source

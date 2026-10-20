@@ -1,0 +1,26 @@
+== tools/syscall-census, the one case
+syscall-census: difftest under strace exit 1: difftest: total          0     1     0 (0)
+syscall-census: 33 distinct system calls, 172 calls, 4 processes and threads -> /home/mfwolffe/lanes/sh22/logs/reap-base/sysc/census.txt
+exit 0
+FAIL hang/c_fifo: timed out
+difftest: total          0     1     0 (0)
+-- processes left after syscall-census (but this script's own):
+     11       1       2 S<l  /home/mfwolffe/lanes/sh22/tmp/bin-base/pelt ../s.sh
+     13      11       2 S<   /usr/bin/sleep 300
+     18      16       2 R<   ps -eo pid=,ppid=,pgid=,stat=,args=
+     19      16       2 S<   awk -v me=2 $1 != me && $2 != me && $1 != 1
+ended 11
+ended 13
+== tools/difftest alone, the one case
+difftest: pelt = /home/mfwolffe/lanes/sh22/tmp/bin-base/pelt
+difftest: oracle = probe: sh22 leak
+FAIL hang/c_fifo: timed out
+difftest: area        pass  fail  pending (of which pass)
+difftest: hang           0     1     0 (0)
+difftest: total          0     1     0 (0)
+exit 1
+-- processes left after difftest (but this script's own):
+     27       1       2 S<   /usr/bin/sleep 300
+     31      29       2 R<   ps -eo pid=,ppid=,pgid=,stat=,args=
+     32      29       2 S<   awk -v me=2 $1 != me && $2 != me && $1 != 1
+ended 27

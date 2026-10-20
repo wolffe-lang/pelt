@@ -1,0 +1,10 @@
+jobcost: native nine 100000 15720 KB 200000 29236 KB  138 B a slot
+jobcost: native int1 100000 4092 KB 200000 5960 KB  19 B a slot
+jobcost: native bool1 100000 2500 KB 200000 2764 KB  2 B a slot
+jobcost: native str1 100000 5928 KB 200000 9692 KB  38 B a slot
+jobcost: native chunk 100000 4040 KB 200000 5820 KB  18 B a slot
+jobcost: release nine 100000 15756 KB 200000 29148 KB  137 B a slot
+jobcost: release int1 100000 4240 KB 200000 5928 KB  17 B a slot
+jobcost: release bool1 100000 2436 KB 200000 2696 KB  2 B a slot
+jobcost: release str1 100000 6112 KB 200000 9676 KB  36 B a slot
+jobcost: release chunk 100000 3972 KB 200000 5844 KB  19 B a slot

@@ -1,0 +1,9 @@
+iteration 0 ends
+iteration 1 ends
+iteration 2 ends
+the loop has ended
+[3] + Done                       true
+[2] + Done                       true
+[1] + Done                       true
+the next command
+exit 0
