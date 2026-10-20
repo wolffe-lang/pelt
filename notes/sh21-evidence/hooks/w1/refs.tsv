@@ -1,0 +1,40 @@
+lope	bash	cd	3 of 3 recorded
+lope	bash	word	/t/beta/gamma
+lope	bash	two	/t/projects/myapp
+lope	bash	here	/t/alpha
+lope	bash	frag	/t/beta
+lope	bash	real	ran /t 
+lope	bash	miss	status 127, said not found
+lope	bash	g	/t/alpha, back /home, alone /home
+lope	bash	menu	menu, /t/alpha
+lope	bash	fzf	/t/beta/gamma
+lope	zsh	cd	3 of 3 recorded
+lope	zsh	word	/t/beta/gamma
+lope	zsh	two	/t/projects/myapp
+lope	zsh	here	/t/alpha
+lope	zsh	frag	/t/beta
+lope	zsh	real	ran /t 
+lope	zsh	miss	status 127, said not found
+lope	zsh	g	/t/alpha, back /home, alone /home
+lope	zsh	menu	menu, /t/alpha
+lope	zsh	fzf	/t/beta/gamma
+lope	fish	cd	3 of 3 recorded
+lope	fish	word	/t/beta/gamma
+lope	fish	two	/t/projects/myapp
+lope	fish	here	/t/alpha
+lope	fish	frag	/t/beta
+lope	fish	real	ran /t 
+lope	fish	miss	status 127, said not found
+lope	fish	g	/t/alpha, back /home, alone /home
+lope	fish	menu	menu, /t/alpha
+lope	fish	fzf	/t/beta/gamma
+lope	fortsh	cd	3 of 3 recorded
+lope	fortsh	word	/t/beta/gamma
+lope	fortsh	two	/t/projects/myapp
+lope	fortsh	here	/t/alpha
+lope	fortsh	frag	/t/beta
+lope	fortsh	real	ran /t 
+lope	fortsh	miss	status 127, said not found
+lope	fortsh	g	/t/alpha, back /home, alone /home
+lope	fortsh	menu	menu, /t/alpha
+lope	fortsh	fzf	/t/beta/gamma

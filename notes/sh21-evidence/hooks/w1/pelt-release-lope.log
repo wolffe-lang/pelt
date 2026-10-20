@@ -1,0 +1,16 @@
+hook-sessions: logs in /home/mfwolffe/lanes/sh21/hooks/w1/logs-release-lope
+lope	pelt	cd	3 of 3 recorded
+lope	pelt	word	/t/beta/gamma
+lope	pelt	two	/t/projects/myapp
+lope	pelt	here	/t/alpha
+lope	pelt	frag	/t/beta
+lope	pelt	real	ran /t 
+lope	pelt	miss	status 127, said not found
+lope	pelt	g	/t/alpha, back /home, alone /home
+lope	pelt	menu	menu, /t/alpha
+lope	pelt	fzf	/t/beta/gamma
+hook-sessions: DIFFERS lope/pelt word: want '/home', have '/t/beta/gamma'
+hook-sessions: DIFFERS lope/pelt two: want '/home', have '/t/projects/myapp'
+hook-sessions: DIFFERS lope/pelt here: want '/t', have '/t/alpha'
+hook-sessions: DIFFERS lope/pelt frag: want '/t', have '/t/beta'
+hook-sessions: 4 expected row(s) differ

@@ -1,0 +1,50 @@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/projects
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/projects
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/alpha
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/alpha
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/beta
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/beta
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/home
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/home
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/home@@0@@
+[6nPROMPT> 
+<<< projects
+projects
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/projects@@0@@
+[6nPROMPT> 
+<<< g -
+g -
+/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/home
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/home@@0@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t
+[6nPROMPT> 
+<<< alpha
+alpha
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ykp687j_/t/alpha@@0@@
+[6nPROMPT> 
+<<< zzqqxx
+zzqqxx
+pelt: line 98: zzqqxx: not found
+[6nPROMPT> 
+<<< echo "@@$?@@"
+echo "@@$?@@"
+@@127@@
+[6nPROMPT> 

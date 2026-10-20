@@ -1,0 +1,11 @@
+session: pelt = /home/mfwolffe/lanes/sh21/pelt/target/release/pelt
+ok   cnf_127
+ok   cnf_assign
+ok   cnf_cd
+ok   cnf_contexts
+ok   cnf_redirect
+ok   cnf_rerun
+ok   cnf_skipped
+ok   cnf_status
+ok   cnf_words
+session: pass 9  fail 0  pending 0 (0)

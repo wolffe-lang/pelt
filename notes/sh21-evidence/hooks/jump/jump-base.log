@@ -1,0 +1,52 @@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/projects
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/projects
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/alpha
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/alpha
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/beta
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/beta
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/home
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/home
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/home@@0@@
+[6nPROMPT> 
+<<< projects
+projects
+pelt: line 6: projects: not found
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/home@@127@@
+[6nPROMPT> 
+<<< g -
+g -
+/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/beta
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t/beta@@0@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t
+cd /home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t
+[6nPROMPT> 
+<<< alpha
+alpha
+pelt: line 11: alpha: not found
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh21/tmp/sh21-jump-ljuoqsvu/t@@127@@
+[6nPROMPT> 
+<<< zzqqxx
+zzqqxx
+pelt: line 13: zzqqxx: not found
+[6nPROMPT> 
+<<< echo "@@$?@@"
+echo "@@$?@@"
+@@127@@
+[6nPROMPT> 

@@ -1,0 +1,18 @@
+pelt /home/mfwolffe/lanes/sh21/base/pelt-release
+  start          /home
+  projects       /home status 127
+  g -            /t/beta status 0
+  alpha (in t)   /t
+  zzqqxx         status 127, said not found
+pelt /home/mfwolffe/lanes/sh21/pelt/target/release/pelt
+  start          /home
+  projects       /t/projects status 0
+  g -            /home status 0
+  alpha (in t)   /t/alpha
+  zzqqxx         status 127, said not found
+pelt /home/mfwolffe/lanes/sh21/pelt/target/native/pelt
+  start          /home
+  projects       /t/projects status 0
+  g -            /home status 0
+  alpha (in t)   /t/alpha
+  zzqqxx         status 127, said not found

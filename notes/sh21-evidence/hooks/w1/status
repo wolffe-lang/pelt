@@ -1,0 +1,12 @@
+lope 5ac37df22866e8fd418c67b611f48ff30e8a2630 b90c21707a080ff0
+pelt release 0892af432e15452a
+expect-sh21-release=0
+expect-lope-release=1
+pelt native d535b0ec0f426b26
+expect-sh21-native=0
+expect-lope-native=1
+refs=0
+GNU bash, version 5.3.20(1)-release (x86_64-pc-linux-gnu)
+zsh 5.9.2 (x86_64-pc-linux-gnu)
+fish, version 4.9.3
+done
