@@ -170,7 +170,8 @@ struct Sh {
     /// two `int`s (pelt#39: nine parallel lists kept ~140 B a job in the
     /// root, `notes/sh22-evidence/witness/jobcost`), read and written only
     /// through `sh.jobs`'s `slot_*` accessors: `jb_a` packs its state
-    /// (`JB_FREE` or a job's), the status of a list pelt ran itself, and the
+    /// (`JB_FREE` or a job's), the status of a list pelt ran itself (or
+    /// of a job whose one process ended, with job control off), and the
     /// flags told, late, waited and held; `jb_b` packs the number `$!`
     /// gave it (a process id, or for a list pelt ran itself a number no
     /// process has, `NO_PID_BASE` and up) and its last use (a stamp of

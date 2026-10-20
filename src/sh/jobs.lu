@@ -585,6 +585,43 @@ fn jb_reap(mut sh: Sh) {
     }
 }
 
+/// With job control off, job `j` whose one process has ended keeps that
+/// process's status (as the poll spelled it) in its slot, as a list pelt
+/// ran itself keeps its own, and gives the process entry back: the
+/// process table then holds only the processes still live (pelt#39).
+/// `$!`'s number stays the slot's, and `wait`, `jobs`, `jobs -l`, `jobs
+/// -p` and `kill` read a slot with no process to the same answers.
+fn jb_fold(mut sh: Sh, j: int) {
+    if sh.jc_on {
+        return
+    }
+    var only = -1
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            if only >= 0 {
+                return
+            }
+            only = k
+        }
+        k += 1
+    }
+    if only < 0 {
+        return
+    }
+    let st = sh.pr_st[only]
+    if st == PR_RUN || st >= 256 {
+        return
+    }
+    set_slot_status(mut sh, j, st)
+    set_slot_state(mut sh, j, JB_DONE)
+    sh.pr_job[only] = -1
+    sh.pr_h[only] = -1
+    sh.pr_pid[only] = 0
+    sh.pr_st[only] = 0
+    sh.pr_text[only] = ""
+}
+
 /// The poll taken as a line is read at the prompt (`jc_take`): what the
 /// jobs did while the line was typed, written into the table only when
 /// the next thing that reads the table asks (a poll, a notice, `jobs`)
@@ -630,6 +667,7 @@ fn jc_record(mut sh: Sh, h: int, st: int) {
             sh.pr_st[k] = st
             let j = sh.pr_job[k]
             set_slot_told(mut sh, j, false)
+            jb_fold(mut sh, j)
             return
         }
         k += 1

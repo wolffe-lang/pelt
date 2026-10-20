@@ -2729,7 +2729,14 @@ fn async_target(a: Ast, node: int) -> int {
 /// nothing for `wait` with no operand, black-box: s10).
 fn wait_job(mut sh: Sh, j: int, quiet: bool) -> int {
     if jb_procs(sh, j) == 0 {
-        return slot_status(sh, j)
+        // a list pelt ran itself (its status), or a job whose one process
+        // ended and was folded into its slot (`sh.jobs`'s `jb_fold`: the
+        // poll's spelling, so an end by a signal is said as below)
+        let (st0, sig0) = status_of(slot_status(sh, j))
+        if !quiet {
+            report_signal(mut sh, sig0)
+        }
+        return st0
     }
     var k = 0
     while k < sh.pr_job.len {
