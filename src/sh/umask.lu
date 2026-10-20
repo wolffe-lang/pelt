@@ -47,12 +47,16 @@ fn mask_from(cur: int, s: str) -> int ! {parse} {
         return cur
     }
     if is_digit(ch(s, 0)) {
+        // by index, not `chars()`, which builds a list (pelt#39)
         var m: int = 0
-        for c in s.chars() {
+        var k = 0
+        while k < s.len {
+            let c = ch(s, k)
             if c < '0' || c > '7' {
                 return parse
             }
             m = m * 8 + (c as int - '0' as int) & 511
+            k += 1
         }
         return m
     }
@@ -144,18 +148,51 @@ fn mask_symbolic(m: int) -> str {
     "u={rwx(p / 64 % 8)},g={rwx(p / 8 % 8)},o={rwx(p % 8)}"
 }
 
+/// A class's permissions as `-S` writes them: a literal, nothing built.
 fn rwx(bits: int) -> str {
-    var o = buf()
-    if bits & 4 != 0 {
-        putc(mut o, 'r')
+    match bits & 7 {
+        0 => "",
+        1 => "x",
+        2 => "w",
+        3 => "wx",
+        4 => "r",
+        5 => "rx",
+        6 => "rw",
+        _ => "rwx",
     }
-    if bits & 2 != 0 {
-        putc(mut o, 'w')
+}
+
+fn oct_digit(d: int) -> str {
+    match d & 7 {
+        0 => "0",
+        1 => "1",
+        2 => "2",
+        3 => "3",
+        4 => "4",
+        5 => "5",
+        6 => "6",
+        _ => "7",
     }
-    if bits & 1 != 0 {
-        putc(mut o, 'x')
+}
+
+/// `umask`'s line, written in pieces that are all literals, so printing
+/// the mask builds nothing (pelt#39).
+fn emit_mask(mut sh: Sh, m: int, symbolic: bool) {
+    if symbolic {
+        let p = 511 - (m & 511)
+        emit(mut sh, "u=")
+        emit(mut sh, rwx(p / 64 % 8))
+        emit(mut sh, ",g=")
+        emit(mut sh, rwx(p / 8 % 8))
+        emit(mut sh, ",o=")
+        emit(mut sh, rwx(p % 8))
+    } else {
+        emit(mut sh, "0")
+        emit(mut sh, oct_digit(m / 64 % 8))
+        emit(mut sh, oct_digit(m / 8 % 8))
+        emit(mut sh, oct_digit(m % 8))
     }
-    text(o)
+    emit(mut sh, "\n")
 }
 
 /// Set the process's mask to `m`, learning the one the shell started
@@ -216,10 +253,17 @@ fn bi_umask(mut sh: Sh, args: List[str]) -> int {
         if a == "--" {
             break
         }
-        for c in a[1..].chars() {
-            if c != 'S' {
-                diag(mut sh, "umask: -{c}: not an option (umask [-S] [mask])")
-                return 2
+        // by index; `chars()` (a list) only to name a bad letter
+        var k = 1
+        while k < a.len && ch(a, k) == 'S' {
+            k += 1
+        }
+        if k < a.len {
+            for c in a[1..].chars() {
+                if c != 'S' {
+                    diag(mut sh, "umask: -{c}: not an option (umask [-S] [mask])")
+                    return 2
+                }
             }
         }
         symbolic = true
@@ -246,11 +290,7 @@ fn bi_umask(mut sh: Sh, args: List[str]) -> int {
     let m = mask_now(mut sh) else |_| {
         return no_mask(mut sh)
     }
-    if symbolic {
-        emit(mut sh, "{mask_symbolic(m)}\n")
-    } else {
-        emit(mut sh, "{mask_octal(m)}\n")
-    }
+    emit_mask(mut sh, m, symbolic)
     0
 }
 
