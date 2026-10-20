@@ -5,9 +5,10 @@ tools/loop-rss holds a loop of simple commands flat. This holds the
 other shapes a long script or a long session repeats (pelt#19): a
 pipeline, a command substitution, a subshell, a function call, an
 arithmetic assignment, a long script of one line repeated, and lines
-typed at the prompt. Each shape runs at N and at 2N turns, and the 2N
-run may peak at most BOUND_B bytes a turn (plus 1 MiB of allocator
-steps) above the N run, as tools/loop-rss's bound reads.
+typed at the prompt. Each shape runs at N and at 2N turns (N is -n, or
+the row's own where a small leak needs more turns to cross the 1 MiB),
+and the 2N run may peak at most BOUND_B bytes a turn (plus 1 MiB of
+allocator steps) above the N run, as tools/loop-rss's bound reads.
 
   loop    `while [ $i -lt N ]; do BODY; i=$((i+1)); done`, one process
           per size; peak resident set from `/usr/bin/time` (the child's
@@ -40,7 +41,8 @@ import lib_session as ls  # noqa: E402
 
 PRELUDE = "f() { :; }\ng() { local v; v=$1; return 0; }\n"
 
-# (name, kind, text)
+# (name, kind, text[, N]): N, when given, is the row's own turn count
+# (its bound scales with it); every other row takes -n
 SHAPES = [
     ("baseline", "loop", ":"),
     ("pipeline", "loop", "true | true"),
@@ -84,6 +86,21 @@ SHAPES = [
     ("background-wait-pid", "loop", "true & wait $!"),
     ("script-background-wait", "script", "true & wait"),
     ("typed-background-wait", "typed", "true & wait"),
+    # sh22 (pelt#39): the built-ins the lean path did not reach (a
+    # redirection, `eval`'s parser, `cd`'s strings, `command`'s copies,
+    # `umask`'s `chars()`), and a job nobody waits for (its slot, its
+    # process entry, its unreaped child). At trunk `90d7c64` they kept
+    # 131 to 1,700 B a turn (notes/sh22-evidence/logs/base-shapes.log).
+    # A row's own N, where the trunk's leak is too small to cross the
+    # bound's 1 MiB at 10,000 turns: `command true` and `umask 022` kept
+    # ~150 B a turn, `true &` ~210.
+    ("builtin-read-redir", "loop", "read x </dev/null"),
+    ("builtin-eval", "loop", "eval :"),
+    ("builtin-cd", "loop", "cd ."),
+    ("builtin-command", "loop", "command true", 100000),
+    ("builtin-umask", "loop", "umask 022", 100000),
+    ("background-nowait", "loop", "true &", 20000),
+    ("background-program-nowait", "loop", "env true &"),
 ]
 
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
@@ -211,7 +228,8 @@ def main(argv):
     only = None
     while argv[:1] in (["-n"], ["-b"], ["--only"], ["--list"]):
         if argv[0] == "--list":
-            for name, kind, text in SHAPES:
+            for row in SHAPES:
+                name, kind, text = row[:3]
                 print(f"{name:24} {kind:7} {text}")
             return 0
         if argv[0] == "-n":
@@ -225,9 +243,12 @@ def main(argv):
         print(__doc__, file=sys.stderr)
         return 2
     shell = os.path.abspath(argv[0])
-    limit = n * bound_b // 1024 + 1024
+    base_n = n
     failed = []
-    for name, kind, text in SHAPES:
+    for row in SHAPES:
+        name, kind, text = row[:3]
+        n = row[3] if len(row) > 3 else base_n
+        limit = n * bound_b // 1024 + 1024
         if only is not None and name not in only:
             continue
         if kind == "typed":
@@ -252,9 +273,9 @@ def main(argv):
             failed.append(name)
     if failed:
         print(f"shape-rss: FAIL {len(failed)}: {', '.join(failed)} "
-              f"(bound {limit} KB: {bound_b} B a turn + 1 MiB)")
+              f"(bound {bound_b} B a turn + 1 MiB over N turns)")
         return 1
-    print(f"shape-rss: ok (bound {limit} KB: {bound_b} B a turn + 1 MiB)")
+    print(f"shape-rss: ok (bound {bound_b} B a turn + 1 MiB over N turns)")
     return 0
 
 
