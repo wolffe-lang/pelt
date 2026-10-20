@@ -1,0 +1,17 @@
+debconf: delaying package configuration, since apt-utils is not installed
+Ubuntu LLD 18.1.3 (compatible with GNU linkers)
+Ubuntu clang version 18.1.3 (1ubuntu1)
+gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+ldd (Ubuntu GLIBC 2.39-0ubuntu8.9) 2.39
+pax d733bf454c3a9880d3473af92e9ee650791c3dd6
+PELT_REV=6bf7d2a96d3eaf2a7be4187356cd7b82af24b30c
+mkpelt: pelt 6bf7d2a96d3eaf2a7be4187356cd7b82af24b30c pins wolf 0.2.32 (4c37f9c5…), wolf-std d37c911f12206c4bf5c8d3281a649bf31da3beef
+mkpelt: wolf 0.2.32 (wolfgang, pin 72de141)
+pelt 5448cb27d882553bccba66dbde2c4aaba417a7501ae1c6bf3944af0d00a93c5d 15201640
+linked against: /usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/libc.a
+  Type:                              EXEC (Executable file)
+0
+5448cb27d882553bccba66dbde2c4aaba417a7501ae1c6bf3944af0d00a93c5d  /out/pelt
+mkpelt=0
+5448cb27d882553bccba66dbde2c4aaba417a7501ae1c6bf3944af0d00a93c5d  /home/mfwolffe/lanes/sh21/mkpelt/out/pelt
+5448cb27d882553bccba66dbde2c4aaba417a7501ae1c6bf3944af0d00a93c5d  /home/mfwolffe/lanes/sh21/mkpelt/out/pelt

@@ -1,0 +1,20 @@
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:40:37.3031733Z difftest: total        962     0    38 (0)
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:23.6935571Z FAIL cnf_127
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:23.8518260Z FAIL cnf_assign
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:24.2666323Z FAIL cnf_cd
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:24.5812570Z FAIL cnf_contexts
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:24.8439226Z FAIL cnf_redirect
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:25.0533175Z FAIL cnf_rerun
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:25.7814175Z FAIL cnf_status
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:26.0422516Z FAIL cnf_words
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:47:47.6929296Z session: pass 265  fail 8  pending 3 (0)
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:39:35.3404302Z difftest: total        962     0    38 (0)
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:22.4602964Z FAIL cnf_127
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:22.6182362Z FAIL cnf_assign
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:23.0322940Z FAIL cnf_cd
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:23.3434224Z FAIL cnf_contexts
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:23.6056912Z FAIL cnf_redirect
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:23.8136129Z FAIL cnf_rerun
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:24.5393787Z FAIL cnf_status
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:24.8000801Z FAIL cnf_words
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:46:46.5200022Z session: pass 265  fail 8  pending 3 (0)

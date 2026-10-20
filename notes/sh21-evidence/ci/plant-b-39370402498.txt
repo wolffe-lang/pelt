@@ -1,0 +1,10 @@
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:42:34.9342560Z FAIL simple/cnf_not_interactive: stdout
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:42:40.2969222Z difftest: total        961     1    38 (0)
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:49:28.2223153Z FAIL cnf_rerun
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:49:28.5380208Z FAIL cnf_skipped
+gauntlet (ubuntu-latest, true, native)	UNKNOWN STEP	2026-10-20T04:49:50.9396072Z session: pass 271  fail 2  pending 3 (0)
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:42:23.6622614Z FAIL simple/cnf_not_interactive: stdout
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:42:28.9855292Z difftest: total        961     1    38 (0)
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:49:16.6187941Z FAIL cnf_rerun
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:49:16.9314812Z FAIL cnf_skipped
+gauntlet (ubuntu-latest, true, release)	UNKNOWN STEP	2026-10-20T04:49:39.2243737Z session: pass 271  fail 2  pending 3 (0)

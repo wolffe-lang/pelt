@@ -1,0 +1,4 @@
+syscall-census: difftest under strace exit 1: difftest: total        919    43    38 (2)
+syscall-census: session under strace exit 1: session: pass 270  fail 3  pending 3 (0)
+syscall-census: 49 distinct system calls, 732412 calls, 4132 processes and threads -> /home/mfwolffe/lanes/sh21/sysc/head/census.txt
+sysc=0
