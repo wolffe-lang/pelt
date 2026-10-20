@@ -82,7 +82,11 @@ def _table():
 
 
 def children():
-    """The pids whose parent is this process."""
+    """The pids whose parent is this process: what a case finds there
+    already is not its own. Only a subreaper adopts, so elsewhere there
+    is nothing to read (and no `ps` a case)."""
+    if not subreaper():
+        return set()
     me = os.getpid()
     return {p for p, (pp, _s) in _table().items() if pp == me}
 
@@ -145,7 +149,10 @@ def end_tree(root, before=frozenset()):
 def reap_adopted(before=frozenset()):
     """Reap the processes re-parented to this harness that have ended
     (a case's background job that outlived its shell), so none waits as
-    a zombie; `before` are children that are not the harness's to reap."""
+    a zombie; `before` are children that are not the harness's to reap.
+    Nothing to do where the harness adopts nothing."""
+    if not subreaper():
+        return
     me = os.getpid()
     _reap(p for p, (pp, s) in _table().items() if pp == me and s == "Z" and p not in before)
 
