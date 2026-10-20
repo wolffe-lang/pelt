@@ -2410,7 +2410,7 @@ fn run_external(
 /// not-found: said, 127. Inside the call every name not found is the
 /// plain not-found, so the function is never re-entered.
 fn unfound(mut sh: Sh, fields: List[str], names: List[str], values: List[str], hook: bool) -> int {
-    if hook && sh.interactive && !sh.in_cnf {
+    if hook || sh.in_cnf {
         // bash's name for it, which fortsh shares (pelt#42)
         let fnode = sh.funcs["command_not_found_handle"] else -1
         if fnode >= 0 {

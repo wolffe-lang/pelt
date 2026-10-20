@@ -753,7 +753,7 @@ fn bi_command(mut sh: Sh, args: List[str]) -> int {
         return builtin(mut sh, rest)
     }
     // the utility, never a function: no `command_not_found_handle`
-    run_external(mut sh, rest, List[str](), List[str](), false, via, false)
+    run_external(mut sh, rest, List[str](), List[str](), false, via, true)
 }
 
 /// Where a name the command search reaches would be found: through the
