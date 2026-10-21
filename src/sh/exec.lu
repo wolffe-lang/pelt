@@ -2342,7 +2342,9 @@ fn start_child(
 /// again (XCU 2.9.1.4; dash, black-box). A name found nowhere is
 /// `unfound`'s: `hook` when it is a simple command's own name (not
 /// `command`'s operand, not `exec`'s), which may call
-/// `command_not_found_handle` (pelt#42).
+/// `command_not_found_handle` (pelt#42). With `set -o autocd` such a
+/// name, found nowhere or with a `/`, that names a directory is `cd`'s
+/// first (`sh.builtin`'s `run_autocd`, ruling #113).
 fn run_external(
     mut sh: Sh,
     fields: List[str],
@@ -2365,11 +2367,16 @@ fn run_external(
             remembered = hash_get(sh, cmd).len > 0
             path = hash_find(mut sh, cmd)
         }
-        if path.len == 0 {
-            let st = unfound(mut sh, fields, names, values, hook)
-            sh.status = st
-            return st
-        }
+    }
+    if hook && autocd_dir(sh, cmd, path) {
+        let st = run_autocd(mut sh, fields, names, values)
+        sh.status = st
+        return st
+    }
+    if path.len == 0 {
+        let st = unfound(mut sh, fields, names, values, hook)
+        sh.status = st
+        return st
     }
     flush(mut sh)
     sync_env(sh)
