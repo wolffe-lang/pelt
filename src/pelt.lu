@@ -3,7 +3,8 @@
 //! pelt — a POSIX shell. `pelt -c 'string' [name [arg…]]` runs the
 //! string, `pelt script [arg…]` runs the file, and plain `pelt` runs
 //! its standard input. `-n` parses without running; `--parse` prints
-//! the tree the parser built.
+//! the tree the parser built; `--self-test` runs the table checks on the
+//! tier this binary is (`sh.selftest`).
 //!
 //! References consulted: POSIX.1-2024 XCU chapter 2 and the `sh`
 //! utility page; black-box runs of `dash` 0.5.13.4 and `bash --posix`
