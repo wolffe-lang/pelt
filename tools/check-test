@@ -1,7 +1,7 @@
 #!/bin/sh
 # check-test — the unit tests (`*_test.lu`), which `wolf test` runs on the
-# checked machine; `target/<tier>/pelt --self-test` runs the same table
-# checks on a compiled tier (sh20).
+# checked machine; `tools/self-check <tier>` runs the same table checks
+# on a compiled tier (sh20).
 set -eu
 PELT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 export PELT_ROOT

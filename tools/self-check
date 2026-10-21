@@ -1,0 +1,23 @@
+#!/bin/sh
+# self-check — the table checks (`sh.selftest`) on a compiled tier, and
+# `busy`'s row with them (`src/selfcheck.lu`): a fork asked while a task
+# is live is answered `busy` and pelt runs the shape in process. `wolf
+# test` (tools/check-test) runs the same checks on the checked machine,
+# where the fork is `unsupported` instead.
+# usage: tools/self-check native|release  (builds target/<tier>/selfcheck)
+set -eu
+PELT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+export PELT_ROOT
+cd "$PELT_ROOT"
+. tools/lib-toolchain.sh
+tier=${1:-native}
+mkdir -p "target/$tier"
+case "$tier" in
+native) "$WOLF" build --deny-warnings src/selfcheck.lu -o "target/$tier/selfcheck" ;;
+release) "$WOLF" build --release --deny-warnings src/selfcheck.lu -o "target/$tier/selfcheck" ;;
+*)
+    echo "self-check: unknown tier $tier" >&2
+    exit 2
+    ;;
+esac
+"target/$tier/selfcheck"
