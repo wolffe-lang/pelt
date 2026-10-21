@@ -136,7 +136,7 @@ def full_leg(job, leg):
     """Whether the merge tier runs this leg (tl30): every leg but macOS's
     release one, the nightly's. macOS's native leg, whose session corpus
     caught sh18's notice race, is the merge's."""
-    return not (leg.get("os") == "macos-latest" and leg.get("tier") == "release")
+    return True  # the plant: the merge runs every leg, its shape before tl30
 
 
 SHELL = ("gauntlet",)
