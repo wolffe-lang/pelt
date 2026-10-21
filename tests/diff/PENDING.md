@@ -9,7 +9,6 @@ makes it pass.
 
 | primitive pelt waits on | where it comes from | cases |
 |---|---|---|
-| **fork** — a process for a subshell | none planned: pelt runs `( … )` in-process, so a signal sent to "the subshell" (`$PPID` of its child) reaches the shell itself, whose trap then runs where dash's subshell would have died | `pending/subshell_signal` |
 | **user database** — `~login` | no `getpwnam` surface in wolf 0.2.27; not filed until a lane needs it beyond this case | `tilde/user` |
 
 <!-- census:begin -->
@@ -34,13 +33,11 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | **printf-float** | `printf` `%e %f %g` (optional in POSIX; dash has them and configure scripts use `%f`) | pelt (P09); wolf has float formatting | `printf/c_floats` |
 | **printf-numbered** | `printf '%2$s'` (new in POSIX.1-2024; neither oracle has it) | not counted in the census | `printf/c_numbered` |
 | **trap-p** | `trap -p` (new in POSIX.1-2024) | pelt (P10) | `signal/c_trap_p` |
-| **trap-in-cmdsub** | `$(trap)` shows nothing where it must show the invoking shell's traps | pelt (P10) | `signal/c_trap_cmdsub_shows_parent` |
 | **ps4-expansion** | `PS4` is written as is, not parameter-expanded (XCU 2.5.3) | pelt (P10) | `option/c_ps4` |
 | **xtrace-assignment** | `set -x` does not trace a command that is only assignments | pelt (P10) | `option/c_xtrace_forms` |
 | **verbose** | `set -v` writes nothing | pelt#6 | `option/c_verbose`, `option/c_verbose_stderr` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
-| **fork** | a compound command or function after `&`, and every pipeline stage pelt runs itself, runs to its end before the shell goes on: no concurrency, no SIGPIPE to a shell-written producer, a subshell is not a process (XCU 2.9.2, 2.9.3.1, 2.13); `(echo … >fifo &)` opens the FIFO for writing inside the shell, which waits for a reader that comes only after it, so `builtin/c_s_dot_special_file` times out (its `. /dev/null` line passes since sh07, and `builtin/dot_fifo_program` reads a FIFO a program writes); and `signal/c_trap_ignore_pipe` (since sh14 `trap '' PIPE` is honoured, `signal/trap_ignore_pipe_fifo`; this case's writer is a brace group in a pipeline, which runs to its end before the reader starts, so its write meets a pipe that still has a reader) | wolf-lang: a fork (sh06 issue W01), or pelt re-executing itself per subshell (ruling R1) | `builtin/c_s_dot_special_file`, `env/c_subshell_concurrent`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`, `signal/c_subshell_trap_reset`, `wait/c_subshell`, `signal/c_trap_ignore_pipe` |
 | **ulimit** | `ulimit` | wolf-lang: no `getrlimit`/`setrlimit` surface (W02) | `ulimit/c_bad`, `ulimit/c_enforced`, `ulimit/c_file_size`, `ulimit/c_resources` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
 | **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
@@ -50,11 +47,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 
 **No case, named:**
 
-- With no fork, a pipeline stage pelt runs itself runs to the end
-  before the next starts, so an endless in-process producer
-  (`while :; do echo y; done | head -1`) does not end as it does under
-  dash; and `exec cmd` inside a subshell starts `cmd` as a child of
-  pelt rather than replacing a subshell process.
 - `kill 0`, `kill -- -N` (a process group) and `kill -1`: since sh18
   sent through `os_signal_send_group` and `os_signal_send_all`. No case
   here, under the oracle or pelt: `kill 0` and `kill -1` would signal
@@ -71,6 +63,22 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
   control off is empty, as dash's (black-box: s02), so they name no job
   in a script.
 
+**Cleared by sh20 (wolf 0.2.34), the fork:** `builtin/c_s_dot_special_file`,
+`env/c_subshell_concurrent`, `pending/subshell_signal` (now
+`signal/subshell_signal`), `pipe/c_concurrent_stages`,
+`pipe/c_shell_producer_ends`, `redir/c_s_cmdsub_fd_pipeline`,
+`signal/c_subshell_trap_reset`, `signal/c_trap_ignore_pipe`,
+`wait/c_subshell`: a subshell, a command substitution, a list after `&`
+and a pipeline stage pelt runs itself are processes (`os_fork`,
+`src/sh/fork.lu`), each with its traps back at the default and its own
+descriptors and (empty) job table. And `signal/c_trap_cmdsub_shows_parent`:
+a substitution that is one `trap` command alone keeps the shell's traps
+(XCU `trap`, as dash's). The two named here with no case have one now:
+the endless producer (`pipe/endless_producer`) and `exec` in a subshell
+(`exec/exec_replaces_subshell`). On a host that does not fork (the
+checked machine: `unsupported`, ruling #95 R4 C) every one of these
+shapes still runs in process, to its end.
+
 **Cleared by sh18 (wolf 0.2.32), job control:** `jobsctl/c_jobs_script`
 (`jobs`, `-p`), `jobsctl/c_fg_bg_no_monitor`, `jobsctl/c_monitor_script_pgid`
 (`set -m`: a group per job), `option/c_long_names` (`b` in `$-`), and the
@@ -78,9 +86,10 @@ two interruptible waits, `pending/wait_interrupted` (now
 `signal/wait_interrupted`) and `signal/c_wait_interrupted_term`: `wait`
 polls the children (`os_wait_poll`) and parks in `os_signal_wait` on
 `CHILD` and the trapped signals, so a trapped signal cuts it short with
-`128 + N`. `c_wait_interrupted_term`'s sender is `( … ) &`, which pelt
-still runs in-process to its end before `wait`: its signal is pending
-when `wait` looks, so the answer is dash's, by another order.
+`128 + N`. `c_wait_interrupted_term`'s sender is `( … ) &`, which until
+sh20 pelt ran in process to its end before `wait`, so the answer was
+dash's by another order; since sh20 it is a process and the order is
+dash's too.
 
 **Cleared by sh14 (wolf 0.2.29), `kill`:** `kill/c_bad`,
 `kill/c_job_id`, `kill/c_list`, `kill/c_send` and `wait/c_job_id`.
