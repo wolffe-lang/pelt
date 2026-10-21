@@ -978,6 +978,7 @@ fn shadow_of(sh: Sh) -> Sh {
     t.fds = copy sh.fds
     t.line = sh.line
     t.interactive = sh.interactive
+    t.sub_of_i = sh.sub_of_i
     t.from_stdin = sh.from_stdin
     t.last_bg = sh.last_bg
     t.phys = sh.phys
@@ -1019,6 +1020,7 @@ fn shadow_read(sh: Sh) -> Sh {
     t.opt_b = sh.opt_b
     t.line = sh.line
     t.interactive = sh.interactive
+    t.sub_of_i = sh.sub_of_i
     t.from_stdin = sh.from_stdin
     t.last_bg = sh.last_bg
     t.phys = sh.phys
@@ -2532,7 +2534,8 @@ fn run_external(
 }
 
 /// A simple command whose name (no `/`) command search found nowhere
-/// (XCU 2.9.1.4). When `hook`, the shell is interactive, a function
+/// (XCU 2.9.1.4). When `hook`, the shell is interactive (or a forked
+/// subshell of one, `Sh.sub_of_i`), a function
 /// `command_not_found_handle` is defined and this is not already inside
 /// it, the function is called (`run_cnf`) and its status is the
 /// command's; a 127 it returns is said as pelt's own not-found, unless
@@ -2540,7 +2543,7 @@ fn run_external(
 /// not-found: said, 127. Inside the call every name not found is the
 /// plain not-found, so the function is never re-entered.
 fn unfound(mut sh: Sh, fields: List[str], names: List[str], values: List[str], hook: bool) -> int {
-    if hook && sh.interactive && !sh.in_cnf {
+    if hook && (sh.interactive || sh.sub_of_i) && !sh.in_cnf {
         // bash's name for it, which fortsh shares (pelt#42)
         let fnode = sh.funcs["command_not_found_handle"] else -1
         if fnode >= 0 {
