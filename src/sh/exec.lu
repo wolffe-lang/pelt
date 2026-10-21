@@ -2846,16 +2846,19 @@ fn async_target(a: Ast, node: int) -> int {
 /// `sh.builtin`); an end by signal is said unless `quiet` (dash says
 /// nothing for `wait` with no operand, black-box: s10).
 fn wait_job(mut sh: Sh, j: int, quiet: bool) -> int {
+    // an end a poll took before this `wait` asked is not said (pelt#47)
+    let earlier = slot_flag(sh, j, SL_REAPED)
     if jb_procs(sh, j) == 0 {
         // a list pelt ran itself (its status), or a job whose one process
         // ended and was folded into its slot (`sh.jobs`'s `jb_fold`: the
         // poll's spelling, so an end by a signal is said as below)
         let (st0, sig0) = status_of(slot_status(sh, j))
-        if !quiet {
+        if !quiet && !earlier {
             report_signal(mut sh, sig0)
         }
         return st0
     }
+    var now = false
     var k = 0
     while k < sh.pr_job.len {
         if sh.pr_job[k] == j && sh.pr_st[k] == PR_RUN {
@@ -2865,12 +2868,13 @@ fn wait_job(mut sh: Sh, j: int, quiet: bool) -> int {
             } else {
                 sh.pr_st[k] = os_wait_status(sh.pr_h[k]) else 1
             }
+            now = true
         }
         k += 1
     }
     let raw = jb_raw(sh, j)
     let (st, sig) = status_of(raw)
-    if !quiet {
+    if !quiet && (now || !earlier) {
         report_signal(mut sh, sig)
     }
     st

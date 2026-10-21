@@ -1738,6 +1738,16 @@ fn cd_stays(sh: Sh, dir: str, physical: bool, show: bool) -> bool {
 /// control off `wait` with no operand forgets the jobs that ended
 /// (dash, black-box: s10).
 fn bi_wait(mut sh: Sh, args: List[str]) -> int {
+    // what a poll takes while `wait` runs is `wait`'s own to say
+    // (`sh.jobs`'s `SL_REAPED`, pelt#47)
+    let was = sh.in_wait
+    sh.in_wait = true
+    let st = wait_ops(mut sh, args)
+    sh.in_wait = was
+    st
+}
+
+fn wait_ops(mut sh: Sh, args: List[str]) -> int {
     flush(mut sh)
     let cut = sh.sig_mine
     let polled = sh.jc_on || cut != 0

@@ -348,6 +348,8 @@ struct Sh {
     /// dash's does, and a name not found still calls
     /// `command_not_found_handle` (`sh.exec`'s `unfound`, pelt#42).
     sub_of_i: bool,
+    /// The `wait` built-in is running (`sh.jobs`'s `SL_REAPED`, pelt#47).
+    in_wait: bool,
     /// The journal (module doc, `jot`).
     ji: List[int],
     jn: List[str],
@@ -499,6 +501,7 @@ fn new_sh(name: str) -> Sh {
         hold_ign: 0,
         async_ign: 0,
         sub_of_i: false,
+        in_wait: false,
         ji: List[int](),
         jn: List[str](),
         fr_top: -1,
