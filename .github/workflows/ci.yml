@@ -209,7 +209,7 @@ jobs:
         # tools/check-test runs the unit tests, once a host on the native
         # leg; `wolf test` runs them on the checked machine (its rows are
         # `unsupported` where that machine refuses a construct), so the
-        # compiled tiers run the same checks below (`pelt --self-test`, sh20).
+        # compiled tiers run the same checks below (`tools/self-check`, sh20).
         if: matrix.builds && matrix.tier == 'native'
         run: tools/check-test
 
@@ -217,10 +217,11 @@ jobs:
       # above runs them on the checked machine), with the one row only a
       # compiled tier can answer: a fork asked while a task is live is
       # answered `busy`, and pelt runs the shape in process, as it does on
-      # a host that does not fork (pelt starts no task; src/sh/fork.lu).
+      # a host that does not fork (pelt starts no task; src/sh/fork.lu;
+      # the task is src/selfcheck.lu's, a program of its own).
       - name: the table checks on the ${{ matrix.tier }} tier, busy's row with them
         if: ${{ matrix.builds && !cancelled() }}
-        run: target/${{ matrix.tier }}/pelt --self-test
+        run: tools/self-check ${{ matrix.tier }}
 
       # pelt#3: a word that is not a pattern (`[`, `a]`, `[a`) reads no
       # directory. End to end: a `[ … ]` loop's peak RSS in a directory
