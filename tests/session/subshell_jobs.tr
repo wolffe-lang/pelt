@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "sleep 1 &"
+err no
+prompt "$ "
+step 2 "echo \"[$(jobs)]\"; ( jobs ) | wc -l | tr -d \" \"; jobs | wc -l | tr -d \" \""
+out "[[1] + Running                    ]\n0\n1\n"
+err no
+prompt "$ "
+step 3 "wait"
+err no
+prompt "$ "
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4
