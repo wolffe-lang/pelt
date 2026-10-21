@@ -1,26 +1,31 @@
 //! sh.exec — running the tree (XCU 2.9): simple commands and their
 //! search, pipelines, lists, compound commands, functions, and the
-//! subshells and command substitutions that run in-process.
+//! subshells and command substitutions, as processes (`sh.fork`) or in
+//! process.
 //!
 //! References consulted: POSIX.1-2024 XCU 2.8 (exit status and
 //! errors), 2.9 (shell commands, command search and execution); the
 //! `set` page for `-e`, `-u`, `-x`, `-f`; black-box runs of `dash`
 //! 0.5.13.4. No shell's source.
 //!
-//! **Plumbing without fork (H2).** wolf has no fork, so pelt runs
-//! every subshell, command substitution and in-process pipeline stage
-//! itself (`sh.state`) and starts programs with `os_spawn_fds` and a
-//! map built from its descriptor table: the programs of a pipeline run
-//! together, a stage pelt runs itself runs to the end before the next
-//! starts (`run_pipeline` says why), and `&` starts a program without
-//! waiting; `$!` is that program's process id (`os_proc_pid`).
+//! **Plumbing.** pelt starts programs with `os_spawn_fds` and a map
+//! built from its descriptor table, and since wolf 0.2.34 forks for
+//! every subshell, command substitution, list after `&` and pipeline
+//! stage it runs itself (`sh.fork`), so the stages of a pipeline run
+//! together and `$!` is always a process id. Where the host does not
+//! fork (the checked machine), each of those runs in process
+//! (`sh.state`), a stage to its end before the next starts
+//! (`run_pipeline` says why), and `$!` of a list pelt ran itself is a
+//! number no process has.
 //!
 //! **`exec cmd`** at the top level replaces the shell (`os_exec`,
 //! `[os.proc.exec]`): the same process, its descriptor table handed over
 //! as the map and the exported variables as the whole environment.
-//! Inside anything pelt runs in-process as a subshell there is no
-//! process of its own to replace, so the program is started, waited
-//! for, and the subshell ends with its status.
+//! Inside a subshell pelt runs in process there is no process of its
+//! own to replace, so the program is started, waited for, and the
+//! subshell ends with its status; a forked subshell's process is
+//! replaced, and so is one's by the program that is its last command
+//! (`sh.fork`'s `last_simple`).
 //!
 //! **Memory.** A simple command runs inside `copy region`
 //! (`[mem.region.copyout]`) with the state read only and copies out
@@ -121,7 +126,7 @@ fn run_node(mut sh: Sh, n: int, k: int) -> int {
         st = run_simple(mut sh, n)
         check_e(mut sh, st)
     } else if k == K_SUBSHELL {
-        st = run_subshell(mut sh, sh.ast.nodes[n].kids[0])
+        st = run_paren(mut sh, n)
         check_e(mut sh, st)
     } else if k == K_BRACE {
         st = run(mut sh, sh.ast.nodes[n].kids[0])
@@ -553,7 +558,29 @@ fn case_pick_here(mut sh: Sh, n: int) -> int {
     -1
 }
 
-/// `( list )` in-process: run in a frame (`sh.state`), which puts the
+/// `( list )`, node `n`: a process (`sh.fork`), with job control a
+/// foreground job of its own (so Ctrl-Z stops it, the program it ends
+/// with too; its text the body's, as dash's: `jc_subshell_stop`); or, when `list` is one simple command and no job is made,
+/// in process, the command forking only if the fast path does not
+/// finish it (`run_simple`).
+fn run_paren(mut sh: Sh, n: int) -> int {
+    let body = sh.ast.nodes[n].kids[0]
+    if fork_usable(sh) {
+        let job = jc_here(sh)
+        if job || one_simple(sh.ast, body) < 0 {
+            let st = fork_shape(mut sh, body, FK_WAIT, job, false, false, body)
+            if st != RUN_HERE {
+                sh.status = st
+                return st
+            }
+        } else {
+            sh.fk_mode = FK_WAIT
+        }
+    }
+    run_subshell(mut sh, body)
+}
+
+/// `( list )` in process: run in a frame (`sh.state`), which puts the
 /// environment back.
 fn run_subshell(mut sh: Sh, body: int) -> int {
     frame_open(mut sh)
@@ -574,25 +601,53 @@ fn run_subshell(mut sh: Sh, body: int) -> int {
     st
 }
 
-/// A command substitution: run `node` in-process with its standard
-/// output captured, the trailing newlines cut (XCU 2.6.3). Its status
-/// becomes `$?` of a command with no command name.
+/// A command substitution: `node` run with its standard output captured,
+/// the trailing newlines cut (XCU 2.6.3). Its status becomes `$?` of a
+/// command with no command name. A process (`sh.fork`) whose output the
+/// shell reads from a pipe; or, when `node` is one simple command, in
+/// process, the command forking only if the fast path does not finish
+/// it. `$(trap)` alone keeps the shell's traps (`lone_trap`).
 fn run_cmdsub(mut sh: Sh, node: int) -> str {
+    let lone = lone_trap(sh.ast, node)
+    if node >= 0 && fork_usable(sh) && one_simple(sh.ast, node) < 0 {
+        let saved = sh.status
+        cap_begin(mut sh)
+        let st = fork_shape(mut sh, node, FK_CAP, false, false, false, node)
+        if st != RUN_HERE {
+            let out = cap_end(mut sh, true)
+            sh.status = saved
+            sh.cs_status = st
+            sh.cs_ran = true
+            return out
+        }
+        let start = cap_close(mut sh)
+        cap_cut(mut sh, start)
+    }
     frame_open(mut sh)
-    traps_reset(mut sh)
+    if !lone {
+        traps_reset(mut sh)
+    }
     let saved_status = sh.status
     sh.sub += 1
     sh.sig_mine = interactive_set(sh)
     cap_begin(mut sh)
     var st = 0
     if node >= 0 {
+        if fork_usable(sh) && one_simple(sh.ast, node) >= 0 {
+            sh.fk_mode = FK_CAP
+            sh.fk_keep = lone
+        }
         st = run(mut sh, node)
+        sh.fk_mode = FK_NONE
+        sh.fk_keep = false
     }
     if sh.flow == F_EXIT {
         st = sh.status
     }
     sh.flow = F_NONE
-    st = run_exit_trap(mut sh, st)
+    if !lone {
+        st = run_exit_trap(mut sh, st)
+    }
     let out = cap_end(mut sh, true)
     sh.sub -= 1
     frame_close(mut sh)
@@ -735,13 +790,29 @@ fn run_simple(mut sh: Sh, n: int) -> int {
     // keep its scratch in the root every time (pelt#33)
     let bg = sh.bg_simple
     sh.bg_simple = false
-    if fast_ok(sh) && (!nowait || stage_fast(sh) || last || bg) {
+    // a subshell's one command (`sh.fork`): forked here when the fast
+    // path does not finish it; the command a forked child may let take
+    // its place does not take the fast path, which would start it
+    let fk = sh.fk_mode
+    sh.fk_mode = FK_NONE
+    let fk_keep = sh.fk_keep
+    sh.fk_keep = false
+    if n != sh.exec_last && fast_ok(sh) && (!nowait || stage_fast(sh) || last || bg) {
         flush(mut sh)
         let r = copy region turn {
             run_fast(sh, sh.ast, n, nowait || last, bg)
         }
         if r.kind != R_SLOW {
             return commit_fast(mut sh, r)
+        }
+    }
+    if fk != FK_NONE && fork_usable(sh) {
+        let st = fork_shape(mut sh, n, fk, false, fk_keep, true, n)
+        if st != RUN_HERE {
+            if fk == FK_WAIT || fk == FK_CAP {
+                sh.status = st
+            }
+            return st
         }
     }
     run_slow(mut sh, n, nowait || last)
