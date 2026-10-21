@@ -1,0 +1,8 @@
+:
+W=$PWD; mkdir jdir
+command_not_found_handle() { echo "handler [$*]"; case $1 in fuzzy) cd -- jdir; return 0;; esac; return 127; }
+cd -- jdir; echo "dir st=$? ${PWD#"$W"}"
+cd "$W"; fuzzy x; echo "fuzzy st=$? ${PWD#"$W"}"
+cd "$W"; cd -- ./jdir; echo "slashed st=$? ${PWD#"$W"}"
+cd "$W"; nosuch; echo "nosuch st=$? ${PWD#"$W"}"
+exit

@@ -1,0 +1,9 @@
+:
+W=$PWD; mkdir -p home/pax
+cd -- home/pax; echo "rel st=$? ${PWD#"$W"} ${OLDPWD#"$W"}"
+cd "$W"; cd -- "$W/home/pax/"; echo "abs st=$? ${PWD#"$W"}"
+cd -- ..; echo "dotdot st=$? ${PWD#"$W"}"
+cd -- ..; echo "dotdot st=$? ${PWD#"$W"}"
+cd -- ~; echo "tilde st=$? ${PWD#"$HOME"}"
+cd "$W"; cd -- home/pax/; cd - >/dev/null; echo "back st=$? ${PWD#"$W"}"
+exit

@@ -1,0 +1,8 @@
+:
+W=$PWD; mkdir basename echo fn
+basename /a/b; echo "path st=$? ${PWD#"$W"}"
+echo builtin; echo "builtin st=$? ${PWD#"$W"}"
+fn() { echo "fn ran $#"; }
+fn a b; echo "function st=$? ${PWD#"$W"}"
+cd -- ./fn; echo "slashed st=$? ${PWD#"$W"}"
+exit

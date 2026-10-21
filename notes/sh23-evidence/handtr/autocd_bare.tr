@@ -1,0 +1,39 @@
+step 0
+err no
+prompt "$ "
+step 1 "set -o autocd"
+err no
+prompt "$ "
+step 2 "W=$PWD; mkdir child \"my dir\"; d=child"
+err no
+prompt "$ "
+step 3 "child; echo \"child st=$? ${PWD#\"$W\"}\""
+out "child st=0 /child\n"
+err no
+prompt "$ "
+step 4 "cd \"$W\"; \"my dir\"; echo \"space st=$? ${PWD#\"$W\"}\""
+out "space st=0 /my dir\n"
+err no
+prompt "$ "
+step 5 "cd \"$W\"; $d; echo \"var st=$? ${PWD#\"$W\"}\""
+out "var st=0 /child\n"
+err no
+prompt "$ "
+step 6 "cd \"$W\"; mkdir -p elsewhere/kid elsewhere/only kid; CDPATH=$W/elsewhere"
+err no
+prompt "$ "
+step 7 "kid >/dev/null; echo \"cdpath st=$? ${PWD#\"$W\"}\""
+out "cdpath st=0 /elsewhere/kid\n"
+err no
+prompt "$ "
+step 8 "cd \"$W\"; only; echo \"only st=$? ${PWD#\"$W\"}\""
+out "only st=127 \n"
+err yes
+prompt "$ "
+step 9 "unset CDPATH"
+err no
+prompt "$ "
+step 10 "exit"
+err no
+prompt ""
+exit 0 at step 10
