@@ -15,10 +15,12 @@
 //! pipeline the shell runs at its top level, or of `cmd &`, is started
 //! by `os_spawn_job` into one new process group: the first leads it, the
 //! rest join it, and a foreground job is handed the terminal. A stage
-//! pelt runs itself (a built-in, a function, a compound command) stays in
-//! the shell: pelt has no fork, and a subshell is not yet a process
-//! (ruling #69 R1). Inside a subshell pelt runs in-process there is no
-//! job control, as in dash's subshells.
+//! pelt runs itself (a function, a compound command, a built-in the fast
+//! path does not finish) is a forked process that joins the group the
+//! same way (`sh.fork`), and so are `( … )` at the top level (a
+//! foreground job of its own) and a list after `&` (a background one).
+//! A forked subshell has no job control, as dash's has none; nor has
+//! one pelt runs in process (where the host does not fork).
 //!
 //! **The wait.** wolf answers a child's change by `os_wait_poll`: an
 //! exit code, `-N` for an end by signal N, `256 + N` for a stop, or
@@ -914,11 +916,12 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
         m = sh.ast.nodes[m].kids[0]
     }
     let piped = sh.ast.nodes[m].kind == K_PIPE && sh.ast.nodes[m].ints[0] == 0
+    let forks = fork_usable(sh)
     var k = 0
     var i = 0
     while k < sh.pr_job.len {
         if sh.pr_job[k] == j {
-            let st = if piped then nth_simple(sh.ast, m, i) else -1
+            let st = if piped then nth_proc(sh.ast, m, i, forks) else -1
             if st >= 0 {
                 sh.pr_text[k] = copy region pt {
                     node_text(sh.ast, st)
@@ -932,11 +935,24 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
     }
 }
 
-/// The `i`th simple command among pipeline `m`'s stages, or -1.
-fn nth_simple(a: Ast, m: int, i: int) -> int {
+/// The stage of pipeline `m` that is its `i`th process, or -1: a simple
+/// command, or, where the host forks (`forks`), any stage but a simple
+/// command naming a pure built-in by a plain word (whose output is fed
+/// on, no process: `sh.exec`'s fast path).
+fn nth_proc(a: Ast, m: int, i: int, forks: bool) -> int {
     var c = 0
     for k in a.nodes[m].kids {
-        if a.nodes[k].kind == K_SIMPLE {
+        var isp = a.nodes[k].kind == K_SIMPLE
+        if forks {
+            isp = true
+            if a.nodes[k].kind == K_SIMPLE {
+                let na = a.nodes[k].ints[0]
+                if na == 0 && a.nodes[k].words.len > 0 && is_pure_builtin(a.nodes[k].words[0]) {
+                    isp = false
+                }
+            }
+        }
+        if isp {
             if c == i {
                 return k
             }
@@ -1055,6 +1071,12 @@ fn jc_leave(mut sh: Sh) {
 /// The meanings a child gets back at the default: the ones the shell
 /// ignores for job control and was not started ignoring.
 fn jc_defaults(sh: Sh) -> int {
+    if sh.caps.len > 0 && sh.stage_w < 0 && fork_usable(sh) {
+        // a program a command substitution starts keeps them ignored: the
+        // substitution is no job, as a forked one's programs keep them
+        // (`sh.fork`; dash, black-box)
+        return 0
+    }
     let back = less(sh.jc_ign, if sh.sig_ign0 > 0 then sh.sig_ign0 else 0)
     if sh.jc_hold {
         // a pipeline with a stage the shell runs itself is no job: its
@@ -1074,14 +1096,19 @@ fn is_alias(a: Ast, w: str) -> bool {
     true
 }
 
-/// Whether every stage of pipeline `n` looks like a program, so the
-/// pipeline can be one job: a simple command whose command word is a
+/// Whether pipeline `n` is one job. Where the host forks (`sh.fork`),
+/// every pipeline is: each stage pelt runs itself is a process that
+/// joins the job's group (a pure built-in's stage has ended before the
+/// next starts). Where it does not, only a pipeline whose every stage
+/// looks like a program: a simple command whose command word is a
 /// literal naming no built-in, function or alias (a word with an
-/// expansion or a quote is taken for a program). A pipeline with a
-/// stage pelt runs itself is not one: pelt has no fork, so that stage
-/// runs in the shell, which would wait on a pipe its stopped programs
-/// never fill (ruling #69 R1; `tests/session/PENDING.md`).
+/// expansion or a quote is taken for a program). A stage pelt runs
+/// itself in the shell would leave the shell waiting on a pipe its
+/// stopped programs never fill.
 fn pipe_is_job(sh: Sh, n: int) -> bool {
+    if fork_usable(sh) {
+        return true
+    }
     for k in sh.ast.nodes[n].kids {
         if sh.ast.nodes[k].kind != K_SIMPLE {
             return false
