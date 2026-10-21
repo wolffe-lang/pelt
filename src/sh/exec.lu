@@ -919,6 +919,8 @@ fn shadow_of(sh: Sh) -> Sh {
     t.dots = sh.dots
     t.in_trap = sh.in_trap
     t.trap_status = sh.trap_status
+    t.pid = sh.pid
+    t.fork_ok = sh.fork_ok
     t.shadow = true
     t.defer_ok = true
     t
@@ -949,6 +951,7 @@ fn shadow_read(sh: Sh) -> Sh {
     t.from_stdin = sh.from_stdin
     t.last_bg = sh.last_bg
     t.phys = sh.phys
+    t.pid = sh.pid
     t.shadow = true
     t
 }
