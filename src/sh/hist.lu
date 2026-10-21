@@ -488,7 +488,7 @@ fn hist_append(path: str, xs: List[str], nl: bool) -> int {
 /// rename it over it (oldest first are the ones gone).
 fn hist_rewrite(mut sh: Sh) {
     let path = sh.ed.h.path
-    let tmp = "{path}.pelt{shell_pid()}"
+    let tmp = "{path}.pelt{os_pid()}"
     let wrote = copy region hrw {
         hist_write_all(tmp, sh.ed.h)
     }

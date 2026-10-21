@@ -552,7 +552,7 @@ fn param(sh: Sh, name: str) -> (str, bool) {
         return (dash_flags(sh), true)
     }
     if name == "$" {
-        return (shell_pid(), true)
+        return (shell_pid(sh), true)
     }
     if name == "!" {
         if sh.last_bg > 0 {
@@ -583,10 +583,14 @@ fn param(sh: Sh, name: str) -> (str, bool) {
     ("", false)
 }
 
-/// `$$`: the shell's process id (`os_pid`, `[os.proc.self]`). A
-/// subshell runs in this process, so it answers the same there, which
-/// is what XCU 2.5.2 asks of a subshell with a process of its own.
-fn shell_pid() -> str {
+/// `$$`: the shell's process id (`os_pid`, `[os.proc.self]`), read when
+/// the shell started (`Sh.pid`): a subshell's process, which a fork made,
+/// answers the shell's, as XCU 2.5.2 asks; one run in process answers
+/// the same.
+fn shell_pid(sh: Sh) -> str {
+    if sh.pid > 0 {
+        return "{sh.pid}"
+    }
     "{os_pid()}"
 }
 
