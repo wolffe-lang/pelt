@@ -1,0 +1,2 @@
+bash=agree
+why=pelt#49, ruling #113: set -o autocd is off by default, so in an interactive shell a slashed directory still cannot be run (126, said) and a slash-less one, .. and a quoted name are not found (127, said), the shell where it was: as dash, which has no such option, and bash without shopt -s autocd
