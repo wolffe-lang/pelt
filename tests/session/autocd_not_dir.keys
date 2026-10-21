@@ -1,0 +1,7 @@
+set -o autocd
+W=$PWD; echo 'echo ran' > f
+./f; echo "file-slash st=$? ${PWD#"$W"}"
+f; echo "file-bare st=$? ${PWD#"$W"}"
+./nope/; echo "nope-slash st=$? ${PWD#"$W"}"
+nope; echo "nope-bare st=$? ${PWD#"$W"}"
+exit

@@ -1,0 +1,10 @@
+set -o autocd
+W=$PWD; mkdir child "my dir"; d=child
+child; echo "child st=$? ${PWD#"$W"}"
+cd "$W"; "my dir"; echo "space st=$? ${PWD#"$W"}"
+cd "$W"; $d; echo "var st=$? ${PWD#"$W"}"
+cd "$W"; mkdir -p elsewhere/kid elsewhere/only kid; CDPATH=$W/elsewhere
+kid >/dev/null; echo "cdpath st=$? ${PWD#"$W"}"
+cd "$W"; only; echo "only st=$? ${PWD#"$W"}"
+unset CDPATH
+exit

@@ -1,0 +1,2 @@
+tr_by=hand
+why=pelt#49, ruling #113: with set -o autocd a name that is a file, or no such path, keeps its answer and its message: a file with a slash 126, a name with no slash 127, a missing path 127, as bash 5.3 and zsh 5.9 with the option (black-box, notes/sh23-evidence/refs/base/bash-i-autocd/p03-notdir) and dash without it. Written by hand: pelt trunk's own answers, set -o autocd typed as :

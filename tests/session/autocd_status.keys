@@ -1,0 +1,14 @@
+set -o autocd
+W=$PWD; mkdir -m 000 locked; mkdir sub
+./locked; echo "locked st=$? ${PWD#"$W"}"
+locked 2>err; echo "redir st=$? ${PWD#"$W"} $([ -s err ] && echo said)"
+chmod 755 locked
+command ./sub; echo "command st=$? ${PWD#"$W"}"
+(sub) 2>/dev/null; echo "subshell ${PWD#"$W"}"
+sub 2>/dev/null | cat; echo "pipe ${PWD#"$W"}"
+FOO=bar sub; echo "assign st=$? ${FOO-unset} ${PWD#"$W"}"
+cd "$W"; sub >out; echo "out st=$? ${PWD#"$W"} [$(cat "$W/out")]"
+cd "$W"; cd() { echo "fn cd [$#] $*"; command cd "$@"; }
+sub; echo "fn st=$? ${PWD#"$W"}"
+unset -f cd
+exit

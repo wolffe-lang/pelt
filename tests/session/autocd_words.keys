@@ -1,0 +1,6 @@
+set -o autocd
+W=$PWD; mkdir child other
+child a b; echo "two st=$? ${PWD#"$W"}"
+cd "$W"; ./child other; echo "slashed st=$? ${PWD#"$W"}"
+cd "$W"; child -P; echo "option st=$? ${PWD#"$W"}"
+exit

@@ -1,0 +1,7 @@
+mkdir sub
+sub; echo "st=$? ${PWD##*/}"
+set +o | grep autocd
+cd ..
+"$0" -o autocd -c 'sub; echo "c st=$? ${PWD##*/}"'
+"$0" -o autocd -c './sub; echo "slash st=$? ${PWD##*/}"'
+exit

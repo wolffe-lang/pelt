@@ -1,0 +1,10 @@
+set -o | grep autocd
+set +o | grep autocd
+set -o autocd; echo "st=$?"
+set -o | grep autocd
+set +o | grep autocd
+s=$(set +o); set +o autocd; eval "$s"; set +o | grep autocd
+(set +o autocd); set +o | grep autocd
+set +o autocd; set -o | grep autocd
+set -o | sed -n 1,3p
+exit

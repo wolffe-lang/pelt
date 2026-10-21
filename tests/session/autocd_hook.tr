@@ -1,0 +1,32 @@
+step 0
+err no
+prompt "$ "
+step 1 "set -o autocd"
+err no
+prompt "$ "
+step 2 "W=$PWD; mkdir jdir"
+err no
+prompt "$ "
+step 3 "command_not_found_handle() { echo \"handler [$*]\"; case $1 in fuzzy) cd -- jdir; return 0;; esac; return 127; }"
+err no
+prompt "$ "
+step 4 "jdir; echo \"dir st=$? ${PWD#\"$W\"}\""
+out "dir st=0 /jdir\n"
+err no
+prompt "$ "
+step 5 "cd \"$W\"; fuzzy x; echo \"fuzzy st=$? ${PWD#\"$W\"}\""
+out "handler [fuzzy x]\nfuzzy st=0 /jdir\n"
+err no
+prompt "$ "
+step 6 "cd \"$W\"; ./jdir; echo \"slashed st=$? ${PWD#\"$W\"}\""
+out "slashed st=0 /jdir\n"
+err no
+prompt "$ "
+step 7 "cd \"$W\"; nosuch; echo \"nosuch st=$? ${PWD#\"$W\"}\""
+out "handler [nosuch]\nnosuch st=127 \n"
+err yes
+prompt "$ "
+step 8 "exit"
+err no
+prompt ""
+exit 0 at step 8

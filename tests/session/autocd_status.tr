@@ -1,0 +1,54 @@
+step 0
+err no
+prompt "$ "
+step 1 "set -o autocd"
+err no
+prompt "$ "
+step 2 "W=$PWD; mkdir -m 000 locked; mkdir sub"
+err no
+prompt "$ "
+step 3 "./locked; echo \"locked st=$? ${PWD#\"$W\"}\""
+out "locked st=2 \n"
+err yes
+prompt "$ "
+step 4 "locked 2>err; echo \"redir st=$? ${PWD#\"$W\"} $([ -s err ] && echo said)\""
+out "redir st=2  said\n"
+err no
+prompt "$ "
+step 5 "chmod 755 locked"
+err no
+prompt "$ "
+step 6 "command ./sub; echo \"command st=$? ${PWD#\"$W\"}\""
+out "command st=126 \n"
+err yes
+prompt "$ "
+step 7 "(sub) 2>/dev/null; echo \"subshell ${PWD#\"$W\"}\""
+out "subshell \n"
+err no
+prompt "$ "
+step 8 "sub 2>/dev/null | cat; echo \"pipe ${PWD#\"$W\"}\""
+out "pipe \n"
+err no
+prompt "$ "
+step 9 "FOO=bar sub; echo \"assign st=$? ${FOO-unset} ${PWD#\"$W\"}\""
+out "assign st=0 unset /sub\n"
+err no
+prompt "$ "
+step 10 "cd \"$W\"; sub >out; echo \"out st=$? ${PWD#\"$W\"} [$(cat \"$W/out\")]\""
+out "out st=0 /sub []\n"
+err no
+prompt "$ "
+step 11 "cd \"$W\"; cd() { echo \"fn cd [$#] $*\"; command cd \"$@\"; }"
+err no
+prompt "$ "
+step 12 "sub; echo \"fn st=$? ${PWD#\"$W\"}\""
+out "fn cd [2] -- sub\nfn st=0 /sub\n"
+err no
+prompt "$ "
+step 13 "unset -f cd"
+err no
+prompt "$ "
+step 14 "exit"
+err no
+prompt ""
+exit 0 at step 14

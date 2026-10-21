@@ -1,0 +1,2 @@
+tr_by=hand
+why=pelt#49, ruling #113: with set -o autocd a directory named like a program on PATH, a built-in or a function never reaches the option: each runs (bash's rule; bash 5.3 and zsh 5.9 agree, black-box, notes/sh23-evidence/refs/base/bash-i-autocd/p04-wins); the same name with a slash names the directory and is cd's. Written by hand from pelt trunk's answers to the explicit session (notes/sh23-evidence/handtr.py)

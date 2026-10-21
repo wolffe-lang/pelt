@@ -1,0 +1,2 @@
+tr_by=hand
+why=pelt#49, ruling #113: set -o and set +o list autocd between allexport and emacs, off by default; set -o autocd and set +o autocd turn it on and off, eval of set +o's output puts it back, and a subshell's setting ends with the subshell. pelt's own option (bash spells it shopt -s autocd, zsh setopt AUTO_CD); dash has none. Written by hand
