@@ -1101,6 +1101,11 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
             if assigns.len > 0 {
                 return slow()
             }
+            if bg && sh.fork_ok != 0 {
+                // a built-in after `&` is a process of its own, as dash's
+                // (`sh.fork`): started by the ordinary path's fork
+                return slow()
+            }
             if is_pure_builtin(cmd) {
                 bk = B_PURE
             } else if is_flow_builtin(cmd) {
@@ -2713,9 +2718,11 @@ fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
 /// `list &` (XCU 2.9.3.1). A simple command that runs a program, or a
 /// pipeline, becomes a background job (`sh.jobs`): its programs are
 /// started and not waited for, with job control on in a group of their
-/// own; anything else pelt runs itself, to the end, as a subshell (no
-/// fork), and records as a finished job. `$!` is the last program's
-/// process id, or for a list pelt ran itself a number no process has.
+/// own; anything else (a built-in, a compound command, a function) is a
+/// forked process (`sh.fork`), the job's one. Where the host does not
+/// fork, pelt runs such a list itself, to the end, as a subshell, and
+/// records it as a finished job. `$!` is the last process's id, or for
+/// a list pelt ran itself a number no process has.
 /// With job control off standard input is the null device before the
 /// list's own redirections, and the programs start with `SIGINT` and
 /// `SIGQUIT` ignored (XCU 2.11): the two are ignored in pelt across the
@@ -2735,7 +2742,8 @@ fn run_async(mut sh: Sh, node: int) -> int {
         fd_set(mut sh, 0, null)
     }
     var j = -1
-    if as_job {
+    let forks = !as_job && fork_usable(sh) && sh.caps.len == 0 && sh.jc_build < 0
+    if as_job || forks {
         j = jb_new(mut sh)
         set_slot_pgid(mut sh, j, if jc then 0 else -1)
         sh.jc_build = j
@@ -2750,8 +2758,25 @@ fn run_async(mut sh: Sh, node: int) -> int {
         os_signal_ignore(two) else |_| {}
         sh.sig_listen = less(sh.sig_listen, two)
         sh.sig_ignore = sh.sig_ignore | two
+        // and a stage the pipeline forks holds them ignored (`sh.fork`)
+        sh.async_ign = two
     }
-    let st = run_subshell(mut sh, node)
+    var st = RUN_HERE
+    if forks {
+        st = fork_shape(mut sh, node, FK_BG, false, false, false, node)
+        if st == RUN_HERE {
+            jc_end_build(mut sh)
+            jb_free(mut sh, j)
+            j = -1
+        }
+    } else if as_job && tk == K_SIMPLE && fork_usable(sh) {
+        sh.fk_mode = FK_BG
+    }
+    if st == RUN_HERE {
+        st = run_subshell(mut sh, node)
+    }
+    sh.fk_mode = FK_NONE
+    sh.async_ign = 0
     sh.nowait = false
     sh.bg_simple = false
     jc_end_build(mut sh)
@@ -2854,10 +2879,12 @@ fn proc_status(sh: Sh, j: int, h: int) -> int {
 /// `a | b | …` (XCU 2.9.2), stages left to right. A stage that is a
 /// simple command running a program is started with its descriptor 1 a
 /// pipe's write end and not waited for, so the programs of a pipeline
-/// run together. A stage pelt runs itself (a built-in, a function, a
-/// compound command) runs as a subshell, to the end: if it is not the
-/// last, what it writes is caught and becomes the next stage's input
-/// (`sh.redir`'s `feed`), so pelt never blocks writing a pipe nobody drains.
+/// run together; so is a stage pelt runs itself (a function, a compound
+/// command, a built-in the fast path does not finish), as a forked
+/// process (`sh.fork`). A pure built-in's output is caught and becomes
+/// the next stage's input (`sh.redir`'s `feed`); and where the host does
+/// not fork, so is every stage pelt runs itself, run as a subshell to
+/// its end, so pelt never blocks writing a pipe nobody drains.
 /// The status is the last stage's, or under `pipefail` the rightmost
 /// failing stage's.
 fn run_pipeline(mut sh: Sh, n: int) -> int {
@@ -2914,6 +2941,7 @@ fn run_pipeline_in(mut sh: Sh, n: int) -> int {
         }
         cap_begin(mut sh)
         sh.stage_w = w
+        sh.stage_r = r
         sh.stage_cap = sh.caps.len
         sh.stage_child = -1
         sh.stage_in = -1
@@ -2924,6 +2952,7 @@ fn run_pipeline_in(mut sh: Sh, n: int) -> int {
         sh.stage_child = -1
         sh.stage_in = -1
         sh.stage_w = -1
+        sh.stage_r = -1
         sh.stage_cap = 0
         var fed = given
         if child >= 0 || given >= 0 {
@@ -3022,13 +3051,31 @@ fn run_stage_kept(mut sh: Sh, node: int, input: int, nowait: bool) -> int {
     st
 }
 
-/// One pipeline stage as a subshell, with descriptor 0 `input`.
+/// One pipeline stage as a subshell, with descriptor 0 `input`: a
+/// process (`sh.fork`) unless it is a simple command the fast path
+/// finishes (a program started on the stage's pipe, a pure built-in whose
+/// output is fed on). A stage's process is the pipeline's to wait for (or
+/// the job's) but the last of a pipeline that is no job, which is waited
+/// for here.
 fn run_stage(mut sh: Sh, node: int, input: int, nowait: bool) -> int {
     let saved_in = fd_get(sh, 0)
     fd_set(mut sh, 0, input)
-    sh.nowait = nowait
-    let st = run_subshell(mut sh, node)
-    sh.nowait = false
+    var st = RUN_HERE
+    if fork_usable(sh) {
+        let last = sh.stage_w < 0
+        let fk = if !last || sh.jc_build >= 0 then FK_STAGE else FK_WAIT
+        if sh.ast.nodes[node].kind != K_SIMPLE {
+            st = fork_shape(mut sh, node, fk, false, false, false, node)
+        } else {
+            sh.fk_mode = fk
+        }
+    }
+    if st == RUN_HERE {
+        sh.nowait = nowait
+        st = run_subshell(mut sh, node)
+        sh.nowait = false
+        sh.fk_mode = FK_NONE
+    }
     fd_set(mut sh, 0, saved_in)
     st
 }
