@@ -203,6 +203,9 @@ Each of these is a ruling first. None is started before POSIX is met.
   dash's meaning (R5);
 - arithmetic beyond POSIX (`++`, `--`, `,`): follow dash (R6);
 - a `set -o emacs` name for the default editing mode (R2);
+- **`set -o autocd`** (ruling #113, pelt#49; bash's `shopt -s autocd`,
+  zsh's `AUTO_CD`): a command that names a directory is `cd -- NAME` in
+  an interactive shell; off by default; landed in sh23;
 - nothing from bash's or zsh's languages (`[[`, arrays, `function`)
   unless a ruling asks for it.
 
