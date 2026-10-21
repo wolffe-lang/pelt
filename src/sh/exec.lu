@@ -1793,6 +1793,9 @@ fn run_fields(mut sh: Sh, n: int, na: int, fields: List[str], nowait: bool) -> i
             k -= 1
         }
     } else {
+        // a forked child's last command, a program, takes the child's
+        // place (`sh.fork`'s `last_simple`)
+        sh.exec_here = n == sh.exec_last
         st = run_external(mut sh, fields, names, values, nowait, "", true)
     }
     end_redirs(mut sh)
@@ -2436,6 +2439,8 @@ fn run_external(
     let cmd = fields[0]
     var path = cmd
     var remembered = false
+    let in_place = sh.exec_here && !nowait
+    sh.exec_here = false
     sh.started = false
     if (cmd.find("/") else -1) < 0 {
         if via.len > 0 {
@@ -2465,6 +2470,13 @@ fn run_external(
     while k < names.len {
         env_set(names[k], values[k]) else |_| {}
         k += 1
+    }
+    if in_place && sh.caps.len == 0 && !names_cap(sh.fds) && !traps_act(sh) {
+        // the program takes the forked child's place, as dash's last
+        // command of a subshell does: the same process, its descriptor
+        // table as the map; a refusal (a script the kernel will not run,
+        // say) leaves it to the spawn below, which says why
+        let _x = try_exec(path, fields, env_vars(), child_map(sh))
     }
     // with job control, a program the shell waits for at its top level
     // is a foreground job of its own (`sh.jobs`)
