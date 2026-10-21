@@ -1,5 +1,0 @@
-exit=0
-stderr=yes
-bash=agree
-pending=fork
-why=a subshell runs in-process (wolf has no fork), so a signal sent to the subshell's process reaches the shell itself
