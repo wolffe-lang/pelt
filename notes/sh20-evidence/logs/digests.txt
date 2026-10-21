@@ -1,0 +1,50 @@
+# sh20: the release API, read twice (nomad-1, gh api, 2026-10-21T22:05:56Z)
+## read 1
+wolf-lang v0.2.34 tag object 38ab81cb32ca7af7c0fc40d456c9c0794fe2b987
+  -> commit 9da7bdcf2aea9adf48df6570bedc58e16e9ef853
+  release 419552903
+  wolf-0.2.34-aarch64-apple-darwin.tar.gz sha256:29c8331f5d188b00c4580bc7677b1238891c5734d00b0512df10c60eab236ee3
+  wolf-0.2.34-aarch64-unknown-linux-gnu.tar.gz sha256:ca5cadf936dc0d4396e92733fc65e953d549f3b61f0aa354e7be2e78ea8c3ad0
+  wolf-0.2.34-x86_64-pc-windows-msvc.tar.gz sha256:77bb8403aeeae9f0ebd5a461f3a71d6360acb4be60194307993245d0ff1e2f07
+  wolf-0.2.34-x86_64-unknown-linux-gnu.tar.gz sha256:88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821
+wolf-interp v0.1.55 tag object 047184fb8c70e8306dfbe4740ccf08c627eed9d3
+  -> commit e642f2630ad4c7f53740428d5cca705f2e0d295b
+  release 418932753
+  lupin-0.1.55-aarch64-apple-darwin.tar.gz sha256:2eac1cccdc8a5bec5831787604098982a7ac42e41561a037c3b5ccf0ac21741a
+  lupin-0.1.55-aarch64-unknown-linux-gnu.tar.gz sha256:5854ab268a835bb75749bce7601441858ac342351906a0838e8602e4edbd45d7
+  lupin-0.1.55-x86_64-pc-windows-msvc.zip sha256:f453a79383d94d1f2367498d5aa8dbd2e7d88b87a76473465ca98fa8e7e12ea3
+  lupin-0.1.55-x86_64-unknown-linux-gnu.tar.gz sha256:1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38
+  lupin.exe sha256:fe4b3884760a42cdb220202b763bca291b75524932645d6a75b04b2d9e4eb7e8
+## read 2
+wolf-lang v0.2.34 tag object 38ab81cb32ca7af7c0fc40d456c9c0794fe2b987
+  -> commit 9da7bdcf2aea9adf48df6570bedc58e16e9ef853
+  release 419552903
+  wolf-0.2.34-aarch64-apple-darwin.tar.gz sha256:29c8331f5d188b00c4580bc7677b1238891c5734d00b0512df10c60eab236ee3
+  wolf-0.2.34-aarch64-unknown-linux-gnu.tar.gz sha256:ca5cadf936dc0d4396e92733fc65e953d549f3b61f0aa354e7be2e78ea8c3ad0
+  wolf-0.2.34-x86_64-pc-windows-msvc.tar.gz sha256:77bb8403aeeae9f0ebd5a461f3a71d6360acb4be60194307993245d0ff1e2f07
+  wolf-0.2.34-x86_64-unknown-linux-gnu.tar.gz sha256:88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821
+wolf-interp v0.1.55 tag object 047184fb8c70e8306dfbe4740ccf08c627eed9d3
+  -> commit e642f2630ad4c7f53740428d5cca705f2e0d295b
+  release 418932753
+  lupin-0.1.55-aarch64-apple-darwin.tar.gz sha256:2eac1cccdc8a5bec5831787604098982a7ac42e41561a037c3b5ccf0ac21741a
+  lupin-0.1.55-aarch64-unknown-linux-gnu.tar.gz sha256:5854ab268a835bb75749bce7601441858ac342351906a0838e8602e4edbd45d7
+  lupin-0.1.55-x86_64-pc-windows-msvc.zip sha256:f453a79383d94d1f2367498d5aa8dbd2e7d88b87a76473465ca98fa8e7e12ea3
+  lupin-0.1.55-x86_64-unknown-linux-gnu.tar.gz sha256:1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38
+  lupin.exe sha256:fe4b3884760a42cdb220202b763bca291b75524932645d6a75b04b2d9e4eb7e8
+
+# sh20, kasumi 2026-10-21T22:05:26Z: the linux x86-64 pair, downloaded once, hashed twice
+88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821  wolf.tgz
+1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38  lupin.tgz
+88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821  wolf.tgz
+1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38  lupin.tgz
+
+# kasumi tools/fetch-toolchain at the pin:
+fetch-toolchain: https://github.com/wolffe-lang/wolf-lang/releases/download/v0.2.34/wolf-0.2.34-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-interp/releases/download/v0.1.55/lupin-0.1.55-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38 OK
+fetch-toolchain: the archive bundles std e036bec318ad81ecd5a025612bc2c2adb17527f3; staging the pin instead
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at e036bec318ad81ecd5a025612bc2c2adb17527f3
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+wolf --version: wolf 0.2.34 (wolfgang, pin 9da7bdc) / paired with lupin 0.1.55 (reference interpreter), pin 294d626
+lupin --version: lupin 0.1.55 (wolf-interp, reference interpreter at pin 294d626)
