@@ -15,9 +15,16 @@ The census cases (sh06, `c_*`; `docs/CENSUS.md`), by what they wait on.
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
 | **ignoreeof** | `set -o ignoreeof` is accepted and Ctrl-D still ends the shell | pelt (P10) | `c_ignoreeof` |
-| **fork** | a pipeline with a stage pelt runs itself (`… \| while read …`) is not stopped as one job: pelt has no fork, so that stage runs in the shell, and the pipeline's programs keep `SUSPEND` ignored, so Ctrl-Z stops nothing rather than leave the shell waiting on a pipe a stopped program never fills (`sh.jobs`'s `pipe_is_job`) | pelt re-executing itself for a subshell (ruling #69 R1) | `c_jc_mixed_pipeline` |
 | **mail** | `MAIL`, `MAILCHECK`, `MAILPATH`: no notice before the prompt | pelt (P10); the file's time is `fs_stat` | `c_mail` |
 <!-- census:end -->
+
+**Cleared by sh20 (wolf 0.2.34, the fork):** `c_jc_mixed_pipeline`: a
+stage pelt runs itself is a process that joins the job's group with
+`SUSPEND` at the default, so Ctrl-Z stops the whole pipeline as one job.
+New with it: `jc_subshell_stop` (a foreground `( … )` is a job Ctrl-Z
+stops and `fg` continues), `jc_background_subshell` (the prompt's line
+goes on while `( … ) &` runs) and `subshell_jobs` (which subshells list
+the shell's jobs, as dash's).
 
 **Cleared by sh18 (wolf 0.2.32, job control):** `c_jc_background_group`,
 `c_jc_background_job`, `c_jc_bg`, `c_jc_bg_ttin`, `c_jc_ctrl_z`,
