@@ -23,11 +23,8 @@
 //! `cap_mark(level)`, what is flushed there lands in `cap_data` after
 //! the position the capture began at, and its result is cut back out.
 //!
-//! **Subshells in process.** Since wolf 0.2.34 most subshells are
-//! processes (`sh.fork`); the ones that are not — a `( cmd )` or
-//! `$( cmd )` the fast path finishes, a pipeline stage that is a program
-//! or a pure built-in, and every subshell on a host that does not fork
-//! (the checked machine) — run in the shell's own state, inside
+//! **Subshells run in-process.** wolf has no fork, so `( … )`, `$( … )`
+//! and an in-process pipeline stage run in the shell's own state, inside
 //! a FRAME (`frame_open`, `frame_close`) that puts it back after:
 //! variables, functions, positional parameters, options, traps, the
 //! `local` stack, the descriptor table, the working directory and the
@@ -321,35 +318,6 @@ struct Sh {
     /// until a `umask` has run.
     mask: int,
     mask0: int,
-    /// `$$`: the shell's process id, read once at start (`sh.main`), so a
-    /// subshell's process answers the shell's, as XCU 2.5.2 asks (0 until
-    /// read: `os_pid()` then).
-    pid: int,
-    /// Subshells as processes (`sh.fork`): whether the host forks (-1 not
-    /// asked yet, 0 no: the checked machine and windows answer
-    /// `unsupported`, 1 yes); the process kind the next simple command
-    /// forks as when the fast path does not finish it, and whether it
-    /// keeps the shell's traps
-    /// (`$(trap)`); in a forked child, the simple command that may replace
-    /// the child (`exec`'s way) as its last; the read end of the pipeline
-    /// stage's pipe, which the stage's child closes; the meanings a child
-    /// holds ignored until a trap of its own names them, and the two an
-    /// asynchronous list's children start ignoring with job control off.
-    fork_ok: int,
-    fk_mode: int,
-    fk_keep: bool,
-    exec_last: int,
-    exec_here: bool,
-    stage_r: int,
-    hold_ign: int,
-    async_ign: int,
-    /// A forked subshell of an interactive shell (`sh.fork`): it behaves as
-    /// a non-interactive shell (XCU 2.13), but `$-` still shows `i`, as
-    /// dash's does, and a name not found still calls
-    /// `command_not_found_handle` (`sh.exec`'s `unfound`, pelt#42).
-    sub_of_i: bool,
-    /// The `wait` built-in is running (`sh.jobs`'s `SL_REAPED`, pelt#47).
-    in_wait: bool,
     /// The journal (module doc, `jot`).
     ji: List[int],
     jn: List[str],
@@ -491,17 +459,6 @@ fn new_sh(name: str) -> Sh {
         groups: "",
         mask: -1,
         mask0: -1,
-        pid: 0,
-        fork_ok: -1,
-        fk_mode: 0,
-        fk_keep: false,
-        exec_last: -1,
-        exec_here: false,
-        stage_r: -1,
-        hold_ign: 0,
-        async_ign: 0,
-        sub_of_i: false,
-        in_wait: false,
         ji: List[int](),
         jn: List[str](),
         fr_top: -1,
@@ -1147,7 +1104,7 @@ fn dash_flags(sh: Sh) -> str {
     if sh.opt_m {
         putc(mut o, 'm')
     }
-    if sh.interactive || sh.sub_of_i {
+    if sh.interactive {
         putc(mut o, 'i')
     }
     if sh.opt_f {

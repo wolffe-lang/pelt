@@ -22,12 +22,6 @@ pub fn run_main(args: List[str]) -> int {
             i += 1
             continue
         }
-        if a == "--self-test" && i == 0 {
-            // the table checks (`sh.selftest`) on the tier this binary is,
-            // and `busy`'s row, which only a compiled tier can answer
-            // (`wolf test` runs them on the checked machine)
-            return self_test_main()
-        }
         if a == "--" {
             i += 1
             break
@@ -145,27 +139,6 @@ pub fn run_main(args: List[str]) -> int {
     run_source(src, name, rest, opts, cmd_string && read_stdin)
 }
 
-/// `pelt --self-test`: each failing table check one line on standard
-/// error, then `busy`'s row; 0 when none failed.
-fn self_test_main() -> int {
-    var bad = self_test()
-    let busy = fork_busy_answer()
-    if busy.len > 0 {
-        (mut bad).push(busy)
-    }
-    for line in bad {
-        eprint(line)
-    }
-    if bad.len > 0 {
-        eprint("pelt --self-test: {bad.len} table checks failed")
-        return 1
-    }
-    print(
-        "pelt --self-test: every table check passed; a fork with a task live is busy and runs in process",
-    )
-    0
-}
-
 fn report(name: str, line: int, msg: str) {
     eprint("pelt: {name}: line {line}: {msg}")
 }
@@ -275,7 +248,6 @@ fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int 
 /// default (`sh.signal`'s `sig_start`).
 fn import_env(mut sh: Sh) {
     sig_start()
-    sh.pid = os_pid()
     for kv in env_vars() {
         let eq = kv.find("=") else -1
         if eq > 0 {

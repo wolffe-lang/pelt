@@ -7,7 +7,6 @@
 //! `fc`'s operands, its list format and the history file's lines, Tab's
 //! reading of a line, its quoting and its list's shape (`sh.complete`),
 //! `read`'s split of a line into its variables, `$'…'`'s escapes,
-//! what `sh.fork` reads of a body's tree and its answer to `busy`,
 //! and what pelt#19's memory work keeps in place: a subshell's frame and
 //! journal, the tree's recycled slots and a word's text as a view.
 //! `src/sh_test.lu` runs them under `wolf test`.
@@ -855,90 +854,7 @@ pub fn self_test() -> List[str] {
     want_ds(mut bad, "$'\\q'", "\\q", 5)
     want_ds(mut bad, "$'\\u00e9'", "é", 9)
     want_ds(mut bad, "$''", "", 3)
-    want_fork_shape(mut bad, "true", true, false, true)
-    want_fork_shape(mut bad, "! x=1 env y", true, false, false)
-    want_fork_shape(mut bad, "a; b", false, false, true)
-    want_fork_shape(mut bad, "a && b", false, false, true)
-    want_fork_shape(mut bad, "a | b", false, false, false)
-    want_fork_shape(mut bad, "a &", false, false, false)
-    want_fork_shape(mut bad, "{{ a; b; }}", false, false, true)
-    want_fork_shape(mut bad, "trap", true, true, true)
-    want_fork_shape(mut bad, "trap - INT", true, true, true)
-    want_fork_shape(mut bad, "trap; :", false, false, true)
-    want_fork_shape(mut bad, "x=1 trap", true, false, true)
-    want_fork_shape(mut bad, "'trap'", true, false, true)
-    want_fork_busy(mut bad)
     bad
-}
-
-/// What `sh.fork` reads of a body's tree, for the body `src`: whether it
-/// is one simple command (run in process when the fast path finishes
-/// it), one `trap` command alone (`$(trap)` keeps the shell's traps), and
-/// whether a forked child may let a program that is its last command take
-/// its place.
-fn want_fork_shape(mut bad: List[str], src: str, one: bool, lone: bool, last: bool) {
-    var a = new_ast()
-    var p = new_parser(src, 1)
-    let n = parse_complete(mut p, mut a)
-    if (one_simple(a, n) >= 0) != one {
-        (mut bad).push("one_simple({src}) is not {one}")
-    }
-    if lone_trap(a, n) != lone {
-        (mut bad).push("lone_trap({src}) is not {lone}")
-    }
-    if (last_simple(a, n) >= 0) != last {
-        (mut bad).push("last_simple({src}) is not {last}")
-    }
-}
-
-/// `busy` (`[os.proc.fork]`): a fork asked with a task live is answered
-/// before the host is, and pelt runs the shape in process, as on a host
-/// that does not fork, without taking the host for one that does not
-/// (`sh.fork`'s `fork_begin`). pelt starts no task (`src/` spawns none),
-/// so this is the one place `busy` is met. On the checked machine, where
-/// `wolf test` runs this, the fork is `unsupported` first, and the shape
-/// runs in process the same way; `pelt --self-test` asks it on a compiled
-/// tier, where the answer must be `busy` (`fork_busy_answer`).
-fn want_fork_busy(mut bad: List[str]) {
-    let (got, ok) = fork_with_a_task()
-    if got != FORK_HERE {
-        (mut bad).push("a fork with a task live answered {got}, not FORK_HERE (in process)")
-    }
-    if ok == 1 {
-        (mut bad).push("a fork with a task live took the host for one that forks")
-    }
-}
-
-/// `fork_begin` asked while a task is parked in a scope: what it
-/// answered, and what it took the host for (-1 unasked: `busy`; 0: does
-/// not fork, `unsupported`).
-fn fork_with_a_task() -> (int, int) {
-    var sh = new_sh("selftest")
-    let ch = channel[int](1)
-    var got = 0
-    scope s {
-        s.spawn(fn() {
-            let _v = ch.recv() else 0
-        })
-        got = fork_begin(mut sh, FK_WAIT, -1, -1, -1, -1, false, true)
-        if got == FORK_CHILD {
-            // not reached: had the fork been made, the child ends here
-            os_exit(0)
-        }
-        ch.send(1) else |_| {}
-    }
-    (got, sh.fork_ok)
-}
-
-/// `busy`'s row on a compiled tier (`pelt --self-test`): "" when a fork
-/// with a task live was answered `busy` and run in process, else what
-/// was answered instead.
-pub fn fork_busy_answer() -> str {
-    let (got, ok) = fork_with_a_task()
-    if got == FORK_HERE && ok == -1 {
-        return ""
-    }
-    "a fork with a task live answered {got} and took the host for {ok}, not busy (FORK_HERE, -1)"
 }
 
 /// The `$'…'` at the start of `w` decoded (`sh.dsquote`): its text with
