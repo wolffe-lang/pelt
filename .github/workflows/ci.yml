@@ -210,6 +210,15 @@ jobs:
         if: matrix.builds && matrix.tier == 'native'
         run: tools/check-test
 
+      # sh20: the table checks again, on the tier just built (`wolf test`
+      # above runs them on the checked machine), with the one row only a
+      # compiled tier can answer: a fork asked while a task is live is
+      # answered `busy`, and pelt runs the shape in process, as it does on
+      # a host that does not fork (pelt starts no task; src/sh/fork.lu).
+      - name: the table checks on the ${{ matrix.tier }} tier, busy's row with them
+        if: ${{ matrix.builds && !cancelled() }}
+        run: target/${{ matrix.tier }}/pelt --self-test
+
       # pelt#3: a word that is not a pattern (`[`, `a]`, `[a`) reads no
       # directory. End to end: a `[ … ]` loop's peak RSS in a directory
       # of 64 files must match an empty directory's (tools/glob-rss).
@@ -240,7 +249,10 @@ jobs:
       # script and at the prompt, which kept 600 to 2,300 B a turn before.
       # sh22 (pelt#39) added `read` with a redirection, `eval`, `cd .`,
       # `command`, `umask` and a job nobody waits for, which kept 131 to
-      # 1,700 B a turn.
+      # 1,700 B a turn. sh20 (pelt#34) added the shapes that fork, a
+      # process a turn: a substitution and a subshell of two commands, a
+      # brace group and a subshell after `&`, a stage pelt runs itself, in
+      # a loop, a script and at the prompt.
       - name: memory flat over every shape, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 20
