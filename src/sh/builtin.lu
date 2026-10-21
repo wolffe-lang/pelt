@@ -309,6 +309,12 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
         sh.opt_pipefail = on
         return true
     }
+    // pelt's own (ruling #113): bash's `shopt -s autocd`, zsh's AUTO_CD
+    // (`run_autocd`)
+    if name == "autocd" {
+        sh.opt_autocd = on
+        return true
+    }
     if name == "monitor" {
         return option_letter(mut sh, 'm', on)
     }
@@ -321,6 +327,7 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
 fn print_options(mut sh: Sh, reinput: bool) {
     let names = [
         "allexport",
+        "autocd",
         "emacs",
         "errexit",
         "noclobber",
@@ -333,7 +340,7 @@ fn print_options(mut sh: Sh, reinput: bool) {
         "xtrace",
     ]
     // a letter for the options `$-` shows; '-' for the editing modes
-    let letters = ['a', '-', 'e', 'C', 'n', 'f', 'u', '-', 'v', '-', 'x']
+    let letters = ['a', '-', '-', 'e', 'C', 'n', 'f', 'u', '-', 'v', '-', 'x']
     let flags = dash_flags(sh)
     var i = 0
     while i < names.len {
@@ -344,6 +351,8 @@ fn print_options(mut sh: Sh, reinput: bool) {
             on = sh.opt_vi
         } else if names[i] == "pipefail" {
             on = sh.opt_pipefail
+        } else if names[i] == "autocd" {
+            on = sh.opt_autocd
         }
         if reinput {
             emit(mut sh, "set {if on then "-o" else "+o"} {names[i]}\n")
@@ -1661,6 +1670,70 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
         emit(mut sh, "{now}\n")
     }
     0
+}
+
+/// `set -o autocd` (ruling #113, pelt#49): whether the simple command
+/// named `cmd`, which `sh.exec`'s `run_external` found nowhere (`path` is
+/// "") or did not search because it has a `/`, is a `cd` instead: the
+/// option is on, the shell is interactive (bash ignores the option in a
+/// script, in `-c` and on standard input; black-box, sh23), and `cmd`
+/// names a directory as it stands, from here (so `CDPATH` is `cd`'s to
+/// take after, as in bash). A name with no `/` that the search found is
+/// a program, and is never a `cd`.
+fn autocd_dir(sh: Sh, cmd: str, path: str) -> bool {
+    if !sh.opt_autocd || !sh.interactive {
+        return false
+    }
+    if path.len > 0 && (cmd.find("/") else -1) < 0 {
+        return false
+    }
+    fs_is_dir(cmd)
+}
+
+/// The command `fields`, whose name names a directory (`autocd_dir`), run
+/// as `cd -- NAME WORD…` would be, as bash 5 runs it (black-box, sh23):
+/// the command's other words are `cd`'s further operands; a function
+/// named `cd` runs when one is defined (lope's records the visit), else
+/// the built-in; the command's assignments are made for the call and
+/// undone after, as for any function or built-in (XCU 2.9.1), and its
+/// redirections are already in place around it. Nothing is said but what
+/// `cd` says (bash writes `cd -- NAME` first; zsh, like pelt, nothing).
+fn run_autocd(mut sh: Sh, fields: List[str], names: List[str], values: List[str]) -> int {
+    var words = List[str]()
+    (mut words).push("cd")
+    (mut words).push("--")
+    for f in fields {
+        (mut words).push(f)
+    }
+    var old = List[str]()
+    var had = List[bool]()
+    var k = 0
+    while k < names.len {
+        (mut had).push(has_var(sh, names[k]))
+        (mut old).push(value_of(sh, names[k]))
+        if !set_var(mut sh, names[k], values[k]) {
+            fatal(mut sh, "{names[k]}: is read-only", 2)
+            return 2
+        }
+        k += 1
+    }
+    var st = 0
+    let fnode = sh.funcs["cd"] else -1
+    if fnode >= 0 {
+        st = call_function(mut sh, fnode, words)
+    } else {
+        st = builtin(mut sh, words)
+    }
+    k = names.len - 1
+    while k >= 0 {
+        if had[k] {
+            let _ok = set_var(mut sh, names[k], old[k])
+        } else {
+            let _ok = unset_var(mut sh, names[k])
+        }
+        k -= 1
+    }
+    st
 }
 
 /// Whether `cd` to `dir` (`bi_cd`, after its options and `-`) leaves the
