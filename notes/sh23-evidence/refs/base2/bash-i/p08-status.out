@@ -1,0 +1,5 @@
+locked-slash st=126 
+locked-bare st=127 
+locked-redir st=126  err=[bash: ./locked: Is a directory]
+command st=126 
+command-bare st=127 

@@ -1,0 +1,5 @@
+dash: 0: can't access tty; job control turned off
+$ $ $ $ dash: 4: jdir: not found
+$ $ dash: 6: fuzzy: not found
+$ dash: 7: ./jdir: Permission denied
+$ $ 

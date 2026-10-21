@@ -1,0 +1,9 @@
+in sub /sub
+after sub 
+pipe 
+assign st=0 FOO=unset /sub
+redir st=127 
+files: [] [zsh: command not found: sub]
+old= pwd=/sub
+/home/mfwolffe/lanes/sh23/tmp/sh23-probe.kjah6m/w
+back st=0 

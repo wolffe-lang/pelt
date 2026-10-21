@@ -1,0 +1,6 @@
+dash: 0: can't access tty; job control turned off
+$ $ $ dash: 3: ./f: Permission denied
+$ dash: 4: f: not found
+$ dash: 5: ./nope/: not found
+$ dash: 6: nope: not found
+$ 

@@ -1,0 +1,19 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir -p home/pax
+bash-5.3$ home/pax; echo "rel st=$? ${PWD#$W} old=${OLDPWD#$W}"
+cd -- home/pax
+bash-5.3$ cd "$W"
+bash-5.3$ "$W/home/pax/"; echo "abs st=$? ${PWD#$W}"
+cd -- /home/mfwolffe/lanes/sh23/tmp/sh23-probe.PZ1whP/w/home/pax/
+bash-5.3$ ..; echo "dotdot st=$? ${PWD#$W}"
+cd -- ..
+bash-5.3$ ..; echo "dotdot2 st=$? ${PWD#$W}"
+cd -- ..
+bash-5.3$ ~; echo "tilde st=$? ${PWD#$HOME}"
+cd -- /home/mfwolffe/lanes/sh23/tmp/sh23-probe.PZ1whP/home
+bash-5.3$ cd "$W"
+bash-5.3$ home/pax/; cd - >/dev/null; echo "back st=$? ${PWD#$W}"
+cd -- home/pax/
+bash-5.3$ exit

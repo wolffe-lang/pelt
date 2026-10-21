@@ -1,0 +1,18 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir -m 000 locked
+bash-5.3$ ./locked; echo "locked-slash st=$? ${PWD#$W}"
+bash: ./locked: Is a directory
+bash-5.3$ locked; echo "locked-bare st=$? ${PWD#$W}"
+bash: locked: command not found
+bash-5.3$ <cho "locked-redir st=$? ${PWD#$W} err=[$(cat err)]"
+bash-5.3$ chmod 755 locked
+bash-5.3$ mkdir sub
+bash-5.3$ command ./sub; echo "command st=$? ${PWD#$W}"
+bash: ./sub: Is a directory
+bash-5.3$ cd "$W"
+bash-5.3$ command sub; echo "command-bare st=$? ${PWD#$W}"
+bash: sub: command not found
+bash-5.3$ cd "$W"
+bash-5.3$ exit

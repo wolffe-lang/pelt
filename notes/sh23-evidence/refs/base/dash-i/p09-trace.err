@@ -1,0 +1,5 @@
+dash: 0: can't access tty; job control turned off
+$ $ $ $ + sub
+dash: 4: sub: not found
+$ + set +x
+$ $ $ 

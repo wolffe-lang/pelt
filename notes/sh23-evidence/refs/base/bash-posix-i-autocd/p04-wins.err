@@ -1,0 +1,12 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir basename echo fn
+bash-5.3$ basename /a/b; echo "path st=$? ${PWD#$W}"
+bash-5.3$ echo builtin; echo "builtin st=$? ${PWD#$W}"
+bash-5.3$ fn() { echo "fn ran $#"; }
+bash-5.3$ fn a b; echo "function st=$? ${PWD#$W}"
+bash-5.3$ ./fn; echo "slashed st=$? ${PWD#$W}"
+cd -- ./fn
+bash-5.3$ cd "$W"
+bash-5.3$ exit

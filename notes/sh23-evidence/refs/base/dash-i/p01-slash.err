@@ -1,0 +1,8 @@
+dash: 0: can't access tty; job control turned off
+$ $ $ dash: 3: home/pax: Permission denied
+$ $ dash: 5: /home/mfwolffe/lanes/sh23/tmp/sh23-probe.OPPY3F/w/home/pax/: Permission denied
+$ dash: 6: ..: Permission denied
+$ dash: 7: ..: Permission denied
+$ dash: 8: /home/mfwolffe/lanes/sh23/tmp/sh23-probe.OPPY3F/home: Permission denied
+$ $ dash: 10: home/pax/: Permission denied
+$ 

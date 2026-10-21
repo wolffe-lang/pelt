@@ -1,0 +1,21 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir sub
+bash-5.3$ (sub; echo "in sub ${PWD#$W}"); echo "after sub ${PWD#$W}"
+bash: sub: command not found
+bash-5.3$ cd "$W"
+bash-5.3$ sub | cat; echo "pipe ${PWD#$W}"
+cd -- sub
+bash-5.3$ cd "$W"
+bash-5.3$ FOO=bar sub; echo "assign st=$? FOO=${FOO-unset} ${PWD#$W}"
+cd -- sub
+bash-5.3$ cd "$W"
+bash-5.3$ sub >out 2>err; echo "redir st=$? ${PWD#$W}"
+cd -- sub
+bash-5.3$ cd "$W"
+bash-5.3$ echo "files: [$(cat out 2>/dev/null)] [$(cat err 2>/dev/null)]"
+bash-5.3$ sub; echo "old=${OLDPWD#$W} pwd=${PWD#$W}"
+cd -- sub
+bash-5.3$ cd -; echo "back st=$? ${PWD#$W}"
+bash-5.3$ exit

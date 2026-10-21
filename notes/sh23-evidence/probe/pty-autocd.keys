@@ -1,0 +1,10 @@
+mkdir sub "my dir"
+sub
+echo "${PWD##*/}"
+cd ..
+"my dir"
+echo "${PWD##*/}"
+cd ..
+sub a b
+echo "st=$? ${PWD##*/}"
+exit

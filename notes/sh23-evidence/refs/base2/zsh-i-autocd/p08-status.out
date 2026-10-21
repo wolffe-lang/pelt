@@ -1,0 +1,5 @@
+locked-slash st=126 
+locked-bare st=127 
+locked-redir st=126  err=[zsh: permission denied: ./locked]
+command st=0 /sub
+command-bare st=0 /sub

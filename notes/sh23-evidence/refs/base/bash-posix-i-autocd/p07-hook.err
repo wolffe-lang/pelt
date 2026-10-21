@@ -1,0 +1,13 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir jdir
+bash-5.3$ command_not_found_handle() { echo "handler [$*]"; return 0; }
+bash-5.3$ jdir; echo "dir st=$? ${PWD#$W}"
+cd -- jdir
+bash-5.3$ cd "$W"
+bash-5.3$ fuzzy x; echo "fuzzy st=$? ${PWD#$W}"
+bash-5.3$ ./jdir; echo "slashed st=$? ${PWD#$W}"
+cd -- ./jdir
+bash-5.3$ cd "$W"
+bash-5.3$ exit

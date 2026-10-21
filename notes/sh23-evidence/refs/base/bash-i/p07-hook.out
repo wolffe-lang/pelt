@@ -1,0 +1,5 @@
+handler [jdir]
+dir st=0 
+handler [fuzzy x]
+fuzzy st=0 
+slashed st=126 

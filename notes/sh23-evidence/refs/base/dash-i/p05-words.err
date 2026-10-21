@@ -1,0 +1,7 @@
+dash: 0: can't access tty; job control turned off
+$ $ $ dash: 3: child: not found
+$ $ dash: 5: child: not found
+$ $ dash: 7: child: not found
+$ $ dash: 9: ./child: Permission denied
+$ $ dash: 11: child: not found
+$ $ 

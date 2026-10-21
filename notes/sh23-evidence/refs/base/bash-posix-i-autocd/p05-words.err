@@ -1,0 +1,25 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir child other
+bash-5.3$ child a b; echo "two st=$? ${PWD#$W}"
+cd -- child a b
+bash: cd: too many arguments
+bash-5.3$ cd "$W"
+bash-5.3$ child a; echo "one st=$? ${PWD#$W}"
+cd -- child a
+bash: cd: too many arguments
+bash-5.3$ cd "$W"
+bash-5.3$ child other; echo "dir-word st=$? ${PWD#$W}"
+cd -- child other
+bash: cd: too many arguments
+bash-5.3$ cd "$W"
+bash-5.3$ ./child x; echo "slashed st=$? ${PWD#$W}"
+cd -- ./child x
+bash: cd: too many arguments
+bash-5.3$ cd "$W"
+bash-5.3$ child -P; echo "option st=$? ${PWD#$W}"
+cd -- child -P
+bash: cd: too many arguments
+bash-5.3$ cd "$W"
+bash-5.3$ exit

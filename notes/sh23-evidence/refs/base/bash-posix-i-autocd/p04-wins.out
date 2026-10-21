@@ -1,0 +1,7 @@
+b
+path st=0 
+builtin
+builtin st=0 
+fn ran 2
+function st=0 
+slashed st=0 /fn

@@ -1,0 +1,11 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir a b
+bash-5.3$ cd a b; echo "cd-two st=$? ${PWD#$W}"
+bash: cd: too many arguments
+bash-5.3$ cd "$W"
+bash-5.3$ cd -- a b; echo "cd-dd-two st=$? ${PWD#$W}"
+bash: cd: too many arguments
+bash-5.3$ cd "$W"
+bash-5.3$ exit

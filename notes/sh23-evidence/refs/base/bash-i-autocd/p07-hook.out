@@ -1,0 +1,4 @@
+dir st=0 /jdir
+handler [fuzzy x]
+fuzzy st=0 
+slashed st=0 /jdir

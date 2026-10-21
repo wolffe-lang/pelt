@@ -1,0 +1,152 @@
+### bash --norc --noprofile -i +m -O autocd
+step 0
+err no
+prompt "$ "
+step 1 "mkdir sub \"my dir\""
+err yes
+prompt "$ "
+step 2 "sub"
+err yes
+prompt "$ "
+step 3 "echo \"${PWD##*/}\""
+out "sub\n"
+err yes
+prompt "$ "
+step 4 "cd .."
+err yes
+prompt "$ "
+step 5 "\"my dir\""
+err yes
+prompt "$ "
+step 6 "echo \"${PWD##*/}\""
+out "my dir\n"
+err yes
+prompt "$ "
+step 7 "cd .."
+err yes
+prompt "$ "
+step 8 "sub a b"
+err yes
+prompt "$ "
+step 9 "echo \"st=$? ${PWD##*/}\""
+out "st=2 w\n"
+err yes
+prompt "$ "
+step 10 "exit"
+err yes
+prompt ""
+exit 0 at step 10
+### bash --posix -i +m -O autocd
+step 0
+err no
+prompt "$ "
+step 1 "mkdir sub \"my dir\""
+err yes
+prompt "$ "
+step 2 "sub"
+err yes
+prompt "$ "
+step 3 "echo \"${PWD##*/}\""
+out "sub\n"
+err yes
+prompt "$ "
+step 4 "cd .."
+err yes
+prompt "$ "
+step 5 "\"my dir\""
+err yes
+prompt "$ "
+step 6 "echo \"${PWD##*/}\""
+out "my dir\n"
+err yes
+prompt "$ "
+step 7 "cd .."
+err yes
+prompt "$ "
+step 8 "sub a b"
+err yes
+prompt "$ "
+step 9 "echo \"st=$? ${PWD##*/}\""
+out "st=2 w\n"
+err yes
+prompt "$ "
+step 10 "exit"
+err yes
+prompt ""
+exit 0 at step 10
+### zsh -f -i +m -o autocd
+step 0
+err no
+prompt ""
+step 1 "mkdir sub \"my dir\""
+err no
+prompt ""
+step 2 "sub"
+err no
+prompt ""
+step 3 "echo \"${PWD##*/}\""
+out "sub\n"
+err no
+prompt ""
+step 4 "cd .."
+err no
+prompt ""
+step 5 "\"my dir\""
+err no
+prompt ""
+step 6 "echo \"${PWD##*/}\""
+out "my dir\n"
+err no
+prompt ""
+step 7 "cd .."
+err no
+prompt ""
+step 8 "sub a b"
+err yes
+prompt ""
+step 9 "echo \"st=$? ${PWD##*/}\""
+out "st=127 w\n"
+err no
+prompt ""
+step 10 "exit"
+err no
+prompt ""
+exit 0 at step 10
+### dash -i +m
+step 0
+err no
+prompt "$ "
+step 1 "mkdir sub \"my dir\""
+err no
+prompt "$ "
+step 2 "sub"
+err yes
+prompt "$ "
+step 3 "echo \"${PWD##*/}\""
+out "w\n"
+err no
+prompt "$ "
+step 4 "cd .."
+err no
+prompt "$ "
+step 5 "\"my dir\""
+err yes
+prompt "$ "
+step 6 "echo \"${PWD##*/}\""
+out "pelt-sess.znr2w1xy\n"
+err no
+prompt "$ "
+step 7 "cd .."
+err no
+prompt "$ "
+step 8 "sub a b"
+err yes
+prompt "$ "
+step 9 "echo \"st=$? ${PWD##*/}\""
+out "st=127 tmp\n"
+err no
+prompt "$ "
+step 10 "exit"
+err no
+prompt ""
+exit 0 at step 10

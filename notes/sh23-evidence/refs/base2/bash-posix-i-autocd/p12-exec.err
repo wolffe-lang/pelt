@@ -1,0 +1,17 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir sub
+bash-5.3$ (exec ./sub); echo "exec st=$? ${PWD#$W}"
+bash: /home/mfwolffe/lanes/sh23/tmp/sh23-probe.GkLdwk/w/sub: Is a directory
+bash-5.3$ cd "$W"
+bash-5.3$ eval ./sub; echo "eval st=$? ${PWD#$W}"
+cd -- ./sub
+bash-5.3$ cd "$W"
+bash-5.3$ f() { ./sub; }; f; echo "in-function st=$? ${PWD#$W}"
+cd -- ./sub
+bash-5.3$ cd "$W"
+bash-5.3$ x=$(./sub; pwd); echo "cmdsub st=$? [${x#$W}] ${PWD#$W}"
+bash: ./sub: Is a directory
+bash-5.3$ cd "$W"
+bash-5.3$ exit

@@ -1,0 +1,4 @@
+$ $ $ $ + sub
+pelt: line 4: sub: not found
+$ + set +x
+$ $ $ 

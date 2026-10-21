@@ -1,0 +1,9 @@
+in sub 
+after sub 
+pipe 
+assign st=0 FOO=unset /sub
+redir st=0 /sub
+files: [] []
+old= pwd=/sub
+/home/mfwolffe/lanes/sh23/tmp/sh23-probe.IGYjmO/w
+back st=0 

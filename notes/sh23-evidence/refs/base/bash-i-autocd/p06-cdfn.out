@@ -1,0 +1,4 @@
+fn cd [2] -- sub
+bare st=0 /sub
+fn cd [2] -- ./sub
+slash st=0 /sub

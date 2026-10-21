@@ -1,0 +1,13 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir -p elsewhere/kid elsewhere/only kid
+bash-5.3$ CDPATH=$W/elsewhere
+bash-5.3$ kid; echo "kid st=$? ${PWD#$W}"
+cd -- kid
+bash-5.3$ cd "$W"
+bash-5.3$ only; echo "only st=$? ${PWD#$W}"
+bash: only: command not found
+bash-5.3$ cd "$W"
+bash-5.3$ unset CDPATH
+bash-5.3$ exit

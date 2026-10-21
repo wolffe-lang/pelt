@@ -1,0 +1,13 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ echo 'echo ran' > f
+bash-5.3$ ./f; echo "file-slash st=$? ${PWD#$W}"
+bash: ./f: Permission denied
+bash-5.3$ f; echo "file-bare st=$? ${PWD#$W}"
+bash: f: command not found
+bash-5.3$ ./nope/; echo "nope-slash st=$? ${PWD#$W}"
+bash: ./nope/: No such file or directory
+bash-5.3$ nope; echo "nope-bare st=$? ${PWD#$W}"
+bash: nope: command not found
+bash-5.3$ exit

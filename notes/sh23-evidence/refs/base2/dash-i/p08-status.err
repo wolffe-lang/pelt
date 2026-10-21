@@ -1,0 +1,6 @@
+dash: 0: can't access tty; job control turned off
+$ $ $ dash: 3: ./locked: Permission denied
+$ dash: 4: locked: not found
+$ $ $ $ dash: 8: ./sub: Permission denied
+$ $ dash: 10: sub: not found
+$ $ 

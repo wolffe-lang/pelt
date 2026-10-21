@@ -1,0 +1,13 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir sub
+bash-5.3$ cd() { echo "fn cd [$#] $*"; command cd "$@"; }
+bash-5.3$ sub; echo "bare st=$? ${PWD#$W}"
+cd -- sub
+bash-5.3$ command cd "$W"
+bash-5.3$ ./sub; echo "slash st=$? ${PWD#$W}"
+cd -- ./sub
+bash-5.3$ command cd "$W"
+bash-5.3$ unset -f cd
+bash-5.3$ exit

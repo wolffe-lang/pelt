@@ -1,0 +1,9 @@
+in sub 
+after sub 
+pipe 
+assign st=127 FOO=unset 
+redir st=127 
+files: [] [bash: sub: command not found]
+old= pwd=
+/home/mfwolffe/lanes/sh23/tmp/sh23-probe.Jxnglk/w
+back st=0 

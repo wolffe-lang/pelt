@@ -1,0 +1,5 @@
+$ $ $ pelt: line 3: ./locked: cannot be run
+$ pelt: line 4: locked: not found
+$ $ $ $ pelt: line 8: ./sub: cannot be run
+$ $ pelt: line 10: sub: not found
+$ $ 

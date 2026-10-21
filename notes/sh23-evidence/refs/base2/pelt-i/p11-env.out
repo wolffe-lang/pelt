@@ -1,0 +1,9 @@
+in sub 
+after sub 
+pipe 
+assign st=127 FOO=unset 
+redir st=127 
+files: [] [pelt: line 9: sub: not found]
+old= pwd=
+/home/mfwolffe/lanes/sh23/tmp/sh23-probe.pM7yZK/w
+back st=0 

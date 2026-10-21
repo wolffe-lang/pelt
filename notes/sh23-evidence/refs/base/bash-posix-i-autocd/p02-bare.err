@@ -1,0 +1,15 @@
+bash: cannot set terminal process group (2): Inappropriate ioctl for device
+bash: no job control in this shell
+bash-5.3$ W=$PWD
+bash-5.3$ mkdir child "my dir"
+bash-5.3$ child; echo "child st=$? ${PWD#$W}"
+cd -- child
+bash-5.3$ cd "$W"
+bash-5.3$ "my dir"; echo "space st=$? ${PWD#$W}"
+cd -- 'my dir'
+bash-5.3$ cd "$W"
+bash-5.3$ d=child
+bash-5.3$ $d; echo "var st=$? ${PWD#$W}"
+cd -- child
+bash-5.3$ cd "$W"
+bash-5.3$ exit

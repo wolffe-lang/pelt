@@ -1,0 +1,5 @@
+$ $ $ pelt: line 3: ./f: cannot be run
+$ pelt: line 4: f: not found
+$ pelt: line 5: ./nope/: not found
+$ pelt: line 6: nope: not found
+$ 

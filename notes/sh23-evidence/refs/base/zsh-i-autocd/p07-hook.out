@@ -1,0 +1,3 @@
+dir st=0 /jdir
+fuzzy st=127 
+slashed st=0 /jdir
