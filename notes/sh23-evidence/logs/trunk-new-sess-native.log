@@ -1,0 +1,440 @@
+session: pelt = /home/mfwolffe/lanes/sh23/base/native/pelt
+FAIL autocd_bare
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir child \"my dir\"; d=child"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "child; echo \"child st=$? ${PWD#\"$W\"}\""
+     ! pelt out "child st=127 \n"
+       dash out "child st=0 /child\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 4 "cd \"$W\"; \"my dir\"; echo \"space st=$? ${PWD#\"$W\"}\""
+     ! pelt out "space st=127 \n"
+       dash out "space st=0 /my dir\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 5 "cd \"$W\"; $d; echo \"var st=$? ${PWD#\"$W\"}\""
+     ! pelt out "var st=127 \n"
+       dash out "var st=0 /child\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 6 "cd \"$W\"; mkdir -p elsewhere/kid elsewhere/only kid; CDPATH=$W/elsewhere"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "kid >/dev/null; echo \"cdpath st=$? ${PWD#\"$W\"}\""
+     ! pelt out "cdpath st=127 \n"
+       dash out "cdpath st=0 /elsewhere/kid\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 8 "cd \"$W\"; only; echo \"only st=$? ${PWD#\"$W\"}\""
+       pelt out "only st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 9 "unset CDPATH"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 10 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 10
+FAIL autocd_hook
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir jdir"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "command_not_found_handle() { echo \"handler [$*]\"; case $1 in fuzzy) cd -- jdir; return 0;; esac; return 127; }"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "jdir; echo \"dir st=$? ${PWD#\"$W\"}\""
+     ! pelt out "handler [jdir]\ndir st=127 \n"
+       dash out "dir st=0 /jdir\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 5 "cd \"$W\"; fuzzy x; echo \"fuzzy st=$? ${PWD#\"$W\"}\""
+       pelt out "handler [fuzzy x]\nfuzzy st=0 /jdir\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "cd \"$W\"; ./jdir; echo \"slashed st=$? ${PWD#\"$W\"}\""
+     ! pelt out "slashed st=126 \n"
+       dash out "slashed st=0 /jdir\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 7 "cd \"$W\"; nosuch; echo \"nosuch st=$? ${PWD#\"$W\"}\""
+       pelt out "handler [nosuch]\nnosuch st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 8 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 8
+FAIL autocd_invoked
+       pelt step 0
+     ! pelt err yes
+       dash err no
+     ! pelt prompt ""
+       dash prompt "$ "
+     ! pelt exit 2 at step 0
+       dash step 1 "mkdir sub"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 2 "sub; echo \"st=$? ${PWD##*/}\""
+     ! pelt <none>
+       dash out "st=0 sub\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 3 "set +o | grep autocd"
+     ! pelt <none>
+       dash out "set -o autocd\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 4 "cd .."
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 5 "\"$0\" -o autocd -c 'sub; echo \"c st=$? ${PWD##*/}\"'"
+     ! pelt <none>
+       dash out "c st=127 w\n"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 6 "\"$0\" -o autocd -c './sub; echo \"slash st=$? ${PWD##*/}\"'"
+     ! pelt <none>
+       dash out "slash st=126 w\n"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 7 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 7
+FAIL autocd_list
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o | grep autocd"
+     ! pelt err no
+       dash out "autocd\toff\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 2 "set +o | grep autocd"
+       dash prompt "$ "
+     ! pelt err no
+       dash step 2 "set +o | grep autocd"
+     ! pelt prompt "$ "
+       dash out "set +o autocd\n"
+     ! pelt step 3 "set -o autocd; echo \"st=$?\""
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 3 "set -o autocd; echo \"st=$?\""
+     ! pelt step 4 "set -o | grep autocd"
+       dash out "st=0\n"
+       pelt err no
+       pelt prompt "$ "
+     ! pelt step 5 "set +o | grep autocd"
+       dash step 4 "set -o | grep autocd"
+     ! pelt err no
+       dash out "autocd\ton\n"
+     ! pelt prompt "$ "
+       dash err no
+     ! pelt step 6 "s=$(set +o); set +o autocd; eval \"$s\"; set +o | grep autocd"
+       dash prompt "$ "
+     ! pelt err yes
+       dash step 5 "set +o | grep autocd"
+     ! pelt prompt "$ "
+       dash out "set -o autocd\n"
+     ! pelt step 7 "(set +o autocd); set +o | grep autocd"
+       dash err no
+     ! pelt err yes
+       dash prompt "$ "
+     ! pelt prompt "$ "
+       dash step 6 "s=$(set +o); set +o autocd; eval \"$s\"; set +o | grep autocd"
+     ! pelt step 8 "set +o autocd; set -o | grep autocd"
+       dash out "set -o autocd\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+     ! pelt step 9 "set -o | sed -n 1,3p"
+       dash step 7 "(set +o autocd); set +o | grep autocd"
+     ! pelt out "allexport\toff\nemacs\ton\nerrexit\toff\n"
+       dash out "set -o autocd\n"
+       pelt err no
+       pelt prompt "$ "
+     ! pelt step 10 "exit"
+       dash step 8 "set +o autocd; set -o | grep autocd"
+     ! pelt err no
+       dash out "autocd\toff\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 10
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 9 "set -o | sed -n 1,3p"
+     ! pelt <none>
+       dash out "allexport\toff\nautocd\toff\nemacs\ton\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$ "
+     ! pelt <none>
+       dash step 10 "exit"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 10
+FAIL autocd_not_dir
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; echo 'echo ran' > f"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "./f; echo \"file-slash st=$? ${PWD#\"$W\"}\""
+       pelt out "file-slash st=126 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 4 "f; echo \"file-bare st=$? ${PWD#\"$W\"}\""
+       pelt out "file-bare st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 5 "./nope/; echo \"nope-slash st=$? ${PWD#\"$W\"}\""
+       pelt out "nope-slash st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 6 "nope; echo \"nope-bare st=$? ${PWD#\"$W\"}\""
+       pelt out "nope-bare st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 7 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 7
+ok   autocd_off
+FAIL autocd_slash
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir -p home/pax"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "home/pax; echo \"rel st=$? ${PWD#\"$W\"} ${OLDPWD#\"$W\"}\""
+     ! pelt out "rel st=126  \n"
+       dash out "rel st=0 /home/pax \n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 4 "cd \"$W\"; \"$W/home/pax/\"; echo \"abs st=$? ${PWD#\"$W\"}\""
+     ! pelt out "abs st=126 \n"
+       dash out "abs st=0 /home/pax\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 5 "..; echo \"dotdot st=$? ${PWD#\"$W\"}\""
+     ! pelt out "dotdot st=127 \n"
+       dash out "dotdot st=0 /home\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 6 "..; echo \"dotdot st=$? ${PWD#\"$W\"}\""
+     ! pelt out "dotdot st=127 \n"
+       dash out "dotdot st=0 \n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 7 "~; echo \"tilde st=$? ${PWD#\"$HOME\"}\""
+     ! pelt out "tilde st=126 /home/mfwolffe/lanes/sh23/tmp/pelt-sess.wuyo8897/w\n"
+       dash out "tilde st=0 \n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 8 "cd \"$W\"; home/pax/; cd - >/dev/null; echo \"back st=$? ${PWD#\"$W\"}\""
+       pelt out "back st=0 \n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 9 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 9
+FAIL autocd_status
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir -m 000 locked; mkdir sub"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "./locked; echo \"locked st=$? ${PWD#\"$W\"}\""
+     ! pelt out "locked st=126 \n"
+       dash out "locked st=2 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 4 "locked 2>err; echo \"redir st=$? ${PWD#\"$W\"} $([ -s err ] && echo said)\""
+     ! pelt out "redir st=127  said\n"
+       dash out "redir st=2  said\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "chmod 755 locked"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "command ./sub; echo \"command st=$? ${PWD#\"$W\"}\""
+       pelt out "command st=126 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 7 "(sub) 2>/dev/null; echo \"subshell ${PWD#\"$W\"}\""
+       pelt out "subshell \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 8 "sub 2>/dev/null | cat; echo \"pipe ${PWD#\"$W\"}\""
+       pelt out "pipe \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 9 "FOO=bar sub; echo \"assign st=$? ${FOO-unset} ${PWD#\"$W\"}\""
+     ! pelt out "assign st=127 unset \n"
+       dash out "assign st=0 unset /sub\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 10 "cd \"$W\"; sub >out; echo \"out st=$? ${PWD#\"$W\"} [$(cat \"$W/out\")]\""
+     ! pelt out "out st=127  []\n"
+       dash out "out st=0 /sub []\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 11 "cd \"$W\"; cd() { echo \"fn cd [$#] $*\"; command cd \"$@\"; }"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 12 "sub; echo \"fn st=$? ${PWD#\"$W\"}\""
+     ! pelt out "fn st=127 \n"
+       dash out "fn cd [2] -- sub\nfn st=0 /sub\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 13 "unset -f cd"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 14 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 14
+FAIL autocd_wins
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir basename echo fn"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "basename /a/b; echo \"path st=$? ${PWD#\"$W\"}\""
+       pelt out "b\npath st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "echo builtin; echo \"builtin st=$? ${PWD#\"$W\"}\""
+       pelt out "builtin\nbuiltin st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "fn() { echo \"fn ran $#\"; }"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "fn a b; echo \"function st=$? ${PWD#\"$W\"}\""
+       pelt out "fn ran 2\nfunction st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "./fn; echo \"slashed st=$? ${PWD#\"$W\"}\""
+     ! pelt out "slashed st=126 \n"
+       dash out "slashed st=0 /fn\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 8 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 8
+FAIL autocd_words
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir child other"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "child a b; echo \"two st=$? ${PWD#\"$W\"}\""
+     ! pelt out "two st=127 \n"
+       dash out "two st=0 /child\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 4 "cd \"$W\"; ./child other; echo \"slashed st=$? ${PWD#\"$W\"}\""
+     ! pelt out "slashed st=126 \n"
+       dash out "slashed st=0 /child\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 5 "cd \"$W\"; child -P; echo \"option st=$? ${PWD#\"$W\"}\""
+     ! pelt out "option st=127 \n"
+       dash out "option st=0 /child\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 6 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 6
+session: pass 1  fail 9  pending 0 (0)

@@ -1,0 +1,27 @@
+3b0bab9 ci/tl30-prediction.md: the plant, seen red (run 39609022583)
+fetch-toolchain: https://github.com/wolffe-lang/wolf-lang/releases/download/v0.2.32/wolf-0.2.32-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 4c37f9c5dc3d8830c06810948027d38bdbc375dc5524ab23127b0ada0907d851 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-interp/releases/download/v0.1.54/lupin-0.1.54-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 175df23880cd5bb993b778e5c8fdd7d0d96c176696802e640f6fc87d3dab40dd OK
+fetch-toolchain: the archive bundles std d37c911f12206c4bf5c8d3281a649bf31da3beef; staging the pin instead
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at d37c911f12206c4bf5c8d3281a649bf31da3beef
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+fetch=0
+build: target/native/pelt
+build: target/release/pelt
+build=0
+09726364f1c20b6e88e69d94443c88ae019703c459015ea5435a20479362e0e7  /home/mfwolffe/lanes/sh23/base/pelt-native
+8d773735b96f7f0957f7a4b74be7f3d93d6c9e8d08b5ca52649d0356e3c6b558  /home/mfwolffe/lanes/sh23/base/pelt-release
+5ac37df notes/lp00: the macOS red, the PATH lookup, the final static digest
+fetch-toolchain: https://github.com/wolffe-lang/wolf-lang/releases/download/v0.2.33/wolf-0.2.33-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 4f955e8dfe6eaafa441903eeba43c009c4ec2b45a8da09fe13431e8b12340af8 OK
+fetch-toolchain: https://github.com/wolffe-lang/wolf-interp/releases/download/v0.1.54/lupin-0.1.54-x86_64-unknown-linux-gnu.tar.gz
+fetch-toolchain: sha256 175df23880cd5bb993b778e5c8fdd7d0d96c176696802e640f6fc87d3dab40dd OK
+fetch-toolchain: the archive bundles std cceda63151430eac07df895fdfffddfa4a0b92c1; staging the pin instead
+fetch-toolchain: https://github.com/wolffe-lang/wolf-std at cceda63151430eac07df895fdfffddfa4a0b92c1
+fetch-toolchain: staged x86_64-unknown-linux-gnu into .wolf-bin/
+lope-fetch=0
+build: target/release/lope
+lope-build=0
+b90c21707a080ff03ab834ae8ec5748a15a7b1f4e620d85c17f03140725fedf1  target/release/lope
+done
