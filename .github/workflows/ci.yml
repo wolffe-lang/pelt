@@ -206,7 +206,10 @@ jobs:
           grep -q "this host cannot run the $TIER tier" "$TIER.log"
 
       - name: wolf test (the table checks)
-        # tools/check-test runs the unit tests (on the native compiler): that leg's.
+        # tools/check-test runs the unit tests, once a host on the native
+        # leg; `wolf test` runs them on the checked machine (its rows are
+        # `unsupported` where that machine refuses a construct), so the
+        # compiled tiers run the same checks below (`pelt --self-test`, sh20).
         if: matrix.builds && matrix.tier == 'native'
         run: tools/check-test
 
