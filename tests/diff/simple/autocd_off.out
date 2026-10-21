@@ -1,0 +1,7 @@
+slash st=126 w
+abs st=126 w
+bare st=127 w
+dotdot st=127 w
+space st=127 w
+file st=126 w
+nope st=127 w

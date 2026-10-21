@@ -1,0 +1,4 @@
+exit=0
+stderr=yes
+bash=agree
+why=pelt#49, ruling #113: a shell that is not interactive ignores set -o autocd, as bash ignores shopt -s autocd in a script and in -c (notes/sh23-evidence/refs/base/bash-script-autocd/p20-script): the answers are the default's, dash's (dash refuses the option; command keeps that from ending the script)

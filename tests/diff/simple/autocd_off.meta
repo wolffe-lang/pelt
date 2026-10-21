@@ -1,0 +1,4 @@
+exit=0
+stderr=yes
+bash=agree
+why=pelt#49, ruling #113: set -o autocd is off by default, so a slashed directory is a command the kernel will not run (126) and a slash-less one is not found (127), with the shell where it was: as dash, which has no such option
