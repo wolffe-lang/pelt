@@ -77,6 +77,12 @@ const SL_WAITED: int = 16
 /// Kept out of one round of notices (`jc_notify`'s late ones).
 const SL_HELD: int = 32
 
+/// Its end was taken by a poll the `wait` built-in did not make (a job
+/// starting, a line read): `wait` then answers its status and says
+/// nothing of a signal, as dash, which reaped it as it went on
+/// (black-box: `wait/reaped_signal_quiet`, pelt#47).
+const SL_REAPED: int = 64
+
 const SL_STATUS: int = 256
 
 /// A status may be below 0 (`-N`: an end by signal N, as `os_wait_poll`
@@ -669,6 +675,9 @@ fn jc_record(mut sh: Sh, h: int, st: int) {
             sh.pr_st[k] = st
             let j = sh.pr_job[k]
             set_slot_told(mut sh, j, false)
+            if !sh.in_wait && st < 256 {
+                set_slot_flag(mut sh, j, SL_REAPED, true)
+            }
             jb_fold(mut sh, j)
             return
         }
