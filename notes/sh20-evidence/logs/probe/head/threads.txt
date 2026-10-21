@@ -1,0 +1,12 @@
+## dash
+shell threads: 1
+forked child threads: 1
+forked child threads with a trap set: 1
+## pelt-native
+shell threads: 2
+forked child threads: 1
+forked child threads with a trap set: 1
+## pelt-release
+shell threads: 2
+forked child threads: 1
+forked child threads with a trap set: 1

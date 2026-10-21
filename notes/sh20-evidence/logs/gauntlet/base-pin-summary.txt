@@ -1,0 +1,20 @@
+base-diff-native: difftest: total        966     0    38 (2)
+base-diff-release: difftest: total        966     0    38 (2)
+base-sess-native: session: pass 273  fail 0  pending 3 (0)
+base-sess-release: session: pass 273  fail 0  pending 3 (0)
+pin-diff-native: difftest: total        966     0    38 (2)
+pin-diff-release: difftest: total        966     0    38 (2)
+pin-diff-native-taskset: difftest: total        966     0    38 (2)
+pin-diff-release-taskset: difftest: total        966     0    38 (2)
+pin-sess-native: session: pass 273  fail 0  pending 3 (0)
+pin-sess-release: session: pass 273  fail 0  pending 3 (0)
+pin-sess-native-taskset: ok   c_ed_complete_after_assign
+pin-sess-release-taskset: session: pass 273  fail 0  pending 3 (0)
+diff-native base=pin but the path line
+diff-release base=pin but the path line
+diff-native-taskset base=pin but the path line
+diff-release-taskset base=pin but the path line
+sess-native base=pin but the first line
+sess-release base=pin but the first line
+sess-native-taskset differs
+sess-release-taskset base=pin but the first line

@@ -24,6 +24,9 @@ run sess-release-taskset taskset -c 0-3 tools/session --bin target/release
 run sess-native-taskset taskset -c 0-3 tools/session --bin target/native
 run sess-selftest tools/session-selftest target/release
 for t in native release; do
+  if [ -x tools/self-check ]; then
+    run self-$t tools/self-check $t
+  fi
   run glob-$t tools/glob-rss target/$t/pelt
   run loop-$t tools/loop-rss target/$t/pelt
   run shape-$t tools/shape-rss target/$t/pelt
