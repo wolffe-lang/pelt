@@ -343,6 +343,11 @@ struct Sh {
     stage_r: int,
     hold_ign: int,
     async_ign: int,
+    /// A forked subshell of an interactive shell (`sh.fork`): it behaves as
+    /// a non-interactive shell (XCU 2.13), but `$-` still shows `i`, as
+    /// dash's does, and a name not found still calls
+    /// `command_not_found_handle` (`sh.exec`'s `unfound`, pelt#42).
+    sub_of_i: bool,
     /// The journal (module doc, `jot`).
     ji: List[int],
     jn: List[str],
@@ -493,6 +498,7 @@ fn new_sh(name: str) -> Sh {
         stage_r: -1,
         hold_ign: 0,
         async_ign: 0,
+        sub_of_i: false,
         ji: List[int](),
         jn: List[str](),
         fr_top: -1,
@@ -1138,7 +1144,7 @@ fn dash_flags(sh: Sh) -> str {
     if sh.opt_m {
         putc(mut o, 'm')
     }
-    if sh.interactive {
+    if sh.interactive || sh.sub_of_i {
         putc(mut o, 'i')
     }
     if sh.opt_f {

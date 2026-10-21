@@ -474,6 +474,7 @@ fn child_start(
     sh.exit_warned_prev = false
     // a subshell is not interactive (2.13), and nothing of the parent's
     // frames, stages or captures is the child's to put back
+    sh.sub_of_i = sh.sub_of_i || sh.interactive
     sh.interactive = false
     sh.at_prompt = false
     sh.intr = false
