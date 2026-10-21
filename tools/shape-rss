@@ -101,6 +101,19 @@ SHAPES = [
     ("builtin-umask", "loop", "umask 022", 100000),
     ("background-nowait", "loop", "true &", 20000),
     ("background-program-nowait", "loop", "env true &"),
+    # sh20 (pelt#34, ruling #90): the shapes that fork (`src/sh/fork.lu`),
+    # each a process a turn. What the parent keeps of one is what a spawned
+    # program costs it (the runtime's child-table entry), and nothing of
+    # the child's memory or of its exit is the parent's. Since sh20 the
+    # rows above that run a list after `&` or a substitution of more than
+    # one command fork too (`true & wait`, `true &`, `x=$(echo a | cat)`)
+    ("fork-substitution", "loop", "x=$(true; true)"),
+    ("fork-subshell", "loop", "( true; true )"),
+    ("fork-background-group", "loop", "{ true; } & wait"),
+    ("fork-background-subshell", "loop", "( true ) & wait"),
+    ("fork-stage", "loop", "{ true; } | true"),
+    ("script-fork-substitution", "script", "x=$(true; true)"),
+    ("typed-fork-subshell", "typed", "( true; true )"),
 ]
 
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
