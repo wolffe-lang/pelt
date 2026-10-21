@@ -12,18 +12,14 @@ step 3 "set +o | grep autocd"
 out "set -o autocd\n"
 err no
 prompt "$ "
-step 4 "cd .."
+step 4 "cd ..; set +o autocd"
 err no
 prompt "$ "
-step 5 "\"$0\" -o autocd -c 'sub; echo \"c st=$? ${PWD##*/}\"'"
-out "c st=127 w\n"
+step 5 "sub; echo \"off st=$? ${PWD##*/}\""
+out "off st=127 w\n"
 err yes
 prompt "$ "
-step 6 "\"$0\" -o autocd -c './sub; echo \"slash st=$? ${PWD##*/}\"'"
-out "slash st=126 w\n"
-err yes
-prompt "$ "
-step 7 "exit"
+step 6 "exit"
 err no
 prompt ""
-exit 0 at step 7
+exit 0 at step 6

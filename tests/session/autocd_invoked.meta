@@ -1,3 +1,3 @@
 pelt_args=-i -o autocd
 tr_by=hand
-why=pelt#49, ruling #113: pelt -i -o autocd starts with the option on (as bash -O autocd and zsh -o autocd); a non-interactive shell ignores it, as bash does in a script, in -c and on standard input (black-box, notes/sh23-evidence/refs/base/bash-script-autocd/p20-script, bash-c-autocd, bash-stdin-autocd): pelt -o autocd -c 'DIR' is DIR's not found (127) or cannot be run (126). zsh applies AUTO_CD when it reads standard input even without -i (zsh-stdin-autocd). Written by hand
+why=pelt#49, ruling #113: pelt -i -o autocd starts with the option on (as bash -O autocd and zsh -o autocd start with theirs), set +o lists it on, and set +o autocd turns it off again: the directory is then not found (127). That a shell that is not interactive ignores the option, -c included, is simple/autocd_script's (an interactive pelt's $0 is pelt, so a session cannot start one). Written by hand
