@@ -1,0 +1,47 @@
+## script
+shell: ign=0000000000000000 the-shell shell-group
+subshell: ign=0000000000000000 a-child shell-group
+cmdsub: ign=0000000000000000 a-child shell-group
+bg-subshell: ign=0000000000000006 a-child shell-group
+bg-brace: ign=0000000000000006 a-child shell-group
+stage-first: ign=0000000000000000 a-child shell-group
+stage-last: ign=0000000000000000 a-child shell-group
+sub-traps: ign=0000000000000001 a-child shell-group
+trap -- '' HUP
+cmdsub-program: ign=0000000000000000
+bg-program: ign=0000000000000006
+bg-trap-int: caught
+bg-trap-int: after
+## set -m script
+shell: ign=0000000000280000 the-shell shell-group
+subshell: ign=0000000000000000 a-child leads-own
+cmdsub: ign=0000000000280000 a-child shell-group
+bg-subshell: ign=0000000000000000 a-child leads-own
+[1] + Done                       (; show bg-subshell ${p}; :)
+bg-brace: ign=0000000000000000 a-child leads-own
+[1] + Done                       ; show bg-brace ${p}; :
+stage-first: ign=0000000000000000 a-child leads-own
+stage-last: ign=0000000000000000 a-child other-group
+sub-traps: ign=0000000000000001 a-child leads-own
+trap -- '' HUP
+cmdsub-program: ign=0000000000280000
+bg-program: ign=0000000000000000
+[1] + Done                       sed -n "s/^SigIgn:[[:space:]]*/bg-program: ign=/p" /proc/self/status
+bg-trap-int: caught
+bg-trap-int: after
+[1] + Done                       (trap "echo bg-trap-int: caught" INT; kill -INT $(...); sleep 0.2; echo bg-trap-int: after)
+## typed, -i -m
+shell: ign=0000000000284004 the-shell shell-group
+subshell: ign=0000000000000000 a-child leads-own
+cmdsub: ign=0000000000280000 a-child shell-group
+bg-subshell: ign=0000000000000000 a-child leads-own
+bg-brace: ign=0000000000000000 a-child leads-own
+stage-first: ign=0000000000000000 a-child leads-own
+stage-last: ign=0000000000000000 a-child other-group
+sub-traps: ign=0000000000000001 a-child leads-own
+cmdsub-program: ign=0000000000280000
+bg-program: ign=0000000000000000
+[1] + Done                       sed -n "s/^SigIgn:[[:space:]]*/bg-program: ign=/p" /proc/self/status
+bg-trap-int: caught
+bg-trap-int: after
+[1] + Done                       (trap "echo bg-trap-int: caught" INT; kill -INT $(...); sleep 0.2; echo bg-trap-int: after)

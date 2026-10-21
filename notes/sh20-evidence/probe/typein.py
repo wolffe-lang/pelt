@@ -39,5 +39,5 @@ for l in lines + ["exit"]:
     drain(3.0)
 os.waitpid(pid, 0)
 for l in out.decode(errors="replace").replace("\r", "").splitlines():
-    if ": ign=" in l or "bg-trap-int" in l:
+    if ": ign=" in l or "bg-trap-int" in l or l.startswith("flags"):
         print(l[l.find(l.split(":")[0]):])
