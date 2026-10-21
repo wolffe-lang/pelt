@@ -1,0 +1,5 @@
+cmdsub-jobs: [[1] + Running                    ]
+stage-jobs: [1] + Running                    
+cmdsub-pipeline-count: 0
+sub-wait-%1=2
+sub-kill: refused
