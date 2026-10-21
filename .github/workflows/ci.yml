@@ -26,26 +26,35 @@
 # gauntlet runs only the legs the plan hands it, and the run's LAST job
 # says which tier it was:
 #
-#   tier full   the gauntlet on every host, linux x86-64, macOS arm64 and
+#   tier all    the gauntlet on every host, linux x86-64, macOS arm64 and
 #               linux aarch64, each on both compiler tiers (one job a host
-#               and tier since pelt#40). A push to trunk, the nightly `schedule`, a
-#               `workflow_dispatch` (tier full, the default), a pull
-#               request labelled `full-matrix`; and a pull request with a
-#               changed path no rule of `ci/tiers.py` names, or whose
-#               change cannot be read.
+#               and tier since pelt#40). The nightly `schedule` and a
+#               `workflow_dispatch` with tier all (tl30).
+#   tier full   the merge gate: every leg but macOS's release one. A pull
+#               request labelled `full-matrix`, a push to trunk, a
+#               `workflow_dispatch` (tier full, the default); and a pull
+#               request with a changed path no rule of `ci/tiers.py` names,
+#               or whose change cannot be read.
 #   tier pr     any other pull-request run (and a dispatch with tier pr):
 #               the gauntlet on linux x86-64 alone, both compiler tiers.
 #   tier noop   the plan and the verdict: a pull request whose changed
 #               paths are ALL prose (notes/, docs/, README.md, CLAUDE.md),
 #               or a label other than `full-matrix`.
 #
-# Nothing a step checks changed and no leg left the full tier: a pull
-# request's push no longer runs the macOS and aarch64 legs, and they run
-# before the merge, on every trunk push and every night. The `tier` job
-# fails unless the plan succeeded, the hosts it chose are that tier's, the
-# chosen job succeeded and every other was skipped; so a green `tier full`
-# is "every host, green", and a green `tier pr` is never that. A red
-# nightly opens an issue (`nightly-red`).
+# Nothing a step checks changed: a pull request's push runs linux x86-64
+# alone, the merge (the label, and again the trunk push) every leg but
+# macOS's release one, and the nightly every leg. THE macOS CAP (tl30): the
+# org has five macOS slots for every repository, busy 55% of the time after
+# the Team plan (tl29). In the last 60 runs with a macOS job the macOS
+# gauntlet caught one defect no linux leg did (sh18: a job's notice raced
+# the host, in the native tier's session corpus), so macOS's native leg
+# stays at the merge; its release leg caught nothing and runs every night
+# instead of twice a merge (ci/tl30-prediction.md). The `tier` job fails
+# unless the plan succeeded, the hosts it chose are that tier's, the chosen
+# job succeeded and every other was skipped; so a green `tier all` is
+# "every leg, green", a green `tier full` the merge's legs, and a green
+# `tier pr` is never either. A red nightly opens an issue (`nightly-red`):
+# what left the merge is owed the next lane on the repo.
 #
 # THE MERGE RULE: a lane's PR merges only with a green `tier full` at its
 # head. Add the `full-matrix` label once the head is the one to merge
@@ -62,15 +71,16 @@ on:
     # other label's run is a noop (the plan, then nothing).
     types: [opened, synchronize, reopened, labeled]
   schedule:
-    # Nightly, the full tier, on trunk: the macOS and aarch64 legs a
-    # pull request's run leaves out.
+    # Nightly, the all tier, on trunk: every leg, the macOS and aarch64
+    # legs a pull request's run leaves out and macOS's release leg the
+    # merge leaves out (tl30).
     - cron: "29 8 * * *"
   workflow_dispatch:
     inputs:
       tier:
-        description: "full: every job on every host; pr: this branch's change against trunk, as a pull request's (a path no rule names runs full)"
+        description: "full: the merge's legs (macOS's release leg left out); all: every leg, as the nightly; pr: this branch's change against trunk, as a pull request's (a path no rule names runs full)"
         type: choice
-        options: [full, pr]
+        options: [full, all, pr]
         default: full
 
 permissions:
@@ -134,7 +144,9 @@ jobs:
         # ran both tiers' corpus and sessions, 38-41 of macOS's 45 minutes).
         # Linux x86-64, macOS arm64 and linux aarch64 (`builds: false`, where
         # the job asserts the tier is refused by name, wolf-lang#614) in the
-        # full tier; linux x86-64 alone in a pull request's.
+        # all tier (the nightly); the same but macOS's release leg in the
+        # full tier (the merge; tl30, the macOS cap); linux x86-64 alone in
+        # a pull request's.
         include: ${{ fromJSON(needs.plan.outputs.matrix_gauntlet || '[]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
