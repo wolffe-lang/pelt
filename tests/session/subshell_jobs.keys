@@ -1,0 +1,4 @@
+sleep 1 &
+echo "[$(jobs)]"; ( jobs ) | wc -l | tr -d " "; jobs | wc -l | tr -d " "
+wait
+exit

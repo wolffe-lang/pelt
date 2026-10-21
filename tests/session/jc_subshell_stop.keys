@@ -1,0 +1,6 @@
+( sleep 1; echo back )
+^Z
+jobs
+fg
+echo st=$?
+exit

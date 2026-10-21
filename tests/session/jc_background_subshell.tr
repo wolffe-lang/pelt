@@ -1,0 +1,14 @@
+step 0
+err no
+prompt "$ "
+step 1 "( sleep 0.2; echo late ) & echo now; wait; echo st=$?"
+out "now\nlate\nst=0\n"
+err yes
+prompt "$ "
+step 2 "jobs"
+err no
+prompt "$ "
+step 3 "exit"
+err no
+prompt ""
+exit 0 at step 3
