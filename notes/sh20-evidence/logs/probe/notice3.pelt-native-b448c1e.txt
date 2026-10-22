@@ -1,0 +1,48 @@
+01 { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f | cat
+   out: st=0
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+02 x=$( { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f ); echo "[$x]"
+   out: []|st=0
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+03 { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f & wait $!
+   out: st=143
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+04 ( { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>/dev/null ) 2>f
+   out: st=143
+   err: 
+   file: 
+05 { ( ( kill -TERM $(sh -c 'echo $PPID') ) 2>/dev/null ); } 2>f
+   out: st=143
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+06 { ( sh -c 'kill -TERM $$' ); } 2>f | cat
+   out: st=0
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+07 { ( kill -TERM $(sh -c 'echo $PPID'); : ); } 2>f | cat
+   out: st=0
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+08 : | { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f
+   out: st=143
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+09 { ( kill -TERM $(sh -c 'echo $PPID') ) 2>f; } | cat
+   out: st=0
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+10 { { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>/dev/null; } 2>f | cat
+   out: st=0
+   err: 
+   file: 
+11 x=$( ( kill -TERM $(sh -c 'echo $PPID') ) 2>f; echo after ); echo "[$x]"
+   out: [after]|st=0
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
+12 x=$( { ( kill -TERM $(sh -c 'echo $PPID') ); :; } 2>f ); echo "[$x]"
+   out: []|st=0
+   err: 
+   file: pelt: ended by signal 15 (TERM)|
