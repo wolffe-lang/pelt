@@ -1,0 +1,2 @@
+shape-rss: FAIL jobs-loop                jobs   100000     8532 KB  200000    15968 KB  grew    7436 KB (76 B a turn)  [jobs]
+shape-rss: FAIL 1: jobs-loop (bound 100 B a turn + 1 MiB over N turns)

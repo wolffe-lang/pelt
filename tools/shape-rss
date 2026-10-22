@@ -45,6 +45,9 @@ PRELUDE = "f() { :; }\ng() { local v; v=$1; return 0; }\n"
 # (its bound scales with it); every other row takes -n
 SHAPES = [
     ("baseline", "loop", ":"),
+    # sh24: jobs has no loop counter in this script; its own list must
+    # not allocate a fresh header per call. A stricter per-row bound.
+    ("jobs-loop", "jobs", "jobs", 100000, 16),
     ("pipeline", "loop", "true | true"),
     ("pipeline-program", "loop", "echo x | cat >/dev/null"),
     ("substitution", "loop", "x=$(true)"),
@@ -146,17 +149,25 @@ def peak_kb(shell, script, cwd):
 
 
 def run_file(shell, kind, text, n, cwd):
+    if kind == "jobs":
+        # Equal-length script control removes input/parser storage and
+        # file-backed pages. Judge what jobs itself keeps, not its input.
+        control, good0, why0 = run_file(shell, "script", "true", n, cwd)
+        measured, good1, why1 = run_file(shell, "script", text, n, cwd)
+        return measured - control, good0 and good1, why0 + "; " + why1
     path = os.path.join(cwd, "shape.sh")
     with open(path, "w") as f:
         f.write(PRELUDE)
-        if kind == "loop":
+        if kind == "monitor":
+            f.write("exec 2>/dev/null\nset -m\n")
+        if kind in ("loop", "monitor"):
             f.write("i=0\n")
             f.write(f"while [ $i -lt {n} ]; do\n{text}\ni=$((i+1))\ndone\n")
             f.write("echo $i\n")
         else:
             f.write((text + "\n") * n)
             f.write("echo done\n")
-    want = str(n) if kind == "loop" else "done"
+    want = str(n) if kind in ("loop", "monitor") else "done"
     kb, rc, out, nerr = peak_kb(shell, "shape.sh", cwd)
     ok = rc == 0 and out == want and nerr == 0
     return kb, ok, f"exit {rc} out {out!r} stderr_bytes {nerr}"
@@ -264,7 +275,8 @@ def main(argv):
     for row in SHAPES:
         name, kind, text = row[:3]
         n = row[3] if len(row) > 3 else base_n
-        limit = n * bound_b // 1024 + 1024
+        row_bound = row[4] if len(row) > 4 else bound_b
+        limit = n * row_bound // 1024 + 1024
         if only is not None and name not in only:
             continue
         if kind == "typed":
