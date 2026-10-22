@@ -1,0 +1,5 @@
+shell=/usr/bin/dash exit=0 stdout=ordinary in f: 143 stderr_bytes=0
+shell=/home/mfwolffe/lanes/sh24/base/target/native/pelt exit=0 stdout=ordinary in f: 143 stderr_bytes=0
+shell=/home/mfwolffe/lanes/sh24/head/target/native/pelt exit=0 stdout=ordinary in f: 143 stderr_bytes=0
+shell=/home/mfwolffe/lanes/sh24/base/target/release/pelt exit=0 stdout=ordinary in f: 143 stderr_bytes=0
+shell=/home/mfwolffe/lanes/sh24/head/target/release/pelt exit=0 stdout=ordinary in f: 143 stderr_bytes=0
