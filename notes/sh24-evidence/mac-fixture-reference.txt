@@ -1,0 +1,3 @@
+new mac dash pass 1 elapsed 2.488 output_bytes 153 identical_to_recorded True
+new mac dash pass 2 elapsed 2.454 output_bytes 153 identical_to_recorded True
+new mac dash pass 3 elapsed 2.453 output_bytes 153 identical_to_recorded True

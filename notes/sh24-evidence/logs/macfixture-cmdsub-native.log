@@ -1,0 +1,34 @@
+difftest: pelt = /home/mfwolffe/lanes/sh24/macfixture/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   cmdsub/backquote
+ok   cmdsub/basic
+ok   cmdsub/c_any_program
+ok   cmdsub/c_arith_ambiguity
+ok   cmdsub/c_backquote_backslash
+ok   cmdsub/c_backquote_nested
+ok   cmdsub/c_newlines
+ok   cmdsub/c_not_rescanned
+ok   cmdsub/c_split_glob
+ok   cmdsub/c_stdin_inherited
+ok   cmdsub/c_subshell_env
+ok   cmdsub/case_inside
+ok   cmdsub/drain_chunks
+ok   cmdsub/empty
+ok   cmdsub/exit_inside
+ok   cmdsub/external
+ok   cmdsub/function
+ok   cmdsub/in_dquotes
+ok   cmdsub/isolation
+ok   cmdsub/nested
+ok   cmdsub/program_backquote
+ok   cmdsub/program_in_loop
+ok   cmdsub/program_large
+ok   cmdsub/program_nested
+ok   cmdsub/program_newlines
+ok   cmdsub/program_status
+ok   cmdsub/program_stderr
+ok   cmdsub/status
+ok   cmdsub/trailing_newlines
+difftest: area        pass  fail  pending (of which pass)
+difftest: cmdsub        29     0     0 (0)
+difftest: total         29     0     0 (0)

@@ -1,0 +1,9 @@
+old-four-Python 1 seconds 9.643 153 bytes stdout exactly unchanged
+old-four-Python 2 seconds 9.387 153 bytes stdout exactly unchanged
+old-four-Python 3 seconds 9.363 153 bytes stdout exactly unchanged
+new-one-Python 1 seconds 2.451 153 bytes stdout exactly unchanged
+new-one-Python 2 seconds 2.467 153 bytes stdout exactly unchanged
+new-one-Python 3 seconds 2.461 153 bytes stdout exactly unchanged
+Apple-Python-startup 1 seconds 2.416 exit 0 version 3.9.6
+Apple-Python-startup 2 seconds 2.425 exit 0 version 3.9.6
+Apple-Python-startup 3 seconds 2.398 exit 0 version 3.9.6
