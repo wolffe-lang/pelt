@@ -1686,7 +1686,7 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
 /// in sh20): a forked one is not interactive (`sh.fork`), one run in
 /// process has `sub` above 0.
 fn autocd_dir(sh: Sh, cmd: str, path: str) -> bool {
-    if !sh.opt_autocd || !sh.interactive || sh.sub > 0 {
+    if !sh.opt_autocd || !sh.interactive {
         return false
     }
     if path.len > 0 && (cmd.find("/") else -1) < 0 {
