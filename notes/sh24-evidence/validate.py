@@ -7,11 +7,12 @@ import sys
 root = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(__file__).parent / "logs"
 text = (root / "final.status").read_text()
 assert text.rstrip().endswith("done"), "gauntlet has not ended"
-codes = dict(re.findall(r"^([a-z][-a-z0-9]*)=(\d+)$", text, re.M))
-assert all(v == "0" for v in codes.values()), {k: v for k, v in codes.items() if v != "0"}
+pairs = re.findall(r"^([a-z][-a-z0-9]*)=(\d+)$", text, re.M)
+codes = dict(pairs)
+assert all(v == "0" for _, v in pairs), [(k, v) for k, v in pairs if v != "0"]
 required = {"fmt", "build", "test", "clause", "width", "diff-selftest", "sess-selftest", "oracle-check"}
 for tier in ("native", "release"):
-    required |= {f"{k}-{tier}" for k in ("diff", "diff", "sess", "self", "glob-rss", "loop-rss", "exec-witness", "edit-witness", "hist-witness", "signal-witness", "reap")}
+    required |= {f"{k}-{tier}" for k in ("diff", "sess", "self", "glob-rss", "loop-rss", "exec-witness", "edit-witness", "hist-witness", "signal-witness", "reap")}
     required |= {f"diff-{tier}-taskset", f"sess-{tier}-taskset", f"edit-{tier}-control", f"signal-{tier}-control"}
     for mode in ("", "-taskset"):
         for pass_ in (1, 2, 3):

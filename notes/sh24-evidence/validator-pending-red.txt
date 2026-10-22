@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/mfwolffe/lanes/sh24/pelt/notes/sh24-evidence/validate.py", line 9, in <module>
+    assert text.rstrip().endswith("done"), "gauntlet has not ended"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: gauntlet has not ended
