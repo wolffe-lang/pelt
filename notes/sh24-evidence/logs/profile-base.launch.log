@@ -1,0 +1,29 @@
+heapprof: /home/mfwolffe/lanes/sh24/base/target/native/pelt /home/mfwolffe/lanes/sh24/probe/setm.sh: 12 chunk grabs after the first 0 (~768 KiB)
+-- innermost wolf frame
+     6  50.0%  [str_repeat]
+     5  41.7%  [list_push]
+     1   8.3%  [env_args]
+-- innermost four frames
+     6  50.0%  [str_repeat] < run_simple < run_node < run
+     3  25.0%  [list_push] < jb_add_proc < jb_join < commit_fast
+     2  16.7%  [list_push] < set_slot_text < jb_fill_text < run_async
+     1   8.3%  [env_args]
+-- on the stack at all
+    11  91.7%  eval_top
+    11  91.7%  run_loop
+    11  91.7%  run_list
+    11  91.7%  run_main
+    11  91.7%  run_node
+    11  91.7%  run
+    11  91.7%  run_source
+     9  75.0%  run_simple
+     6  50.0%  run_async
+     6  50.0%  [str_repeat]
+     5  41.7%  [list_push]
+     4  33.3%  run_subshell
+     3  25.0%  jb_add_proc
+     3  25.0%  jb_join
+     3  25.0%  commit_fast
+     2  16.7%  set_slot_text
+     2  16.7%  jb_fill_text
+     1   8.3%  [env_args]

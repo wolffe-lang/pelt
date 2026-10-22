@@ -593,14 +593,16 @@ fn jb_reap(mut sh: Sh) {
     }
 }
 
-/// With job control off, job `j` whose one process has ended keeps that
+/// Job `j` whose one process has ended keeps that
 /// process's status (as the poll spelled it) in its slot, as a list pelt
 /// ran itself keeps its own, and gives the process entry back: the
 /// process table then holds only the processes still live (pelt#39).
 /// `$!`'s number stays the slot's, and `wait`, `jobs`, `jobs -l`, `jobs
 /// -p` and `kill` read a slot with no process to the same answers.
 fn jb_fold(mut sh: Sh, j: int) {
-    if sh.jc_on {
+    // Foreground pipeline readers still need their per-process status;
+    // a completed single-process background job in a script does not.
+    if sh.jc_on && (sh.interactive || slot_order(sh, j) == 0 || sh.jc_build == j) {
         return
     }
     var only = -1
@@ -916,9 +918,7 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
     if !sh.opt_m || n < 0 {
         return
     }
-    let jt = copy region jt {
-        node_text(sh.ast, n)
-    }
+    let jt = cached_job_text(mut sh, n)
     set_slot_text(mut sh, j, jt)
     var m = n
     if sh.ast.nodes[m].kind == K_ANDOR && sh.ast.nodes[m].kids.len == 1 {
@@ -932,9 +932,7 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
         if sh.pr_job[k] == j {
             let st = if piped then nth_proc(sh.ast, m, i, forks) else -1
             if st >= 0 {
-                sh.pr_text[k] = copy region pt {
-                    node_text(sh.ast, st)
-                }
+                sh.pr_text[k] = cached_job_text(mut sh, st)
             } else {
                 sh.pr_text[k] = slot_text(sh, j)
             }
@@ -942,6 +940,17 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
         }
         k += 1
     }
+}
+
+/// A loop starts the same syntax node repeatedly. Keep its rendered
+/// command once, rather than allocating it for every retained notice.
+/// `add` clears the cache when the AST slot is reused (pelt#46).
+fn cached_job_text(mut sh: Sh, n: int) -> str {
+    if sh.ast.nodes[n].job_text.len == 0 {
+        let t = copy region jt { node_text(sh.ast, n) }
+        sh.ast.nodes[n].job_text = t
+    }
+    sh.ast.nodes[n].job_text
 }
 
 /// The stage of pipeline `m` that is its `i`th process, or -1: a simple

@@ -1,0 +1,3 @@
+ 14:42:31 up 5 days, 23:00,  0 users,  load average: 29.45, 38.29, 32.22
+shape-rss: FAIL jobs-set-m               monitor   3000     7152 KB    6000     7896 KB  grew     744 KB (253 B a turn)  [env true & wait $!]
+shape-rss: FAIL 1: jobs-set-m (bound 100 B a turn + 1 MiB over N turns)

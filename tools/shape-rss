@@ -45,6 +45,9 @@ PRELUDE = "f() { :; }\ng() { local v; v=$1; return 0; }\n"
 # (its bound scales with it); every other row takes -n
 SHAPES = [
     ("baseline", "loop", ":"),
+    # A monitored loop retains notices until the complete command ends.
+    # Dash is ~0-16 B/job; allow 160 B/job plus 64 KiB arena granularity.
+    ("jobs-set-m", "monitor", "env true & wait $!", 3000, 160, 64),
     ("compound-brace-redir", "loop", "{ true; } >/dev/null"),
     ("compound-if-redir", "loop", "if true; then :; fi >/dev/null"),
     ("compound-while-redir", "loop", "while false; do :; done >/dev/null"),
@@ -165,8 +168,11 @@ def run_file(shell, kind, text, n, cwd):
             f.write("exec 2>/dev/null\nset -m\n")
         if kind in ("loop", "monitor"):
             f.write("i=0\n")
-            f.write(f"while [ $i -lt {n} ]; do\n{text}\ni=$((i+1))\ndone\n")
-            f.write("echo $i\n")
+            tail = "done; echo $i; exec true\n" if kind == "monitor" else "done\necho $i\n"
+            # Measure the retained jobs before notifying: exec in this
+            # same complete command avoids the old table's cubic notice
+            # walk, without discarding any of the retained memory first.
+            f.write(f"while [ $i -lt {n} ]; do\n{text}\ni=$((i+1))\n" + tail)
         else:
             f.write((text + "\n") * n)
             f.write("echo done\n")
@@ -279,7 +285,8 @@ def main(argv):
         name, kind, text = row[:3]
         n = row[3] if len(row) > 3 else base_n
         row_bound = row[4] if len(row) > 4 else bound_b
-        limit = n * row_bound // 1024 + 1024
+        slack_kb = row[5] if len(row) > 5 else 1024
+        limit = n * row_bound // 1024 + slack_kb
         if only is not None and name not in only:
             continue
         if kind == "typed":

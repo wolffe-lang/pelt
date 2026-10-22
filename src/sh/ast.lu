@@ -69,6 +69,8 @@ const K_FUNC: int = 14
 struct Node {
     kind: int,
     text: str,
+    /// Rendered once per live node, shared by jobs made from a loop.
+    job_text: str,
     words: List[str],
     kids: List[int],
     ints: List[int],
@@ -109,6 +111,7 @@ fn add(mut a: Ast, kind: int, text: str, line: int) -> int {
     if i < a.nodes.len {
         a.nodes[i].kind = kind
         a.nodes[i].text = text
+        a.nodes[i].job_text = ""
         a.nodes[i].line = line
         (mut a.nodes[i].words).clear()
         (mut a.nodes[i].kids).clear()
@@ -119,6 +122,7 @@ fn add(mut a: Ast, kind: int, text: str, line: int) -> int {
     (mut a.nodes).push(Node {
         kind: kind,
         text: text,
+        job_text: "",
         words: List[str](),
         kids: List[int](),
         ints: List[int](),
