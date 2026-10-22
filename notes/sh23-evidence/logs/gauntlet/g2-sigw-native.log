@@ -1,0 +1,6 @@
+signal-witness: reap    ok   0 misses of 5000 (exit 0; shell 'SigBlk: 0000000000000000 SigIgn: 0000000000000000')
+signal-witness: self    ok   0 misses of 5000 (exit 0)
+signal-witness: ignored ok   exit 0, wrote "trap -- 'echo trapped' USR1\nalive\nstill\n"
+signal-witness: ignored-i ok   exit 0, wrote "trap -- 'echo trapped' USR1\nalive\nstill\n"
+signal-witness: default ok   returncode -15 (want -15), wrote "trap -- 'echo trapped' USR1\ntrapped\n"
+signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'

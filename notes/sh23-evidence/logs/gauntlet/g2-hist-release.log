@@ -1,0 +1,7 @@
+hist-witness: write    ok   file b"echo one\nprintf '%s\\\\n' 'a\\\\b'\nfor i in 1 2\\ndo echo $i\\ndone\nexit\n", mode 600, status 0
+hist-witness: read     ok   fc -l b"1\techo one\n2\tprintf '%s\\n' 'a\\b'\n3\tfor i in 1 2\n\tdo echo $i\n\tdone\n4\texit\n", Up x3 ran b'1\n2\n', said b''
+hist-witness: shared   ok   b: fc -ln -1 b'\techo from-a\n', Up x2 ran b'from-a\n'; a: fc -ln -2 -1 b'\tfc -ln -1\n\techo from-a\n'
+hist-witness: truncate ok   at start b'echo n36\necho n37\necho n38\necho n39\necho n40\n', fc -l b'2\techo n37\n3\techo n38\n4\techo n39\n5\techo n40\n', after 10 entries b'fc -l\necho x1\necho x2\necho x3\necho x4\n', at the end b'fc -l\necho x1\necho x2\necho x3\necho x4\nexit\n'
+hist-witness: foreign  ok   no directory: fc b'\techo a\n', said b''; binary file: fc -l b'1\techo b\n', file kept True, said b''
+hist-witness: default  ok   $HOME/.sh_history b'echo z\nexit\n', mode 600
+hist-witness: 6 of 6 hold
