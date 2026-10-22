@@ -1,0 +1,2 @@
+bash=agree
+why=R-sh23-4 (ruling taken in sh20): set -o autocd is not taken inside a subshell, a command substitution or a pipeline stage, as bash 5.3 (shopt -s autocd, the second opinion here) and zsh 5.9 refuse (notes/sh23-evidence/refs/subsh*.txt); dash has no such option, so its answers are the refusal's; shopt -s autocd for bash first (its set -o refuses and, a special built-in, ends the line), set -o autocd for pelt, each silent in the shells that lack it
