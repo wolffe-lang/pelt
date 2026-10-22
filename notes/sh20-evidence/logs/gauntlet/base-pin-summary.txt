@@ -8,7 +8,7 @@ pin-diff-native-taskset: difftest: total        966     0    38 (2)
 pin-diff-release-taskset: difftest: total        966     0    38 (2)
 pin-sess-native: session: pass 273  fail 0  pending 3 (0)
 pin-sess-release: session: pass 273  fail 0  pending 3 (0)
-pin-sess-native-taskset: ok   c_ed_complete_after_assign
+pin-sess-native-taskset: session: pass 273  fail 0  pending 3 (0)
 pin-sess-release-taskset: session: pass 273  fail 0  pending 3 (0)
 diff-native base=pin but the path line
 diff-release base=pin but the path line
@@ -16,5 +16,50 @@ diff-native-taskset base=pin but the path line
 diff-release-taskset base=pin but the path line
 sess-native base=pin but the first line
 sess-release base=pin but the first line
-sess-native-taskset differs
+sess-native-taskset base=pin but the first line (the pin's taken after the pause, gauntlet-rest.sh)
 sess-release-taskset base=pin but the first line
+# the witnesses, base (trunk 3b0bab9 at 0.2.32) and the pin (0eabfaf at 0.2.34), the pin's after the pause (2026-10-22, load 18-33 on kasumi)
+base-glob-native: glob-rss: ok (12108 KB with 64 files, 12240 KB empty, bound 15512)
+pin-glob-native: glob-rss: ok (12188 KB with 64 files, 12156 KB empty, bound 15419)
+base-loop-native: loop-rss: ok (10000 more turns grew 312 KB, about 31 B a turn; bound 2000 KB)
+pin-loop-native: loop-rss: ok (10000 more turns grew 588 KB, about 60 B a turn; bound 2000 KB)
+base-shape-native: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+pin-shape-native: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+base-exec-native: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+pin-exec-native: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+base-edit-native: edit-witness: 11 ok, 0 failed, 0 skipped
+pin-edit-native: edit-witness: 11 ok, 0 failed, 0 skipped
+base-edit-native-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+pin-edit-native-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+base-hist-native: hist-witness: 6 of 6 hold
+pin-hist-native: hist-witness: 6 of 6 hold
+base-sigw-native: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+pin-sigw-native: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+base-sigw-native-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+pin-sigw-native-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+base-reap-native: reap-witness: ok (0 failed, 0 skipped)
+pin-reap-native: reap-witness: ok (0 failed, 0 skipped)
+base-glob-release: glob-rss: ok (12016 KB with 64 files, 12208 KB empty, bound 15476)
+pin-glob-release: glob-rss: ok (12164 KB with 64 files, 12124 KB empty, bound 15384)
+base-loop-release: loop-rss: ok (10000 more turns grew -40 KB, about -5 B a turn; bound 2000 KB)
+pin-loop-release: loop-rss: ok (10000 more turns grew 384 KB, about 39 B a turn; bound 2000 KB)
+base-shape-release: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+pin-shape-release: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+base-exec-release: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+pin-exec-release: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+base-edit-release: edit-witness: 11 ok, 0 failed, 0 skipped
+pin-edit-release: edit-witness: 11 ok, 0 failed, 0 skipped
+base-edit-release-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+pin-edit-release-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+base-hist-release: hist-witness: 6 of 6 hold
+pin-hist-release: hist-witness: 6 of 6 hold
+base-sigw-release: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+pin-sigw-release: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+base-sigw-release-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+pin-sigw-release-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+base-reap-release: reap-witness: ok (0 failed, 0 skipped)
+pin-reap-release: reap-witness: ok (0 failed, 0 skipped)
+base-oracle-check: oracle-record: 0 drifted
+pin-oracle-check: oracle-record: 0 drifted
+base-sess-selftest: session-selftest: unlisted exits 1 as it must
+pin-sess-selftest: session-selftest: unlisted exits 1 as it must
