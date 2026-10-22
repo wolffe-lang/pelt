@@ -1,0 +1,35 @@
+row | pin-native | head-native | pin-release | head-release | dash   (B a turn, passes 1/2/3; FAIL marked !)
+baseline | 24/56/51 | 20/36/49 | 36/42/28 | 54/54/34 | -6/-10/9
+substitution | 76/88/74 | 81/53/93 | 56/75/92 | 65/104/70 | 2/8/0
+substitution-pipeline | 159/158/151 | 136/100/154 | 129/128/115 | 163/189/152 | 7/8/-1
+subshell | 35/59/30 | 41/26/16 | 36/43/53 | 55/43/70 | -4/4/-7
+background-builtin-wait | 103/79/97 | 48/66/105 | 74/71/94 | 98/104/106 | -5/-1/-1
+script-background-wait | 73/40/69 | 113/97/90 | 78/58/69 | 99/122/91 | 4/-7/1
+typed-background-wait | 159/159/159 | 188/188/188 | 160/160/160 | 188/188/188 | 0/0/0
+background-nowait | 74/99/105 | 150/130/118 | 98/91/83 | 113/121/124 | 26/41/30
+fork-substitution | 113/100/108 | 62/68/67 | 86/89/97 | 68/57/75 | -6/1/1
+fork-subshell | 79/50/69 | 46/24/52 | 55/57/61 | 42/67/61 | -11/6/-11
+fork-background-group | 73/63/65 | 93/65/82 | 74/72/71 | 84/62/64 | 9/8/-2
+fork-background-subshell | 70/90/87 | 77/116/88 | 83/77/63 | 97/36/61 | 9/-7/5
+fork-stage | 69/49/68 | 40/74/22 | 61/64/74 | 71/58/53 | -7/-7/3
+script-fork-substitution | 3/43/43 | 52/85/66 | 41/32/6 | 81/59/89 | -2/-5/5
+typed-fork-subshell | 128/128/128 | 123/123/123 | 128/128/128 | 123/123/123 | 0/0/0
+fork-redirected-subshell | !675/!699/!678 | 44/-18/34 | !671/!672/!668 | 42/63/83 | 8/1/1
+
+peak KB at the larger N, pass 3:
+baseline | 5888 | 6040 | 4136 | 4260 | 2504
+substitution | 6436 | 6852 | 4964 | 4860 | 2496
+substitution-pipeline | 8108 | 8296 | 5836 | 6324 | 2524
+subshell | 5888 | 6104 | 4344 | 4444 | 2420
+background-builtin-wait | 7160 | 7816 | 4940 | 5332 | 2400
+script-background-wait | 6788 | 7496 | 4776 | 5128 | 2368
+typed-background-wait | 9028 | 10348 | 6548 | 7408 | 2632
+background-nowait | 9024 | 10260 | 6568 | 7872 | 3776
+fork-substitution | 6932 | 7164 | 5184 | 5084 | 2520
+fork-subshell | 6240 | 6608 | 4556 | 4548 | 2416
+fork-background-group | 6972 | 7732 | 4824 | 5060 | 2496
+fork-background-subshell | 7032 | 7672 | 4700 | 4912 | 2472
+fork-stage | 6472 | 6600 | 4624 | 4536 | 2504
+script-fork-substitution | 5760 | 6796 | 3856 | 4816 | 2452
+typed-fork-subshell | 8116 | 8708 | 5900 | 6088 | 2652
+fork-redirected-subshell | 18220 | 6428 | 16460 | 4460 | 2500

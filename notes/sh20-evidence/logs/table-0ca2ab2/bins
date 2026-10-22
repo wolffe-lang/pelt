@@ -1,0 +1,5 @@
+pin-native f78ebdf08126 from /home/mfwolffe/lanes/sh20/pin/target/native/pelt
+pin-release 84823de5fb49 from /home/mfwolffe/lanes/sh20/pin/target/release/pelt
+head-native 999936bcc24d from /home/mfwolffe/lanes/sh20/pelt/target/native/pelt
+head-release 97aba059b0d8 from /home/mfwolffe/lanes/sh20/pelt/target/release/pelt
+dash c6221703b619 from /usr/bin/dash
