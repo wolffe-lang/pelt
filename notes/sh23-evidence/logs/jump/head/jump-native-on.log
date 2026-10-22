@@ -1,0 +1,82 @@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/alpha
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/alpha
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/beta
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/beta
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w
+[6nPROMPT> 
+<<< set -o autocd
+set -o autocd
+[6nPROMPT> 
+<<< t/alpha
+t/alpha
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/alpha@@0@@
+[6nPROMPT> 
+<<< /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects/
+/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects/
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects@@0@@
+[6nPROMPT> 
+<<< ..
+..
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t@@0@@
+[6nPROMPT> 
+<<< beta
+beta
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/beta@@0@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/home
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/home
+[6nPROMPT> 
+<<< proj
+proj
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects@@0@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w
+[6nPROMPT> 
+<<< t/projects/myapp
+t/projects/myapp
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects/myapp@@0@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/home
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/home
+[6nPROMPT> 
+<<< myapp
+myapp
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects/myapp@@0@@
+[6nPROMPT> 
+<<< zzqqxx
+zzqqxx
+pelt: line 98: zzqqxx: not found
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-9862hz6w/t/projects/myapp@@127@@
+[6nPROMPT> 

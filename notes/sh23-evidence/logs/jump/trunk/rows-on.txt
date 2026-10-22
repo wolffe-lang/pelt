@@ -1,0 +1,20 @@
+pelt /home/mfwolffe/lanes/sh23/base/native/pelt (native), option on
+  set -o autocd      refused
+  t/alpha            / status 126, said cannot be run
+  ROOT/t/projects/   / status 126, said cannot be run
+  ..                 /home/mfwolffe/lanes/sh23/tmp status 0
+  beta (in t)        /t/beta status 0
+  proj (fuzzy)       /t/projects status 0
+  t/projects/myapp   / status 126, said cannot be run
+  myapp (fuzzy)      /home status 127, said not found
+  zzqqxx             /home status 127, said not found
+pelt /home/mfwolffe/lanes/sh23/base/release/pelt (release), option on
+  set -o autocd      refused
+  t/alpha            / status 126, said cannot be run
+  ROOT/t/projects/   / status 126, said cannot be run
+  ..                 /home/mfwolffe/lanes/sh23/tmp status 0
+  beta (in t)        /t/beta status 0
+  proj (fuzzy)       /t/projects status 0
+  t/projects/myapp   / status 126, said cannot be run
+  myapp (fuzzy)      /home status 127, said not found
+  zzqqxx             /home status 127, said not found

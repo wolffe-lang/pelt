@@ -1,0 +1,83 @@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/projects
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/projects
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/alpha
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/alpha
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/beta
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/beta
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq
+[6nPROMPT> 
+<<< t/alpha
+t/alpha
+pelt: line 5: t/alpha: cannot be run
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq@@126@@
+[6nPROMPT> 
+<<< /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/projects/
+/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/projects/
+pelt: line 7: /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/projects/: cannot be run
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq@@126@@
+[6nPROMPT> 
+<<< ..
+..
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp@@0@@
+[6nPROMPT> 
+<<< beta
+beta
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/beta@@0@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/home
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/home
+[6nPROMPT> 
+<<< proj
+proj
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/t/projects@@0@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq
+[6nPROMPT> 
+<<< t/projects/myapp
+t/projects/myapp
+pelt: line 17: t/projects/myapp: cannot be run
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq@@126@@
+[6nPROMPT> 
+<<< cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/home
+cd /home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/home
+[6nPROMPT> 
+<<< myapp
+myapp
+pelt: line 98: myapp: not found
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/home@@127@@
+[6nPROMPT> 
+<<< zzqqxx
+zzqqxx
+pelt: line 98: zzqqxx: not found
+[6nPROMPT> 
+<<< echo "@@$PWD@@$?@@"
+echo "@@$PWD@@$?@@"
+@@/home/mfwolffe/lanes/sh23/tmp/sh23-jump-yhqx4uzq/home@@127@@
+[6nPROMPT> 

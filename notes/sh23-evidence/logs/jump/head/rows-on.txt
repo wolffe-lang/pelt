@@ -1,0 +1,20 @@
+pelt /home/mfwolffe/lanes/sh23/bins/head/native/pelt (native), option on
+  set -o autocd      ok
+  t/alpha            /t/alpha status 0
+  ROOT/t/projects/   /t/projects status 0
+  ..                 /t status 0
+  beta (in t)        /t/beta status 0
+  proj (fuzzy)       /t/projects status 0
+  t/projects/myapp   /t/projects/myapp status 0
+  myapp (fuzzy)      /t/projects/myapp status 0
+  zzqqxx             /t/projects/myapp status 127, said not found
+pelt /home/mfwolffe/lanes/sh23/bins/head/release/pelt (release), option on
+  set -o autocd      ok
+  t/alpha            /t/alpha status 0
+  ROOT/t/projects/   /t/projects status 0
+  ..                 /t status 0
+  beta (in t)        /t/beta status 0
+  proj (fuzzy)       /t/projects status 0
+  t/projects/myapp   /t/projects/myapp status 0
+  myapp (fuzzy)      /t/projects/myapp status 0
+  zzqqxx             /t/projects/myapp status 127, said not found
