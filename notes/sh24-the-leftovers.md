@@ -56,7 +56,7 @@ profiler and sh20's RssAnon/RssFile split were re-used, not shell source.
   existing slot; and has an unlimited overflow-reference list. Released pool
   entries are reused. Native/release checked table tests include extreme
   groups/status/flags, shared/replaced/released texts, overflow and AST reuse.
-  The original nominal 160 B prediction is slightly missed on release 163,
+  The nominal 160 B prediction is slightly missed on both tiers (up to 163),
   inside the committed 160 B/job + 64 KiB over 3,000 jobs gate. No bound increased.
 - **#54:** the predicted `redirs_of` list, not saved descriptors, was the
   keep: 103 of 104 root chunk grabs were `[list_push] < redirs_of < run`.
@@ -72,7 +72,11 @@ profiler and sh20's RssAnon/RssFile split were re-used, not shell source.
 - **#53:** the fast path reported after closing the shadow's redirections.
   It now reports through shadow descriptor2 while open. An optimized
   one-command subshell still reports outside its redirections/capture;
-  the added capture control exposed and fixed that distinction.
+  the added capture control exposed and fixed that distinction. The corpus
+  also covers an assignment variant (which can still take the fast path).
+  An explicit `command sh` ordinary-path control is already correct at trunk
+  and remains correct on both tiers: notice in the file, status143, no outer
+  stderr (`probe/ordinary-notice.sh`, `logs/ordinary-notice.log`).
 - **Item6:** two cheap fixes, as predicted: invalid trap options are fatal in
   a script, and non-EPIPE builtin writes are checked. A failed shadow builtin
   must not flush before ordinary fallback (`printf_bad_number` caught the
