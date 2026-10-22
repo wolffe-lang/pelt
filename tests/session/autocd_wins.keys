@@ -4,5 +4,9 @@ basename /a/b; echo "path st=$? ${PWD#"$W"}"
 echo builtin; echo "builtin st=$? ${PWD#"$W"}"
 fn() { echo "fn ran $#"; }
 fn a b; echo "function st=$? ${PWD#"$W"}"
+cd "$W"; X=1 fn a; echo "function-assign st=$? ${PWD#"$W"}"
+cd "$W"; fn a >/dev/null; echo "function-redir st=$? ${PWD#"$W"}"
+cd "$W"; X=1 echo builtin; echo "builtin-assign st=$? ${PWD#"$W"}"
+cd "$W"; { set -x; basename /a/b; set +x; } 2>/dev/null; echo "path-traced st=$? ${PWD#"$W"}"
 ./fn; echo "slashed st=$? ${PWD#"$W"}"
 exit
