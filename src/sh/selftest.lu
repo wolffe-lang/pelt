@@ -656,7 +656,7 @@ fn want_mask_texts(mut bad: List[str]) {
     }
 }
 
-/// Run every table check; answers one line per check that failed,
+/// Packed job fields and text-pool lifecycle, including overflow references.
 fn want_job_slots(mut bad: List[str]) {
     var sh = new_sh("job slots")
     let a = jb_new(mut sh)
