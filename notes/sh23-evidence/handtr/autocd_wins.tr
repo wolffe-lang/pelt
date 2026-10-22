@@ -22,11 +22,27 @@ step 6 "fn a b; echo \"function st=$? ${PWD#\"$W\"}\""
 out "fn ran 2\nfunction st=0 \n"
 err no
 prompt "$ "
-step 7 "./fn; echo \"slashed st=$? ${PWD#\"$W\"}\""
+step 7 "cd \"$W\"; X=1 fn a; echo \"function-assign st=$? ${PWD#\"$W\"}\""
+out "fn ran 1\nfunction-assign st=0 \n"
+err no
+prompt "$ "
+step 8 "cd \"$W\"; fn a >/dev/null; echo \"function-redir st=$? ${PWD#\"$W\"}\""
+out "function-redir st=0 \n"
+err no
+prompt "$ "
+step 9 "cd \"$W\"; X=1 echo builtin; echo \"builtin-assign st=$? ${PWD#\"$W\"}\""
+out "builtin\nbuiltin-assign st=0 \n"
+err no
+prompt "$ "
+step 10 "cd \"$W\"; { set -x; basename /a/b; set +x; } 2>/dev/null; echo \"path-traced st=$? ${PWD#\"$W\"}\""
+out "b\npath-traced st=0 \n"
+err no
+prompt "$ "
+step 11 "./fn; echo \"slashed st=$? ${PWD#\"$W\"}\""
 out "slashed st=0 /fn\n"
 err no
 prompt "$ "
-step 8 "exit"
+step 12 "exit"
 err no
 prompt ""
-exit 0 at step 8
+exit 0 at step 12
