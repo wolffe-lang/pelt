@@ -1,0 +1,72 @@
+session: pelt = /home/mfwolffe/lanes/sh23/plant-wt/target/native/pelt
+ok   autocd_bare
+ok   autocd_hook
+ok   autocd_invoked
+ok   autocd_list
+ok   autocd_not_dir
+ok   autocd_off
+ok   autocd_slash
+ok   autocd_status
+FAIL autocd_wins
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir basename echo fn"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "basename /a/b; echo \"path st=$? ${PWD#\"$W\"}\""
+       pelt out "b\npath st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "echo builtin; echo \"builtin st=$? ${PWD#\"$W\"}\""
+       pelt out "builtin\nbuiltin st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "fn() { echo \"fn ran $#\"; }"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "fn a b; echo \"function st=$? ${PWD#\"$W\"}\""
+       pelt out "fn ran 2\nfunction st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "cd \"$W\"; X=1 fn a; echo \"function-assign st=$? ${PWD#\"$W\"}\""
+       pelt out "fn ran 1\nfunction-assign st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 8 "cd \"$W\"; fn a >/dev/null; echo \"function-redir st=$? ${PWD#\"$W\"}\""
+       pelt out "function-redir st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 9 "cd \"$W\"; X=1 echo builtin; echo \"builtin-assign st=$? ${PWD#\"$W\"}\""
+       pelt out "builtin\nbuiltin-assign st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 10 "cd \"$W\"; { set -x; basename /a/b; set +x; } 2>/dev/null; echo \"path-traced st=$? ${PWD#\"$W\"}\""
+     ! pelt out "path-traced st=0 /basename\n"
+       dash out "b\npath-traced st=0 \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 11 "./fn; echo \"slashed st=$? ${PWD#\"$W\"}\""
+     ! pelt out "slashed st=127 /basename\n"
+       dash out "slashed st=0 /fn\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 12 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 12
+ok   autocd_words
+ok   cnf_127
+ok   cnf_assign
+ok   cnf_cd
+ok   cnf_contexts
+ok   cnf_redirect
+ok   cnf_rerun
+ok   cnf_skipped
+ok   cnf_status
+ok   cnf_words
+session: pass 18  fail 1  pending 0 (0)
