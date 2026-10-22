@@ -1,0 +1,6 @@
+head=428e4ffb1ed3167f30d49e763e70d60ed8df92bb
+start=2026-10-22T15:50:20+00:00
+ 15:50:20 up 6 days, 7 min,  0 users,  load average: 31.67, 23.01, 22.70
+pid 2's current affinity mask: f00
+command=taskset -c 8-11 tools/session --bin target/release 
+exit=0

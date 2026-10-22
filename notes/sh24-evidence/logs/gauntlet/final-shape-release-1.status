@@ -1,0 +1,6 @@
+head=428e4ffb1ed3167f30d49e763e70d60ed8df92bb
+start=2026-10-22T16:09:59+00:00
+ 16:09:59 up 6 days, 27 min,  0 users,  load average: 30.83, 20.32, 20.26
+pid 2's current affinity mask: f00
+command=tools/shape-rss target/release/pelt 
+exit=0

@@ -1,0 +1,5 @@
+/home/mfwolffe/lanes/sh24/base/target/native/pelt [true &] RssAnon_KB=[2108, 3664] own=318 B/job
+/home/mfwolffe/lanes/sh24/base/target/native/pelt [env true &] RssAnon_KB=[2124, 3736] own=330 B/job
+/home/mfwolffe/lanes/sh24/head/target/native/pelt [true &] RssAnon_KB=[1172, 1760] own=120 B/job
+/home/mfwolffe/lanes/sh24/head/target/native/pelt [env true &] RssAnon_KB=[1200, 1752] own=113 B/job
+/home/mfwolffe/lanes/sh24/base/target/release/pelt [true &] RssAnon_KB=[1972, 3552] own=323 B/job

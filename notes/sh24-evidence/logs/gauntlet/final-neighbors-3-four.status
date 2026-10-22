@@ -1,0 +1,6 @@
+head=428e4ffb1ed3167f30d49e763e70d60ed8df92bb
+start=2026-10-22T16:24:25+00:00
+ 16:24:25 up 6 days, 41 min,  0 users,  load average: 10.33, 13.38, 15.82
+pid 2's current affinity mask: f00
+command=python3 /home/mfwolffe/lanes/sh24/probe/monitor-neighbors.py /home/mfwolffe/lanes/sh24/head /home/mfwolffe/lanes/sh24/base/target/native/pelt /home/mfwolffe/lanes/sh24/head/target/native/pelt /home/mfwolffe/lanes/sh24/base/target/release/pelt /home/mfwolffe/lanes/sh24/head/target/release/pelt /usr/bin/dash 
+exit=0

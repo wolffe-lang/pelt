@@ -1,0 +1,1 @@
+sh24 evidence: 54 exits zero; corpus 994/0/28 x4; sessions 290/0/2 x4; 52 shapes x12; affinity/load recorded

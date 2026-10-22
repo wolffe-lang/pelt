@@ -1,0 +1,6 @@
+head=428e4ffb1ed3167f30d49e763e70d60ed8df92bb
+start=2026-10-22T15:41:24+00:00
+ 15:41:24 up 5 days, 23:58,  0 users,  load average: 24.27, 24.43, 23.97
+pid 2's current affinity mask: f00
+command=taskset -c 8-11 tools/shape-rss target/native/pelt 
+exit=0

@@ -1,0 +1,7 @@
+neighbors pass=1 mode=bare  15:29:42 up 5 days, 23:47,  0 users,  load average: 18.27, 19.06, 22.85
+neighbors pass=1 mode=bare exit=0
+neighbors pass=1 mode=four  15:32:05 up 5 days, 23:49,  0 users,  load average: 25.57, 21.60, 23.25
+neighbors pass=1 mode=four exit=0
+neighbors pass=2 mode=bare  15:36:22 up 5 days, 23:53,  0 users,  load average: 31.19, 24.13, 23.68
+neighbors pass=2 mode=bare exit=0
+neighbors pass=2 mode=four  15:39:01 up 5 days, 23:56,  0 users,  load average: 25.72, 24.71, 23.98

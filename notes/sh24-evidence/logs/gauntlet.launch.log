@@ -1,27 +1,164 @@
-2026-10-22T15:15:26+00:00 start fmt  15:15:26 up 5 days, 23:32,  0 users,  load average: 26.95, 23.16, 24.70
-fmt=0
-2026-10-22T15:15:27+00:00 start build  15:15:27 up 5 days, 23:32,  0 users,  load average: 26.95, 23.16, 24.70
-2026-10-22T15:16:27+00:00 running build  15:16:27 up 5 days, 23:34,  0 users,  load average: 55.08, 30.17, 26.92
-build=0
-2026-10-22T15:16:43+00:00 start test  15:16:43 up 5 days, 23:34,  0 users,  load average: 48.55, 29.95, 26.90
-test=0
-2026-10-22T15:16:45+00:00 start clause  15:16:45 up 5 days, 23:34,  0 users,  load average: 48.55, 29.95, 26.90
-clause=0
-2026-10-22T15:16:46+00:00 start width  15:16:46 up 5 days, 23:34,  0 users,  load average: 46.03, 29.73, 26.84
-width=0
-2026-10-22T15:16:47+00:00 start diff-native  15:16:47 up 5 days, 23:34,  0 users,  load average: 46.03, 29.73, 26.84
-diff-native=0
-2026-10-22T15:17:23+00:00 start diff-native-taskset  15:17:23 up 5 days, 23:34,  0 users,  load average: 55.18, 33.43, 28.16
-diff-native-taskset=0
-2026-10-22T15:17:59+00:00 start sess-native  15:17:59 up 5 days, 23:35,  0 users,  load average: 40.09, 32.07, 27.90
-2026-10-22T15:18:59+00:00 running sess-native  15:18:59 up 5 days, 23:36,  0 users,  load average: 28.33, 30.12, 27.49
-2026-10-22T15:19:59+00:00 running sess-native  15:19:59 up 5 days, 23:37,  0 users,  load average: 25.33, 29.03, 27.29
-2026-10-22T15:20:59+00:00 running sess-native  15:20:59 up 5 days, 23:38,  0 users,  load average: 21.75, 27.33, 26.81
-2026-10-22T15:22:00+00:00 running sess-native  15:22:00 up 5 days, 23:39,  0 users,  load average: 18.09, 25.35, 26.16
-2026-10-22T15:23:00+00:00 running sess-native  15:23:00 up 5 days, 23:40,  0 users,  load average: 19.98, 24.55, 25.83
-2026-10-22T15:24:00+00:00 running sess-native  15:24:00 up 5 days, 23:41,  0 users,  load average: 22.89, 24.60, 25.77
-2026-10-22T15:25:00+00:00 running sess-native  15:25:00 up 5 days, 23:42,  0 users,  load average: 20.00, 23.51, 25.33
-sess-native=0
-2026-10-22T15:25:29+00:00 start sess-native-taskset  15:25:29 up 5 days, 23:43,  0 users,  load average: 18.16, 22.73, 25.01
-2026-10-22T15:26:29+00:00 running sess-native-taskset  15:26:29 up 5 days, 23:44,  0 users,  load average: 15.26, 21.15, 24.32
-2026-10-22T15:27:29+00:00 running sess-native-taskset  15:27:29 up 5 days, 23:45,  0 users,  load average: 15.86, 20.17, 23.78
+2026-10-22T15:41:24+00:00 start diff-release  15:41:24 up 5 days, 23:58,  0 users,  load average: 24.27, 24.43, 23.97
+2026-10-22T15:41:24+00:00 start shape-native-1  15:41:24 up 5 days, 23:58,  0 users,  load average: 24.27, 24.43, 23.97
+2026-10-22T15:41:24+00:00 start shape-native-1-taskset  15:41:24 up 5 days, 23:58,  0 users,  load average: 24.27, 24.43, 23.97
+diff-release=0
+2026-10-22T15:42:04+00:00 start diff-release-taskset  15:42:04 up 5 days, 23:59,  0 users,  load average: 22.44, 23.94, 23.83
+2026-10-22T15:42:24+00:00 running shape-native-1  15:42:24 up 5 days, 23:59,  0 users,  load average: 21.10, 23.54, 23.69
+2026-10-22T15:42:24+00:00 running shape-native-1-taskset  15:42:24 up 5 days, 23:59,  0 users,  load average: 21.10, 23.54, 23.69
+diff-release-taskset=0
+2026-10-22T15:42:40+00:00 start sess-release  15:42:40 up 6 days, 0 min,  0 users,  load average: 20.73, 23.33, 23.62
+2026-10-22T15:43:24+00:00 running shape-native-1  15:43:24 up 6 days, 0 min,  0 users,  load average: 18.03, 22.23, 23.24
+2026-10-22T15:43:25+00:00 running shape-native-1-taskset  15:43:25 up 6 days, 0 min,  0 users,  load average: 18.03, 22.23, 23.24
+2026-10-22T15:43:41+00:00 running sess-release  15:43:41 up 6 days, 1 min,  0 users,  load average: 17.26, 21.86, 23.10
+2026-10-22T15:44:25+00:00 running shape-native-1  15:44:25 up 6 days, 1 min,  0 users,  load average: 16.64, 21.04, 22.76
+2026-10-22T15:44:25+00:00 running shape-native-1-taskset  15:44:25 up 6 days, 1 min,  0 users,  load average: 16.64, 21.04, 22.76
+2026-10-22T15:44:41+00:00 running sess-release  15:44:41 up 6 days, 2 min,  0 users,  load average: 18.69, 21.29, 22.82
+2026-10-22T15:45:25+00:00 running shape-native-1  15:45:25 up 6 days, 2 min,  0 users,  load average: 18.84, 20.91, 22.61
+2026-10-22T15:45:25+00:00 running shape-native-1-taskset  15:45:25 up 6 days, 2 min,  0 users,  load average: 18.84, 20.91, 22.61
+2026-10-22T15:45:41+00:00 running sess-release  15:45:41 up 6 days, 3 min,  0 users,  load average: 18.47, 20.69, 22.50
+2026-10-22T15:46:25+00:00 running shape-native-1  15:46:25 up 6 days, 3 min,  0 users,  load average: 17.88, 20.19, 22.25
+2026-10-22T15:46:25+00:00 running shape-native-1-taskset  15:46:25 up 6 days, 3 min,  0 users,  load average: 17.88, 20.19, 22.25
+2026-10-22T15:46:41+00:00 running sess-release  15:46:41 up 6 days, 4 min,  0 users,  load average: 18.03, 20.06, 22.16
+2026-10-22T15:47:25+00:00 running shape-native-1  15:47:25 up 6 days, 4 min,  0 users,  load average: 19.32, 19.94, 22.02
+2026-10-22T15:47:25+00:00 running shape-native-1-taskset  15:47:25 up 6 days, 4 min,  0 users,  load average: 19.32, 19.94, 22.02
+2026-10-22T15:47:41+00:00 running sess-release  15:47:41 up 6 days, 5 min,  0 users,  load average: 21.76, 20.47, 22.15
+2026-10-22T15:48:25+00:00 running shape-native-1  15:48:25 up 6 days, 5 min,  0 users,  load average: 20.88, 20.35, 22.04
+2026-10-22T15:48:25+00:00 running shape-native-1-taskset  15:48:25 up 6 days, 5 min,  0 users,  load average: 20.88, 20.35, 22.04
+2026-10-22T15:48:41+00:00 running sess-release  15:48:41 up 6 days, 6 min,  0 users,  load average: 19.46, 20.08, 21.91
+2026-10-22T15:49:25+00:00 running shape-native-1  15:49:25 up 6 days, 6 min,  0 users,  load average: 18.39, 19.70, 21.71
+2026-10-22T15:49:25+00:00 running shape-native-1-taskset  15:49:25 up 6 days, 6 min,  0 users,  load average: 18.39, 19.70, 21.71
+2026-10-22T15:49:42+00:00 running sess-release  15:49:42 up 6 days, 7 min,  0 users,  load average: 16.10, 19.09, 21.46
+shape-native-1=0
+2026-10-22T15:50:19+00:00 start shape-native-2  15:50:19 up 6 days, 7 min,  0 users,  load average: 31.67, 23.01, 22.70
+sess-release=0
+2026-10-22T15:50:20+00:00 start sess-release-taskset  15:50:20 up 6 days, 7 min,  0 users,  load average: 31.67, 23.01, 22.70
+shape-native-1-taskset=0
+2026-10-22T15:50:22+00:00 start shape-native-2-taskset  15:50:22 up 6 days, 7 min,  0 users,  load average: 30.09, 22.83, 22.65
+2026-10-22T15:51:20+00:00 running shape-native-2  15:51:20 up 6 days, 8 min,  0 users,  load average: 21.18, 21.47, 22.18
+2026-10-22T15:51:20+00:00 running sess-release-taskset  15:51:20 up 6 days, 8 min,  0 users,  load average: 21.18, 21.47, 22.18
+2026-10-22T15:51:22+00:00 running shape-native-2-taskset  15:51:22 up 6 days, 8 min,  0 users,  load average: 21.48, 21.53, 22.20
+2026-10-22T15:52:20+00:00 running shape-native-2  15:52:20 up 6 days, 9 min,  0 users,  load average: 17.68, 20.47, 21.80
+2026-10-22T15:52:20+00:00 running sess-release-taskset  15:52:20 up 6 days, 9 min,  0 users,  load average: 17.68, 20.47, 21.80
+2026-10-22T15:52:22+00:00 running shape-native-2-taskset  15:52:22 up 6 days, 9 min,  0 users,  load average: 17.62, 20.41, 21.77
+2026-10-22T15:53:20+00:00 running shape-native-2  15:53:20 up 6 days, 10 min,  0 users,  load average: 16.68, 19.72, 21.46
+2026-10-22T15:53:20+00:00 running sess-release-taskset  15:53:20 up 6 days, 10 min,  0 users,  load average: 16.68, 19.72, 21.46
+2026-10-22T15:53:22+00:00 running shape-native-2-taskset  15:53:22 up 6 days, 10 min,  0 users,  load average: 16.15, 19.56, 21.40
+2026-10-22T15:54:20+00:00 running shape-native-2  15:54:20 up 6 days, 11 min,  0 users,  load average: 14.98, 18.62, 20.96
+2026-10-22T15:54:20+00:00 running sess-release-taskset  15:54:20 up 6 days, 11 min,  0 users,  load average: 14.98, 18.62, 20.96
+2026-10-22T15:54:22+00:00 running shape-native-2-taskset  15:54:22 up 6 days, 11 min,  0 users,  load average: 14.82, 18.52, 20.92
+2026-10-22T15:55:20+00:00 running shape-native-2  15:55:20 up 6 days, 12 min,  0 users,  load average: 16.14, 18.24, 20.68
+2026-10-22T15:55:20+00:00 running sess-release-taskset  15:55:20 up 6 days, 12 min,  0 users,  load average: 16.14, 18.24, 20.68
+2026-10-22T15:55:22+00:00 running shape-native-2-taskset  15:55:22 up 6 days, 12 min,  0 users,  load average: 16.12, 18.20, 20.66
+2026-10-22T15:56:20+00:00 running shape-native-2  15:56:20 up 6 days, 13 min,  0 users,  load average: 24.69, 20.07, 21.15
+2026-10-22T15:56:21+00:00 running sess-release-taskset  15:56:21 up 6 days, 13 min,  0 users,  load average: 24.69, 20.07, 21.15
+2026-10-22T15:56:23+00:00 running shape-native-2-taskset  15:56:23 up 6 days, 13 min,  0 users,  load average: 25.12, 20.24, 21.19
+2026-10-22T15:57:21+00:00 running shape-native-2  15:57:21 up 6 days, 14 min,  0 users,  load average: 23.30, 20.54, 21.24
+2026-10-22T15:57:21+00:00 running sess-release-taskset  15:57:21 up 6 days, 14 min,  0 users,  load average: 23.30, 20.54, 21.24
+2026-10-22T15:57:23+00:00 running shape-native-2-taskset  15:57:23 up 6 days, 14 min,  0 users,  load average: 25.04, 20.94, 21.37
+sess-release-taskset=0
+2026-10-22T15:57:59+00:00 start self-release  15:57:59 up 6 days, 15 min,  0 users,  load average: 22.43, 20.73, 21.28
+2026-10-22T15:58:21+00:00 running shape-native-2  15:58:21 up 6 days, 15 min,  0 users,  load average: 22.76, 20.92, 21.33
+2026-10-22T15:58:23+00:00 running shape-native-2-taskset  15:58:23 up 6 days, 15 min,  0 users,  load average: 22.76, 20.92, 21.33
+2026-10-22T15:58:59+00:00 running self-release  15:58:59 up 6 days, 16 min,  0 users,  load average: 22.83, 21.15, 21.39
+2026-10-22T15:59:22+00:00 running shape-native-2  15:59:22 up 6 days, 16 min,  0 users,  load average: 25.15, 21.79, 21.59
+2026-10-22T15:59:24+00:00 running shape-native-2-taskset  15:59:24 up 6 days, 16 min,  0 users,  load average: 25.15, 21.79, 21.59
+2026-10-22T16:00:00+00:00 running self-release  16:00:00 up 6 days, 17 min,  0 users,  load average: 28.03, 22.90, 21.97
+2026-10-22T16:00:22+00:00 running shape-native-2  16:00:22 up 6 days, 17 min,  0 users,  load average: 28.93, 23.55, 22.21
+2026-10-22T16:00:25+00:00 running shape-native-2-taskset  16:00:25 up 6 days, 17 min,  0 users,  load average: 28.93, 23.55, 22.21
+2026-10-22T16:01:01+00:00 running self-release  16:01:01 up 6 days, 18 min,  0 users,  load average: 24.53, 23.11, 22.12
+self-release=0
+2026-10-22T16:01:06+00:00 start glob-rss-release  16:01:06 up 6 days, 18 min,  0 users,  load average: 24.01, 23.02, 22.10
+glob-rss-release=0
+2026-10-22T16:01:07+00:00 start loop-rss-release  16:01:07 up 6 days, 18 min,  0 users,  load average: 23.93, 23.02, 22.10
+loop-rss-release=0
+2026-10-22T16:01:08+00:00 start exec-witness-release  16:01:08 up 6 days, 18 min,  0 users,  load average: 23.93, 23.02, 22.10
+exec-witness-release=0
+2026-10-22T16:01:09+00:00 start edit-witness-release  16:01:09 up 6 days, 18 min,  0 users,  load average: 23.93, 23.02, 22.10
+2026-10-22T16:01:23+00:00 running shape-native-2  16:01:23 up 6 days, 18 min,  0 users,  load average: 24.75, 23.24, 22.19
+2026-10-22T16:01:25+00:00 running shape-native-2-taskset  16:01:25 up 6 days, 18 min,  0 users,  load average: 24.75, 23.24, 22.19
+edit-witness-release=0
+2026-10-22T16:01:35+00:00 start hist-witness-release  16:01:35 up 6 days, 19 min,  0 users,  load average: 23.89, 23.11, 22.16
+hist-witness-release=0
+2026-10-22T16:01:41+00:00 start signal-witness-release  16:01:41 up 6 days, 19 min,  0 users,  load average: 22.37, 22.81, 22.07
+signal-witness-release=0
+2026-10-22T16:01:48+00:00 start reap-release  16:01:48 up 6 days, 19 min,  0 users,  load average: 21.78, 22.68, 22.03
+reap-release=0
+2026-10-22T16:02:10+00:00 start edit-release-control  16:02:10 up 6 days, 19 min,  0 users,  load average: 19.54, 22.10, 21.85
+2026-10-22T16:02:23+00:00 running shape-native-2  16:02:23 up 6 days, 19 min,  0 users,  load average: 18.23, 21.69, 21.72
+2026-10-22T16:02:25+00:00 running shape-native-2-taskset  16:02:25 up 6 days, 19 min,  0 users,  load average: 18.23, 21.69, 21.72
+shape-native-2=0
+2026-10-22T16:02:34+00:00 start shape-native-3  16:02:34 up 6 days, 20 min,  0 users,  load average: 17.81, 21.48, 21.66
+edit-release-control=0
+2026-10-22T16:02:36+00:00 start signal-release-control  16:02:36 up 6 days, 20 min,  0 users,  load average: 17.59, 21.38, 21.62
+shape-native-2-taskset=0
+2026-10-22T16:02:37+00:00 start shape-native-3-taskset  16:02:37 up 6 days, 20 min,  0 users,  load average: 17.59, 21.38, 21.62
+signal-release-control=0
+2026-10-22T16:02:40+00:00 start edit-native-control  16:02:40 up 6 days, 20 min,  0 users,  load average: 17.59, 21.38, 21.62
+edit-native-control=0
+2026-10-22T16:03:06+00:00 start signal-native-control  16:03:06 up 6 days, 20 min,  0 users,  load average: 16.27, 20.69, 21.38
+signal-native-control=0
+2026-10-22T16:03:12+00:00 start diff-selftest  16:03:12 up 6 days, 20 min,  0 users,  load average: 16.09, 20.58, 21.34
+diff-selftest=0
+2026-10-22T16:03:13+00:00 start sess-selftest  16:03:13 up 6 days, 20 min,  0 users,  load average: 16.09, 20.58, 21.34
+sess-selftest=0
+2026-10-22T16:03:30+00:00 start oracle-check  16:03:30 up 6 days, 21 min,  0 users,  load average: 15.11, 20.14, 21.19
+2026-10-22T16:03:34+00:00 running shape-native-3  16:03:34 up 6 days, 21 min,  0 users,  load average: 15.02, 20.04, 21.15
+2026-10-22T16:03:37+00:00 running shape-native-3-taskset  16:03:37 up 6 days, 21 min,  0 users,  load average: 15.26, 20.00, 21.13
+2026-10-22T16:04:30+00:00 running oracle-check  16:04:30 up 6 days, 22 min,  0 users,  load average: 13.32, 18.77, 20.65
+2026-10-22T16:04:34+00:00 running shape-native-3  16:04:34 up 6 days, 22 min,  0 users,  load average: 13.54, 18.73, 20.63
+2026-10-22T16:04:37+00:00 running shape-native-3-taskset  16:04:37 up 6 days, 22 min,  0 users,  load average: 13.25, 18.58, 20.57
+oracle-check=0
+2026-10-22T16:05:34+00:00 running shape-native-3  16:05:34 up 6 days, 23 min,  0 users,  load average: 13.00, 17.61, 20.12
+2026-10-22T16:05:37+00:00 running shape-native-3-taskset  16:05:37 up 6 days, 23 min,  0 users,  load average: 13.32, 17.60, 20.11
+2026-10-22T16:06:34+00:00 running shape-native-3  16:06:34 up 6 days, 24 min,  0 users,  load average: 13.22, 16.84, 19.70
+2026-10-22T16:06:37+00:00 running shape-native-3-taskset  16:06:37 up 6 days, 24 min,  0 users,  load average: 13.37, 16.81, 19.67
+2026-10-22T16:07:34+00:00 running shape-native-3  16:07:34 up 6 days, 25 min,  0 users,  load average: 12.68, 16.10, 19.27
+2026-10-22T16:07:38+00:00 running shape-native-3-taskset  16:07:38 up 6 days, 25 min,  0 users,  load average: 13.35, 16.18, 19.28
+2026-10-22T16:08:35+00:00 running shape-native-3  16:08:35 up 6 days, 26 min,  0 users,  load average: 16.18, 16.68, 19.28
+2026-10-22T16:08:38+00:00 running shape-native-3-taskset  16:08:38 up 6 days, 26 min,  0 users,  load average: 15.84, 16.60, 19.24
+2026-10-22T16:09:35+00:00 running shape-native-3  16:09:35 up 6 days, 27 min,  0 users,  load average: 15.87, 16.24, 18.95
+2026-10-22T16:09:38+00:00 running shape-native-3-taskset  16:09:38 up 6 days, 27 min,  0 users,  load average: 38.22, 20.86, 20.43
+shape-native-3=0
+2026-10-22T16:09:59+00:00 start shape-release-1  16:09:59 up 6 days, 27 min,  0 users,  load average: 30.83, 20.32, 20.26
+shape-native-3-taskset=0
+2026-10-22T16:09:59+00:00 start shape-release-1-taskset  16:09:59 up 6 days, 27 min,  0 users,  load average: 30.83, 20.32, 20.26
+2026-10-22T16:10:59+00:00 running shape-release-1  16:10:59 up 6 days, 28 min,  0 users,  load average: 18.67, 18.76, 19.73
+2026-10-22T16:10:59+00:00 running shape-release-1-taskset  16:10:59 up 6 days, 28 min,  0 users,  load average: 18.67, 18.76, 19.73
+2026-10-22T16:11:59+00:00 running shape-release-1  16:11:59 up 6 days, 29 min,  0 users,  load average: 14.66, 17.65, 19.29
+2026-10-22T16:11:59+00:00 running shape-release-1-taskset  16:11:59 up 6 days, 29 min,  0 users,  load average: 14.66, 17.65, 19.29
+2026-10-22T16:12:59+00:00 running shape-release-1  16:12:59 up 6 days, 30 min,  0 users,  load average: 17.11, 17.55, 19.14
+2026-10-22T16:12:59+00:00 running shape-release-1-taskset  16:12:59 up 6 days, 30 min,  0 users,  load average: 17.11, 17.55, 19.14
+2026-10-22T16:13:59+00:00 running shape-release-1  16:13:59 up 6 days, 31 min,  0 users,  load average: 13.24, 16.53, 18.70
+2026-10-22T16:13:59+00:00 running shape-release-1-taskset  16:13:59 up 6 days, 31 min,  0 users,  load average: 13.24, 16.53, 18.70
+shape-release-1=0
+2026-10-22T16:14:25+00:00 start shape-release-2  16:14:25 up 6 days, 31 min,  0 users,  load average: 11.53, 15.88, 18.42
+shape-release-1-taskset=0
+2026-10-22T16:14:29+00:00 start shape-release-2-taskset  16:14:29 up 6 days, 32 min,  0 users,  load average: 11.00, 15.70, 18.35
+2026-10-22T16:15:25+00:00 running shape-release-2  16:15:25 up 6 days, 32 min,  0 users,  load average: 11.17, 14.89, 17.92
+2026-10-22T16:15:29+00:00 running shape-release-2-taskset  16:15:29 up 6 days, 33 min,  0 users,  load average: 11.07, 14.81, 17.87
+2026-10-22T16:16:25+00:00 running shape-release-2  16:16:25 up 6 days, 33 min,  0 users,  load average: 11.20, 14.18, 17.48
+2026-10-22T16:16:29+00:00 running shape-release-2-taskset  16:16:29 up 6 days, 34 min,  0 users,  load average: 10.86, 14.06, 17.42
+2026-10-22T16:17:25+00:00 running shape-release-2  16:17:25 up 6 days, 34 min,  0 users,  load average: 16.01, 14.94, 17.52
+2026-10-22T16:17:30+00:00 running shape-release-2-taskset  16:17:30 up 6 days, 35 min,  0 users,  load average: 15.29, 14.80, 17.47
+2026-10-22T16:18:25+00:00 running shape-release-2  16:18:25 up 6 days, 35 min,  0 users,  load average: 11.29, 13.79, 16.97
+2026-10-22T16:18:30+00:00 running shape-release-2-taskset  16:18:30 up 6 days, 36 min,  0 users,  load average: 11.27, 13.74, 16.93
+shape-release-2=0
+2026-10-22T16:18:30+00:00 start shape-release-3  16:18:30 up 6 days, 36 min,  0 users,  load average: 11.27, 13.74, 16.93
+shape-release-2-taskset=0
+2026-10-22T16:18:37+00:00 start shape-release-3-taskset  16:18:37 up 6 days, 36 min,  0 users,  load average: 10.69, 13.54, 16.83
+2026-10-22T16:19:30+00:00 running shape-release-3  16:19:30 up 6 days, 37 min,  0 users,  load average: 9.89, 12.88, 16.43
+2026-10-22T16:19:37+00:00 running shape-release-3-taskset  16:19:37 up 6 days, 37 min,  0 users,  load average: 10.61, 12.94, 16.41
+2026-10-22T16:20:31+00:00 running shape-release-3  16:20:31 up 6 days, 38 min,  0 users,  load average: 9.85, 12.40, 16.05
+2026-10-22T16:20:37+00:00 running shape-release-3-taskset  16:20:37 up 6 days, 38 min,  0 users,  load average: 9.57, 12.25, 15.96
+2026-10-22T16:21:31+00:00 running shape-release-3  16:21:31 up 6 days, 39 min,  0 users,  load average: 21.51, 14.98, 16.69
+2026-10-22T16:21:37+00:00 running shape-release-3-taskset  16:21:37 up 6 days, 39 min,  0 users,  load average: 19.21, 14.70, 16.58
+2026-10-22T16:22:31+00:00 running shape-release-3  16:22:31 up 6 days, 40 min,  0 users,  load average: 14.61, 14.31, 16.35
+shape-release-3=0
+2026-10-22T16:22:33+00:00 start neighbors-2-four  16:22:33 up 6 days, 40 min,  0 users,  load average: 20.49, 15.53, 16.74
+2026-10-22T16:22:37+00:00 running shape-release-3-taskset  16:22:37 up 6 days, 40 min,  0 users,  load average: 19.65, 15.44, 16.70
+shape-release-3-taskset=0
+neighbors-2-four=0
+2026-10-22T16:23:31+00:00 start neighbors-3-bare  16:23:31 up 6 days, 41 min,  0 users,  load average: 13.66, 14.41, 16.28
+neighbors-3-bare=0
+2026-10-22T16:24:25+00:00 start neighbors-3-four  16:24:25 up 6 days, 41 min,  0 users,  load average: 10.33, 13.38, 15.82
+neighbors-3-four=0

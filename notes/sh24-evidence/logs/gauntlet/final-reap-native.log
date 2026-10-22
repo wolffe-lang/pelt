@@ -1,0 +1,3 @@
+reap-witness: ok   difftest  the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended 4; left running: 0 (10.3 s)
+reap-witness: ok   census    the case wrote 4 pids (shell, child, job, grandchild); the harness said it ended 5, 0 left; left running: 0 (10.3 s)
+reap-witness: ok (0 failed, 0 skipped)

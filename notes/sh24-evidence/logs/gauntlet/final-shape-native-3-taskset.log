@@ -1,0 +1,53 @@
+shape-rss: ok   baseline                 loop    10000     5908 KB   20000     6364 KB  grew     456 KB (46 B a turn)  [:] metric=RSS bound=100B+1024KiB
+shape-rss: ok   jobs-set-m               monitor   3000      904 KB    6000     1380 KB  grew     476 KB (162 B a turn)  [env true & wait $!] metric=RssAnon bound=160B+64KiB
+shape-rss: ok   compound-brace-redir     loop    10000     6020 KB   20000     6588 KB  grew     568 KB (58 B a turn)  [{ true; } >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   compound-if-redir        loop    10000     6212 KB   20000     7040 KB  grew     828 KB (84 B a turn)  [if true; then :; fi >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   compound-while-redir     loop    10000     5860 KB   20000     6260 KB  grew     400 KB (40 B a turn)  [while false; do :; done >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   jobs-loop                jobs   100000       28 KB  200000      144 KB  grew     116 KB (1 B a turn)  [jobs] metric=RSS bound=16B+1024KiB
+shape-rss: ok   pipeline                 loop    10000     6360 KB   20000     7284 KB  grew     924 KB (94 B a turn)  [true | true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   pipeline-program         loop    10000     6716 KB   20000     8192 KB  grew    1476 KB (151 B a turn)  [echo x | cat >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   substitution             loop    10000     6380 KB   20000     7248 KB  grew     868 KB (88 B a turn)  [x=$(true)] metric=RSS bound=100B+1024KiB
+shape-rss: ok   substitution-output      loop    10000     6172 KB   20000     7092 KB  grew     920 KB (94 B a turn)  [x=$(echo y)] metric=RSS bound=100B+1024KiB
+shape-rss: ok   backquote                loop    10000     6584 KB   20000     7120 KB  grew     536 KB (54 B a turn)  [x=`true`] metric=RSS bound=100B+1024KiB
+shape-rss: ok   substitution-pipeline    loop    10000     7388 KB   20000     9248 KB  grew    1860 KB (190 B a turn)  [x=$(echo a | cat)] metric=RSS bound=100B+1024KiB
+shape-rss: ok   subshell                 loop    10000     6284 KB   20000     6464 KB  grew     180 KB (18 B a turn)  [( true )] metric=RSS bound=100B+1024KiB
+shape-rss: ok   call                     loop    10000     6436 KB   20000     7568 KB  grew    1132 KB (115 B a turn)  [f a b] metric=RSS bound=100B+1024KiB
+shape-rss: ok   call-local               loop    10000     7108 KB   20000     8288 KB  grew    1180 KB (120 B a turn)  [g a b] metric=RSS bound=100B+1024KiB
+shape-rss: ok   arith-assign             loop    10000     6012 KB   20000     6552 KB  grew     540 KB (55 B a turn)  [: $((j=j+1))] metric=RSS bound=100B+1024KiB
+shape-rss: ok   case                     loop    10000     6104 KB   20000     6384 KB  grew     280 KB (28 B a turn)  [case a in a) :;; esac] metric=RSS bound=100B+1024KiB
+shape-rss: ok   for                      loop    10000     6012 KB   20000     6852 KB  grew     840 KB (86 B a turn)  [for j in 1; do :; done] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-simple            script  10000     5240 KB   20000     5824 KB  grew     584 KB (59 B a turn)  [true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-pipeline          script  10000     6052 KB   20000     6244 KB  grew     192 KB (19 B a turn)  [true | true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-substitution      script  10000     5880 KB   20000     5884 KB  grew       4 KB (0 B a turn)  [x=$(true)] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-call              script  10000     6224 KB   20000     6796 KB  grew     572 KB (58 B a turn)  [f] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-pipeline           typed   10000     7980 KB   20000     9232 KB  grew    1252 KB (128 B a turn)  [true | true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-and                typed   10000     7368 KB   20000     8620 KB  grew    1252 KB (128 B a turn)  [true && true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-brace              typed   10000     7284 KB   20000     8380 KB  grew    1096 KB (112 B a turn)  [{ true; }] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-if                 typed   10000     7596 KB   20000     8844 KB  grew    1248 KB (127 B a turn)  [if true; then :; fi] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-substitution       typed   10000     7500 KB   20000     8908 KB  grew    1408 KB (144 B a turn)  [x=$(true)] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-program            typed   10000     7916 KB   20000     9284 KB  grew    1368 KB (140 B a turn)  [env true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-pipeline-program   typed   10000     8660 KB   20000    10340 KB  grew    1680 KB (172 B a turn)  [echo x | cat >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-wait             loop    10000     6456 KB   20000     6916 KB  grew     460 KB (47 B a turn)  [wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-export           loop    10000     6308 KB   20000     6880 KB  grew     572 KB (58 B a turn)  [export X] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-kill             loop    10000     6300 KB   20000     7024 KB  grew     724 KB (74 B a turn)  [kill -0 $$] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait          loop    10000     7188 KB   20000     8264 KB  grew    1076 KB (110 B a turn)  [env true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-builtin-wait  loop    10000     7572 KB   20000     8404 KB  grew     832 KB (85 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait-pid      loop    10000     7204 KB   20000     8340 KB  grew    1136 KB (116 B a turn)  [true & wait $!] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-background-wait   script  10000     7136 KB   20000     8024 KB  grew     888 KB (90 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-background-wait    typed   10000     8616 KB   20000    10452 KB  grew    1836 KB (188 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-read-redir       loop    10000     6600 KB   20000     7028 KB  grew     428 KB (43 B a turn)  [read x </dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-eval             loop    10000     6452 KB   20000     7292 KB  grew     840 KB (86 B a turn)  [eval :] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-cd               loop    10000     6400 KB   20000     7140 KB  grew     740 KB (75 B a turn)  [cd .] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-command          loop   100000    11772 KB  200000    18120 KB  grew    6348 KB (65 B a turn)  [command true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-umask            loop   100000    11768 KB  200000    17872 KB  grew    6104 KB (62 B a turn)  [umask 022] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-nowait        loop    20000     8528 KB   40000    10516 KB  grew    1988 KB (101 B a turn)  [true &] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-program-nowait loop    10000     7148 KB   20000     8492 KB  grew    1344 KB (137 B a turn)  [env true &] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-substitution        loop    10000     7204 KB   20000     7676 KB  grew     472 KB (48 B a turn)  [x=$(true; true)] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-subshell            loop    10000     6428 KB   20000     7052 KB  grew     624 KB (63 B a turn)  [( true; true )] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-background-group    loop    10000     7048 KB   20000     7912 KB  grew     864 KB (88 B a turn)  [{ true; } & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-background-subshell loop    10000     7180 KB   20000     7992 KB  grew     812 KB (83 B a turn)  [( true ) & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-stage               loop    10000     6868 KB   20000     7544 KB  grew     676 KB (69 B a turn)  [{ true; } | true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-fork-substitution script  10000     6572 KB   20000     7240 KB  grew     668 KB (68 B a turn)  [x=$(true; true)] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-fork-subshell      typed   10000     7708 KB   20000     8916 KB  grew    1208 KB (123 B a turn)  [( true; true )] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-redirected-subshell loop    10000     6292 KB   20000     7120 KB  grew     828 KB (84 B a turn)  [( true ) >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)

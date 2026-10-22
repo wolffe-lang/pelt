@@ -1,0 +1,10 @@
+/home/mfwolffe/lanes/sh24/base/target/native/pelt [true &] RssAnon_KB=[2080, 3656] own=322 B/job
+/home/mfwolffe/lanes/sh24/base/target/native/pelt [env true &] RssAnon_KB=[2128, 3744] own=330 B/job
+/home/mfwolffe/lanes/sh24/head/target/native/pelt [true &] RssAnon_KB=[1164, 1680] own=105 B/job
+/home/mfwolffe/lanes/sh24/head/target/native/pelt [env true &] RssAnon_KB=[1212, 1768] own=113 B/job
+/home/mfwolffe/lanes/sh24/base/target/release/pelt [true &] RssAnon_KB=[1968, 3544] own=322 B/job
+/home/mfwolffe/lanes/sh24/base/target/release/pelt [env true &] RssAnon_KB=[2012, 3628] own=330 B/job
+/home/mfwolffe/lanes/sh24/head/target/release/pelt [true &] RssAnon_KB=[1044, 1560] own=105 B/job
+/home/mfwolffe/lanes/sh24/head/target/release/pelt [env true &] RssAnon_KB=[1092, 1648] own=113 B/job
+/usr/bin/dash [true &] RssAnon_KB=[612, 872] own=53 B/job
+/usr/bin/dash [env true &] RssAnon_KB=[608, 876] own=54 B/job

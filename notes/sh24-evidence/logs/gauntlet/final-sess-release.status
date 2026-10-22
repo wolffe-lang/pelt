@@ -1,0 +1,6 @@
+head=428e4ffb1ed3167f30d49e763e70d60ed8df92bb
+start=2026-10-22T15:42:40+00:00
+ 15:42:40 up 6 days, 0 min,  0 users,  load average: 20.73, 23.33, 23.62
+pid 2's current affinity mask: f00
+command=tools/session --bin target/release 
+exit=0
