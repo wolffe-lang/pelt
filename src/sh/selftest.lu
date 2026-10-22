@@ -657,7 +657,6 @@ fn want_mask_texts(mut bad: List[str]) {
 }
 
 /// Run every table check; answers one line per check that failed,
-/// empty when all pass.
 fn want_job_slots(mut bad: List[str]) {
     var sh = new_sh("job slots")
     let a = jb_new(mut sh)
@@ -668,8 +667,10 @@ fn want_job_slots(mut bad: List[str]) {
             set_slot_status(mut sh, a, raw)
             set_slot_state(mut sh, a, JB_DONE)
             set_slot_flag(mut sh, a, SL_REAPED, true)
-            if slot_pgid(sh, a) != group || slot_status(sh, a) != raw ||
-                slot_state(sh, a) != JB_DONE || !slot_flag(sh, a, SL_REAPED) {
+            if slot_pgid(sh, a) != group ||
+                slot_status(sh, a) != raw ||
+                slot_state(sh, a) != JB_DONE ||
+                !slot_flag(sh, a, SL_REAPED) {
                 (mut bad).push("job group/status/flags overlap")
             }
         }
@@ -690,6 +691,25 @@ fn want_job_slots(mut bad: List[str]) {
     if sh.jb_texts.len != 2 || slot_text(sh, c) != "reused" {
         (mut bad).push("released job text pool slots are not reused")
     }
+    var ids = List[int]()
+    for i in 0..20 {
+        let j = jb_new(mut sh)
+        (mut ids).push(j)
+        set_slot_text(mut sh, j, "command {i}")
+        set_slot_pgid(mut sh, j, 4294967295)
+        set_slot_status(mut sh, j, -15)
+    }
+    var ix = 0
+    while ix < ids.len {
+        let j = ids[ix]
+        if slot_text(sh, j) != "command {ix}" ||
+            slot_pgid(sh, j) != 4294967295 ||
+            slot_status(sh, j) != -15 {
+            (mut bad).push("inline or overflow job text overlaps group/status")
+        }
+        jb_free(mut sh, j)
+        ix += 1
+    }
     var tree = new_ast()
     let n = add(mut tree, K_SIMPLE, "", 1)
     tree.nodes[n].job_text = "stale"
@@ -700,6 +720,7 @@ fn want_job_slots(mut bad: List[str]) {
     }
 }
 
+/// Table-check failures; empty when all pass.
 pub fn self_test() -> List[str] {
     var bad = List[str]()
     want_job_slots(mut bad)
