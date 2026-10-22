@@ -1,0 +1,16 @@
+sub-a
+sub-b
+cmdsub: cs-a
+cs-b
+brace-bg
+paren-bg
+one
+two
+stage: f-out
+b
+a
+bg-pid: a process
+redir-brace
+redir: 0
+end 0
+exit=0

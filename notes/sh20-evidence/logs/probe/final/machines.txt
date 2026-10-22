@@ -1,0 +1,9 @@
+# /home/mfwolffe/lanes/sh20/pelt/.wolf-bin/wolf conform-run --json --checked src/pelt.lu < checked.sh (wolf 0.2.34 (wolfgang, pin 9da7bdc))
+one
+two
+stage: f-out
+{"commit":"9da7bdc","diagnostics":[],"file":"src/pelt.lu","impl":"wolfgang","impl_version":"0.2.34","phase_reached":"run","protocol":1,"seeded":false,"stdout_inline":"sub-a\nsub-b\ncmdsub: cs-a\ncs-b\nbrace-bg\nparen-bg\na\nb\nbg-pid: none\nredir-brace\nredir: 0\nend 0\n","stdout_sha256":"ef66fdb71c525b67ea6d4fd3f7a06e96fab309698746f54c504d5a8ffe371714","verdict":"exit(0)","warnings":[]}
+exit 0
+# /home/mfwolffe/lanes/sh20/pelt/.wolf-bin/lupin run --json --std-root .wolf-bin/std src/pelt.lu (lupin 0.1.55 (wolf-interp, reference interpreter at pin 294d626)) < /dev/null
+{"protocol":1,"impl":"lupin","impl_version":"0.1.55","commit":"e642f26","file":"src/pelt.lu","phase_reached":"resolve","seeded":false,"diagnostics":[],"warnings":[],"verdict":"unsupported","stdout_sha256":null,"stdout_inline":null,"x-unsupported":"`os_signal_default` sets a signal's disposition: this machine admits no `unsafe` and std has no `sigaction` ([os.signal.disp], [os.term.note] R8)","x-unsupported-at":"run"}
+exit 0
