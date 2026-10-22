@@ -1,0 +1,57 @@
+session: pelt = /home/mfwolffe/lanes/sh20/pelt/target/native/pelt
+ok   alias_prompt_forms
+ok   arith_assign
+ok   arith_error
+ok   background
+ok   background_status
+ok   c_alias_interactive
+ok   c_ed_alt_word
+ok   c_ed_backspace_delete
+ok   c_ed_combining
+ok   c_ed_complete_abs
+ok   c_ed_complete_after_assign
+ok   c_ed_complete_after_ops
+ok   c_ed_complete_command
+ok   c_ed_complete_dirs
+ok   c_ed_complete_file
+ok   c_ed_complete_hidden
+ok   c_ed_complete_in_quotes
+ok   c_ed_complete_lcp
+ok   c_ed_complete_list
+ok   c_ed_complete_list_prompt
+ok   c_ed_complete_list_vars
+ok   c_ed_complete_list_wide
+ok   c_ed_complete_mid_word
+ok   c_ed_complete_names
+ok   c_ed_complete_newline
+ok   c_ed_complete_nomatch
+ok   c_ed_complete_query
+ok   c_ed_complete_quoting
+ok   c_ed_complete_redirect
+ok   c_ed_complete_slash_cmd
+ok   c_ed_complete_tilde
+ok   c_ed_complete_tilde_alone
+ok   c_ed_complete_var
+ok   c_ed_complete_var_in_word
+     (c_ed_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c
+     (c_ed_ctrl_c_continued: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_continued
+     (c_ed_ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_ignored
+     (c_ed_ctrl_c_trap: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_trap
+ok   c_ed_ctrl_k_y
+ok   c_ed_ctrl_l
+ok   c_ed_ctrl_u_y
+ok   c_ed_ctrl_v
+ok   c_ed_ctrl_w
+ok   c_ed_delete_char
+ok   c_ed_flow_stop
+ok   c_ed_history_screen
+ok   c_ed_home_end
+ok   c_ed_home_end_keys
+ok   c_ed_insert_mid
+ok   c_ed_keys_abf
+ok   c_ed_kill_to_end
+ok   c_ed_left_insert

@@ -1,0 +1,23 @@
+== /usr/bin/dash c6221703b619
+/usr/bin/zgrep beta a.gz -> st=0 beta|beta two
+/usr/bin/zgrep -c beta a.gz b.gz -> st=0 a.gz:2|b.gz:0
+/usr/bin/xzgrep -n beta a.xz -> st=0 2:beta|4:beta two
+/usr/bin/zgrep -i beta a.gz b.gz -> st=0 a.gz:beta|a.gz:beta two|b.gz:BETA
+/usr/bin/zdiff a.gz b.gz -> st=1 2c2|< beta|---|> BETA|4d3|< beta two
+/usr/bin/xzgrep -l gamma a.xz a.gz -> st=0 a.xz|a.gz
+== /home/mfwolffe/lanes/sh20/snaps/rb/target/release/pelt abee983c310d
+/usr/bin/zgrep beta a.gz -> st=0 beta|beta two
+/usr/bin/zgrep -c beta a.gz b.gz -> st=0 a.gz:2|b.gz:0
+/usr/bin/xzgrep -n beta a.xz -> st=0 2:beta|4:beta two
+/usr/bin/zgrep -i beta a.gz b.gz -> st=0 a.gz:beta|a.gz:beta two|b.gz:BETA
+/usr/bin/zdiff a.gz b.gz -> st=1 2c2|< beta|---|> BETA|4d3|< beta two
+/usr/bin/xzgrep -l gamma a.xz a.gz -> st=0 a.xz|a.gz
+== /home/mfwolffe/lanes/sh20/pin/target/release/pelt 84823de5fb49
+/usr/bin/zgrep beta a.gz -> st=0 beta|beta two|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 258: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 261: test: 0: unknown operator
+/usr/bin/zgrep -c beta a.gz b.gz -> st=0 a.gz:2|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 258: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 261: test: 0: unknown operator|b.gz:0|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 258: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 261: test: 1: unknown operator
+/usr/bin/xzgrep -n beta a.xz -> st=2 2:beta|4:beta two
+/usr/bin/zgrep -i beta a.gz b.gz -> st=0 a.gz:beta|a.gz:beta two|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 258: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 261: test: 0: unknown operator|b.gz:BETA|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 257: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 258: test: -eq: unknown operator|pelt: /usr/bin/zgrep: line 261: test: 0: unknown operator
+/usr/bin/zdiff a.gz b.gz -> st=1 2c2|< beta|---|> BETA|4d3|< beta two
+/usr/bin/xzgrep -l gamma a.xz a.gz -> st=2 a.xz
+xz 5.8.3-1
+gzip 1.15-1.1
