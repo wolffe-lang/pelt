@@ -19,7 +19,7 @@ for tier in ("native", "release"):
             name = f"shape-{tier}-{pass_}{mode}"
             required.add(name)
             log = (root / "gauntlet" / f"final-{name}.log").read_text()
-            assert len(re.findall(r"^shape-rss: ok\s+\S+\s+\S+\s+\d+", log, re.M)) == 52, name
+            assert len(re.findall(r"^shape-rss: ok\s+\S+\s+(?:loop|script|typed|jobs|monitor)\s+\d+", log, re.M)) == 52, name
             assert "shape-rss: FAIL" not in log, name
             status = (root / "gauntlet" / f"final-{name}.status").read_text()
             assert "load average:" in status and "affinity mask: f00" in status, name
