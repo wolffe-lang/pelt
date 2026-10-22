@@ -1,0 +1,99 @@
+g251362c-diff-native: difftest: total        987     0    28 (2)
+g251362c-diff-release: difftest: total        987     0    28 (2)
+g251362c-diff-native-taskset: difftest: total        987     0    28 (2)
+g251362c-diff-release-taskset: difftest: total        987     0    28 (2)
+g251362c-sess-native: session: pass 278  fail 0  pending 2 (0)
+g251362c-sess-release: session: pass 278  fail 0  pending 2 (0)
+g251362c-sess-native-taskset: session: pass 278  fail 0  pending 2 (0)
+g251362c-sess-release-taskset: session: pass 278  fail 0  pending 2 (0)
+g251362c-clause: clause-census: total                                548  516   25    2      5  95.0%
+g251362c-test: wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+g251362c-self-native: selfcheck: every table check passed; a fork with a task live is busy and runs in process
+g251362c-self-release: selfcheck: every table check passed; a fork with a task live is busy and runs in process
+g251362c-shape-native: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+g251362c-shape-release: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+g251362c-loop-native: loop-rss: ok (10000 more turns grew 216 KB, about 22 B a turn; bound 2000 KB)
+g251362c-loop-release: loop-rss: ok (10000 more turns grew 248 KB, about 25 B a turn; bound 2000 KB)
+g251362c-glob-native: glob-rss: ok (12188 KB with 64 files, 12188 KB empty, bound 15454)
+g251362c-glob-release: glob-rss: ok (12216 KB with 64 files, 12048 KB empty, bound 15300)
+g251362c-exec-native: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+g251362c-exec-release: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+g251362c-edit-native: edit-witness: 11 ok, 0 failed, 0 skipped
+g251362c-edit-release: edit-witness: 11 ok, 0 failed, 0 skipped
+g251362c-edit-native-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+g251362c-edit-release-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+g251362c-hist-native: hist-witness: 6 of 6 hold
+g251362c-hist-release: hist-witness: 6 of 6 hold
+g251362c-sigw-native: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g251362c-sigw-release: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g251362c-sigw-native-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g251362c-sigw-release-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g251362c-reap-native: reap-witness: ok (0 failed, 0 skipped)
+g251362c-reap-release: reap-witness: ok (0 failed, 0 skipped)
+g251362c-oracle-check: oracle-record: 0 drifted
+g0ca2ab2-diff-native: difftest: total        987     0    28 (2)
+g0ca2ab2-diff-release: difftest: total        987     0    28 (2)
+g0ca2ab2-diff-native-taskset: difftest: total        987     0    28 (2)
+g0ca2ab2-diff-release-taskset: difftest: total        987     0    28 (2)
+g0ca2ab2-sess-native: session: pass 278  fail 0  pending 2 (0)
+g0ca2ab2-sess-release: session: pass 278  fail 0  pending 2 (0)
+g0ca2ab2-sess-native-taskset: session: pass 278  fail 0  pending 2 (0)
+g0ca2ab2-sess-release-taskset: session: pass 278  fail 0  pending 2 (0)
+g0ca2ab2-clause: clause-census: total                                548  516   25    2      5  95.0%
+g0ca2ab2-test: wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+g0ca2ab2-self-native: selfcheck: every table check passed; a fork with a task live is busy and runs in process
+g0ca2ab2-self-release: selfcheck: every table check passed; a fork with a task live is busy and runs in process
+g0ca2ab2-shape-native: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+g0ca2ab2-shape-release: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+g0ca2ab2-loop-native: loop-rss: ok (10000 more turns grew 492 KB, about 50 B a turn; bound 2000 KB)
+g0ca2ab2-loop-release: loop-rss: ok (10000 more turns grew 316 KB, about 32 B a turn; bound 2000 KB)
+g0ca2ab2-glob-native: glob-rss: ok (12188 KB with 64 files, 12108 KB empty, bound 15366)
+g0ca2ab2-glob-release: glob-rss: ok (12276 KB with 64 files, 12252 KB empty, bound 15525)
+g0ca2ab2-exec-native: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+g0ca2ab2-exec-release: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+g0ca2ab2-edit-native: edit-witness: 11 ok, 0 failed, 0 skipped
+g0ca2ab2-edit-release: edit-witness: 11 ok, 0 failed, 0 skipped
+g0ca2ab2-edit-native-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+g0ca2ab2-edit-release-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+g0ca2ab2-hist-native: hist-witness: 6 of 6 hold
+g0ca2ab2-hist-release: hist-witness: 6 of 6 hold
+g0ca2ab2-sigw-native: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g0ca2ab2-sigw-release: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g0ca2ab2-sigw-native-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g0ca2ab2-sigw-release-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+g0ca2ab2-reap-native: reap-witness: ok (0 failed, 0 skipped)
+g0ca2ab2-reap-release: reap-witness: ok (0 failed, 0 skipped)
+g0ca2ab2-oracle-check: oracle-record: 0 drifted
+final-diff-native: difftest: total        989     0    28 (2)
+final-diff-release: difftest: total        989     0    28 (2)
+final-diff-native-taskset: difftest: total        989     0    28 (2)
+final-diff-release-taskset: difftest: total        989     0    28 (2)
+final-sess-native: session: pass 289  fail 0  pending 2 (0)
+final-sess-release: session: pass 289  fail 0  pending 2 (0)
+final-sess-native-taskset: session: pass 289  fail 0  pending 2 (0)
+final-sess-release-taskset: session: pass 289  fail 0  pending 2 (0)
+final-clause: clause-census: total                                548  516   25    2      5  95.0%
+final-test: wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+final-self-native: selfcheck: every table check passed; a fork with a task live is busy and runs in process
+final-self-release: selfcheck: every table check passed; a fork with a task live is busy and runs in process
+final-shape-native: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+final-shape-release: shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+final-loop-native: loop-rss: ok (10000 more turns grew 352 KB, about 36 B a turn; bound 2000 KB)
+final-loop-release: loop-rss: ok (10000 more turns grew 244 KB, about 24 B a turn; bound 2000 KB)
+final-glob-native: glob-rss: ok (12236 KB with 64 files, 12124 KB empty, bound 15384)
+final-glob-release: glob-rss: ok (12244 KB with 64 files, 12188 KB empty, bound 15454)
+final-exec-native: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+final-exec-release: exec-witness: status  ok   returncode -15 (want -15), stderr ''
+final-edit-native: edit-witness: 11 ok, 0 failed, 0 skipped
+final-edit-release: edit-witness: 11 ok, 0 failed, 0 skipped
+final-edit-native-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+final-edit-release-taskset: edit-witness: 11 ok, 0 failed, 0 skipped
+final-hist-native: hist-witness: 6 of 6 hold
+final-hist-release: hist-witness: 6 of 6 hold
+final-sigw-native: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+final-sigw-release: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+final-sigw-native-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+final-sigw-release-taskset: signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+final-reap-native: reap-witness: ok (0 failed, 0 skipped)
+final-reap-release: reap-witness: ok (0 failed, 0 skipped)
+final-oracle-check: oracle-record: 0 drifted
