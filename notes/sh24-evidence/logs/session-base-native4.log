@@ -1,0 +1,24 @@
+session: pelt = /home/mfwolffe/lanes/sh24/base/target/native/pelt
+FAIL jc_wait_frees
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "printf '%s\\n' 'sleep 0.02 & wait' 'sleep 0.2 & jobs >f; cut -c1-3 f; wait' >w"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 ". ./w"
+     ! pelt out "[2]\n[1]\n"
+       dash out "[1]\n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 3 "jobs"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "rm -f f w"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 5
+session: pass 0  fail 1  pending 0 (0)

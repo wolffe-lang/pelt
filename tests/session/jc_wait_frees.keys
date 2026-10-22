@@ -1,0 +1,5 @@
+printf '%s\n' 'sleep 0.02 & wait' 'sleep 0.2 & jobs >f; cut -c1-3 f; wait' >w
+. ./w
+jobs
+rm -f f w
+exit
