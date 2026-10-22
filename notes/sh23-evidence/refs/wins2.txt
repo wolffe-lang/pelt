@@ -1,0 +1,40 @@
+== /home/mfwolffe/lanes/sh23/bins/head/native/pelt -i
+fn ran 1
+function-assign st=0 
+function-redir st=0 
+builtin
+builtin-assign st=0 
+b
+path-traced st=0 
+== /home/mfwolffe/lanes/sh23/base/native/pelt -i
+fn ran 1
+function-assign st=0 
+function-redir st=0 
+builtin
+builtin-assign st=0 
+b
+path-traced st=0 
+== /usr/bin/bash -i
+fn ran 1
+function-assign st=0 
+function-redir st=0 
+builtin
+builtin-assign st=0 
+b
+path-traced st=0 
+== /usr/bin/zsh -i
+fn ran 1
+function-assign st=0 
+function-redir st=0 
+builtin
+builtin-assign st=0 
+b
+path-traced st=0 
+== /usr/bin/dash -i
+fn ran 1
+function-assign st=0 
+function-redir st=0 
+builtin
+builtin-assign st=0 
+b
+path-traced st=0 
