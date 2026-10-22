@@ -26,6 +26,9 @@ lane) and in the README's status.
   traps (pelt#17). `$$` is the shell's pid in every subshell. The
   checked machine (`os_fork` answers `unsupported`, ruling #95) runs
   every shape in process as before.
+  The three census scripts that read a decompressor's status through a
+  pipeline stage, `xzgrep`, `zgrep` and `zdiff`, run as under dash (a
+  Linux host's own copies; `tools/script-census` is not run again yet).
 - `wait` for a job a poll reaped earlier answers its status without the
   signal's notice, as dash (pelt#47).
 - `set -o autocd` is not taken inside a subshell, a command substitution
