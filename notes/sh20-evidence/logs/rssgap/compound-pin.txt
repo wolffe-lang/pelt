@@ -1,0 +1,7 @@
+# /home/mfwolffe/lanes/sh20/pin/target/native/pelt (f78ebdf08126), taskset -c 4-7
+( true ) >/dev/null: 11848 -> 18524 KB, 683 B a turn
+{ true; } >/dev/null: 11960 -> 18620 KB, 681 B a turn
+( true; true ) >/dev/null: 11872 -> 18784 KB, 707 B a turn
+if true; then :; fi >/dev/null: 12080 -> 19048 KB, 713 B a turn
+while false; do :; done >/dev/null: 12088 -> 18516 KB, 658 B a turn
+true >/dev/null: 5692 -> 6296 KB, 61 B a turn

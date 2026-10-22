@@ -1,0 +1,22 @@
+# rss-split, first run (2026-10-21 ~21:31, before probe/rss-split.sh was written: the same
+# 10,000-turn loop and grep, from tmp/sh20-rsssplit.sh, taskset -c 12-15 in the container),
+# copied from the terminal; pelt/target/native then held 9a6baf2e2666 (the 251362c build),
+# byte-identical to snaps/fx1/target/native
+pin/target/native/pelt
+VmHWM: 5792 kB RssAnon: 812 kB RssFile: 4980 kB RssShmem: 0 kB 
+VmHWM: 5756 kB RssAnon: 816 kB RssFile: 4940 kB RssShmem: 0 kB 
+snaps/fx1/target/native/pelt
+VmHWM: 7300 kB RssAnon: 832 kB RssFile: 6468 kB RssShmem: 0 kB 
+VmHWM: 7052 kB RssAnon: 840 kB RssFile: 6212 kB RssShmem: 0 kB 
+pelt/target/native/pelt
+VmHWM: 6048 kB RssAnon: 832 kB RssFile: 5216 kB RssShmem: 0 kB 
+VmHWM: 6000 kB RssAnon: 836 kB RssFile: 5164 kB RssShmem: 0 kB 
+snaps/b448/target/native/pelt
+VmHWM: 6068 kB RssAnon: 832 kB RssFile: 5236 kB RssShmem: 0 kB 
+VmHWM: 5980 kB RssAnon: 832 kB RssFile: 5148 kB RssShmem: 0 kB 
+pin/target/release/pelt
+VmHWM: 3936 kB RssAnon: 704 kB RssFile: 3232 kB RssShmem: 0 kB 
+VmHWM: 3956 kB RssAnon: 700 kB RssFile: 3256 kB RssShmem: 0 kB 
+snaps/fx1/target/release/pelt
+VmHWM: 3996 kB RssAnon: 700 kB RssFile: 3296 kB RssShmem: 0 kB 
+VmHWM: 4012 kB RssAnon: 700 kB RssFile: 3312 kB RssShmem: 0 kB 

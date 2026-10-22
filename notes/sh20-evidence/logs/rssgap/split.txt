@@ -1,0 +1,24 @@
+/home/mfwolffe/lanes/sh20/pin/target/native/pelt (f78ebdf08126)
+VmHWM: 6696 kB RssAnon: 812 kB RssFile: 5884 kB 
+VmHWM: 6772 kB RssAnon: 816 kB RssFile: 5956 kB 
+/home/mfwolffe/lanes/sh20/snaps/fx1/target/native/pelt (9a6baf2e2666)
+VmHWM: 7044 kB RssAnon: 832 kB RssFile: 6212 kB 
+VmHWM: 6980 kB RssAnon: 836 kB RssFile: 6144 kB 
+/home/mfwolffe/lanes/sh20/snaps/b448/target/native/pelt (ffd056a656d0)
+VmHWM: 6924 kB RssAnon: 832 kB RssFile: 6092 kB 
+VmHWM: 7036 kB RssAnon: 832 kB RssFile: 6204 kB 
+/home/mfwolffe/lanes/sh20/snaps/8b8d/target/native/pelt (3ca7eaf6c950)
+VmHWM: 6888 kB RssAnon: 832 kB RssFile: 6056 kB 
+VmHWM: 6972 kB RssAnon: 832 kB RssFile: 6140 kB 
+/home/mfwolffe/lanes/sh20/pelt/target/native/pelt (999936bcc24d)
+VmHWM: 6028 kB RssAnon: 836 kB RssFile: 5192 kB 
+VmHWM: 6120 kB RssAnon: 832 kB RssFile: 5288 kB 
+/home/mfwolffe/lanes/sh20/pin/target/release/pelt (84823de5fb49)
+VmHWM: 4000 kB RssAnon: 704 kB RssFile: 3296 kB 
+VmHWM: 3940 kB RssAnon: 704 kB RssFile: 3236 kB 
+/home/mfwolffe/lanes/sh20/snaps/fx1/target/release/pelt (6ea7009225cc)
+VmHWM: 3992 kB RssAnon: 704 kB RssFile: 3288 kB 
+VmHWM: 4008 kB RssAnon: 704 kB RssFile: 3304 kB 
+/home/mfwolffe/lanes/sh20/pelt/target/release/pelt (97aba059b0d8)
+VmHWM: 3960 kB RssAnon: 700 kB RssFile: 3260 kB 
+VmHWM: 4032 kB RssAnon: 708 kB RssFile: 3324 kB 

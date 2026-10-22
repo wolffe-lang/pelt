@@ -1,0 +1,24 @@
+8-15 pin start 4800 KB
+8-15 pin start 4664 KB
+8-15 pin start 4600 KB
+8-15 pin shape-rss: ok   baseline                 loop    10000     5448 KB   20000     5792 KB  grew     344 KB (35 B a turn)  [:]
+8-15 pre-b448c1e start 4952 KB
+8-15 pre-b448c1e start 4988 KB
+8-15 pre-b448c1e start 4996 KB
+8-15 pre-b448c1e shape-rss: ok   baseline                 loop    10000     5576 KB   20000     5976 KB  grew     400 KB (40 B a turn)  [:]
+8-15 9b04506 start 4704 KB
+8-15 9b04506 start 4916 KB
+8-15 9b04506 start 4784 KB
+8-15 9b04506 shape-rss: ok   baseline                 loop    10000     5568 KB   20000     6060 KB  grew     492 KB (50 B a turn)  [:]
+0-15 pin start 4836 KB
+0-15 pin start 4468 KB
+0-15 pin start 4608 KB
+0-15 pin shape-rss: ok   baseline                 loop    10000     5132 KB   20000     5696 KB  grew     564 KB (57 B a turn)  [:]
+0-15 pre-b448c1e start 4768 KB
+0-15 pre-b448c1e start 4852 KB
+0-15 pre-b448c1e start 4684 KB
+0-15 pre-b448c1e shape-rss: ok   baseline                 loop    10000     5392 KB   20000     6124 KB  grew     732 KB (74 B a turn)  [:]
+0-15 9b04506 start 4736 KB
+0-15 9b04506 start 4776 KB
+0-15 9b04506 start 4760 KB
+0-15 9b04506 shape-rss: ok   baseline                 loop    10000     5384 KB   20000     5896 KB  grew     512 KB (52 B a turn)  [:]

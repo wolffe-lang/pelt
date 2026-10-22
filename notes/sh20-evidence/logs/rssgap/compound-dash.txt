@@ -1,0 +1,7 @@
+# /usr/bin/dash (c6221703b619), taskset -c 4-7
+( true ) >/dev/null: 2708 -> 2688 KB, -2 B a turn
+{ true; } >/dev/null: 2788 -> 2692 KB, -9 B a turn
+( true; true ) >/dev/null: 2692 -> 2676 KB, -1 B a turn
+if true; then :; fi >/dev/null: 2764 -> 2648 KB, -11 B a turn
+while false; do :; done >/dev/null: 2744 -> 2744 KB, 0 B a turn
+true >/dev/null: 2720 -> 2684 KB, -3 B a turn

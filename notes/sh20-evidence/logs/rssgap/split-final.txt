@@ -1,0 +1,13 @@
+# sh20: rss-split.sh at the final head b05b0cf beside the pin 0eabfaf, each binary from its build tree; the container, taskset -c 8-11, 2026-10-22T08:47:26-04:00
+/home/mfwolffe/lanes/sh20/pin/target/native/pelt (f78ebdf08126)
+VmHWM: 6700 kB RssAnon: 812 kB RssFile: 5888 kB 
+VmHWM: 6608 kB RssAnon: 808 kB RssFile: 5800 kB 
+/home/mfwolffe/lanes/sh20/pelt/target/native/pelt (ef5c6c66be19)
+VmHWM: 6160 kB RssAnon: 828 kB RssFile: 5332 kB 
+VmHWM: 6144 kB RssAnon: 824 kB RssFile: 5320 kB 
+/home/mfwolffe/lanes/sh20/pin/target/release/pelt (84823de5fb49)
+VmHWM: 3964 kB RssAnon: 700 kB RssFile: 3264 kB 
+VmHWM: 3980 kB RssAnon: 696 kB RssFile: 3284 kB 
+/home/mfwolffe/lanes/sh20/pelt/target/release/pelt (abee983c310d)
+VmHWM: 3992 kB RssAnon: 700 kB RssFile: 3292 kB 
+VmHWM: 3984 kB RssAnon: 700 kB RssFile: 3284 kB 

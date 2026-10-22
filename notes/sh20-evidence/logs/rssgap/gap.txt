@@ -1,0 +1,36 @@
+pin start 4824 KB
+pin start 4656 KB
+pin start 4640 KB
+pin start 4628 KB
+pin start 4556 KB
+pin shape-rss: ok   baseline                 loop    10000     5444 KB   20000     5856 KB  grew     412 KB (42 B a turn)  [:]
+pin shape-rss: ok   subshell                 loop    10000     5540 KB   20000     5920 KB  grew     380 KB (38 B a turn)  [( true )]
+pin shape-rss: ok   fork-subshell            loop    10000     5736 KB   20000     6232 KB  grew     496 KB (50 B a turn)  [( true; true )]
+pin shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+pre-b448c1e start 4852 KB
+pre-b448c1e start 4924 KB
+pre-b448c1e start 4972 KB
+pre-b448c1e start 4800 KB
+pre-b448c1e start 4836 KB
+pre-b448c1e shape-rss: ok   baseline                 loop    10000     5592 KB   20000     6000 KB  grew     408 KB (41 B a turn)  [:]
+pre-b448c1e shape-rss: ok   subshell                 loop    10000     5884 KB   20000     6060 KB  grew     176 KB (18 B a turn)  [( true )]
+pre-b448c1e shape-rss: ok   fork-subshell            loop    10000     5908 KB   20000     6404 KB  grew     496 KB (50 B a turn)  [( true; true )]
+pre-b448c1e shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+b448c1e start 4936 KB
+b448c1e start 4708 KB
+b448c1e start 4744 KB
+b448c1e start 4772 KB
+b448c1e start 4700 KB
+b448c1e shape-rss: ok   baseline                 loop    10000     5444 KB   20000     5920 KB  grew     476 KB (48 B a turn)  [:]
+b448c1e shape-rss: ok   subshell                 loop    10000     5640 KB   20000     6172 KB  grew     532 KB (54 B a turn)  [( true )]
+b448c1e shape-rss: ok   fork-subshell            loop    10000     6004 KB   20000     6356 KB  grew     352 KB (36 B a turn)  [( true; true )]
+b448c1e shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+9b04506 start 4588 KB
+9b04506 start 4740 KB
+9b04506 start 4800 KB
+9b04506 start 4728 KB
+9b04506 start 4776 KB
+9b04506 shape-rss: ok   baseline                 loop    10000     5548 KB   20000     5784 KB  grew     236 KB (24 B a turn)  [:]
+9b04506 shape-rss: ok   subshell                 loop    10000     5700 KB   20000     6064 KB  grew     364 KB (37 B a turn)  [( true )]
+9b04506 shape-rss: ok   fork-subshell            loop    10000     5828 KB   20000     6300 KB  grew     472 KB (48 B a turn)  [( true; true )]
+9b04506 shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)

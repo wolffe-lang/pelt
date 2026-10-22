@@ -1,0 +1,7 @@
+# /home/mfwolffe/lanes/sh20/pin/target/release/pelt (84823de5fb49), taskset -c 4-7
+( true ) >/dev/null: 9904 -> 16404 KB, 665 B a turn
+{ true; } >/dev/null: 9616 -> 16476 KB, 702 B a turn
+( true; true ) >/dev/null: 9924 -> 16748 KB, 698 B a turn
+if true; then :; fi >/dev/null: 9876 -> 16920 KB, 721 B a turn
+while false; do :; done >/dev/null: 9900 -> 16516 KB, 677 B a turn
+true >/dev/null: 3896 -> 4080 KB, 18 B a turn
