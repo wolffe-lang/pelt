@@ -1,0 +1,43 @@
+diff --git a/src/sh/builtin.lu b/src/sh/builtin.lu
+index b147d8d..f545b13 100644
+--- a/src/sh/builtin.lu
++++ b/src/sh/builtin.lu
+@@ -1681,12 +1681,6 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
+ /// take after, as in bash). A name with no `/` that the search found is
+ /// a program, and is never a `cd`.
+ fn autocd_dir(sh: Sh, cmd: str, path: str) -> bool {
+-    if !sh.opt_autocd || !sh.interactive {
+-        return false
+-    }
+-    if path.len > 0 && (cmd.find("/") else -1) < 0 {
+-        return false
+-    }
+     fs_is_dir(cmd)
+ }
+ 
+diff --git a/src/sh/exec.lu b/src/sh/exec.lu
+index ec869d0..26776b4 100644
+--- a/src/sh/exec.lu
++++ b/src/sh/exec.lu
+@@ -1683,6 +1683,12 @@ fn run_fields(mut sh: Sh, n: int, na: int, fields: List[str], nowait: bool) -> i
+         return sh.status
+     }
+     var st = 0
++    if fs_exists(cmd) {
++        st = run_autocd(mut sh, fields, names, values)
++        end_redirs(mut sh)
++        sh.status = st
++        return st
++    }
+     let fnode = sh.funcs[cmd] else -1
+     if fnode >= 0 || is_regular_builtin(cmd) {
+         // temporary assignments, undone after (XCU 2.9.1)
+@@ -2368,7 +2374,7 @@ fn run_external(
+             path = hash_find(mut sh, cmd)
+         }
+     }
+-    if hook && autocd_dir(sh, cmd, path) {
++    if autocd_dir(sh, cmd, path) {
+         let st = run_autocd(mut sh, fields, names, values)
+         sh.status = st
+         return st

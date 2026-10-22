@@ -1,0 +1,13 @@
+diff --git a/src/sh/builtin.lu b/src/sh/builtin.lu
+index b147d8d..5b04a7b 100644
+--- a/src/sh/builtin.lu
++++ b/src/sh/builtin.lu
+@@ -1681,7 +1681,7 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
+ /// take after, as in bash). A name with no `/` that the search found is
+ /// a program, and is never a `cd`.
+ fn autocd_dir(sh: Sh, cmd: str, path: str) -> bool {
+-    if !sh.opt_autocd || !sh.interactive {
++    if !sh.interactive {
+         return false
+     }
+     if path.len > 0 && (cmd.find("/") else -1) < 0 {

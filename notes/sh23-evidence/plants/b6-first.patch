@@ -1,0 +1,17 @@
+diff --git a/src/sh/exec.lu b/src/sh/exec.lu
+index ec869d0..4fc1da4 100644
+--- a/src/sh/exec.lu
++++ b/src/sh/exec.lu
+@@ -1683,6 +1683,12 @@ fn run_fields(mut sh: Sh, n: int, na: int, fields: List[str], nowait: bool) -> i
+         return sh.status
+     }
+     var st = 0
++    if autocd_dir(sh, cmd, "") {
++        st = run_autocd(mut sh, fields, names, values)
++        end_redirs(mut sh)
++        sh.status = st
++        return st
++    }
+     let fnode = sh.funcs[cmd] else -1
+     if fnode >= 0 || is_regular_builtin(cmd) {
+         // temporary assignments, undone after (XCU 2.9.1)

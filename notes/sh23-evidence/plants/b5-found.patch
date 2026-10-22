@@ -1,0 +1,14 @@
+diff --git a/src/sh/builtin.lu b/src/sh/builtin.lu
+index b147d8d..74c6f0d 100644
+--- a/src/sh/builtin.lu
++++ b/src/sh/builtin.lu
+@@ -1684,9 +1684,6 @@ fn autocd_dir(sh: Sh, cmd: str, path: str) -> bool {
+     if !sh.opt_autocd || !sh.interactive {
+         return false
+     }
+-    if path.len > 0 && (cmd.find("/") else -1) < 0 {
+-        return false
+-    }
+     fs_is_dir(cmd)
+ }
+ 

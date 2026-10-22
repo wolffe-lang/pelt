@@ -1,0 +1,13 @@
+diff --git a/src/sh/exec.lu b/src/sh/exec.lu
+index ec869d0..8a57e09 100644
+--- a/src/sh/exec.lu
++++ b/src/sh/exec.lu
+@@ -2368,7 +2368,7 @@ fn run_external(
+             path = hash_find(mut sh, cmd)
+         }
+     }
+-    if hook && autocd_dir(sh, cmd, path) {
++    if autocd_dir(sh, cmd, path) {
+         let st = run_autocd(mut sh, fields, names, values)
+         sh.status = st
+         return st
