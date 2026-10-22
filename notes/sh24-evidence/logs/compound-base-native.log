@@ -1,0 +1,4 @@
+shape-rss: FAIL compound-brace-redir     loop    10000    11848 KB   20000    18328 KB  grew    6480 KB (663 B a turn)  [{ true; } >/dev/null]
+shape-rss: FAIL compound-if-redir        loop    10000    12104 KB   20000    18724 KB  grew    6620 KB (677 B a turn)  [if true; then :; fi >/dev/null]
+shape-rss: FAIL compound-while-redir     loop    10000    11704 KB   20000    18360 KB  grew    6656 KB (681 B a turn)  [while false; do :; done >/dev/null]
+shape-rss: FAIL 3: compound-brace-redir, compound-if-redir, compound-while-redir (bound 100 B a turn + 1 MiB over N turns)

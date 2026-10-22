@@ -45,6 +45,9 @@ PRELUDE = "f() { :; }\ng() { local v; v=$1; return 0; }\n"
 # (its bound scales with it); every other row takes -n
 SHAPES = [
     ("baseline", "loop", ":"),
+    ("compound-brace-redir", "loop", "{ true; } >/dev/null"),
+    ("compound-if-redir", "loop", "if true; then :; fi >/dev/null"),
+    ("compound-while-redir", "loop", "while false; do :; done >/dev/null"),
     # sh24: jobs has no loop counter in this script; its own list must
     # not allocate a fresh header per call. A stricter per-row bound.
     ("jobs-loop", "jobs", "jobs", 100000, 16),
