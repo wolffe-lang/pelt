@@ -1426,7 +1426,7 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
     if jobs_live(sh) {
         let _p = jc_poll(mut sh)
     }
-    var pick = List[int]()
+    (mut sh.jobs_pick).clear()
     var st = 0
     if i >= args.len {
         var n = 0
@@ -1436,7 +1436,7 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
                 break
             }
             if j != sh.jc_build {
-                (mut pick).push(j)
+                (mut sh.jobs_pick).push(j)
             }
             n += 1
         }
@@ -1447,12 +1447,15 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
                 diag(mut sh, "jobs: {job_word(args[i], j)}")
                 st = 2
             } else {
-                (mut pick).push(j)
+                (mut sh.jobs_pick).push(j)
             }
             i += 1
         }
     }
-    for j in pick {
+    var pi = 0
+    while pi < sh.jobs_pick.len {
+        let j = sh.jobs_pick[pi]
+        pi += 1
         if pids {
             emit(mut sh, "{jb_leader(sh, j)}\n")
         } else {
@@ -1460,7 +1463,10 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
         }
     }
     if !pids {
-        for j in pick {
+        pi = 0
+        while pi < sh.jobs_pick.len {
+            let j = sh.jobs_pick[pi]
+            pi += 1
             if slot_state(sh, j) == JB_FREE {
                 continue
             }

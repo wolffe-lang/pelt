@@ -186,6 +186,7 @@ struct Sh {
     /// before). Its group (0 for none) and its command text ("" with job
     /// control off) are in `jb_pgid` and `jb_text`, which grow only when
     /// job control writes them: past their ends a slot's are -1 and "".
+    jobs_pick: List[int],
     jb_a: List[int],
     jb_b: List[int],
     jb_pgid: List[int],
@@ -426,6 +427,7 @@ fn new_sh(name: str) -> Sh {
         jc_last: false,
         jc_hold: false,
         jc_node: -1,
+        jobs_pick: List[int](),
         jb_a: List[int](),
         jb_b: List[int](),
         jb_pgid: List[int](),
