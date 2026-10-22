@@ -335,3 +335,37 @@ The new labelled head and its runs/audit are in the PR body; the coordinator
 watches them and no final CI result is presumed here. No row override was
 implemented. All re-created regression builds/toolchains were pruned again;
 kasumi has no sh24 containers and retains1.9M of logs, probes and drivers.
+
+## macOS fixture startup follow-up
+
+Full run **39834713346** at `82a26c4` was red only on macOS native:
+`cmdsub/drain_chunks` exceeded the unchanged10s case budget. The run has no
+binary artifacts, and no installed pelt was found on nomad-1. No wolf build
+was performed there; the installed compiler's version was only read.
+
+The exact old fixture under `/bin/dash` and the harness's restricted
+`PATH=/usr/bin:/bin` took6.91–7.02s initially, then9.36–9.64s in the paired
+record. Apple's system Python3.9.6 took1.78–2.43s just to start/import hashlib;
+the fixture started it four times. Thus the reference alone nearly exhausted
+the10s budget, before pelt's large-variable handling. This is measured tool
+startup pressure, not a claim to have observed the missing Mac pelt binary.
+
+**072a1c9** changes only fixture plumbing: POSIX awk prepares the same two
+131,073-byte payload files; the first capture still runs a cat pipeline, the
+second still exits7; actual captured variables are written to files, and one
+Python launch hashes both. Both lengths, both SHA256 values, status7, exit,
+stderr-presence assertions, byte count and timeout are unchanged. No source,
+implementation, memory row or budget changed, and no case was skipped.
+
+New macOS dash runs take2.45–2.49s and produce the exact same153 stdout bytes;
+the entire cmdsub reference group is29/0 on macOS dash. Mac pelt validation
+remains CI-only. On kasumi, both pelt tiers pass the row1/0, group29/0 and
+full corpus995/0/28; re-recording the oracle changes neither `.out` nor `.meta`;
+oracle-check has0drift. `macfixture.status` has nine zero exits.
+
+Evidence: `mac-fixture-startups.txt`, `mac-fixture-reference.txt`,
+`mac-cmdsub-reference.txt`, `logs/macfixture-*.log`,
+`ci/macos-timeout-39834713346.log`, `macfixture-verify.sh`.
+Builds were pruned again: no sh24 containers, only2.0M evidence/drivers on
+kasumi. New final-head CI/audit metadata is in the PR body; no CI wait or
+presumed macOS pelt green is substituted for the orchestrator's watch.
