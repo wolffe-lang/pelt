@@ -136,9 +136,16 @@ Everything here is under `notes/sh24-evidence/`.
   (`trap_bad_option`, `write_full`, `jobs/write_failure`,
   `signal/simple_end_redirected`) and `jc_wait_frees`. Counts 990/4/28 and
   sessions 289/1/2. `ci/plant-a-39798914029.log` is the full log.
-- Updated-metric plant A: `39803107364`, `0dcc58a`, pending.
-- Packed-field plant B: `39803216452`, `ee1eab9`, pending; status writes
-  deliberately erase packed group/text bits. These branches never merge.
+- Updated-metric plant A: `39803107364`, `0dcc58a`, red on both tiers:
+  monitor RssAnon 360 native / 352 release B/job; all five new memory rows,
+  four corpus rows and the sourced session fail as in the first plant.
+  `ci/plant-a-anon-39803107364.log` is the full log.
+- Packed-field plant B: `39803216452`, `ee1eab9`: status writes deliberately
+  erase packed group/text bits. Checked `wolf test` fails, and both compiled
+  self-checks report 29 failures (nine field-overlap and twenty text/group
+  overlap checks). The three existing `jobsctl/c_monitor_*` notice cases
+  also fail, both tiers (991/3/28); all 290 sessions pass. Full log:
+  `ci/plant-b-39803216452.log`. These branches never merge.
 
 Commits:
 - `ad79302`, `464046b`, `3ece371`: pooled jobs queries/listing/error propagation.
@@ -157,7 +164,7 @@ Commits:
 - [ ] Final corpus 994/0/28 and sessions 290/0/2 on both tiers, bare/four-core.
 - [ ] Three full shape passes on both tiers, bare/four-core; comparison table.
 - [x] Low-load retake of the existing timing row, no assertion/timeout changes.
-- [ ] Updated-metric and packed-field CI plants, final evidence recorded.
+- [x] Updated-metric and packed-field CI plants, final evidence recorded.
 - [ ] Final tier-pr verdict, final-head full-matrix label, lane audit, pruning.
 
 On merge, close pelt#45, #46, #53, #54, #55. Comment #28 (two fixes, census
@@ -166,10 +173,18 @@ Leave pelt#56's job-text ruling untouched. No issue was filed or closed.
 
 ## State at the pause (2026-10-22)
 
-The source is frozen at 428e4ff. New gauntlet `logs/final.status` has both native
-corpus runs green 994/0/28; sessions and remaining gates are running. The
-interleaved table runs independently, with uptime; the low-load retake prints
-once a minute while waiting below 16. Paths on kasumi are
+The source is frozen at 428e4ff. Both native corpus runs are 994/0/28 and both
+native session runs 290/0/2. The interleaved comparison table and all four
+low-load timing retakes are complete. Remaining full shape passes now use
+accepted bounded parallel scheduling: at most two RSS workers, inherited
+CPU affinity 8–11 for both bare and explicitly-taskset legs; release sessions
+run independently. `finish.sh` records uptime, affinity and command in each
+leg's `.status` file. The earlier sequential comparison table above is not
+from that schedule. Full-shape rows marked **P** below will name parallel
+results. The interrupted first sequential shape run and neighbor leg remain
+as `sequential-interrupted-*` / `neighbors-2-four-interrupted.log`; no partial
+run is counted as a pass. `logs/final.status` joins the completed native
+checks with the remaining frozen-binary legs. Paths on kasumi are
 `/home/mfwolffe/lanes/sh24/head` (frozen code), `pelt` (staging), `base`
 (trunk binaries), `first-head` (failed first layout), `logs` and `probe`.
 All pids are recorded under that lane directory. Draft PR #58 is not ready to
