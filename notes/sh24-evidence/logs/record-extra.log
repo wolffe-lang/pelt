@@ -1,0 +1,121 @@
+recorded jobs/background: exit 0
+recorded jobs/bang: exit 0
+recorded jobs/c_async_andor: exit 0
+recorded jobs/c_async_status: exit 0
+recorded jobs/c_async_stdin: exit 0 (bash differs)
+recorded jobs/c_async_subshell: exit 0
+recorded jobs/c_exit_no_wait: exit 0
+recorded jobs/output: exit 0
+recorded jobs/stdin_null: exit 0 (bash differs)
+recorded jobs/subshell_jobs: exit 0 (bash differs)
+recorded jobs/two: exit 0
+recorded jobs/wait_all: exit 0
+recorded jobs/wait_program_status: exit 0
+recorded jobs/wait_subshell_status: exit 0
+recorded jobs/wait_unknown: exit 0
+recorded jobs/write_failure: exit 0 (bash differs)
+recorded jobsctl/c_fg_bg_no_monitor: exit 0
+recorded jobsctl/c_jobs_script: exit 0 (bash differs)
+recorded jobsctl/c_monitor_list_notices: exit 0 (bash differs)
+recorded jobsctl/c_monitor_loop_builtin: exit 0 (bash differs)
+recorded jobsctl/c_monitor_loop_notices: exit 0 (bash differs)
+recorded jobsctl/c_monitor_script_pgid: exit 0
+recorded jobsctl/c_no_monitor_pgid: exit 0
+recorded jobsctl/folded_single_status: exit 0 (bash differs)
+recorded signal/background_ignores_int: exit 0
+recorded signal/bang_is_a_process: exit 0
+recorded signal/bang_of_a_list: exit 0
+recorded signal/c_async_ignores_quit: exit 0
+recorded signal/c_exit_trap_env: exit 4
+recorded signal/c_exit_trap_subshell: exit 0
+recorded signal/c_ignored_on_entry: exit 0
+recorded signal/c_inherited_ignore: exit 0
+recorded signal/c_s_trap_by_number: exit 0
+recorded signal/c_subshell_trap_reset: exit 0 (bash differs)
+recorded signal/c_trap_abrt_number: exit 0
+recorded signal/c_trap_alrm: exit 0
+recorded signal/c_trap_cmdsub_shows_parent: exit 0 (bash differs)
+recorded signal/c_trap_condition_names: exit 0 (bash differs)
+recorded signal/c_trap_dashdash: exit 0 (bash differs)
+recorded signal/c_trap_ignore_pipe: exit 0
+recorded signal/c_trap_in_action: exit 0
+recorded signal/c_trap_invalid: exit 0
+recorded signal/c_trap_p: exit 0 (bash differs)
+recorded signal/c_trap_pipe: exit 0
+recorded signal/c_trap_print_reinput: exit 0 (bash differs)
+recorded signal/c_trap_reset_forms: exit 0 (bash differs)
+recorded signal/c_trap_usr1_self: exit 0
+recorded signal/c_trap_winch_cont: exit 0
+recorded signal/c_wait_interrupted_term: exit 0
+recorded signal/child_bg_unwaited: exit 0
+recorded signal/child_bg_wait: exit 0
+recorded signal/child_hup: exit 0
+recorded signal/child_in_cmdsub: exit 0
+recorded signal/child_in_function: exit 0
+recorded signal/child_in_pipeline: exit 0
+recorded signal/child_in_subshell: exit 0
+recorded signal/child_int: exit 0
+recorded signal/child_kill: exit 0
+recorded signal/child_last_in_pipeline: exit 0
+recorded signal/child_term: exit 0
+recorded signal/death_runs_no_exit_trap: exit 143 (bash differs)
+recorded signal/ignored_at_start: exit 0 (bash differs)
+recorded signal/simple_end_redirected: exit 0 (bash differs)
+recorded signal/subshell_end_devnull: exit 0
+recorded signal/subshell_end_said_outside: exit 0 (bash differs)
+recorded signal/subshell_signal: exit 0
+recorded signal/trap_action_runs_program: exit 0
+recorded signal/trap_action_sets_variable: exit 0
+recorded signal/trap_action_status_dropped: exit 0
+recorded signal/trap_after_redirected_subshell: exit 0
+recorded signal/trap_bad_condition: exit 0
+recorded signal/trap_break_keeps_pending: exit 0 (bash differs)
+recorded signal/trap_breaks_loop: exit 0
+recorded signal/trap_caught_default_in_child: exit 0
+recorded signal/trap_chld: exit 0
+recorded signal/trap_cmdsub_lone_exit: exit 0 (bash differs)
+recorded signal/trap_deferred_to_foreground_end: exit 0
+recorded signal/trap_eval: exit 0
+recorded signal/trap_every: exit 0
+recorded signal/trap_exec_resets: exit 0
+recorded signal/trap_exit_in_action: exit 3
+recorded signal/trap_exit_no_operand: exit 6
+recorded signal/trap_exit_runs_exit_trap: exit 5
+recorded signal/trap_hup: exit 0
+recorded signal/trap_ignore: exit 0
+recorded signal/trap_ignore_chld: exit 0
+recorded signal/trap_ignore_every: exit 0
+recorded signal/trap_ignore_inherited: exit 0
+recorded signal/trap_ignore_int: exit 0
+recorded signal/trap_ignore_pipe_fifo: exit 0
+recorded signal/trap_ignore_usr1: exit 0
+recorded signal/trap_in_cmdsub: exit 0
+recorded signal/trap_in_function: exit 0
+recorded signal/trap_in_loop: exit 0
+recorded signal/trap_in_subshell: exit 0
+recorded signal/trap_int: exit 0
+recorded signal/trap_names: exit 0 (bash differs)
+recorded signal/trap_nested: exit 0
+recorded signal/trap_number: exit 0
+recorded signal/trap_numbers_common: exit 0
+recorded signal/trap_one_operand: exit 0 (bash differs)
+recorded signal/trap_pending_order: exit 0
+recorded signal/trap_print: exit 0
+recorded signal/trap_print_order: exit 0
+recorded signal/trap_quit: exit 0
+recorded signal/trap_replaced: exit 0
+recorded signal/trap_reset: exit 143
+recorded signal/trap_reset_after_ignore: exit 129
+recorded signal/trap_reset_number: exit 143
+recorded signal/trap_send_only: exit 0 (bash differs)
+recorded signal/trap_status_kept: exit 0
+recorded signal/trap_subshell_ends_restores: exit 0
+recorded signal/trap_subshell_reset: exit 0 (bash differs)
+recorded signal/trap_term: exit 0
+recorded signal/trap_twice_same: exit 0
+recorded signal/trap_two: exit 0
+recorded signal/trap_usr1: exit 0
+recorded signal/trap_usr2: exit 0
+recorded signal/wait_interrupted: exit 0
+recorded signal/wait_twice: exit 0 (bash differs)
+recorded signal/wait_two_jobs: exit 0

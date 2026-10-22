@@ -1,0 +1,4 @@
+ 15:11:12 up 5 days, 23:28,  0 users,  load average: 20.46, 19.98, 24.53
+shape-rss: ok   jobs-set-m               monitor   3000     6792 KB    6000     7068 KB  grew     276 KB (94 B a turn)  [env true & wait $!]
+shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+target/native/pelt ['VmHWM: 6944\nRssAnon: 924\nRssFile: 6020', 'VmHWM: 7528\nRssAnon: 1400\nRssFile: 6128']

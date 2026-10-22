@@ -1,0 +1,5 @@
+shape-rss: FAIL jobs-loop                jobs   100000     3520 KB  200000     6308 KB  grew    2788 KB (28 B a turn)  [jobs]
+shape-rss: ok   compound-brace-redir     loop    10000     5484 KB   20000     6332 KB  grew     848 KB (86 B a turn)  [{ true; } >/dev/null]
+shape-rss: ok   compound-if-redir        loop    10000     5920 KB   20000     6120 KB  grew     200 KB (20 B a turn)  [if true; then :; fi >/dev/null]
+shape-rss: ok   compound-while-redir     loop    10000     5796 KB   20000     6172 KB  grew     376 KB (38 B a turn)  [while false; do :; done >/dev/null]
+shape-rss: FAIL 1: jobs-loop (bound 100 B a turn + 1 MiB over N turns)

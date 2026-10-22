@@ -1,0 +1,15 @@
+ 15:06:23 up 5 days, 23:23,  0 users,  load average: 19.75, 21.68, 26.68
+shape-rss: ok   jobs-set-m               monitor   3000     6984 KB    6000     6896 KB  grew     -88 KB (-31 B a turn)  [env true & wait $!]
+shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+session: pelt = /home/mfwolffe/lanes/sh24/pelt/target/native/pelt
+ok   c_jc_bg_running
+ok   c_jc_done_message
+ok   c_jc_jobs_states
+ok   jc_wait_frees
+session: pass 4  fail 0  pending 0 (0)
+ok   signal/wait_two_jobs
+difftest: area        pass  fail  pending (of which pass)
+difftest: jobs          16     0     0 (0)
+difftest: jobsctl        8     0     0 (0)
+difftest: signal        96     0     1 (0)
+difftest: total        120     0     1 (0)

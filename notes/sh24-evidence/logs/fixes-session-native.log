@@ -1,0 +1,3 @@
+session: pelt = /home/mfwolffe/lanes/sh24/pelt/target/native/pelt
+ok   jc_wait_frees
+session: pass 1  fail 0  pending 0 (0)

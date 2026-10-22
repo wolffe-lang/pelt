@@ -1,0 +1,19 @@
+ 14:56:25 up 5 days, 23:13,  0 users,  load average: 31.17, 33.77, 32.70
+heapprof: /home/mfwolffe/lanes/sh24/base/target/native/pelt /home/mfwolffe/lanes/sh24/probe/compound.sh: 104 chunk grabs after the first 0 (~6656 KiB)
+-- innermost wolf frame
+   103  99.0%  [list_push]
+     1   1.0%  [env_args]
+-- innermost four frames
+   103  99.0%  [list_push] < redirs_of < run < run_list
+     1   1.0%  [env_args]
+-- on the stack at all
+   103  99.0%  run_node
+   103  99.0%  run_list
+   103  99.0%  run_loop
+   103  99.0%  redirs_of
+   103  99.0%  eval_top
+   103  99.0%  run_main
+   103  99.0%  run
+   103  99.0%  [list_push]
+   103  99.0%  run_source
+     1   1.0%  [env_args]

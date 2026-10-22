@@ -1,0 +1,9 @@
+pass=2 mode=bare binary=/usr/bin/dash  15:00:25 up 5 days, 23:17,  0 users,  load average: 17.92, 26.18, 29.94
+shape-rss: ok   baseline                 loop    10000     2504 KB   20000     2488 KB  grew     -16 KB (-2 B a turn)  [:]
+shape-rss: ok   jobs-set-m               monitor   3000     2648 KB    6000     2824 KB  grew     176 KB (60 B a turn)  [env true & wait $!]
+shape-rss: ok   compound-brace-redir     loop    10000     2416 KB   20000     2508 KB  grew      92 KB (9 B a turn)  [{ true; } >/dev/null]
+shape-rss: ok   compound-if-redir        loop    10000     2488 KB   20000     2488 KB  grew       0 KB (0 B a turn)  [if true; then :; fi >/dev/null]
+shape-rss: ok   compound-while-redir     loop    10000     2420 KB   20000     2508 KB  grew      88 KB (9 B a turn)  [while false; do :; done >/dev/null]
+shape-rss: ok   jobs-loop                jobs   100000        4 KB  200000       20 KB  grew      16 KB (0 B a turn)  [jobs]
+shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)
+exit=0

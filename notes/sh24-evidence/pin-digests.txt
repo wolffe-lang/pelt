@@ -1,0 +1,6 @@
+pass=1
+wolf-0.2.34-x86_64-unknown-linux-gnu.tar.gz	sha256:88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821
+lupin-0.1.55-x86_64-unknown-linux-gnu.tar.gz	sha256:1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38
+pass=2
+wolf-0.2.34-x86_64-unknown-linux-gnu.tar.gz	sha256:88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821
+lupin-0.1.55-x86_64-unknown-linux-gnu.tar.gz	sha256:1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38

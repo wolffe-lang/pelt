@@ -1,0 +1,2 @@
+pass=2 mode=four binary=/usr/bin/dash  15:02:54 up 5 days, 23:20,  0 users,  load average: 21.22, 24.29, 28.64
+shape-rss: ok   baseline                 loop    10000     2424 KB   20000     2520 KB  grew      96 KB (9 B a turn)  [:]

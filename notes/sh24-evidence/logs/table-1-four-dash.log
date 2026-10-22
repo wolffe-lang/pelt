@@ -1,0 +1,9 @@
+pass=1 mode=four binary=/usr/bin/dash  15:20:18 up 5 days, 23:37,  0 users,  load average: 23.39, 28.35, 27.10
+shape-rss: ok   baseline                 loop    10000     2532 KB   20000     2520 KB  grew     -12 KB (-2 B a turn)  [:] metric=RSS bound=100B+1024KiB
+shape-rss: ok   jobs-set-m               monitor   3000      396 KB    6000      660 KB  grew     264 KB (90 B a turn)  [env true & wait $!] metric=RssAnon bound=160B+64KiB
+shape-rss: ok   compound-brace-redir     loop    10000     2400 KB   20000     2544 KB  grew     144 KB (14 B a turn)  [{ true; } >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   compound-if-redir        loop    10000     2448 KB   20000     2496 KB  grew      48 KB (4 B a turn)  [if true; then :; fi >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   compound-while-redir     loop    10000     2520 KB   20000     2488 KB  grew     -32 KB (-4 B a turn)  [while false; do :; done >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   jobs-loop                jobs   100000      104 KB  200000       32 KB  grew     -72 KB (-1 B a turn)  [jobs] metric=RSS bound=16B+1024KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)
+exit=0

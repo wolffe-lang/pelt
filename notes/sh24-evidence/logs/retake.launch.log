@@ -1,0 +1,46 @@
+2026-10-22T15:16:46+00:00 waiting for load below16:  15:16:46 up 5 days, 23:34,  0 users,  load average: 46.03, 29.73, 26.84
+2026-10-22T15:17:46+00:00 waiting for load below16:  15:17:46 up 5 days, 23:35,  0 users,  load average: 43.63, 32.46, 27.98
+2026-10-22T15:18:46+00:00 waiting for load below16:  15:18:46 up 5 days, 23:36,  0 users,  load average: 29.11, 30.32, 27.53
+2026-10-22T15:19:46+00:00 waiting for load below16:  15:19:46 up 5 days, 23:37,  0 users,  load average: 26.22, 29.33, 27.36
+2026-10-22T15:20:46+00:00 waiting for load below16:  15:20:46 up 5 days, 23:38,  0 users,  load average: 22.24, 27.61, 26.89
+2026-10-22T15:21:46+00:00 waiting for load below16:  15:21:46 up 5 days, 23:39,  0 users,  load average: 19.12, 25.79, 26.31
+2026-10-22T15:22:46+00:00 waiting for load below16:  15:22:46 up 5 days, 23:40,  0 users,  load average: 20.16, 24.74, 25.91
+2026-10-22T15:23:46+00:00 waiting for load below16:  15:23:46 up 5 days, 23:41,  0 users,  load average: 23.34, 24.74, 25.83
+2026-10-22T15:24:46+00:00 waiting for load below16:  15:24:46 up 5 days, 23:42,  0 users,  load average: 20.72, 23.76, 25.43
+2026-10-22T15:25:46+00:00 waiting for load below16:  15:25:46 up 5 days, 23:43,  0 users,  load average: 17.26, 22.21, 24.79
+2026-10-22T15:26:46+00:00 retake tier=native mode=bare  15:26:46 up 5 days, 23:44,  0 users,  load average: 13.88, 20.44, 24.02
+ 15:26:46 up 5 days, 23:44,  0 users,  load average: 13.88, 20.44, 24.02
+difftest: pelt = /home/mfwolffe/lanes/sh24/head/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   builtin/c_times_real
+difftest: area        pass  fail  pending (of which pass)
+difftest: builtin        1     0     0 (0)
+difftest: total          1     0     0 (0)
+retake tier=native mode=bare exit=0
+2026-10-22T15:26:52+00:00 retake tier=native mode=four  15:26:52 up 5 days, 23:44,  0 users,  load average: 14.85, 20.53, 24.03
+ 15:26:52 up 5 days, 23:44,  0 users,  load average: 14.85, 20.53, 24.03
+difftest: pelt = /home/mfwolffe/lanes/sh24/head/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   builtin/c_times_real
+difftest: area        pass  fail  pending (of which pass)
+difftest: builtin        1     0     0 (0)
+difftest: total          1     0     0 (0)
+retake tier=native mode=four exit=0
+2026-10-22T15:26:58+00:00 retake tier=release mode=bare  15:26:58 up 5 days, 23:44,  0 users,  load average: 14.94, 20.46, 23.99
+ 15:26:58 up 5 days, 23:44,  0 users,  load average: 14.94, 20.46, 23.99
+difftest: pelt = /home/mfwolffe/lanes/sh24/head/target/release/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   builtin/c_times_real
+difftest: area        pass  fail  pending (of which pass)
+difftest: builtin        1     0     0 (0)
+difftest: total          1     0     0 (0)
+retake tier=release mode=bare exit=0
+2026-10-22T15:27:00+00:00 retake tier=release mode=four  15:27:00 up 5 days, 23:44,  0 users,  load average: 14.94, 20.46, 23.99
+ 15:27:00 up 5 days, 23:44,  0 users,  load average: 14.94, 20.46, 23.99
+difftest: pelt = /home/mfwolffe/lanes/sh24/head/target/release/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   builtin/c_times_real
+difftest: area        pass  fail  pending (of which pass)
+difftest: builtin        1     0     0 (0)
+difftest: total          1     0     0 (0)
+retake tier=release mode=four exit=0

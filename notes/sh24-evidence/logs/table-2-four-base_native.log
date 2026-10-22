@@ -1,0 +1,9 @@
+pass=2 mode=four binary=/home/mfwolffe/lanes/sh24/base/target/native/pelt  15:21:15 up 5 days, 23:38,  0 users,  load average: 21.01, 26.89, 26.67
+shape-rss: ok   baseline                 loop    10000     5568 KB   20000     5756 KB  grew     188 KB (19 B a turn)  [:] metric=RSS bound=100B+1024KiB
+shape-rss: FAIL jobs-set-m               monitor   3000     1404 KB    6000     2456 KB  grew    1052 KB (359 B a turn)  [env true & wait $!] metric=RssAnon bound=160B+64KiB
+shape-rss: FAIL compound-brace-redir     loop    10000    11532 KB   20000    18512 KB  grew    6980 KB (714 B a turn)  [{ true; } >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: FAIL compound-if-redir        loop    10000    12040 KB   20000    18472 KB  grew    6432 KB (658 B a turn)  [if true; then :; fi >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: FAIL compound-while-redir     loop    10000    11760 KB   20000    18236 KB  grew    6476 KB (663 B a turn)  [while false; do :; done >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: FAIL jobs-loop                jobs   100000     8264 KB  200000    15648 KB  grew    7384 KB (75 B a turn)  [jobs] metric=RSS bound=16B+1024KiB
+shape-rss: FAIL 5: jobs-set-m, compound-brace-redir, compound-if-redir, compound-while-redir, jobs-loop (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)
+exit=1

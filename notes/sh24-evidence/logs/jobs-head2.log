@@ -1,0 +1,2 @@
+shape-rss: ok   jobs-loop                jobs   100000      -12 KB  200000      292 KB  grew     304 KB (3 B a turn)  [jobs]
+shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)

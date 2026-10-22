@@ -1,0 +1,7 @@
+ 15:26:46 up 5 days, 23:44,  0 users,  load average: 13.88, 20.44, 24.02
+difftest: pelt = /home/mfwolffe/lanes/sh24/head/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   builtin/c_times_real
+difftest: area        pass  fail  pending (of which pass)
+difftest: builtin        1     0     0 (0)
+difftest: total          1     0     0 (0)

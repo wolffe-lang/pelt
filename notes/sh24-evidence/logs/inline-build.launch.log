@@ -1,0 +1,5 @@
+ 15:09:57 up 5 days, 23:27,  0 users,  load average: 17.89, 19.66, 24.83
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+build: target/native/pelt
+build: target/release/pelt

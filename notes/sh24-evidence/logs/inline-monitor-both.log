@@ -1,0 +1,5 @@
+ 15:13:56 up 5 days, 23:31,  0 users,  load average: 24.55, 21.82, 24.48
+shape-rss: ok   jobs-set-m               monitor   3000      908 KB    6000     1376 KB  grew     468 KB (159 B a turn)  [env true & wait $!] metric=RssAnon bound=160B+64KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)
+shape-rss: ok   jobs-set-m               monitor   3000      776 KB    6000     1256 KB  grew     480 KB (163 B a turn)  [env true & wait $!] metric=RssAnon bound=160B+64KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)

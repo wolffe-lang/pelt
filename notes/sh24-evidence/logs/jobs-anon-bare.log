@@ -1,0 +1,15 @@
+/home/mfwolffe/lanes/sh24/base/target/native/pelt pass=1 RssAnon_KB={'true': [420, 612], 'jobs': [1184, 2088]} own=72 B/call
+/home/mfwolffe/lanes/sh24/base/target/native/pelt pass=2 RssAnon_KB={'true': [420, 608], 'jobs': [1188, 2088]} own=72 B/call
+/home/mfwolffe/lanes/sh24/base/target/native/pelt pass=3 RssAnon_KB={'true': [416, 604], 'jobs': [1184, 2088]} own=73 B/call
+/home/mfwolffe/lanes/sh24/head/target/native/pelt pass=1 RssAnon_KB={'true': [436, 620], 'jobs': [432, 620]} own=0 B/call
+/home/mfwolffe/lanes/sh24/head/target/native/pelt pass=2 RssAnon_KB={'true': [420, 620], 'jobs': [424, 612]} own=-2 B/call
+/home/mfwolffe/lanes/sh24/head/target/native/pelt pass=3 RssAnon_KB={'true': [440, 624], 'jobs': [432, 612]} own=-1 B/call
+/home/mfwolffe/lanes/sh24/base/target/release/pelt pass=1 RssAnon_KB={'true': [324, 508], 'jobs': [1096, 1996]} own=73 B/call
+/home/mfwolffe/lanes/sh24/base/target/release/pelt pass=2 RssAnon_KB={'true': [324, 508], 'jobs': [1088, 1992]} own=73 B/call
+/home/mfwolffe/lanes/sh24/base/target/release/pelt pass=3 RssAnon_KB={'true': [328, 512], 'jobs': [1092, 1996]} own=73 B/call
+/home/mfwolffe/lanes/sh24/head/target/release/pelt pass=1 RssAnon_KB={'true': [328, 516], 'jobs': [328, 512]} own=-1 B/call
+/home/mfwolffe/lanes/sh24/head/target/release/pelt pass=2 RssAnon_KB={'true': [328, 516], 'jobs': [328, 516]} own=0 B/call
+/home/mfwolffe/lanes/sh24/head/target/release/pelt pass=3 RssAnon_KB={'true': [328, 520], 'jobs': [328, 516]} own=-1 B/call
+/usr/bin/dash pass=1 RssAnon_KB={'true': [176, 176], 'jobs': [172, 176]} own=0 B/call
+/usr/bin/dash pass=2 RssAnon_KB={'true': [176, 180], 'jobs': [176, 176]} own=-1 B/call
+/usr/bin/dash pass=3 RssAnon_KB={'true': [176, 176], 'jobs': [176, 180]} own=0 B/call

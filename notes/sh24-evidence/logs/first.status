@@ -1,0 +1,21 @@
+head=2555b81653b0468df24addab0cf54907f12bcec9
+cpus=8-11 ulimit=0
+2026-10-22T14:50:34+00:00 start fmt  14:50:34 up 5 days, 23:08,  0 users,  load average: 31.21, 32.27, 31.48
+fmt=0
+2026-10-22T14:50:35+00:00 start build  14:50:35 up 5 days, 23:08,  0 users,  load average: 31.21, 32.27, 31.48
+build=0
+2026-10-22T14:52:04+00:00 start test  14:52:04 up 5 days, 23:09,  0 users,  load average: 36.56, 34.59, 32.44
+test=0
+2026-10-22T14:52:06+00:00 start clause  14:52:06 up 5 days, 23:09,  0 users,  load average: 35.48, 34.40, 32.39
+clause=0
+2026-10-22T14:52:07+00:00 start width  14:52:07 up 5 days, 23:09,  0 users,  load average: 35.48, 34.40, 32.39
+width=0
+2385a949bd98ca1ae7f05fa8619a256b3ccc19b035bb71ca7dc1a248a826a9df  target/native/pelt
+2e4f45206c5d00537ba7b1ff647f7cf067cac6c03aabae291f3714cc3f2fd65c  target/release/pelt
+2026-10-22T14:52:09+00:00 start diff-native  14:52:09 up 5 days, 23:09,  0 users,  load average: 35.48, 34.40, 32.39
+diff-native=1
+2026-10-22T14:53:02+00:00 start diff-native-taskset  14:53:02 up 5 days, 23:10,  0 users,  load average: 33.81, 34.09, 32.40
+diff-native-taskset=1
+2026-10-22T14:53:58+00:00 start sess-native  14:53:58 up 5 days, 23:11,  0 users,  load average: 36.14, 34.78, 32.73
+sess-native=1
+2026-10-22T15:01:36+00:00 start sess-native-taskset  15:01:36 up 5 days, 23:19,  0 users,  load average: 18.78, 24.50, 29.05

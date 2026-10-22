@@ -1,0 +1,6 @@
+shape-rss: ok   jobs-set-m               monitor   3000     7092 KB    6000     7444 KB  grew     352 KB (120 B a turn)  [env true & wait $!]
+shape-rss: ok   compound-brace-redir     loop    10000     5708 KB   20000     6068 KB  grew     360 KB (36 B a turn)  [{ true; } >/dev/null]
+shape-rss: ok   compound-if-redir        loop    10000     5708 KB   20000     6536 KB  grew     828 KB (84 B a turn)  [if true; then :; fi >/dev/null]
+shape-rss: ok   compound-while-redir     loop    10000     5764 KB   20000     6188 KB  grew     424 KB (43 B a turn)  [while false; do :; done >/dev/null]
+shape-rss: ok   jobs-loop                jobs   100000      388 KB  200000      524 KB  grew     136 KB (1 B a turn)  [jobs]
+shape-rss: ok (bound 100 B a turn + 1 MiB over N turns)

@@ -1,0 +1,13 @@
+warning[W0313]: this `pub` item has no doc comment
+   --> ./sh/selftest.lu:705:1
+    |
+705 | pub fn self_test() -> List[str] {
+    | ^^^ exported, but undocumented
+    |
+    = note: an exported item carries a `///` contract: what it computes, what each row tag means,
+      when it traps. If it is not worth documenting, it is rarely worth exporting.
+
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+target/native/pelt ['VmHWM: 7172\nRssAnon: 948\nRssFile: 6224', 'VmHWM: 7552\nRssAnon: 1480\nRssFile: 6072']
+target/release/pelt ['VmHWM: 4116\nRssAnon: 816\nRssFile: 3300', 'VmHWM: 4692\nRssAnon: 1356\nRssFile: 3336']
