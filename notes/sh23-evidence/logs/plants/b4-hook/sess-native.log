@@ -1,0 +1,81 @@
+session: pelt = /home/mfwolffe/lanes/sh23/plant-wt/target/native/pelt
+ok   autocd_bare
+ok   autocd_hook
+ok   autocd_invoked
+ok   autocd_list
+ok   autocd_not_dir
+ok   autocd_off
+ok   autocd_slash
+FAIL autocd_status
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir -m 000 locked; mkdir sub"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "./locked; echo \"locked st=$? ${PWD#\"$W\"}\""
+       pelt out "locked st=2 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 4 "locked 2>err; echo \"redir st=$? ${PWD#\"$W\"} $([ -s err ] && echo said)\""
+       pelt out "redir st=2  said\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "chmod 755 locked"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "command ./sub; echo \"command st=$? ${PWD#\"$W\"}\""
+     ! pelt out "command st=0 /sub\n"
+       dash out "command st=126 \n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 7 "(sub) 2>/dev/null; echo \"subshell ${PWD#\"$W\"}\""
+     ! pelt out "subshell /sub\n"
+       dash out "subshell \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 8 "sub 2>/dev/null | cat; echo \"pipe ${PWD#\"$W\"}\""
+     ! pelt out "pipe /sub\n"
+       dash out "pipe \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 9 "FOO=bar sub; echo \"assign st=$? ${FOO-unset} ${PWD#\"$W\"}\""
+     ! pelt out "assign st=127 unset /sub\n"
+       dash out "assign st=0 unset /sub\n"
+     ! pelt err yes
+       dash err no
+       pelt prompt "$ "
+       pelt step 10 "cd \"$W\"; sub >out; echo \"out st=$? ${PWD#\"$W\"} [$(cat \"$W/out\")]\""
+       pelt out "out st=0 /sub []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 11 "cd \"$W\"; cd() { echo \"fn cd [$#] $*\"; command cd \"$@\"; }"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 12 "sub; echo \"fn st=$? ${PWD#\"$W\"}\""
+       pelt out "fn cd [2] -- sub\nfn st=0 /sub\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 13 "unset -f cd"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 14 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 14
+ok   autocd_wins
+ok   autocd_words
+ok   cnf_127
+ok   cnf_assign
+ok   cnf_cd
+ok   cnf_contexts
+ok   cnf_redirect
+ok   cnf_rerun
+ok   cnf_skipped
+ok   cnf_status
+ok   cnf_words
+session: pass 18  fail 1  pending 0 (0)

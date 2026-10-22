@@ -1,0 +1,117 @@
+session: pelt = /home/mfwolffe/lanes/sh23/plant-wt/target/native/pelt
+ok   autocd_bare
+ok   autocd_hook
+FAIL autocd_invoked
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "mkdir sub"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "sub; echo \"st=$? ${PWD##*/}\""
+       pelt out "st=0 sub\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "set +o | grep autocd"
+       pelt out "set -o autocd\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "cd ..; set +o autocd"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "sub; echo \"off st=$? ${PWD##*/}\""
+     ! pelt out "off st=0 sub\n"
+       dash out "off st=127 w\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 6 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 6
+ok   autocd_list
+ok   autocd_not_dir
+FAIL autocd_off
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "mkdir -p d/e child \"my dir\""
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "d/e; echo \"slash st=$? ${PWD##*/}\""
+     ! pelt out "slash st=0 e\n"
+       dash out "slash st=126 w\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "\"$PWD/d/\"; echo \"abs st=$? ${PWD##*/}\""
+     ! pelt out "abs st=127 e\n"
+       dash out "abs st=126 w\n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 4 "child; echo \"bare st=$? ${PWD##*/}\""
+     ! pelt out "bare st=127 e\n"
+       dash out "bare st=127 w\n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 5 "..; echo \"dotdot st=$? ${PWD##*/}\""
+     ! pelt out "dotdot st=0 d\n"
+       dash out "dotdot st=127 w\n"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 6 "\"my dir\"; echo \"space st=$? ${PWD##*/}\""
+     ! pelt out "space st=127 d\n"
+       dash out "space st=127 w\n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 7 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 7
+ok   autocd_slash
+ok   autocd_status
+ok   autocd_wins
+ok   autocd_words
+ok   cnf_127
+ok   cnf_assign
+FAIL cnf_cd
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "mkdir there"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "command_not_found_handle() { cd -- \"$1\" || return 127; kept=$#; }"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "there a b"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "echo \"${PWD##*/} ${OLDPWD##*/} st=$? kept=$kept\""
+     ! pelt out "there w st=0 kept=\n"
+       dash out "there w st=0 kept=3\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "cd - >/dev/null"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "echo \"${PWD##*/}\""
+       pelt out "w\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "(there); echo \"${PWD##*/} st=$?\""
+       pelt out "w st=0\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 8 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 8
+ok   cnf_contexts
+ok   cnf_redirect
+ok   cnf_rerun
+ok   cnf_skipped
+ok   cnf_status
+ok   cnf_words
+session: pass 16  fail 3  pending 0 (0)

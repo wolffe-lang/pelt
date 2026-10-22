@@ -1,0 +1,52 @@
+session: pelt = /home/mfwolffe/lanes/sh23/plant-wt/target/native/pelt
+ok   autocd_bare
+ok   autocd_hook
+ok   autocd_invoked
+ok   autocd_list
+FAIL autocd_not_dir
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "set -o autocd"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; echo 'echo ran' > f"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "./f; echo \"file-slash st=$? ${PWD#\"$W\"}\""
+     ! pelt out "file-slash st=2 \n"
+       dash out "file-slash st=126 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 4 "f; echo \"file-bare st=$? ${PWD#\"$W\"}\""
+     ! pelt out "file-bare st=2 \n"
+       dash out "file-bare st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 5 "./nope/; echo \"nope-slash st=$? ${PWD#\"$W\"}\""
+       pelt out "nope-slash st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 6 "nope; echo \"nope-bare st=$? ${PWD#\"$W\"}\""
+       pelt out "nope-bare st=127 \n"
+       pelt err yes
+       pelt prompt "$ "
+       pelt step 7 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 7
+ok   autocd_off
+ok   autocd_slash
+ok   autocd_status
+ok   autocd_wins
+ok   autocd_words
+ok   cnf_127
+ok   cnf_assign
+ok   cnf_cd
+ok   cnf_contexts
+ok   cnf_redirect
+ok   cnf_rerun
+ok   cnf_skipped
+ok   cnf_status
+ok   cnf_words
+session: pass 18  fail 1  pending 0 (0)

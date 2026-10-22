@@ -1,0 +1,53 @@
+difftest: pelt = /home/mfwolffe/lanes/sh23/plant-wt/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   simple/assign_expansion
+ok   simple/assign_only
+ok   simple/assign_order_program
+ok   simple/assign_status
+ok   simple/autocd_off
+FAIL simple/autocd_script: stdout, exit 127 (oracle 0)
+     pelt stdout: b'slash st=0 e\nbare st=127 e\nabs st=127 e\n'
+     want stdout: b'slash st=126 w\nbare st=127 w\nabs st=126 w\nc st=126 w\nc bare st=127 w\n'
+     pelt stderr: b'pelt: ../s.sh: line 4: d: not found\npelt: ../s.sh: line 5: /home/mfwolffe/lanes/sh23/tmp/pelt-case.oaiv9xja/w/d/e/d/: not found\npelt: ../s.sh: line 6: ../sh: not found\npelt: ../s.sh: line 7: ../sh: not found\n'
+ok   simple/c_126_127
+ok   simple/c_arg0
+ok   simple/c_assign_current
+ok   simple/c_assign_error_exits
+ok   simple/c_assign_expansions
+ok   simple/c_assign_function
+ok   simple/c_assign_regular_builtin
+ok   simple/c_assign_special_persists
+ok   simple/c_assign_temp
+ok   simple/c_declaration_utility
+ok   simple/c_enoexec
+PEND-ok   simple/c_enoexec_binary (waits on enoexec)
+ok   simple/c_exit_mod_256
+ok   simple/c_name_after_empty
+ok   simple/c_not_declaration
+ok   simple/c_not_found_continues
+ok   simple/c_path_empty_component
+ok   simple/c_path_order
+ok   simple/c_path_rehash
+ok   simple/c_redirect_only
+ok   simple/c_search_order
+ok   simple/c_slash_direct
+PEND-fail simple/c_special_not_shadowed (waits on special-name-function)
+ok   simple/c_status_no_name
+ok   simple/child_stdin
+ok   simple/cnf_not_interactive
+ok   simple/command_name_from_var
+ok   simple/declaration_forms
+ok   simple/empty_command
+ok   simple/external
+ok   simple/external_args
+ok   simple/external_env
+ok   simple/not_found
+ok   simple/path_search
+ok   simple/persist_special
+ok   simple/readonly_assign
+ok   simple/script_no_shebang
+ok   simple/slash_not_found
+ok   simple/temp_builtin
+difftest: area        pass  fail  pending (of which pass)
+difftest: simple        42     1     2 (1)
+difftest: total         42     1     2 (1)

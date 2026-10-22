@@ -1,0 +1,21 @@
+session: pelt = /home/mfwolffe/lanes/sh23/plant-wt/target/native/pelt
+ok   autocd_bare
+ok   autocd_hook
+ok   autocd_invoked
+ok   autocd_list
+ok   autocd_not_dir
+ok   autocd_off
+ok   autocd_slash
+ok   autocd_status
+ok   autocd_wins
+ok   autocd_words
+ok   cnf_127
+ok   cnf_assign
+ok   cnf_cd
+ok   cnf_contexts
+ok   cnf_redirect
+ok   cnf_rerun
+ok   cnf_skipped
+ok   cnf_status
+ok   cnf_words
+session: pass 19  fail 0  pending 0 (0)
