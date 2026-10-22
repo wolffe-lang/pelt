@@ -1,0 +1,7 @@
+regress-base native [167, 124, 132, 139, 172, 144] median 141.5
+regress-head native [149, 151, 174, 157, 155, 188] median 156.0
+drain-fixed native [66, 112, 104, 73, 79, 110] median 91.5
+regress-base release [155, 181, 162, 169, 163, 144] median 162.5
+regress-head release [159, 126, 142, 169, 169, 135] median 150.5
+drain-fixed release [62, 88, 62, 103, 45, 64] median 63.0
+drain follow-up: paired six readings/tier; fixed six readings/tier; corpus995/0/28 x4; sessions290/0/2 x4; full52 shapes x2; checked and compiled units green

@@ -1,0 +1,28 @@
+heapprof: /home/mfwolffe/lanes/sh24/regress/head/target/native/pelt /home/mfwolffe/lanes/sh24/probe/drain-profile.sh: 21 chunk grabs after the first 0 (~1344 KiB)
+-- innermost wolf frame
+    19  90.5%  [str_repeat]
+     1   4.8%  [env_args]
+     1   4.8%  [fs_read_chunk]
+-- innermost four frames
+    19  90.5%  [str_repeat] < cap_end < run_cmdsub < assign_value
+     1   4.8%  [env_args]
+     1   4.8%  [fs_read_chunk] < drain < fork_shape < run_cmdsub
+-- on the stack at all
+    20  95.2%  eval_top
+    20  95.2%  run_loop
+    20  95.2%  run_assign_only
+    20  95.2%  run
+    20  95.2%  assign_value
+    20  95.2%  run_cmdsub
+    20  95.2%  run_slow
+    20  95.2%  run_main
+    20  95.2%  run_simple
+    20  95.2%  run_list
+    20  95.2%  run_node
+    20  95.2%  run_source
+    19  90.5%  cap_end
+    19  90.5%  [str_repeat]
+     1   4.8%  [env_args]
+     1   4.8%  [fs_read_chunk]
+     1   4.8%  fork_shape
+     1   4.8%  drain

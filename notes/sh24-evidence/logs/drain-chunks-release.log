@@ -1,0 +1,6 @@
+difftest: pelt = /home/mfwolffe/lanes/sh24/regress/head/target/release/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   subst/drain_chunks
+difftest: area        pass  fail  pending (of which pass)
+difftest: subst          1     0     0 (0)
+difftest: total          1     0     0 (0)

@@ -1,0 +1,32 @@
+2026-10-22T18:14:36+00:00 start shape-release  18:14:36 up 6 days,  2:32,  0 users,  load average: 5.76, 6.40, 8.14
+2026-10-22T18:14:36+00:00 start sess-native  18:14:36 up 6 days,  2:32,  0 users,  load average: 5.76, 6.40, 8.14
+2026-10-22T18:14:36+00:00 start shape-native  18:14:36 up 6 days,  2:32,  0 users,  load average: 5.76, 6.40, 8.14
+shape-release=0
+shape-native=0
+rss-native=0
+rss-release=0
+sess-native=0
+2026-10-22T18:22:04+00:00 start sess-native-taskset  18:22:04 up 6 days,  2:39,  0 users,  load average: 10.94, 12.13, 10.11
+sess-native-taskset=0
+2026-10-22T18:29:31+00:00 start exec-native  18:29:31 up 6 days,  2:47,  0 users,  load average: 3.58, 5.77, 7.77
+exec-native=0
+2026-10-22T18:29:32+00:00 start signal-native  18:29:32 up 6 days,  2:47,  0 users,  load average: 3.58, 5.77, 7.77
+signal-native=0
+2026-10-22T18:29:35+00:00 start sess-release  18:29:35 up 6 days,  2:47,  0 users,  load average: 3.61, 5.74, 7.75
+sess-release=0
+2026-10-22T18:37:01+00:00 start sess-release-taskset  18:37:01 up 6 days,  2:54,  0 users,  load average: 3.92, 4.12, 6.14
+sess-release-taskset=0
+2026-10-22T18:44:27+00:00 start exec-release  18:44:27 up 6 days,  3:02,  0 users,  load average: 4.23, 5.47, 6.17
+exec-release=0
+2026-10-22T18:44:28+00:00 start signal-release  18:44:28 up 6 days,  3:02,  0 users,  load average: 4.13, 5.43, 6.15
+signal-release=0
+2026-10-22T18:44:30+00:00 start fmt  18:44:30 up 6 days,  3:02,  0 users,  load average: 4.13, 5.43, 6.15
+fmt=0
+2026-10-22T18:44:32+00:00 start clause  18:44:31 up 6 days,  3:02,  0 users,  load average: 4.13, 5.43, 6.15
+clause=0
+2026-10-22T18:44:33+00:00 start width  18:44:33 up 6 days,  3:02,  0 users,  load average: 4.13, 5.43, 6.15
+width=0
+2026-10-22T18:44:34+00:00 start oracle-check  18:44:34 up 6 days,  3:02,  0 users,  load average: 4.12, 5.40, 6.14
+oracle-check=0
+sessions=0
+done

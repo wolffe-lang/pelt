@@ -1,0 +1,23 @@
+error[E1010]: `sh` still holds a value allocated in region `chunk` when the region is freed
+    --> src/sh/exec.lu:2371:17
+     |
+2365 |         region chunk {
+     |                ----- region `chunk` is created here
+...
+2371 |                 (mut sh.cap_data).push(x)
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^ the value flows out of the region here
+     |                 ------------------------- allocated here, into region `chunk`
+2372 |             }
+2373 |         }
+     |         - the region is freed here — everything in it is freed wholesale, as one unit
+     |
+     = note: to keep the value, allocate it where it must live: build it outside the region block, or
+       aim the allocation at a longer-lived region explicitly (`let r = region()` … `in r { …
+       }`); widening the region block to cover every use also works. When the block's own value
+       is what must outlive it, `copy region { … }` copies that value into the enclosing region
+       before the free ([mem.region.copyout]). Two keep-alive alternatives change the ownership
+       instead: `freeze` the region (immutable forever) or make the value a `shared` cell
+       (reference-counted, never dangles).
+
+wolf build: the package does not compile; fix the errors above (`wolf --explain E1010` explains this code, or any other, by name)
+build=2

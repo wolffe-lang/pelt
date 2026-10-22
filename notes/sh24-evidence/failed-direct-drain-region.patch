@@ -1,0 +1,31 @@
+diff --git a/src/sh/exec.lu b/src/sh/exec.lu
+index 246c88e..8b86970 100644
+--- a/src/sh/exec.lu
++++ b/src/sh/exec.lu
+@@ -2358,12 +2358,21 @@ fn reap(mut sh: Sh, h: int) -> int {
+ /// Everything readable from `r` into the open capture; `r` is closed.
+ fn drain(mut sh: Sh, r: int) {
+     loop {
+-        let c = fs_read_chunk(r, 65536) else |e| match e {
+-            eof => { break },
+-            io => { break },
++        var ended = false
++        // The read list is scratch. Only its copied bytes belong to the
++        // capture; keeping each list in the parent's root retained one
++        // allocation per output-producing forked substitution.
++        region chunk {
++            let c = fs_read_chunk(r, 65536) else |_| {
++                ended = true
++                List[byte]()
++            }
++            for x in c {
++                (mut sh.cap_data).push(x)
++            }
+         }
+-        for x in c {
+-            (mut sh.cap_data).push(x)
++        if ended {
++            break
+         }
+     }
+     fs_close(r) else |_| {}

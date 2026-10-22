@@ -1,0 +1,3 @@
+build: target/native/pelt
+build: target/release/pelt
+build=0
