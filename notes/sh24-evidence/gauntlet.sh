@@ -14,9 +14,13 @@ run() {
   echo "$(date -Is) start $n $(uptime)" | tee -a "$St"
   "$@" > "$L/gauntlet/$T-$n.log" 2>&1 &
   local pid=$!
+  local tick=0
   while kill -0 "$pid" 2>/dev/null; do
-    echo "$(date -Is) running $n $(uptime)"
-    sleep 60
+    sleep 1
+    tick=$((tick+1))
+    if (( tick % 60 == 0 )); then
+      echo "$(date -Is) running $n $(uptime)"
+    fi
   done
   wait "$pid"; local rc=$?
   echo "$n=$rc" | tee -a "$St"
