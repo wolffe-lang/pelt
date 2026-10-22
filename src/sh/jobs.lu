@@ -174,7 +174,7 @@ fn slot_status(sh: Sh, j: int) -> int {
 
 fn set_slot_status(mut sh: Sh, j: int, v: int) {
     let a = sh.jb_a[j]
-    sh.jb_a[j] = a - a % SL_GROUP + a % SL_STATUS + (v + SL_BIAS) * SL_STATUS
+    sh.jb_a[j] = a % SL_STATUS + (v + SL_BIAS) * SL_STATUS
 }
 
 fn slot_id(sh: Sh, j: int) -> int {
