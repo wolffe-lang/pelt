@@ -1,0 +1,63 @@
+# plant run 39708887619 (workflow_dispatch tier pr, branch sh20-plant2 59db4cb: src/ at the pin 0eabfaf, tests/tools/ci at b08e6bd); jobs native 119595296417, release 119595296273
+## job 119595296417
+the table checks on the native tier, busy's row with them: wolf build: no such file: src/selfcheck.lu
+memory flat over every shape, native tier: shape-rss: FAIL fork-redirected-subshell loop    10000    11252 KB   20000    18040 KB  grew    6788 KB (695 B a turn)  [( true ) >/dev/null]
+memory flat over every shape, native tier: shape-rss: FAIL 1: fork-redirected-subshell (bound 100 B a turn + 1 MiB over N turns)
+the differential corpus, native tier: FAIL builtin/c_s_dot_special_file: timed out, ended 1 processes
+the differential corpus, native tier: FAIL env/c_subshell_concurrent: stdout
+the differential corpus, native tier: FAIL env/subshell_is_process: stdout
+the differential corpus, native tier: FAIL exec/exec_replaces_subshell: stdout
+the differential corpus, native tier: FAIL jobs/subshell_jobs: stdout
+the differential corpus, native tier: FAIL pipe/c_concurrent_stages: stdout
+the differential corpus, native tier: FAIL pipe/c_shell_producer_ends: stdout
+the differential corpus, native tier: FAIL pipe/endless_producer: timed out, ended 1 processes
+the differential corpus, native tier: FAIL redir/c_s_cmdsub_fd_pipeline: stdout
+the differential corpus, native tier: FAIL redir/subshell_redir_fails_set_e: stdout, exit 0 (oracle 2)
+the differential corpus, native tier: FAIL signal/c_subshell_trap_reset: stdout, stderr absent
+the differential corpus, native tier: FAIL signal/c_trap_cmdsub_shows_parent: stdout
+the differential corpus, native tier: FAIL signal/c_trap_ignore_pipe: stdout
+the differential corpus, native tier: FAIL signal/subshell_end_devnull: stdout, exit 143 (oracle 0), stderr absent
+the differential corpus, native tier: FAIL signal/subshell_end_said_outside: stdout, exit 143 (oracle 0), stderr absent
+the differential corpus, native tier: FAIL signal/subshell_signal: stdout, stderr absent
+the differential corpus, native tier: FAIL signal/trap_after_redirected_subshell: stdout
+the differential corpus, native tier: FAIL signal/trap_cmdsub_lone_exit: stdout
+the differential corpus, native tier: FAIL wait/c_subshell: stdout
+the differential corpus, native tier: FAIL wait/reaped_signal_quiet: stderr present
+the differential corpus, native tier: difftest: total        967    20    28 (0)
+the session corpus, native tier: FAIL c_jc_mixed_pipeline
+the session corpus, native tier: FAIL jc_background_subshell
+the session corpus, native tier: FAIL jc_subshell_redir_stop
+the session corpus, native tier: FAIL jc_subshell_stop
+the session corpus, native tier: FAIL subshell_jobs
+the session corpus, native tier: session: pass 273  fail 5  pending 2 (0)
+## job 119595296273
+the table checks on the release tier, busy's row with them: wolf build: no such file: src/selfcheck.lu
+memory flat over every shape, release tier: shape-rss: FAIL fork-redirected-subshell loop    10000     9744 KB   20000    16356 KB  grew    6612 KB (677 B a turn)  [( true ) >/dev/null]
+memory flat over every shape, release tier: shape-rss: FAIL 1: fork-redirected-subshell (bound 100 B a turn + 1 MiB over N turns)
+the differential corpus, release tier: FAIL builtin/c_s_dot_special_file: timed out, ended 1 processes
+the differential corpus, release tier: FAIL env/c_subshell_concurrent: stdout
+the differential corpus, release tier: FAIL env/subshell_is_process: stdout
+the differential corpus, release tier: FAIL exec/exec_replaces_subshell: stdout
+the differential corpus, release tier: FAIL jobs/subshell_jobs: stdout
+the differential corpus, release tier: FAIL pipe/c_concurrent_stages: stdout
+the differential corpus, release tier: FAIL pipe/c_shell_producer_ends: stdout
+the differential corpus, release tier: FAIL pipe/endless_producer: timed out, ended 1 processes
+the differential corpus, release tier: FAIL redir/c_s_cmdsub_fd_pipeline: stdout
+the differential corpus, release tier: FAIL redir/subshell_redir_fails_set_e: stdout, exit 0 (oracle 2)
+the differential corpus, release tier: FAIL signal/c_subshell_trap_reset: stdout, stderr absent
+the differential corpus, release tier: FAIL signal/c_trap_cmdsub_shows_parent: stdout
+the differential corpus, release tier: FAIL signal/c_trap_ignore_pipe: stdout
+the differential corpus, release tier: FAIL signal/subshell_end_devnull: stdout, exit 143 (oracle 0), stderr absent
+the differential corpus, release tier: FAIL signal/subshell_end_said_outside: stdout, exit 143 (oracle 0), stderr absent
+the differential corpus, release tier: FAIL signal/subshell_signal: stdout, stderr absent
+the differential corpus, release tier: FAIL signal/trap_after_redirected_subshell: stdout
+the differential corpus, release tier: FAIL signal/trap_cmdsub_lone_exit: stdout
+the differential corpus, release tier: FAIL wait/c_subshell: stdout
+the differential corpus, release tier: FAIL wait/reaped_signal_quiet: stderr present
+the differential corpus, release tier: difftest: total        967    20    28 (0)
+the session corpus, release tier: FAIL c_jc_mixed_pipeline
+the session corpus, release tier: FAIL jc_background_subshell
+the session corpus, release tier: FAIL jc_subshell_redir_stop
+the session corpus, release tier: FAIL jc_subshell_stop
+the session corpus, release tier: FAIL subshell_jobs
+the session corpus, release tier: session: pass 273  fail 5  pending 2 (0)
