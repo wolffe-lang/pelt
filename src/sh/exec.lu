@@ -105,18 +105,8 @@ fn run(mut sh: Sh, n: int) -> int {
                 return node_end(mut sh, K_SUBSHELL, st)
             }
         }
-        begin_frame(mut sh)
-        var ri = 0
-        var applied = true
-        while ri < sh.ast.nodes[n].redirs.len {
-            let rd = rd_of(sh.ast, sh.ast.nodes[n].redirs[ri])
-            if !redir_one(mut sh, rd, true) {
-                applied = false
-                break
-            }
-            ri += 1
-        }
-        if !applied {
+        let rds = redirs_of(sh.ast, n)
+        if !apply_redirs(mut sh, rds) {
             end_redirs(mut sh)
             if sh.flow == F_NONE {
                 sh.status = 2
@@ -764,9 +754,8 @@ fn eval_top(mut sh: Sh, mut p: P, src: str, line: int) -> int {
         if !sh.opt_n {
             st = run(mut sh, n)
         }
-        if sh.jc_on {
-            // Complete commands of sourced/evaluated input are boundaries
-            // too, including in an interactive shell (pelt#55).
+        if sh.jc_on && !sh.interactive {
+            // `set -m` in a script: the notices after each command
             jc_notify(mut sh, true)
         }
         if p.pend.len == 0 && p.want_doc == 0 {
@@ -1423,17 +1412,6 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
         sig = signo
     }
     env_back(t, names)
-    // The simple command's descriptor 2, while its redirections still
-    // exist (pelt#53); a subshell's parent notice stays outside them.
-    if signal_spoken(sig) && sh.sub == 0 {
-        if is_cap(fd_get(t, 2)) {
-            for b in "pelt: {signal_words(sig)}\n".bytes() {
-                (mut got).push(b)
-            }
-        } else {
-            report_signal(mut t, sig)
-        }
-    }
     close_opened(t)
     if hd < 0 {
         return slow()
@@ -1598,9 +1576,7 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
             }
         }
     }
-    // An optimized one-command subshell is represented in process;
-    // its parent's notice remains outside the command's redirections.
-    if r.sig != 0 && sh.sub > 0 {
+    if r.sig != 0 {
         report_signal(mut sh, r.sig)
     }
     var at = 0
@@ -1656,13 +1632,6 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
     let nw = sh.ast.nodes[n].words.len
     if na == nw {
         return run_assign_only(mut sh, n, na)
-    }
-    // The empty jobs query is a hot polling operation. Its literal
-    // encoding needs no per-call copy of pre_expand's string (pelt#45).
-    if na == 0 && nw == 1 && !sh.opt_x && sh.ast.nodes[n].words[0] == "jobs" {
-        if (sh.funcs["jobs"] else -1) < 0 {
-            return run_builtin_enc(mut sh, n, "jobs", "jobs\0")
-        }
     }
     // the words after the assignments, expanded inside a region when
     // that writes nothing (pelt#19), else here

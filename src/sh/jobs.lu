@@ -593,16 +593,14 @@ fn jb_reap(mut sh: Sh) {
     }
 }
 
-/// Job `j` whose one process has ended keeps that
+/// With job control off, job `j` whose one process has ended keeps that
 /// process's status (as the poll spelled it) in its slot, as a list pelt
 /// ran itself keeps its own, and gives the process entry back: the
 /// process table then holds only the processes still live (pelt#39).
 /// `$!`'s number stays the slot's, and `wait`, `jobs`, `jobs -l`, `jobs
 /// -p` and `kill` read a slot with no process to the same answers.
 fn jb_fold(mut sh: Sh, j: int) {
-    // Foreground pipeline readers still need their per-process status;
-    // a completed single-process background job in a script does not.
-    if sh.jc_on && (sh.interactive || slot_order(sh, j) == 0 || sh.jc_build == j) {
+    if sh.jc_on {
         return
     }
     var only = -1
@@ -918,7 +916,9 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
     if !sh.opt_m || n < 0 {
         return
     }
-    let jt = cached_job_text(mut sh, n)
+    let jt = copy region jt {
+        node_text(sh.ast, n)
+    }
     set_slot_text(mut sh, j, jt)
     var m = n
     if sh.ast.nodes[m].kind == K_ANDOR && sh.ast.nodes[m].kids.len == 1 {
@@ -932,7 +932,9 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
         if sh.pr_job[k] == j {
             let st = if piped then nth_proc(sh.ast, m, i, forks) else -1
             if st >= 0 {
-                sh.pr_text[k] = cached_job_text(mut sh, st)
+                sh.pr_text[k] = copy region pt {
+                    node_text(sh.ast, st)
+                }
             } else {
                 sh.pr_text[k] = slot_text(sh, j)
             }
@@ -940,17 +942,6 @@ fn jb_fill_text(mut sh: Sh, j: int, n: int) {
         }
         k += 1
     }
-}
-
-/// A loop starts the same syntax node repeatedly. Keep its rendered
-/// command once, rather than allocating it for every retained notice.
-/// `add` clears the cache when the AST slot is reused (pelt#46).
-fn cached_job_text(mut sh: Sh, n: int) -> str {
-    if sh.ast.nodes[n].job_text.len == 0 {
-        let t = copy region jt { node_text(sh.ast, n) }
-        sh.ast.nodes[n].job_text = t
-    }
-    sh.ast.nodes[n].job_text
 }
 
 /// The stage of pipeline `m` that is its `i`th process, or -1: a simple
@@ -1435,7 +1426,7 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
     if jobs_live(sh) {
         let _p = jc_poll(mut sh)
     }
-    (mut sh.jobs_pick).clear()
+    var pick = List[int]()
     var st = 0
     if i >= args.len {
         var n = 0
@@ -1445,7 +1436,7 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
                 break
             }
             if j != sh.jc_build {
-                (mut sh.jobs_pick).push(j)
+                (mut pick).push(j)
             }
             n += 1
         }
@@ -1456,24 +1447,20 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
                 diag(mut sh, "jobs: {job_word(args[i], j)}")
                 st = 2
             } else {
-                (mut sh.jobs_pick).push(j)
+                (mut pick).push(j)
             }
             i += 1
         }
     }
-    var pi = 0
-    while pi < sh.jobs_pick.len {
-        let j = sh.jobs_pick[pi]
-        pi += 1
-        if !jobs_emit(mut sh, j, pids, long) {
-            st = 1
+    for j in pick {
+        if pids {
+            emit(mut sh, "{jb_leader(sh, j)}\n")
+        } else {
+            emit(mut sh, "{job_line(sh, j, long)}\n")
         }
     }
     if !pids {
-        pi = 0
-        while pi < sh.jobs_pick.len {
-            let j = sh.jobs_pick[pi]
-            pi += 1
+        for j in pick {
             if slot_state(sh, j) == JB_FREE {
                 continue
             }
@@ -1486,38 +1473,6 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
         }
     }
     st
-}
-
-/// Listing scratch dies per call unless the output is a capture;
-/// the reusable pick list remains the state's (pelt#45).
-fn jobs_emit(mut sh: Sh, j: int, pids: bool, long: bool) -> bool {
-    flush(mut sh)
-    let h = fd_get(sh, 1)
-    if !is_cap(h) {
-        let wrote = copy region jl {
-            let line = if pids then "{jb_leader(sh, j)}" else job_line(sh, j, long)
-            var bytes = List[byte]()
-            for b in line.bytes() {
-                (mut bytes).push(b)
-            }
-            (mut bytes).push(10 as byte)
-            var ok = h >= 0
-            if ok {
-                fs_write_chunk(h, bytes) else |_| { ok = false }
-            }
-            ok
-        }
-        if !wrote {
-            diag(mut sh, "jobs: write error")
-        }
-        return wrote
-    }
-    if pids {
-        emit(mut sh, "{jb_leader(sh, j)}\n")
-    } else {
-        emit(mut sh, "{job_line(sh, j, long)}\n")
-    }
-    true
 }
 
 /// A job's group leader: its first process (`jobs -p`), or the id `$!`
