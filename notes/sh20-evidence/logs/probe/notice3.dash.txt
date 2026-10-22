@@ -1,0 +1,48 @@
+01 { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f | cat
+   out: st=0
+   err: Terminated|
+   file: 
+02 x=$( { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f ); echo "[$x]"
+   out: []|st=0
+   err: Terminated|
+   file: 
+03 { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f & wait $!
+   out: st=143
+   err: Terminated|
+   file: 
+04 ( { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>/dev/null ) 2>f
+   out: st=143
+   err: Terminated|
+   file: 
+05 { ( ( kill -TERM $(sh -c 'echo $PPID') ) 2>/dev/null ); } 2>f
+   out: st=143
+   err: Terminated|
+   file: 
+06 { ( sh -c 'kill -TERM $$' ); } 2>f | cat
+   out: st=0
+   err: Terminated|
+   file: 
+07 { ( kill -TERM $(sh -c 'echo $PPID'); : ); } 2>f | cat
+   out: st=0
+   err: Terminated|
+   file: 
+08 : | { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f
+   out: st=143
+   err: Terminated|
+   file: 
+09 { ( kill -TERM $(sh -c 'echo $PPID') ) 2>f; } | cat
+   out: st=0
+   err: Terminated|
+   file: 
+10 { { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>/dev/null; } 2>f | cat
+   out: st=0
+   err: Terminated|
+   file: 
+11 x=$( ( kill -TERM $(sh -c 'echo $PPID') ) 2>f; echo after ); echo "[$x]"
+   out: [after]|st=0
+   err: Terminated|
+   file: 
+12 x=$( { ( kill -TERM $(sh -c 'echo $PPID') ); :; } 2>f ); echo "[$x]"
+   out: []|st=0
+   err: 
+   file: Terminated|

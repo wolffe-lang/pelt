@@ -1,0 +1,19 @@
+01 trap "echo got" USR1; ( kill -USR1 $$; sleep 0.2; echo in ); echo st=$?; echo two
+   in got st=0 two 
+02 trap "echo got" USR1; ( kill -USR1 $$; sleep 0.2; echo in ) >/dev/null; echo st=$?; echo two
+   got st=0 two 
+03 trap "echo got" USR1; { ( kill -USR1 $$; sleep 0.2; echo in ); } >/dev/null; echo st=$?; echo two
+   got st=0 two 
+04 trap "echo got" USR1; sh -c "kill -USR1 \$PPID; sleep 0.2" >/dev/null; echo st=$?; echo two
+   got st=0 two 
+05 trap "echo got" USR1; x=$(kill -USR1 $$; sleep 0.2; echo in); echo st=$?; echo two
+   got st=0 two 
+06 trap "echo got" USR1; ( kill -USR1 $$; sleep 0.2 ) | cat; echo st=$?; echo two
+   got st=0 two 
+07 trap "echo got" USR1; ( kill -USR1 $$; sleep 0.2 ) & wait; echo st=$?; echo two
+   got st=138 two 
+08 trap "echo got" USR1; ( sh -c "kill -USR1 \$PPID; sleep 0.2" ) >/dev/null; echo st=$?; echo two
+   got st=0 two 
+09 trap "echo got" USR1; ( kill -USR1 $$; sleep 0.2; echo in ) >/dev/null
+echo st=$?; echo two
+   got st=0 two 
