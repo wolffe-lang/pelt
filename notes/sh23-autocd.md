@@ -189,7 +189,7 @@ as pelt#42's hook is not called for `command`) where bash and zsh change
 directory.
 
 **The counts** (§3.4; gauntlet `g1` at `497d104`, `logs/g1.status`, every
-gate 0):
+gate 0; `g2` at `93561ad` the same, §4):
 
 | | trunk `3b0bab9` (`logs/base-*`) | head `497d104` (`logs/gauntlet/g1-*`) | predicted |
 |---|---|---|---|
@@ -272,7 +272,13 @@ the gate says) and is copied here under `notes/sh23-evidence/`.
   (every gate 0, `ctr=0`, `done`; the binaries' sha256 beside the build),
   `logs/gauntlet/g1-*.log`.
 - **Gauntlet `g2`** at `93561ad` (`autocd_wins`'s new rows; the code as at
-  `497d104`): `logs/g2.status`, `logs/gauntlet/g2-*.log`.
+  `497d104`): `logs/g2.status`, every gate 0 (`ctr=0`, `done`), the two
+  binaries byte for byte `g1`'s (sha256 `6b2ff495…` native, `b9b12f5d…`
+  release); the counts as `g1`'s (968/0/38, 283/0/3, both tiers, with and
+  without `taskset`); `logs/gauntlet/g2-*.log`. kasumi was shared with two
+  other lanes' builds and tests while it ran (load 8 to 20 on 16 cores);
+  the signal, edit and rss gates held.
+- After `93561ad` the branch changes `notes/` only.
 - **The cost**: `cost.sh`, `cost/head/`, `cost/trunk/` (§3.6).
 - **lope's session**: `autocd-jump.py`, `logs/jump/` (§3.6).
 - **Driver scripts**: `finish.sh` (the cost, lope's session, the plants
