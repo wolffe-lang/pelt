@@ -310,3 +310,28 @@ fresh shape/session checks. `failed-direct-drain-region.patch` and
 multi-chunk assertions are separate commits. Post-fix full shape and session
 completion, final pruning and new PR metadata are recorded at the hand-back;
 the earlier624-row gauntlet is not mislabelled as post-fix evidence.
+
+### Follow-up completion
+
+The safe drain fix is **89862e1**; the multi-chunk assertion is **4919e2c**,
+subsequently indexed as `cmdsub/drain_chunks` in **f7f4531**. The original
+census prose and other tables were preserved; only two coverage references
+changed. README corpus status is995; statements remain516/548.
+
+All follow-up checks completed: `regress-measure.status`26 zero exits;
+`drain-verify.status`22 zero exits (six fixed readings/tier, full corpus
+995/0/28 x4, checked and both compiled units); `post-drain.status`17 zero
+exits (fresh full52-row shape run on each tier, all four sessions290/0/2,
+exec/signal witnesses, fmt, census, width and oracle-check). These are the
+post-fix runs, not a relabel of the earlier624-row gauntlet.
+`drain-green.txt` is the strict completeness check. `drain-profile-fixed.log`
+records13 allocation chunk grabs after the fix versus21 before over10,000
+substitutions, despite the one-time staging allocation; sample percentages
+are not used as byte attribution.
+
+The completed final-fa80a2f CI red is preserved as
+`ci/final-fa80a2f-39818177236.log`. The fix does not waive or widen that row.
+The new labelled head and its runs/audit are in the PR body; the coordinator
+watches them and no final CI result is presumed here. No row override was
+implemented. All re-created regression builds/toolchains were pruned again;
+kasumi has no sh24 containers and retains1.9M of logs, probes and drivers.
