@@ -114,6 +114,9 @@ SHAPES = [
     ("fork-stage", "loop", "{ true; } | true"),
     ("script-fork-substitution", "script", "x=$(true; true)"),
     ("typed-fork-subshell", "typed", "( true; true )"),
+    # a subshell with redirections of its own forks whatever its body
+    # (they are its process's, `sh.exec`'s `run_paren_redir`)
+    ("fork-redirected-subshell", "loop", "( true ) >/dev/null"),
 ]
 
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
