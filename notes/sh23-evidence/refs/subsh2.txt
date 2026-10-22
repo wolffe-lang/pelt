@@ -1,0 +1,21 @@
+== /home/mfwolffe/lanes/sh23/bins/head/native/pelt -i
+group-in-pipe [/sub]
+simple-stage-after []
+last-stage [/sub]
+eval [/sub]
+fn [/sub]
+paren-two [/sub]
+== /usr/bin/bash -i
+group-in-pipe []
+simple-stage-after []
+last-stage []
+eval [/sub]
+fn [/sub]
+paren-two []
+== /usr/bin/zsh -i
+group-in-pipe []
+simple-stage-after []
+last-stage []
+eval [/sub]
+fn []
+paren-two []

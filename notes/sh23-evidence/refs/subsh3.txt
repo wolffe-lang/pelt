@@ -1,0 +1,9 @@
+== /home/mfwolffe/lanes/sh23/bins/head/native/pelt -i
+cs-bare st=0 [] []
+cs-slash st=0 [] []
+== /usr/bin/bash -i
+cs-bare st=127 [] []
+cs-slash st=126 [] []
+== /usr/bin/zsh -i
+cs-bare st=127 [] []
+cs-slash st=126 [] []

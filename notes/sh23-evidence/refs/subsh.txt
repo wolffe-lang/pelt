@@ -1,0 +1,33 @@
+== /home/mfwolffe/lanes/sh23/bins/head/native/pelt -i
+in-sub [/sub]
+after []
+cs [/sub]
+pipe-after []
+== /home/mfwolffe/lanes/sh23/bins/head/release/pelt -i
+in-sub [/sub]
+after []
+cs [/sub]
+pipe-after []
+== /home/mfwolffe/lanes/sh23/base/native/pelt -i
+in-sub []
+after []
+cs []
+pipe-after []
+== /usr/bin/bash -i
+in-sub []
+after []
+cs []
+pipe-after []
+== /usr/bin/zsh -i
+in-sub []
+after []
+cs []
+pipe-after []
+== /usr/bin/dash -i
+in-sub []
+after []
+cs []
+pipe-after []
+GNU bash, version 5.3.20(1)-release (x86_64-pc-linux-gnu)
+zsh 5.9.2-1.1
+dash 0.5.13.4-1.1
