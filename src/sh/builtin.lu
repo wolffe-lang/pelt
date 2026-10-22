@@ -1676,12 +1676,17 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
 /// named `cmd`, which `sh.exec`'s `run_external` found nowhere (`path` is
 /// "") or did not search because it has a `/`, is a `cd` instead: the
 /// option is on, the shell is interactive (bash ignores the option in a
-/// script, in `-c` and on standard input; black-box, sh23), and `cmd`
+/// script, in `-c` and on standard input; black-box, sh23), not inside a
+/// subshell, a command substitution or a pipeline stage, and `cmd`
 /// names a directory as it stands, from here (so `CDPATH` is `cd`'s to
 /// take after, as in bash). A name with no `/` that the search found is
-/// a program, and is never a `cd`.
+/// a program, and is never a `cd`. In a subshell bash 5.3 and zsh 5.9
+/// refuse (`x=$(DIR)` is 127, `x=$(./DIR)` 126; bash takes the option in
+/// `eval` and a function body; sh23's `refs/subsh*.txt`, R-sh23-4, taken
+/// in sh20): a forked one is not interactive (`sh.fork`), one run in
+/// process has `sub` above 0.
 fn autocd_dir(sh: Sh, cmd: str, path: str) -> bool {
-    if !sh.opt_autocd || !sh.interactive {
+    if !sh.opt_autocd || !sh.interactive || sh.sub > 0 {
         return false
     }
     if path.len > 0 && (cmd.find("/") else -1) < 0 {
