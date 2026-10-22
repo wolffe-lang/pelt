@@ -6,6 +6,11 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- Forked command substitutions release each temporary read chunk after its
+  bytes reach the capture. A reusable 64 KiB staging buffer keeps the read
+  region separate from the longer-lived output buffer; multi-chunk byte
+  integrity and the substitution's exit status are covered by the corpus.
+
 - `jobs` reuses its listing and releases listing scratch after each call;
   an empty literal query no longer copies an expansion string each time
   (pelt#45). Redirected brace groups, `if` and `while` commands apply
