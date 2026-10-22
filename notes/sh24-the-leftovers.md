@@ -166,7 +166,9 @@ Everything here is under `notes/sh24-evidence/`.
   `logs/profile-base.launch.log`, `logs/profile-compound.launch.log`.
 - Retention instrument: `probe/jobs-anon.py`, `probe/monitor-anon.py`.
   Equal-length controls and RssAnon are explicitly distinguished from peak.
-- Frozen final code: `428e4ff`; later commits change notes/docs/README only.
+- Frozen implementation/tool code: `428e4ff`; no implementation or RSS
+  assertion changed afterward. The late portable write-fixture inputs were
+  corrected separately, with every corpus run retaken (below).
   `gauntlet.sh`, `table.sh`, `retake.sh`, `ctr.sh`, `launch.sh` reproduce the
   container runs. `logs/final.status` records 54 zero exits; the validator
   checks every expected gate, corpus/session total and all 624 memory rows.
@@ -203,6 +205,28 @@ Commits:
 - `2c5819a`, `3d7b5da`, `17a563f`: folded records, packed group/text pool, overflow.
 - `169db63`: approved monitor RssAnon measurement with unchanged bound.
 
+### Portable write controls and the historical CI red
+
+Before labelling, the Linux-only `/dev/full` fixture inputs were replaced by
+writes through a valid read-only descriptor, available on Unix including
+macOS. Assertions, stdout, statuses, stderr-presence checks and pending counts
+are unchanged. `portable-verify.sh` rebuilt both the head and trunk on kasumi
+inside the container: both portable cases red at trunk on both tiers, both
+green at the head; full corpus 994/0/28 retaken four ways; oracle-check0drift.
+`logs/portable.status` and `portable-*.log` preserve this, including binary
+hashes. The implementation/tool code is exactly the RSS-tested code; only
+the two shell inputs changed. All 624 RSS rows and the four session runs above
+remain the same tested assertions. Portable verification builds were pruned
+again; only logs/probes/drivers remain (1.5M).
+
+Completed code-head CI **39803238294** was red solely on the existing native
+`substitution-pipeline` peak: 240 B/turn, above the unchanged default bound.
+Its corpus and sessions pass on both tiers. This is preserved in
+`ci/code-head-39803238294.log`, **not waived or called green**. Local repeated
+runs passed that row, but the cause of that CI peak is not diagnosed here;
+the final-head PR/full runs must be green before merge. The coordinator owns
+that watch and resumes the lane on red; the lane does not wait on CI.
+
 ## 5. Done-when
 
 - [x] Prediction before the first implementation change.
@@ -212,7 +236,7 @@ Commits:
 - [x] Three full shape passes on both tiers, bare/four-core; comparison table.
 - [x] Low-load retake of the existing timing row, no assertion/timeout changes.
 - [x] Updated-metric and packed-field CI plants, final evidence recorded.
-- [x] Kasumi pruned: 1.5G of lane builds/snapshots reduced to 1.3M of logs,
+- [x] Kasumi pruned: 1.5G of lane builds/snapshots reduced to 1.5M of logs,
   probes and drivers; no sh24 containers left. `head`, `first-head`, `pelt`,
   `base`, `base-bin`, `tmp` removed with `podman unshare`; other lanes untouched.
 - Final PR head/run ids, first PR-tier status, label and audit are recorded
@@ -226,7 +250,8 @@ Leave pelt#56's job-text ruling untouched. No issue was filed or closed.
 
 ## Final local state (2026-10-22)
 
-Frozen code/tool head `428e4ff`; subsequent commits are notes only. All local
+Frozen implementation/tool head `428e4ff`; subsequent functional changes are
+only the two portable shell-fixture inputs, reverified as above. All local
 checks above are complete and green. Original sequential partial runs are
 retained, never counted as passes. R-sh24-1 and R-sh24-2 were accepted as
 recommended; the four-core move and two-worker schedule were also directed
