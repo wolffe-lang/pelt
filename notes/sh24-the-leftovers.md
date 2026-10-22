@@ -46,7 +46,7 @@ profiler and sh20's RssAnon/RssFile split were re-used, not shell source.
   equal-length `true` input control to exclude input/parser storage; Linux
   RssAnon excludes file-backed pages. Initial native result: trunk 72–74,
   head 0–1, dash −1–0 B/call. The CI gate uses 100,000 calls, bound 16 B/call plus
-  the existing 1 MiB granularity allowance. Final table below is still pending.
+  the existing 1 MiB granularity allowance. Final tables are below.
 - **#46:** the prediction that records/text, not descriptors, dominated held.
   The first fold/cache implementation did not meet the bound: RssAnon grew
   about 220 B/job. It is retained as failed evidence, not waived. The final
@@ -215,9 +215,10 @@ Commits:
 - [x] Kasumi pruned: 1.5G of lane builds/snapshots reduced to 1.3M of logs,
   probes and drivers; no sh24 containers left. `head`, `first-head`, `pelt`,
   `base`, `base-bin`, `tmp` removed with `podman unshare`; other lanes untouched.
-- [ ] Final PR head/run ids, first PR-tier verdict, label and audit are recorded
-  in the PR body after this file's final commit. The orchestrator watches CI;
-  the lane does not wait for either PR-tier completion or the full run.
+- Final PR head/run ids, first PR-tier status, label and audit are recorded
+  in the PR body after this file's final commit.
+- [ ] PR-tier and full-tier green before merge: the orchestrator watches CI.
+  Per the coordinator's handoff direction, the lane does not wait for CI.
 
 On merge, close pelt#45, #46, #53, #54, #55. Comment #28 (two fixes, census
 coin remains), #6 and #20 (not one-site fixes; unchanged pending surfaces).
@@ -231,6 +232,6 @@ retained, never counted as passes. R-sh24-1 and R-sh24-2 were accepted as
 recommended; the four-core move and two-worker schedule were also directed
 by the coordinator. No issue was filed or closed. No branch was merged.
 
-The final-head PR/audit/CI state is in PR #58's body. MacOS is CI-only; no
+The final-head PR/audit/CI state is in PR #58's body. macOS is CI-only; no
 local macOS build or PAX run is claimed. Kasumi retains only the evidence and
 reproduction scripts under `/home/mfwolffe/lanes/sh24/`; builds are pruned.
