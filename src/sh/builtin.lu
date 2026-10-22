@@ -112,7 +112,7 @@ fn builtin_args(mut sh: Sh, name: str, args: List[str]) -> int {
         (mut sh.out).clear()
         diag(mut sh, "{name}: write error: bad file descriptor")
         st = 1
-    } else if sh.out.len > 0 && !flush_checked(mut sh) {
+    } else if sh.out.len > 0 && !sh.bail && !flush_checked(mut sh) {
         // Every refused write is the command's error, not just EPIPE
         // under an ignored PIPE (pelt#28). Default SIGPIPE still ends
         // the process before write returns.
