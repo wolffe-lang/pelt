@@ -1,0 +1,2 @@
+tests/diff/builtin/c_s_dot_special_file.sh ended 2: 217746 217748
+tests/diff/pipe/endless_producer.sh ended 2: 220463 220465

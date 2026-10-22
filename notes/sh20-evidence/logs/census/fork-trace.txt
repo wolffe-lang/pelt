@@ -1,0 +1,21 @@
+# sh20: strace -f -e sched_yield,clone,clone3,wait4,exit_group of the head (b05b0cf, release) on -c ( :; : ); x=$(:; :); { :; } | cat; echo done (the container, taskset -c 4-7)
+4     clone3({flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, child_tid=0x7f903f5ffce8, parent_tid=0x7f903f5ff990, exit_signal=0, stack=0x7f903f3ff000, stack_size=0x1ffd40, tls=0x7f903f5ff6c0} => {parent_tid=[5]}, 88) = 5
+4     clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f903f8aa090) = 6
+4     wait4(6 <unfinished ...>
+6     exit_group(0)                     = ?
+4     <... wait4 resumed>, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 6
+4     --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+4     clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f903f8aa090) = 7
+7     exit_group(0)                     = ?
+4     --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+4     wait4(7, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 7
+4     clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f903f8aa090) = 8
+4     clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f903f8aa090) = 9
+8     exit_group(0)                     = ?
+4     --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=8, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+4     wait4(9 <unfinished ...>
+9     exit_group(0)                     = ?
+4     <... wait4 resumed>, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 9
+4     --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=9, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+4     wait4(8, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 8
+4     exit_group(0)                     = ?

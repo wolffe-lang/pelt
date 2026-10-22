@@ -1,0 +1,3 @@
+syscall-census: difftest under strace exit 1: difftest: total        925    64    28 (2)
+syscall-census: 2 cases timed out under strace; 4 processes ended; 0 left -> /home/mfwolffe/lanes/sh20/logs/census/pin/reaped.txt
+syscall-census: 50 distinct system calls, 225519 calls, 3777 processes and threads -> /home/mfwolffe/lanes/sh20/logs/census/pin/census.txt
