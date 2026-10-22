@@ -105,8 +105,18 @@ fn run(mut sh: Sh, n: int) -> int {
                 return node_end(mut sh, K_SUBSHELL, st)
             }
         }
-        let rds = redirs_of(sh.ast, n)
-        if !apply_redirs(mut sh, rds) {
+        begin_frame(mut sh)
+        var ri = 0
+        var applied = true
+        while ri < sh.ast.nodes[n].redirs.len {
+            let rd = rd_of(sh.ast, sh.ast.nodes[n].redirs[ri])
+            if !redir_one(mut sh, rd, true) {
+                applied = false
+                break
+            }
+            ri += 1
+        }
+        if !applied {
             end_redirs(mut sh)
             if sh.flow == F_NONE {
                 sh.status = 2
