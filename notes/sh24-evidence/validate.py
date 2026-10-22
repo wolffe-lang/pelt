@@ -33,3 +33,15 @@ required |= {"neighbors-2-four", "neighbors-3-bare", "neighbors-3-four", "releas
 assert required <= codes.keys(), sorted(required - codes.keys())
 assert len(codes) == 54, len(codes)
 print(f"sh24 evidence: {len(codes)} exits zero; corpus 994/0/28 x4; sessions 290/0/2 x4; 52 shapes x12; affinity/load recorded")
+
+portable = (root / "portable.status").read_text()
+assert portable.rstrip().endswith("done"), "portable verification unfinished"
+ppairs = re.findall(r"^([a-z][-a-z0-9]*)=(\d+)$", portable, re.M)
+assert len(ppairs) == 12, ppairs
+for name, code in ppairs:
+    assert code == ("1" if name.startswith("base-red-") else "0"), (name, code)
+for tier in ("native", "release"):
+    for suffix in ("", "-taskset"):
+        data = (root / f"portable-diff-{tier}{suffix}.log").read_text()
+        assert re.search(r"difftest: total\s+994\s+0\s+28", data)
+print("portable inputs: assertions unchanged; trunk red2/2 both tiers; headgreen2/2; corpus994/0/28 x4 retaken; oracle0drift")
