@@ -69,7 +69,13 @@ special built-ins.
 signal POSIX lets a program catch, by name or by the host's number, and
 leaves alone a signal the shell was started ignoring; a child a signal
 ended answers 128+N; `$$`, `PPID` and `$!` are real process ids on every
-host; a child's environment is exactly the exported variables. A script
+host; a child's environment is exactly the exported variables. A
+subshell `( … )`, a command substitution, a list after `&` and every
+pipeline stage pelt runs itself (a function, a compound command, a
+built-in) are processes of their own (wolf 0.2.34's `os_fork`), as
+dash's are: the stages of a pipeline run together, a producer ends when
+its reader leaves, the child starts with caught traps back at the
+default, and a subshell's own redirections are its process's. A script
 reaps the jobs it never waits for as the next one starts, so a loop of
 `cmd &` does not fill the process table.
 
@@ -94,7 +100,9 @@ and is handed the terminal, Ctrl-Z stops it, `jobs` (`-l`, `-p`), `fg`
 and `bg` take every job id (`%n`, `%+`, `%-`, `%string`, `%?string`), a
 job's ending or stopping is told before the next prompt (at once with
 `set -b`), `wait` is cut short by a trapped signal, and `exit` with
-stopped jobs warns once.
+stopped jobs warns once. A pipeline with a stage pelt runs itself, and
+a foreground `( … )`, are jobs like any other: Ctrl-Z stops the whole of
+it and `fg` continues it.
 
 **Two hooks for a modern prompt.** An interactive pelt calls a function
 named `command_not_found_handle` (bash's name) when a command's name is
@@ -105,7 +113,8 @@ default; `pelt -o autocd` too) a command that names a directory, with a
 slash (`home/pax`, `/home/pax/`) or found nowhere (`..`, `child`), runs
 as `cd -- NAME`, the way bash's `shopt -s autocd` and zsh's `AUTO_CD`
 do; a function, built-in or program of that name still wins, and a
-script ignores the option. Where pelt parts from bash on the details,
+script ignores the option, as do a subshell, a command substitution and
+a pipeline stage (bash's line). Where pelt parts from bash on the details,
 `docs/CHANGELOG.md` says so.
 
 **Startup.** pelt is POSIX here too: an interactive shell runs the file
@@ -123,11 +132,11 @@ Each gap is named with the primitive it waits on in
 [`tests/session/PENDING.md`](tests/session/PENDING.md), and every
 pending case still runs on every pass and is reported, never skipped.
 
-- A subshell, `{ …; } &` and a pipeline stage pelt runs itself (a
-  built-in, a function, a compound command) are not processes of their
-  own, so they are not jobs and a stage runs to its end before the next
-  starts. The fork that fixes this (wolf 0.2.34's `os_fork`) is in
-  progress.
+- Where wolf's `os_fork` does not fork (the checked machine of `wolf
+  test` and `wolf conform-run --checked`, which answers `unsupported`),
+  a subshell, a list after `&` and a pipeline stage pelt runs itself
+  still run inside the shell: they are no jobs there, and a stage runs
+  to its end before the next starts.
 - `trap` and `kill` know the signals POSIX names and no other (not
   Linux's `IO`, `PWR` or the real-time ones).
 - A byte that is not UTF-8 cannot reach a program.
