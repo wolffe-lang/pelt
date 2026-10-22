@@ -16,10 +16,14 @@
 //! a `( cmd )`, a `$( cmd )` or a stage, since what can be seen of it is
 //! the same (sh19 §6.1). Such a command that the fast path does not
 //! finish forks where it would have taken the ordinary path
-//! (`sh.exec`'s `run_simple`). A host that does not fork (the checked
-//! machine answers `unsupported`, ruling #95 R4 C) runs every shape in
-//! process as before, and so does a fork answered `busy` (a task live:
-//! pelt starts none).
+//! (`sh.exec`'s `run_simple`). A `( … )` with redirections of its own,
+//! or in braces with theirs that hold it alone (`paren_alone`), forks
+//! whatever its body, and the child applies them: they are the
+//! subshell's process's, so what the shell says or runs meanwhile goes
+//! to its own descriptors (`sh.exec`'s `run_paren_redir`). A host that
+//! does not fork (the checked machine answers `unsupported`, ruling #95
+//! R4 C) runs every shape in process as before, and so does a fork
+//! answered `busy` (a task live: pelt starts none).
 //!
 //! **The child, before anything of the body runs:** it moves into its
 //! job's process group when job control says so (`os_set_pgid` acts on
