@@ -1,0 +1,2 @@
+trap -x
+echo survived

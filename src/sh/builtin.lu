@@ -638,6 +638,10 @@ fn bi_trap(mut sh: Sh, args: List[str]) -> int {
         return 0
     }
     var action = args[i]
+    if action.len > 1 && ch(action, 0) == '-' && i == 0 {
+        fatal(mut sh, "trap: {action}: no such option", 2)
+        return 2
+    }
     var reset = action == "-"
     var conds = args[i + 1..args.len]
     if is_digits(action) && cond_name(action).len > 0 {
