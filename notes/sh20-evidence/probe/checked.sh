@@ -8,4 +8,5 @@ x=$(echo cs-a; echo cs-b); echo "cmdsub: $x"
 f() { echo f-out; }; f | sed 's/^/stage: /'
 ( sleep 0.3; echo a ) & echo b; wait
 ( sleep 1 ) & p=$!; kill -0 $p 2>/dev/null && echo "bg-pid: a process" || echo "bg-pid: none"; wait
+( echo redir-sub ) >/dev/null; { ( echo redir-brace ); } 2>/dev/null; echo "redir: $?"
 echo "end $?"
