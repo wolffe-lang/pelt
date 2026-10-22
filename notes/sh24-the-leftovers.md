@@ -56,7 +56,7 @@ profiler and sh20's RssAnon/RssFile split were re-used, not shell source.
   existing slot; and has an unlimited overflow-reference list. Released pool
   entries are reused. Native/release checked table tests include extreme
   groups/status/flags, shared/replaced/released texts, overflow and AST reuse.
-  The nominal 160 B prediction is slightly missed on both tiers (up to 163),
+  The nominal 160 B prediction is slightly missed on both tiers (up to 165),
   inside the committed 160 B/job + 64 KiB over 3,000 jobs gate. No bound increased.
 - **#54:** the predicted `redirs_of` list, not saved descriptors, was the
   keep: 103 of 104 root chunk grabs were `[list_push] < redirs_of < run`.
@@ -115,10 +115,42 @@ not a claim that a turn frees memory.
 The monitor row now uses retained RssAnon, and waits each job explicitly; its
 dash reading is **90–91**, not the archived 0–16 for different no-wait/peak
 shapes. These are not presented as the same measurement. The original
-no-wait neighbors are being rederived separately with the new instrument.
+no-wait neighbors were rederived separately with the new instrument below.
 The stricter 10,000-call jobs check (`jobs-anon-bare.log`,
 `jobs-anon-four.log`) reads trunk 72–74 native / 72–73 release, head −2–0 /
 −1–0, dash −1–0 B/call: comfortably within 16 on both tiers.
+
+**P: full-shape gauntlet, bounded parallel schedule.** Three passes per
+compiler tier, each with and without an inner `taskset`; both inherit CPUs
+8–11, per the coordinator's scheduling instruction. At most two RSS workers
+ran together; every leg's `.status` records command, affinity and uptime.
+All 52 rows pass in all 12 invocations (624 row assertions). Critical rows:
+
+| row (P) | native, six readings | release, six readings |
+|---|---|---|
+| baseline | 40–76 | 38–65 |
+| jobs query, own peak keep | −2–5 | −2–2 |
+| monitored env/wait, retained RssAnon | 159–163 | 162–165 |
+| redirected braces | 17–67 | 23–61 |
+| redirected if | 36–84 | 57–78 |
+| redirected while | 40–68 | 49–63 |
+| typed background/wait (sh20's existing row) | 188 | 188 |
+
+The original no-wait shapes, retained RssAnon at N=5,000/10,000, six readings
+per cell (three sequential S legs, three resumed P legs; logs and status
+files distinguish them):
+
+| row (S+P) | trunk native / release | head native / release | dash |
+|---|---|---|---|
+| set-m true & | 319–330 / 320–325 | 100–107 / 103–108 | 53–54 |
+| set-m env true & | 326–330 / 327–330 | 112–114 / 112–114 | 52–55 |
+
+These establish the reduction on both original bodies without pretending
+the archived peak-based dash 0–16 reading is a new RssAnon result. Pelt's
+no-wait keep is now 46–62 B/job above the matched dash measurements; the
+stricter waited-job gate is 68–75 above dash, within its unchanged bound.
+Multi-process and interactive records remain available to their per-process
+readers; no claim is made that those unmeasured shapes have dash's size.
 
 The high-load timing row was retaken unchanged at load 13.88–14.94 and passed
 on both tiers, bare and four-core (`retake-times-*.log`, `retake.launch.log`).
@@ -136,7 +168,13 @@ Everything here is under `notes/sh24-evidence/`.
   Equal-length controls and RssAnon are explicitly distinguished from peak.
 - Frozen final code: `428e4ff`; later commits change notes/docs/README only.
   `gauntlet.sh`, `table.sh`, `retake.sh`, `ctr.sh`, `launch.sh` reproduce the
-  container runs. Final gauntlet/table logs and counts are pending.
+  container runs. `logs/final.status` records 54 zero exits; the validator
+  checks every expected gate, corpus/session total and all 624 memory rows.
+  `validator-pending-red.txt` shows it rejecting an unfinished run;
+  `validator-green.txt` records the completed check. No final gate says SKIP.
+  Corpus **994/0/28** and sessions **290/0/2** on all four runs; clause census
+  **516 of 548**, unchanged; `wolf test` 1 passed, no rejected/unsupported;
+  both compiled table checks and every witness/selftest/oracle-check green.
 - First attempt: `first.status`, `gauntlet/first-*`, `first-table-*` retain
   the inadequate monitor layout and the prompt-notification regression.
   Stopped/moving-tree exploration is not final-head evidence.
@@ -170,31 +208,29 @@ Commits:
 - [x] Prediction before the first implementation change.
 - [x] Five principal fixes and two cheap #28 fixes; no pin move.
 - [x] Each issue's new row red at trunk; first CI plant red on both tiers.
-- [ ] Final corpus 994/0/28 and sessions 290/0/2 on both tiers, bare/four-core.
-- [ ] Three full shape passes on both tiers, bare/four-core; comparison table.
+- [x] Final corpus 994/0/28 and sessions 290/0/2 on both tiers, bare/four-core.
+- [x] Three full shape passes on both tiers, bare/four-core; comparison table.
 - [x] Low-load retake of the existing timing row, no assertion/timeout changes.
 - [x] Updated-metric and packed-field CI plants, final evidence recorded.
-- [ ] Final tier-pr verdict, final-head full-matrix label, lane audit, pruning.
+- [x] Kasumi pruned: 1.5G of lane builds/snapshots reduced to 1.3M of logs,
+  probes and drivers; no sh24 containers left. `head`, `first-head`, `pelt`,
+  `base`, `base-bin`, `tmp` removed with `podman unshare`; other lanes untouched.
+- [ ] Final PR head/run ids, first PR-tier verdict, label and audit are recorded
+  in the PR body after this file's final commit. The orchestrator watches CI;
+  the lane does not wait for either PR-tier completion or the full run.
 
 On merge, close pelt#45, #46, #53, #54, #55. Comment #28 (two fixes, census
 coin remains), #6 and #20 (not one-site fixes; unchanged pending surfaces).
 Leave pelt#56's job-text ruling untouched. No issue was filed or closed.
 
-## State at the pause (2026-10-22)
+## Final local state (2026-10-22)
 
-The source is frozen at 428e4ff. Both native corpus runs are 994/0/28 and both
-native session runs 290/0/2. The interleaved comparison table and all four
-low-load timing retakes are complete. Remaining full shape passes now use
-accepted bounded parallel scheduling: at most two RSS workers, inherited
-CPU affinity 8–11 for both bare and explicitly-taskset legs; release sessions
-run independently. `finish.sh` records uptime, affinity and command in each
-leg's `.status` file. The earlier sequential comparison table above is not
-from that schedule. Full-shape rows marked **P** below will name parallel
-results. The interrupted first sequential shape run and neighbor leg remain
-as `sequential-interrupted-*` / `neighbors-2-four-interrupted.log`; no partial
-run is counted as a pass. `logs/final.status` joins the completed native
-checks with the remaining frozen-binary legs. Paths on kasumi are
-`/home/mfwolffe/lanes/sh24/head` (frozen code), `pelt` (staging), `base`
-(trunk binaries), `first-head` (failed first layout), `logs` and `probe`.
-All pids are recorded under that lane directory. Draft PR #58 is not ready to
-merge. Final measurements, CI/audit and pruning are still owed.
+Frozen code/tool head `428e4ff`; subsequent commits are notes only. All local
+checks above are complete and green. Original sequential partial runs are
+retained, never counted as passes. R-sh24-1 and R-sh24-2 were accepted as
+recommended; the four-core move and two-worker schedule were also directed
+by the coordinator. No issue was filed or closed. No branch was merged.
+
+The final-head PR/audit/CI state is in PR #58's body. MacOS is CI-only; no
+local macOS build or PAX run is claimed. Kasumi retains only the evidence and
+reproduction scripts under `/home/mfwolffe/lanes/sh24/`; builds are pruned.
