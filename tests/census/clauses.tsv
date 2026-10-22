@@ -291,10 +291,10 @@ id	kind	statement	cases	note
 2.11/13	T	set -m in a non-interactive shell puts each asynchronous list in its own process group	jobsctl/c_monitor_script_pgid	
 2.11/14	T	With job control off, a background command stays in the shell's process group	jobsctl/c_no_monitor_pgid	
 2.11/19	X	With set -m in a non-interactive shell, a job that ended is told after the complete command it ended during, never inside it: a loop's jobs after the loop, newest first, the ones wait answered and the ones the shell ran itself too	jobsctl/c_monitor_loop_notices jobsctl/c_monitor_loop_builtin jobsctl/c_monitor_list_notices	POSIX writes the message before a prompt, which a script never issues; dash tells them after the complete command, black-box (sh22 probe m01-m08, pelt#41)
-2.11/20	S	With job control on, a subshell ( … ) run in the foreground is a job of its own: Ctrl-Z stops it, fg continues it	session:jc_subshell_stop	
+2.11/20	S	With job control on, a subshell ( … ) run in the foreground is a job of its own: Ctrl-Z stops it, fg continues it	session:jc_subshell_stop session:jc_subshell_redir_stop	
 2.12/1	T	With job control off, commands of an asynchronous list start with SIGINT and SIGQUIT ignored	signal/background_ignores_int signal/c_async_ignores_quit	
 2.12/2	T	Otherwise commands inherit the signal actions the shell inherited, unless trap changed them	signal/trap_ignore_inherited signal/trap_caught_default_in_child signal/c_inherited_ignore	
-2.12/3	T	A trapped signal that arrives while a foreground command runs is acted on after that command completes	signal/trap_deferred_to_foreground_end	
+2.12/3	T	A trapped signal that arrives while a foreground command runs is acted on after that command completes	signal/trap_deferred_to_foreground_end signal/trap_after_redirected_subshell	
 2.12/4	T	A trapped signal that arrives during wait makes wait return at once with a status above 128, then the trap runs	signal/wait_interrupted signal/c_wait_interrupted_term	
 2.12/5	T	Signals for every name in signal.h can be trapped (USR1, ALRM, PIPE, CHLD, CONT, WINCH and the rest)	signal/trap_usr1 signal/trap_ignore_usr1 signal/c_trap_alrm signal/c_trap_pipe signal/c_trap_usr1_self signal/c_trap_abrt_number signal/c_trap_winch_cont signal/trap_every signal/trap_ignore_every signal/trap_chld signal/trap_ignore_pipe_fifo	
 2.13/1	T	A utility is run with the shell's open files, working directory and file creation mask	redir/child_inherits_fd exec/fd3_inherited cd/child_sees_it env/c_utility_environment	
@@ -303,7 +303,7 @@ id	kind	statement	cases	note
 2.13/4	T	A shell script run as a utility starts with caught traps at default and ignored signals still ignored	signal/trap_caught_default_in_child signal/trap_ignore_inherited	
 2.13/5	T	A subshell is a duplicate of the shell environment: variables (exported or not), functions, options, positional parameters	control/subshell cmdsub/function env/c_subshell_duplicate	
 2.13/6	T	In a subshell, traps that are not ignored are reset to default	signal/trap_subshell_reset signal/trap_in_subshell signal/trap_subshell_ends_restores signal/c_subshell_trap_reset	
-2.13/7	T	A subshell killed by a signal does not take the parent with it, and the parent sees a status above 128	signal/subshell_signal	
+2.13/7	T	A subshell killed by a signal does not take the parent with it, and the parent sees a status above 128	signal/subshell_signal signal/subshell_end_said_outside signal/subshell_end_devnull	
 2.13/8	T	Changes made in a subshell do not affect the shell, for every subshell form: ( ), $( ), pipeline stage, &	pipe/stage_is_subshell cmdsub/isolation env/c_subshell_forms	
 2.13/9	T	exit in a subshell ends only the subshell, for every subshell form	cmdsub/exit_inside pipe/exit_in_stage env/c_exit_in_subshell_forms	
 2.13/10	T	A subshell has its own working directory and descriptors: cd and exec redirections there do not leak	env/c_subshell_cwd_fds	
@@ -372,7 +372,7 @@ set/6	T	set -e ignores failures in the condition of if, while, until, in a ! pip
 set/7	T	Under set -e only the pipeline's own status matters, not an earlier stage's or a command substitution's inside a word	pipe/set_e option/c_errexit_pipeline	
 set/8	T	Under set -e an assignment from a failing command substitution exits	option/c_errexit_assign_cmdsub	
 set/9	T	set -e is ignored inside a compound command or function that runs in an exempt context	option/errexit_function option/c_errexit_ignored_inside	
-set/10	T	set -e applies in each subshell separately; a failing subshell then fails in the parent	option/errexit_subshell option/c_errexit_subshell_forms	
+set/10	T	set -e applies in each subshell separately; a failing subshell then fails in the parent	option/errexit_subshell option/c_errexit_subshell_forms redir/subshell_redir_fails_set_e	
 set/11	T	Under set -e the EXIT trap still runs, and the status is the failing command's	option/c_errexit_trap	
 set/12	T	A compound command whose status came from an ignored failure does not trigger -e	option/c_errexit_compound_status	
 set/13	T	set -f disables pathname expansion	option/noglob glob/noglob	
