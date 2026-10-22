@@ -1,0 +1,2 @@
+shape-rss: ok   substitution-pipeline    loop    10000     7044 KB   20000     8676 KB  grew    1632 KB (167 B a turn)  [x=$(echo a | cat)] metric=RSS bound=100B+1024KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)

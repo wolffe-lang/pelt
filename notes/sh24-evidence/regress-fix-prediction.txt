@@ -1,0 +1,13 @@
+Follow-up after final-head CI red, 2026-10-22. Before source changes.
+Same-instrument six readings, CPUs8-11:
+merge base57ffef9 native167,124,132,139,172,144; release155,181,162,169,163,144.
+headfa80a2f native149,151,174,157,155,188; release159,126,142,169,169,135.
+No consistent sh24 growth: ranges overlap, native median+14.5 and release-12.
+The inherited exec.drain performs fs_read_chunk in the ambient parent root.
+Prediction: a region per read frees the temporary List[byte] after copying
+its bytes into the state-owned capture, reducing retained bytes by roughly
+one read-list header/buffer per output-producing substitution. Expect the
+same row to decrease at least32 B/turn on both tiers; output and status are
+unchanged, including partial reads and captures beyond one chunk. No change
+to N, shape body, memory instrument or bound. Profile before, fix, measure
+six readings/tier, then corpus/sessions and capture boundary cases.
