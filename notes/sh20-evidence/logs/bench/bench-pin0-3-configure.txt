@@ -1,0 +1,6 @@
+bench: 9 runs each, taskset -c 0-3; load ['0.62', '0.54', '0.27']
+script           shell    median s   min s  user s   sys s  ratio
+configure-shaped dash        0.325   0.323   0.288   0.110   1.00
+configure-shaped pin         0.335   0.335   0.258   0.142   1.03
+configure-shaped pelt        0.481   0.477   0.371   0.183   1.48
+configure-shaped native      0.650   0.649   0.504   0.222   2.00

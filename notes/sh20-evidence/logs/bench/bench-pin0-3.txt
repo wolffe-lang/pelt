@@ -1,0 +1,98 @@
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+/usr/bin/dash: 0: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh: No such file
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+pelt: cannot open /home/mfwolffe/lanes/sh20/probe/bench/configure-shaped.sh
+bench: 9 runs each, taskset -c 0-3; load ['0.08', '0.09', '0.05']
+script           shell    median s   min s  user s   sys s  ratio
+fork             dash        0.311   0.308   0.258   0.052   1.00
+fork             pin         0.491   0.482   0.358   0.159   1.58
+fork             pelt        0.494   0.483   0.355   0.162   1.59
+fork             native      0.542   0.539   0.387   0.181   1.74
+pipeline         dash        0.319   0.314   0.415   0.182   1.00
+pipeline         pin         0.418   0.413   0.384   0.186   1.31
+pipeline         pelt        0.420   0.412   0.385   0.187   1.32
+pipeline         native      0.481   0.477   0.431   0.206   1.51
+param            dash        0.340   0.338   0.339   0.000   1.00
+param            pin         1.663   1.657   1.658   0.006   4.90
+param            pelt        1.725   1.710   1.718   0.006   5.08
+param            native      6.913   6.822   6.893   0.009  20.36
+configure-shaped dash     REFUSED: exit [2, 2, 2, 2, 2, 2, 2, 2, 2]
+configure-shaped pin      REFUSED: exit [127, 127, 127, 127, 127, 127, 127, 127, 127]
+configure-shaped pelt     REFUSED: exit [127, 127, 127, 127, 127, 127, 127, 127, 127]
+configure-shaped native   REFUSED: exit [127, 127, 127, 127, 127, 127, 127, 127, 127]
+s-sub            dash        0.159   0.155   0.096   0.070   1.00
+s-sub            pin         0.013   0.008   0.011   0.001   0.08
+s-sub            pelt        0.016   0.011   0.014   0.001   0.10
+s-sub            native      0.038   0.037   0.038   0.000   0.24
+s-cmdsub         dash        0.159   0.157   0.096   0.073   1.00
+s-cmdsub         pin         0.010   0.010   0.010   0.001   0.07
+s-cmdsub         pelt        0.017   0.016   0.016   0.001   0.10
+s-cmdsub         native      0.049   0.048   0.049   0.000   0.31
+s-cmdsub-echo    dash        0.163   0.162   0.103   0.075   1.00
+s-cmdsub-echo    pin         0.015   0.010   0.015   0.000   0.09
+s-cmdsub-echo    pelt        0.017   0.016   0.016   0.001   0.10
+s-cmdsub-echo    native      0.053   0.052   0.052   0.000   0.32
+s-sub2           dash        0.155   0.148   0.095   0.066   1.00
+s-sub2           pin         0.014   0.010   0.013   0.000   0.09
+s-sub2           pelt        0.320   0.316   0.232   0.111   2.06
+s-sub2           native      0.460   0.448   0.336   0.148   2.97
+s-cmdsub2        dash        0.162   0.161   0.098   0.076   1.00
+s-cmdsub2        pin         0.015   0.011   0.015   0.000   0.09
+s-cmdsub2        pelt        0.333   0.325   0.238   0.123   2.05
+s-cmdsub2        native      0.486   0.463   0.357   0.163   3.00
+s-bg-sub         dash        0.160   0.158   0.101   0.070   1.00
+s-bg-sub         pin         0.017   0.013   0.014   0.002   0.10
+s-bg-sub         pelt        0.296   0.288   0.214   0.125   1.85
+s-bg-sub         native      0.393   0.382   0.304   0.171   2.46
+s-bg-brace       dash        0.160   0.154   0.099   0.069   1.00
+s-bg-brace       pin         0.013   0.013   0.011   0.002   0.08
+s-bg-brace       pelt        0.302   0.295   0.222   0.130   1.89
+s-bg-brace       native      0.405   0.386   0.320   0.171   2.53
+s-stage          dash        0.225   0.222   0.201   0.136   1.00
+s-stage          pin         0.017   0.015   0.012   0.004   0.08
+s-stage          pelt        0.018   0.018   0.013   0.006   0.08
+s-stage          native      0.067   0.066   0.061   0.006   0.30
+s-func-pipe      dash        0.225   0.223   0.203   0.137   1.00
+s-func-pipe      pin         0.018   0.018   0.014   0.003   0.08
+s-func-pipe      pelt        0.308   0.296   0.231   0.125   1.37
+s-func-pipe      native      0.444   0.434   0.355   0.193   1.97
+s-stage-read     dash        0.241   0.238   0.225   0.138   1.00
+s-stage-read     pin         0.020   0.020   0.015   0.005   0.08
+s-stage-read     pelt        0.320   0.313   0.227   0.117   1.33
+s-stage-read     native      0.491   0.468   0.351   0.157   2.03
+s-program        dash        0.305   0.301   0.252   0.051   1.00
+s-program        pin         0.487   0.475   0.354   0.153   1.60
+s-program        pelt        0.491   0.487   0.356   0.157   1.61
+s-program        native      0.531   0.523   0.382   0.177   1.74
