@@ -76,9 +76,14 @@ profiler and sh20's RssAnon/RssFile split were re-used, not shell source.
 - **Item6:** two cheap fixes, as predicted: invalid trap options are fatal in
   a script, and non-EPIPE builtin writes are checked. A failed shadow builtin
   must not flush before ordinary fallback (`printf_bad_number` caught the
-  duplicate-output attempt). #6 requires input/lexer read boundaries,
-  lookahead, aliases and here-documents, not one echo in the evaluator; #20
-  still needs W06 byte-string process/environment/file APIs. #28's census
+  duplicate-output attempt). #6's remaining script-input echo requires
+  lexer read boundaries, lookahead, aliases and here-documents, not one echo
+  after evaluation. Re-derived: `set -v` then `echo a` in a script emits
+  7 stderr bytes in dash, 0 in both pelt tiers; enabled inside a `-c` string,
+  both dash and pelt emit 0 (the input was already read). #20
+  still needs W06 byte-string process/environment/file APIs: its existing
+  `quote/c_s_high_bytes` is visibly PEND-fail on both tiers. Evidence:
+  `probe/leftovers.sh`, `logs/leftovers.log`. #28's census
   timestamp coin is untouched. These three issues remain open.
 
 R-sh24-2, accepted: the new monitor row reads retained Linux RssAnon at the end
