@@ -1,0 +1,80 @@
+01 { ( kill -TERM $(sh -c 'echo $PPID') ); :; } 2>f
+   out: st=0
+   err: 
+   file: Terminated|
+02 { :; ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f
+   out: st=143
+   err: 
+   file: Terminated|
+03 { { ( kill -TERM $(sh -c 'echo $PPID') ); }; } 2>f
+   out: st=143
+   err: Terminated|
+   file: 
+04 { ( kill -TERM $(sh -c 'echo $PPID') ) 2>/dev/null; } 2>f
+   out: st=143
+   err: Terminated|
+   file: 
+05 { ( kill -TERM $(sh -c 'echo $PPID') ) && :; } 2>f
+   out: st=143
+   err: 
+   file: Terminated|
+06 { ! ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f
+   out: st=0
+   err: 
+   file: Terminated|
+07 { ( kill -TERM $(sh -c 'echo $PPID') ) & wait $!; } 2>f
+   out: st=143
+   err: 
+   file: Terminated|
+08 while :; do ( kill -TERM $(sh -c 'echo $PPID') ); break; done 2>f
+   out: st=0
+   err: 
+   file: Terminated|
+09 if :; then ( kill -TERM $(sh -c 'echo $PPID') ); fi 2>f
+   out: st=143
+   err: 
+   file: Terminated|
+10 case x in x) ( kill -TERM $(sh -c 'echo $PPID') );; esac 2>f
+   out: st=143
+   err: 
+   file: Terminated|
+11 { sh -c 'kill -TERM $$'; :; } 2>f
+   out: st=0
+   err: 
+   file: Terminated|
+12 { ( sh -c 'kill -TERM $$' ); :; } 2>f
+   out: st=0
+   err: 
+   file: Terminated|
+13 { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>f >/dev/null
+   out: st=143
+   err: Terminated|
+   file: 
+14 { ( kill -TERM $(sh -c 'echo $PPID') ); } 2>&1 | cat
+   out: st=0
+   err: Terminated|
+   file: 
+15 ( kill -TERM $(sh -c 'echo $PPID') ) 2>&1 | cat
+   out: st=0
+   err: Terminated|
+   file: 
+16 { ( kill -TERM $(sh -c 'echo $PPID') ); } 3>f
+   out: st=143
+   err: Terminated|
+   file: 
+17 exec 2>f; ( kill -TERM $(sh -c 'echo $PPID') )
+   out: st=143
+   err: 
+   file: Terminated|
+18 { ( echo in >&2; kill -TERM $(sh -c 'echo $PPID') ); } 2>f
+   out: st=143
+   err: Terminated|
+   file: in|
+19 ( echo in >&2; kill -TERM $(sh -c 'echo $PPID') ) 2>f
+   out: st=143
+   err: Terminated|
+   file: in|
+20 { ( kill -TERM $(sh -c 'echo $PPID'); ); echo out >&2; } 2>f
+   out: st=0
+   err: 
+   file: Terminated|out|

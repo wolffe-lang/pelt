@@ -1,0 +1,29 @@
+session: pelt = /home/mfwolffe/lanes/sh20/snaps/b448/target/native/pelt
+FAIL jc_subshell_redir_stop
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "( sleep 1; echo back ) 2>/dev/null"
+       pelt err no
+       pelt prompt ""
+       pelt step 2 "^Z"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "jobs"
+       pelt out "[1] + Stopped                    sleep 1; echo back\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "fg"
+       pelt out "sleep 1; echo back\nback\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "echo st=$?"
+       pelt out "st=0\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 6
+session: pass 0  fail 1  pending 0 (0)

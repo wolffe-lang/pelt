@@ -1,0 +1,24 @@
+01 trap 'echo got' USR1; ( kill -USR1 $$; sleep 0.2; echo in ) >f
+   out: got|st=0
+   err: 
+   file: in|
+02 trap 'echo got' USR1; { ( kill -USR1 $$; sleep 0.2; echo in ); } >f
+   out: got|st=0
+   err: 
+   file: in|
+03 trap 'echo got' USR1; ( sh -c 'kill -USR1 $PPID; sleep 0.2; echo in' ) >f
+   out: got|st=0
+   err: 
+   file: in|
+04 trap 'echo got >&2' USR1; ( kill -USR1 $$; sleep 0.2 ) 2>f
+   out: st=0
+   err: got|
+   file: 
+05 trap 'echo got' USR1; { kill -USR1 $$; sleep 0.2; echo in; } >f
+   out: st=0
+   err: 
+   file: got|in|
+06 trap 'echo got' USR1; ( kill -USR1 $$; sleep 0.2; echo in ) >f | cat
+   out: got|st=0
+   err: 
+   file: in|

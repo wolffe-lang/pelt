@@ -1,0 +1,84 @@
+01 ( echo hi ) >/nonexistent/f; echo "a $?"
+   out: a 2|st=0
+   err: some
+   file: 
+02 { ( echo hi ); } >/nonexistent/f; echo "a $?"
+   out: a 2|st=0
+   err: some
+   file: 
+03 set -e; ( echo hi ) >/nonexistent/f; echo after
+   out: 
+   err: some
+   file: 
+04 set -e; { ( echo hi ); } >/nonexistent/f; echo after
+   out: 
+   err: some
+   file: 
+05 set -e; ( false ) >f; echo after
+   out: 
+   err: 
+   file: 
+06 set -e; { ( false ); } >f; echo after
+   out: 
+   err: 
+   file: 
+07 set -e; if ( false ) >f; then :; fi; echo after
+   out: after|st=0
+   err: 
+   file: 
+08 set -e; ( false ) >f || echo or; echo after
+   out: or|after|st=0
+   err: 
+   file: 
+09 ( cat ) <<E
+doc
+E
+   out: doc|E; echo "st=0"
+   err: 
+   file: 
+10 { ( cat ); } <<E >f
+doc
+E
+   out: 
+   err: 
+   file: doc|E; echo "st=0"
+11 x=$( ( echo cap ) 2>f ); echo "[$x]"
+   out: [cap]|st=0
+   err: 
+   file: 
+12 ( echo one; echo two >&2 ) 2>&1 >f
+   out: two|st=0
+   err: 
+   file: one|
+13 exec 3>f; ( echo three >&3 ) 3>&-; exec 3>&-
+   out: st=0
+   err: some
+   file: 
+14 ( exit 3 ) >f; echo "e $?"
+   out: e 3|st=0
+   err: 
+   file: 
+15 set -u; ( echo $nope ) 2>f; echo "u $?"
+   out: u 2|st=0
+   err: 
+   file: /usr/bin/dash: 1: nope: parameter not set|
+16 set -C; echo x >f; ( echo y ) >f; echo "C $?"
+   out: C 2|st=0
+   err: some
+   file: x|
+17 ( read v; echo "got $v" ) <f
+   out: st=2
+   err: some
+   file: 
+18 echo in >f; ( read v; echo "got $v" ) <f
+   out: got in|st=0
+   err: 
+   file: in|
+19 trap 'echo exit-trap' EXIT; ( echo sub ) >f
+   out: st=0|exit-trap
+   err: 
+   file: sub|
+20 ( echo a ) >f >&2
+   out: st=0
+   err: some
+   file: 
