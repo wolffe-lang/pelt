@@ -99,6 +99,12 @@ fn run(mut sh: Sh, n: int) -> int {
     let k = sh.ast.nodes[n].kind
     if sh.ast.nodes[n].redirs.len > 0 && k != K_SIMPLE && k != K_FUNC {
         sh.line = sh.ast.nodes[n].line
+        if fork_usable(sh) && paren_alone(sh.ast, n) {
+            let st = run_paren_redir(mut sh, n)
+            if st != RUN_HERE {
+                return node_end(mut sh, K_SUBSHELL, st)
+            }
+        }
         let rds = redirs_of(sh.ast, n)
         if !apply_redirs(mut sh, rds) {
             end_redirs(mut sh)
@@ -143,6 +149,12 @@ fn run_node(mut sh: Sh, n: int, k: int) -> int {
         keep(mut sh.ast)
         st = 0
     }
+    node_end(mut sh, k, st)
+}
+
+/// What follows a node of kind `k` that answered `st`: `$?`, and a
+/// trap's action for a signal that came during a command.
+fn node_end(mut sh: Sh, k: int, st: int) -> int {
     if sh.flow == F_NONE || sh.flow == F_EXIT {
         if sh.flow == F_EXIT {
             return sh.status
@@ -578,6 +590,26 @@ fn run_paren(mut sh: Sh, n: int) -> int {
         }
     }
     run_subshell(mut sh, body)
+}
+
+/// `( list )` with redirections of its own, or braces with theirs that
+/// hold it alone (`paren_alone`), node `n`: always a process, which
+/// applies the redirections itself (`sh.fork`'s `child_body`), as dash's
+/// subshell does; so the shell's word that a signal ended it, a trap's
+/// action run while it runs and a stop's notice go to the shell's own
+/// descriptors, not into the subshell's redirections (black box:
+/// `notes/sh20-evidence/logs/probe/notice*`). With job control a
+/// foreground job of its own, as `run_paren`'s. `RUN_HERE` when the host
+/// does not fork (`run` then applies them in process).
+fn run_paren_redir(mut sh: Sh, n: int) -> int {
+    let job = jc_here(sh)
+    let st = fork_shape(mut sh, n, FK_WAIT, job, false, false, paren_body(sh.ast, n))
+    if st == RUN_HERE {
+        return st
+    }
+    sh.status = st
+    check_e(mut sh, st)
+    st
 }
 
 /// `( list )` in process: run in a frame (`sh.state`), which puts the

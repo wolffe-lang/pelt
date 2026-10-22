@@ -118,6 +118,46 @@ fn one_simple(a: Ast, n: int) -> int {
     -1
 }
 
+/// Whether node `n` is a subshell, or a brace group that holds one
+/// alone (braces in braces too): one process, whose redirections are
+/// all the subshell's (dash, black box: `{ ( … ); } 2>f` says the
+/// subshell's end outside `f`, and a stage, a substitution or a list
+/// after `&` of that shape is one process; `{ ( … ); :; } 2>f` and a
+/// function's or a loop's redirections are the shell's;
+/// `notes/sh20-evidence/logs/probe/notice*`).
+fn paren_alone(a: Ast, n: int) -> bool {
+    var m = n
+    loop {
+        if m < 0 {
+            return false
+        }
+        let k = a.nodes[m].kind
+        if k == K_SUBSHELL {
+            return true
+        }
+        if k != K_BRACE {
+            return false
+        }
+        m = one_of(a, a.nodes[m].kids[0])
+    }
+    false
+}
+
+/// The body of the subshell `paren_alone` node `n` holds.
+fn paren_body(a: Ast, n: int) -> int {
+    var m = n
+    loop {
+        if m < 0 || a.nodes[m].kind == K_SUBSHELL {
+            break
+        }
+        m = one_of(a, a.nodes[m].kids[0])
+    }
+    if m < 0 {
+        return n
+    }
+    a.nodes[m].kids[0]
+}
+
 /// Whether command substitution body `n` is one `trap` command and
 /// nothing else: the one substitution that keeps the shell's traps
 /// (XCU `trap`: "a command substitution containing only a single trap
@@ -510,13 +550,14 @@ fn child_start(
 }
 
 /// A forked node's body: a subshell that is the whole of it (`( ( … ) )`,
-/// `( … ) | …`, `( … ) &`) runs its own body here, its redirections
-/// around it, rather than fork again.
+/// `( … ) | …`, `( … ) &`, `( … ) >f`), braces that hold one alone
+/// (`paren_alone`) too, runs its own body here, the redirections of
+/// each around it, rather than fork again.
 fn child_body(mut sh: Sh, node: int) -> int {
     var m = node
     loop {
         let one = one_of(sh.ast, m)
-        if one < 0 || sh.ast.nodes[one].kind != K_SUBSHELL {
+        if one < 0 || !paren_alone(sh.ast, one) {
             break
         }
         if sh.ast.nodes[one].redirs.len > 0 {
