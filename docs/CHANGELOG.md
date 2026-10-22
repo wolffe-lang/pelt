@@ -6,6 +6,25 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- `jobs` reuses its listing and releases listing scratch after each call;
+  an empty literal query no longer copies an expansion string each time
+  (pelt#45). Redirected brace groups, `if` and `while` commands apply
+  their redirections directly from the syntax tree instead of keeping a
+  temporary list per turn (pelt#54).
+- In a `set -m` script, an ended single-process background job gives its
+  process entry back while retaining its status and notice; jobs started
+  repeatedly from one syntax node share its rendered command text.
+  Foreground pipelines retain their per-process status readers (pelt#46).
+- Complete commands in sourced interactive input tell and release ended
+  jobs before the next complete command, as dash does. A `wait` does not
+  itself release a job within the same complete command (pelt#55).
+- A simple command's signal-end notice follows its redirected standard
+  error. An optimized one-command subshell's notice remains outside its
+  redirections and output capture, as a forked subshell's does (pelt#53).
+- An invalid `trap` option ends a non-interactive shell with status 2;
+  refused built-in writes report an error and status 1 even when the
+  refusal is not EPIPE (pelt#28; the script-census timing coin remains).
+
 - **The fork** (wolf 0.2.34 / lupin 0.1.55, the eighth pin; ruling #90,
   pelt#34). On a host whose `os_fork` forks, a subshell `( … )`, a
   command substitution, every list after `&` (a built-in's too) and
