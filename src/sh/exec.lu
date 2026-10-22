@@ -1423,6 +1423,17 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
         sig = signo
     }
     env_back(t, names)
+    // The simple command's descriptor 2, while its redirections still
+    // exist (pelt#53); a subshell's parent notice stays outside them.
+    if signal_spoken(sig) {
+        if is_cap(fd_get(t, 2)) {
+            for b in "pelt: {signal_words(sig)}\n".bytes() {
+                (mut got).push(b)
+            }
+        } else {
+            report_signal(mut t, sig)
+        }
+    }
     close_opened(t)
     if hd < 0 {
         return slow()
@@ -1586,9 +1597,6 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
                 k += 1
             }
         }
-    }
-    if r.sig != 0 {
-        report_signal(mut sh, r.sig)
     }
     var at = 0
     var jtext = ""
