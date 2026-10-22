@@ -23,7 +23,7 @@ because eight lanes were sharing 0–3. The final gauntlet also runs bare
 controls. Uptime is printed beside every table and at each gate. The existing
 `builtin/c_times_real` timed out at high load in the first run; neither its
 assertion nor ten-second timeout changed. A separate printing driver waits
-for load below16 to retake it.
+for load below 16 to retake it.
 
 ## 2. Inputs, verified
 
@@ -44,23 +44,23 @@ profiler and sh20's RssAnon/RssFile split were re-used, not shell source.
   literal empty query removes that too; listing text/bytes live in a region
   and failed writes still propagate. The 10,000-call check subtracts an
   equal-length `true` input control to exclude input/parser storage; Linux
-  RssAnon excludes file-backed pages. Initial native result: trunk72–74,
-  head0–1, dash−1–0 B/call. The CI gate uses100,000 calls, bound16 B/call plus
-  the existing1MiB granularity allowance. Final table below is still pending.
+  RssAnon excludes file-backed pages. Initial native result: trunk 72–74,
+  head 0–1, dash −1–0 B/call. The CI gate uses 100,000 calls, bound 16 B/call plus
+  the existing 1 MiB granularity allowance. Final table below is still pending.
 - **#46:** the prediction that records/text, not descriptors, dominated held.
   The first fold/cache implementation did not meet the bound: RssAnon grew
-  about220 B/job. It is retained as failed evidence, not waived. The final
+  about 220 B/job. It is retained as failed evidence, not waived. The final
   layout folds only an ended single-process background job in a script,
   leaving foreground pipeline readers and interactive records intact; caches
   syntax-node text; packs group and common pooled text references into the
   existing slot; and has an unlimited overflow-reference list. Released pool
   entries are reused. Native/release checked table tests include extreme
   groups/status/flags, shared/replaced/released texts, overflow and AST reuse.
-  The original nominal160 B prediction is slightly missed on release163,
-  inside the committed160 B/job +64KiB over3,000 jobs gate. No bound increased.
+  The original nominal 160 B prediction is slightly missed on release 163,
+  inside the committed 160 B/job + 64 KiB over 3,000 jobs gate. No bound increased.
 - **#54:** the predicted `redirs_of` list, not saved descriptors, was the
-  keep:103 of104 root chunk grabs were `[list_push] < redirs_of < run`.
-  Direct AST iteration alone took the first native rows663–681 to20–86
+  keep: 103 of 104 root chunk grabs were `[list_push] < redirs_of < run`.
+  Direct AST iteration alone took the first native rows 663–681 to 20–86
   B/turn. Three separate brace/if/while rows cover it.
 - **#55:** the literal free-on-reap prediction was wrong. Dash keeps a waited
   job inside the same complete input command. It tells/frees between complete
@@ -83,9 +83,36 @@ profiler and sh20's RssAnon/RssFile split were re-used, not shell source.
 
 R-sh24-2, accepted: the new monitor row reads retained Linux RssAnon at the end
 of the same complete command, before notices/exec. Identical binaries moved
-100+KiB of RssFile between runs; peak could both hide and invent a failure.
-The160 B/job +64KiB bound is unchanged. macOS retains peak RSS for full CI.
+100+ KiB of RssFile between runs; peak could both hide and invent a failure.
+The 160 B/job + 64 KiB bound is unchanged. macOS retains peak RSS for full CI.
 The other existing shapes retain their measurements and assertions.
+
+### Memory table at the frozen code head
+
+Ranges over three passes, each bare and on CPUs 8–11 (six readings per cell),
+`logs/table-*.log`. Bytes per turn/call/job. The loop floor is included except
+for the explicitly input-controlled jobs query. Negative values are noise,
+not a claim that a turn frees memory.
+
+| row | sh20's archived issue baseline | trunk native / release, rederived | head native / release | dash, rederived |
+|---|---|---|---|---|
+| bare loop | 36–59 | 19–51 / 36–52 | 38–75 / 39–65 | −9–5 |
+| jobs query, own keep | about 60 | 75–86 / 77–82 | −4–2 / −2–0 | −1–0 |
+| monitored `env true & wait $!` | 111–299 on the older no-wait/peak shapes | 353–361 / 352–354 | 159–163 / 161–163 | 90–91 |
+| redirected braces | 644–721 | 638–714 / 638–675 | 24–64 / 31–67 | −9–14 |
+| redirected if | 644–721 | 658–716 / 675–705 | 43–67 / 49–83 | −4–6 |
+| redirected while | 644–721 | 648–670 / 657–683 | 33–63 / 34–64 | −5–2 |
+
+The monitor row now uses retained RssAnon, and waits each job explicitly; its
+dash reading is **90–91**, not the archived 0–16 for different no-wait/peak
+shapes. These are not presented as the same measurement. The original
+no-wait neighbors are being rederived separately with the new instrument.
+The stricter 10,000-call jobs check (`jobs-anon-bare.log`,
+`jobs-anon-four.log`) reads trunk 72–74 native / 72–73 release, head −2–0 /
+−1–0, dash −1–0 B/call: comfortably within 16 on both tiers.
+
+The high-load timing row was retaken unchanged at load 13.88–14.94 and passed
+on both tiers, bare and four-core (`retake-times-*.log`, `retake.launch.log`).
 
 ## 4. Evidence index
 
@@ -107,8 +134,8 @@ Everything here is under `notes/sh24-evidence/`.
 - CI plant A: `39798914029`, `sh24-plant` at `2fc22e4`, source at trunk.
   Both tiers red on exactly the five new memory rows, four new corpus rows
   (`trap_bad_option`, `write_full`, `jobs/write_failure`,
-  `signal/simple_end_redirected`) and `jc_wait_frees`. Counts990/4/28 and
-  sessions289/1/2. `ci/plant-a-39798914029.log` is the full log.
+  `signal/simple_end_redirected`) and `jc_wait_frees`. Counts 990/4/28 and
+  sessions 289/1/2. `ci/plant-a-39798914029.log` is the full log.
 - Updated-metric plant A: `39803107364`, `0dcc58a`, pending.
 - Packed-field plant B: `39803216452`, `ee1eab9`, pending; status writes
   deliberately erase packed group/text bits. These branches never merge.
@@ -127,9 +154,9 @@ Commits:
 - [x] Prediction before the first implementation change.
 - [x] Five principal fixes and two cheap #28 fixes; no pin move.
 - [x] Each issue's new row red at trunk; first CI plant red on both tiers.
-- [ ] Final corpus994/0/28 and sessions290/0/2 on both tiers, bare/four-core.
+- [ ] Final corpus 994/0/28 and sessions 290/0/2 on both tiers, bare/four-core.
 - [ ] Three full shape passes on both tiers, bare/four-core; comparison table.
-- [ ] Low-load retake of the existing timing row, no assertion/timeout changes.
+- [x] Low-load retake of the existing timing row, no assertion/timeout changes.
 - [ ] Updated-metric and packed-field CI plants, final evidence recorded.
 - [ ] Final tier-pr verdict, final-head full-matrix label, lane audit, pruning.
 
@@ -139,11 +166,11 @@ Leave pelt#56's job-text ruling untouched. No issue was filed or closed.
 
 ## State at the pause (2026-10-22)
 
-The source is frozen at428e4ff. New gauntlet `logs/final.status` has both native
-corpus runs green994/0/28; sessions and remaining gates are running. The
+The source is frozen at 428e4ff. New gauntlet `logs/final.status` has both native
+corpus runs green 994/0/28; sessions and remaining gates are running. The
 interleaved table runs independently, with uptime; the low-load retake prints
-once a minute while waiting below16. Paths on kasumi are
+once a minute while waiting below 16. Paths on kasumi are
 `/home/mfwolffe/lanes/sh24/head` (frozen code), `pelt` (staging), `base`
 (trunk binaries), `first-head` (failed first layout), `logs` and `probe`.
-All pids are recorded under that lane directory. Draft PR58 is not ready to
+All pids are recorded under that lane directory. Draft PR #58 is not ready to
 merge. Final measurements, CI/audit and pruning are still owed.
