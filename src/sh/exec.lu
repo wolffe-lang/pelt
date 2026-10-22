@@ -764,9 +764,9 @@ fn eval_top(mut sh: Sh, mut p: P, src: str, line: int) -> int {
         if !sh.opt_n {
             st = run(mut sh, n)
         }
-        if sh.jc_on {
-            // Complete commands of sourced/evaluated input are boundaries
-            // too, including in an interactive shell (pelt#55).
+        if sh.jc_on && (!sh.interactive || sh.dots > 0) {
+            // Complete commands inside sourced input are boundaries too
+            // (pelt#55); top-level typed lines keep prompt notification.
             jc_notify(mut sh, true)
         }
         if p.pend.len == 0 && p.want_doc == 0 {
