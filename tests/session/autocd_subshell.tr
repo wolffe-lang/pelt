@@ -1,0 +1,45 @@
+step 0
+err no
+prompt "$ "
+step 1 "shopt -s autocd 2>/dev/null; set -o autocd 2>/dev/null"
+err no
+prompt "$ "
+step 2 "W=$PWD; mkdir sub"
+err no
+prompt "$ "
+step 3 "x=$(sub 2>/dev/null); echo \"cs-bare st=$? [${PWD#\"$W\"}]\""
+out "cs-bare st=127 []\n"
+err no
+prompt "$ "
+step 4 "x=$(./sub 2>/dev/null); echo \"cs-slash st=$? [${PWD#\"$W\"}]\""
+out "cs-slash st=126 []\n"
+err no
+prompt "$ "
+step 5 "echo \"cs-in $(sub 2>/dev/null; echo \"[${PWD#\"$W\"}]\")\""
+out "cs-in []\n"
+err no
+prompt "$ "
+step 6 "(sub 2>/dev/null; echo \"paren [${PWD#\"$W\"}]\")"
+out "paren []\n"
+err no
+prompt "$ "
+step 7 "(cd .; sub 2>/dev/null; echo \"paren-two [${PWD#\"$W\"}]\")"
+out "paren-two []\n"
+err no
+prompt "$ "
+step 8 "{ sub 2>/dev/null; echo \"group-in-pipe [${PWD#\"$W\"}]\"; } | cat"
+out "group-in-pipe []\n"
+err no
+prompt "$ "
+step 9 "echo x | { sub 2>/dev/null; echo \"last-stage [${PWD#\"$W\"}]\"; }"
+out "last-stage []\n"
+err no
+prompt "$ "
+step 10 "sub 2>/dev/null | cat; echo \"simple-stage-after [${PWD#\"$W\"}]\""
+out "simple-stage-after []\n"
+err no
+prompt "$ "
+step 11 "exit"
+err no
+prompt ""
+exit 0 at step 11
