@@ -7,9 +7,6 @@
 //! `fc`'s operands, its list format and the history file's lines, Tab's
 //! reading of a line, its quoting and its list's shape (`sh.complete`),
 //! `read`'s split of a line into its variables, `$'…'`'s escapes,
-//! what `sh.fork` reads of a body's tree (and, for a program that holds
-//! a task, `busy`'s answer: `fork_now`), whether `set -o autocd` refuses
-//! inside a subshell,
 //! and what pelt#19's memory work keeps in place: a subshell's frame and
 //! journal, the tree's recycled slots and a word's text as a view.
 //! `src/sh_test.lu` runs them under `wolf test`.
@@ -857,105 +854,7 @@ pub fn self_test() -> List[str] {
     want_ds(mut bad, "$'\\q'", "\\q", 5)
     want_ds(mut bad, "$'\\u00e9'", "é", 9)
     want_ds(mut bad, "$''", "", 3)
-    want_fork_shape(mut bad, "true", true, false, true)
-    want_fork_shape(mut bad, "! x=1 env y", true, false, false)
-    want_fork_shape(mut bad, "a; b", false, false, true)
-    want_fork_shape(mut bad, "a && b", false, false, true)
-    want_fork_shape(mut bad, "a | b", false, false, false)
-    want_fork_shape(mut bad, "a &", false, false, false)
-    want_fork_shape(mut bad, "{{ a; b; }}", false, false, true)
-    want_fork_shape(mut bad, "trap", true, true, true)
-    want_fork_shape(mut bad, "trap - INT", true, true, true)
-    want_fork_shape(mut bad, "trap; :", false, false, true)
-    want_fork_shape(mut bad, "x=1 trap", true, false, true)
-    want_fork_shape(mut bad, "'trap'", true, false, true)
-    want_paren(mut bad, "( a ) >f", true)
-    want_paren(mut bad, "{{ ( a ); }} 2>f", true)
-    want_paren(mut bad, "{{ {{ ( a ); }}; }} 2>f", true)
-    want_paren(mut bad, "{{ ( a ); :; }} 2>f", false)
-    want_paren(mut bad, "{{ a; }} >f", false)
-    want_paren(mut bad, "{{ ( a ) & }} >f", false)
-    want_autocd(mut bad)
     bad
-}
-
-/// Whether `src` is a subshell, or braces that hold one alone
-/// (`sh.fork`'s `paren_alone`: the redirections are the subshell
-/// process's).
-fn want_paren(mut bad: List[str], src: str, want: bool) {
-    var a = new_ast()
-    var p = new_parser(src, 1)
-    let n = parse_complete(mut p, mut a)
-    if paren_alone(a, one_of(a, n)) != want {
-        (mut bad).push("paren_alone({src}) is not {want}")
-    }
-}
-
-/// `set -o autocd` refuses inside a subshell run in process (`sub` above
-/// 0) and in a shell that is not interactive (a forked subshell's), the
-/// name a directory or not (sh23's R-sh23-4, taken in sh20).
-fn want_autocd(mut bad: List[str]) {
-    var sh = new_sh("selftest")
-    sh.opt_autocd = true
-    sh.interactive = true
-    sh.sub = 1
-    if autocd_dir(sh, "/", "") {
-        (mut bad).push("autocd_dir answers yes inside a subshell run in process")
-    }
-    sh.sub = 0
-    sh.interactive = false
-    sh.sub_of_i = true
-    if autocd_dir(sh, "/", "") {
-        (mut bad).push("autocd_dir answers yes in a forked subshell of an interactive shell")
-    }
-}
-
-/// What `sh.fork` reads of a body's tree, for the body `src`: whether it
-/// is one simple command (run in process when the fast path finishes
-/// it), one `trap` command alone (`$(trap)` keeps the shell's traps), and
-/// whether a forked child may let a program that is its last command take
-/// its place.
-fn want_fork_shape(mut bad: List[str], src: str, one: bool, lone: bool, last: bool) {
-    var a = new_ast()
-    var p = new_parser(src, 1)
-    let n = parse_complete(mut p, mut a)
-    if (one_simple(a, n) >= 0) != one {
-        (mut bad).push("one_simple({src}) is not {one}")
-    }
-    if lone_trap(a, n) != lone {
-        (mut bad).push("lone_trap({src}) is not {lone}")
-    }
-    if (last_simple(a, n) >= 0) != last {
-        (mut bad).push("last_simple({src}) is not {last}")
-    }
-}
-
-/// `busy`'s row (`[os.proc.fork]`), asked by a program that holds a task
-/// parked in a scope while it calls this (`src/selfcheck.lu`, and
-/// `src/sh_test.lu` under `wolf test`): what `fork_begin` answered, and
-/// what it took the host for (-1 unasked: `busy`, the fork asked before
-/// the host is; 0: `unsupported`, the checked machine). In either case
-/// the answer must be `FORK_HERE`: pelt runs the shape in process. pelt
-/// starts no task (`src/` spawns none), so a program of its own asks it,
-/// and pelt's own program names none.
-pub fn fork_now() -> (int, int) {
-    var sh = new_sh("selfcheck")
-    let got = fork_begin(mut sh, FK_WAIT, -1, -1, -1, -1, false, true)
-    if got == FORK_CHILD {
-        // not reached: had the fork been made, the child ends here
-        os_exit(0)
-    }
-    (got, sh.fork_ok)
-}
-
-/// `fork_now`'s answer, as a check's line: "" when it is `FORK_HERE` and
-/// the host was taken for `want` (-1 `busy`, 0 `unsupported`, or -2 for
-/// either).
-pub fn fork_now_line(got: int, ok: int, want: int) -> str {
-    if got == FORK_HERE && (ok == want || want == -2 && ok != 1) {
-        return ""
-    }
-    "a fork with a task live answered {got} and took the host for {ok}, not in process (FORK_HERE) with {want}"
 }
 
 /// The `$'…'` at the start of `w` decoded (`sh.dsquote`): its text with
