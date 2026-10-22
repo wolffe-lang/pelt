@@ -1652,6 +1652,13 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
     if na == nw {
         return run_assign_only(mut sh, n, na)
     }
+    // The empty jobs query is a hot polling operation. Its literal
+    // encoding needs no per-call copy of pre_expand's string (pelt#45).
+    if na == 0 && nw == 1 && !sh.opt_x && sh.ast.nodes[n].words[0] == "jobs" {
+        if (sh.funcs["jobs"] else -1) < 0 {
+            return run_builtin_enc(mut sh, n, "jobs", "jobs\0")
+        }
+    }
     // the words after the assignments, expanded inside a region when
     // that writes nothing (pelt#19), else here
     let pre = copy region pe {

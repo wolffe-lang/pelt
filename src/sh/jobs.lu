@@ -1456,11 +1456,7 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
     while pi < sh.jobs_pick.len {
         let j = sh.jobs_pick[pi]
         pi += 1
-        if pids {
-            emit(mut sh, "{jb_leader(sh, j)}\n")
-        } else {
-            emit(mut sh, "{job_line(sh, j, long)}\n")
-        }
+        jobs_emit(mut sh, j, pids, long)
     }
     if !pids {
         pi = 0
@@ -1479,6 +1475,25 @@ fn bi_jobs(mut sh: Sh, args: List[str]) -> int {
         }
     }
     st
+}
+
+/// Listing scratch dies per call unless the output is a capture;
+/// the reusable pick list remains the state's (pelt#45).
+fn jobs_emit(mut sh: Sh, j: int, pids: bool, long: bool) {
+    flush(mut sh)
+    let h = fd_get(sh, 1)
+    if !is_cap(h) {
+        region jl {
+            let line = if pids then "{jb_leader(sh, j)}" else job_line(sh, j, long)
+            write_handle(h, "{line}\n")
+        }
+        return
+    }
+    if pids {
+        emit(mut sh, "{jb_leader(sh, j)}\n")
+    } else {
+        emit(mut sh, "{job_line(sh, j, long)}\n")
+    }
 }
 
 /// A job's group leader: its first process (`jobs -p`), or the id `$!`
