@@ -1,25 +1,192 @@
 # pelt
 
-A POSIX shell written in wolf.
+A POSIX shell written in [wolf](https://github.com/wolffe-lang/wolf-lang).
+pelt is `/bin/sh` on [PAX](https://github.com/wolffe-lang/pax) and an
+ordinary program on Linux and macOS.
 
-pelt is `/bin/sh` for [PAX](https://github.com/wolffe-lang/pax) and an ordinary program on Linux and macOS. It targets the POSIX.1-2024 Shell Command Language first; anything of its own comes after that is complete. Every behaviour is tested side by side against `dash` and `bash --posix`.
+It targets the POSIX.1-2024 Shell Command Language first; anything of
+its own comes after that is complete. Every behaviour is recorded from
+`dash` (the oracle of record) and checked against `bash --posix`, and no
+shell's source is ever read: pelt is clean-room, black-box only.
 
-Status: the language and the plumbing run. `pelt -c 'string'` and `pelt script` parse the whole POSIX grammar and run simple commands, compound commands, functions, every expansion and the special built-ins; pipelines, every redirection form (`<`, `>`, `>>`, `<>`, `>|`, `n>&m`, `n<&m`, `n>&-`, here-documents), `cd`, `&` and `wait`, and command substitutions that run programs — matching `dash` on a differential corpus (`tests/diff/`). On wolf 0.2.27: `exec cmd` replaces the shell (the same process, measured by `tools/exec-witness`); a child's environment is exactly the exported variables, so `unset` reaches it; `trap` catches, ignores and resets a signal (five of them at that pin); a child a signal ended answers 128+N; and `$!` is a process id. Plain `pelt` (or `pelt -i`, or `pelt -s arg…`) is interactive when standard input and standard error are terminals: it prompts with `PS1` and `PS2`, reads a line, runs it, and loops until `exit` or Ctrl-D; Ctrl-C ends the program it is waiting for, or the loop it is running, and the prompt comes back. Typed sessions are compared with `dash -i` through a pseudo-terminal (`tests/session/`). A loop of commands, or a session at the prompt, keeps almost nothing per command (`tools/loop-rss`). Of 80 real scripts (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts, small utilities), 76 run exactly as under dash, one more differs only where dash differs from itself, and the other 3 (xzgrep, zgrep, zdiff) need a process for a pipeline stage. On wolf 0.2.28, `umask` sets the process's file mode creation mask (octal or symbolic, `-S`), which every program pelt starts inherits, and a subshell's `umask` ends with the subshell. On wolf 0.2.29, `trap` catches, ignores and resets every signal POSIX lets a program catch, by name or by the host's number, and leaves alone a signal the shell was started ignoring; `$$` and `PPID` are the process's ids on every host; and `kill` is built in (`-s`, `-signal`, `-0`, `-l`, job ids). On wolf 0.2.30, the line editor takes the window's width from the terminal and draws the line again when the window is resized, waits for a key or a signal without waking (an idle prompt costs nothing), honours the erase, kill, interrupt, end-of-file, word-erase and literal-next characters `stty` set, and lets Ctrl-S, Ctrl-Q, Ctrl-V and Ctrl-O reach it. Tab completes a command name (built-ins, reserved words, functions, programs on `PATH`), a file name (relative, absolute or under `~`, quoted so the shell reads it back as itself) or a variable's name (after `$` and `${`); several names complete to what they share, and a second Tab lists them in columns sized to the window. Ctrl-V then Tab types a tab. Aliases are substituted as the shell reads (`alias`, `unalias`, a value ending in a blank, no recursion), `$'…'` quotes with its escapes, `set -o pipefail` gives a pipeline its rightmost failure, `type` and `command -v`/`-V` say what a name is, a utility once found on `PATH` is remembered until `PATH` changes (`hash`), `command -p` searches a standard `PATH`, `read -d` reads to a delimiter, and `sh -ec 'string'` and its kin read their options as dash does. On wolf 0.2.32, an interactive pelt has job control (`set -m`, also in a script): each pipeline of programs runs in a process group of its own and is handed the terminal, Ctrl-Z stops it, `jobs` (`-l`, `-p`), `fg` and `bg` take every job id (`%n`, `%+`, `%-`, `%string`, `%?string`), a job's ending or stopping is told before the next prompt (at once with `set -b`), `kill` reaches a job's group, `kill 0` and `kill -- -N`, `wait` is cut short by a trapped signal, and `exit` with stopped jobs warns once. A subshell, `{ …; } &` and a pipeline stage pelt runs itself are not processes yet, so they are not jobs. An interactive pelt calls a function named `command_not_found_handle` (bash's name) when a command's name is found nowhere: with the command's words as its operands and its redirections around it, in the shell's own environment, so a `cd` there moves the shell (the jump `lope init pelt` defines), and never from inside itself; its status is the command's, and a 127 is said as pelt's usual not-found (pelt#42). A script never calls it. With `set -o autocd` (off by default; `pelt -o autocd` too, and `set +o autocd` turns it off), an interactive pelt runs a command whose name names a directory, with a slash (`home/pax`, `/home/pax/`) or found nowhere (`..`, `child`, `"my dir"`), as `cd -- NAME`: `cd`'s status and message, the command's other words `cd`'s further operands, a function named `cd` called when there is one; a function, built-in or program of that name still runs, a file or a missing path keeps its answer, a name that is no directory still goes to `command_not_found_handle`, and a script ignores the option (pelt#49). A script reaps the jobs it never waits for as the next one starts, so a loop of `cmd &` does not fill the host's process table, and each such job keeps two numbers of the shell's memory; `read` with a redirection, `eval`, `cd`, `command` and `umask` keep almost nothing per command (`tools/shape-rss`, pelt#39). With `set -m` in a script, a job's ending is told after the complete command it ended in, as dash tells it (pelt#41). A test harness whose case times out ends every process the case started, under `tools/syscall-census` too (`tools/reap-witness`, pelt#27).
+## Status at a glance
 
-What it does not do yet, each named with what it waits on in `tests/diff/PENDING.md` and `tests/session/PENDING.md`: without fork, a pipeline stage pelt runs itself (a built-in, a function, a compound command) runs to the end before the next stage starts, and a subshell has no process of its own; `trap` and `kill` know the signals POSIX names and no other (not linux's `IO`, `PWR` or the real-time ones), and `kill` cannot signal a process group; a byte that is not UTF-8 cannot reach a program; `test -r/-w/-x` read the mode bits for the shell's own ids rather than asking `access(2)`, so a read-only or `noexec` mount and ACLs are not seen; `wait` is not cut short by a trapped signal. The line editor (emacs keys, `set -o vi`) and the history (`fc`, a shared `HISTFILE` kept to `HISTSIZE`, Ctrl-R, vi `v`, `!` in `PS1`) are there; no job control. What pelt lacks is measured in [`docs/CENSUS.md`](docs/CENSUS.md) (POSIX clause by clause, 80 real scripts, the prompt, speed), and what comes next is [`docs/PLAN.md`](docs/PLAN.md).
+| measure | where it stands |
+|---|---|
+| POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 505 of 547 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
+| differential corpus against dash, both tiers | 968 cases, 0 failing, 38 pending on a named primitive (`tests/diff/`) |
+| typed sessions against `dash -i` through a pseudo-terminal | 283 sessions, 0 failing, 3 pending (`tests/session/`) |
+| real `sh` scripts that run as under dash | 76 of 80 (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts) |
+| memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
+| toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
+
+The two documents behind the numbers: [`docs/CENSUS.md`](docs/CENSUS.md)
+measures what pelt lacks (POSIX clause by clause, real scripts, the
+prompt, speed) and [`docs/PLAN.md`](docs/PLAN.md) says what comes next
+and what each piece needs from wolf or PAX. Trunk's changes are in
+[`docs/CHANGELOG.md`](docs/CHANGELOG.md).
+
+## Try it
+
+On PAX, pelt is already the shell: boot the image and you are at its
+prompt. Elsewhere, build it from source with the pinned compiler
+(there are no binary releases yet):
 
 ```sh
-tools/fetch-toolchain   # the pinned wolf, by digest
-tools/build             # target/native/pelt and target/release/pelt
-tools/difftest --bin target/release
-tools/session --bin target/release
-tools/exec-witness target/release/pelt
-tools/signal-witness target/release/pelt
-tools/reap-witness target/release   # a case that times out leaves nothing running
-tools/clause-census     # the POSIX clause table, counted
-target/release/pelt     # a prompt
+tools/fetch-toolchain      # the pinned wolf and lupin, fetched by digest
+tools/build                # target/native/pelt and target/release/pelt
+target/release/pelt        # a prompt
+target/release/pelt -c 'for f in *; do echo "$f"; done'
+target/release/pelt script.sh
 ```
+
+`tools/build --static` links the release tier with `cc -static`, the
+shape PAX runs as pid 1. Every build denies warnings.
+
+## What works
+
+**The language.** `pelt -c 'string'`, `pelt script` and the prompt
+parse the whole POSIX grammar: simple and compound commands, functions,
+every expansion (parameters, arithmetic, command substitution, word
+splitting, pathname expansion, quoting, `$'…'`), aliases, and the
+special built-ins. `sh -ec 'string'` and its kin read their options as
+dash does.
+
+**Redirections and pipelines.** `<`, `>`, `>>`, `<>`, `>|`, `n>&m`,
+`n<&m`, `n>&-` and here-documents; pipelines, with `set -o pipefail`
+for the rightmost failure; `&`, `wait`, `$!`, and command substitutions
+that run programs.
+
+**Built-ins.** `cd`, `pwd`, `echo`, `printf`, `test`, `read` (`-d`),
+`getopts`, `umask` (octal and symbolic, `-S`), `trap`, `kill` (`-s`,
+`-signal`, `-0`, `-l`, job ids, a process group), `type`, `command`
+(`-v`, `-V`, `-p`), `hash` (a utility once found is remembered until
+`PATH` changes), `alias`/`unalias`, `fc`, `jobs`, `fg`, `bg`, `exec`
+(which replaces the shell in the same process), and the rest of the
+special built-ins.
+
+**Signals and processes.** `trap` catches, ignores and resets every
+signal POSIX lets a program catch, by name or by the host's number, and
+leaves alone a signal the shell was started ignoring; a child a signal
+ended answers 128+N; `$$`, `PPID` and `$!` are real process ids on every
+host; a child's environment is exactly the exported variables. A script
+reaps the jobs it never waits for as the next one starts, so a loop of
+`cmd &` does not fill the process table.
+
+**The prompt.** Interactive when standard input and standard error are
+terminals (`pelt`, `pelt -i`, `pelt -s`): `PS1` and `PS2`, Ctrl-C ends
+the program it is waiting for or the loop it is running and the prompt
+comes back, Ctrl-D ends the shell. The line editor has emacs keys and
+`set -o vi`, takes the window's width from the terminal and redraws on a
+resize, honours the erase, kill, interrupt, end-of-file, word-erase and
+literal-next characters `stty` set, and lets Ctrl-S, Ctrl-Q, Ctrl-V and
+Ctrl-O through. Tab completes a command name (built-ins, reserved words,
+functions, programs on `PATH`), a file name (relative, absolute or under
+`~`, quoted so the shell reads it back as itself) or a variable's name
+after `$` or `${`; a second Tab lists the candidates in columns sized to
+the window. History: `fc`, a shared `HISTFILE` kept to `HISTSIZE`,
+Ctrl-R, vi's `v`, and `!` in `PS1`. An idle prompt costs nothing: it
+waits for a key or a signal without waking.
+
+**Job control.** `set -m` (on by default at an interactive prompt, also
+in a script): each pipeline of programs runs in its own process group
+and is handed the terminal, Ctrl-Z stops it, `jobs` (`-l`, `-p`), `fg`
+and `bg` take every job id (`%n`, `%+`, `%-`, `%string`, `%?string`), a
+job's ending or stopping is told before the next prompt (at once with
+`set -b`), `wait` is cut short by a trapped signal, and `exit` with
+stopped jobs warns once.
+
+**Two hooks for a modern prompt.** An interactive pelt calls a function
+named `command_not_found_handle` (bash's name) when a command's name is
+found nowhere, in the shell's own environment and with the command's
+words, so a `cd` there moves the shell: this is what `lope init pelt`
+uses for no-prefix directory jumping. With `set -o autocd` (off by
+default; `pelt -o autocd` too) a command that names a directory, with a
+slash (`home/pax`, `/home/pax/`) or found nowhere (`..`, `child`), runs
+as `cd -- NAME`, the way bash's `shopt -s autocd` and zsh's `AUTO_CD`
+do; a function, built-in or program of that name still wins, and a
+script ignores the option. Where pelt parts from bash on the details,
+`docs/CHANGELOG.md` says so.
+
+**Startup.** pelt is POSIX here too: an interactive shell runs the file
+named by `ENV` before its first prompt (there is no `~/.peltrc`), so
+
+```sh
+export ENV="$HOME/.peltrc"          # in the shell that starts pelt
+echo 'set -o autocd' >> ~/.peltrc   # and, with lope: eval "$(lope init pelt)"
+```
+
+## What it does not do yet
+
+Each gap is named with the primitive it waits on in
+[`tests/diff/PENDING.md`](tests/diff/PENDING.md) and
+[`tests/session/PENDING.md`](tests/session/PENDING.md), and every
+pending case still runs on every pass and is reported, never skipped.
+
+- A subshell, `{ …; } &` and a pipeline stage pelt runs itself (a
+  built-in, a function, a compound command) are not processes of their
+  own, so they are not jobs and a stage runs to its end before the next
+  starts. The fork that fixes this (wolf 0.2.34's `os_fork`) is in
+  progress.
+- `trap` and `kill` know the signals POSIX names and no other (not
+  Linux's `IO`, `PWR` or the real-time ones).
+- A byte that is not UTF-8 cannot reach a program.
+- `test -r`, `-w` and `-x` read the mode bits for the shell's own ids
+  rather than asking `access(2)`, so a read-only or `noexec` mount and
+  ACLs are not seen.
+- Three of the 80 census scripts (xzgrep, zgrep, zdiff) need a process
+  for a pipeline stage.
+
+## How it is tested
+
+Nothing here is believed without a recording. Every tool below is in
+the tree so the measurement can be taken again.
+
+| tool | what it checks |
+|---|---|
+| `tools/difftest --bin target/release` | the differential corpus, every case's output, status and files against the expectation recorded from dash |
+| `tools/session --bin target/release` | typed sessions through a pseudo-terminal, byte for byte against `dash -i` |
+| `tools/oracle-record`, `tools/session-record` | record a new case's expectation from the oracle |
+| `tools/exec-witness`, `tools/signal-witness`, `tools/hist-witness`, `tools/edit-witness` | one behaviour each, measured on the live process (the same pid after `exec`, a signal's disposition, the history file, the editor) |
+| `tools/reap-witness` | a test case that times out leaves nothing running |
+| `tools/script-census` | the 80 real scripts, run as under dash |
+| `tools/clause-census` | the POSIX statement table, counted |
+| `tools/syscall-census`, `tools/loop-rss`, `tools/shape-rss`, `tools/session-rss`, `tools/glob-rss` | what a command costs in calls and memory |
+| `tools/check-fmt`, `tools/check-test`, `wolf test` | the formatter's fixed point, the unit tests |
+
+CI runs the same tools in tiers: a pull request runs what its paths can
+affect (`ci/tiers.py` decides), the merge runs everything, and a nightly
+re-runs the lot and opens an issue when red. Each lane of work leaves a
+record under `notes/` with its prediction, its measurements and what it
+left undone.
+
+## Layout
+
+```
+src/pelt.lu        the program (over the module src/sh/)
+src/sh/            parse, expand, exec, redir, builtin, jobs, signal, kill,
+                   edit, complete, hist, interact, arith, pattern, umask, …
+tests/diff/        the differential corpus (.lu cases, .meta expectations)
+tests/session/     the typed sessions (.tr transcripts, .meta)
+tests/reap/        the reaper's cases
+tests/census/      the 80 real scripts
+tools/             the build and every measurement tool above
+docs/              CENSUS.md, PLAN.md, CHANGELOG.md
+notes/             one record per lane of work
+ci/                the tier planner and its tests
+wolf-toolchain.toml  the pinned compiler and interpreter, by digest
+```
+
+## Contributing
+
+- dash is the oracle and bash the second opinion, both as black boxes.
+  Never read any shell's source; pelt's licence depends on it.
+- A behaviour change comes with its case, recorded from the oracle and
+  seen red before green.
+- Build with the pinned toolchain only; the pin moves in its own commit.
+- `docs/CHANGELOG.md` gets an entry; a lane of work gets a note.
 
 ## Licence
 
-GPL-3.0-only (`LICENSE`), with the wolf Training Data Permission (`LICENSE-TRAINING-DATA`), as boreutils.
+GPL-3.0-only (`LICENSE`), with the wolf Training Data Permission
+(`LICENSE-TRAINING-DATA`), as boreutils.
