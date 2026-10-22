@@ -1425,7 +1425,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
     env_back(t, names)
     // The simple command's descriptor 2, while its redirections still
     // exist (pelt#53); a subshell's parent notice stays outside them.
-    if signal_spoken(sig) {
+    if signal_spoken(sig) && sh.sub == 0 {
         if is_cap(fd_get(t, 2)) {
             for b in "pelt: {signal_words(sig)}\n".bytes() {
                 (mut got).push(b)
@@ -1597,6 +1597,11 @@ fn commit_fast(mut sh: Sh, r: Fast) -> int {
                 k += 1
             }
         }
+    }
+    // An optimized one-command subshell is represented in process;
+    // its parent's notice remains outside the command's redirections.
+    if r.sig != 0 && sh.sub > 0 {
+        report_signal(mut sh, r.sig)
     }
     var at = 0
     var jtext = ""

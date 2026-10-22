@@ -1,3 +1,3 @@
 exit=0
-stderr=no
+stderr=yes
 bash=differs
