@@ -2357,13 +2357,30 @@ fn reap(mut sh: Sh, h: int) -> int {
 
 /// Everything readable from `r` into the open capture; `r` is closed.
 fn drain(mut sh: Sh, r: int) {
+    while sh.cap_read.len < 65536 {
+        (mut sh.cap_read).push(0 as byte)
+    }
     loop {
-        let c = fs_read_chunk(r, 65536) else |e| match e {
-            eof => { break },
-            io => { break },
+        var count = 0
+        // A read returns a fresh list. Copy its bytes into already-owned
+        // staging storage before releasing the scratch region; growing
+        // the capture happens outside, in its own longer-lived region.
+        region chunk {
+            let c = fs_read_chunk(r, 65536) else |_| List[byte]()
+            count = c.len
+            var i = 0
+            while i < count {
+                sh.cap_read[i] = c[i]
+                i += 1
+            }
         }
-        for x in c {
-            (mut sh.cap_data).push(x)
+        if count == 0 {
+            break
+        }
+        var i = 0
+        while i < count {
+            (mut sh.cap_data).push(sh.cap_read[i])
+            i += 1
         }
     }
     fs_close(r) else |_| {}

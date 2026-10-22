@@ -132,6 +132,8 @@ struct Sh {
     caps: List[int],
     cap_was: List[int],
     cap_data: List[byte],
+    /// Reused read staging, so per-read scratch never escapes its region.
+    cap_read: List[byte],
     /// Redirection frames: (descriptor, what it was) pairs to put back,
     /// and the handles the frame opened, each frame's start in `rs_fd`
     /// and `rs_open`.
@@ -407,6 +409,7 @@ fn new_sh(name: str) -> Sh {
         caps: List[int](),
         cap_was: List[int](),
         cap_data: List[byte](),
+        cap_read: List[byte](),
         rs_fd: List[int](),
         rs_was: List[int](),
         rs_open: List[int](),
