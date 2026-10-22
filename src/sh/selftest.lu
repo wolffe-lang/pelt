@@ -8,7 +8,8 @@
 //! reading of a line, its quoting and its list's shape (`sh.complete`),
 //! `read`'s split of a line into its variables, `$'…'`'s escapes,
 //! what `sh.fork` reads of a body's tree (and, for a program that holds
-//! a task, `busy`'s answer: `fork_now`),
+//! a task, `busy`'s answer: `fork_now`), whether `set -o autocd` refuses
+//! inside a subshell,
 //! and what pelt#19's memory work keeps in place: a subshell's frame and
 //! journal, the tree's recycled slots and a word's text as a view.
 //! `src/sh_test.lu` runs them under `wolf test`.
@@ -868,7 +869,45 @@ pub fn self_test() -> List[str] {
     want_fork_shape(mut bad, "trap; :", false, false, true)
     want_fork_shape(mut bad, "x=1 trap", true, false, true)
     want_fork_shape(mut bad, "'trap'", true, false, true)
+    want_paren(mut bad, "( a ) >f", true)
+    want_paren(mut bad, "{{ ( a ); }} 2>f", true)
+    want_paren(mut bad, "{{ {{ ( a ); }}; }} 2>f", true)
+    want_paren(mut bad, "{{ ( a ); :; }} 2>f", false)
+    want_paren(mut bad, "{{ a; }} >f", false)
+    want_paren(mut bad, "{{ ( a ) & }} >f", false)
+    want_autocd(mut bad)
     bad
+}
+
+/// Whether `src` is a subshell, or braces that hold one alone
+/// (`sh.fork`'s `paren_alone`: the redirections are the subshell
+/// process's).
+fn want_paren(mut bad: List[str], src: str, want: bool) {
+    var a = new_ast()
+    var p = new_parser(src, 1)
+    let n = parse_complete(mut p, mut a)
+    if paren_alone(a, one_of(a, n)) != want {
+        (mut bad).push("paren_alone({src}) is not {want}")
+    }
+}
+
+/// `set -o autocd` refuses inside a subshell run in process (`sub` above
+/// 0) and in a shell that is not interactive (a forked subshell's), the
+/// name a directory or not (sh23's R-sh23-4, taken in sh20).
+fn want_autocd(mut bad: List[str]) {
+    var sh = new_sh("selftest")
+    sh.opt_autocd = true
+    sh.interactive = true
+    sh.sub = 1
+    if autocd_dir(sh, "/", "") {
+        (mut bad).push("autocd_dir answers yes inside a subshell run in process")
+    }
+    sh.sub = 0
+    sh.interactive = false
+    sh.sub_of_i = true
+    if autocd_dir(sh, "/", "") {
+        (mut bad).push("autocd_dir answers yes in a forked subshell of an interactive shell")
+    }
 }
 
 /// What `sh.fork` reads of a body's tree, for the body `src`: whether it
@@ -897,9 +936,8 @@ fn want_fork_shape(mut bad: List[str], src: str, one: bool, lone: bool, last: bo
 /// what it took the host for (-1 unasked: `busy`, the fork asked before
 /// the host is; 0: `unsupported`, the checked machine). In either case
 /// the answer must be `FORK_HERE`: pelt runs the shape in process. pelt
-/// starts no task (`src/` spawns none), so a program of its own asks it:
-/// a scope named in pelt's own program makes a native pelt start 1.2 to
-/// 1.4 MB larger, every process (`notes/sh20-the-fork.md`).
+/// starts no task (`src/` spawns none), so a program of its own asks it,
+/// and pelt's own program names none.
 pub fn fork_now() -> (int, int) {
     var sh = new_sh("selfcheck")
     let got = fork_begin(mut sh, FK_WAIT, -1, -1, -1, -1, false, true)
