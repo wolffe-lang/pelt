@@ -17,4 +17,7 @@ lane) and in the README's status.
   `command_not_found_handle`. `set -o` and `set +o` list it; `pelt -o
   autocd` starts with it on. A shell that is not interactive ignores it,
   as bash ignores `shopt -s autocd` there. Unlike bash, pelt does not
-  write `cd -- NAME` before it changes directory.
+  write `cd -- NAME` before it changes directory, its `cd` takes the
+  first of several operands where bash's refuses them (`DIR a b` goes
+  to `DIR`), and `command DIR` still cannot be run (126) where bash and
+  zsh change directory.
