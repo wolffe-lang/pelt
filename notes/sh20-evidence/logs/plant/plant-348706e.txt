@@ -1,0 +1,66 @@
+# plant run 39715917270 (workflow_dispatch tier pr, branch sh20-plant3 348706e: src/ at the pin fd5a890, i.e. trunk c10bad1's src, the head b05b0cf's tests, tools and ci); jobs native 119617913851, release 119617913902; red at every new row but wait/waited_signal_said (green at the pin by design)
+## gauntlet (ubuntu-latest, true, native)
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+wolf build: no such file: src/selfcheck.lu
+shape-rss: FAIL fork-redirected-subshell loop    10000    11132 KB   20000    17932 KB  grew    6800 KB (696 B a turn)  [( true ) >/dev/null]
+shape-rss: FAIL 1: fork-redirected-subshell (bound 100 B a turn + 1 MiB over N turns)
+FAIL builtin/c_s_dot_special_file: timed out, ended 1 processes
+FAIL env/c_subshell_concurrent: stdout
+FAIL env/subshell_is_process: stdout
+FAIL exec/exec_replaces_subshell: stdout
+FAIL jobs/subshell_jobs: stdout
+FAIL pipe/c_concurrent_stages: stdout
+FAIL pipe/c_shell_producer_ends: stdout
+FAIL pipe/endless_producer: timed out, ended 1 processes
+FAIL redir/c_s_cmdsub_fd_pipeline: stdout
+FAIL redir/subshell_redir_fails_set_e: stdout, exit 0 (oracle 2)
+FAIL signal/c_subshell_trap_reset: stdout, stderr absent
+FAIL signal/c_trap_cmdsub_shows_parent: stdout
+FAIL signal/c_trap_ignore_pipe: stdout
+FAIL signal/subshell_end_devnull: stdout, exit 143 (oracle 0), stderr absent
+FAIL signal/subshell_end_said_outside: stdout, exit 143 (oracle 0), stderr absent
+FAIL signal/subshell_signal: stdout, stderr absent
+FAIL signal/trap_after_redirected_subshell: stdout
+FAIL signal/trap_cmdsub_lone_exit: stdout
+FAIL wait/c_subshell: stdout
+FAIL wait/reaped_signal_quiet: stderr present
+difftest: total        969    20    28 (0)
+FAIL autocd_subshell
+FAIL c_jc_mixed_pipeline
+FAIL jc_background_subshell
+FAIL jc_subshell_redir_stop
+FAIL jc_subshell_stop
+FAIL subshell_jobs
+session: pass 283  fail 6  pending 2 (0)
+## gauntlet (ubuntu-latest, true, release)
+wolf build: no such file: src/selfcheck.lu
+shape-rss: FAIL fork-redirected-subshell loop    10000     9668 KB   20000    16140 KB  grew    6472 KB (662 B a turn)  [( true ) >/dev/null]
+shape-rss: FAIL 1: fork-redirected-subshell (bound 100 B a turn + 1 MiB over N turns)
+FAIL builtin/c_s_dot_special_file: timed out, ended 1 processes
+FAIL env/c_subshell_concurrent: stdout
+FAIL env/subshell_is_process: stdout
+FAIL exec/exec_replaces_subshell: stdout
+FAIL jobs/subshell_jobs: stdout
+FAIL pipe/c_concurrent_stages: stdout
+FAIL pipe/c_shell_producer_ends: stdout
+FAIL pipe/endless_producer: timed out, ended 1 processes
+FAIL redir/c_s_cmdsub_fd_pipeline: stdout
+FAIL redir/subshell_redir_fails_set_e: stdout, exit 0 (oracle 2)
+FAIL signal/c_subshell_trap_reset: stdout, stderr absent
+FAIL signal/c_trap_cmdsub_shows_parent: stdout
+FAIL signal/c_trap_ignore_pipe: stdout
+FAIL signal/subshell_end_devnull: stdout, exit 143 (oracle 0), stderr absent
+FAIL signal/subshell_end_said_outside: stdout, exit 143 (oracle 0), stderr absent
+FAIL signal/subshell_signal: stdout, stderr absent
+FAIL signal/trap_after_redirected_subshell: stdout
+FAIL signal/trap_cmdsub_lone_exit: stdout
+FAIL wait/c_subshell: stdout
+FAIL wait/reaped_signal_quiet: stderr present
+difftest: total        969    20    28 (0)
+FAIL autocd_subshell
+FAIL c_jc_mixed_pipeline
+FAIL jc_background_subshell
+FAIL jc_subshell_redir_stop
+FAIL jc_subshell_stop
+FAIL subshell_jobs
+session: pass 283  fail 6  pending 2 (0)

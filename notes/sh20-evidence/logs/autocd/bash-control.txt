@@ -1,0 +1,7 @@
+# sh20: bash 5.3 --posix -i (kasumi, the container, 2026-10-22) takes `shopt -s autocd`
+# from autocd_subshell's first line at the top level, and refuses it in a substitution;
+# so the session's second opinion (bash=agree) is bash with the option on.
+# input: shopt -s autocd 2>/dev/null; set -o autocd 2>/dev/null / W=$PWD; mkdir sub /
+#        sub 2>/dev/null; echo top [${PWD#$W}] / cd $W; x=$(sub 2>/dev/null); echo cs st=$? / exit
+top [/sub]
+cs st=127

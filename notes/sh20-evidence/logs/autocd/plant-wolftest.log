@@ -1,0 +1,3 @@
+test ./sh_test.lu::main ... FAILED (trap(assert))
+  stderr: autocd_dir answers yes inside a subshell run in process
+wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out

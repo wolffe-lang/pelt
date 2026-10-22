@@ -1,0 +1,13 @@
+# plant run 39715919419 (workflow_dispatch tier pr, branch sh20-plant4 94ca885: the head b05b0cf but autocd_dir without its sh.sub > 0 refusal); jobs native 119617924964, release 119617924996; the session autocd_subshell stays green (a forked child is not interactive), the table check is the red
+## gauntlet (ubuntu-latest, true, native)
+test ./sh_test.lu::main ... FAILED (trap(assert))
+wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out
+autocd_dir answers yes inside a subshell run in process
+selfcheck: 1 table checks failed
+difftest: total        989     0    28 (0)
+session: pass 289  fail 0  pending 2 (0)
+## gauntlet (ubuntu-latest, true, release)
+autocd_dir answers yes inside a subshell run in process
+selfcheck: 1 table checks failed
+difftest: total        989     0    28 (0)
+session: pass 289  fail 0  pending 2 (0)

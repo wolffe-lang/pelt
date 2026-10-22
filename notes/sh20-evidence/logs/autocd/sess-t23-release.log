@@ -1,0 +1,55 @@
+session: pelt = /home/mfwolffe/lanes/sh20/snaps/t23/target/release/pelt
+FAIL autocd_subshell
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "shopt -s autocd 2>/dev/null; set -o autocd 2>/dev/null"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "W=$PWD; mkdir sub"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "x=$(sub 2>/dev/null); echo \"cs-bare st=$? [${PWD#\"$W\"}]\""
+     ! pelt out "cs-bare st=0 []\n"
+       dash out "cs-bare st=127 []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "x=$(./sub 2>/dev/null); echo \"cs-slash st=$? [${PWD#\"$W\"}]\""
+     ! pelt out "cs-slash st=0 []\n"
+       dash out "cs-slash st=126 []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "echo \"cs-in $(sub 2>/dev/null; echo \"[${PWD#\"$W\"}]\")\""
+     ! pelt out "cs-in [/sub]\n"
+       dash out "cs-in []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "(sub 2>/dev/null; echo \"paren [${PWD#\"$W\"}]\")"
+     ! pelt out "paren [/sub]\n"
+       dash out "paren []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 7 "(cd .; sub 2>/dev/null; echo \"paren-two [${PWD#\"$W\"}]\")"
+     ! pelt out "paren-two [/sub]\n"
+       dash out "paren-two []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 8 "{ sub 2>/dev/null; echo \"group-in-pipe [${PWD#\"$W\"}]\"; } | cat"
+     ! pelt out "group-in-pipe [/sub]\n"
+       dash out "group-in-pipe []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 9 "echo x | { sub 2>/dev/null; echo \"last-stage [${PWD#\"$W\"}]\"; }"
+     ! pelt out "last-stage [/sub]\n"
+       dash out "last-stage []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 10 "sub 2>/dev/null | cat; echo \"simple-stage-after [${PWD#\"$W\"}]\""
+       pelt out "simple-stage-after []\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 11 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 11
+session: pass 0  fail 1  pending 0 (0)
