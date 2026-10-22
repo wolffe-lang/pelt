@@ -1,0 +1,18 @@
+verbose script shell=/usr/bin/dash exit=0 stdout=a stderr_bytes=7
+verbose command shell=/usr/bin/dash exit=0 stdout=a stderr_bytes=0
+verbose script shell=/home/mfwolffe/lanes/sh24/head/target/native/pelt exit=0 stdout=a stderr_bytes=0
+verbose command shell=/home/mfwolffe/lanes/sh24/head/target/native/pelt exit=0 stdout=a stderr_bytes=0
+verbose script shell=/home/mfwolffe/lanes/sh24/head/target/release/pelt exit=0 stdout=a stderr_bytes=0
+verbose command shell=/home/mfwolffe/lanes/sh24/head/target/release/pelt exit=0 stdout=a stderr_bytes=0
+difftest: pelt = /home/mfwolffe/lanes/sh24/head/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+PEND-fail quote/c_s_high_bytes (waits on non-utf8-bytes)
+difftest: area        pass  fail  pending (of which pass)
+difftest: quote          0     0     1 (0)
+difftest: total          0     0     1 (0)
+difftest: pelt = /home/mfwolffe/lanes/sh24/head/target/release/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+PEND-fail quote/c_s_high_bytes (waits on non-utf8-bytes)
+difftest: area        pass  fail  pending (of which pass)
+difftest: quote          0     0     1 (0)
+difftest: total          0     0     1 (0)
