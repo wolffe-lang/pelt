@@ -105,7 +105,7 @@ id	kind	statement	cases	note
 2.6.2/18	T	Trim forms of an unset parameter fail under set -u	param/c_trim_nounset	
 2.6.2/19	T	A bad substitution operator is an expansion error: a non-interactive shell exits	param/bad_substitution	
 2.6.2/20	T	Parameter expansion applies to special parameters ($?, $#, $-, $!, $0, $$) in the modifier forms	param/c_special_modifiers	
-2.6.3/1	T	$(commands) runs in a subshell and is replaced by its standard output	cmdsub/basic cmdsub/isolation cmdsub/external cmdsub/c_subshell_env	
+2.6.3/1	T	$(commands) runs in a subshell and is replaced by its standard output	cmdsub/basic cmdsub/isolation cmdsub/external cmdsub/c_subshell_env cmdsub/drain_chunks	
 2.6.3/2	T	Trailing newlines of the output are removed, all of them; others are kept	cmdsub/trailing_newlines cmdsub/program_newlines cmdsub/c_newlines	
 2.6.3/3	T	Unquoted command substitution output is split and globbed; quoted is not	cmdsub/in_dquotes cmdsub/c_split_glob	
 2.6.3/4	T	In `...` a backslash is literal except before $ ` and backslash	cmdsub/backquote cmdsub/program_backquote cmdsub/c_backquote_backslash	
@@ -113,7 +113,7 @@ id	kind	statement	cases	note
 2.6.3/6	T	$(...) may hold any program: quotes, comments, case with unbalanced ), here-documents	cmdsub/case_inside cmdsub/c_any_program	
 2.6.3/7	T	The result of a command substitution is not expanded again	cmdsub/c_not_rescanned	
 2.6.3/8	T	$(( is arithmetic when it parses as such; $( ( starts a subshell in a command substitution	cmdsub/c_arith_ambiguity	
-2.6.3/9	T	The exit status of the last command substitution is the status of a command with no name	cmdsub/status cmdsub/program_status	
+2.6.3/9	T	The exit status of the last command substitution is the status of a command with no name	cmdsub/status cmdsub/program_status cmdsub/drain_chunks	
 2.6.3/10	T	An exit in a command substitution ends only the substitution	cmdsub/exit_inside	
 2.6.3/11	T	A command substitution's commands see standard input and standard error of the shell	cmdsub/program_stderr cmdsub/c_stdin_inherited	
 2.6.4/1	T	$((expression)) is replaced by the value of the expression	arith/basic	

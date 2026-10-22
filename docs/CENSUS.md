@@ -1,273 +1,46 @@
-# The census: what pelt lacks, measured
-
-pelt at `b32bebc` (wolf 0.2.27 / lupin 0.1.50), measured on 2026-10-11
-against dash 0.5.13.4 (the oracle of record, `tests/diff/ORACLE`) and
-`bash --posix` 5.3.20, on linux x86-64 (kasumi) with CI on linux x86-64
-and macOS arm64. Four measurements, each kept in the tree so it can be
-taken again: the POSIX clauses, real scripts, the prompt, and speed.
-The plan that follows from them is [`PLAN.md`](PLAN.md).
-
-**The three numbers.**
-
-| measure | result |
-|---|---|
-| POSIX.1-2024 XCU chapter 2 and the built-in utilities' pages, testable statements met | **400 of 527, 75.9%** (`tools/clause-census`) |
-| real `sh` scripts that run as under dash (output, status, files) | **50 of 80, 62.5%**; 72 of 80 once four gaps are routed around (`tools/script-census`) |
-| the largest single gap | **`test -r`, `-w`, `-x`, `-L`, `-h`, `-ef` answer wrongly**: 14 of the 80 scripts fail on it, the most of any construct, and it is pelt's own work |
-
-## 1. The clause census
-
-**Method.** Every normative paragraph of POSIX.1-2024 XCU chapter 2
-(read from the Open Group's online edition, `pubs.opengroup.org/
-onlinepubs/9799919799`, 2026-10-11) and of the utility pages for the
-special built-ins and for `sh`, `alias`, `unalias`, `command`, `type`,
-`hash`, `cd`, `pwd`, `echo`, `true`, `false`, `test`, `printf`, `read`,
-`getopts`, `wait`, `kill`, `umask`, `ulimit`, `fc`, `jobs`, `fg` and
-`bg` was cut into testable statements, written in this project's words
-with an id (the clause, then a serial), and each statement given the
-cases that show it: the corpus's existing cases where they do, and a
-new case (`c_*`) where nothing did. Every new case was recorded from
-dash by `tools/oracle-record`; where dash and POSIX part, the case says
-so and takes `bash --posix` as its oracle (24 cases: `$'…'`, `;&`,
-`getopts`' `OPTARG`, the declaration utilities, `read -d`, `trap -p`,
-`cd -e`, `set -h`, `set -u` in arithmetic, `LINENO` in a function,
-`sh`'s 127 for a missing command file). A case pelt fails is marked
-`pending=` with what it waits on (`tests/diff/PENDING.md`,
-`tests/session/PENDING.md`), so CI stays at 0 failures and each gap
-stays visible. Statements that POSIX leaves unspecified or optional but
-scripts lean on (dash's `echo`, `read` with no name, `$((++x))`) are
-recorded and not counted (kind X).
-
-`tests/census/clauses.tsv` is the table; `tools/clause-census` counts
-it and checks it against the tree on every CI host. A statement is
-**met** when every case that shows it passes; that is a sample of the
-statement, not a proof.
-
-**How the corpus was built.** sh01–sh05 built the corpus by area, as
-the language arrived: the grammar, expansions, redirections and the
-special built-ins by design; the utility pages only where a lane needed
-one. 283 of the 532 statements had a passing case before this census.
-Nothing covered aliases, `$'…'`, `umask`, `ulimit`, `type`, `hash`,
-`fc`, `jobs`, `fg`, `bg`, the job-control clauses, or `test`'s file
-primaries beyond `-e`, `-f`, `-d`, `-s`.
-
-**Counts.** 471 new differential cases (110 pending) and 42 new
-session cases (35 pending). The corpus is 804 pass, 0 fail, 117
-pending on both tiers; the sessions 92 pass, 0 fail, 35 pending.
-dash and `bash --posix` give different output on 96 of the new cases,
-mostly in how they format messages and listings.
-
 | part | statements | met | pending | gap | untestable | met, of the testable | had a case before the census |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | 2.1 Introduction | 2 | 1 | 0 | 0 | 1 | 100% | 1 |
-| 2.2 Quoting | 19 | 10 | 9 | 0 | 0 | 53% | 9 |
-| 2.3 Token recognition and aliases | 18 | 8 | 10 | 0 | 0 | 44% | 5 |
+| 2.2 Quoting | 19 | 18 | 1 | 0 | 0 | 95% | 12 |
+| 2.3 Token recognition and aliases | 18 | 18 | 0 | 0 | 0 | 100% | 10 |
 | 2.4 Reserved words | 3 | 3 | 0 | 0 | 0 | 100% | 1 |
-| 2.5 Parameters and variables | 34 | 25 | 8 | 0 | 1 | 76% | 19 |
+| 2.5 Parameters and variables | 34 | 31 | 2 | 0 | 1 | 94% | 22 |
 | 2.6 Word expansions | 67 | 66 | 1 | 0 | 0 | 99% | 44 |
 | 2.7 Redirection | 27 | 27 | 0 | 0 | 0 | 100% | 19 |
 | 2.8 Exit status and errors | 17 | 15 | 1 | 0 | 1 | 94% | 11 |
-| 2.9 Shell commands | 68 | 61 | 7 | 0 | 0 | 90% | 46 |
+| 2.9 Shell commands | 68 | 67 | 1 | 0 | 0 | 99% | 49 |
 | 2.10 Grammar | 15 | 15 | 0 | 0 | 0 | 100% | 7 |
-| 2.11 Job control | 15 | 3 | 10 | 2 | 0 | 20% | 1 |
-| 2.12 Signals | 5 | 3 | 2 | 0 | 0 | 60% | 3 |
-| 2.13 Execution environment | 12 | 8 | 4 | 0 | 0 | 67% | 7 |
-| 2.14 Pattern matching | 17 | 15 | 2 | 0 | 0 | 88% | 13 |
-| 2.15 Special built-ins | 88 | 75 | 13 | 0 | 0 | 85% | 54 |
-| `sh` (utility page) | 26 | 16 | 8 | 0 | 2 | 67% | 6 |
-| `alias` (utility page) | 6 | 0 | 6 | 0 | 0 | 0% | 0 |
-| `command` (utility page) | 7 | 4 | 3 | 0 | 0 | 57% | 3 |
-| `type` (utility page) | 2 | 0 | 2 | 0 | 0 | 0% | 0 |
-| `hash` (utility page) | 2 | 1 | 1 | 0 | 0 | 50% | 0 |
+| 2.11 Job control | 17 | 15 | 0 | 2 | 0 | 88% | 3 |
+| 2.12 Signals | 5 | 5 | 0 | 0 | 0 | 100% | 5 |
+| 2.13 Execution environment | 12 | 12 | 0 | 0 | 0 | 100% | 9 |
+| 2.14 Pattern matching | 17 | 17 | 0 | 0 | 0 | 100% | 13 |
+| 2.15 Special built-ins | 88 | 82 | 6 | 0 | 0 | 93% | 59 |
+| `sh` (utility page) | 38 | 34 | 2 | 0 | 2 | 94% | 7 |
+| `alias` (utility page) | 6 | 6 | 0 | 0 | 0 | 100% | 3 |
+| `command` (utility page) | 7 | 7 | 0 | 0 | 0 | 100% | 3 |
+| `type` (utility page) | 2 | 2 | 0 | 0 | 0 | 100% | 1 |
+| `hash` (utility page) | 2 | 2 | 0 | 0 | 0 | 100% | 2 |
 | `cd` (utility page) | 8 | 7 | 1 | 0 | 0 | 88% | 6 |
 | `pwd` (utility page) | 2 | 1 | 1 | 0 | 0 | 50% | 1 |
 | `echo` (utility page) | 1 | 1 | 0 | 0 | 0 | 100% | 1 |
 | `true` (utility page) | 1 | 1 | 0 | 0 | 0 | 100% | 1 |
-| `test` (utility page) | 15 | 9 | 6 | 0 | 0 | 60% | 8 |
+| `test` (utility page) | 15 | 13 | 2 | 0 | 0 | 87% | 9 |
 | `printf` (utility page) | 9 | 6 | 3 | 0 | 0 | 67% | 6 |
-| `read` (utility page) | 8 | 5 | 3 | 0 | 0 | 62% | 3 |
+| `read` (utility page) | 8 | 8 | 0 | 0 | 0 | 100% | 5 |
 | `getopts` (utility page) | 7 | 7 | 0 | 0 | 0 | 100% | 2 |
-| `wait` (utility page) | 7 | 5 | 2 | 0 | 0 | 71% | 5 |
-| `kill` (utility page) | 6 | 2 | 4 | 0 | 0 | 33% | 1 |
-| `umask` (utility page) | 4 | 0 | 4 | 0 | 0 | 0% | 0 |
+| `wait` (utility page) | 7 | 7 | 0 | 0 | 0 | 100% | 6 |
+| `kill` (utility page) | 7 | 7 | 0 | 0 | 0 | 100% | 5 |
+| `umask` (utility page) | 4 | 4 | 0 | 0 | 0 | 100% | 0 |
 | `ulimit` (utility page) | 4 | 0 | 4 | 0 | 0 | 0% | 0 |
-| `fc` (utility page) | 4 | 0 | 4 | 0 | 0 | 0% | 0 |
-| `jobs` (utility page) | 3 | 0 | 3 | 0 | 0 | 0% | 0 |
-| `fg` (utility page) | 2 | 0 | 2 | 0 | 0 | 0% | 0 |
-| `bg` (utility page) | 1 | 0 | 1 | 0 | 0 | 0% | 0 |
-| **total** | **532** | **400** | **125** | **2** | **5** | **75.9%** | **283** |
+| `fc` (utility page) | 5 | 5 | 0 | 0 | 0 | 100% | 0 |
+| `jobs` (utility page) | 3 | 3 | 0 | 0 | 0 | 100% | 0 |
+| `fg` (utility page) | 2 | 2 | 0 | 0 | 0 | 100% | 0 |
+| `bg` (utility page) | 1 | 1 | 0 | 0 | 0 | 100% | 0 |
+| **total** | **548** | **516** | **25** | **2** | **5** | **95.0%** | **323** |
 
-Not counted: 18 statements recorded for what dash does where POSIX leaves the behaviour unspecified or optional (kind X).
-
-**What the unmet statements wait on**, counted by statement (a
-statement may wait on more than one thing):
-
-| waits on | statements | whose work |
-|---|---:|---|
-| aliases (`alias`, `unalias`, XCU 2.3.1) | 17 | pelt |
-| job control (`set -m`, `jobs`, `fg`, `bg`, Ctrl-Z, XCU 2.11) | 14 | wolf-lang, then pelt; PAX for PAX |
-| `$'…'` (XCU 2.2.4, new in 2024) | 7 | pelt |
-| a process per subshell and pipeline stage (no fork) | 7 | wolf-lang (or a ruling) |
-| command history and `fc` | 6 | pelt |
-| `test`'s file primaries | 5 | pelt (and wolf-lang for exact access) |
-| `kill` built in | 4 | wolf-lang#141 |
-| `umask` | 4 | wolf-lang s230 (merged, not released) |
-| `ulimit` | 4 | wolf-lang |
-| `$$`, `PPID` off linux | 4 | wolf-lang#141 |
-| about forty others, one to two statements each | 53 | mostly pelt |
+Not counted: 43 statements recorded for what dash does where POSIX leaves the behaviour unspecified or optional (kind X).
 
 
-## 2. The script census
-
-**Method** (`tools/script-census`). 80 real scripts, each pinned by
-the sha256 of the script file (`tools/script-census.pins`), run under
-dash and under a static pelt in throwaway `--network none` containers
-with nothing of the host mounted but one scratch directory. Compared:
-standard output byte for byte, the exit status, standard error by
-presence, and a listing of the files each run made or changed. No
-third-party script is in this repository; the tool fetches each by
-digest. The dash in each image is that distribution's (Arch 0.5.13.4,
-Debian 13 0.5.12, Alpine 3.22 0.5.12); every construct below was
-checked again against the oracle's 0.5.13.4.
-
-| group | scripts | same | differs |
-|---|---:|---:|---:|
-| autoconf `configure` (GNU hello 2.12.2, sed 4.9, gzip 1.14) and zlib 1.3.1's | 4 | 1 | 3 |
-| automake 1.18.1 and libtool 2.5.4 helpers | 13 | 6 | 7 |
-| git 2.56.0's test library (a 4-test file, and `t0000-basic`) | 2 | 0 | 2 |
-| Debian 13 maintainer scripts | 17 | 10 | 7 |
-| Debian init scripts and helpers | 7 | 2 | 5 |
-| Alpine 3.22 package scripts and alpine-conf tools | 16 | 16 | 0 |
-| small `#!/bin/sh` utilities (10 of them `shellcheck -s sh` clean: all 10 same) | 21 | 15 | 6 |
-| **total** | **80** | **50** | **30** |
-
-No script hung and none crashed pelt. A second pass (`--aided`)
-rewrote each script so that the four most common gaps went around pelt
-(`test` run from `/usr/bin`, `umask` skipped, `trap … 13` spelled
-`PIPE`, autoconf's bracket-with-slash `case` arms rewritten): **72 of
-80** then run as under dash, and the 8 left are constructs 5 to 8.
-
-**The smallest constructs, ranked by scripts broken.** Each is a case
-of this project's own writing (`c_s_*`), pending, recorded from dash.
-
-| # | construct | scripts | case | whose work |
-|---|---|---:|---|---|
-| 1 | `test -x` is false for an executable file; `-r`/`-w` ignore the permission bits; `-L`/`-h` never true; `-ef` never true | 14 | `test/c_s_test_access` | pelt |
-| 2 | `umask` is "not supported yet" (status 2) | 9 | `umask/c_s_umask_set` | wolf-lang (s230's `os_umask`, not yet released), then pelt |
-| 3 | `trap ACTION 13` is refused (a number with no wolf meaning), though `trap … PIPE` is taken | 7 | `signal/c_s_trap_by_number` | pelt to record it; wolf-lang#679 to catch it |
-| 4 | a bracket expression holding `/` never matches in `case` or `${x#…}` | 4 | `glob/c_s_bracket_slash_case` | pelt |
-| 5 | in `$( exec 4>&1; { … >&4; } \| cmd >&3 )` a pipeline stage's write to descriptor 4 is lost | 3 | `redir/c_s_cmdsub_fd_pipeline` | pelt, tied to the in-process pipeline |
-| 6 | unquoted `$*` on the right of an assignment, or as a `case` word, joins with nothing instead of IFS's first character — a **silent wrong answer**: configure computes `host_os=linuxgnu` | 3 | `param/c_s_star_assign_ifs` | pelt |
-| 7 | every byte above 0x7f becomes `?` when it leaves pelt (an argument, a file name, `read`, a here-document), even valid UTF-8 — a **silent wrong answer** | 1 | `quote/c_s_high_bytes` | pelt; and bytes that are not UTF-8 cannot be a wolf `str` at all (wolf-lang) |
-| 8 | `.` of `/dev/null` or a FIFO is "not found" and ends the shell | 1 | `builtin/c_s_dot_special_file` | pelt |
-
-The per-script table (package, version, digest, licence, both exit
-statuses, verdict) is `notes/sh06-evidence/scripts/scripts.tsv`; the
-three shells' answers for every construct are in
-`notes/sh06-evidence/scripts/constructs.md`.
-
-## 3. The interactive census
-
-Typed through a pseudo-terminal (`tools/session`, with keys, Ctrl-Z
-and a `bash --posix -i` oracle added for what dash has no editor for)
-and measured by `tools/interactive-census`.
-
-| what a person meets | today | case | waits on |
-|---|---|---|---|
-| `PS1`, `PS2`, `ENV`, `exit`, Ctrl-D, Ctrl-C at the prompt and over a child, the terminal's own erase, kill and word-erase, two lines pasted at once | works | 92 sessions | — |
-| arrows, Home/End, Ctrl-A/E/K/D, Alt-B/F, a line longer than the terminal's 4,095 bytes | none: typed into the command as bytes | `c_ed_*`, `c_long_line` | pelt (raw mode exists in wolf) |
-| Up/Down history, Ctrl-R, `fc`, `!` in `PS1` | none | `c_ed_up_*`, `c_ed_search`, `c_hist_*`, `c_ps1_bang` | pelt |
-| Tab completion of files and commands | none | `c_ed_complete_*` | pelt; a ruling |
-| UTF-8 and wide characters at the prompt | erased a byte at a time | `c_ed_utf8_*` | pelt (and a width table) |
-| a resized window | not heard | `witness/winch` | wolf-lang (window size, `SIGWINCH`) |
-| `set -o vi` | accepted, does nothing | `c_vi_*` | pelt, after the editor |
-| job control: `set -m`, `jobs`, `fg`, `bg`, Ctrl-Z, job numbers, completion notices | none | `c_jc_*` (11) | wolf-lang (stop reporting, `SIGCONT`, a group signal, an interruptible wait), then pelt; PAX for PAX |
-| aliases at the prompt | none | `c_alias_interactive` | pelt |
-| `set -o ignoreeof`, `MAIL` | accepted, do nothing | `c_ignoreeof`, `c_mail` | pelt |
-| startup (`-c :`, and to the first prompt) | 1.35 ms and 2.70 ms median against dash's 2.32 and 2.32 (loaded host); 0.34 and 0.40 ms against 0.36 and 0.37 on the native tier, quiet | — | — |
-| memory after 10,000 typed `i=$((i+1)); echo $i` | **33 MB and growing** (3.4 MB at 100, 18 MB at 5,000) against dash's flat 2.8 MB | `tools/interactive-census` | pelt (below) |
-| a session typed a byte at a time, 20 ms a byte (about 500 baud, PAX's serial console) | the same output as typed at once | `PELT_SESSION_SLOW` | — |
-
-**Memory.** The CI gate (`tools/loop-rss`, `tools/session-rss`) holds
-a loop of simple commands flat, and it is: 0.3 KB a typed line. But a
-line or loop body that is more than one simple command keeps
-kilobytes each time it runs:
-
-| each run of | kept, a script loop | kept, a typed line |
-|---|---:|---:|
-| `:` or `x=1` | flat | 0.3 KB |
-| `true && true`, `{ true; }` | flat | 3.5 KB |
-| `case a in a) :;; esac` | 0.3 KB | — |
-| a function call | 1.3 KB | — |
-| `x=$(true)` | 6.2 KB | — |
-| `true \| true` | 9.9 KB | 10.6 KB |
-| a script's top-level line, any | 1.7 KB | — |
-
-A script of 20,000 `true | true` lines peaks at 258 MB; dash at 2.7 MB.
-A `configure` run makes thousands of command substitutions and
-pipelines (`notes/sh06-evidence/loopmem.sh`, `leak.py`, logs).
-
-**What wolf gives a line editor today**, measured by the witnesses in
-`notes/sh06-evidence/witness/` (built with the pinned 0.2.27, driven by
-`drive.py` through a pseudo-terminal):
-
-- **Enough to start.** `os_term_set_mode` turns canonical mode and echo
-  off and back on exactly (`term_keys`: "mode restored: true"); a read
-  of one byte returns each key (an arrow arrives as `27 91 68`); a read
-  with `VMIN` 0 and `VTIME` 2 comes back empty after 0.2 s; the window's
-  size can be learned by moving the cursor to the far corner and asking
-  where it is (`24;80`).
-- **No window size or resize.** No call answers `TIOCGWINSZ`, and no
-  meaning in `[os.signal.set]` is `SIGWINCH`: resized twice while
-  listening for all nine meanings, the program heard nothing
-  (`winch`). `os_signal_listen(512)`, a bit no meaning has, answers ok
-  (wolf-lang#679's second half).
-- **A read is not cut short by a signal.** Listening for `INTERRUPT`
-  and blocked in a read, the program was sent `SIGINT` and was still in
-  its read two seconds later; the poll saw it only after a key came
-  (`read_vs_signal`). An editor waiting for a key cannot wake for a
-  child that ended, a resize, or a trap. A timed read (`VTIME`) is the
-  workaround, at a tenth of a second's latency.
-- **A stopped child is not reported.** A child stopped by `SIGSTOP`
-  sat in state `T` while the parent stayed in `os_wait_status`, which
-  returns only when the child ends; and there is no call to send
-  `SIGCONT` (`stop_report`). Job control cannot start.
-- **Arguments are UTF-8.** `os_spawn_fds` passes "é中" intact
-  (`c3 a9 e4 b8 ad`), so pelt's `?` is pelt's; but the bytes
-  `a \xff b`, a legal POSIX argument, cannot be made into a `str` at
-  all (`argv_bytes`).
-- **Not given:** a character-width table (`wcwidth`), and a way to put
-  the terminal's mode back if the shell is killed.
-
-## 4. Speed
-
-`tools/bench/run`, nine runs each, median, on kasumi; output checked
-identical across shells.
-
-| loop | dash | pelt release | ratio | pelt native | ratio |
-|---|---:|---:|---:|---:|---:|
-| 2,000 × `/bin/true` | 0.329 s | 0.505 s | 1.54 | 0.521 s | 1.58 |
-| 1,000 × `echo x \| cat \| cat >/dev/null` | 0.336 s | 0.568 s | 1.69 | 0.569 s | 1.70 |
-| 200,000 turns of `${x#*/}`, `${#y}`, `$((…))`, `case` | 0.369 s | 1.446 s | **3.92** | 3.772 s | **10.24** |
-| 1,200 configure-shaped checks | 0.337 s | 0.506 s | 1.50 | 0.561 s | 1.66 |
-
-Under `taskset -c 0-3` the release ratios are 1.49, 1.56, 3.89, 1.44.
-
-**Where the time goes.** In the expansion loop pelt runs 20.2 G
-instructions to dash's 5.2 G (about 101,000 against 26,000 a turn) at
-much the same IPC, with no system calls of note: it is pelt's own work
-per command. About 29% of cycles are the wolf runtime making, growing
-and checking lists, maps and strings; the rest is pelt's interpreter,
-which parses arithmetic from text on every turn. The native tier is
-2.6 times slower than release on this loop. A program started costs
-pelt 57 system calls against dash's 34 (a full `clone`, a
-`socketpair`, six `fcntl`, eleven `close`, three `rt_sigprocmask`, a
-`recvfrom`; dash uses `vfork`), and pelt searches `PATH` for every
-command: 8,432 `statx` in the configure-shaped run, 7,025 failing.
-
-## 5. The clause table, statement by statement
-
-Generated by `tools/clause-census --markdown` from `tests/census/clauses.tsv`.
 ### 2.1 Introduction
 
 | id | statement | verdict | cases | note |
@@ -403,7 +176,7 @@ Generated by `tools/clause-census --markdown` from `tests/census/clauses.tsv`.
 | 2.6.2/18 | Trim forms of an unset parameter fail under set -u | met | `param/c_trim_nounset` |  |
 | 2.6.2/19 | A bad substitution operator is an expansion error: a non-interactive shell exits | met | `param/bad_substitution` |  |
 | 2.6.2/20 | Parameter expansion applies to special parameters ($?, $#, $-, $!, $0, $$) in the modifier forms | met | `param/c_special_modifiers` |  |
-| 2.6.3/1 | $(commands) runs in a subshell and is replaced by its standard output | met | `cmdsub/basic`, `cmdsub/isolation`, `cmdsub/external`, `cmdsub/c_subshell_env` |  |
+| 2.6.3/1 | $(commands) runs in a subshell and is replaced by its standard output | met | `cmdsub/basic`, `cmdsub/isolation`, `cmdsub/external`, `cmdsub/c_subshell_env`, `cmdsub/drain_chunks` |  |
 | 2.6.3/2 | Trailing newlines of the output are removed, all of them; others are kept | met | `cmdsub/trailing_newlines`, `cmdsub/program_newlines`, `cmdsub/c_newlines` |  |
 | 2.6.3/3 | Unquoted command substitution output is split and globbed; quoted is not | met | `cmdsub/in_dquotes`, `cmdsub/c_split_glob` |  |
 | 2.6.3/4 | In `...` a backslash is literal except before $ ` and backslash | met | `cmdsub/backquote`, `cmdsub/program_backquote`, `cmdsub/c_backquote_backslash` |  |
@@ -411,7 +184,7 @@ Generated by `tools/clause-census --markdown` from `tests/census/clauses.tsv`.
 | 2.6.3/6 | $(...) may hold any program: quotes, comments, case with unbalanced ), here-documents | met | `cmdsub/case_inside`, `cmdsub/c_any_program` |  |
 | 2.6.3/7 | The result of a command substitution is not expanded again | met | `cmdsub/c_not_rescanned` |  |
 | 2.6.3/8 | $(( is arithmetic when it parses as such; $( ( starts a subshell in a command substitution | met | `cmdsub/c_arith_ambiguity` |  |
-| 2.6.3/9 | The exit status of the last command substitution is the status of a command with no name | met | `cmdsub/status`, `cmdsub/program_status` |  |
+| 2.6.3/9 | The exit status of the last command substitution is the status of a command with no name | met | `cmdsub/status`, `cmdsub/program_status`, `cmdsub/drain_chunks` |  |
 | 2.6.3/10 | An exit in a command substitution ends only the substitution | met | `cmdsub/exit_inside` |  |
 | 2.6.3/11 | A command substitution's commands see standard input and standard error of the shell | met | `cmdsub/program_stderr`, `cmdsub/c_stdin_inherited` |  |
 | 2.6.4/1 | $((expression)) is replaced by the value of the expression | met | `arith/basic` |  |
