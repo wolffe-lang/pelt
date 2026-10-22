@@ -276,3 +276,303 @@ child's hub, and no new name).
 a job a poll reaped earlier (as the next job started) answers its status
 silently, as dash's does. A case without `2>/dev/null` on that `wait`,
 red at the pin, green after; `wait/c_unwaited_many_status` unchanged.
+
+### 3.10 After the pause: a redirected subshell's process (2026-10-22)
+
+At the pause one corner of `probe/corners.sh` differed from dash:
+`( kill -TERM $(sh -c 'echo $PPID') ) 2>/dev/null`. dash says that the
+signal ended the subshell on the shell's own standard error; pelt said
+it inside the subshell's `2>/dev/null`. Black box, the difference is
+wider than the notice (`probe/notice.sh`, `notice2.sh`, `notice3.sh`,
+`notice4.sh`, `notice5.sh`, `trapwait.sh`; 81 shapes, dash's answers in
+`logs/probe/notice*.dash.txt`): **a subshell's own redirections, and
+those of braces that hold it alone (`{ ( … ); } 2>f`,
+`{ { ( … ); }; } 2>f`, `{ ( … ) 2>/dev/null; } 2>f`), are the subshell
+process's.** So in dash, while such a subshell runs, nothing the shell
+does is under them: the notice of its end, a trap's action for a signal
+the shell heard meanwhile (run after the subshell and before the next
+command), the `Stopped` notice of `( … ) 2>/dev/null` stopped by
+Ctrl-Z; and a failed redirection is the subshell's status 2, which
+`set -e` acts on. A brace group with more in it (`{ ( … ); :; } 2>f`), a
+loop's, an `if`'s, a `case`'s and a function call's redirections are
+the shell's: there the notice goes into `f`, in dash and in pelt alike.
+The same braces-around-a-subshell shape forked as a stage, a
+substitution or after `&` is one process in dash (its stage's end is
+said by the parent on its own standard error).
+
+At `b448c1e` pelt applied a `( … )`'s redirections in the parent
+(`sh.exec`'s `run`) around both forking paths (`run_paren` forking the
+whole node, and `run_simple` forking a one-command body off the fast
+path inside `run_subshell`'s frame), and around the in-process path of
+`( program ) >f`; so the notice, the trap's output and the stop notice
+went into the redirection, and `set -e; ( echo ) >/nonexistent/f` went
+on. The attempt reverted at the pause (deferring the notice to after
+`end_redirs`) covered only the first path and none of the trap, stop or
+`set -e` cases. **The fix** (`9b04506`, on the branch `b4bca4a`; every
+older sha is mapped in §4): `run` sends a node that is `paren_alone` (a
+subshell, or braces holding one alone) with redirections of its own to
+`run_paren_redir`, which forks the whole node whatever its body, a
+foreground job of its own under job control as `run_paren`'s; the
+child's `child_body` unwraps subshells and now braces that hold one
+alone, applying each one's redirections in the child; the parent's
+`node_end` (`run_node`'s tail, factored out) sets `$?` and runs the
+traps after the command. A host that does not fork keeps the old
+in-process path. The cost: `( program ) >f` is a fork and an `exec`
+where it was a spawn (dash forks there too).
+
+Rows from dash, each red at the pin and at `b448c1e` and green at
+`9b04506` on both tiers (`logs/notice/new-rows-*.log`,
+`logs/notice/sess-redir-stop-b448.log`), and red again in both plants
+(§4): `signal/subshell_end_said_outside` (twelve shapes, three of them
+the shell's own redirections), `signal/subshell_end_devnull` (the
+corner), `signal/trap_after_redirected_subshell`,
+`redir/subshell_redir_fails_set_e`, the session `jc_subshell_redir_stop`
+(Ctrl-Z's notice, `err yes`), and `tools/shape-rss`'s
+`fork-redirected-subshell` (`( true ) >/dev/null` in a loop). At
+`9b04506` the 35 corners answer as dash's on both tiers but for the
+notice's words (dash `Terminated`, pelt `pelt: ended by signal 15
+(TERM)`; the corpus compares standard error by its presence),
+`logs/probe/corners-9b04506.txt`; and of the 81 notice shapes all but
+one, which is not the fork's: `sh -c 'kill -TERM $$' 2>f`, a simple
+command's own redirection, where dash says the end inside `f` and pelt
+on its own standard error, at trunk too (`notice.pelt-native-pin.txt`
+row 07; §7).
+
+### 3.11 The ~1.2 MB above the pin's peak: the binary's mapped pages, not pelt's memory
+
+Pass 1 of the table (before the pause, `logs/table/`) had the head's
+native loop peaks 1.2–1.3 MB above the pin's at the same turn count,
+the bare loop too (`baseline` 6,588 against 5,268 KB at 10,000 turns,
+7,064 against 5,856 KB at 20,000), with the same order of growth a turn
+(48 against 60 B). It is not memory pelt allocates.
+`probe/rss-split.sh` reads a pelt's own `/proc/self/status` after a
+10,000-turn `:` loop, twice a binary, inside the container, in three
+runs: `logs/rssgap/split-run1.txt` (2026-10-21 about 21:31; the head
+then `251362c`'s build, `9a6baf2e…`), `split.txt` (about an hour later,
+after `probe/table.sh` had copied the binaries; the head `0ca2ab2`'s
+build `999936bc…`, beside snapshots of `8b8d470` and `b448c1e`) and
+`split-final.txt` (2026-10-22 08:47, the final head `b05b0cf`'s
+`ef5c6c66…` and `abee983c…`, every binary from its build tree,
+`taskset -c 8-11`). In KB:
+
+| | pin, native | the heads, native | pin, release | the heads, release |
+|---|---|---|---|---|
+| `RssAnon`, every run | 808–816 | 824–840 | 696–704 | 700–708 |
+| `RssFile`, run 1 | 4,940–4,980 | 5,148–6,468 | 3,232–3,256 | 3,296–3,312 |
+| `RssFile`, run 2 | 5,884–5,956 | 6,056–6,212; `0ca2ab2` 5,192–5,288 | 3,236–3,296 | 3,260–3,324 |
+| `RssFile`, the final head | 5,800–5,888 | 5,320–5,332 | 3,264–3,284 | 3,284–3,292 |
+
+The file-backed share follows the file's page-cache history, not the
+build: the pin's binary, never rebuilt, mapped about 0.9 MB more in the
+second run than in the first; two byte-identical copies of `251362c`'s
+binary (`9a6baf2e…`, the build tree's written by the linker and
+`snaps/fx1`'s written by `rsync` and read through by `sha256sum`)
+mapped 5,164–5,216 and 6,212–6,468 KB in the same run; and in the final
+run the head's native peak is *below* the pin's (6,144–6,160 against
+6,608–6,700 KB `VmHWM`) with 12–20 KB more anonymous memory. Pass 1's
+head ran from the frozen copy `snaps/t2` (made by `snap.sh` for the
+table's second job at 19:04), the pin from its build tree. The bare
+loop's peak by `tools/shape-rss` (`logs/rssgap/gap.txt`, its cpus not
+recorded; `gap-cpus.txt`, cpus 8–15 and 0–15): at 20,000 turns
+`8b8d470` +144 to +428 KB over the pin's, `b448c1e` +64, `9b04506` −72
+to +268; `pelt -c :` starts at 4,468–4,836 KB for the pin, 4,684–4,996
+for `8b8d470`, 4,700–4,936 for `b448c1e` and 4,588–4,916 for `9b04506`.
+So `b448c1e`'s premise, that a `scope` named in pelt's own program made
+a native pelt start 1.2–1.4 MB larger, was this artefact: `8b8d470`,
+with the scope, starts within 0.2 MB of the pin. The task stays in
+`src/selfcheck.lu` (pelt names no task, which costs nothing).
+
+**Bound:** after 10,000 turns a head's anonymous memory is within 32 KB
+of the pin's native and 12 KB release, every head measured; the final
+head's is 12–20 KB above the pin's native and 0–4 KB release. The final
+table copies every binary the same way before its passes
+(`probe/table.sh`), but its peaks still carry the file's share, so the
+gate (`tools/shape-rss`) and this note judge growth a turn, which the
+mapping does not move.
+
+### 3.12 Found on the way, not the fork's: a redirected compound command keeps ~690 B a turn
+
+`tools/shape-rss` had no row for a compound command with a redirection.
+`probe/compound-redir-rss.sh` (`logs/rssgap/compound-*.txt`, every
+binary under `taskset -c 4-7`): at trunk `3b0bab9` (built at 0.2.32),
+at the pin and at the head (`0ca2ab2`'s build), `{ true; } >/dev/null`,
+`if true; then :; fi >/dev/null` and `while false; do :; done
+>/dev/null` in a loop keep 644–721 B a turn on both tiers (11.6 → 18.3
+MB native over 10,000 → 20,000 turns), where a simple command's
+redirection keeps 18–67 B and dash nothing (−11 to 0). A redirected
+subshell kept as much at trunk and at the pin (651–707 B) and keeps
+42–65 B a turn since it forks (§3.10; the new `shape-rss` row holds
+it). The frame `run` applies for a compound command keeps what it
+allocates in the shell's root; that is the shell's own path, not the
+fork's, so it is left for an issue (§7).
+
+### 3.13 Two rebases, and R-sh23-4 taken here
+
+sh23 (`set -o autocd`, pelt#51) landed first: trunk `2dc8dbe`; then
+pelt#52 (the README made a map, the old record moved whole into
+`docs/CHANGELOG.md`): trunk `c10bad1`. `sh20` was rebased onto each (the
+heads before them kept on origin as `sh20-prerebase`, `fd20549`, and
+`sh20-prerebase2`, `e87118a`); every sha this note cites from before is
+mapped in §4. The conflicts were the README alone: sh20's README commit
+(`4cac139`) fell away empty at the second rebase; the fork's record is
+`docs/CHANGELOG.md`'s entry under `## Unreleased` (`9e24844`), and the
+README says what is true at the head: the fork in "What works", the
+checked machine's in-process shapes under "What it does not do yet"
+(`b05b0cf`), the status table's counts at the head and the script
+census's three fork-bound scripts no longer a gap (`0c77c22`, §3.14).
+`exec.lu`'s `run_external` (sh23's one check before `unfound`) and
+`builtin.lu`'s option table merged without a conflict.
+
+**R-sh23-4** (sh23 §7: pelt autocds inside `( )`, `$( )` and pipeline
+stages where bash 5.3 and zsh 5.9 do not; `x=$(DIR)` answers 0 in pelt,
+127 in bash and zsh, `x=$(./DIR)` 0 against 126), **taken in sh20 as the
+orchestrator recommended, bash's line** (reversible by one line):
+`autocd_dir` refuses when `sh.sub > 0` (`866c2a6`), besides when the
+shell is not interactive, which a forked child is not; the hook
+(`command_not_found_handle`) keeps sh20's `sh.interactive ||
+sh.sub_of_i`. Rows, both seen red: the session `autocd_subshell` (from
+dash, which has no such option, so its answers are the refusal's;
+bash 5.3 with `shopt -s autocd` agrees, and takes the option at the top
+level from the same first line, `logs/autocd/bash-control.txt`): red at
+trunk `2dc8dbe` on both tiers (seven of its eight rows: `cs-bare st=0`,
+`cs-slash st=0`, `[/sub]` in the substitution, both subshells, the
+group in a pipe and the last stage; `logs/autocd/sess-t23-*.log`) and
+in the plant 39715917270, green at the head (`sess-rb-*.log`); and the
+table check `want_autocd` (`sh.selftest`), red on both compiled tiers
+and under `wolf test` with the `sh.sub > 0` line removed while the
+session stays green there, the fork's child being no longer interactive
+(`logs/autocd/plant-*.log` on kasumi; CI plant **39715919419**,
+`logs/plant/plant-94ca885.txt`). `eval` and a function body take the
+option, as bash's do.
+
+### 3.14 Found on the way: three real scripts
+
+`probe/zgrep.sh` runs kasumi's own `/usr/bin/zgrep`, `xzgrep` and
+`zdiff` (gzip 1.15, xz 5.8.3; run, never read) six ways under each shell
+(`logs/zgrep/zgrep.txt`). dash and the final head's release pelt
+(`abee983c…`) answer alike, byte for byte; the pin's pelt prints `test:
+-eq: unknown operator` for every file (the decompressor's status these
+scripts read through `$( exec 4>&1; { …; echo $? >&4; } | … )` is empty
+without a process per stage: census 2.13/12) and its `xzgrep` exits 2
+where dash's exits 0. They are sh13's three fork-bound census scripts.
+`tools/script-census` itself (its own pinned copies, in images built
+from pinned bases, which needs the network) was not run again, so the
+census's 76 of 80 stands as measured before the fork, and the README
+says so.
+
+### 3.15 The result against the prediction
+
+| §3 | predicted | measured | |
+|---|---|---|---|
+| 3.1 the pin alone | no verdict moves; corpus 966 / 0 / 38, sessions 273 / 0 / 3, statements 505 of 547, every gate 0 on both tiers and under `taskset`; every corpus and session log byte-identical to the seventh pin's run of trunk; `wolf test` 1 passed | corpus 966 / 0 / 38 on both tiers and both under `taskset`, each log identical to trunk's but its binary-path line; sessions 273 / 0 / 3 on all four runs, identical but the first line; the pin's witnesses (glob-, loop- and shape-rss, exec, edit, hist, signal and reap on both tiers, edit and signal also under `taskset`) and oracle-check every one 0, as trunk's at 0.2.32; statements 505 of 547 and `wolf test` 1 passed at both (`logs/gauntlet/base-pin-summary.txt`, `logs/pin.status`: the run stopped at the pause and its rest taken on 2026-10-22, "rest from") | held |
+| 3.3 the fork rows | the nine green with the fork alone, two with the trap reset, `c_jc_mixed_pipeline` with the group; `$(trap)` the lone-trap rule | all green on both tiers at every head gauntlet; red at the pin in both plants (§4) | held |
+| 3.3 new cases | each from dash, red at the pin, green at the head | eleven corpus rows (five in `924fac7`, #47's two in `61f9cf9`, four for §3.10), five sessions (three in `bb83b6d`, `jc_subshell_redir_stop`, `autocd_subshell`) and a `shape-rss` row; every one red in the final plant 39715917270 (at the final head's tests: 20 corpus rows and 6 sessions on each tier, the row and the table checks) but `wait/waited_signal_said`, the control that is green at the pin by design | held |
+| 3.3 corpus at the head | (966 + new) / 0 / 28 | **989 / 0 / 28** on both tiers and both under `taskset` (trunk `c10bad1` 968 / 0 / 38, sh23's +2; +10 from pending, +11 new) | held |
+| 3.3 sessions at the head | (274 + new) / 0 / 2 | **289 / 0 / 2** on all four runs (trunk `c10bad1` 283 / 0 / 3, sh23's +10; +1 from pending, +5 new; `c_ignoreeof`, `c_mail` stay) | held |
+| 3.3 statements | at least 515 of 547 | **516 of 548** (95.0%; one statement added, 2.11/20) | held |
+| 3.4 `busy` | never met; a row proves the in-process answer | `tools/self-check` on both tiers: "a fork with a task live is busy and runs in process"; `wolf test` (the checked machine): `unsupported`, in process | held |
+| 3.5 the parent's bytes a turn | 60–140 B a forked shape, both tiers; the existing rows unchanged | three passes at the final head (`logs/table-final/summary.txt`), every row ok on both tiers; the forked shapes **−18 to 123 B a turn** (`fork-substitution` 57–75, `fork-subshell` 24–67, `fork-background-group` 62–93, `fork-background-subshell` 36–116, `fork-stage` 22–74, `script-fork-substitution` 52–89, `typed-fork-subshell` 123, `fork-redirected-subshell` −18 to 83), the pin's in-process answers on the same rows 3–128 but `fork-redirected-subshell` 668–699 (red), dash −11 to 41; of the rows that fork since sh20, `background-nowait` (`true &`), `script-background-wait` and `typed-background-wait` keep 28–31 B a turn more than at the pin by the medians (113–150, 90–122, 188 against 74–105, 40–78, 159–160: the prediction's child-table slot a child), the typed one at 188 of its bound's 205 B at N = 10,000; `background-builtin-wait` and `substitution-pipeline` move both ways by tier (−31 to +35), the rest as at the pin | held for the forked shapes (some below the floor); **missed** for three existing rows, inside the bound |
+| 3.6 cost | 150–300 µs a forked shape, 1.5–2.5× dash's; sh19's target (no slower than dash) not met; the in-process shapes stay at 5–45 µs | `logs/bench/bench-pin0-3.txt` (9 runs, median, a turn of 2,000 with the loop counter; load 0.08 at the start): forked, release **148–166.5 µs, 1.33–2.06×** dash's 77.5–120.5, native **196.5–245.5 µs, 1.97–3.00×**; in process at the head, release 8–9 µs (the pin 5–8.5), native 19–33.5; a program 245.5 µs (the pin 243.5, dash 152.5); the census loops, release: `fork` 0.494 s (the pin 0.491, dash 0.311), `pipeline` 0.420 (0.418, 0.319), `param` 1.725 (1.663, 0.340), `configure-shaped` **0.481** (0.335, 0.325; `bench-pin0-3-configure.txt`) | held on release (148 at the floor); the ratio **missed** on native (up to 3.00); the target not met, as predicted |
+| 3.7 checked lane | `exit(0)`, in-process bytes, trunk's order | `logs/probe/final/machines.txt`: `exit(0)`, `a b` where native says `b a`, `bg-pid: none`, the redirected subshells in process; lupin 0.1.55 refuses at resolve (`os_signal_default`, wolf-interp#269) | held |
+| 3.8 PAX | the rows to replay; census: more `clone` without `CLONE_VM`, `setpgid`, `exit_group`, `pipe2`, no new name | `logs/census/{pin,head}/census.txt`: 50 names at the pin and at the head, **the same 50**; more `clone` (1,445 → 1,984), `exit_group` (1,014 → 1,512), `pipe2` (3,993 → 5,544), `wait4` (1,877 → 2,471), `rt_sigaction` (15,424 → 18,546), `getpid` (208 → 1,133), `setpgid` (16 → 19); a fork is `clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID\|CLONE_CHILD_SETTID\|SIGCHLD)`, the call pelt's spawn already made (`logs/census/fork-trace.txt`); under `strace` 44 rows fail at the head, the pin's 64 being those and the twenty fork rows (timing and `strace` in the process tree, as sh22's 43) | held |
+| 3.9 pelt#47 | `wait` silent for a job a poll reaped | `wait/reaped_signal_quiet` red at the pin (kasumi and both plants), green at the head; `wait/waited_signal_said` green both | held |
+
+## 4. Evidence index
+
+- Container, launcher, gauntlets: `ctr.sh`, `launch.sh`, `gauntlet.sh`, `gauntlet-ctr.sh`, `gauntlet-rest.sh`, `quick.sh`, `snap.sh`, `after.sh` (the final table, census and probes, cpus 8–15), `probe/final-runs.sh` (the split and the bench).
+- Base and pin: `logs/base.status` (trunk `3b0bab9`, 39 gates 0), `logs/pin.status` (`0eabfaf`, its rest after the pause), `logs/gauntlet/base-pin-summary.txt`.
+- The heads: `logs/g251362c.status`, `logs/g0ca2ab2.status` and **`logs/final.status` (the final head `b05b0cf`, 41 gates 0, no SKIP)**; their counts `logs/gauntlet/heads-summary.txt`; digests `logs/digests.txt`. The commits after `b05b0cf` are prose only (`notes/`, `docs/`, `README.md`: `ci/tiers.py`'s PROSE, read by no gate).
+- Probes beside dash: `logs/probe/childstate.{dash,bash}.txt`; `logs/probe/head/` (at `b448c1e`) and `logs/probe/final/` (at `b05b0cf`): `shapes.*`, `checked.*` (identical to dash on both tiers), `childstate.*` (§7's rows), `machines.txt`, `threads.txt`; `logs/probe/corners-9b04506.txt`; `logs/probe/notice*.txt`, `trapwait.*.txt` (dash, the pin, `b448c1e`, `9b04506`); `logs/probe/trunk/childstate.pelt-native-base.txt`.
+- New rows red: `logs/notice/new-rows-*.log`, `logs/notice/sess-redir-stop-b448.log`, `logs/autocd/` (kasumi); the plant runs 39689838304 (`sh20-plant` `a458710`, at `61f9cf9`'s tests), 39708887619 (`sh20-plant2` `59db4cb`: `src/` at the pin, the rest at `b08e6bd`; `logs/plant/plant-59db4cb.txt`), and at the final head **39715917270** (`sh20-plant3` `348706e`: `src/` at the pin `fd5a890`, i.e. trunk `c10bad1`'s, the rest at `b05b0cf`; `logs/plant/plant-348706e.txt`: 20 corpus rows, 6 sessions, `fork-redirected-subshell` and the table checks red on both tiers) and **39715919419** (`sh20-plant4` `94ca885`: the head without `autocd_dir`'s `sh.sub > 0`; `plant-94ca885.txt`: `wolf test` and both tiers' table checks red). No branch `sh20-plant*` is to merge.
+- Memory: `logs/table/` (pass 1 before the pause), `logs/table-0ca2ab2/` and `logs/table-final/` (three passes each, summed in `summary.txt`), `logs/rssgap/` (§3.11, §3.12).
+- Cost: `logs/bench/bench-pin0-3.txt`, `bench-pin0-3-configure.txt` (`configure-shaped.sh` written by `probe/bench/gen-configure-shaped`, sha256 `4f1f4096…`). Syscalls: `logs/census/`. Real scripts: `logs/zgrep/zgrep.txt`.
+
+**The shas across the two rebases.** The note's §1–§3.9 and the evidence name the commits as they were made, on trunk `3b0bab9`; the branch holds them rebased onto `c10bad1`. The binaries measured were built from the first column's trees.
+
+| on `3b0bab9` | on `2dc8dbe` | on `c10bad1` (the branch) | commit |
+|---|---|---|---|
+| `65734ae` | `900c8f2` | `e3ded99` | the lane's container, launcher and gauntlet |
+| `59e06cd` | `9b1e5da` | `c2f0622` | inputs and the prediction |
+| `0eabfaf` | `b91156a` | `fd5a890` | the eighth pin |
+| `8060f41` | `be44f4f` | `9a3c39f` | sh.state |
+| `33fd0c0` | `ad6ff61` | `662d01a` | `$$` read at start |
+| `0b6d0e2` | `81807b6` | `e6dab63` | sh.fork, the door |
+| `90b875a` | `510c0c6` | `b19d817` | sig_apply |
+| `2d477d2` | `d433b1f` | `7cb7d5c` | sh.jobs |
+| `d275650` | `9019854` | `75b3c29` | `( list )`, `$( list )` fork |
+| `f39dfa0` | `4c1e5c3` | `6ca54a2` | stages and `&` lists fork |
+| `1612b2d` | `3efdd44` | `ab851a0` | the last command takes the child's place |
+| `f0c7ff9` | `41185b5` | `a6943b0` | sh.selftest |
+| `389ad24` | `92eb41c` | `7793a37` | the hook in a subshell |
+| `556b321` | `b54ff34` | `bea3d4a` | the nine rows leave pending |
+| `157d3e7` | `ee02351` | `a712ad6` | `c_jc_mixed_pipeline` |
+| `924fac7` | `08c4b27` | `90f78ba` | five corpus rows |
+| `bb83b6d` | `0879506` | `086e2aa` | three sessions |
+| `f17ce72` | `0178ca4` | `88f2ec2` | census |
+| `c623bc4` | `9b20c46` | `6f71c40` | shape-rss's fork rows |
+| `f9bbfc1` | `73aaa1a` | `7273966` | ci, the table checks |
+| `9e2265c` | `01dfc85` | `57ea509` | pelt#47 |
+| `61f9cf9` | `9d93fdb` | `71af117` | #47's rows |
+| `4cac139` | `5985655` | — | README (empty at the second rebase) |
+| `8b8d470` | `f5cc80d` | `14918d2` | check-test, ci |
+| `b448c1e` | `4b5bd50` | `2f0f3af` | selfcheck in its own program |
+| `e9e3506` | `40d386b` | `e4aeb6a` | evidence |
+| `b626c83` | `4a9507e` | `f495c46` | evidence (the pause's head) |
+| `9b04506` | `499c77b` | `b4bca4a` | a redirected subshell's process |
+| `87c54f6` | `a6d912f` | `5c5c2f5` | its corpus rows |
+| `ab1890f` | `0487700` | `9e96e53` | its session |
+| `251362c` | `d21c58a` | `d3a530c` | evidence |
+| `0c50ef0` | `2f66060` | `a167c84` | census |
+| `b08e6bd` | `6471c90` | `b752aa9` | shape-rss's redirected row |
+| `e39a70e` | `92af41c` | `6578b54` | sh.fork's doc |
+| `0ca2ab2` | `ad48515` | `855f27e` | evidence |
+| `fd20549` | `0afbbcf` | `5821c03` | evidence |
+| — | `945330a` | `866c2a6` | autocd refused in a subshell (R-sh23-4) |
+| — | `5698cfe` | `54d5c6b` | sh.selftest, autocd |
+| — | `21e7eff` | `bf5bac6` | `autocd_subshell` |
+| — | `904e7b9` | `c9185d1` | census ed/26 |
+| — | `e87118a` | `9e24844` | docs/CHANGELOG.md |
+| — | — | `b05b0cf` | README at the head (the final gauntlet's head) |
+
+## 5. Done-when
+
+- [x] the eighth pin, its own commit (`fd5a890`, measured as `0eabfaf`); corpus and sessions counted against the seventh pin's (§3.15)
+- [x] the fork for the five shapes, #34's rows in the corpus and sessions, dash-identical on kasumi; a redirected subshell's process (§3.10)
+- [x] the checked lane's in-process rows (`logs/probe/final/machines.txt`)
+- [x] `shape-rss` green on both tiers (every head gauntlet and CI), three passes of the table at the final head (§3.15, 3.5)
+- [x] the PAX list (§6)
+- [x] pelt#47, its own commit and rows
+- [x] the change record in `docs/CHANGELOG.md` under `## Unreleased`; the README true at the head
+- [x] every new row red before green: kasumi (the pin, `b448c1e`, trunk `2dc8dbe`) and the plants 39715917270, 39715919419
+- [ ] PR: five sections, shas as bullets, a test checklist, `Footprint: cross-cutting`; `tier pr` green at the final head; `full-matrix` at that head; lane-audit; the `tier full` run id (the PR body records them)
+
+## 6. PAX: what a pax lane (px58 or after) replays with the forking pelt
+
+Nothing was measured on PAX. The static pelt (`tools/build --static`) at
+the final head, and:
+
+- the corpus rows the fork moved or added: `builtin/c_s_dot_special_file`, `env/c_subshell_concurrent`, `env/subshell_is_process`, `exec/exec_replaces_subshell`, `jobs/subshell_jobs`, `pipe/c_concurrent_stages`, `pipe/c_shell_producer_ends`, `pipe/endless_producer`, `redir/c_s_cmdsub_fd_pipeline`, `redir/subshell_redir_fails_set_e`, `signal/subshell_signal`, `signal/c_subshell_trap_reset`, `signal/c_trap_ignore_pipe`, `signal/c_trap_cmdsub_shows_parent`, `signal/c_wait_interrupted_term`, `signal/trap_cmdsub_lone_exit`, `signal/subshell_end_said_outside`, `signal/subshell_end_devnull`, `signal/trap_after_redirected_subshell`, `wait/c_subshell`, `wait/reaped_signal_quiet`, `wait/waited_signal_said`;
+- the sessions: `c_jc_mixed_pipeline`, `jc_subshell_stop`, `jc_subshell_redir_stop`, `jc_background_subshell`, `subshell_jobs`, `autocd_subshell`, `cnf_cd`, `cnf_contexts`, `cnf_redirect`;
+- `tools/shape-rss`'s eight fork rows (`fork-substitution`, `fork-subshell`, `fork-background-group`, `fork-background-subshell`, `fork-stage`, `script-fork-substitution`, `typed-fork-subshell`, `fork-redirected-subshell`) and the rows that fork since sh20 (`true & wait`, `true &`, `x=$(echo a | cat)` in a loop, a script's and typed);
+- `probe/shapes.sh`, `probe/childstate.sh`, `probe/corners.sh`, `probe/notice*.sh`, `probe/trapwait.sh`, each beside dash; `tools/self-check`;
+- the system calls the fork uses, all of them names pelt already made before it (§3.15, 3.8): `clone` with `CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD` and no stack from the shell's main thread (the fork, as px17 serves it), `setpgid` from the child on itself, `pipe2` (the child's one-byte word to the parent, and its hub), `rt_sigaction` in the child before its body (the trap resets), `wait4` on the forked pid, `exit_group` from the child; and a forked child is one thread where the shell is two, its signal thread being the second (`logs/probe/final/threads.txt`).
+
+## 7. Findings (texts for the orchestrator to file; none filed)
+
+1. **pelt: a simple command's own redirection and the notice of its end.** `sh -c 'kill -TERM $$' 2>f`: dash says `Terminated` inside `f`, pelt says it on its own standard error. Not the fork's: trunk `3b0bab9` and the pin answer the same (`logs/probe/notice.pelt-native-pin.txt` row 07, `notice.pelt-*-9b04506.txt` row 07). (The `( … ) 2>/dev/null` notice the pause named is fixed, §3.10.)
+2. **pelt: a compound command with a redirection keeps 644–721 B a turn** (`{ true; } >/dev/null`, `if … fi >/dev/null`, `while … done >/dev/null` in a loop: 11.6 → 18.3 MB native over 10,000 → 20,000 turns; dash nothing), at trunk, the pin and the head, both tiers (§3.12, `logs/rssgap/compound-*.txt`). No `shape-rss` row covers it.
+3. **pelt: an interactive shell keeps a job `wait` answered, its number and its `Done` notice, until the next prompt**; dash tells it right after the `wait` and frees the number. Typed `. ./childstate.sh` at `-i -m`: dash `[1] + Done` after each `… & wait`, pelt `[4]` and `[3]` together at the end (`logs/probe/final/childstate.*.txt`, typed section); at trunk too (`logs/probe/trunk/childstate.pelt-native-base.txt`: `[3] - Done`).
+4. **pelt: a job's text keeps an assignment-only command that dash's leaves out.** `( p=$(…); show …; : ) &` is `(p=$(...); show …; :)` in pelt's `Done` line, `(; show …; :)` in dash's (`logs/probe/final/childstate.*.txt`, lines 20 and 22). dash's text is the odd one; whether pelt copies it is a ruling.
+5. **pelt: a forked shape costs 1.3–3.0× dash's** (148–166.5 µs release, 196.5–245.5 native, against dash's 77.5–120.5; §3.15, 3.6), and the configure-shaped loop went from 1.03× to 1.48× dash's with the fork (its multi-command substitutions fork now). sh19's target (no slower than dash) is not met; a later lane's, if wanted.
+6. Recorded, not issues: a pipeline whose first stage is a pure built-in pelt feeds has its first forked stage lead the job's group where dash's forked built-in leads (`stage-last: leads-own` against dash's `other-group`); nothing a job does differs. An interactive pelt catches QUIT and TERM where dash ignores them (`SigIgn` `0x280000` against `0x284004`, typed section), at trunk too; every child's mask is dash's. `tools/script-census` is owed a run after the fork (§3.14).
+
+To close on the merge: pelt#34, pelt#47. To comment: pelt#17 (`$(trap)` keeps the shell's traps, `signal/c_trap_cmdsub_shows_parent`; its other items stay open).
+
+## 8. Not verified, and inferred
+
+- PAX: nothing run there (§6).
+- macOS: no local run (no build on nomad-1); CI's `tier full` runs the macOS native leg.
+- `busy` from a real task: pelt starts none; the row parks a task in `src/selfcheck.lu`'s own program.
+- What makes a file's mapping count more or less of `RssFile` (§3.11): measured, not explained further than "the file's page-cache history"; the anonymous memory is the bound.
+- The real-script census after the fork (§3.14): kasumi's own copies of the three scripts only.
+- The bench ran alone on cpus 0–3 (load 0.08 at its start, 1.08 at its end, other lanes' jobs on other cpus); sh19's numbers were taken at load 7.7, so its dash column (100–156 µs) is not this one's (77.5–120.5).
