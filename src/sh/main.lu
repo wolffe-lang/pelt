@@ -248,7 +248,6 @@ fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int 
 /// default (`sh.signal`'s `sig_start`).
 fn import_env(mut sh: Sh) {
     sig_start()
-    sh.pid = os_pid()
     for kv in env_vars() {
         let eq = kv.find("=") else -1
         if eq > 0 {

@@ -44,11 +44,8 @@
 //! '' CHLD` is recorded without ignoring it, because a process that
 //! ignores it cannot read its children's statuses.
 //!
-//! **A forked subshell** (`sh.fork`) is a process of its own: it sets its
-//! caught traps back to the default and its dispositions follow; one
-//! pelt runs in process (where the host does not fork, or a `( cmd )`
-//! the fast path finishes) shares one set of dispositions with the shell
-//! and every subshell it is running. A subshell starts with
+//! **Subshells run in-process**, so there is one set of dispositions for
+//! the shell and every subshell it is running. A subshell starts with
 //! its traps reset (XCU 2.12) and polls only for what it has trapped
 //! itself; a signal the enclosing shell traps stays queued until that
 //! shell is running again, which is when dash's parent would run its
@@ -303,9 +300,6 @@ fn sig_apply(mut sh: Sh) {
             let c = sig_name(k)
             if has_trap(sh, c) {
                 let m = sig_meaning(k)
-                // a trap of a forked child's own ends what it held
-                // ignored for that meaning (`sh.fork`)
-                sh.hold_ign = less(sh.hold_ign, m)
                 let action = sh.traps[c] else ""
                 if action.len == 0 {
                     // `trap '' CHLD` is recorded and no more: the
@@ -333,12 +327,6 @@ fn sig_apply(mut sh: Sh) {
     }
     if sh.jc_ign != 0 {
         ignore = ignore | less(sh.jc_ign, listen)
-    }
-    // what a forked child holds ignored (`sh.fork`): INT and QUIT after
-    // `&` with job control off, TSTP and TTOU in a command substitution
-    // under job control (dash, black-box)
-    if sh.hold_ign != 0 {
-        ignore = ignore | less(sh.hold_ign, listen)
     }
     if sh.sub > 0 {
         listen = listen | less(sh.sig_listen, ignore)

@@ -4,25 +4,9 @@
 use sh
 
 fn main() {
-    var bad = sh.self_test()
-    // `busy`'s row with a task parked (`sh.selftest`'s `fork_now`): the
-    // checked machine answers `unsupported` first, a compiled tier `busy`
-    // (`src/selfcheck.lu`); pelt runs the shape in process on either
-    let ch = channel[int](1)
-    var line = ""
-    scope s {
-        s.spawn(fn() {
-            let _v = ch.recv() else 0
-        })
-        let (got, ok) = sh.fork_now()
-        line = sh.fork_now_line(got, ok, -2)
-        ch.send(1) else |_| {}
-    }
-    if line.len > 0 {
-        (mut bad).push(line)
-    }
-    for l in bad {
-        eprint(l)
+    let bad = sh.self_test()
+    for line in bad {
+        eprint(line)
     }
     assert(bad.len == 0, "{bad.len} table checks failed")
 }
