@@ -85,6 +85,10 @@ const SL_REAPED: int = 64
 
 const SL_STATUS: int = 256
 
+/// Status and flags fit below 2^26; the group above it is pgid + 1.
+/// Even a 32-bit pid fits comfortably in a signed 64-bit slot.
+const SL_GROUP: int = 67108864
+
 /// A status may be below 0 (`-N`: an end by signal N, as `os_wait_poll`
 /// spells it).
 const SL_BIAS: int = 65536
@@ -161,12 +165,12 @@ fn set_slot_waited(mut sh: Sh, j: int, on: bool) {
 }
 
 fn slot_status(sh: Sh, j: int) -> int {
-    sh.jb_a[j] / SL_STATUS - SL_BIAS
+    sh.jb_a[j] % SL_GROUP / SL_STATUS - SL_BIAS
 }
 
 fn set_slot_status(mut sh: Sh, j: int, v: int) {
     let a = sh.jb_a[j]
-    sh.jb_a[j] = a % SL_STATUS + (v + SL_BIAS) * SL_STATUS
+    sh.jb_a[j] = a - a % SL_GROUP + a % SL_STATUS + (v + SL_BIAS) * SL_STATUS
 }
 
 fn slot_id(sh: Sh, j: int) -> int {
@@ -187,40 +191,70 @@ fn set_slot_order(mut sh: Sh, j: int, v: int) {
     sh.jb_b[j] = b % SL_ID + v * SL_ID
 }
 
-/// A slot's process group: -1 past `jb_pgid`'s end (job control off).
+/// A slot's group in the otherwise-unused high bits, -1 for none.
 fn slot_pgid(sh: Sh, j: int) -> int {
-    if j < sh.jb_pgid.len then sh.jb_pgid[j] else -1
+    sh.jb_a[j] / SL_GROUP - 1
 }
 
-/// `jb_pgid` grows only for a group other than -1.
 fn set_slot_pgid(mut sh: Sh, j: int, v: int) {
-    if j >= sh.jb_pgid.len {
-        if v == -1 {
-            return
-        }
-        while sh.jb_pgid.len <= j {
-            (mut sh.jb_pgid).push(-1)
-        }
-    }
-    sh.jb_pgid[j] = v
+    sh.jb_a[j] = sh.jb_a[j] % SL_GROUP + (v + 1) * SL_GROUP
 }
 
-/// A slot's command text: "" past `jb_text`'s end (job control off).
+/// Command texts are pooled. A retained job needs one integer reference,
+/// not a 24-byte string descriptor plus its list's growth (pelt#46).
 fn slot_text(sh: Sh, j: int) -> str {
-    if j < sh.jb_text.len then sh.jb_text[j] else ""
+    if j >= sh.jb_text.len || sh.jb_text[j] < 0 {
+        return ""
+    }
+    sh.jb_texts[sh.jb_text[j]]
 }
 
-/// `jb_text` grows only for a text other than "".
 fn set_slot_text(mut sh: Sh, j: int, t: str) {
     if j >= sh.jb_text.len {
         if t.len == 0 {
             return
         }
         while sh.jb_text.len <= j {
-            (mut sh.jb_text).push("")
+            (mut sh.jb_text).push(-1)
         }
     }
-    sh.jb_text[j] = t
+    let old = sh.jb_text[j]
+    if old >= 0 {
+        if sh.jb_texts[old] == t {
+            return
+        }
+        sh.jb_text_uses[old] -= 1
+        if sh.jb_text_uses[old] == 0 {
+            sh.jb_texts[old] = ""
+        }
+    }
+    sh.jb_text[j] = -1
+    if t.len == 0 {
+        return
+    }
+    var free = -1
+    var i = 0
+    while i < sh.jb_texts.len {
+        if sh.jb_text_uses[i] == 0 {
+            if free < 0 {
+                free = i
+            }
+        } else if sh.jb_texts[i] == t {
+            sh.jb_text_uses[i] += 1
+            sh.jb_text[j] = i
+            return
+        }
+        i += 1
+    }
+    if free < 0 {
+        free = sh.jb_texts.len
+        (mut sh.jb_texts).push(t)
+        (mut sh.jb_text_uses).push(1)
+    } else {
+        sh.jb_texts[free] = t
+        sh.jb_text_uses[free] = 1
+    }
+    sh.jb_text[j] = free
 }
 
 // ------------------------------------------------------------ the table

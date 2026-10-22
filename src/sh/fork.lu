@@ -489,8 +489,9 @@ fn child_start(
     if clear {
         (mut sh.jb_a).clear()
         (mut sh.jb_b).clear()
-        (mut sh.jb_pgid).clear()
         (mut sh.jb_text).clear()
+        (mut sh.jb_texts).clear()
+        (mut sh.jb_text_uses).clear()
         (mut sh.pr_job).clear()
         (mut sh.pr_h).clear()
         (mut sh.pr_pid).clear()

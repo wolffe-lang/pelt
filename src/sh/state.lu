@@ -183,14 +183,15 @@ struct Sh {
     /// gave it (a process id, or for a list pelt ran itself a number no
     /// process has, `NO_PID_BASE` and up) and its last use (a stamp of
     /// `jb_clock`, 0 for none: `+` is the most recent, `-` the one
-    /// before). Its group (0 for none) and its command text ("" with job
-    /// control off) are in `jb_pgid` and `jb_text`, which grow only when
-    /// job control writes them: past their ends a slot's are -1 and "".
+    /// before). The group is packed above the status in `jb_a`. Command
+    /// text references grow only with job control; repeated texts share
+    /// one reusable pool entry, returned after the last job releases it.
     jobs_pick: List[int],
     jb_a: List[int],
     jb_b: List[int],
-    jb_pgid: List[int],
-    jb_text: List[str],
+    jb_text: List[int],
+    jb_texts: List[str],
+    jb_text_uses: List[int],
     /// How many slots `wait` marked (the waited flag), and the lowest slot
     /// that may be free: so starting a job is not a walk of the table.
     jb_nwaited: int,
@@ -430,8 +431,9 @@ fn new_sh(name: str) -> Sh {
         jobs_pick: List[int](),
         jb_a: List[int](),
         jb_b: List[int](),
-        jb_pgid: List[int](),
-        jb_text: List[str](),
+        jb_text: List[int](),
+        jb_texts: List[str](),
+        jb_text_uses: List[int](),
         jb_nwaited: 0,
         jb_free_lo: 0,
         jb_reap_since: 0,

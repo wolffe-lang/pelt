@@ -658,8 +658,51 @@ fn want_mask_texts(mut bad: List[str]) {
 
 /// Run every table check; answers one line per check that failed,
 /// empty when all pass.
+fn want_job_slots(mut bad: List[str]) {
+    var sh = new_sh("job slots")
+    let a = jb_new(mut sh)
+    let b = jb_new(mut sh)
+    for group in [-1, 0, 41, 4294967295] {
+        set_slot_pgid(mut sh, a, group)
+        for raw in [-15, 0, 255] {
+            set_slot_status(mut sh, a, raw)
+            set_slot_state(mut sh, a, JB_DONE)
+            set_slot_flag(mut sh, a, SL_REAPED, true)
+            if slot_pgid(sh, a) != group || slot_status(sh, a) != raw ||
+                slot_state(sh, a) != JB_DONE || !slot_flag(sh, a, SL_REAPED) {
+                (mut bad).push("job group/status/flags overlap")
+            }
+        }
+    }
+    set_slot_text(mut sh, a, "shared")
+    set_slot_text(mut sh, b, "shared")
+    if sh.jb_texts.len != 1 || sh.jb_text_uses[0] != 2 {
+        (mut bad).push("job texts are not shared")
+    }
+    set_slot_text(mut sh, a, "other")
+    if slot_text(sh, b) != "shared" || slot_text(sh, a) != "other" {
+        (mut bad).push("replacing one job text changed another")
+    }
+    jb_free(mut sh, a)
+    jb_free(mut sh, b)
+    let c = jb_new(mut sh)
+    set_slot_text(mut sh, c, "reused")
+    if sh.jb_texts.len != 2 || slot_text(sh, c) != "reused" {
+        (mut bad).push("released job text pool slots are not reused")
+    }
+    var tree = new_ast()
+    let n = add(mut tree, K_SIMPLE, "", 1)
+    tree.nodes[n].job_text = "stale"
+    tree.top = 0
+    let m = add(mut tree, K_SIMPLE, "", 2)
+    if tree.nodes[m].job_text.len != 0 {
+        (mut bad).push("recycled AST slot kept stale job text")
+    }
+}
+
 pub fn self_test() -> List[str] {
     var bad = List[str]()
+    want_job_slots(mut bad)
     want_match(mut bad, "*", "", true)
     want_match(mut bad, "a*c", "abbbc", true)
     want_match(mut bad, "a*c", "abbb", false)
