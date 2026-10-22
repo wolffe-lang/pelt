@@ -1,0 +1,12 @@
+native miss off median 0.348 s, runs 0.344 0.350 0.350 0.347 0.348 0.350 0.344 
+native miss on median 0.346 s, runs 0.353 0.345 0.357 0.352 0.344 0.346 0.343 
+native found off median 0.752 s, runs 0.722 0.751 0.752 0.752 0.753 0.765 0.760 
+native found on median 0.752 s, runs 0.746 0.752 0.752 0.753 0.750 0.777 0.786 
+native strace miss x1000 off: total 29247 calls; stat-family 12012
+native strace miss x1000 on: total 30276 calls; stat-family 13014
+release miss off median 0.145 s, runs 0.145 0.145 0.143 0.145 0.145 0.144 0.145 
+release miss on median 0.145 s, runs 0.145 0.145 0.145 0.145 0.144 0.145 0.147 
+release found off median 0.700 s, runs 0.690 0.699 0.700 0.700 0.703 0.704 0.713 
+release found on median 0.701 s, runs 0.700 0.703 0.701 0.703 0.701 0.716 0.698 
+release strace miss x1000 off: total 29247 calls; stat-family 12012
+release strace miss x1000 on: total 30276 calls; stat-family 13014
