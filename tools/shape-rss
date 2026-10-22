@@ -47,6 +47,9 @@ SHAPES = [
     ("baseline", "loop", ":"),
     # A monitored loop retains notices until the complete command ends.
     # Dash is ~0-16 B/job; allow 160 B/job plus 64 KiB arena granularity.
+    # R-sh24-2: Linux reads retained RssAnon before notices/exec. RssFile
+    # moved by 100+ KiB between identical runs (page-cache noise, sh20
+    # section 3.11); macOS keeps the peak, judged by the full CI leg.
     ("jobs-set-m", "monitor", "env true & wait $!", 3000, 160, 64),
     ("compound-brace-redir", "loop", "{ true; } >/dev/null"),
     ("compound-if-redir", "loop", "if true; then :; fi >/dev/null"),
@@ -168,7 +171,13 @@ def run_file(shell, kind, text, n, cwd):
             f.write("exec 2>/dev/null\nset -m\n")
         if kind in ("loop", "monitor"):
             f.write("i=0\n")
-            tail = "done; echo $i; exec true\n" if kind == "monitor" else "done\necho $i\n"
+            tail = "done\necho $i\n"
+            if kind == "monitor":
+                tail = "done; echo $i; "
+                if sys.platform.startswith("linux"):
+                    tail += ('while read _k _v _u; do if [ "$_k" = RssAnon: ]; '
+                             'then echo "__shape_anon=$_v"; fi; done </proc/self/status; ')
+                tail += "exec true\n"
             # Measure the retained jobs before notifying: exec in this
             # same complete command avoids the old table's cubic notice
             # walk, without discarding any of the retained memory first.
@@ -178,7 +187,15 @@ def run_file(shell, kind, text, n, cwd):
             f.write("echo done\n")
     want = str(n) if kind in ("loop", "monitor") else "done"
     kb, rc, out, nerr = peak_kb(shell, "shape.sh", cwd)
-    ok = rc == 0 and out == want and nerr == 0
+    anon_ok = True
+    if kind == "monitor" and sys.platform.startswith("linux"):
+        lines = out.splitlines()
+        marker = "__shape_anon="
+        anon_ok = (len(lines) == 2 and lines[1].startswith(marker)
+                   and lines[1][len(marker):].isdigit())
+        kb = int(lines[1][len(marker):]) if anon_ok else -1
+        out = lines[0] if lines else ""
+    ok = anon_ok and rc == 0 and out == want and nerr == 0
     return kb, ok, f"exit {rc} out {out!r} stderr_bytes {nerr}"
 
 
@@ -303,17 +320,19 @@ def main(argv):
         grew = rows[1] - rows[0]
         per = grew * 1024 // n
         verdict = "ok" if ok and grew <= limit else "FAIL"
+        metric = "RssAnon" if kind == "monitor" and sys.platform.startswith("linux") else "RSS"
+        detail = f" metric={metric} bound={row_bound}B+{slack_kb}KiB"
         print(f"shape-rss: {verdict:4} {name:24} {kind:6} {n:>6} {rows[0]:>8} KB  "
-              f"{2 * n:>6} {rows[1]:>8} KB  grew {grew:>7} KB ({per} B a turn)  [{text}]", flush=True)
+              f"{2 * n:>6} {rows[1]:>8} KB  grew {grew:>7} KB ({per} B a turn)  [{text}]{detail}", flush=True)
         if not ok:
             print(f"shape-rss:      {name}: wrong answer ({why})")
         if verdict != "ok":
             failed.append(name)
     if failed:
         print(f"shape-rss: FAIL {len(failed)}: {', '.join(failed)} "
-              f"(bound {bound_b} B a turn + 1 MiB over N turns)")
+              f"(default bound {bound_b} B a turn + 1 MiB over N turns; row overrides shown above)")
         return 1
-    print(f"shape-rss: ok (bound {bound_b} B a turn + 1 MiB over N turns)")
+    print(f"shape-rss: ok (default bound {bound_b} B a turn + 1 MiB over N turns; row overrides shown above)")
     return 0
 
 
