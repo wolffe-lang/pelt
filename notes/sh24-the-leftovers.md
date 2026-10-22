@@ -260,3 +260,53 @@ by the coordinator. No issue was filed or closed. No branch was merged.
 The final-head PR/audit/CI state is in PR #58's body. macOS is CI-only; no
 local macOS build or PAX run is claimed. Kasumi retains only the evidence and
 reproduction scripts under `/home/mfwolffe/lanes/sh24/`; builds are pruned.
+
+## Final-head CI follow-up: inherited capture-read retention
+
+The labelled `fa80a2f` full run **39818177236** was red on the existing
+substitution-pipeline row on both native hosts: Linux264 and macOS206 B/turn.
+No history or local pass waived that failure. The coordinator resumed sh24
+with an ordered comparison/fix request. No row override was decided.
+
+The unchanged `tools/shape-rss --only substitution-pipeline` instrument,
+N=10,000/20,000, CPUs8–11, six readings/tier at merge-base `57ffef9` and old
+head `fa80a2f` (uptime at every reading):
+
+| implementation | native B/turn, six readings | median | release B/turn, six readings | median |
+|---|---|---:|---|---:|
+| merge base57ffef9 |167,124,132,139,172,144|141.5|155,181,162,169,163,144|162.5|
+| old headfa80a2f |149,151,174,157,155,188|156|159,126,142,169,169,135|150.5|
+| fixed89862e1 |66,112,104,73,79,110|91.5|62,88,62,103,45,64|63|
+
+There was no consistent increase introduced by sh24: ranges overlap and the
+medians move in opposite directions. The retaining helper was inherited:
+`exec.drain` (`1a4c093`) read a fresh `List[byte]` in the ambient parent root,
+then copied its bytes into the capture. The fork door `e6dab63`, activated for
+this compound substitution by `75b3c29`, makes that the parent-side hot path.
+This is source-history attribution, not an invented pre-fork timing result.
+
+The old parent allocation profile records `fs_read_chunk < drain < fork_shape
+< run_cmdsub` and copy-out under `cap_end`. Its deterministic chunk-boundary
+samples are not treated as exact byte shares. A direct region around the read
+and capture append was refused E1010: growing the outer capture there would
+make it retain region-local storage. That compile error is preserved, not
+counted as a skip. The fix in **89862e1** instead creates a reusable64KiB
+owned staging list, index-copies bytes into it inside the read region, frees
+the read scratch, then grows/appends to the capture outside the region.
+No language/runtime change, unsafe escape, row, N, instrument or bound changed.
+
+The fixed medians fall64.5 B/turn native and87.5 release versus the old head,
+exceeding the pre-fix prediction of at least32. A new regression preserves
+131,073 bytes with two different payload hashes and exit status7; it guards
+multi-read scratch reuse, not a manufactured old-output failure. Its final
+name is `cmdsub/drain_chunks`; the first successful logs used `subst/` before
+moving it into the existing area. Census2.6.3/1 and /9 name it; the statement
+count stays516/548. Corpus count is now995/0/28. No bound was relaxed.
+
+`regress-measure.sh`, `drain-verify.sh`, `post-drain.sh` and their `.status`/
+logs preserve the paired measurements, safe-buffer build, full corpus and
+fresh shape/session checks. `failed-direct-drain-region.patch` and
+`logs/drain-build.launch.log` preserve the E1010 attempt. Source fix and
+multi-chunk assertions are separate commits. Post-fix full shape and session
+completion, final pruning and new PR metadata are recorded at the hand-back;
+the earlier624-row gauntlet is not mislabelled as post-fix evidence.
