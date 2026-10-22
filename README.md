@@ -13,10 +13,10 @@ shell's source is ever read: pelt is clean-room, black-box only.
 
 | measure | where it stands |
 |---|---|
-| POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 505 of 547 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
-| differential corpus against dash, both tiers | 968 cases, 0 failing, 38 pending on a named primitive (`tests/diff/`) |
-| typed sessions against `dash -i` through a pseudo-terminal | 283 sessions, 0 failing, 3 pending (`tests/session/`) |
-| real `sh` scripts that run as under dash | 76 of 80 (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts) |
+| POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 516 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
+| differential corpus against dash, both tiers | 989 cases, 0 failing, 28 pending on a named primitive (`tests/diff/`) |
+| typed sessions against `dash -i` through a pseudo-terminal | 289 sessions, 0 failing, 2 pending (`tests/session/`) |
+| real `sh` scripts that run as under dash | 76 of 80 when the census last ran, before the fork (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts); the three it missed for want of a process per pipeline stage (xzgrep, zgrep, zdiff) wait on its next run |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
 | toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
 
@@ -143,8 +143,6 @@ pending case still runs on every pass and is reported, never skipped.
 - `test -r`, `-w` and `-x` read the mode bits for the shell's own ids
   rather than asking `access(2)`, so a read-only or `noexec` mount and
   ACLs are not seen.
-- Three of the 80 census scripts (xzgrep, zgrep, zdiff) need a process
-  for a pipeline stage.
 
 ## How it is tested
 
