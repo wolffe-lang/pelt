@@ -1,0 +1,28 @@
+sh24, GPT-6.1-Sol, crawl 54; prediction before implementation.
+Base origin/trunk 57ffef9; wolf 0.2.34 / lupin 0.1.55 / std e036bec unchanged.
+Clean room: no shell source; dash black box only. RULES sections 5-7 apply.
+All builds and process measurements in sh24 containers on kasumi; ulimit -c 0;
+measurements on cpus 0-3, plus the required unpinned controls. No packages.
+
+#45: bi_jobs allocates pick anew even when empty. A reusable list should remove
+its own ~60 bytes/call. Use a script shape without loop-counter growth to test
+<=16 B/call at N=10000; retain an ordinary loop control.
+#46: predict the process record and its text dominate, not saved descriptors.
+jb_fold currently refuses all job-controlled jobs. Folding a single ended
+process should retain id/status/group/text in the job slot and recycle process
+entries. Job texts still allocate each start; intern or pool repeated command
+texts if profiling confirms. Bound: dash growth + 160 B/job slack initially
+(the runtime child table and shell loop floor are irreducible at this pin).
+#54: predict redirs_of's List[Rd], not saved descriptors: compound run rebuilds
+it each turn whereas run_builtin_enc applies AST redirections directly. Direct
+AST iteration should reduce 644-721 to <=160 B/turn including loop floor.
+#55: explicit interactive wait should tell/free a done job before the next job
+in the same input line, preserving interrupted and stopped waits and script
+set -m's delayed notices.
+#53: fast path reports after close_opened on parent's table; report through
+shadow descriptor 2 before closing it; avoid duplicate report on commit.
+Item 6: predict two cheap sites: trap bad-option fatality and non-EPIPE write
+diagnostic. set -v needs incremental script/-c input handling, not a one-site
+change; W06 still requires byte-string APIs. Confirm via dash rows before fixing.
+Baseline corpus 989/0/28, sessions 289/0/2. Every changed gate red first, then
+plants through smallest CI run; no issue filed/closed, merge/tag, attribution.
