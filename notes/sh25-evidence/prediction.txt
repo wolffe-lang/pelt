@@ -1,0 +1,28 @@
+sh25 prediction, before implementation
+
+Inputs re-derived: origin/trunk 9d4f56cb7d57e2c5de22945e0431bca63f1855c1;
+three original read-only wl66 patches and mpcheck logs agree with the contract.
+Wolf 0.2.34 9da7bdcf / lupin 0.1.55 e642f26 / std e036bec remain pinned.
+pelt#16/#59/#60 are open. PR58's five headings and sh22/sh24's memory
+methods read. CI attempt2 records 135 B/turn native, not a guessed green.
+
+Prediction:
+- pwd: retain wollf-v7sf3's unknown-option rejection, but review -- and
+  grouped -L/-P against dash before keeping the blanket '-' rejection.
+- cd: retain -e acceptance, replace the claim that resolution already checks
+  it: os_cwd currently falls back silently. Test a removed cwd and implement
+  -P -e's failure status if reproduced; do not pretend dash supports -e.
+- printf: retain the prefix scan/parse_const fallback design, but use the
+  C constant's base and whitespace rules: decimal-only scanning misses
+  0x12x and 078. Regression must check sign-only and no-digit cases too.
+- notice5: newline before the appended status should change rows9/10 only;
+  all other recorded rows should be byte-identical under dash.
+- #60: predict six readings per tier are not all under110 B/turn: the
+  loop floor and runtime child table plus peak RSS spread likely exceed it.
+  No bound or instrument is changed without R-sh25-1. Find an attributable
+  keep before proposing a code fix; otherwise report spread honestly.
+
+R-sh25-2 taken by orchestrator: no host forks. Six readings per tier inside
+our own container, three with and three without taskset12-15. All builds and
+other process checks likewise container-contained, ulimit -c0. No pin change,
+no shell source, packages, merges, tags or issue actions.
