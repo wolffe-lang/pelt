@@ -108,6 +108,41 @@ fn num_arg(mut sh: Sh, a: str, mut bad: bool) -> int {
     let n = parse_const(a) else |_| {
         diag(mut sh, "printf: {a}: not a number")
         bad = true
+        let t = a.trim()
+        var k = 0
+        if k < t.len && (ch(t, k) == '+' || ch(t, k) == '-') {
+            k += 1
+        }
+        let first = k
+        var base = 10
+        if k < t.len && ch(t, k) == '0' {
+            base = 8
+            if k + 2 < t.len && (ch(t, k + 1) == 'x' || ch(t, k + 1) == 'X') {
+                let c = ch(t, k + 2)
+                if is_digit(c) || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F' {
+                    base = 16
+                    k += 2
+                }
+            }
+        }
+        while k < t.len {
+            let c = ch(t, k)
+            var d = -1
+            if is_digit(c) {
+                d = c as int - 48
+            } else if c >= 'a' && c <= 'f' {
+                d = c as int - 87
+            } else if c >= 'A' && c <= 'F' {
+                d = c as int - 55
+            }
+            if d < 0 || d >= base {
+                break
+            }
+            k += 1
+        }
+        if k > first {
+            return parse_const(t[0..k]) else 0
+        }
         return 0
     }
     n
