@@ -173,7 +173,7 @@ left undone.
 src/pelt.lu        the program (over the module src/sh/)
 src/sh/            parse, expand, exec, redir, builtin, jobs, signal, kill,
                    edit, complete, hist, interact, arith, pattern, umask, …
-tests/diff/        the differential corpus (.lu cases, .meta expectations)
+tests/diff/        the differential corpus (.sh cases, .meta expectations)
 tests/session/     the typed sessions (.tr transcripts, .meta)
 tests/reap/        the reaper's cases
 tests/census/      the 80 real scripts
