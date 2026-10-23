@@ -6,7 +6,7 @@ Original patch copies on kasumi: /home/mfwolffe/lanes/sh25/patches/.
 Issues16/59/60 read as OPEN, #60's attempt2 comment and PR58's five headings read.
 CI39847135493 attempt2: native135 B/turn, release92, macOS native96.
 CI evidence requested: PR39841894702 native124, trunk attempt1 native213;
-these latter two values are issue60's independently recorded inputs.
+both original job logs were fetched independently and verify those values.
 px61's verified-final exists; Linux and PAX sessions are readable and unchanged.
 
 Tag references and objects read twice through gh api:
@@ -27,3 +27,11 @@ First baseline taskset legs CPUs12–15; bare-affinity controls unpinned inside
 the container. Final gauntlet's outer affinity restricts both bare and inner
 taskset controls to12–15, as sh24 did on its assigned pool. R-sh25-2 taken:
 there are no host fork readings. Launch pids and SigBlk/SigIgn printed.
+
+Final-run load: the system-only guard saw load2–6 despite no sh25 job.
+Orchestrator identified r40 lupin binaries on8–11 and GPU RPC (under1% CPU),
+not t06 (its build had not started). They directed assigned-core idleness
+instead of system load. mpstat was absent; no package was installed.
+quiet.sh reads /proc/stat's CPU12–15 idle counters over5seconds and requires
+90% idle before launch. The earlier uptime series remains quiet-before.log.
+Only the recorded sh25 quiet-wait pid was stopped, with TERM, not a group.
