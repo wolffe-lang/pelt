@@ -1,0 +1,29 @@
+Trunk 9d4f56cb7d57e2c5de22945e0431bca63f1855c1 (origin/trunk, git log).
+Rules §1–10 and pelt index read; sh24 record read in full, sh22 memory method read.
+Original read-only model patches: /Users/mfwolffe/lanes/wl66/window/mp-{pwd,cd,printf}/diff.patch.
+Model note §8 and mpcheck-{pwd,cd,printf}.log read; only native was tested there.
+Original patch copies on kasumi: /home/mfwolffe/lanes/sh25/patches/.
+Issues16/59/60 read as OPEN, #60's attempt2 comment and PR58's five headings read.
+CI39847135493 attempt2: native135 B/turn, release92, macOS native96.
+CI evidence requested: PR39841894702 native124, trunk attempt1 native213;
+these latter two values are issue60's independently recorded inputs.
+px61's verified-final exists; Linux and PAX sessions are readable and unchanged.
+
+Tag references and objects read twice through gh api:
+wolf v0.2.34 tag38ab81cb32ca7af7c0fc40d456c9c0794fe2b987
+  ->9da7bdcf2aea9adf48df6570bedc58e16e9ef853
+lupin v0.1.55 tag047184fb8c70e8306dfbe4740ccf08c627eed9d3
+  ->e642f2630ad4c7f53740428d5cca705f2e0d295b
+Release API digests each read twice, agreeing with wolf-toolchain.toml:
+wolf Linux88a9dd3da1c9a0e38c08eb6e2de9c1ef04d1ed93dcf51024d8dbbb76890c1821
+lupin Linux1152abc0bef65d334b94bc881a26463fac345919cc2ca07a291796e6048a8a38
+std e036bec318ad81ecd5a025612bc2c2adb17527f3; fetched by exact commit.
+tools/fetch-toolchain hashes the archives and refuses on mismatch; see logs/fetch.log.
+
+At start kasumi81GiB free; load0.17/0.24/0.34. Original before/after uptime
+samples span >2quiet minutes before baseline measurements. Builds/process
+checks are rootless podman, init/private PID namespace/network none, core0.
+First baseline taskset legs CPUs12–15; bare-affinity controls unpinned inside
+the container. Final gauntlet's outer affinity restricts both bare and inner
+taskset controls to12–15, as sh24 did on its assigned pool. R-sh25-2 taken:
+there are no host fork readings. Launch pids and SigBlk/SigIgn printed.
