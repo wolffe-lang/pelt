@@ -1,0 +1,12 @@
+Final code/tool head63104f9, all legs outer CPUs12–15, core0, container.
+Three passes/tier, 52 rows/pass, bare and inner-taskset:624 assertions all pass.
+
+tier | pass | fork-background-subshell bare B/turn | inner taskset B/turn
+native | 1 | 107 | 81
+native | 2 | 78 | 135
+native | 3 | 60 | 138
+release | 1 | 116 | 117
+release | 2 | 90 | 111
+release | 3 | 114 | 60
+
+All input hashes in logs/tested-inputs.sha256 match the final Git files.

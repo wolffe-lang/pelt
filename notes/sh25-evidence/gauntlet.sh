@@ -52,7 +52,8 @@ run diff-selftest tools/difftest-selftest target/release
 run sess-selftest tools/session-selftest target/release
 run oracle-check tools/oracle-record --check
 for t in native release; do
+ run notice-before-$t bash notes/sh25-evidence/notice5-before.sh "$S/base-bin/$t/pelt"
  run notice-$t bash notes/sh20-evidence/probe/notice5.sh "$S/pelt/target/$t/pelt"
- run notice-check-$t python3 -I notes/sh25-evidence/check-notice5.py notes/sh20-evidence/logs/probe/notice5.dash.txt "$L/notice-$t.log"
+ run notice-check-$t python3 -I notes/sh25-evidence/check-notice5.py "$L/notice-before-$t.log" "$L/notice-$t.log"
 done
 echo done | tee -a "$ST"

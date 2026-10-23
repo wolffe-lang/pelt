@@ -1,0 +1,103 @@
+code_head=63104f95d6a578d921d83777679959fbeced371b
+cpus=pid 2's current affinity list: 12-15 core=0
+2026-10-23T01:18:36+00:00 start fmt  01:18:36 up 6 days,  9:36,  0 users,  load average: 8.84, 5.83, 3.34
+fmt=0
+2026-10-23T01:18:37+00:00 start build  01:18:37 up 6 days,  9:36,  0 users,  load average: 8.84, 5.83, 3.34
+build=0
+2026-10-23T01:19:18+00:00 start test  01:19:18 up 6 days,  9:36,  0 users,  load average: 7.41, 5.87, 3.48
+test=0
+2026-10-23T01:19:19+00:00 start clause  01:19:19 up 6 days,  9:36,  0 users,  load average: 7.41, 5.87, 3.48
+clause=0
+2026-10-23T01:19:20+00:00 start width  01:19:20 up 6 days,  9:36,  0 users,  load average: 7.41, 5.87, 3.48
+width=0
+866d69dc4399eef29c21e6eb6f40fe344e3b695c2a30775b32981aa43ff7e092  target/native/pelt
+090f84d9f0d4cb182a86f6bbede8ddacae43043a009b80223109e2e6f2d36f25  target/release/pelt
+2026-10-23T01:19:21+00:00 start diff-native  01:19:21 up 6 days,  9:36,  0 users,  load average: 7.41, 5.87, 3.48
+diff-native=0
+2026-10-23T01:19:49+00:00 start diff-native-taskset  01:19:49 up 6 days,  9:37,  0 users,  load average: 5.47, 5.54, 3.44
+diff-native-taskset=0
+2026-10-23T01:20:17+00:00 start sess-native  01:20:17 up 6 days,  9:37,  0 users,  load average: 4.12, 5.22, 3.39
+sess-native=0
+2026-10-23T01:27:45+00:00 start sess-native-taskset  01:27:45 up 6 days,  9:45,  0 users,  load average: 5.95, 13.92, 8.42
+sess-native-taskset=0
+2026-10-23T01:35:11+00:00 start self-native  01:35:11 up 6 days,  9:52,  0 users,  load average: 1.48, 4.68, 6.02
+self-native=0
+2026-10-23T01:35:16+00:00 start glob-rss-native  01:35:16 up 6 days,  9:52,  0 users,  load average: 1.52, 4.63, 5.99
+glob-rss-native=0
+2026-10-23T01:35:17+00:00 start loop-rss-native  01:35:17 up 6 days,  9:52,  0 users,  load average: 1.52, 4.63, 5.99
+loop-rss-native=0
+2026-10-23T01:35:18+00:00 start exec-witness-native  01:35:18 up 6 days,  9:52,  0 users,  load average: 1.56, 4.59, 5.97
+exec-witness-native=0
+2026-10-23T01:35:19+00:00 start edit-witness-native  01:35:19 up 6 days,  9:52,  0 users,  load average: 1.56, 4.59, 5.97
+edit-witness-native=0
+2026-10-23T01:35:45+00:00 start hist-witness-native  01:35:45 up 6 days,  9:53,  0 users,  load average: 2.32, 4.51, 5.91
+hist-witness-native=0
+2026-10-23T01:35:51+00:00 start signal-witness-native  01:35:51 up 6 days,  9:53,  0 users,  load average: 2.30, 4.47, 5.89
+signal-witness-native=0
+2026-10-23T01:35:54+00:00 start reap-native  01:35:54 up 6 days,  9:53,  0 users,  load average: 2.35, 4.45, 5.87
+reap-native=0
+2026-10-23T01:36:17+00:00 start diff-release  01:36:17 up 6 days,  9:53,  0 users,  load average: 2.03, 4.24, 5.77
+diff-release=0
+2026-10-23T01:36:41+00:00 start diff-release-taskset  01:36:41 up 6 days,  9:54,  0 users,  load average: 1.73, 3.99, 5.65
+diff-release-taskset=0
+2026-10-23T01:37:05+00:00 start sess-release  01:37:05 up 6 days,  9:54,  0 users,  load average: 1.91, 3.85, 5.56
+sess-release=0
+2026-10-23T01:44:31+00:00 start sess-release-taskset  01:44:31 up 6 days, 10:02,  0 users,  load average: 1.00, 1.76, 3.88
+sess-release-taskset=0
+2026-10-23T01:51:59+00:00 start self-release  01:51:59 up 6 days, 10:09,  0 users,  load average: 4.04, 1.83, 2.95
+self-release=0
+2026-10-23T01:52:26+00:00 start glob-rss-release  01:52:26 up 6 days, 10:09,  0 users,  load average: 3.37, 1.86, 2.93
+glob-rss-release=0
+2026-10-23T01:52:27+00:00 start loop-rss-release  01:52:27 up 6 days, 10:10,  0 users,  load average: 3.37, 1.86, 2.93
+loop-rss-release=0
+2026-10-23T01:52:28+00:00 start exec-witness-release  01:52:28 up 6 days, 10:10,  0 users,  load average: 3.37, 1.86, 2.93
+exec-witness-release=0
+2026-10-23T01:52:29+00:00 start edit-witness-release  01:52:29 up 6 days, 10:10,  0 users,  load average: 3.42, 1.90, 2.93
+edit-witness-release=0
+2026-10-23T01:52:55+00:00 start hist-witness-release  01:52:55 up 6 days, 10:10,  0 users,  load average: 2.96, 1.92, 2.91
+hist-witness-release=0
+2026-10-23T01:53:01+00:00 start signal-witness-release  01:53:01 up 6 days, 10:10,  0 users,  load average: 2.80, 1.90, 2.90
+signal-witness-release=0
+2026-10-23T01:53:03+00:00 start reap-release  01:53:03 up 6 days, 10:10,  0 users,  load average: 2.80, 1.90, 2.90
+reap-release=0
+2026-10-23T01:53:25+00:00 start shape-release-1  01:53:25 up 6 days, 10:10,  0 users,  load average: 2.19, 1.83, 2.85
+2026-10-23T01:53:25+00:00 start shape-native-1  01:53:25 up 6 days, 10:10,  0 users,  load average: 2.19, 1.83, 2.85
+shape-release-1=0
+2026-10-23T01:56:54+00:00 start shape-release-1-taskset  01:56:54 up 6 days, 10:14,  0 users,  load average: 6.63, 4.18, 3.56
+shape-native-1=0
+2026-10-23T01:58:10+00:00 start shape-native-1-taskset  01:58:10 up 6 days, 10:15,  0 users,  load average: 6.29, 4.72, 3.80
+shape-release-1-taskset=0
+2026-10-23T02:00:16+00:00 start shape-release-2  02:00:16 up 6 days, 10:17,  0 users,  load average: 7.40, 6.50, 4.63
+shape-native-1-taskset=0
+2026-10-23T02:02:50+00:00 start shape-native-2  02:02:50 up 6 days, 10:20,  0 users,  load average: 4.84, 5.76, 4.63
+shape-release-2=0
+2026-10-23T02:03:49+00:00 start shape-release-2-taskset  02:03:49 up 6 days, 10:21,  0 users,  load average: 5.88, 5.88, 4.75
+shape-release-2-taskset=0
+2026-10-23T02:07:36+00:00 start shape-release-3  02:07:36 up 6 days, 10:25,  0 users,  load average: 7.48, 6.92, 5.39
+shape-native-2=0
+2026-10-23T02:07:54+00:00 start shape-native-2-taskset  02:07:54 up 6 days, 10:25,  0 users,  load average: 6.69, 6.77, 5.38
+shape-release-3=0
+2026-10-23T02:10:51+00:00 start shape-release-3-taskset  02:10:51 up 6 days, 10:28,  0 users,  load average: 4.03, 5.30, 5.04
+shape-native-2-taskset=0
+2026-10-23T02:12:23+00:00 start shape-native-3  02:12:23 up 6 days, 10:29,  0 users,  load average: 4.08, 4.97, 4.94
+shape-release-3-taskset=0
+shape-native-3=0
+2026-10-23T02:16:40+00:00 start shape-native-3-taskset  02:16:40 up 6 days, 10:34,  0 users,  load average: 3.44, 3.88, 4.47
+shape-native-3-taskset=0
+shape-native-worker=0
+shape-release-worker=0
+2026-10-23T02:21:29+00:00 start diff-selftest  02:21:29 up 6 days, 10:39,  0 users,  load average: 6.26, 4.65, 4.57
+diff-selftest=0
+2026-10-23T02:21:30+00:00 start sess-selftest  02:21:30 up 6 days, 10:39,  0 users,  load average: 6.26, 4.65, 4.57
+sess-selftest=0
+2026-10-23T02:21:47+00:00 start oracle-check  02:21:47 up 6 days, 10:39,  0 users,  load average: 5.16, 4.48, 4.52
+oracle-check=0
+2026-10-23T02:22:45+00:00 start notice-native  02:22:45 up 6 days, 10:40,  0 users,  load average: 3.08, 4.01, 4.35
+notice-native=0
+2026-10-23T02:22:46+00:00 start notice-check-native  02:22:46 up 6 days, 10:40,  0 users,  load average: 3.08, 4.01, 4.35
+notice-check-native=1
+2026-10-23T02:22:47+00:00 start notice-release  02:22:47 up 6 days, 10:40,  0 users,  load average: 3.08, 4.01, 4.35
+notice-release=0
+2026-10-23T02:22:49+00:00 start notice-check-release  02:22:49 up 6 days, 10:40,  0 users,  load average: 3.08, 4.00, 4.34
+notice-check-release=1
+done

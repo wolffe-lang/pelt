@@ -1,0 +1,1 @@
+gauntlet: 52 validated outcomes (notice domain retake explicit);  corpus998/0/25 x4; sessions290/0/2 x4; 624 shape assertions; no SKIP

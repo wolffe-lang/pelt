@@ -17,6 +17,27 @@ for tier in ('native', 'release'):
     for p in (1, 2, 3):
         expected.update((f'shape-{tier}-{p}', f'shape-{tier}-{p}-taskset'))
 found = dict(re.findall(r'^([a-z0-9-]+)=(\d+)$', status, re.M))
+before = {f'notice-before-{tier}' for tier in ('native', 'release')}
+retake_path = root / 'notice-retake.status'
+if retake_path.exists():
+    # The first driver compared pelt's row15 diagnostic text with dash's.
+    # Preserve those reds; require the exact diagnosis and a same-shell retake.
+    assert set(found) == expected
+    assert {k: v for k, v in found.items() if v != '0'} == {
+        'notice-check-native': '1', 'notice-check-release': '1'}
+    for tier in ('native', 'release'):
+        text = (root / 'final' / f'notice-check-{tier}.log').read_text()
+        assert 'AssertionError: unexpected changed row 15' in text
+    retake_text = retake_path.read_text()
+    assert retake_text.rstrip().endswith('done')
+    retake = dict(re.findall(r'^([a-z0-9-]+)=(\d+)$', retake_text, re.M))
+    assert set(retake) == {f'{g}-{t}' for g in ('notice-before', 'notice', 'notice-check')
+                           for t in ('native', 'release')}
+    assert all(v == '0' for v in retake.values())
+    found.update(retake)
+    expected.update(before)
+elif set(found) & before:
+    expected.update(before)
 assert set(found) == expected, (sorted(expected - set(found)), sorted(set(found) - expected))
 assert all(v == '0' for v in found.values()), {k: v for k, v in found.items() if v != '0'}
 for tier in ('native', 'release'):
@@ -32,4 +53,4 @@ for tier in ('native', 'release'):
             assert 'FAIL' not in log and 'SKIP' not in log, f'shape verdict {tier}/{p}{suffix}'
 for p in (root / 'final').glob('*.log'):
     assert not re.search(r'\bSKIP\b', p.read_text()), f'unaccounted SKIP {p}'
-print(f'gauntlet: {len(expected)} zero exits; corpus998/0/25 x4; sessions290/0/2 x4; 624 shape assertions; no SKIP')
+print(f'gauntlet: {len(expected)} validated outcomes (notice domain retake explicit);  corpus998/0/25 x4; sessions290/0/2 x4; 624 shape assertions; no SKIP')

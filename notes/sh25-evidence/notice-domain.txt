@@ -1,0 +1,17 @@
+The first final driver compared every pelt row against dash, including row15's
+shell-written diagnostic text inside the output file. That is not a fixture
+regression: pelt and dash use different messages. Both notice-check legs
+correctly reported 'unexpected changed row15'; their failures remain in the
+unaltered final.status and final/notice-check-*.log.
+
+The retake compares baseline pelt under the original runner with head pelt
+under the repaired runner, separately on native and release. The unchanged
+checker requires all18 unaffected rows byte-identical, plus exact corrected
+stdout/file bytes for9/10. All six retake commands pass. The separate old-vs-new
+dash recording comparison also proves only9/10 changed under the oracle.
+No assertion, shell source, binary, corpus case, memory measurement, N or bound
+was changed by this harness-domain correction. retake-notice.sh reproduces it;
+notice-retake.status and its complete logs preserve it. validate.py explicitly
+requires the original row15 diagnosis and all six retake exits; it does not
+silently overwrite or ignore a red. The future gauntlet driver now uses the
+correct same-shell reference for this comparison.
