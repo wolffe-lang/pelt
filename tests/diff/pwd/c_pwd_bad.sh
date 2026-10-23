@@ -1,1 +1,5 @@
 pwd -x >/dev/null 2>&1; echo "st=$?"
+pwd -- >/dev/null; echo "dashdash=$?"
+pwd -LP >/dev/null; echo "group=$?"
+pwd ignored -x >/dev/null; echo "operand=$?"
+pwd -- -x >/dev/null; echo "after=$?"

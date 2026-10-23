@@ -705,10 +705,21 @@ fn print_traps(mut sh: Sh) {
 fn bi_pwd(mut sh: Sh, args: List[str]) -> int {
     var physical = false
     for a in args {
-        if a == "-P" {
-            physical = true
-        } else if a == "-L" {
-            physical = false
+        if a == "--" || a.len < 2 || ch(a, 0) != '-' {
+            break
+        }
+        var k = 1
+        while k < a.len {
+            let c = ch(a, k)
+            if c == 'P' {
+                physical = true
+            } else if c == 'L' {
+                physical = false
+            } else {
+                diag(mut sh, "pwd: {a}: no such option")
+                return 2
+            }
+            k += 1
         }
     }
     var dir = value_of(sh, "PWD")
