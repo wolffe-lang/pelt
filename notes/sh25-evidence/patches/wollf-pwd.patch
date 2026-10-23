@@ -1,0 +1,35 @@
+diff --git a/src/sh/builtin.lu b/src/sh/builtin.lu
+index fb16627..c86314d 100644
+--- a/src/sh/builtin.lu
++++ b/src/sh/builtin.lu
+@@ -705,6 +705,9 @@ fn bi_pwd(mut sh: Sh, args: List[str]) -> int {
+             physical = true
+         } else if a == "-L" {
+             physical = false
++        } else if a.len > 1 && ch(a, 0) == '-' {
++            diag(mut sh, "pwd: {a}: no such option")
++            return 2
+         }
+     }
+     var dir = value_of(sh, "PWD")
+diff --git a/tests/diff/PENDING.md b/tests/diff/PENDING.md
+index c42713c..4119d71 100644
+--- a/tests/diff/PENDING.md
++++ b/tests/diff/PENDING.md
+@@ -26,7 +26,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
+ | **builtin-dashdash** | `export -- name` and `printf -- format`: `--` is taken as an operand | pelt (P09) | `builtin/c_export_invalid`, `printf/c_usage` |
+ | **exit-in-exit-trap** | `exit` with no operand inside an EXIT trap action uses the action's last status, not the status from before the trap | pelt (P09) | `builtin/c_exit_in_trap_status` |
+ | **readonly-p-unset** | `readonly -p` omits a readonly variable that has no value | pelt (P09) | `builtin/c_readonly_p` |
+-| **pwd-bad-option** | `pwd -x` answers 0 | pelt (P09) | `pwd/c_pwd_bad` |
+ | **cd-e** | `cd -P -e` (new in POSIX.1-2024) | pelt (P09) | `cd/c_dash_e` |
+ | **pwd-from-env** | `PWD` is not taken from the environment at start, so a shell started in a directory reached through a symbolic link reports the physical path (XCU 2.5.3) | pelt (P09) | `cd/c_pwd_from_env` |
+ | **printf-partial-number** | `printf %d 12x` prints 0 where the leading digits are the value | pelt (P09) | `printf/c_bad_operand` |
+diff --git a/tests/diff/pwd/c_pwd_bad.meta b/tests/diff/pwd/c_pwd_bad.meta
+index 0676e15..edce7a3 100644
+--- a/tests/diff/pwd/c_pwd_bad.meta
++++ b/tests/diff/pwd/c_pwd_bad.meta
+@@ -1,4 +1,3 @@
+ exit=0
+ stderr=no
+ bash=agree
+-pending=pwd-bad-option

@@ -1,0 +1,36 @@
+recorded cd/c_canonical: exit 0
+recorded cd/c_cdpath_forms: exit 0
+recorded cd/c_dash_e: exit 0 (bash differs)
+recorded cd/c_double_slash: exit 0
+recorded cd/c_double_slash_path: exit 0
+recorded cd/c_failures: exit 0 (bash differs)
+recorded cd/c_home_forms: exit 0 (bash differs)
+recorded cd/c_logical_physical: exit 0
+recorded cd/c_minus: exit 0
+recorded cd/c_pwd_from_env: exit 0
+recorded cd/c_pwd_oldpwd: exit 0
+recorded cd/c_root_relative: exit 0
+recorded cd/cd_subshell: exit 0
+recorded cd/cdpath: exit 0
+recorded cd/cdpath_prints: exit 0 (bash differs)
+recorded cd/child_sees_it: exit 0
+recorded cd/dotdot: exit 0
+recorded cd/fail: exit 0 (bash differs)
+recorded cd/home: exit 0
+recorded cd/minus: exit 0
+recorded cd/oldpwd: exit 0
+recorded cd/relative_file: exit 0
+recorded cd/subshell_restores: exit 0
+recorded cd/symlink: exit 0
+recorded printf/c_b: exit 0
+recorded printf/c_bad_operand: exit 0 (bash differs)
+recorded printf/c_basic: exit 0
+recorded printf/c_floats: exit 0
+recorded printf/c_format_escapes: exit 0
+recorded printf/c_integers: exit 0
+recorded printf/c_numbered: exit 0 (bash differs)
+recorded printf/c_quote_value: exit 0
+recorded printf/c_strings: exit 0
+recorded printf/c_usage: exit 0
+recorded pwd/c_pwd: exit 0
+recorded pwd/c_pwd_bad: exit 0

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh25/pelt/notes/sh25-evidence/validate.py", line 9, in <module>
+    assert status.rstrip().endswith('done'), 'unfinished'
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+AssertionError: unfinished

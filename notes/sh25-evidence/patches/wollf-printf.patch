@@ -1,0 +1,42 @@
+diff --git a/src/sh/util.lu b/src/sh/util.lu
+index 0a9a386..b20c499 100644
+--- a/src/sh/util.lu
++++ b/src/sh/util.lu
+@@ -108,6 +108,16 @@ fn num_arg(mut sh: Sh, a: str, mut bad: bool) -> int {
+     let n = parse_const(a) else |_| {
+         diag(mut sh, "printf: {a}: not a number")
+         bad = true
++        var k = 0
++        if k < a.len && (ch(a, k) == '+' || ch(a, k) == '-') {
++            k += 1
++        }
++        while k < a.len && is_digit(ch(a, k)) {
++            k += 1
++        }
++        if k > 0 && (k > 1 || a.len > 0 && is_digit(ch(a, 0))) {
++            return parse_const(a[0..k]) else 0
++        }
+         return 0
+     }
+     n
+diff --git a/tests/diff/PENDING.md b/tests/diff/PENDING.md
+index c42713c..2ede2fe 100644
+--- a/tests/diff/PENDING.md
++++ b/tests/diff/PENDING.md
+@@ -29,7 +29,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
+ | **pwd-bad-option** | `pwd -x` answers 0 | pelt (P09) | `pwd/c_pwd_bad` |
+ | **cd-e** | `cd -P -e` (new in POSIX.1-2024) | pelt (P09) | `cd/c_dash_e` |
+ | **pwd-from-env** | `PWD` is not taken from the environment at start, so a shell started in a directory reached through a symbolic link reports the physical path (XCU 2.5.3) | pelt (P09) | `cd/c_pwd_from_env` |
+-| **printf-partial-number** | `printf %d 12x` prints 0 where the leading digits are the value | pelt (P09) | `printf/c_bad_operand` |
+ | **printf-float** | `printf` `%e %f %g` (optional in POSIX; dash has them and configure scripts use `%f`) | pelt (P09); wolf has float formatting | `printf/c_floats` |
+ | **printf-numbered** | `printf '%2$s'` (new in POSIX.1-2024; neither oracle has it) | not counted in the census | `printf/c_numbered` |
+ | **trap-p** | `trap -p` (new in POSIX.1-2024) | pelt (P10) | `signal/c_trap_p` |
+diff --git a/tests/diff/printf/c_bad_operand.meta b/tests/diff/printf/c_bad_operand.meta
+index f5b455b..70f5d55 100644
+--- a/tests/diff/printf/c_bad_operand.meta
++++ b/tests/diff/printf/c_bad_operand.meta
+@@ -1,4 +1,3 @@
+ exit=0
+ stderr=no
+ bash=differs
+-pending=printf-partial-number

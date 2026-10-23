@@ -1,0 +1,50 @@
+difftest: pelt = /home/mfwolffe/lanes/sh25/model/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   cd/c_canonical
+ok   cd/c_cdpath_forms
+FAIL cd/c_dash_e: stdout
+     pelt stdout: b'st=0\nmissing=0\n'
+     want stdout: b'st=0\nmissing=1\n'
+ok   cd/c_double_slash
+ok   cd/c_double_slash_path
+ok   cd/c_failures
+ok   cd/c_home_forms
+ok   cd/c_logical_physical
+ok   cd/c_minus
+PEND-fail cd/c_pwd_from_env (waits on pwd-from-env)
+ok   cd/c_pwd_oldpwd
+ok   cd/c_root_relative
+ok   cd/cd_subshell
+ok   cd/cdpath
+ok   cd/cdpath_prints
+ok   cd/child_sees_it
+ok   cd/dotdot
+ok   cd/fail
+ok   cd/home
+ok   cd/minus
+ok   cd/oldpwd
+ok   cd/relative_file
+ok   cd/subshell_restores
+ok   cd/symlink
+ok   printf/c_b
+FAIL printf/c_bad_operand: stdout
+     pelt stdout: b'0\nst=1\n12\nst=1\n0\nst=0\n12\nst=1\n-12\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n'
+     want stdout: b'0\nst=1\n12\nst=1\n0\nst=0\n12\nst=1\n-12\nst=1\n18\nst=1\n7\nst=1\n12\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n0\nst=1\n-31\nst=1\n'
+ok   printf/c_basic
+PEND-fail printf/c_floats (waits on printf-float)
+ok   printf/c_format_escapes
+ok   printf/c_integers
+PEND-fail printf/c_numbered (waits on printf-numbered)
+ok   printf/c_quote_value
+ok   printf/c_strings
+PEND-fail printf/c_usage (waits on builtin-dashdash)
+ok   pwd/c_pwd
+FAIL pwd/c_pwd_bad: stdout, stderr present
+     pelt stdout: b'st=2\ndashdash=2\ngroup=2\noperand=2\nafter=2\n'
+     want stdout: b'st=2\ndashdash=0\ngroup=0\noperand=0\nafter=0\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: pwd: --: no such option\npelt: ../s.sh: line 3: pwd: -LP: no such option\npelt: ../s.sh: line 4: pwd: -x: no such option\npelt: ../s.sh: line 5: pwd: --: no such option\n'
+difftest: area        pass  fail  pending (of which pass)
+difftest: cd            22     1     1 (0)
+difftest: printf         6     1     3 (0)
+difftest: pwd            1     1     0 (0)
+difftest: total         29     3     4 (0)

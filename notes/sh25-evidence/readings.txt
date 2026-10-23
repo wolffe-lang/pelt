@@ -1,0 +1,40 @@
+pelt#60, 9d4f56cb, unchanged tools/shape-rss, N10000→20000, bytes/turn.
+All measurements inside sh25's own rootless container; core0. The bare
+baseline controls below have no taskset (not host execution). Taskset12–15.
+
+pass | native taskset | native bare | release taskset | release bare
+1    | 137            | 87          | 96              | 96
+2    | 75             | 83          | 81              | 80
+3    | 117            | 70          | 101             | 76
+range| 75–137         | 70–87       | 81–101          | 76–96
+
+Native all six70–137 (median85); release76–101 (median88.5).
+Nominal100B/turn; actual limit floor(10000*100/1024)+1024=2000KiB,
+i.e.204.8B/turn. Every baseline row passes, largest native1340KiB,
+660KiB below its gate. Not every native reading is under110: prediction held.
+
+Same-head GitHub ubuntu native: PR39841894702=124; trunk39847135493
+attempt1=213 (2088KiB,88KiB past actual bar); attempt2=135. Raw logs included.
+No comparisons mix a previous code head or a new instrument into this table.
+
+Diagnostic only, loop body unchanged, retained Linux RssAnon read before exec:
+pass | native anon | native HWM | release anon | release HWM | dash anon
+1    | 91          | 86         | 91           | 92          | -1
+2    | 91          | 70         | 92           | 96          | -1
+3    | 91          | 69         | 91           | 88          | 0
+The anonymous delta is896KiB on native,896–904KiB release. Native RssFile
+delta varies-5 to-23 B/turn. Diagnostic sampling is not the peak-RSS gate,
+and does not prove GitHub's unobserved RssAnon was identical to kasumi's.
+The fork shape retains about91B/turn locally, not dash-flat; sh20 already
+attributed its expected parent keep to the runtime child table plus loop.
+No new retaining object is established by these numbers.
+
+R-sh25-1 option(a), taken by the maintainer and implemented: keep nominal100 and add256KiB
+only to this row's slack (1024→1280KiB), actual limit2256KiB=231.0144B/turn.
+This rounds the observed88KiB GitHub overflow upward without changing N,
+the body or nominal retention. Alternative: a kasumi-only gate; less favored
+because it removes a useful cross-host observation. The maintainer took option(a): only this row's slack changed, in its own
+commit; issue60 closes at merge. Footprint: cross-cutting.
+
+R-sh25-2 taken: no host forks, container-only readings. Final three passes
+on both tiers, with/without inner taskset, inherit outer CPUs12–15.

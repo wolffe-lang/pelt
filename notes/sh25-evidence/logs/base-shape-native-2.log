@@ -1,0 +1,2 @@
+shape-rss: ok   fork-background-subshell loop    10000     6904 KB   20000     7644 KB  grew     740 KB (75 B a turn)  [( true ) & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)

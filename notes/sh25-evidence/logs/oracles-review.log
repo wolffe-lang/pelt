@@ -1,0 +1,139 @@
+SHELL=/usr/bin/dash
+status=0
+status=0
+status=0
+status=0
+status=0
+/usr/bin/dash: 1: pwd: Illegal option -x
+status=2
+status=0
+12
+status=1
+x: 1: printf: 12x: not completely converted
+12
+status=1
+x: 1: printf: +12x: not completely converted
+x: 1: printf: -12x: not completely converted
+-12
+status=1
+18
+status=1
+x: 1: printf: 0x12x: not completely converted
+7
+status=1
+x: 1: printf: 078: not completely converted
+x: 1: printf:  12x: not completely converted
+12
+status=1
+x: 1: printf: +: expected numeric value
+0
+status=1
+0
+status=1
+x: 1: printf: -: expected numeric value
+0
+status=1
+x: 1: printf: 0x: not completely converted
+0
+status=1
+x: 1: printf: 08x: not completely converted
+-31
+status=1
+x: 1: printf: -0x1fx: not completely converted
+status=2
+
+pwdstatus=0
+/usr/bin/dash: 1: cd: Illegal option -e
+/usr/bin/dash: 1: pwd: getcwd() failed: No such file or directory
+SHELL=/usr/bin/bash
+status=0
+status=0
+status=0
+status=0
+status=0
+status=2
+/usr/bin/bash: line 1: pwd: -x: invalid option
+pwd: usage: pwd [-LP]
+status=0
+12
+status=1
+x: line 1: printf: 12x: invalid number
+12
+x: line 1: printf: +12x: invalid number
+status=1
+-12
+status=1
+x: line 1: printf: -12x: invalid number
+18
+status=1
+x: line 1: printf: 0x12x: invalid hex number
+7
+status=1
+x: line 1: printf: 078: invalid octal number
+12
+status=1
+x: line 1: printf:  12x: invalid number
+0
+status=1
+x: line 1: printf: +: invalid number
+0
+status=1
+x: line 1: printf: -: invalid number
+0
+status=1
+x: line 1: printf: 0x: invalid hex number
+0
+status=1
+x: line 1: printf: 08x: invalid octal number
+-31
+status=1
+x: line 1: printf: -0x1fx: invalid number
+status=1
+pwdstatus=1
+cd: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+pwd: error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+SHELL=/home/mfwolffe/lanes/sh25/base-bin/native/pelt
+status=0
+status=0
+status=0
+status=0
+status=0
+status=0
+status=0
+pelt: x: line 1: printf: 12x: not a number
+0
+status=1
+pelt: x: line 1: printf: +12x: not a number
+0
+status=1
+pelt: x: line 1: printf: -12x: not a number
+0
+status=1
+pelt: x: line 1: printf: 0x12x: not a number
+0
+status=1
+0
+pelt: x: line 1: printf: 078: not a number
+status=1
+pelt: x: line 1: printf:  12x: not a number
+0
+status=1
+pelt: x: line 1: printf: +: not a number
+0
+status=1
+0
+pelt: x: line 1: printf: -: not a number
+status=1
+pelt: x: line 1: printf: 0x: not a number
+0
+status=1
+0
+pelt: x: line 1: printf: 08x: not a number
+status=1
+pelt: x: line 1: printf: -0x1fx: not a number
+0
+status=1
+pelt: pelt: line 1: cd: -e: no such option
+status=2
+pelt: pelt: line 1: pwd: cannot read the working directory
+pwdstatus=1

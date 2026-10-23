@@ -1,0 +1,36 @@
+   file: 
+09 ( cat ) <<E
+doc
+E
+   out: doc|E; echo "st=0"
+   err: 
+   file: 
+10 { ( cat ); } <<E >f
+doc
+E
+   out: 
+   err: 
+   file: doc|E; echo "st=0"|
+11 x=$( ( echo cap ) 2>f ); echo "[$x]"
+   out: [cap]|st=0
+   err: 
+   file: 
+12 ( echo one; echo two >&2 ) 2>&1 >f
+   file: 
+09 ( cat ) <<E
+doc
+E
+   out: doc|E; echo "st=0"
+   err: 
+   file: 
+10 { ( cat ); } <<E >f
+doc
+E
+   out: 
+   err: 
+   file: doc|E; echo "st=0"|
+11 x=$( ( echo cap ) 2>f ); echo "[$x]"
+   out: [cap]|st=0
+   err: 
+   file: 
+12 ( echo one; echo two >&2 ) 2>&1 >f

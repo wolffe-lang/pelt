@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh25/pelt/notes/sh25-evidence/check-notice5.py", line 17, in <module>
+    assert "   out: doc|st=0\n" in new[9], new[9]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 09 ( cat ) <<E
+doc
+E
+   out: doc|E; echo "st=0"
+   err: 
+   file: 
+

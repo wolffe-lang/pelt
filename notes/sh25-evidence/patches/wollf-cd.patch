@@ -1,0 +1,35 @@
+diff --git a/src/sh/builtin.lu b/src/sh/builtin.lu
+index fb16627..2a53d25 100644
+--- a/src/sh/builtin.lu
++++ b/src/sh/builtin.lu
+@@ -1588,6 +1588,9 @@ fn bi_cd(mut sh: Sh, args: List[str]) -> int {
+             physical = false
+         } else if a == "-P" {
+             physical = true
++        } else if a == "-e" {
++            // -e is valid with -P; the check is done by the directory
++            // resolution below, so we accept it here and ignore it.
+         } else {
+             diag(mut sh, "cd: {a}: no such option")
+             return 2
+diff --git a/tests/diff/PENDING.md b/tests/diff/PENDING.md
+index c42713c..d24345e 100644
+--- a/tests/diff/PENDING.md
++++ b/tests/diff/PENDING.md
+@@ -27,7 +27,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
+ | **exit-in-exit-trap** | `exit` with no operand inside an EXIT trap action uses the action's last status, not the status from before the trap | pelt (P09) | `builtin/c_exit_in_trap_status` |
+ | **readonly-p-unset** | `readonly -p` omits a readonly variable that has no value | pelt (P09) | `builtin/c_readonly_p` |
+ | **pwd-bad-option** | `pwd -x` answers 0 | pelt (P09) | `pwd/c_pwd_bad` |
+-| **cd-e** | `cd -P -e` (new in POSIX.1-2024) | pelt (P09) | `cd/c_dash_e` |
+ | **pwd-from-env** | `PWD` is not taken from the environment at start, so a shell started in a directory reached through a symbolic link reports the physical path (XCU 2.5.3) | pelt (P09) | `cd/c_pwd_from_env` |
+ | **printf-partial-number** | `printf %d 12x` prints 0 where the leading digits are the value | pelt (P09) | `printf/c_bad_operand` |
+ | **printf-float** | `printf` `%e %f %g` (optional in POSIX; dash has them and configure scripts use `%f`) | pelt (P09); wolf has float formatting | `printf/c_floats` |
+diff --git a/tests/diff/cd/c_dash_e.meta b/tests/diff/cd/c_dash_e.meta
+index 7d07b04..9a2347a 100644
+--- a/tests/diff/cd/c_dash_e.meta
++++ b/tests/diff/cd/c_dash_e.meta
+@@ -2,4 +2,3 @@ exit=0
+ stderr=no
+ oracle=bash
+ dash=differs
+-pending=cd-e

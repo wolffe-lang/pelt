@@ -1,0 +1,35 @@
+Model diffs, review comparison (original patches preserved under patches/)
+
+project | as written by wollf-v7sf3, wl66 window | adopted after review
+pwd -x | reject every multi-character operand beginning '-', status2 | preserve rejection; parse grouped L/P and stop at -- or first operand
+cd -P -e | accept -e in an empty arm, claiming directory resolution already checks it | track -e; if physical cwd lookup fails return1; do not take the unchanged-directory shortcut
+printf %d 12x | scan leading sign and decimal digits; parse_const(prefix) else0 | retain scan/fallback and status1/diagnostic; trim whitespace and scan octal/hex prefixes too
+
+Original patches remove exactly their matching PENDING row and meta marker;
+those removals are retained. No unrelated pending is retired. The original
+cases each passed wl66's native-only checks; our extra cases expose all3
+original patches (model-original-strengthened.log:29/3/4). Trunk's strict
+case plant likewise fails exactly3 (plant-three.log:29/3/4). Fixed native
+and release targeted cases:32/0/4, review.launch.log. All oracles are black
+boxes. Dash accepts grouped pwd flags and --; dash rejects cd -e, so that
+existing POSIX.1-2024 case keeps bash --posix as its recorded oracle.
+
+Notice5 before/after (all other18 rows byte-identical under dash):
+row9 old stdout: doc|E; echo "st=0"
+row9 new stdout: doc|st=0
+row10 old stdout: empty; file: doc|E; echo "st=0"|
+row10 new stdout: st=0; file: doc|
+Old recording fails check-notice5.py; corrected recording passes. The old
+px61 Linux and PAX recordings show the same malformed delimiter payload;
+see logs/px61-notice5-before.txt. Only pelt's runner/reference were changed.
+PAX should replay the corrected fixture after taking the pelt commit; no
+corrected PAX execution is claimed and no pax repository was touched.
+
+Cross-cutting plant: sh25-plant c49c4f2, CI39882857944 (tier pr), adds
+X=${X}x to this one loop body, retaining growing strings well above even
+the new slack. This branch never merges. Original and final bodies and
+nominal100 B/turn are otherwise identical in the actual change.
+
+Census expectation drift: each independent wl66 patch measured516→517.
+Adopting all3 together gives519/548, not the contract's517. The generated
+statement IDs and cases are preserved; only three verdicts become met.

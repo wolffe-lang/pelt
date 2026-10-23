@@ -1,0 +1,89 @@
+build: target/native/pelt
+build: target/release/pelt
+difftest: pelt = /home/mfwolffe/lanes/sh25/pelt/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   cd/c_canonical
+ok   cd/c_cdpath_forms
+ok   cd/c_dash_e
+ok   cd/c_double_slash
+ok   cd/c_double_slash_path
+ok   cd/c_failures
+ok   cd/c_home_forms
+ok   cd/c_logical_physical
+ok   cd/c_minus
+PEND-fail cd/c_pwd_from_env (waits on pwd-from-env)
+ok   cd/c_pwd_oldpwd
+ok   cd/c_root_relative
+ok   cd/cd_subshell
+ok   cd/cdpath
+ok   cd/cdpath_prints
+ok   cd/child_sees_it
+ok   cd/dotdot
+ok   cd/fail
+ok   cd/home
+ok   cd/minus
+ok   cd/oldpwd
+ok   cd/relative_file
+ok   cd/subshell_restores
+ok   cd/symlink
+ok   printf/c_b
+ok   printf/c_bad_operand
+ok   printf/c_basic
+PEND-fail printf/c_floats (waits on printf-float)
+ok   printf/c_format_escapes
+ok   printf/c_integers
+PEND-fail printf/c_numbered (waits on printf-numbered)
+ok   printf/c_quote_value
+ok   printf/c_strings
+PEND-fail printf/c_usage (waits on builtin-dashdash)
+ok   pwd/c_pwd
+ok   pwd/c_pwd_bad
+difftest: area        pass  fail  pending (of which pass)
+difftest: cd            23     0     1 (0)
+difftest: printf         7     0     3 (0)
+difftest: pwd            2     0     0 (0)
+difftest: total         32     0     4 (0)
+difftest: pelt = /home/mfwolffe/lanes/sh25/pelt/target/release/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   cd/c_canonical
+ok   cd/c_cdpath_forms
+ok   cd/c_dash_e
+ok   cd/c_double_slash
+ok   cd/c_double_slash_path
+ok   cd/c_failures
+ok   cd/c_home_forms
+ok   cd/c_logical_physical
+ok   cd/c_minus
+PEND-fail cd/c_pwd_from_env (waits on pwd-from-env)
+ok   cd/c_pwd_oldpwd
+ok   cd/c_root_relative
+ok   cd/cd_subshell
+ok   cd/cdpath
+ok   cd/cdpath_prints
+ok   cd/child_sees_it
+ok   cd/dotdot
+ok   cd/fail
+ok   cd/home
+ok   cd/minus
+ok   cd/oldpwd
+ok   cd/relative_file
+ok   cd/subshell_restores
+ok   cd/symlink
+ok   printf/c_b
+ok   printf/c_bad_operand
+ok   printf/c_basic
+PEND-fail printf/c_floats (waits on printf-float)
+ok   printf/c_format_escapes
+ok   printf/c_integers
+PEND-fail printf/c_numbered (waits on printf-numbered)
+ok   printf/c_quote_value
+ok   printf/c_strings
+PEND-fail printf/c_usage (waits on builtin-dashdash)
+ok   pwd/c_pwd
+ok   pwd/c_pwd_bad
+difftest: area        pass  fail  pending (of which pass)
+difftest: cd            23     0     1 (0)
+difftest: printf         7     0     3 (0)
+difftest: pwd            2     0     0 (0)
+difftest: total         32     0     4 (0)
+review=0

@@ -1,0 +1,9 @@
+/home/mfwolffe/lanes/sh25/base-bin/native/pelt 1 [{'VmHWM:': 7136, 'RssAnon:': 1384, 'RssFile:': 5752}, {'VmHWM:': 7984, 'RssAnon:': 2280, 'RssFile:': 5704}] delta B/turn {'VmHWM:': 86, 'RssAnon:': 91, 'RssFile:': -5}
+/home/mfwolffe/lanes/sh25/base-bin/native/pelt 2 [{'VmHWM:': 7116, 'RssAnon:': 1384, 'RssFile:': 5732}, {'VmHWM:': 7800, 'RssAnon:': 2280, 'RssFile:': 5520}] delta B/turn {'VmHWM:': 70, 'RssAnon:': 91, 'RssFile:': -22}
+/home/mfwolffe/lanes/sh25/base-bin/native/pelt 3 [{'VmHWM:': 7116, 'RssAnon:': 1384, 'RssFile:': 5732}, {'VmHWM:': 7796, 'RssAnon:': 2280, 'RssFile:': 5516}] delta B/turn {'VmHWM:': 69, 'RssAnon:': 91, 'RssFile:': -23}
+/home/mfwolffe/lanes/sh25/base-bin/release/pelt 1 [{'VmHWM:': 4552, 'RssAnon:': 1260, 'RssFile:': 3292}, {'VmHWM:': 5452, 'RssAnon:': 2156, 'RssFile:': 3296}] delta B/turn {'VmHWM:': 92, 'RssAnon:': 91, 'RssFile:': 0}
+/home/mfwolffe/lanes/sh25/base-bin/release/pelt 2 [{'VmHWM:': 4544, 'RssAnon:': 1256, 'RssFile:': 3288}, {'VmHWM:': 5488, 'RssAnon:': 2160, 'RssFile:': 3328}] delta B/turn {'VmHWM:': 96, 'RssAnon:': 92, 'RssFile:': 4}
+/home/mfwolffe/lanes/sh25/base-bin/release/pelt 3 [{'VmHWM:': 4576, 'RssAnon:': 1256, 'RssFile:': 3320}, {'VmHWM:': 5444, 'RssAnon:': 2152, 'RssFile:': 3292}] delta B/turn {'VmHWM:': 88, 'RssAnon:': 91, 'RssFile:': -3}
+/usr/bin/dash 1 [{'VmHWM:': 2564, 'RssAnon:': 164, 'RssFile:': 2400}, {'VmHWM:': 2528, 'RssAnon:': 160, 'RssFile:': 2368}] delta B/turn {'VmHWM:': -4, 'RssAnon:': -1, 'RssFile:': -4}
+/usr/bin/dash 2 [{'VmHWM:': 2564, 'RssAnon:': 168, 'RssFile:': 2396}, {'VmHWM:': 2544, 'RssAnon:': 164, 'RssFile:': 2380}] delta B/turn {'VmHWM:': -3, 'RssAnon:': -1, 'RssFile:': -2}
+/usr/bin/dash 3 [{'VmHWM:': 2524, 'RssAnon:': 164, 'RssFile:': 2360}, {'VmHWM:': 2548, 'RssAnon:': 164, 'RssFile:': 2384}] delta B/turn {'VmHWM:': 2, 'RssAnon:': 0, 'RssFile:': 2}
