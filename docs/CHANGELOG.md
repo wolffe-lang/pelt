@@ -6,6 +6,19 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- `pwd` rejects unknown options with status 2 while accepting `--` and
+  grouped `-L`/`-P`. `cd -e` is accepted and, with `-P`, reports failure
+  to resolve the new physical directory. `printf` prints the converted
+  prefix of an invalid integer operand while preserving its diagnostic
+  and status 1, including signed, octal and hexadecimal constants.
+  These three fixes adopt wollf-v7sf3's wl66 window diffs with additional
+  option and numeric-prefix checks (pelt#16).
+- The notice5 probe puts its final status on a separate input line, so
+  here-document delimiters in rows 9 and 10 remain complete (pelt#59).
+- The background-subshell RSS check retains its 100 B/turn allowance and
+  10,000/20,000 turns, with 256 KiB more allocator/runner slack after
+  repeated same-head measurements (pelt#60).
+
 - Forked command substitutions release each temporary read chunk after its
   bytes reach the capture. A reusable 64 KiB staging buffer keeps the read
   region separate from the longer-lived output buffer; multi-chunk byte
