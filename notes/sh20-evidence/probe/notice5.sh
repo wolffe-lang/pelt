@@ -9,7 +9,8 @@ n=0
 row() {
   n=$((n + 1))
   rm -f "$D/f"
-  out=$(cd "$D" && "$SH" -c "$1"'; echo "st=$?"' 2>"$D/e")
+  out=$(cd "$D" && "$SH" -c "$1"'
+echo "st=$?"' 2>"$D/e")
   printf '%02d %s\n   out: %s\n   err: %s\n   file: %s\n' "$n" "$1" \
     "$(printf %s "$out" | tr '\n' '|')" "$( [ -s "$D/e" ] && echo some)" \
     "$(cat "$D/f" 2>/dev/null | tr '\n' '|')"

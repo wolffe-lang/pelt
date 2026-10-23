@@ -33,15 +33,15 @@
 09 ( cat ) <<E
 doc
 E
-   out: doc|E; echo "st=0"
+   out: doc|st=0
    err: 
    file: 
 10 { ( cat ); } <<E >f
 doc
 E
-   out: 
+   out: st=0
    err: 
-   file: doc|E; echo "st=0"
+   file: doc|
 11 x=$( ( echo cap ) 2>f ); echo "[$x]"
    out: [cap]|st=0
    err: 
