@@ -123,7 +123,7 @@ SHAPES = [
     ("fork-subshell", "loop", "( true; true )"),
     ("fork-background-group", "loop", "{ true; } & wait"),
     # R-sh25-1: keep 100 B/turn; add 256 KiB for measured peak-RSS spread.
-    ("fork-background-subshell", "loop", "( true ) & wait", 10000, 100, 1280),
+    ("fork-background-subshell", "loop", "( true ) & wait; X=${X}x", 10000, 100, 1280),
     ("fork-stage", "loop", "{ true; } | true"),
     ("script-fork-substitution", "script", "x=$(true; true)"),
     ("typed-fork-subshell", "typed", "( true; true )"),
