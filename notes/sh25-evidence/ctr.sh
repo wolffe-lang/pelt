@@ -7,7 +7,7 @@
 # mounted at the same path; no network. usage: ctr.sh CMD...
 S=$HOME/lanes/sh25
 exec podman run --rm --network none --userns=keep-id -u $(id -u):$(id -g) \
-  --init --pids-limit ${CTRPIDS:-4096} \
+  --init --ulimit core=0:0 --pids-limit ${CTRPIDS:-4096} \
   -v /usr:/usr:ro -v /var/lib/pacman:/var/lib/pacman:ro \
   -v $S:$S -w "${CTRDIR:-$S/pelt}" -e TMPDIR=$S/tmp -e HOME=$S/tmp \
   -e PELT_REAP_LOG -e KEEP_TRACES -e PELT_DIFF_DIR \

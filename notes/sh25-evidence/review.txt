@@ -33,3 +33,9 @@ nominal100 B/turn are otherwise identical in the actual change.
 Census expectation drift: each independent wl66 patch measured516→517.
 Adopting all3 together gives519/548, not the contract's517. The generated
 statement IDs and cases are preserved; only three verdicts become met.
+Plant39882857944 completed RED: native15577 and release15595 B/turn;
+exactly this row fails the full52-row shape tool on each tier. Native job
+120184160532, release120184160531, tier-pr120189962703. First verdict read
+once; raw JSON and complete logs retained. This proves the widened gate
+still rejects a real retained-string regression, rather than trusting a
+never-red allowance.
