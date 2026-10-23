@@ -1585,11 +1585,11 @@ fn canon(p: str) -> str {
     text(o)
 }
 
-/// `cd [-L|-P] [directory]` and `cd -` (XCU `cd`): `CDPATH` searched
+/// `cd [-L|-P] [-e] [directory]` and `cd -` (XCU `cd`): `CDPATH` searched
 /// for a relative name not starting with `.` or `..`, the new directory
 /// printed when `CDPATH` (a non-empty entry) or `-` chose it, `PWD` and
-/// `OLDPWD` set. Failure is status 2 with a message, as dash, and does
-/// not end the shell.
+/// `OLDPWD` set. A failed change is status 2, as dash; `-P -e` answers
+/// 1 when the new physical directory cannot be resolved, as bash.
 fn bi_cd(mut sh: Sh, args: List[str]) -> int {
     var physical = false
     var require_cwd = false
