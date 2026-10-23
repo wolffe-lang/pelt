@@ -38,3 +38,16 @@ commit; issue60 closes at merge. Footprint: cross-cutting.
 
 R-sh25-2 taken: no host forks, container-only readings. Final three passes
 on both tiers, with/without inner taskset, inherit outer CPUs12–15.
+
+Required assigned-core repeat, 01:38–01:40Z (baseline-assigned.sh):
+Both modes inherit outer taskset12–15; 'bare' omits only the inner taskset.
+Trunk binaries and trunk shape-rss (100B+1024KiB), not the widened head tool.
+Each command/uptime and inherited affinity is in baseline-assigned.status.
+pass | native inner taskset | native bare | release inner taskset | release bare
+1    | 92                   | 76          | 83                    | 112
+2    | 108                  | 129         | 99                    | 99
+3    | 125                  | 81          | 108                   | 93
+All six native76–129 (median100), release83–112 (median99). All12 pass
+unchanged trunk bounds. Not every tier's reading is below110. This repeat
+ran during a final session pass, never alongside the final RSS passes;
+its loads1.08–1.46 were the recorded shared-host loads, not invented idle.
