@@ -1,0 +1,9 @@
+2026-10-22T22:26:25-04:00
+66M	/home/mfwolffe/lanes/sh25/pelt/target
+358M	/home/mfwolffe/lanes/sh25/pelt/.wolf-bin
+33M	/home/mfwolffe/lanes/sh25/base-bin
+0	/home/mfwolffe/lanes/sh25/tmp
+59M	/home/mfwolffe/lanes/sh25
+prune=0
+56M	/home/mfwolffe/lanes/sh25
+builds-pruned
