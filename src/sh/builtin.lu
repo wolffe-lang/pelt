@@ -311,6 +311,14 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
     }
     // pelt's own (ruling #113): bash's `shopt -s autocd`, zsh's AUTO_CD
     // (`run_autocd`)
+    if name == "friendly" {
+        sh.opt_friendly = on && !sh.posix_mode
+        return true
+    }
+    if name == "friendly_keys" {
+        sh.opt_friendly_keys = on
+        return true
+    }
     if name == "autocd" {
         sh.opt_autocd = on
         return true
@@ -341,6 +349,7 @@ fn print_options(mut sh: Sh, reinput: bool) {
     ]
     // a letter for the options `$-` shows; '-' for the editing modes
     let letters = ['a', '-', '-', 'e', 'C', 'n', 'f', 'u', '-', 'v', '-', 'x']
+    print_friendly_options(mut sh, reinput)
     let flags = dash_flags(sh)
     var i = 0
     while i < names.len {
@@ -360,6 +369,22 @@ fn print_options(mut sh: Sh, reinput: bool) {
             emit(mut sh, "{names[i]}\t{if on then "on" else "off"}\n")
         }
         i += 1
+    }
+}
+
+/// Friendly options appear only after opting in, so POSIX option listings
+/// and existing dash sessions stay unchanged at this pin.
+fn print_friendly_options(mut sh: Sh, reinput: bool) {
+    if !friendly_active(sh) {
+        return
+    }
+    for name in ["friendly", "friendly_keys"] {
+        let on = name == "friendly" || sh.opt_friendly_keys
+        if reinput {
+            emit(mut sh, "set {if on then "-o" else "+o"} {name}\n")
+        } else {
+            emit(mut sh, "{name}\t{if on then "on" else "off"}\n")
+        }
     }
 }
 

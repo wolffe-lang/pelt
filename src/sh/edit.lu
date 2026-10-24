@@ -565,6 +565,7 @@ struct Ed {
     rows: int,
     vi: bool,
     vi_ins: bool,
+    friendly: bool,
     /// How the line ended, once it has (-1 while editing).
     done: int,
     mem: EdMem,
@@ -659,6 +660,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         rows: q.rows,
         vi: sh.opt_vi,
         vi_ins: true,
+        friendly: friendly_active(sh) && sh.opt_friendly_keys,
         done: -1,
         mem: copy sh.ed.mem,
         mem_set: false,
@@ -3148,4 +3150,20 @@ fn common_prefix(xs: List[str]) -> str {
         p = p[0..n]
     }
     p
+}
+
+/// Named seam for wolf-lang#904: at the next pin also reject an argv[0]
+/// whose basename is `sh`. Until then friendly is deliberately opt-in.
+fn friendly_invocation_allowed(sh: Sh) -> bool {
+    !sh.posix_mode
+}
+
+fn friendly_active(sh: Sh) -> bool {
+    sh.opt_friendly &&
+        sh.interactive &&
+        sh.sub == 0 &&
+        !sh.jc_hold &&
+        friendly_invocation_allowed(sh) &&
+        fd_get(sh, 0) == 0 &&
+        on_terminal()
 }

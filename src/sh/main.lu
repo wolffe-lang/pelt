@@ -9,6 +9,7 @@
 /// run what it names, and answer the exit status.
 pub fn run_main(args: List[str]) -> int {
     var i = 0
+    var posix_mode = false
     var parse_only = false
     var dump_tree = false
     var cmd_string = false
@@ -17,6 +18,11 @@ pub fn run_main(args: List[str]) -> int {
     var opts = List[str]()
     while i < args.len {
         let a = args[i]
+        if a == "--posix" {
+            posix_mode = true
+            i += 1
+            continue
+        }
         if a == "--parse" {
             dump_tree = true
             i += 1
@@ -109,7 +115,7 @@ pub fn run_main(args: List[str]) -> int {
             (mut rest).push(args[i])
             i += 1
         }
-        return run_input(name, rest, opts, force_i)
+        return run_input(name, rest, opts, force_i, posix_mode)
     } else {
         var o = buf()
         loop {
@@ -136,7 +142,7 @@ pub fn run_main(args: List[str]) -> int {
     // `-c` with `-s`: the string, then standard input (unspecified by
     // POSIX; dash, black-box: `echo 'echo b' | sh -cs 'echo a'` prints
     // both)
-    run_source(src, name, rest, opts, cmd_string && read_stdin)
+    run_source(src, name, rest, opts, cmd_string && read_stdin, posix_mode)
 }
 
 fn report(name: str, line: int, msg: str) {
@@ -179,9 +185,17 @@ fn check_all(src: str, name: str) -> int {
     0
 }
 
-fn run_source(src: str, name: str, rest: List[str], opts: List[str], then_stdin: bool) -> int {
+fn run_source(
+    src: str,
+    name: str,
+    rest: List[str],
+    opts: List[str],
+    then_stdin: bool,
+    posix_mode: bool,
+) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
+    sh.posix_mode = posix_mode
     sh.pos = copy rest
     if opts.len > 0 {
         let _st = bi_set(mut sh, opts)
@@ -212,9 +226,10 @@ fn run_source(src: str, name: str, rest: List[str], opts: List[str], then_stdin:
 /// The shell reading its standard input (no operand and no `-c`, or
 /// `-s`): interactive when forced by `-i` or when standard input and
 /// standard error are terminals (`sh.interact`).
-fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool) -> int {
+fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool, posix_mode: bool) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
+    sh.posix_mode = posix_mode
     sh.pos = copy rest
     sh.from_stdin = true
     sh.interactive = force_i || on_terminal()

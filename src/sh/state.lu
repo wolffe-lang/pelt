@@ -117,6 +117,10 @@ struct Sh {
     /// a command that names a directory as `cd` (`sh.builtin`'s
     /// `run_autocd`). Off by default.
     opt_autocd: bool,
+    /// Friendly keys remain opt-in until the pin exposes argv[0] (#904).
+    opt_friendly: bool,
+    opt_friendly_keys: bool,
+    posix_mode: bool,
     /// The line editor's history and what outlives a line.
     ed: EdKeep,
     no_e: int,
@@ -398,6 +402,9 @@ fn new_sh(name: str) -> Sh {
         opt_vi: false,
         opt_emacs: false,
         opt_autocd: false,
+        opt_friendly: false,
+        opt_friendly_keys: true,
+        posix_mode: false,
         ed: new_edkeep(),
         no_e: 0,
         loops: 0,
@@ -592,6 +599,15 @@ fn opts_bits(sh: Sh) -> int {
     if sh.opt_autocd {
         b = b | 8192
     }
+    if sh.opt_friendly {
+        b = b | 16384
+    }
+    if sh.opt_friendly_keys {
+        b = b | 32768
+    }
+    if sh.posix_mode {
+        b = b | 65536
+    }
     b
 }
 
@@ -610,6 +626,9 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_m = b & 2048 != 0
     sh.opt_b = b & 4096 != 0
     sh.opt_autocd = b & 8192 != 0
+    sh.opt_friendly = b & 16384 != 0
+    sh.opt_friendly_keys = b & 32768 != 0
+    sh.posix_mode = b & 65536 != 0
 }
 
 /// Where a frame's record keeps its fields on `istk`, from the record's
