@@ -1,0 +1,19 @@
+Prediction (recorded before implementation or measurements)
+
+At trunk 70eec14 I predict 28 distinct readline emacs actions already bound,
+24 sensible actions missing, and 12 fish-only interactive actions beyond
+readline's default table. Counts will distinguish actions from byte aliases.
+I predict dash's libedit implements vi _, without repeated cycling; bash will
+retain quotes for yank-last-arg and count a trailing redirection operand as
+a word. I predict no start/stop/discard byte should be newly consumed, but
+stty eol/eol2 will need an explicit precedence decision. I predict a last-arg
+lookup indexes directly into the history list and costs <1 ms median with
+32,767 entries. I predict 330 passing sessions after this lane (290 baseline
+plus 40 new), retaining the two named pending sessions.
+
+Footprint prediction: cross-cutting. A friendly-only read-only bindings
+builtin and umbrella option require dispatch/state outside src/sh/edit*.lu.
+The existing typed-session contract will not be changed.
+
+The wrapper prohibits writing Markdown report files. The five-section report
+will therefore be in the PR body, with evidence under notes/sh28-evidence/.
