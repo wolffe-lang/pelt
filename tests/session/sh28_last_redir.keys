@@ -1,0 +1,4 @@
+exec 2>&0
+: value > output
+\k echo \e.\r
+exit

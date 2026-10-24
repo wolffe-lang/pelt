@@ -1,0 +1,4 @@
+exec 2>&0
+: 'two words'
+\k echo\e_\r
+exit

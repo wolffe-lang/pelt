@@ -1,0 +1,17 @@
+step 0
+err no
+prompt "$ "
+step 1 "exec 2>&0"
+err yes
+prompt ""
+step 2 "true"
+err no
+prompt ""
+step 3 "\\k echo \\e.\\r"
+out "true\n"
+err no
+prompt ""
+step 4 "exit"
+err no
+prompt ""
+exit 0 at step 4

@@ -1,0 +1,4 @@
+exec 2>&0
+: first second
+\k echo \e0\e.\r
+exit

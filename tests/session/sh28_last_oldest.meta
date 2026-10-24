@@ -1,0 +1,5 @@
+oracle=bash
+compare=stdout
+env=PS1=$\s HISTSIZE=1
+pelt_args=-i -o friendly
+why=sh28 black-box bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785; measured twice by notes/sh28-evidence/record.py, see logs/record.log

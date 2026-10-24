@@ -1,0 +1,17 @@
+build: target/native/pelt
+session: pelt = /home/mfwolffe/lanes/sh28/pelt/target/native/pelt
+ok   sh28_last_alias
+ok   sh28_last_arg
+ok   sh28_last_interrupted
+ok   sh28_last_midline
+ok   sh28_last_negative
+ok   sh28_last_numeric
+ok   sh28_last_oldest
+ok   sh28_last_quote
+ok   sh28_last_redir
+ok   sh28_last_repeat
+ok   sh28_last_single
+ok   sh28_last_zero
+ok   sh28_vi_last_arg
+ok   sh28_vi_last_quote
+session: pass 14  fail 0  pending 0 (0)

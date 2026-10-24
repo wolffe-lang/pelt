@@ -181,6 +181,7 @@ const TC_STOP: int = 9
 /// executed on an earlier command line"; `;` `,` `n` `N` likewise).
 struct EdMem {
     kill: List[int],
+    ring: List[List[int]],
     dot: List[int],
     dot_count: int,
     find_kind: int,
@@ -209,6 +210,7 @@ struct EdKeep {
 fn new_edmem() -> EdMem {
     EdMem {
         kill: List[int](),
+        ring: List[List[int]](),
         dot: List[int](),
         dot_count: 0,
         find_kind: 0,
@@ -349,7 +351,7 @@ fn txt_ints(t: str) -> List[int] {
 /// numbers, Ctrl-R's pattern, then vi's search pattern (last: it may
 /// hold anything).
 fn mem_txt(m: EdMem) -> str {
-    "{ints_txt(m.kill)};{ints_txt(m.dot)};{m.dot_count};{m.find_kind};{m.find_c};{m.pat_dir};{ints_txt(m.rpat)};{m.pat}"
+    "{ring_txt(m)};{ints_txt(m.dot)};{m.dot_count};{m.find_kind};{m.find_c};{m.pat_dir};{ints_txt(m.rpat)};{m.pat}"
 }
 
 fn txt_mem(t: str) -> EdMem {
@@ -367,7 +369,15 @@ fn txt_mem(t: str) -> EdMem {
     if parts.len < 7 {
         return m
     }
-    m.kill = txt_ints(parts[0])
+    var first = true
+    for entry in parts[0].split("|") {
+        if first {
+            m.kill = txt_ints(entry)
+            first = false
+        } else {
+            (mut m.ring).push(txt_ints(entry))
+        }
+    }
     m.dot = txt_ints(parts[1])
     m.dot_count = to_int(parts[2]) else 0
     m.find_kind = to_int(parts[3]) else 0
@@ -566,6 +576,22 @@ struct Ed {
     vi: bool,
     vi_ins: bool,
     friendly: bool,
+    last_cmd: int,
+    arg_active: bool,
+    arg_digits: bool,
+    arg_value: int,
+    arg_sign: int,
+    mark: int,
+    yank_a: int,
+    yank_b: int,
+    yank_index: int,
+    larg_h: int,
+    larg_word: int,
+    larg_dir: int,
+    changes: List[EdChange],
+    command_saved: bool,
+    last_insert: bool,
+    this_insert: bool,
     /// How the line ended, once it has (-1 while editing).
     done: int,
     mem: EdMem,
@@ -661,6 +687,22 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         vi: sh.opt_vi,
         vi_ins: true,
         friendly: friendly_active(sh) && sh.opt_friendly_keys,
+        last_cmd: -1,
+        arg_active: false,
+        arg_digits: false,
+        arg_value: 0,
+        arg_sign: 1,
+        mark: 0,
+        yank_a: 0,
+        yank_b: 0,
+        yank_index: 0,
+        larg_h: -1,
+        larg_word: -1,
+        larg_dir: -1,
+        changes: List[EdChange](),
+        command_saved: false,
+        last_insert: false,
+        this_insert: false,
         done: -1,
         mem: copy sh.ed.mem,
         mem_set: false,
@@ -1293,6 +1335,12 @@ fn slice_of(buf: List[int], a: int, b: int) -> List[int] {
 /// stays where it is in the history, changed until the line is accepted
 /// (bash, as a user sees it; POSIX has no emacs mode).
 fn touch(mut e: Ed) {
+    if e.friendly && !e.vi && !e.command_saved {
+        if !(e.last_insert && e.this_insert) {
+            (mut e.changes).push(EdChange { line: copy e.buf, at: e.cur, h: e.h, active: true })
+        }
+        e.command_saved = true
+    }
     if e.vi && e.h < e.hist.len {
         e.h = e.hist.len
         e.orig = copy e.buf
@@ -1339,6 +1387,19 @@ fn set_line(mut e: Ed, nb: List[int], cur: int) {
 
 /// Keep `xs` as the last kill (or join it to the last one).
 fn kill_text(mut e: Ed, xs: List[int], before: bool) {
+    if xs.len == 0 {
+        return
+    }
+    if e.friendly && !e.last_kill && e.mem.kill.len > 0 {
+        var ring = List[List[int]]()
+        (mut ring).push(copy e.mem.kill)
+        var i = 0
+        while i < e.mem.ring.len && ring.len < 9 {
+            (mut ring).push(copy e.mem.ring[i])
+            i += 1
+        }
+        e.mem.ring = ring
+    }
     if e.last_kill {
         if before {
             e.mem.kill = spliced(xs, xs.len, xs.len, e.mem.kill)
@@ -1654,6 +1715,12 @@ fn csi(mut e: Ed) -> int {
             if p1 == 3 {
                 return K_DEL
             }
+            if e.friendly && p1 == 5 {
+                return K_ALT + 60
+            }
+            if e.friendly && p1 == 6 {
+                return K_ALT + 62
+            }
         }
         return K_NONE
     }
@@ -1773,139 +1840,174 @@ fn word_back(e: Ed, from: int) -> int {
 
 fn emacs_loop(mut e: Ed) {
     while e.done < 0 {
-        let k = next_key(mut e)
+        var k = next_key(mut e)
         if ends_line(mut e, k) {
             return
         }
-        let was_kill = e.last_kill
-        e.last_kill = false
-        let again = e.tabs > 0
-        e.tabs = 0
-        if k == 13 || k == 10 {
-            finish(mut e, ED_OK)
-        } else if k == 3 {
-            // interrupt ignored (`trap '' INT`): the key does nothing
-            e.last_kill = was_kill
-        } else if k == 4 {
-            if e.buf.len == 0 {
-                e.done = ED_EOF
-            } else if e.cur < e.buf.len {
-                delete(mut e, e.cur, nxt(e, e.cur))
-            } else {
-                bell(mut e)
+        var n = 1
+        var counted = false
+        if e.friendly {
+            if numeric_key(mut e, k) {
+                continue
             }
-        } else if k == K_DEL {
-            if e.cur < e.buf.len {
-                delete(mut e, e.cur, nxt(e, e.cur))
-            } else {
-                bell(mut e)
+            counted = e.arg_active
+            if counted {
+                n = (if e.arg_digits then e.arg_value else 1) * e.arg_sign
             }
-        } else if k == 127 || k == 8 {
-            if e.cur > 0 {
-                delete(mut e, prv(e, e.cur), e.cur)
-            } else {
-                bell(mut e)
+            e.arg_active = false
+            e.arg_digits = false
+            e.arg_value = 0
+            e.arg_sign = 1
+            e.command_saved = false
+            e.this_insert = is_char_key(k)
+            if friendly_command(mut e, k, n, counted) {
+                e.last_insert = false
+                e.last_cmd = k
+                continue
             }
-        } else if k == K_LEFT || k == 2 {
-            if e.cur > 0 {
-                e.cur = prv(e, e.cur)
-                place(mut e)
-            } else {
-                bell(mut e)
+            if n < 0 {
+                k = reverse_emacs_key(k)
+                n = 0 - n
             }
-        } else if k == K_RIGHT || k == 6 {
-            if e.cur < e.buf.len {
-                e.cur = nxt(e, e.cur)
-                place(mut e)
-            } else {
-                bell(mut e)
-            }
-        } else if k == K_HOME || k == 1 {
-            e.cur = 0
-            place(mut e)
-        } else if k == K_END || k == 5 {
-            e.cur = e.buf.len
-            place(mut e)
-        } else if k == K_ALT + 98 || k == K_ALT + 66 || k == K_WLEFT {
-            e.cur = word_back(e, e.cur)
-            place(mut e)
-        } else if k == K_ALT + 102 || k == K_ALT + 70 || k == K_WRIGHT {
-            e.cur = word_fwd(e, e.cur)
-            place(mut e)
-        } else if k == K_ALT + 100 || k == K_ALT + 68 {
-            let to = word_fwd(e, e.cur)
-            e.last_kill = was_kill
-            kill_text(mut e, slice_of(e.buf, e.cur, to), false)
-            e.last_kill = true
-            delete(mut e, e.cur, to)
-        } else if k == K_ALT + 127 || k == K_ALT + 8 {
-            let from = word_back(e, e.cur)
-            e.last_kill = was_kill
-            kill_text(mut e, slice_of(e.buf, from, e.cur), true)
-            e.last_kill = true
-            delete(mut e, from, e.cur)
-        } else if k == 23 {
-            var from = e.cur
-            while from > 0 && is_blank(e.buf[prv(e, from)]) {
-                from = prv(e, from)
-            }
-            while from > 0 && !is_blank(e.buf[prv(e, from)]) {
-                from = prv(e, from)
-            }
-            e.last_kill = was_kill
-            kill_text(mut e, slice_of(e.buf, from, e.cur), true)
-            e.last_kill = true
-            delete(mut e, from, e.cur)
-        } else if k == 21 {
-            e.last_kill = was_kill
-            kill_text(mut e, slice_of(e.buf, 0, e.cur), true)
-            e.last_kill = true
-            delete(mut e, 0, e.cur)
-        } else if k == 11 {
-            e.last_kill = was_kill
-            kill_text(mut e, slice_of(e.buf, e.cur, e.buf.len), false)
-            e.last_kill = true
-            delete(mut e, e.cur, e.buf.len)
-        } else if k == 25 {
-            if e.mem.kill.len > 0 {
-                insert(mut e, copy e.mem.kill)
-            } else {
-                bell(mut e)
-            }
-        } else if k == 12 {
-            redraw_all(mut e, true)
-        } else if k == 18 {
-            if isearch(mut e) {
-                return
-            }
-        } else if k == K_UP || k == 16 {
-            if e.h > 0 {
-                show_hist(mut e, e.h - 1, true)
-            } else {
-                bell(mut e)
-            }
-        } else if k == K_DOWN || k == 14 {
-            if e.h < e.hist.len {
-                show_hist(mut e, e.h + 1, true)
-            } else {
-                bell(mut e)
-            }
-        } else if k == 22 {
-            let b = next_byte(mut e)
-            if ends_line_byte(mut e, b) {
-                return
-            }
-            var one = List[int]()
-            (mut one).push(utf8_rest(mut e, b))
-            insert(mut e, one)
-        } else if k == 9 {
-            ed_complete(mut e, again)
-        } else if is_char_key(k) {
-            var one = List[int]()
-            (mut one).push(k)
-            insert(mut e, one)
         }
-        // other controls, Ctrl-Z, Ctrl-\ and unknown sequences: nothing
+        var i = 0
+        while i < n && e.done < 0 {
+            emacs_key(mut e, k)
+            i += 1
+        }
+        if e.friendly {
+            e.last_cmd = k
+            e.last_insert = e.this_insert
+        }
+    }
+}
+
+fn emacs_key(mut e: Ed, k: int) {
+    let was_kill = e.last_kill
+    e.last_kill = false
+    let again = e.tabs > 0
+    e.tabs = 0
+    if k == 13 || k == 10 {
+        finish(mut e, ED_OK)
+    } else if k == 3 {
+        // interrupt ignored (`trap '' INT`): the key does nothing
+        e.last_kill = was_kill
+    } else if k == 4 {
+        if e.buf.len == 0 {
+            e.done = ED_EOF
+        } else if e.cur < e.buf.len {
+            delete(mut e, e.cur, nxt(e, e.cur))
+        } else {
+            bell(mut e)
+        }
+    } else if k == K_DEL {
+        if e.cur < e.buf.len {
+            delete(mut e, e.cur, nxt(e, e.cur))
+        } else {
+            bell(mut e)
+        }
+    } else if k == 127 || k == 8 {
+        if e.cur > 0 {
+            delete(mut e, prv(e, e.cur), e.cur)
+        } else {
+            bell(mut e)
+        }
+    } else if k == K_LEFT || k == 2 {
+        if e.cur > 0 {
+            e.cur = prv(e, e.cur)
+            place(mut e)
+        } else {
+            bell(mut e)
+        }
+    } else if k == K_RIGHT || k == 6 {
+        if e.cur < e.buf.len {
+            e.cur = nxt(e, e.cur)
+            place(mut e)
+        } else {
+            bell(mut e)
+        }
+    } else if k == K_HOME || k == 1 {
+        e.cur = 0
+        place(mut e)
+    } else if k == K_END || k == 5 {
+        e.cur = e.buf.len
+        place(mut e)
+    } else if k == K_ALT + 98 || k == K_ALT + 66 || k == K_WLEFT {
+        e.cur = word_back(e, e.cur)
+        place(mut e)
+    } else if k == K_ALT + 102 || k == K_ALT + 70 || k == K_WRIGHT {
+        e.cur = word_fwd(e, e.cur)
+        place(mut e)
+    } else if k == K_ALT + 100 || k == K_ALT + 68 {
+        let to = word_fwd(e, e.cur)
+        e.last_kill = was_kill
+        kill_text(mut e, slice_of(e.buf, e.cur, to), false)
+        e.last_kill = true
+        delete(mut e, e.cur, to)
+    } else if k == K_ALT + 127 || k == K_ALT + 8 {
+        let from = word_back(e, e.cur)
+        e.last_kill = was_kill
+        kill_text(mut e, slice_of(e.buf, from, e.cur), true)
+        e.last_kill = true
+        delete(mut e, from, e.cur)
+    } else if k == 23 {
+        var from = e.cur
+        while from > 0 && is_blank(e.buf[prv(e, from)]) {
+            from = prv(e, from)
+        }
+        while from > 0 && !is_blank(e.buf[prv(e, from)]) {
+            from = prv(e, from)
+        }
+        e.last_kill = was_kill
+        kill_text(mut e, slice_of(e.buf, from, e.cur), true)
+        e.last_kill = true
+        delete(mut e, from, e.cur)
+    } else if k == 21 {
+        e.last_kill = was_kill
+        kill_text(mut e, slice_of(e.buf, 0, e.cur), true)
+        e.last_kill = true
+        delete(mut e, 0, e.cur)
+    } else if k == 11 {
+        e.last_kill = was_kill
+        kill_text(mut e, slice_of(e.buf, e.cur, e.buf.len), false)
+        e.last_kill = true
+        delete(mut e, e.cur, e.buf.len)
+    } else if k == 25 {
+        if e.mem.kill.len > 0 {
+            insert(mut e, copy e.mem.kill)
+        } else {
+            bell(mut e)
+        }
+    } else if k == 12 {
+        redraw_all(mut e, true)
+    } else if k == 18 {
+        let _ended = isearch(mut e)
+    } else if k == K_UP || k == 16 {
+        if e.h > 0 {
+            show_hist(mut e, e.h - 1, true)
+        } else {
+            bell(mut e)
+        }
+    } else if k == K_DOWN || k == 14 {
+        if e.h < e.hist.len {
+            show_hist(mut e, e.h + 1, true)
+        } else {
+            bell(mut e)
+        }
+    } else if k == 22 {
+        let b = next_byte(mut e)
+        if ends_line_byte(mut e, b) {
+            return
+        }
+        var one = List[int]()
+        (mut one).push(utf8_rest(mut e, b))
+        insert(mut e, one)
+    } else if k == 9 {
+        ed_complete(mut e, again)
+    } else if is_char_key(k) {
+        var one = List[int]()
+        (mut one).push(k)
+        insert(mut e, one)
     }
 }
 
@@ -2606,7 +2708,7 @@ fn vi_command(mut e: Ed, k: int, count: int) {
     }
     if c == 95 {
         // `_`: a space and the countth bigword of the previous line
-        let words = bigwords(cps_of(e.prev_line))
+        let words = history_words(cps_of(e.prev_line))
         if words.len == 0 {
             alert(mut e)
             return
@@ -3165,5 +3267,6 @@ fn friendly_active(sh: Sh) -> bool {
         !sh.jc_hold &&
         friendly_invocation_allowed(sh) &&
         fd_get(sh, 0) == 0 &&
-        on_terminal()
+        (os_isatty(0) else false) &&
+        (os_isatty(fd_get(sh, 2)) else false)
 }

@@ -1,0 +1,141 @@
+//! Friendly emacs keys. Inputs: bash 5.3's installed Readline manual,
+//! fish 4.9.3 `bind --help`, and the recorded black-box pty sessions
+//! in notes/sh28-evidence/. No shell or editor implementation sources.
+
+struct EdChange {
+    line: List[int],
+    at: int,
+    h: int,
+    active: bool,
+}
+
+fn ring_txt(m: EdMem) -> str {
+    var o = buf()
+    put(mut o, ints_txt(m.kill))
+    for entry in m.ring {
+        put(mut o, "|")
+        put(mut o, ints_txt(entry))
+    }
+    text(o)
+}
+
+/// Numeric arguments are state, not injected keystrokes. Overflow is
+/// prevented before the multiply; the bounded count is 99,999.
+fn numeric_key(mut e: Ed, k: int) -> bool {
+    let meta = k >= K_ALT + 48 && k <= K_ALT + 57
+    let plain = e.arg_active && k >= 48 && k <= 57
+    if meta || plain {
+        let digit = (if meta then k - K_ALT else k) - 48
+        e.arg_active = true
+        e.arg_digits = true
+        e.arg_value = if e.arg_value > 9999 then 99999 else e.arg_value * 10 + digit
+        return true
+    }
+    if k == K_ALT + 45 || e.arg_active && k == 45 && !e.arg_digits {
+        e.arg_active = true
+        e.arg_sign = 0 - e.arg_sign
+        return true
+    }
+    false
+}
+
+fn reverse_emacs_key(k: int) -> int {
+    if k == 2 || k == K_LEFT { return 6 }
+    if k == 6 || k == K_RIGHT { return 2 }
+    if k == 127 || k == 8 { return K_DEL }
+    if k == K_DEL || k == 4 { return 127 }
+    if k == K_ALT + 98 || k == K_WLEFT { return K_ALT + 102 }
+    if k == K_ALT + 102 || k == K_WRIGHT { return K_ALT + 98 }
+    if k == K_ALT + 100 { return K_ALT + 127 }
+    if k == K_ALT + 127 || k == K_ALT + 8 { return K_ALT + 100 }
+    if k == 16 || k == K_UP { return 14 }
+    if k == 14 || k == K_DOWN { return 16 }
+    k
+}
+
+/// Preserve the spelling of history words, including their quotes and
+/// escapes. Operators delimit words outside quoting, as readline's
+/// history extraction does. This is lexical only: never expansion.
+fn history_words(line: List[int]) -> List[List[int]] {
+    var words = List[List[int]]()
+    var i = 0
+    while i < line.len {
+        while i < line.len && (is_blank(line[i]) || line[i] == 10) { i += 1 }
+        if i >= line.len { break }
+        let start = i
+        var quote = 0
+        var escaped = false
+        while i < line.len {
+            let c = line[i]
+            if escaped {
+                escaped = false
+            } else if c == 92 && quote != 39 {
+                escaped = true
+            } else if c == quote {
+                quote = 0
+            } else if quote == 0 && (c == 39 || c == 34) {
+                quote = c
+            } else if quote == 0 && (is_blank(c) || c == 10) {
+                break
+            } else if quote == 0 && history_operator(c) {
+                if i == start {
+                    i += 1
+                    while i < line.len && line[i] == c { i += 1 }
+                }
+                break
+            }
+            i += 1
+        }
+        (mut words).push(slice_of(line, start, i))
+    }
+    words
+}
+
+fn history_operator(c: int) -> bool {
+    c == 59 || c == 38 || c == 124 || c == 60 || c == 62 || c == 40 || c == 41
+}
+
+fn yank_last_arg(mut e: Ed, n: int, counted: bool) {
+    let again = e.last_cmd == K_ALT + 46 || e.last_cmd == K_ALT + 95
+    if !again {
+        e.larg_h = e.hist.len
+        e.larg_word = if counted then (if n < 0 then n - 1 else n) else -1
+        e.larg_dir = -1
+        e.yank_a = e.cur
+        e.yank_b = e.cur
+    } else if counted && n < 0 {
+        e.larg_dir = 0 - e.larg_dir
+    }
+    let h = e.larg_h + e.larg_dir
+    // Readline removes the prior insertion even at the history boundary.
+    // That observation corrects the original campaign's bell-and-stay guess.
+    if again {
+        delete(mut e, e.yank_a, e.yank_b)
+        e.yank_b = e.yank_a
+    }
+    e.cur = e.yank_a
+    if h < 0 || h >= e.hist.len {
+        e.larg_h = if h < 0 then -1 else e.hist.len
+        bell(mut e)
+        return
+    }
+    e.larg_h = h
+    let words = history_words(cps_of(e.hist[h]))
+    let w = if e.larg_word < 0 then words.len + e.larg_word else e.larg_word
+    if w < 0 || w >= words.len {
+        bell(mut e)
+        return
+    }
+    insert(mut e, copy words[w])
+    e.yank_b = e.cur
+}
+
+fn friendly_command(mut e: Ed, k: int, n: int, counted: bool) -> bool {
+    if k == K_ALT + 46 || k == K_ALT + 95 {
+        yank_last_arg(mut e, n, counted)
+        e.last_kill = false
+        e.tabs = 0
+        return true
+    }
+    false
+}

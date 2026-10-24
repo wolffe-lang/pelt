@@ -1,0 +1,4 @@
+exec 2>&0
+: oldest
+\k echo \e.\e.\e.\r
+exit

@@ -1,0 +1,4 @@
+exec 2>&0
+: inserted
+\k echo  tail\x01\ef \e.\r
+exit
