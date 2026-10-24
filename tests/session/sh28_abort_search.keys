@@ -1,0 +1,4 @@
+exec 2>&0
+: old
+\k echo kept\x12old\x07\r
+exit

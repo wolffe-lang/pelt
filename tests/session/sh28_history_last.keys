@@ -1,0 +1,4 @@
+exec 2>&0
+echo older
+\k echo saved\x10\e>\r
+exit

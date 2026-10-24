@@ -1,0 +1,4 @@
+exec 2>&0
+echo prior
+\k echo draft\x10\e[6~\r
+exit

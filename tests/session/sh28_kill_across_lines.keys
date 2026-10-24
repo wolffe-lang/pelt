@@ -1,0 +1,5 @@
+exec 2>&0
+\k echo first\x01\ef\x06\x0b\r
+\k echo second\x01\ef\x06\x0b\r
+\k echo \x19\ey\r
+exit

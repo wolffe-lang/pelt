@@ -1,0 +1,3 @@
+exec 2>&0
+\k first\x15\x01second\x15echo \x19\ey\r
+exit

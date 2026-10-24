@@ -1841,6 +1841,9 @@ fn word_back(e: Ed, from: int) -> int {
 fn emacs_loop(mut e: Ed) {
     while e.done < 0 {
         var k = next_key(mut e)
+        if e.friendly && k >= K_ALT + 65 && k <= K_ALT + 90 {
+            k += 32
+        }
         if ends_line(mut e, k) {
             return
         }

@@ -1,0 +1,16 @@
+step 2
+| $ : one
+| $
+cursor 1 2
+step 3
+| $ : two
+| $
+cursor 1 2
+step 4
+| $ echo two two
+| $
+cursor 1 2
+step 5
+| $ exit
+| 
+cursor 1 0

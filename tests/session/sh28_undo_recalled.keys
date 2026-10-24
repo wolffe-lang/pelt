@@ -1,0 +1,4 @@
+exec 2>&0
+echo original
+\k \x10\x17changed\x1f\x1f\r
+exit

@@ -1,0 +1,4 @@
+exec 2>&0
+: one\ two
+\k echo \e.\r
+exit

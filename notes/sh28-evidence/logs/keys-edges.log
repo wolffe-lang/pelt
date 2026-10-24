@@ -1,0 +1,39 @@
+build: target/native/pelt
+sh28_abort_character_search_back ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo kept\\\\e\\\\x1d\\\\x07\\\\r"', 'out "kept\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_case_upper_alias ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo hello\\\\eb\\\\eU\\\\r"', 'out "HELLO\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_comment_toggle ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k #echo accepted\\\\e1\\\\e#"', 'out "accepted\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_kill_ring_ten ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k k0\\\\x15\\\\x01k1\\\\x15\\\\x01k2\\\\x15\\\\x01k3\\\\x15\\\\x01k4\\\\x15\\\\x01k5\\\\x15\\\\x01k6\\\\x15\\\\x01k7\\\\x15\\\\x01k8\\\\x15\\\\x01k9\\\\x15\\\\x01k10\\\\x15\\\\x01k11\\\\x15\\\\x01echo \\\\x19\\\\ey\\\\ey\\\\ey\\\\ey\\\\ey\\\\ey\\\\ey\\\\ey\\\\ey\\\\r"', 'out "k2\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_last_reverse ['step 0', 'step 1 "exec 2>&0"', 'step 2 ": older"', 'step 3 ": newer"', 'step 4 "\\\\k echo \\\\e.\\\\e.\\\\e-\\\\e.\\\\r"', 'out "newer\\n"', 'step 5 "exit"', 'exit 0 at step 5']
+sh28_mark_meta_space ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abcd\\\\e \\\\x02\\\\x02\\\\x18\\\\x18X\\\\r"', 'out "abcdX\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_mark_tracks_insert ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abcd\\\\e \\\\x01 \\\\x18\\\\x18X\\\\r"', 'out "abcXd\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_quoted_last_arg ['step 0', 'step 1 "exec 2>&0"', 'step 2 ": one\\\\ two"', 'step 3 "\\\\k echo \\\\e.\\\\r"', 'out "one two\\n"', 'step 4 "exit"', 'exit 0 at step 4']
+sh28_undo_recalled ['step 0', 'step 1 "exec 2>&0"', 'step 2 "echo original"', 'out "original\\n"', 'step 3 "\\\\k \\\\x10\\\\x17changed\\\\x1f\\\\x1f\\\\r"', 'out "original\\n"', 'step 4 "exit"', 'exit 0 at step 4']
+sh28_yank_pop_wrap ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k first\\\\x15\\\\x01second\\\\x15echo \\\\x19\\\\ey\\\\ey\\\\r"', 'out "second\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+session: pelt = /home/mfwolffe/lanes/sh28/pelt/target/native/pelt
+ok   sh28_abort_character_search_back
+ok   sh28_case_upper_alias
+ok   sh28_comment_toggle
+ok   sh28_kill_ring_ten
+ok   sh28_last_reverse
+ok   sh28_mark_meta_space
+FAIL sh28_mark_tracks_insert
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "exec 2>&0"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt step 2 "\\k echo abcd\\e \\x01 \\x18\\x18X\\r"
+     ! pelt out "abcdX\n"
+       dash out "abcXd\n"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 3
+ok   sh28_quoted_last_arg
+ok   sh28_undo_recalled
+ok   sh28_yank_pop_wrap
+session: pass 9  fail 1  pending 0 (0)

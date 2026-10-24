@@ -1,0 +1,4 @@
+exec 2>&0
+: original
+\k \x10 changed\er\r
+exit

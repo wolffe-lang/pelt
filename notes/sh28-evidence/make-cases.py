@@ -45,6 +45,16 @@ CASES = {
  'vi_last_quote': [": 'two words'", r'\k echo\e_\r'],
 }
 CASES.update({
+ 'mark_meta_space': [r'\k echo abcd\e \x02\x02\x18\x18X\r'],
+ 'mark_tracks_insert': [r'\k echo abcd\e \x01 \x18\x18X\r'],
+ 'abort_character_search_back': [r'\k echo kept\e\x1d\x07\r'],
+ 'yank_pop_wrap': [r'\k first\x15\x01second\x15echo \x19\ey\ey\r'],
+ 'quoted_last_arg': [r': one\ two', r'\k echo \e.\r'],
+ 'comment_toggle': [r'\k #echo accepted\e1\e#'],
+ 'last_reverse': [': older', ': newer', r'\k echo \e.\e.\e-\e.\r'],
+ 'undo_recalled': ['echo original', r'\k \x10\x17changed\x1f\x1f\r'],
+ 'case_upper_alias': [r'\k echo hello\eb\eU\r'],
+ 'kill_ring_ten': [r'\k ' + ''.join('k'+str(i)+r'\x15\x01' for i in range(12)) + r'echo \x19' + r'\ey'*9 + r'\r'],
  'pageup': ['echo oldest', 'echo newest', r'\k \e[5~\r'],
  'pagedown': ['echo prior', r'\k echo draft\x10\e[6~\r'],
  'undo_after_move': [r'\k echo abc\x02X\x1f\r'],
@@ -61,4 +71,4 @@ for name, steps in CASES.items():
     base.with_suffix('.meta').write_text(
         'oracle=bash\ncompare=stdout\n' + ('args=-o vi\n' if vi else '') +
         'env=PS1=$\\s' + (' HISTSIZE=1' if name == 'last_oldest' else '') + '\npelt_args=-i -o friendly' + (' -o vi' if vi else '') + '\n' +
-        'why=sh28 black-box bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785; measured twice by notes/sh28-evidence/record.py, see logs/record.log\n')
+        'why=sh28 black-box bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785; measured twice by notes/sh28-evidence/record.py, see logs/record-terminal.log\n')

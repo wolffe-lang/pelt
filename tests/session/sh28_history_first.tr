@@ -1,0 +1,21 @@
+step 0
+err no
+prompt "$ "
+step 1 "exec 2>&0"
+err no
+prompt ""
+step 2 "echo oldest"
+out "oldest\n"
+err no
+prompt ""
+step 3 "echo newest"
+out "newest\n"
+err no
+prompt ""
+step 4 "\\k \\e<\\r"
+err no
+prompt ""
+step 5 "exit"
+err no
+prompt ""
+exit 0 at step 5
