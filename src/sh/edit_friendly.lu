@@ -131,7 +131,7 @@ fn yank_last_arg(mut e: Ed, n: int, counted: bool) {
 }
 
 fn friendly_command(mut e: Ed, k: int, n: int, counted: bool) -> bool {
-    if k == K_ALT + 46 || k == K_ALT + 95 {
+    if k == K_ALT + 1000 || k == K_ALT + 1001 {
         yank_last_arg(mut e, n, counted)
         e.last_kill = false
         e.tabs = 0
