@@ -1,0 +1,13 @@
+Only this lane's paths, after review and completed jobs:
+/Users/mfwolffe/lanes/sh30/plant-colour
+/Users/mfwolffe/lanes/sh30/plant-escape
+/Users/mfwolffe/lanes/sh30/plant-resize
+/Users/mfwolffe/lanes/sh30/pelt (only after final handoff/merge)
+/home/mfwolffe/lanes/sh30/sh30.bundle
+/home/mfwolffe/lanes/sh30/archives
+/home/mfwolffe/lanes/sh30/tmp
+/home/mfwolffe/lanes/sh30/pelt/target
+/home/mfwolffe/lanes/sh30/pelt/.lu-cache
+Image localhost/sh30-oracle, only when no sh30 container uses it.
+Keep raw fish recordings, final logs and durable pid/log/exit markers until
+the orchestrator has read them. Never remove another lane's worktree/image.

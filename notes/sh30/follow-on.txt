@@ -1,0 +1,46 @@
+sh31 draft: F3 the words
+
+Base on sh30's merged head, with 45 additional typed sessions (488 total),
+not an earlier friendly editor. Read docs/FRIENDLY.md, docs/KEYS.md,
+edit_colour.lu/edit_palette.lu, and tools/colour-witness. The classifier's
+spans are codepoint offsets; parser error offsets are UTF-8 byte offsets.
+The renderer alone owns style bytes. Never put colour/shadow bytes into
+Ed.buf, history, undo or the kill ring. PELT_COLORS is atomic per prompt.
+Highlight uses bit1048576; next free option bit is2097152, re-derive it.
+
+Measure fish 4.9.3 in a fresh-HOME pty before deciding abbr/pager behavior.
+Measure bash's !! and !$ black-box, never readline/bash/fish source.
+Keep all 1038 corpus cases and all pre-existing dash/session expectations.
+
+Items:
+1. abbr add/erase/list, expansion on Space as measured; persistence under
+   $HOME/.pelt/abbr with malformed-record handling and atomic replacement.
+   No script/pipe/-c expansion. Test empty/multiple-word/quoted abbreviations,
+   cancel/undo and persistence across separate shell instances.
+2. Completion descriptions and a bounded pager, fish's two-column behavior
+   measured at narrow/wide terminals. Builtin/reserved descriptions are
+   pelt's; files use type/size. Option descriptions may use command --help
+   output only with the campaign's 50ms budget and no man-page scraping.
+   Cache results; no work at an idle prompt. Define no-execute-on-highlight
+   independently from an explicit completion request's help probe.
+3. histexpand under its own option and friendly umbrella: !! previous command,
+   !$ previous command's last word, expansion at Enter, expanded line echo
+   measured from bash. No other ! grammar is owed; other ! remains literal.
+   Measure failed references and recommend own error text; never copy help
+   or diagnostics from an implementation. History representation, expansion
+   order versus abbr, quoting, comments, Ctrl-C and undo need explicit tests.
+4. Pager rows keep their own styles, not line syntax colours. Reset before
+   rows/motion/prompt/execution; restore line and cursor after dismissal and
+   resize. The sh30 direct buffer/undo/kill-ring invariant must still pass.
+5. Typed tests native/release, raw bytes and no stored escapes, cost/idle rows,
+   three fault plants with the fixes committed first; docs/README refresh.
+
+Opt-in remains until argv[0] is available in the pin; sh/--posix/scripts,
+-c/pipes/non-tty/TERM=dumb gates stay. The next pin owns default-on policy,
+not this draft. No hidden history expansion during highlighting.
+
+PAX: retain exact framebuffer and serial pending rows until a px-owned
+session slot exists; cite px70's palette/cell evidence, build no PAX.
+Recommendations to request: abbr persistence format and expansion grammar;
+completion pager navigation/acceptance; !$ shell-word spelling versus value;
+failed event reference policy and where expanded history is recorded.

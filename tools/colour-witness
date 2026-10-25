@@ -68,6 +68,15 @@ def palette(binary, home):
             raw=step(sh,b'\r')
             assert b'echo \x1b[0;91m)\x1b[0m\r\n     \x1b[0;91m^\x1b[0m\r\npelt:' in raw,raw
             print('ok colour-enter-caret',term,flush=True)
+            step(sh,b"alias colour_alias=echo\r")
+            raw=step(sh,b'colour_alias word')
+            assert b'\x1b[0mcolour_alias' in raw,raw
+            step(sh,b'\x15colour_fn() { echo fn; }\r')
+            raw=step(sh,b'colour_fn')
+            assert b'\x1b[0mcolour_fn' in raw,raw
+            raw=step(sh,b'\x15/usr/bin/true')
+            assert b'\x1b[0m/usr/bin/true' in raw,raw
+            print('ok colour-command-census function/alias/explicit-path',term,flush=True)
         finally: assert sh.close(), 'mode not restored'
 
     for name, env, want in [
