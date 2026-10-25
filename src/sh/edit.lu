@@ -1934,6 +1934,7 @@ fn emacs_key(mut e: Ed, k: int) {
     let again = e.tabs > 0
     e.tabs = 0
     if k == 13 || k == 10 {
+        if e.suggest && e.cur == e.buf.len { insert(mut e, copy e.shadow) }
         finish(mut e, ED_OK)
     } else if k == 3 {
         // interrupt ignored (`trap '' INT`): the key does nothing
