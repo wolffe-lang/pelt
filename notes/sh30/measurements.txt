@@ -104,3 +104,26 @@ pelt code only printed the ordinary message, contrary to the brief's premise.
 R-sh30-4 remains a recommendation (orchestrator concurs): measured default
 command foreground rather than guessed green. R-sh30-1/2/3 recommendations
 remain A/A/A. No maintainer ruling is claimed by this lane.
+
+CI typed-shape control, diagnostic run40180141801 (draft#82):
+Source arms: colourbe80068 versus trunk887ce12, same Ubuntu runner and pin.
+Each row compares10000 with20000 turns in one process. Values below are
+retained RSS growth in KiB, then the instrument's integer B/turn.
+
+shape                     head KiB/B-turn   trunk KiB/B-turn   delta KiB/B-turn
+typed-pipeline             1252/128          1252/128             0/0
+typed-and                  1252/128          1252/128             0/0
+typed-brace                1092/111          1092/111             0/0
+typed-if                   1252/128          1252/128             0/0
+typed-substitution         1408/144          1408/144             0/0
+typed-program              1364/139          1364/139             0/0
+typed-pipeline-program     1680/172          1680/172             0/0
+typed-background-wait      1836/188          1836/188             0/0
+typed-fork-subshell         1208/123          1208/123             0/0
+
+All nine growth deltas are exactly0KiB, hence0 additional B/turn attributable
+to sh30 in these rows. The existing111–188B/turn slopes are identical at
+trunk. These fixtures leave highlighting off (no opt-in; stdout/stderr are
+pipes); they do not measure an enabled highlighter's long-session growth.
+The rows pass with the existing1MiB slack; no bound or application changed.
+Raw log retained at /Users/mfwolffe/lanes/sh30/rss-evidence/ci-rss-probe.log.
