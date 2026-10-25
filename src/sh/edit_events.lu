@@ -10,36 +10,24 @@ struct EventLine {
 /// Comments are not history words; spelling and quote delimiters survive.
 /// Unlike Alt-dot, event extraction ignores trailing operators and comments.
 fn event_last(previous: str) -> str {
-    let cps = cps_of(previous)
-    var plain = List[int]()
-    var quote = 0
-    var start = true
-    var i = 0
-    while i < cps.len {
-        let c = cps[i]
-        if c == 35 && quote == 0 && start {
-            while i < cps.len && cps[i] != 10 { i += 1 }
-            continue
-        }
-        (mut plain).push(c)
-        if c == 92 && quote != 39 && i + 1 < cps.len {
-            i += 1
-            (mut plain).push(cps[i])
-            start = false
-        } else if c == quote {
-            quote = 0
-        } else if quote == 0 && (c == 39 || c == 34) {
-            quote = c
-            start = false
-        } else if quote == 0 {
-            start = hl_meta(c)
-        }
-        i += 1
-    }
-    let words = history_words(plain)
+    var parser = new_parser(previous, 1)
+    var ast = new_ast()
     var last = ""
-    for word in words {
-        if word.len > 0 && !history_operator(word[0]) { last = cps_text(word) }
+    loop {
+        var start = parser.pos
+        while start < previous.len {
+            let c = byte_at(previous, start)
+            if c == 32 || c == 9 {
+                start += 1
+            } else if c == 92 && byte_at(previous, start + 1) == 10 {
+                start += 2
+            } else {
+                break
+            }
+        }
+        lex(mut parser, mut ast)
+        if parser.tk == T_EOF || parser.err.len > 0 { break }
+        if parser.tk == T_WORD { last = previous[start..parser.pos] }
     }
     last
 }
