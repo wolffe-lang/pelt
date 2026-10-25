@@ -15,7 +15,8 @@ run() {
  if [ "$rc" -ne 0 ]; then bad=$((bad+1)); fi
 }
 git rev-parse HEAD > "$logs/final.head"
-git ls-files -z src tools tests .github | sort -z | xargs -0 sha256sum > "$logs/final.inputs-before"
+git ls-files -z src tools tests .github ci wolf-toolchain.toml | sort -z | xargs -0 sha256sum > "$logs/final.inputs-before"
+run legacy-expectations bash -c 'git diff --exit-code b942504d -- tests/diff && git diff --exit-code --diff-filter=M b942504d -- "tests/session/*.keys" "tests/session/*.meta" "tests/session/*.tr" "tests/session/*.screen"'
 run build tools/build --all
 run fmt tools/check-fmt
 run checked-tests tools/check-test
@@ -30,7 +31,7 @@ for tier in native release; do
  run "$tier-terminal" tools/edit-witness "target/$tier/pelt"
  run "$tier-history" tools/hist-witness "target/$tier/pelt"
 done
-git ls-files -z src tools tests .github | sort -z | xargs -0 sha256sum > "$logs/final.inputs-after"
+git ls-files -z src tools tests .github ci wolf-toolchain.toml | sort -z | xargs -0 sha256sum > "$logs/final.inputs-after"
 run inputs-stable cmp "$logs/final.inputs-before" "$logs/final.inputs-after"
 printf 'FINAL: %s failed\n' "$bad"
 [ "$bad" -eq 0 ]

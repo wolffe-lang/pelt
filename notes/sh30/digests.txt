@@ -12,3 +12,7 @@ Containerfile retained. Build RUN uses taskset 6-11; runtime helper uses
 hasu-B.lock, --memory 12g, taskset 6-11 inside container, network none.
 Exact packages/binary hashes are in oracle.txt; dash/bash package-rebuild
 mismatch to sh29 is explicitly recorded in measurements.txt.
+
+Final regression image after adding the missing diffutils fixture dependency:
+67e5362ae08e1410fe8e747ba499fc0158ab97d3212cc862e6538fde515393e4
+Initial fish palette measurements used the earlier image recorded above.
