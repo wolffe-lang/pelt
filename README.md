@@ -13,10 +13,10 @@ shell's source is ever read: pelt is clean-room, black-box only.
 
 | measure | where it stands |
 |---|---|
-| POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 519 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
-| differential corpus against dash, both tiers | 998 cases, 0 failing, 25 pending on a named primitive (`tests/diff/`) |
-| typed sessions through a pseudo-terminal | 375 recorded expectations, 2 named pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
-| real `sh` scripts that run as under dash | 76 of 80 when the census last ran, before the fork (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts); the three it missed for want of a process per pipeline stage (xzgrep, zgrep, zdiff) wait on its next run |
+| POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 532 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
+| differential corpus against dash, both tiers | 1,038 cases: 1,023 passing, 0 failing, 15 pending on a named primitive (`tests/diff/`) |
+| typed sessions through a pseudo-terminal | 380 recorded expectations, none pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
+| real `sh` scripts that run as under dash | 78 of 80, the other two not pelt's to change (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts): `configure-sed` prints a timestamp resolution it measures from the shell's own speed, a coin that flips for dash itself and is counted apart, and `pfetch`'s memory line differs between dash's own runs |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
 | toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
 
@@ -82,7 +82,9 @@ reaps the jobs it never waits for as the next one starts, so a loop of
 **The prompt.** Interactive when standard input and standard error are
 terminals (`pelt`, `pelt -i`, `pelt -s`): `PS1` and `PS2`, Ctrl-C ends
 the program it is waiting for or the loop it is running and the prompt
-comes back, Ctrl-D ends the shell. The line editor has emacs keys and
+comes back, Ctrl-D ends the shell (unless `set -o ignoreeof`), and
+`MAIL`, `MAILPATH` and `MAILCHECK` tell of new mail before the
+prompt. The line editor has emacs keys and
 `set -o vi`, takes the window's width from the terminal and redraws on a
 resize, honours the erase, kill, interrupt, end-of-file, word-erase and
 literal-next characters `stty` set, and lets Ctrl-S, Ctrl-Q, Ctrl-V and
@@ -154,7 +156,8 @@ pending case still runs on every pass and is reported, never skipped.
   to its end before the next starts.
 - `trap` and `kill` know the signals POSIX names and no other (not
   Linux's `IO`, `PWR` or the real-time ones).
-- A byte that is not UTF-8 cannot reach a program.
+- A byte that is not UTF-8 cannot reach a program: a `$'…'` that would
+  make one is refused, and a command substitution's becomes `?`.
 - `test -r`, `-w` and `-x` read the mode bits for the shell's own ids
   rather than asking `access(2)`, so a read-only or `noexec` mount and
   ACLs are not seen.
