@@ -1,0 +1,17 @@
+build 0
+fmt 0
+checked-tests 0
+ci-planner 0
+native-selfcheck 0
+native-corpus 1
+native-sessions 0
+native-shadow 0
+native-terminal 0
+native-history 0
+release-selfcheck 0
+release-corpus 1
+release-sessions 0
+release-shadow 0
+release-terminal 0
+release-history 0
+inputs-stable 127

@@ -49,3 +49,14 @@ notes/px70/final-validation.txt and the SGR/OSC-P rows. Cell foreground and
 background use 4-bit palette indices; RGB maps to those 16 entries, not
 arbitrary RGB pixels. All sixteen OSC-P entries measured. No PAX built or
 run here; framebuffer/serial sessions still require a px-owned slot.
+
+Pre-implementation baseline, head 8bef26c, hasu B:
+Both tiers: all 443 sessions pass; build, fmt, checked tests, selfchecks,
+CI planner, shadow/idle, terminal and history witnesses pass.
+Initial corpus: 1022/1/15 on each tier. Both fail only exec/exec_pid:
+its /bin/sh fixture calls cmp, absent from the minimal Arch image.
+inputs-stable also failed because cmp was missing (exit127). Added
+container diffutils, changed no pelt source or expected fixture, then reran
+both whole corpus tiers: 1023 pass / 0 fail / 15 pending each. The original
+before/after tracked-source hash manifests compare equal. Original reds
+and successful rerun are retained under logs/; no application bug claimed.
