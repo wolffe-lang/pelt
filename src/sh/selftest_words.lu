@@ -21,11 +21,19 @@ fn want_words(mut bad: List[str]) {
     if cps_text(e.buf) != "echo latest " { (mut bad).push("abbr first word space") }
     emacs_undo(mut e)
     if cps_text(e.buf) != "zz " { (mut bad).push("abbr undo restores typed word and space") }
-    for literal in ["echo zz ", "'zz' ", "z\\z ", "echo x; zz "] {
+    for literal in ["echo zz ", "'zz' ", "z\\z ", "echo x # zz "] {
         set_line(mut e, cps_of(literal), cps_of(literal).len)
         abbr_space(mut e)
         if cps_text(e.buf) != literal { (mut bad).push("abbr changed quoted/nonfirst word") }
     }
+    set_line(mut e, cps_of("echo x; zz "), 11)
+    abbr_space(mut e)
+    if cps_text(e.buf) != "echo x; echo latest " {
+        (mut bad).push("abbr command position after separator")
+    }
+    set_line(mut e, cps_of("zz"), 2)
+    abbr_expand(mut e, e.cur)
+    if cps_text(e.buf) != "echo latest" { (mut bad).push("abbr Enter trigger") }
     e.abbreviate = false
     set_line(mut e, cps_of("zz "), 3)
     abbr_space(mut e)
