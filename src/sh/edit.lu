@@ -1679,6 +1679,7 @@ fn csi(mut e: Ed) -> int {
         if b < 0 {
             return b
         }
+        if e.friendly && b == 7 { return role_key(e, b) }
         if b >= 48 && b <= 57 {
             if nparam == 0 {
                 p1 = p1 * 10 + b - 48
@@ -1745,6 +1746,7 @@ fn ss3(mut e: Ed) -> int {
     if b < 0 {
         return b
     }
+    if e.friendly && b == 7 { return role_key(e, b) }
     if b == 65 {
         return K_UP
     }
@@ -2118,7 +2120,8 @@ fn isearch(mut e: Ed) -> bool {
                     failed = false
                 }
             }
-        } else if k == 7 {
+        } else if k == 7 || e.friendly && k == K_ALT + 7 {
+            if e.friendly { bell(mut e) }
             // Ctrl-G: the line as it was before Ctrl-R
             e.buf = keep
             e.cur = keep_cur

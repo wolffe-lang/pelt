@@ -136,6 +136,21 @@ def interactive(binary, home):
         shell.command(b'bindings\r')
         assert b'stty intr\t18\tterminal-character\n' in shell.data['out']
         shell.command(b'stty intr "^C"\r')
+        for name, prefix in [('CSI', b'\x1b['), ('SS3', b'\x1bO'), ('C-x', b'\x18'), ('numeric', b'\x1b3'), ('find', b'\x1d')]:
+            print('probe abort prefix', name, flush=True)
+            seen = len(shell.data['tty'])
+            shell.type(prefix + b'\x07')
+            shell.until(lambda: b'\x07' in shell.data['tty'][seen:])
+        shell.data['out'] = b''
+        seen = len(shell.data['tty'])
+        shell.type(b'echo kept\x12')
+        shell.until(lambda: b"(search '" in shell.data['tty'][seen:])
+        seen = len(shell.data['tty'])
+        shell.type(b'\x07')
+        shell.until(lambda: b'\x07' in shell.data['tty'][seen:])
+        shell.command(b'\r')
+        assert shell.data['out'] == b'kept\n', shell.data['out']
+        print('ok abort bells in CSI, SS3, C-x, numeric, find and search', flush=True)
         shell.command(b'set -o vi\r')
         shell.data['out'] = b''
         shell.command(b'bindings\r')

@@ -1,0 +1,17 @@
+build: target/native/pelt
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+ok gate on b'ba\n'
+ok gate default-off b'ab\n'
+ok gate no-stderr-tty b'ab\n'
+ok gate posix-hard-disable b'ab\n'
+ok gate feature-off b'ab\n'
+ok gates script, pipe, -c builtin absence
+probe abort prefix CSI
+probe abort prefix SS3
+probe abort prefix C-x
+probe abort prefix numeric
+probe abort prefix find
+ok abort bells in CSI, SS3, C-x, numeric, find and search
+ok empty history bell; live bindings, actions, remapped stty, vi
+ok friendly idle 10s: contexts 0, RSS pages 2961->2961
+last-arg 32767 entries: median 0.020292 ms, p99 0.062855 ms, 100 samples after warmup

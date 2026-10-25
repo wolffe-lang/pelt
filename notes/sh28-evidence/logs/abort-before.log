@@ -1,0 +1,17 @@
+ok gate on b'ba\n'
+ok gate default-off b'ab\n'
+ok gate no-stderr-tty b'ab\n'
+ok gate posix-hard-disable b'ab\n'
+ok gate feature-off b'ab\n'
+ok gates script, pipe, -c builtin absence
+probe abort prefix CSI
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh28/pelt/notes/sh28-evidence/witness.py", line 202, in <module>
+    interactive(binary, home)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh28/pelt/notes/sh28-evidence/witness.py", line 143, in interactive
+    shell.until(lambda: b'\x07' in shell.data['tty'][seen:])
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh28/pelt/notes/sh28-evidence/witness.py", line 59, in until
+    raise AssertionError(f'timeout pid={self.p.pid}: {self.data!r}')
+AssertionError: timeout pid=21: {'tty': b'\x1b[6n$ ^[.\x07echo empty\r\r\n\x1b[6n$ bindings\r\r\n\x1b[6n$ bindings -l\r\r\n\x1b[6n$ stty intr "^X"\r\r\n\x1b[6n$ bindings\r\r\n\x1b[6n$ stty intr "^C"\r\r\n\x1b[6n$ ', 'out': b'Enter\t0d 0a\taccept-line\nC-C\tstty intr\tinterrupt\nQuit\tstty quit\tdiscard-pending-line\nC-D\tstty eof\tdelete-or-eof\nBackspace\t7f 08 / stty erase\tbackward-delete-char\nC-U\tstty kill\tunix-line-discard\nC-W\tstty werase\tunix-word-rubout\nC-V\tstty lnext\tquoted-insert\nTab\t09\tcomplete\nC-L\t0c\tclear-screen\nLeft\tESC[D ESCOD\tbackward-char\nRight\tESC[C ESCOC\tforward-char\nHome\tESC[H ESCOH ESC[1~ ESC[7~\tbeginning-of-line\nEnd\tESC[F ESCOF ESC[4~ ESC[8~\tend-of-line\nUp\tESC[A ESCOA\tprevious-history\nDown\tESC[B ESCOB\tnext-history\nC-A\t01\tbeginning-of-line\nC-E\t05\tend-of-line\nC-B\t02\tbackward-char\nC-F\t06\tforward-char\nM-B\tESC b B\tbackward-word\nM-F\tESC f F\tforward-word\nCtrl-Left\tESC[1;5D ESC[1;3D\tbackward-word\nCtrl-Right\tESC[1;5C ESC[1;3C\tforward-word\nM-D\tESC d D\tkill-word\nM-Backspace\tESC 7f ESC 08\tbackward-kill-word\nC-K\t0b\tkill-line\nC-Y\t19\tyank\nDelete\tESC[3~\tdelete-char\nC-P\t10\tprevious-history\nC-N\t0e\tnext-history\nC-R\t12\treverse-search-history\nM-. / M-_\tESC . / ESC _\tyank-last-arg\nM-Y\tESC y Y\tyank-pop\nC-T\t14\ttranspose-chars\nM-T\tESC t T\ttranspose-words\nM-U\tESC u U\tupcase-word\nM-L\tESC l L\tdowncase-word\nM-C\tESC c C\tcapitalize-word\nC-_ / C-X C-U\t1f / 18 15\tundo\nM-R\tESC r R\trevert-line\nM-< / PageUp\tESC < / ESC[5~\tbeginning-of-history\nM-> / PageDown\tESC > / ESC[6~\tend-of-history\nM-#\tESC #\tinsert-comment\nM-\\\tESC 5c\tdelete-horizontal-space\nC-]\t1d\tcharacter-search\nM-C-]\tESC 1d\tcharacter-search-backward\nM-0..9 / M--\tESC 30..39 / ESC 2d\tdigit-argument\nC-G\t07 / ESC 07 / 18 07\tabort\nC-@ / M-Space\t00 / ESC 20\tset-mark\nC-X C-X\t18 18\texchange-point-and-mark\nstty erase\t7f\tterminal-character\nstty kill\t15\tterminal-character\nstty intr\t18\tterminal-character\nstty quit\t1c\tterminal-character\nstty susp\t1a\tterminal-character\nstty eof\t04\tterminal-character\nstty werase\t17\tterminal-character\nstty lnext\t16\tterminal-character\nstty start\t11\tterminal-character\nstty stop\t13\tterminal-character\n', 'err': b''}
