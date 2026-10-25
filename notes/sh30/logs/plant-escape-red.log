@@ -1,0 +1,6 @@
+colour escape in buffer, undo or kill
+colour escape in undo stack
+colour escape in kill ring
+colour escape in history
+colour storage witness text: echo red
+selfcheck: 5 table checks failed

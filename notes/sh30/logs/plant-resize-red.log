@@ -1,0 +1,46 @@
+ok colour-unknown xterm-256color
+ok colour-command xterm-256color
+ok colour-argument xterm-256color
+ok colour-reserved xterm-256color
+ok colour-quote xterm-256color
+ok colour-open-quote xterm-256color
+ok colour-variable xterm-256color
+ok colour-redirection xterm-256color
+ok colour-comment xterm-256color
+ok colour-operator xterm-256color
+ok colour-bang xterm-256color
+ok colour-nonexecuting xterm-256color
+ok colour-enter-caret xterm-256color
+ok colour-command-census function/alias/explicit-path xterm-256color
+ok colour-continued-quote xterm-256color
+ok colour-unknown linux
+ok colour-command linux
+ok colour-argument linux
+ok colour-reserved linux
+ok colour-quote linux
+ok colour-open-quote linux
+ok colour-variable linux
+ok colour-redirection linux
+ok colour-comment linux
+ok colour-operator linux
+ok colour-bang linux
+ok colour-nonexecuting linux
+ok colour-enter-caret linux
+ok colour-command-census function/alias/explicit-path linux
+ok colour-continued-quote linux
+ok colour-theme-indexed
+ok colour-theme-rgb
+ok colour-theme-fallback
+ok colour-theme-malformed
+ok colour-gate-posix
+ok colour-gate-stdout-pipe
+ok colour-gate-dumb
+ok colour-shadow-and-toggle
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh30/plant-resize/tools/colour-witness", line 194, in <module>
+    palette(binary,home);gates(binary,home);screen_storage(binary,home)
+                                            ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh30/plant-resize/tools/colour-witness", line 141, in screen_storage
+    assert b'\x1b[J' in raw and b'\x1b[0;36m' in raw,('colour-resize-narrow',raw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('colour-resize-narrow', b'\x1b[0m\r$ \x1b[0mecho\x1b[0m \x1b[0;36mxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\x1b[0m\x1b[0m\x1b[0m')

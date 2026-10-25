@@ -1,0 +1,22 @@
+Fixes committed first at 09e452e. All plants are draft PRs; never merge.
+The orchestrator closes them after reading named-red CI evidence.
+
+#78 https://github.com/wolffe-lang/pelt/pull/78
+sh30-plant-colour 08ce0c5: wrong argument colour (35 rather than36).
+Local hasu native raw gate exit1 at colour-argument (expected cyan bytes).
+Immediate one-time CI lookup after create returned [], no run yet listed.
+
+#79 https://github.com/wolffe-lang/pelt/pull/79
+sh30-plant-escape 9b21d69: escape inserted into Ed.buf during redraw.
+Local hasu native selfcheck exit1: five storage invariant failures,
+including undo stack, kill ring and history, plus changed text.
+Immediate one-time CI lookup after create returned [], no run yet listed.
+
+#80 https://github.com/wolffe-lang/pelt/pull/80
+sh30-plant-resize 7100921: clearing old coloured rows suppressed.
+Local hasu native raw gate exit1 at colour-resize-narrow.
+Immediate one-time CI lookup after create returned [], no run yet listed.
+
+All three plant builds succeeded. Full local red logs retained in logs/.
+No label or second CI read by this lane; run IDs and CI verdicts are owed
+by the orchestrator, not inferred from the local reds.

@@ -1,0 +1,10 @@
+ok colour-unknown xterm-256color
+ok colour-command xterm-256color
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh30/plant-colour/tools/colour-witness", line 194, in <module>
+    palette(binary,home);gates(binary,home);screen_storage(binary,home)
+    ~~~~~~~^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh30/plant-colour/tools/colour-witness", line 61, in palette
+    assert want in raw, (term, name, want, raw)
+           ^^^^^^^^^^^
+AssertionError: ('xterm-256color', 'argument', b'\x1b[0;36margument', b'\x1b[0m\x1b[4D\x1b[0m\x1b[J\x1b[0m\x1b[0m\x1b[0;91me\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x08\x1b[0;91mec\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[2D\x1b[0;91mech\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[3D\x1b[0mecho\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[4D\x1b[0mecho\x1b[0m \x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[5D\x1b[0mecho\x1b[0m \x1b[0;35ma\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[6D\x1b[0mecho\x1b[0m \x1b[0;35mar\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[7D\x1b[0mecho\x1b[0m \x1b[0;35marg\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[8D\x1b[0mecho\x1b[0m \x1b[0;35margu\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[9D\x1b[0mecho\x1b[0m \x1b[0;35margum\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[10D\x1b[0mecho\x1b[0m \x1b[0;35margume\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[11D\x1b[0mecho\x1b[0m \x1b[0;35margumen\x1b[0m\x1b[0m\x1b[0m\x1b[0m\x1b[12D\x1b[0mecho\x1b[0m \x1b[0;35margument\x1b[0m\x1b[0m\x1b[0m')

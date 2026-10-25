@@ -60,3 +60,47 @@ container diffutils, changed no pelt source or expected fixture, then reran
 both whole corpus tiers: 1023 pass / 0 fail / 15 pending each. The original
 before/after tracked-source hash manifests compare equal. Original reds
 and successful rerun are retained under logs/; no application bug claimed.
+
+Implementation and focused checks (before final whole regression):
+- Pure classifier 258 lines, parser state without evaluation; the palette,
+  renderer and continuation helper exceed the guessed150-200-line add-on.
+- 45 new typed sessions, not the guessed60: 45/0 on native and release.
+  Current total488. No original corpus/session expectation changed.
+- Both compiled selfchecks and checked tests pass. The direct invariant
+  reads Ed.buf, Ed.undo, changes[], history, mem.kill and mem.ring after
+  actual coloured insert/redraw/kill/yank/undo operations. The escape plant
+  makes five of these checks fail.
+- Raw typed witnesses cover all measured colour kinds; TERM linux/xterm;
+  16/indexed/RGB theme/fallback; malformed atomic fallback; nonexecution;
+  independent/highlight/friendly/posix/stdout-pipe/dumb/script/stdin-pipe
+  gates; command function/alias/path census; PS2 quote context; error span
+  and caret; pager/shadow resets; resize narrow/wide and stale-row guard.
+- All three local plants fail the intended gate; CI confirmations pending.
+- Startup filesystem census:2316 stat/getdents calls. 80 characters plus
+  200 editing keys after initialization:0 filesystem calls. Explicit paths
+  cost one stat per distinct spelling, cached for this prompt. No fork or
+  command execution in the classifier or rendering resolution path.
+
+Hasu B cost instrument: live owned pty response at80 columns, 100 keys
+following warmup, child-only THP disabled for idle accounting.
+  Focused native: median0.103411ms, p99 0.467778ms.
+  Focused release: median0.079878ms, p99 0.295990ms.
+  Final source including continuation context (09e452e): release
+    median0.123194ms, p99 0.327609ms, strict <1ms assertions passed.
+  Each idle10s witness:0 context switches, CPU/faults/resident/anonymous
+    memory unchanged. Final source RSS7956kB before/after.
+These are measured local response costs, not universal scheduling promises.
+CI uses a looser scheduling envelope (median5.5ms/p9920ms), with exact
+colour/reset/storage assertions. final.sh separately enforces the strict
+local release bar and repeats all old/new corpus/session cases.
+
+Prediction misses: default comments red, arguments cyan, variables bright
+cyan, separators green, unknown commands bright red; not the initial guess.
+Pelt redraws synchronously with full span resets; fish's echo/repaint is
+asynchronous. First differing bytes are redraw/control bytes, not a claim
+of matching fish's editing protocol. Pelt's coloured caret is new; existing
+pelt code only printed the ordinary message, contrary to the brief's premise.
+
+R-sh30-4 remains a recommendation (orchestrator concurs): measured default
+command foreground rather than guessed green. R-sh30-1/2/3 recommendations
+remain A/A/A. No maintainer ruling is claimed by this lane.
