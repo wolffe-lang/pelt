@@ -32,14 +32,15 @@ fn bi_bindings(mut sh: Sh, args: List[str]) -> int {
     var seen = Map[str, bool]()
     for row in binding_rows(sh.opt_vi, sh.opt_friendly_keys) {
         let parts = row.split("\t")
+        let action = shadow_binding(sh, parts[0], parts[2])
         if actions {
-            let name = parts[2]
+            let name = action
             if !(seen[name] else false) {
                 emit(mut sh, "{name}\n")
                 seen[name] = true
             }
         } else {
-            emit(mut sh, "{parts[0]}\t{parts[1]}\t{parts[2]}\n")
+            emit(mut sh, "{parts[0]}\t{parts[1]}\t{action}\n")
         }
     }
     if !actions {
@@ -74,4 +75,21 @@ fn editor_function_names(sh: Sh) -> List[str] {
     var names = sh.funcs.keys()
     if friendly_active(sh) { (mut names).push("bindings") }
     names
+}
+
+fn shadow_binding(sh: Sh, key: str, original: str) -> str {
+    if sh.opt_vi { return original }
+    if sh.opt_suggest {
+        if key == "Right" || key == "End" || key == "C-E" || key == "C-F" {
+            return "move-or-accept-suggestion"
+        }
+        if key == "M-F" { return "forward-word-or-accept-word" }
+        if key == "Ctrl-Right" { return "forward-word-or-accept-token" }
+    }
+    if sh.opt_histsearch {
+        if key == "Up" || key == "C-P" { return "prefix-history-backward" }
+        if key == "Down" || key == "C-N" { return "prefix-history-forward" }
+        if key == "C-R" { return "history-pager" }
+    }
+    original
 }

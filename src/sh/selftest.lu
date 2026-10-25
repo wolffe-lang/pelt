@@ -1361,6 +1361,10 @@ fn want_shadow(mut bad: List[str]) {
     }
     let _s = option_name(mut sh, "suggest", true)
     let _h = option_name(mut sh, "histsearch", true)
+    if shadow_binding(sh, "Right", "forward-char") != "move-or-accept-suggestion" ||
+        shadow_binding(sh, "C-R", "reverse-search-history") != "history-pager" {
+        (mut bad).push("shadow live bindings")
+    }
     let bits = opts_bits(sh)
     frame_open(mut sh)
     let _off = option_name(mut sh, "suggest", false)

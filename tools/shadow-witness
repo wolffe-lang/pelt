@@ -6,8 +6,8 @@ this fixture's child is signalled, and cleanup always waits for that pid.
 from pathlib import Path
 import json, statistics, sys, tempfile, time
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'notes/sh28-evidence'))
-from witness import Shell, idle_snapshot
+sys.path.insert(0,str(ROOT/'tools'))
+from lib_shadow import Shell, idle_snapshot
 
 def settled(shell, seconds=.03):
     until=time.monotonic()+seconds
