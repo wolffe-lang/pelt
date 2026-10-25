@@ -1,0 +1,31 @@
+sh32 draft: F4 the prompt
+
+Start from sh31's merged head,552 typed expectations,1038 corpus cases.
+Read docs/FRIENDLY.md, docs/KEYS.md, edit_palette.lu, edit_completion.lu,
+edit_events.lu, tools/words-witness and sh31's measurement/plant records.
+Confirm both final-head full regression and labelled CI are green first.
+
+1. Measure fish4.9.3's prompt in fresh-HOME ptys: user/host, HOME-relative
+   working directory abbreviation, nonzero status, root/user marker,
+   narrow/wide terminal and Unicode. No shell/editor source.
+2. Default friendly prompt under prompt_friendly, preserving explicitly
+   set PS1 exactly. Read argv[0]/default-on pin lane's resulting policy,
+   do not silently change the still-opt-in0.2.35 policy in sh31.
+3. Right prompt through a prompt_right function, measured and bounded;
+   clear before wrapping, pager rows, resize and execution. Prompt styles
+   remain renderer-owned; never place them in editor/history/undo/kills.
+4. VCS segment only after den provides status --porcelain M2; explicit
+   cache/deadline and zero idle work. Do not guess den's availability.
+5. Typed native/release sessions, immutable old expectations, raw reset/
+   cursor/storage laws, strict release<1ms per-key and idle counters;
+   fixes before named plants. README counts, FRIENDLY/KEYS/CHANGELOG,
+   five-section PR/note and sh33 draft.
+
+Carry invariants: spans are codepoint offsets, parser offsets UTF-8 bytes;
+PELT_COLORS atomic per prompt; event results accepted separately from
+Ed.buf; abbr precedes events only on acceptance; pager Enter accepts
+without executing, Escape restores cursor. Feature bits now occupy through
+8388608 (complete); derive the next from state.lu, never assume it.
+The help probe runs only for explicit Tab at an option, cached per prompt;
+never use it to populate prompt/highlight data. PAX framebuffer/serial
+pending rows retained until px-owned slot; build no PAX in a pelt lane.

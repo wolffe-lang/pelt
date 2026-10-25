@@ -1,0 +1,11 @@
+["wolf-0.2.35-x86_64-unknown-linux-gnu.tar.gz","sha256:4cc4045bbbb605c07835bc4f32685953c784eeef4cd3139a48b457dfc90dad1a"]
+["lupin-0.1.56-x86_64-unknown-linux-gnu.tar.gz","sha256:ad703550ac4787e8e4bb26989d591a731410274d7332f2b4e8b9a64c878822cc"]
+
+Both API fields read twice; both downloaded archives hashed twice on hasu.
+Compiler, runtime archive and lupin bytes compared to the staged pair twice:
+notes/sh31/logs/pin-identity.log. Unchanged std2386522e.
+Image built from sh30 Containerfile with diffutils present:
+1c5e490d332df7f5e9319349dbd9421cf6360d5aae9e379f0406740264165b4e
+fish4.9.3-1 / bash5.3.20-1 / dash0.5.13.4-1 / diffutils3.12-2.
+The latest published wolf release read during closeout was v0.2.35;
+no re-pin performed. The next pin lane owns argv[0] and default-on policy.

@@ -1,0 +1,75 @@
+sh31 measurements, from owned fresh-HOME ptys on hasu block B, cores6-11.
+
+Fish4.9.3:
+- Space AND Enter expand an abbreviation. Empty values remove its word.
+- Quoted/backslash-quoted spellings do not expand; argument position stays
+  literal; leading blanks and command position after a separator expand.
+- Undo after Space restores the name AND the typed space.
+- Six described candidates: one column at24/40, three columns at80/120.
+  The prediction of two at80 was wrong. Columns are adaptive, not fixed.
+- First Tab lists, next Tab selects; Shift-Tab goes backward/wraps; Down
+  moves forward. Enter accepts without execution. Fish's commandline
+  snapshot includes the selection during navigation. Pelt intentionally
+  keeps its editable line untouched and marks the row until Enter.
+Raw input/output hex and snapshots are in oracle/fish-*.json. The screen
+emulator displays some unsupported query residue at24 columns; the raw
+bytes and each candidate row remain recorded, not a byte-parity claim.
+
+Bash5.3.20:
+- !! echoes the expanded previous command before executing it.
+- !$ preserves the last shell word's quotes; redirection operands count,
+  comments do not. Expanded text, not event syntax, is in history.
+- Single quotes and backslash protect events, double quotes permit them.
+- A failed reference prints an error and returns to a fresh bash prompt.
+  Pelt's recommendation deliberately retains the original line for editing
+  and uses its own diagnostic. No copied shell diagnostic/help strings.
+Raw input/output hex is in oracle/bash-*.json.
+
+Recommendations, not maintainer rulings:
+R-sh31-1 A: bounded tab-separated data, atomic replacement, malformed rows
+ignored, later valid duplicate wins; no executable persistence script.
+R-sh31-2 amended after measurement (orchestrator concurrence): Space AND
+Enter; the whole unquoted first command word, including command position
+following separators. This supersedes the Space-only prediction.
+R-sh31-3 measured Tab/backtab/arrows/Enter/Escape semantics, bounded pages.
+R-sh31-4 A: own one-line error, original line retained.
+R-sh31-5 A: last shell word as spelled; reuse pelt's lexer for nested syntax.
+R-sh31-6 A: expanded accepted line is echoed and stored in history.
+R-sh31-7 (orchestrator concurred): adaptive columns, at most five rows,
+selection marker only until Enter; no edit-buffer mutation while selecting.
+R-sh31-8: complete and abbr are the additional feature option names;
+per-prompt help cache, at most8 paths/256 options/32KiB,50ms collection.
+These are implemented recommendations, no maintainer decision claimed.
+
+Verification through5497d4c:
+- 64 new sessions (prediction70), independently asserted stdout first,
+  then pinned pelt-owned screens. Native64/0 and release64/0.
+- Compiled selfchecks on both tiers; checked wolf test1/0/0unsupported.
+- Direct buffer/undo/kill-ring storage laws plus existing sh30 selfchecks.
+- Raw bytes, reset boundaries, two-shell persistence, exclusive-temp
+  collision, script/-c/pipe isolation, nonexecuting selection/highlighting,
+  help cache/timeouts, Enter echo and expanded persistent history pass.
+- CI planner including new words gate passes. First focused command's
+  session selector incorrectly used a glob and exited2, not a skip;
+  corrected explicit names ran64/0 on each tier (words-sessions.log).
+- All1038 original corpus cases and488 session expectations unchanged.
+
+Cost/idle instrument after executing !! with friendly enabled,80 columns,
+100keys after warmup (logs/words-focused.log):
+  native median0.056639ms p990.063717ms; idle RSS11056->11056kB.
+  release median0.047037ms p990.054128ms; idle RSS8068->8068kB.
+  Release strict median AND p99<1ms passed. Both idle10s: zero context
+  switch delta, unchanged CPU/fault/resident/anonymous memory; child-only
+  THP disabled. These are measured response costs, not scheduler promises.
+
+Full legacy regression at5497d4c launched10:48:42Z; native whole corpus
+1023/0/15 finished10:49:55Z. Remaining full passes were still running at
+closeout. Source review then added whole-word-at-cursor guarding, height-
+only pager redraw and a strict remaining-cap read; those are NOT covered
+by the earlier focused measurements. A separate final-head job is queued
+behind the first on the same B lock, with its own pid/log/exit marker.
+No final full-green or current-head cost claim before that job finishes.
+
+PAX unchanged pending rows remain in tests/session/PENDING.md. Basis:
+pax#162 at09471da4, notes/px70/final-validation.txt and the retained sh28
+key/palette evidence. No PAX built or run. No Mac build or config change.

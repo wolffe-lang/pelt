@@ -1,0 +1,18 @@
+Fixes and regression gates committed FIRST at5497d4c.
+Each plant is a draft, never merge. Initial run state read once; the lane
+never waits for CI, so final named-red verification belongs to orchestration.
+
+abbr: PR85, branch sh31-plant-abbr, head9b5bd678e4bea80e4305509db0741067acb9caf6
+run40186401537, in_progress on first read.
+Injected noninteractive lookup in main.lu; expected named row:
+tools/words-witness abbr-script-gate (zz executes instead of status127).
+
+pager: PR86, branch sh31-plant-pager, head4ff081f9a289ca81198f95985c256a660241bbbd
+run40186405017, in_progress on first read.
+Injected ESC codepoint into Ed.buf in completion_draw; expected named row:
+selfcheck completion-pager-storage (edit buffer/undo storage law).
+
+last: PR87, branch sh31-plant-last, headc726d060fd43e4c93eb4f81a92ad597f05649553
+run40186410400, in_progress on first read.
+Injected first-word extraction for !$; expected named rows:
+selfcheck event-last-word redirection and event expansion; typed event cases.

@@ -1,0 +1,19 @@
+No issues filed or closed by sh31.
+Existing follow-ons, not newly discovered regressions:
+- pelt/PAX: px-owned framebuffer and serial session slot remains owed;
+  keep exact existing pending rows and px70 palette/key basis.
+- pelt: argv[0] re-pin/default-on belongs to the pin lane; latest release
+  read at closeout was still wolf0.2.35. No pin/default-policy change here.
+- pelt: programmable completion, help for aliases/functions/compound
+  command positions, and cross-prompt cache invalidation are not claimed.
+  Explicit literal-command --help probing can have the command's normal
+  side effects. It is distinct from no-execute-on-highlight/selection.
+- pelt: concurrent abbreviation writes are atomic last-writer-wins, not a
+  merge protocol. Documented; recommend a separate concurrency feature
+  only if concurrent editing is desired, not a persistence-safety claim.
+
+Review blockers, not issues to hide:
+- Confirm three plant runs fail their named rows, not a formatter/build.
+- Final-head local full regression and CI still pending at handoff.
+- The final source-review guards must be included in the final-head job;
+  older5497d4c cost figures are not final-head evidence.
