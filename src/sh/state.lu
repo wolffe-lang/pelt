@@ -654,6 +654,8 @@ fn opts_bits(sh: Sh) -> int {
     if sh.opt_histexpand { b = b | 4194304 }
     if sh.opt_complete { b = b | 8388608 }
     if sh.opt_prompt_friendly { b = b | 16777216 }
+    // Session precedence must roll back with a subshell frame too.
+    if sh.ps1_explicit { b = b | 33554432 }
     b
 }
 
@@ -683,6 +685,7 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_histexpand = b & 4194304 != 0
     sh.opt_complete = b & 8388608 != 0
     sh.opt_prompt_friendly = b & 16777216 != 0
+    sh.ps1_explicit = b & 33554432 != 0
 }
 
 /// Where a frame's record keeps its fields on `istk`, from the record's

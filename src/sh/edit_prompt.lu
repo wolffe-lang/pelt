@@ -103,10 +103,12 @@ fn prompt_probe(exe: str, args: List[str], deadline: int) -> (bool, str) {
     while bytes.len < 32768 {
         let remaining = deadline - os_clock_ns()
         if remaining <= 0 { break }
-        let (ready, _signal) = os_signal_wait_fds([rd], 0, (remaining + 999999) / 1000000) else (
-            -1,
-            0,
-        )
+        let (ready, signal) = os_signal_wait_fds(
+            [rd],
+            m_int(),
+            (remaining + 999999) / 1000000,
+        ) else (-1, 0)
+        if signal != 0 { os_signal_raise(signal) else |_| {}; break }
         if ready != 0 { break }
         let room = 32768 - bytes.len
         let part = fs_read_chunk(rd, if room < 4096 then room else 4096) else |err| match err {

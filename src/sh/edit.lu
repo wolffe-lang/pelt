@@ -854,6 +854,7 @@ fn ed_line(sh: Sh, shown: str, q: Query, previous: str) -> EdOut {
     } else {
         emacs_loop(mut e)
     }
+    right_clear(mut e)
     flush_out(mut e)
     os_term_set_mode(0, old) else |_| {}
     let hup = e.done == K_HUP
@@ -1378,6 +1379,7 @@ fn resized(mut e: Ed) {
         pager_draw(mut e)
     } else {
         shadow_refresh(mut e)
+        right_draw(mut e)
     }
 }
 

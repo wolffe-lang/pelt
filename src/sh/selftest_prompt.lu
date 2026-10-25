@@ -14,6 +14,11 @@ fn want_prompt(mut bad: List[str]) {
     }
     let _unset = unset_var(mut sh, "PS1")
     if !sh.ps1_explicit { (mut bad).push("prompt-PS1-sticky-unset") }
+    sh.ps1_explicit = false
+    frame_open(mut sh)
+    let _sub_set = set_var(mut sh, "PS1", "subshell")
+    frame_close(mut sh)
+    if sh.ps1_explicit { (mut bad).push("prompt-PS1-subshell-isolation") }
     sh.opt_prompt_friendly = true
     let bits = opts_bits(sh)
     sh.opt_prompt_friendly = false
