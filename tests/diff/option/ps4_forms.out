@@ -1,0 +1,8 @@
+1-2-c-dflt> : one
+1-2-c-dflt> set +x
+[13] : two
+[14] set +x
+: three
+set +x
+: four
+set +x

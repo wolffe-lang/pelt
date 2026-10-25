@@ -829,8 +829,8 @@ fn xtrace(mut sh: Sh, names: List[str], values: List[str], fields: List[str]) {
     if !sh.opt_x {
         return
     }
+    let ps4 = ps4_text(mut sh)
     var o = buf()
-    let ps4 = sh.vals["PS4"] else "+ "
     put(mut o, ps4)
     var k = 0
     while k < names.len {
@@ -851,6 +851,35 @@ fn xtrace(mut sh: Sh, names: List[str], values: List[str], fields: List[str]) {
     }
     putc(mut o, '\n')
     write_fd(mut sh, 2, text(o))
+}
+
+/// The `set -x` prefix (XCU 2.5.3 `PS4`): the value expanded as a
+/// double-quoted word is, parameters, arithmetic and command
+/// substitution alike, as dash expands it, with tracing off while it is
+/// (dash does not trace a substitution inside `PS4`); an unset `PS4` is
+/// no prefix at all (dash, black-box: `notes/sh26-evidence/probe/p12`).
+/// `$?` is left as it was, and an error in the expansion does not end
+/// the shell, as in a prompt (`sh.interact`'s `prompt`).
+fn ps4_text(mut sh: Sh) -> str {
+    let raw = sh.vals["PS4"] else ""
+    if (raw.find("$") else -1) < 0 && (raw.find("`") else -1) < 0 {
+        return raw
+    }
+    let saved_status = sh.status
+    let saved_cs = sh.cs_status
+    let saved_ran = sh.cs_ran
+    let saved_flow = sh.flow
+    sh.opt_x = false
+    let shown = expand_one(mut sh, raw, X_DQ)
+    sh.opt_x = true
+    if sh.flow != saved_flow {
+        sh.flow = saved_flow
+        sh.abort = false
+    }
+    sh.status = saved_status
+    sh.cs_status = saved_cs
+    sh.cs_ran = saved_ran
+    shown
 }
 
 fn split_assign(a: str) -> (str, str) {
@@ -1928,6 +1957,8 @@ fn run_assign_only(mut sh: Sh, n: int, na: int) -> int {
         }
     }
     var ai = 0
+    var names = List[str]()
+    var values = List[str]()
     while ai < na {
         let (name, raw) = split_assign(sh.ast.nodes[n].words[ai])
         let v = assign_value(mut sh, raw)
@@ -1938,7 +1969,17 @@ fn run_assign_only(mut sh: Sh, n: int, na: int) -> int {
             fatal(mut sh, "{name}: is read-only", 2)
             return 2
         }
+        if sh.opt_x {
+            (mut names).push(name)
+            (mut values).push(v)
+        }
         ai += 1
+    }
+    // `set -x` writes an assignment-only command too, its values
+    // expanded, after the substitutions in them have been traced (XCU
+    // `set -x`; dash, black-box: `probe/p09`, `option/c_xtrace_forms`)
+    if names.len > 0 {
+        xtrace(mut sh, names, values, List[str]())
     }
     let st = if sh.cs_ran then sh.cs_status else 0
     sh.status = st

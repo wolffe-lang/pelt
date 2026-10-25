@@ -1,0 +1,8 @@
++ y=1
++ z=a b w=a b
++ echo sub
++ v=sub
++ x=1
++ y=2 true
++ echo hi
++ set +x
