@@ -673,8 +673,15 @@ fn bi_trap(mut sh: Sh, args: List[str]) -> int {
         return 0
     }
     var action = args[i]
+    if action == "-p" && i == 0 {
+        // `trap -p` (new in POSIX.1-2024; dash 0.5.13.4 has none, so the
+        // case takes `bash --posix`: `signal/c_trap_p`)
+        return trap_p(mut sh, args[1..args.len])
+    }
     if action.len > 1 && ch(action, 0) == '-' && i == 0 {
-        fatal(mut sh, "trap: {action}: no such option", 2)
+        // dash's words and status (pelt#28; black-box `probe/p03`): a
+        // bad option to a special built-in ends a script
+        fatal(mut sh, "trap: Illegal option {action.get(0..2) else action}", 2)
         return 2
     }
     var reset = action == "-"
@@ -702,6 +709,56 @@ fn bi_trap(mut sh: Sh, args: List[str]) -> int {
     }
     sig_apply(mut sh)
     st
+}
+
+/// `trap -p [condition…]` (XCU `trap`, POSIX.1-2024): each named
+/// condition's action as a `trap` command that sets it again, and with
+/// no operand every condition the shell knows, those at their default
+/// too (`trap -- - NAME`, bash's form): `EXIT`, then the signals lowest
+/// number first. A name that is no condition is said, status 1.
+fn trap_p(mut sh: Sh, conds: List[str]) -> int {
+    if conds.len == 0 {
+        trap_p_line(mut sh, "EXIT")
+        var last = 0
+        loop {
+            var best = -1
+            var best_n = 0
+            var k = 0
+            while k < SIG_ALL {
+                let n = sig_number(k)
+                if n > last && (best < 0 || n < best_n) {
+                    best = k
+                    best_n = n
+                }
+                k += 1
+            }
+            if best < 0 {
+                break
+            }
+            trap_p_line(mut sh, sig_name(best))
+            last = best_n
+        }
+        return 0
+    }
+    var st = 0
+    for c in conds {
+        let n = cond_name(c)
+        if n.len == 0 {
+            diag(mut sh, "trap: {c}: no such condition")
+            st = 1
+            continue
+        }
+        trap_p_line(mut sh, n)
+    }
+    st
+}
+
+fn trap_p_line(mut sh: Sh, cond: str) {
+    if has_trap(sh, cond) {
+        emit(mut sh, "trap -- {squote(sh.traps[cond] else "")} {cond}\n")
+    } else {
+        emit(mut sh, "trap -- - {cond}\n")
+    }
 }
 
 /// Every trap as a `trap` command that sets it again: `EXIT`, then the

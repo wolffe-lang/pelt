@@ -1,5 +1,5 @@
 exit=0
 stderr=no
 oracle=bash
+why=trap -p is new in POSIX.1-2024 and dash 0.5.13.4 refuses it, so bash --posix answers; sh26 writes the listings to a file where sh06 piped them, since a pipeline stage is a subshell whose caught traps are back at the default in dash and pelt and kept in bash (probe/p28)
 dash=differs
-pending=trap-p

@@ -1,0 +1,10 @@
+trap -- 'echo i' INT
+trap -- '' QUIT
+trap -- - HUP
+trap -- - EXIT
+st=1
+trap -- - EXIT
+trap -- - HUP
+trap -- 'echo i' INT
+trap -- '' QUIT
+trap -- 'echo i' INT

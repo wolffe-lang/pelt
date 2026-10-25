@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+oracle=bash
+why=trap -p is new in POSIX.1-2024 and dash 0.5.13.4 refuses it (Illegal option -p), so bash --posix answers, as signal/c_trap_p
+dash=differs
