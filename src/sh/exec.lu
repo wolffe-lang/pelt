@@ -778,6 +778,7 @@ fn eval_top(mut sh: Sh, mut p: P, src: str, line: int, echo: bool) -> int {
             break
         }
         if n == -2 {
+            highlight_error(mut sh, src, p.tstart)
             sh.line = p.err_line
             fatal(mut sh, p.err, 2)
             return 2

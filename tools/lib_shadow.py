@@ -1,7 +1,7 @@
 """Owned-pty and Linux idle counters, extracted from the sh28 witness.
 Reusable fixture code; never inspects or signals unrelated processes.
 """
-import os, json, ctypes, pty, select, subprocess, sys, termios, time
+import os, json, ctypes, pty, select, subprocess, sys, termios, time, fcntl, struct
 from pathlib import Path
 import lib_session as ls
 
@@ -18,13 +18,18 @@ def ctty_without_thp():
         raise RuntimeError('PR_GET_THP_DISABLE did not confirm complete disable')
 
 class Shell:
-    def __init__(self, binary, home, args=(), tty_err=True, history=None, fullargv=None, tty_out=False, disable_thp=False):
+    def __init__(self, binary, home, args=(), tty_err=True, history=None, fullargv=None, tty_out=False, disable_thp=False, env_overrides=None, cols=1000):
         self.master, slave = pty.openpty()
         self.mode = ls._lmode(slave)
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, cols, 0, 0))
         env = dict(PATH='/usr/bin:/bin', HOME=str(home), LC_ALL='C', PS1='$ ', TERM='xterm', COLUMNS='1000')
         env['HISTFILE'] = str(home/('history-' + str(time.monotonic_ns())))
         if history:
             env.update(HISTFILE=str(history), HISTSIZE='32767')
+        env["COLUMNS"] = str(cols)
+        for key, value in (env_overrides or {}).items():
+            if value is None: env.pop(key, None)
+            else: env[key] = value
         self.p = subprocess.Popen(fullargv or [str(binary), '-i', '+m', *args], stdin=slave,
             stderr=slave if tty_err else subprocess.PIPE, stdout=slave if tty_out else subprocess.PIPE,
             env=env, cwd=home, start_new_session=True, preexec_fn=ctty_without_thp if disable_thp else ls._ctty)
@@ -35,7 +40,7 @@ class Shell:
         if not tty_err:
             self.fds[self.p.stderr.fileno()] = 'err'
         self.data = dict(tty=b'', out=b'', err=b'')
-        self.screen = ls.Screen(1000, 24)
+        self.screen = ls.Screen(cols, 24)
         self.until(lambda: any(b'$ ' in data for data in self.data.values()))
     def pump(self, timeout=.01):
         for fd in select.select(list(self.fds), [], [], timeout)[0]:
