@@ -1,0 +1,15 @@
+Prediction (before implementation or measurement)
+At 80 and 200 columns I expect the visible fish default prompt to be
+mfwolffe@sh32 ~> , with renderer-owned green user/host, blue path and reset
+bytes. For ~/alpha/beta/gamma I expect ~/a/b/gamma at both widths, with a
+nonzero status rendered as [1] before > and root using #. The byte-exact
+SGR ordering is uncertain and will be recorded, not assumed.
+The release right prompt should add <0.10 ms median per key and retain
+both median and p99 strictly below 1 ms for an 80-column line.
+The stale-VCS-deadline plant should be hardest to make red by name because
+den may not yet supply porcelain; the seam needs an injected deterministic
+clock/result test rather than pretending that a real repository answered.
+
+Recommendations to implement, not rulings: R-sh32-1 A measured fish shape;
+R-sh32-2 A explicit PS1 wins; R-sh32-3 A one-third width, ellipsis, hidden
+under 40; R-sh32-4 A explicit cache/deadline, stale dim, no background work.
