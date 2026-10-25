@@ -1,0 +1,110 @@
+//! Explicit option-completion probes only. Never called by display or idle.
+//! Public wolf spec [os.proc.fds], [os.proc.pipe], [os.signal.wait.fds].
+
+fn completion_exe(name: str, path: str) -> str {
+    if !abbr_name(name) || is_regular_builtin(name) || is_special_builtin(name) { return "" }
+    if name.contains("/") {
+        let st = stat_of(name, false)
+        return if st.len > 4 && st[0] == K_FILE && st[4] & 73 != 0 then name else ""
+    }
+    for dir in path.split(":") {
+        let file = (if dir.len == 0 then "." else dir) + "/" + name
+        let st = stat_of(file, false)
+        if st.len > 4 && st[0] == K_FILE && st[4] & 73 != 0 { return file }
+    }
+    ""
+}
+
+/// Hard caps on wait budget and captured bytes; every created handle closes.
+/// Only the owned child is stopped/reaped; no global child poll can steal jobs.
+fn completion_help(mut e: Ed, exe: str) -> str {
+    if e.help_cache.has(exe) { return e.help_cache[exe] else "" }
+    if e.help_cache.len >= 8 { return "" }
+    e.help_cache[exe] = ""
+    let begin = os_clock_ns()
+    let (rd, wr) = os_pipe() else |_| { return "" }
+    let child = os_spawn_fds(exe, ["--help"], [1, wr, 2, -1]) else |_| {
+        fs_close(rd) else |_| {}
+        fs_close(wr) else |_| {}
+        return ""
+    }
+    fs_close(wr) else |_| {}
+    var out = List[byte]()
+    var ended = false
+    while out.len < 32768 {
+        let remaining = 50000000 - (os_clock_ns() - begin)
+        if remaining <= 0 { break }
+        let (ready, signal) = os_signal_wait_fds(
+            [rd],
+            m_int(),
+            (remaining + 999999) / 1000000,
+        ) else (-1, 0)
+        if signal != 0 {
+            e.inj = [K_INTR]
+            e.ii = 0
+            break
+        }
+        if ready != 0 { break }
+        let bytes = fs_read_chunk(rd, 4096) else |err| match err {
+            eof => { ended = true; break },
+            _ => { break },
+        }
+        for b in bytes { (mut out).push(b) }
+    }
+    fs_close(rd) else |_| {}
+    // Reap even a program that closed its output but did not exit. This is
+    // cleanup of this probe's handle, never a pid/name/group from outside it.
+    os_kill(child) else |_| {}
+    let _status = os_wait_status(child) else -1
+    if !ended || out.len >= 32768 || os_clock_ns() - begin > 50000000 { return "" }
+    let result = str_from_utf8(out) else ""
+    e.help_cache[exe] = result
+    result
+}
+
+struct HelpOptions {
+    names: List[str],
+    descriptions: List[str],
+}
+
+/// Plain option declarations only; no eval/man pages/control interpretation.
+fn help_options(raw: str, prefix: str) -> HelpOptions {
+    var names = List[str]()
+    var descriptions = List[str]()
+    var seen = Map[str, bool]()
+    for row in raw.lines() {
+        if names.len >= 256 { break }
+        let line = row.trim()
+        if !line.starts_with("-") { continue }
+        var split = line.find("  ") else -1
+        let tab = line.find("\t") else -1
+        if tab >= 0 && (split < 0 || tab < split) { split = tab }
+        let head = if split < 0 then line else line[0..split]
+        let description = if split < 0 then "option" else line[split..line.len].trim()
+        for item in head.replace(",", " ").words() {
+            if !item.starts_with("-") { continue }
+            var end = 0
+            while end < item.len {
+                let c = byte_at(item, end)
+                if !(
+                    c == 45 ||
+                        c == 95 ||
+                        c >= 48 && c <= 57 ||
+                        c >= 65 && c <= 90 ||
+                        c >= 97 && c <= 122
+                ) {
+                    break
+                }
+                end += 1
+            }
+            if end < 2 { continue }
+            let name = item[0..end]
+            if name.starts_with(prefix) && !seen.has(name) && names.len < 256 {
+                seen[name] = true
+                (mut names).push(name)
+                (mut descriptions).push(description)
+            }
+        }
+    }
+    HelpOptions { names: names, descriptions: descriptions }
+}

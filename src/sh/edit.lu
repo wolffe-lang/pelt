@@ -133,6 +133,8 @@ const K_WRIGHT: int = 3145737
 
 const K_QUIT: int = 3145739
 
+const K_BACKTAB: int = 3145740
+
 const K_NONE: int = 3145738
 
 const K_EOF: int = -2
@@ -585,6 +587,12 @@ struct Ed {
     histexpand: bool,
     event_line: str,
     event_changed: bool,
+    complete: bool,
+    cp_active: bool,
+    cp_at: int,
+    cp_rows: List[str],
+    cp_insertions: List[str],
+    help_cache: Map[str, str],
     abbrs: Map[str, str],
     prefix: List[int],
     colour_off: bool,
@@ -712,6 +720,12 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
         histexpand: friendly_active(sh) && sh.opt_histexpand,
         event_line: "",
         event_changed: false,
+        complete: friendly_active(sh) && sh.opt_complete,
+        cp_active: false,
+        cp_at: -1,
+        cp_rows: List[str](),
+        cp_insertions: List[str](),
+        help_cache: Map[str, str](),
         abbrs: if friendly_active(sh) && sh.opt_abbr {
             abbr_load(sh.vals["HOME"] else "")
         } else {
@@ -1349,7 +1363,13 @@ fn resized(mut e: Ed) {
     e.at = 0
     e.cur = k
     draw_from(mut e, 0)
-    if e.pager { pager_draw(mut e) } else { shadow_refresh(mut e) }
+    if e.cp_active {
+        completion_draw(mut e)
+    } else if e.pager {
+        pager_draw(mut e)
+    } else {
+        shadow_refresh(mut e)
+    }
 }
 
 /// The prompt's last line: what follows its last newline.
@@ -1673,7 +1693,7 @@ fn key_raw(mut e: Ed) -> int {
         }
         return utf8_rest(mut e, b)
     }
-    if e.vi || e.pager {
+    if e.vi || e.pager || e.cp_active {
         let n = peek_byte(mut e)
         if n == 91 {
             return csi(mut e)
@@ -1780,6 +1800,7 @@ fn csi(mut e: Ed) -> int {
             continue
         }
         let ctl = p2 == 5 || p2 == 3
+        if b == 90 { return K_BACKTAB }
         if b == 65 {
             return K_UP
         }

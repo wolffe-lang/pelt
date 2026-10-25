@@ -84,9 +84,68 @@ def events(binary,home):
         assert p.returncode==0 and p.stdout==b'!! !$\n',('event-script-gate',p)
     print('ok event-script-gate',flush=True)
 
+def completion(binary,home):
+    for name in ['alpha','beta','delta','epsilon','gamma','zeta']:
+        (home/name).write_text(name+'\n')
+    for cols in [24,40,80,120]:
+        sh=shell(binary,home,cols=cols,env={'COLUMNS':None})
+        try:
+            step(sh,b'echo ')
+            raw=step(sh,b'\t')
+            assert b'completions ' in raw and b'bytes)' in raw,(cols,raw)
+            colour.assert_resets(raw)
+            # The marker changes; the command line and persistent history do not.
+            raw=step(sh,b'\t');assert b'> alpha' in raw,raw
+            assert not any(row.startswith('| $ echo alpha') for row in sh.screen.snapshot(0)),sh.screen.snapshot(0)
+            raw=step(sh,b'\x1b[Z');assert b'> zeta' in raw,raw
+            raw=step(sh,b'\x1b[B');assert b'> alpha' in raw,raw
+            raw=event_step(sh,b'\r');assert b'\r\nalpha\r\n' not in raw,raw
+            raw=event_step(sh,b'\r');assert b'\r\nalpha\r\n' in raw,raw
+            step(sh,b'echo ');step(sh,b'\t');step(sh,b'\t')
+            step(sh,b'\x1b');colour.settled(sh,.2)
+            raw=event_step(sh,b'kept\r');assert b'\r\nkept\r\n' in raw,raw
+            print('ok completion columns/navigation/accept-not-execute/escape',cols,flush=True)
+        finally:assert sh.close()
+    sh=shell(binary,home,cols=80,env={'COLUMNS':None})
+    try:
+        step(sh,b'echo ');step(sh,b'\t');step(sh,b'\t')
+        import fcntl, struct, termios
+        for cols in [16,80]:
+            sh.screen.resize(cols,24)
+            fcntl.ioctl(sh.master,termios.TIOCSWINSZ,struct.pack('HHHH',24,cols,0,0))
+            colour.settled(sh,.2)
+            assert any('completions' in r for r in sh.screen.snapshot(0)),sh.screen.snapshot(0)
+        raw=step(sh,b'\x07');colour.assert_resets(raw)
+        raw=event_step(sh,b'after-resize\r');assert b'\r\nafter-resize\r\n' in raw,raw
+        print('ok completion resize/restored-line',flush=True)
+    finally:assert sh.close()
+
+
+def help_probe(binary,home):
+    fast=home/'probe';slow=home/'slow'
+    fast.write_text('#!/bin/sh\nprintf x >> probes\nprintf "  --alpha  First choice\\n  --beta  Second choice\\n"\n')
+    slow.write_text('#!/usr/bin/python3\nimport time\nopen("slow-probes","a").write("x")\ntime.sleep(.2)\nprint("  --slow  Too late")\n')
+    fast.chmod(0o755);slow.chmod(0o755)
+    sh=shell(binary,home)
+    try:
+        step(sh,b'./probe --')
+        assert not (home/'probes').exists(),'highlight executed help'
+        raw=step(sh,b'\t');assert b'First choice' in raw and b'Second choice' in raw,raw
+        step(sh,b'\x07');step(sh,b'\t');step(sh,b'\x07')
+        assert (home/'probes').read_text()=='x','uncached help'
+        step(sh,b'\x15./slow --');raw=step(sh,b'\t')
+        assert b'Too late' not in raw,raw
+        step(sh,b'\t');assert (home/'slow-probes').read_text()=='x','uncached timeout'
+        print('ok explicit-help-only/description/cache/timeout',flush=True)
+    finally:assert sh.close()
+
 if __name__=='__main__':
     binary=Path(sys.argv[1]).resolve()
     with tempfile.TemporaryDirectory(prefix='sh31-words-') as temp:
         abbreviations(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix="sh31-events-") as temp:
         events(binary,Path(temp))
+    with tempfile.TemporaryDirectory(prefix="sh31-pager-") as temp:
+        completion(binary,Path(temp))
+    with tempfile.TemporaryDirectory(prefix="sh31-help-") as temp:
+        help_probe(binary,Path(temp))
