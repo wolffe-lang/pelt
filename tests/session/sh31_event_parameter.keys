@@ -1,0 +1,6 @@
+exec 2>&0
+v=VALUE
+echo ${v:-fallback}
+echo !$
+\k \x07\x05\x15
+exit 0

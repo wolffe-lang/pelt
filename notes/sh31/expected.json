@@ -1,0 +1,1103 @@
+{
+  "sh31_abbr_space": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo SPACE'",
+      "\\k zz ",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "SPACE\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_enter": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo ENTER'",
+      "zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "ENTER\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_multi": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo one two'",
+      "\\k zz three\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "one two three\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_quoted_value": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz \"echo 'two words'\"",
+      "zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "two words\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_empty": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz ''",
+      "\\k zz echo EMPTY\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "EMPTY\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_undo": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "\\k zz ",
+      "\\k \\x1f",
+      "\\k \\x01echo \\x05\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zz\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_cancel": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "\\k zz ",
+      "\\k \\x03",
+      "echo CANCELED",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "CANCELED\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_argument": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "echo zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zz\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_single_quote": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "\\k echo 'zz' \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zz\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_double_quote": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "\\k echo \"zz\" \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zz\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_separator": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo AFTER'",
+      "echo BEFORE; zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "BEFORE\nAFTER\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_pipeline": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo AFTER'",
+      "true | zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "AFTER\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_leading_blanks": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo BLANK'",
+      "  zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "BLANK\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_comment": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "echo KEEP # zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEEP\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_erase": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "abbr erase zz",
+      "abbr list",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_abbr_persisted": {
+    "steps": [
+      "exec 2>&0",
+      "zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "LOADED\n",
+    "extra": {},
+    "files": {
+      "home/.pelt/abbr": "zz\techo LOADED\n"
+    },
+    "visible": null
+  },
+  "sh31_abbr_malformed": {
+    "steps": [
+      "exec 2>&0",
+      "zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "VALID\n",
+    "extra": {},
+    "files": {
+      "home/.pelt/abbr": "malformed\nwrong name\tNO\nzz\techo VALID\n"
+    },
+    "visible": null
+  },
+  "sh31_abbr_off": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo NO'",
+      "set +o abbr",
+      "echo zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zz\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_previous": {
+    "steps": [
+      "exec 2>&0",
+      "echo FIRST",
+      "!!",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "FIRST\nFIRST\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_last": {
+    "steps": [
+      "exec 2>&0",
+      "echo one LAST",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "one LAST\nLAST\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_quoted_word": {
+    "steps": [
+      "exec 2>&0",
+      "echo one 'two words'",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "one two words\ntwo words\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_double_word": {
+    "steps": [
+      "exec 2>&0",
+      "echo one \"two words\"",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "one two words\ntwo words\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_escaped_word": {
+    "steps": [
+      "exec 2>&0",
+      "echo one two\\ words",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "one two words\ntwo words\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_comment_word": {
+    "steps": [
+      "exec 2>&0",
+      "echo FIRST # ignored comment",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "FIRST\nFIRST\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_redirection": {
+    "steps": [
+      "exec 2>&0",
+      "echo BODY > output",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "output\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_parameter": {
+    "steps": [
+      "exec 2>&0",
+      "v=VALUE",
+      "echo ${v:-fallback}",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "VALUE\nVALUE\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_substitution": {
+    "steps": [
+      "exec 2>&0",
+      "echo $(printf 'two words')",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "two words\ntwo words\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_single_quote": {
+    "steps": [
+      "exec 2>&0",
+      "echo OLD",
+      "echo '!!'",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OLD\n!!\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_double_quote": {
+    "steps": [
+      "exec 2>&0",
+      "echo OLD",
+      "echo \"!!\"",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OLD\necho OLD\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_escaped": {
+    "steps": [
+      "exec 2>&0",
+      "echo OLD",
+      "echo \\!!",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OLD\n!!\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_comment": {
+    "steps": [
+      "exec 2>&0",
+      "echo OLD",
+      "echo KEEP # !!",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OLD\nKEEP\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_unsupported": {
+    "steps": [
+      "exec 2>&0",
+      "echo !1 !-1 !name !",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "!1 !-1 !name !\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_cancel": {
+    "steps": [
+      "exec 2>&0",
+      "echo OLD",
+      "\\k !!",
+      "\\k \\x03",
+      "echo $?",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OLD\n130\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_recall": {
+    "steps": [
+      "exec 2>&0",
+      "echo ONE",
+      "!!",
+      "\\k \\x10\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "ONE\nONE\nONE\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_multiple": {
+    "steps": [
+      "exec 2>&0",
+      "echo LAST",
+      "echo !$ !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "LAST\nLAST LAST\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_abbr_order": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo !$'",
+      "echo ORDER",
+      "zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "ORDER\nORDER\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_off": {
+    "steps": [
+      "exec 2>&0",
+      "set +o histexpand",
+      "echo !! !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "!! !$\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_event_unicode": {
+    "steps": [
+      "exec 2>&0",
+      "echo 界",
+      "echo !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "界\n界\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_pager_accept_24": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "alpha\n",
+    "extra": {
+      "cols": "24"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_backtab_24": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\e[Z",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zeta\n",
+    "extra": {
+      "cols": "24"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_escape_24": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {
+      "cols": "24"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_arrow_24": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e[B",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "beta\n",
+    "extra": {
+      "cols": "24"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_accept_40": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "alpha\n",
+    "extra": {
+      "cols": "40"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_backtab_40": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\e[Z",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zeta\n",
+    "extra": {
+      "cols": "40"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_escape_40": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {
+      "cols": "40"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_arrow_40": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e[B",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "beta\n",
+    "extra": {
+      "cols": "40"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_accept_80": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "alpha\n",
+    "extra": {
+      "cols": "80"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_backtab_80": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\e[Z",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zeta\n",
+    "extra": {
+      "cols": "80"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_escape_80": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {
+      "cols": "80"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_arrow_80": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e[B",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "beta\n",
+    "extra": {
+      "cols": "80"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_accept_120": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "alpha\n",
+    "extra": {
+      "cols": "120"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_backtab_120": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\e[Z",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "zeta\n",
+    "extra": {
+      "cols": "120"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": "completions"
+  },
+  "sh31_pager_escape_120": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {
+      "cols": "120"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_arrow_120": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\e[B",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "beta\n",
+    "extra": {
+      "cols": "120"
+    },
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_ctrlc": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\x03",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {},
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_typing": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {},
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_undo": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\k \\r",
+      "\\k \\x1f",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {},
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_resize": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\t",
+      "\\size 16 24",
+      "\\size 80 24",
+      "\\k \\r",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "alpha\n",
+    "extra": {},
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_no_accept": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo ",
+      "\\k \\t",
+      "\\k \\r",
+      "\\k KEPT\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KEPT\n",
+    "extra": {},
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_pager_unique": {
+    "steps": [
+      "exec 2>&0",
+      "\\k echo alph",
+      "\\k \\t",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "alpha\n",
+    "extra": {},
+    "files": {
+      "w/alpha": "alpha\n",
+      "w/beta": "beta\n",
+      "w/delta": "delta\n",
+      "w/epsilon": "epsilon\n",
+      "w/gamma": "gamma\n",
+      "w/zeta": "zeta\n"
+    },
+    "visible": null
+  },
+  "sh31_vi_abbr": {
+    "steps": [
+      "exec 2>&0",
+      "abbr add zz 'echo VI'",
+      "set -o vi",
+      "zz",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "VI\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_vi_event": {
+    "steps": [
+      "exec 2>&0",
+      "set -o vi",
+      "echo VI",
+      "!!",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "VI\nVI\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_umbrella_off": {
+    "steps": [
+      "exec 2>&0",
+      "set +o friendly",
+      "echo !! !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "!! !$\n",
+    "extra": {},
+    "files": {},
+    "visible": null
+  },
+  "sh31_posix_gate": {
+    "steps": [
+      "exec 2>&0",
+      "echo !! !$",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "!! !$\n",
+    "extra": {
+      "args": "--posix -o friendly -o histexpand"
+    },
+    "files": {},
+    "visible": null
+  }
+}

@@ -1,0 +1,24 @@
+step 1
+| $ exec 2>&0
+| $
+cursor 1 2
+step 2
+| $ echo ONE
+| $
+cursor 1 2
+step 3
+| $ !!
+| echo ONE
+| $
+cursor 2 2
+step 4
+| $ echo ONE
+| $
+cursor 1 2
+step 5
+| $
+cursor 0 2
+step 6
+| $ exit 0
+| 
+cursor 1 0

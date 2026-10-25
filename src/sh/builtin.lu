@@ -425,11 +425,22 @@ fn print_friendly_options(mut sh: Sh, reinput: bool) {
             emit(mut sh, "highlight\t{if sh.opt_highlight then "on" else "off"}\n")
         }
     }
-    for name in ["friendly", "friendly_keys", "suggest", "histsearch"] {
+    for name in [
+        "friendly",
+        "friendly_keys",
+        "suggest",
+        "histsearch",
+        "abbr",
+        "complete",
+        "histexpand",
+    ] {
         let on = match name {
             "friendly_keys" => sh.opt_friendly_keys,
             "suggest" => sh.opt_suggest,
             "histsearch" => sh.opt_histsearch,
+            "abbr" => sh.opt_abbr,
+            "complete" => sh.opt_complete,
+            "histexpand" => sh.opt_histexpand,
             _ => sh.opt_friendly,
         }
         if reinput {

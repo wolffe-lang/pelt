@@ -1,0 +1,10 @@
+exec 2>&0
+\k echo 
+\k \t
+\k \t
+\size 16 24
+\size 80 24
+\k \r
+\k \r
+\k \x07\x05\x15
+exit 0
