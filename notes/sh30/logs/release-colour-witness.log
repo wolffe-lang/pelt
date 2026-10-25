@@ -1,0 +1,40 @@
+ok colour-unknown xterm-256color
+ok colour-command xterm-256color
+ok colour-argument xterm-256color
+ok colour-reserved xterm-256color
+ok colour-quote xterm-256color
+ok colour-open-quote xterm-256color
+ok colour-variable xterm-256color
+ok colour-redirection xterm-256color
+ok colour-comment xterm-256color
+ok colour-operator xterm-256color
+ok colour-bang xterm-256color
+ok colour-nonexecuting xterm-256color
+ok colour-enter-caret xterm-256color
+ok colour-unknown linux
+ok colour-command linux
+ok colour-argument linux
+ok colour-reserved linux
+ok colour-quote linux
+ok colour-open-quote linux
+ok colour-variable linux
+ok colour-redirection linux
+ok colour-comment linux
+ok colour-operator linux
+ok colour-bang linux
+ok colour-nonexecuting linux
+ok colour-enter-caret linux
+ok colour-theme-indexed
+ok colour-theme-rgb
+ok colour-theme-fallback
+ok colour-theme-malformed
+ok colour-gate-posix
+ok colour-gate-stdout-pipe
+ok colour-gate-dumb
+ok colour-shadow-and-toggle
+ok colour-resize and pager/style/storage interactions
+ok colour-history contains no escapes; selfcheck reads buffer/undo/kill-ring directly
+colour idle before {"contexts": 9, "cpu_ticks": 1, "major_faults": 0, "minor_faults": 1348, "page_size_bytes": 4096, "pid": 28, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4044 kB", "Pss_Anon": "4044 kB", "Pss_File": "2562 kB", "Pss_Shmem": "0 kB", "Rss": "7716 kB"}, "statm_resident_pages": 1929, "status": {"RssAnon": "4044 kB", "RssFile": "3672 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "7716 kB"}, "thp_enabled": "always [madvise] never"}
+colour idle after {"contexts": 9, "cpu_ticks": 1, "major_faults": 0, "minor_faults": 1348, "page_size_bytes": 4096, "pid": 28, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4044 kB", "Pss_Anon": "4044 kB", "Pss_File": "2562 kB", "Pss_Shmem": "0 kB", "Rss": "7716 kB"}, "statm_resident_pages": 1929, "status": {"RssAnon": "4044 kB", "RssFile": "3672 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "7716 kB"}, "thp_enabled": "always [madvise] never"}
+ok colour idle-10s: zero wakeups, unchanged RSS, child THP disabled
+colour 80-column line: median 0.099942ms p99 0.317274ms; 100 keys after warmup
