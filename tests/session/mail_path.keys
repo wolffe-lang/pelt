@@ -1,0 +1,5 @@
+MAILCHECK=0 MAILPATH="$HOME/m3:$HOME/m2%got mail"
+echo z > $HOME/m2
+echo w > $HOME/m3
+echo next
+exit

@@ -145,6 +145,7 @@ fn next_line(mut sh: Sh, first: bool) -> (str, int) {
     let name = if first then "PS1" else "PS2"
     if first && sh.interactive {
         hist_sync(mut sh, true)
+        mail_check(mut sh)
     }
     if !ed_active(sh) {
         if sh.interactive {
@@ -243,6 +244,96 @@ fn prompt_fast(sh: Sh, raw: str, keep: bool) -> (bool, str) {
     }
     write_fd(mut t, 2, shown)
     (true, if keep then shown else "")
+}
+
+/// `MAIL`, `MAILPATH` and `MAILCHECK` (XCU 2.5.3), before a primary
+/// prompt: when `MAILCHECK` seconds have passed since the last check
+/// (600 when it is unset or not a number; 0, every prompt), each
+/// mailbox — `MAILPATH`'s, colon-separated, else `MAIL`'s — whose
+/// modification time is not the one the last check saw (it was made,
+/// or written) is told on standard error: `MAILPATH`'s message after an
+/// unescaped `%`, expanded as a prompt is, else dash's words, `you have
+/// mail`. A mailbox the shell has not seen before (at the first check,
+/// or one newly named) is only noted. dash's rule for what is new
+/// (black-box: `notes/sh26-evidence/probe/p17`–`p19`); POSIX's interval,
+/// which dash ignores, and POSIX's colon at the end of a message,
+/// which dash reads past (R-sh26-5).
+fn mail_check(mut sh: Sh) {
+    let mp = sh.vals["MAILPATH"] else ""
+    let mail = sh.vals["MAIL"] else ""
+    if mp.len == 0 && mail.len == 0 {
+        return
+    }
+    let now = time_unix_ms() / 1000
+    let iv = to_int(sh.vals["MAILCHECK"] else "600") else 600
+    if sh.mail_last >= 0 && iv > 0 && now - sh.mail_last < iv {
+        return
+    }
+    sh.mail_last = now
+    if mp.len > 0 {
+        for entry in mp.split(":") {
+            let (path, msg) = mail_entry(entry)
+            if path.len > 0 {
+                mail_one(mut sh, path, msg)
+            }
+        }
+    } else {
+        mail_one(mut sh, mail, "")
+    }
+}
+
+/// One `MAILPATH` entry: the pathname (`\%` in it a `%`) and the
+/// message after the first unescaped `%` ("" for none).
+fn mail_entry(entry: str) -> (str, str) {
+    var o = buf()
+    var i = 0
+    while i < entry.len {
+        let c = ch(entry, i)
+        if c == '\\' && i + 1 < entry.len && ch(entry, i + 1) == '%' {
+            putc(mut o, '%')
+            i += 2
+            continue
+        }
+        if c == '%' {
+            return (text(o), entry[i + 1..entry.len])
+        }
+        putb(mut o, byte_at(entry, i))
+        i += 1
+    }
+    (text(o), "")
+}
+
+/// A mailbox's modification time in seconds, -1 when there is none.
+fn mail_mtime(path: str) -> int {
+    let rec = stat_of(path, false)
+    if rec.len > 14 then rec[14] else -1
+}
+
+fn mail_one(mut sh: Sh, path: str, msg: str) {
+    let t = copy region mt {
+        mail_mtime(path)
+    }
+    let was = sh.mail_seen[path] else -2
+    sh.mail_seen[path] = t
+    if was == -2 || t < 0 || t == was {
+        return
+    }
+    if msg.len == 0 {
+        write_fd(mut sh, 2, "you have mail\n")
+        return
+    }
+    let saved_status = sh.status
+    let saved_cs = sh.cs_status
+    let saved_ran = sh.cs_ran
+    let shown = expand_one(mut sh, msg, X_DQ)
+    if sh.flow != F_NONE {
+        sh.flow = F_NONE
+        sh.abort = false
+    }
+    sh.status = saved_status
+    sh.cs_status = saved_cs
+    sh.cs_ran = saved_ran
+    write_fd(mut sh, 2, "{shown}\n")
 }
 
 /// `$ENV` (XCU 2.5.3): an interactive shell expands it and runs the
@@ -399,12 +490,24 @@ fn run_lines(mut sh: Sh) -> int {
             continue
         }
         if src.len == 0 {
+            if sh.interactive && sh.opt_ignoreeof && sh.eof_count < 50 {
+                // `set -o ignoreeof` (XCU `set`): the end of file is
+                // refused with dash's words, fifty times in a row, as
+                // dash counts them; the fifty-first ends the shell
+                // (R-sh26-4: dash, black-box `probe/p16`, but at each
+                // end of file, not fifty at once)
+                sh.eof_count += 1
+                sh.eof0 = false
+                write_fd(mut sh, 2, "\nUse \"exit\" to leave shell.\n")
+                continue
+            }
             if sh.interactive {
                 // leave the terminal's cursor off the prompt line
                 write_fd(mut sh, 2, "\n")
             }
             break
         }
+        sh.eof_count = 0
         if sh.interactive {
             // the command about to run is the history's newest entry
             hist_add(mut sh, src)

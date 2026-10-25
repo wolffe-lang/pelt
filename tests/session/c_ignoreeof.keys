@@ -1,4 +1,5 @@
 set -o ignoreeof
 ^D
 echo still-here
-exit
+^D
+kill -KILL $$

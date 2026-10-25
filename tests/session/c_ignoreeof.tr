@@ -11,7 +11,10 @@ step 3 "echo still-here"
 out "still-here\n"
 err no
 prompt "$"
-step 4 "exit"
+step 4 "^D"
 err yes
+prompt "$"
+step 5 "kill -KILL $$"
+err no
 prompt ""
-exit 0 at step 4
+signal 9 at step 5

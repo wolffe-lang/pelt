@@ -2,4 +2,4 @@ oracle_args=--noediting -i +m
 env=PS1=$
 oracle=bash
 dash=differs
-pending=ignoreeof
+why=XCU set -o ignoreeof: an interactive shell does not leave at end-of-file. dash 0.5.13.4 answers one Ctrl-D on a terminal with its message fifty times and leaves (status 0), and applies the option to a script's end too (sh26 probe/p16, p11); bash --posix tells once per Ctrl-D and stays, as POSIX reads (R-sh26-4). pelt stays, with dash's words, Use "exit" to leave shell., once per end-of-file, and leaves at the fifty-first in a row, as dash counts

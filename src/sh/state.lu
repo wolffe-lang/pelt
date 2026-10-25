@@ -121,6 +121,16 @@ struct Sh {
     opt_friendly: bool,
     opt_friendly_keys: bool,
     posix_mode: bool,
+    /// `set -o ignoreeof`: an interactive shell's end of file is not its
+    /// end (`sh.interact`'s `run_lines`)
+    opt_ignoreeof: bool,
+    /// End-of-files in a row at the prompt with `ignoreeof` on
+    eof_count: int,
+    /// `MAIL`/`MAILPATH` (`sh.interact`'s `mail_check`): when the last
+    /// check was, in seconds (-1: none yet), and each mailbox's
+    /// modification time then (-1: none there)
+    mail_last: int,
+    mail_seen: Map[str, int],
     /// The line editor's history and what outlives a line.
     ed: EdKeep,
     no_e: int,
@@ -405,6 +415,10 @@ fn new_sh(name: str) -> Sh {
         opt_friendly: false,
         opt_friendly_keys: true,
         posix_mode: false,
+        opt_ignoreeof: false,
+        eof_count: 0,
+        mail_last: -1,
+        mail_seen: Map[str, int](),
         ed: new_edkeep(),
         no_e: 0,
         loops: 0,
@@ -608,6 +622,9 @@ fn opts_bits(sh: Sh) -> int {
     if sh.posix_mode {
         b = b | 65536
     }
+    if sh.opt_ignoreeof {
+        b = b | 131072
+    }
     b
 }
 
@@ -629,6 +646,7 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_friendly = b & 16384 != 0
     sh.opt_friendly_keys = b & 32768 != 0
     sh.posix_mode = b & 65536 != 0
+    sh.opt_ignoreeof = b & 131072 != 0
 }
 
 /// Where a frame's record keeps its fields on `istk`, from the record's
@@ -1157,9 +1175,14 @@ fn ifs(sh: Sh) -> str {
 /// and an interactive shell reading standard input puts `si` before
 /// `f`).
 fn dash_flags(sh: Sh) -> str {
+    // dash's order (black-box: sh26 `notes/sh26-evidence/probe/p25`,
+    // `b` second and `ignoreeof`'s `I` after `i`)
     var o = buf()
     if sh.opt_u {
         putc(mut o, 'u')
+    }
+    if sh.opt_b {
+        putc(mut o, 'b')
     }
     if sh.opt_a {
         putc(mut o, 'a')
@@ -1173,9 +1196,6 @@ fn dash_flags(sh: Sh) -> str {
     if sh.opt_x {
         putc(mut o, 'x')
     }
-    if sh.opt_b {
-        putc(mut o, 'b')
-    }
     if sh.from_stdin {
         putc(mut o, 's')
     }
@@ -1184,6 +1204,9 @@ fn dash_flags(sh: Sh) -> str {
     }
     if sh.interactive || sh.sub_of_i {
         putc(mut o, 'i')
+    }
+    if sh.opt_ignoreeof {
+        putc(mut o, 'I')
     }
     if sh.opt_f {
         putc(mut o, 'f')

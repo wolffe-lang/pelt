@@ -1091,6 +1091,7 @@ fn shadow_of(sh: Sh) -> Sh {
     t.opt_bigc = sh.opt_bigc
     t.opt_m = sh.opt_m
     t.opt_b = sh.opt_b
+    t.opt_ignoreeof = sh.opt_ignoreeof
     t.fds = copy sh.fds
     t.line = sh.line
     t.interactive = sh.interactive
@@ -1134,6 +1135,7 @@ fn shadow_read(sh: Sh) -> Sh {
     t.opt_bigc = sh.opt_bigc
     t.opt_m = sh.opt_m
     t.opt_b = sh.opt_b
+    t.opt_ignoreeof = sh.opt_ignoreeof
     t.line = sh.line
     t.interactive = sh.interactive
     t.sub_of_i = sh.sub_of_i

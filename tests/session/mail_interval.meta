@@ -1,0 +1,5 @@
+oracle_args=--noediting -i +m
+env=PS1=$\s
+oracle=bash
+dash=differs
+why=XCU 2.5.3 MAILCHECK: the check waits that many seconds after the last one, so a mailbox made within 100 s is not told yet (bash --posix; dash 0.5.13.4 checks before every prompt whatever MAILCHECK says, R-sh26-5)

@@ -1,0 +1,4 @@
+MAIL=$HOME/mbox MAILCHECK=100
+echo x > $HOME/mbox
+echo next
+kill -KILL $$

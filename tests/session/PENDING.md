@@ -14,9 +14,14 @@ The census cases (sh06, `c_*`; `docs/CENSUS.md`), by what they wait on.
 
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
-| **ignoreeof** | `set -o ignoreeof` is accepted and Ctrl-D still ends the shell | pelt (P10) | `c_ignoreeof` |
-| **mail** | `MAIL`, `MAILCHECK`, `MAILPATH`: no notice before the prompt | pelt (P10); the file's time is `fs_stat` | `c_mail` |
 <!-- census:end -->
+
+None is pending since sh26.
+
+**Cleared by sh26 (the corners):** `c_ignoreeof` (`set -o ignoreeof`:
+the end of file refused with dash's words, R-sh26-4) and `c_mail`
+(`MAIL`, `MAILPATH`, `MAILCHECK`, R-sh26-5). New with them:
+`mail_path`, `mail_interval` and `jc_assign_text` (pelt#56).
 
 **Cleared by sh20 (wolf 0.2.34, the fork):** `c_jc_mixed_pipeline`: a
 stage pelt runs itself is a process that joins the job's group with

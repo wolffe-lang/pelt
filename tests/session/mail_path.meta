@@ -1,0 +1,2 @@
+bash=differs
+why=XCU 2.5.3 MAILPATH: each colon-separated mailbox, its message after %, told before the prompt when it is made or written; the % entry last, since dash runs a message past the colon that ends it (R-sh26-5)

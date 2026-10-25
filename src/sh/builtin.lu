@@ -339,18 +339,26 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
     if name == "notify" {
         return option_letter(mut sh, 'b', on)
     }
-    name == "ignoreeof" || name == "nolog"
+    if name == "ignoreeof" {
+        sh.opt_ignoreeof = on
+        return true
+    }
+    name == "nolog"
 }
 
 fn print_options(mut sh: Sh, reinput: bool) {
+    // `ignoreeof` and `notify` are listed too, so that `eval "$(set
+    // +o)"` puts them back (XCU `set +o`; pelt#17)
     let names = [
         "allexport",
         "autocd",
         "emacs",
         "errexit",
+        "ignoreeof",
         "noclobber",
         "noexec",
         "noglob",
+        "notify",
         "nounset",
         "pipefail",
         "verbose",
@@ -358,7 +366,7 @@ fn print_options(mut sh: Sh, reinput: bool) {
         "xtrace",
     ]
     // a letter for the options `$-` shows; '-' for the editing modes
-    let letters = ['a', '-', '-', 'e', 'C', 'n', 'f', 'u', '-', 'v', '-', 'x']
+    let letters = ['a', '-', '-', 'e', 'I', 'C', 'n', 'f', 'b', 'u', '-', 'v', '-', 'x']
     print_friendly_options(mut sh, reinput)
     let flags = dash_flags(sh)
     var i = 0
