@@ -881,6 +881,15 @@ fn bi_command(mut sh: Sh, args: List[str]) -> int {
         let st = builtin_args(mut sh, name, sub)
         (mut sub).clear()
         (mut sh.argpool).push(take sub)
+        if sh.flow == F_EXIT && sh.abort && is_special_builtin(name) {
+            // a special built-in's error through `command` is the
+            // command's failure, not the shell's end (XCU 2.8.1 note;
+            // dash, black-box `probe/p08`; pelt#16): `exit` itself, which
+            // clears `abort`, still leaves
+            sh.flow = F_NONE
+            sh.flow_n = 0
+            sh.abort = false
+        }
         return st
     }
     // the utility, never a function: no `command_not_found_handle`
