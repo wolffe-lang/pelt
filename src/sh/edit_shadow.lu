@@ -32,7 +32,7 @@ fn shadow_source(e: Ed) -> str {
 /// Erase only the display suffix at the old cursor, not any buffer cells.
 fn shadow_clear(mut e: Ed) {
     if !e.shadow_drawn { return }
-    put_esc(mut e.out, "[K")
+    // Planted: leave the old shadow instead of EL.
     e.shadow_drawn = false
 }
 
