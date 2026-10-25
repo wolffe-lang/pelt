@@ -23,14 +23,16 @@ filed.
   terminal, wolf 0.2.30) 451 of 545; since sh17 (the POSIX gaps:
   aliases, `$'…'`, `pipefail`, `type`, `hash`, `command -p`, `read`,
   the command line) 487 of 545; since sh18 (job control, wolf 0.2.32)
-  505 of 546.
+  505 of 546; since sh26 (the corners, wolf 0.2.35) 532 of 548.
 - **Five in eight real scripts run as under dash**: 50 of 80
   (configure, automake and libtool helpers, git's test library, Debian
   and Alpine package scripts, init scripts, small utilities). With four
   gaps fixed it would be 72 of 80. **Since sh07: 66 of 80**, one more
   (pfetch) differing only where dash differs from itself; the other 13
   stop at `umask` (10, S4) or need a process per pipeline stage (3,
-  gap 7). **Since sh13: 76 of 80**; the 3 left are gap 7.
+  gap 7). **Since sh13: 76 of 80**; the 3 left are gap 7. **Since
+  sh20 (the fork), measured by sh26: 78 of 80**, the two left a timing
+  coin (`configure-sed`, counted apart) and `pfetch`'s memory line.
 - **Interactive pelt is a prompt, not yet a place to work.** `PS1`,
   `PS2`, `ENV`, Ctrl-C and Ctrl-D behave as dash's do. There is no line
   editor, no history, no completion, no job control and no aliases.
