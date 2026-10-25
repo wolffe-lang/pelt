@@ -1,7 +1,7 @@
 # Friendly editing
 
 The friendly editor adds abbreviations, described completion, history events,
-syntax colours, suggestions, filtered history and extra emacs keys
+syntax colours, a left and right prompt, suggestions, filtered history and extra emacs keys
 without changing the POSIX shell language. Enable it at a terminal prompt:
 
 ```sh
@@ -9,7 +9,7 @@ set -o friendly -o suggest -o histsearch
 ```
 
 These options are **off by default at the current compiler pin**.
-`friendly` also enables `highlight`, `abbr`, `complete` and `histexpand`; `set -o highlight` works independently.
+`friendly` also enables `highlight`, `abbr`, `complete`, `histexpand` and `prompt_friendly`; `set -o highlight` works independently.
 `friendly_keys` is on, but does nothing without `friendly`. Both stdin and
 stderr must be terminals. Scripts, `-c`, pipes and `--posix` do not use
 friendly editing. `TERM=dumb` uses the terminal's ordinary line discipline,
@@ -31,6 +31,7 @@ prompts, except when invoked as `sh`. That default is not enabled yet.
 | `abbr` | expands a command abbreviation on Space or Enter |
 | `complete` | describes Tab candidates in a bounded selection pager |
 | `histexpand` | expands `!!` and `!$` when you press Enter |
+| `prompt_friendly` | default left prompt, optional right function and den status; explicit PS1 wins |
 
 `set +o suggest` disables suggestions; `set +o histsearch` restores ordinary
 history movement and readline-style Ctrl-R search. Turning off
@@ -236,3 +237,59 @@ editing. Ctrl-C before Enter never expands anything.
 Use `set +o histexpand` to leave both forms literal. These features require
 `friendly` and the interactive editor; scripts, `-c`, pipes, `--posix` and
 `TERM=dumb` remain unchanged. The current pin still defaults to opt-in.
+
+
+## Friendly prompt
+
+With `friendly` and `prompt_friendly`, an unset-at-start `PS1` gets a
+fish-shaped `user@host path> ` prompt. HOME is `~`; intermediate directory
+components shorten to their first character (a hidden component keeps its
+dot too), with Unicode codepoints kept intact. A failed command adds its
+status in brackets; root uses `#`, determined by effective uid, not `USER`.
+The foreground is the terminal default, with a bold nonzero status.
+A narrow terminal elides the left prefix, keeping the directory tail.
+Display identity uses `USER` or `LOGNAME`, and `HOSTNAME` or one bounded
+`hostname` invocation, falling back to `?`. Host identity is cached for the
+session. These are display strings, not authentication information.
+
+**An explicitly set `PS1` is never decorated or replaced.** Environment,
+startup-file and later assignments count, including an empty string or the
+ordinary `$ ` value. Its existing POSIX expansions still apply. Once set,
+unsetting it leaves the ordinary empty prompt rather than opting back in.
+Assignments inside a command substitution do not change the parent prompt.
+`PS2` is unchanged. `set +o prompt_friendly` disables only these prompt
+features; `set +o friendly` disables the whole friendly editor. The prompt
+option appears in the friendly option listing when no explicit PS1 blocks it.
+
+Define a shell function for the right side:
+
+```sh
+prompt_right() { printf 'project'; }
+```
+
+It runs once before each primary prompt, using command-substitution
+isolation and preserving the last command's status. It is ordinary user
+code: it can have external effects, take time or produce large captured
+output, just as a `PS1` command substitution can. It is not run by a key,
+resize, pager or idle refresh. Its **display** is bounded: at most 1024
+codepoints are retained, controls become visible caret text, and at most
+one third of the terminal columns is shown, with an ellipsis for overflow.
+Below 40 columns it is hidden. It is also hidden when input would overlap,
+wrap, or show a suggestion or pager, and cleared before execution. It never
+enters the input, history, undo or kill ring. `set +o highlight` also removes
+prompt styles. An explicit PS1 suppresses the right hook entirely.
+
+If an executable `den` is on PATH, the friendly prompt runs it directly as
+`den status --porcelain` once per primary prompt. It shows `[vcs:clean]` or
+`[vcs:N]`, the number of nonempty porcelain rows, not a branch name or a
+count of individual file operations. Collection has a 50 ms deadline and
+32 KiB cap. A late, failed, oversized or invalid-UTF-8 answer is rejected;
+the last same-directory value is shown dimmed instead. A directory change
+invalidates that value. No provider or no successful answer means no
+segment. There is no background process or idle cache refresh. Process
+startup and cleanup can add wall time beyond the collection deadline.
+
+These features require all three standard descriptors to be terminals.
+Scripts, `-c`, pipes, `--posix`, `TERM=dumb`, and an explicitly set `PS1`
+keep their existing prompt behavior. The compiler pin and opt-in default
+are unchanged.

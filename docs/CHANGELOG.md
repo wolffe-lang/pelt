@@ -6,6 +6,16 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Friendly prompt.** `prompt_friendly`, enabled by the opt-in `friendly`
+  umbrella, shows user/host, an abbreviated HOME-relative path, nonzero
+  status and the root/user marker. Explicit PS1 remains unchanged. A
+  `prompt_right` function supplies width-bounded, control-escaped display
+  text; a direct den porcelain probe has a 50 ms collection deadline and
+  same-directory stale cache. Neither does idle or per-key subprocess work.
+  All prompt text stays out of input/history/undo/kills. 32 typed sessions
+  and raw precedence/storage/deadline/cost gates cover the addition; the
+  compiler pin, scripts and existing expectations are unchanged.
+
 - **Words at the prompt.** Friendly editing now includes persistent
   `abbr add/erase/list`, command-position abbreviation expansion on Space
   and Enter, a bounded described-completion pager, and Enter-only `!!` / `!$`.

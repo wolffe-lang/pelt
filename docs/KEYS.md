@@ -568,3 +568,24 @@ PAX remains pending the px-owned session slot. The exact framebuffer and
 serial rows already in `tests/session/PENDING.md` are retained unchanged;
 px70's sixteen-entry palette/cell evidence remains the rendering basis.
 No PAX session or new key-delivery measurement is claimed here.
+
+
+## Left and right prompt
+
+The prompt pass adds no key binding. `prompt_friendly` is enabled by
+`friendly` but leaves every explicitly assigned PS1 alone. The default is
+`user@host path> `, with abbreviated HOME-relative directories, a nonzero
+status and a root `#`. A `prompt_right` shell function supplies display-only
+text once per primary prompt; its controls are escaped, width capped at a
+third, and it is hidden below 40 columns or on overlap/wrap/pager rows.
+Resize clears and redraws it without rerunning the function. Execution,
+Ctrl-C, EOF and editor teardown clear it. None of its bytes are input.
+
+32 new typed sessions bring the tree to 584 recorded sessions. All 552
+older expectations remain unchanged. `tools/prompt-witness` checks raw
+reset/cursor/storage laws, PS1 precedence, function isolation, width/resize,
+script/POSIX/dumb gates, real subprocess cache deadlines, idle counters and
+per-key cost. Pure checks use explicit completion times for the deadline
+boundary. Fish 4.9.3's user/root, Unicode, 24/40/80/200-column raw recordings
+are under `notes/sh32/oracle/`. PAX framebuffer and serial pending rows are
+unchanged; no new PAX session or delivery claim is made.
