@@ -140,6 +140,12 @@ def extra_checks(say, plan, expect, blocks, wf):
     say(g.count("        if: matrix.tier == 'native'\n") == 3 and "        if: matrix.builds && matrix.tier == 'native'\n" in g,
         "T4 fmt, the clause table, the width table and wolf test run once a host, on the native leg")
     say("    timeout-minutes: 45\n" in g, "T4 the job's 45-minute ceiling is unchanged")
+    session = g.split("      - name: the session corpus,", 1)[1].split("\n      - name:", 1)[0]
+    say("        timeout-minutes: ${{ matrix.os == 'macos-latest' && 45 || 15 }}\n" in session,
+        "T4 session budget: macOS 45 minutes, Linux 15; the complete corpus still runs")
+    say("        run: tools/session --bin target/${{ matrix.tier }}\n" in session,
+        "T4 session budget does not filter or shard away cases")
+
 # --- end of this repository's ------------------------------------------------------
 WORKFLOW = os.path.join(ROOT, ".github", "workflows", WORKFLOW_FILE)
 NIGHTLY = NIGHTLY or ("all", FULL_JOBS)

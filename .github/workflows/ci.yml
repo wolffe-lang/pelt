@@ -307,13 +307,14 @@ jobs:
       # only on a lane's host: before, a plain `if: matrix.builds` meant
       # "only if every step so far passed", and a plant whose corpus was
       # red never showed its sessions (sh18's run 39160267977).
-      # A session step that stops making progress is a failure, not a
-      # 45-minute job timeout (trunk's push run 37953346374 hung here on
-      # macOS and was cancelled with no verdict). 15 since sh11: the
-      # corpus grew from 127 cases to 197 (macOS took 3 minutes for 127).
+      # sh29: run 40160785846 reached about 408 sessions without a failure
+      # before macOS native exhausted the old 15-minute step cap. New typed
+      # sessions cost about 4 seconds each there; 443 at that rate need
+      # roughly 30 minutes. Give macOS 45 minutes of step budget, keeping
+      # Linux at 15 and the whole-job ceiling at 45. No cases are skipped.
       - name: the session corpus, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: 15
+        timeout-minutes: ${{ matrix.os == 'macos-latest' && 45 || 15 }}
         run: tools/session --bin target/${{ matrix.tier }}
 
       - name: shadow bytes, bounded lookup and idle, ${{ matrix.tier }} tier
