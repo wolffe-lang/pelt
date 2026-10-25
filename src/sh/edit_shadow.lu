@@ -1,0 +1,225 @@
+//! Shadow text is display state, never an edit until an acceptance key.
+//! Fish 4.9.3 black-box measurements: notes/sh29/fish/. No editor source.
+
+/// The newest exact prefix, one reverse pass over the prompt's history index.
+fn shadow_history(hist: List[str], line: str) -> str {
+    if line.len == 0 { return "" }
+    var h = hist.len
+    while h > 0 {
+        h -= 1
+        let candidate = hist[h]
+        if candidate.len > line.len && candidate.starts_with(line) {
+            return candidate[line.len..candidate.len]
+        }
+    }
+    ""
+}
+
+fn shadow_source(e: Ed) -> str {
+    if e.buf.len == 0 || e.cur != e.buf.len { return "" }
+    let line = cps_text(e.buf)
+    let history = shadow_history(e.hist, line)
+    if history.len > 0 { return history }
+    // Exact history may suggest after !, but never complete it as a command.
+    if line.trim_start().starts_with("!") { return "" }
+    let c = comp_ctx(e.buf)
+    if c.lit.len == 0 || c.kind != CK_FILE && c.kind != CK_CMD { return "" }
+    let found = comp_find(c, e.fnames, e.vnames, e.cpath, e.home)
+    if found.names.len == 0 { return "" }
+    comp_unique(c, found.base, found.names[0], found.dirs[0], true)
+}
+
+/// Erase only the display suffix at the old cursor, not any buffer cells.
+fn shadow_clear(mut e: Ed) {
+    if !e.shadow_drawn { return }
+    put_esc(mut e.out, "[K")
+    e.shadow_drawn = false
+}
+
+/// One physical row only. Reserve the last cell to avoid pending-wrap state.
+/// A cluster and its combining marks are either all drawn or all omitted.
+fn shadow_refresh(mut e: Ed) {
+    if !e.suggest || e.vi || e.pager { return }
+    shadow_clear(mut e)
+    e.shadow = cps_of(shadow_source(e))
+    if e.shadow.len == 0 { return }
+    var used = 0
+    var end = 0
+    while end < e.shadow.len {
+        let v = e.shadow[end]
+        // A history newline/control must never become terminal control input.
+        if v < 32 || v == 127 { break }
+        let width = cells(v)
+        if used + width >= e.cols - e.tc { break }
+        used += width
+        end += 1
+        while end < e.shadow.len && zero_w(e.shadow[end]) { end += 1 }
+    }
+    if end == 0 { return }
+    put_esc(mut e.out, "[K")
+    put_esc(mut e.out, "[90m")
+    encode_into(mut e.out, e.shadow, 0, end)
+    put_esc(mut e.out, "[39m")
+    if used > 0 {
+        put_esc(mut e.out, "[")
+        put_n(mut e, used)
+        put_s(mut e, "D")
+    }
+    e.shadow_drawn = true
+}
+
+fn shadow_accept(mut e: Ed, k: int) -> bool {
+    if !e.suggest || e.cur != e.buf.len || e.shadow.len == 0 { return false }
+    let word = k == K_ALT + 102 || k == K_ALT + 70
+    let token = k == K_WRIGHT
+    if !word && !token && k != K_RIGHT && k != K_END && k != 5 && k != 6 { return false }
+    var n = e.shadow.len
+    if word || token {
+        n = 0
+        while n < e.shadow.len &&
+            (if token then is_blank(e.shadow[n]) else !is_wordch(e.shadow[n])) { n += 1 }
+        while n < e.shadow.len &&
+            (if token then !is_blank(e.shadow[n]) else is_wordch(e.shadow[n])) { n += 1 }
+        while n < e.shadow.len && zero_w(e.shadow[n]) { n += 1 }
+    }
+    // A single touch, regardless of suffix length; do not join typed insertion.
+    e.this_insert = false
+    insert(mut e, slice_of(e.shadow, 0, n))
+    e.shadow = List[int]()
+    e.tabs = 0
+    e.last_kill = false
+    true
+}
+
+fn history_prefix(mut e: Ed, up: bool) {
+    if !e.hp_active {
+        e.hp_active = true
+        e.hp_prefix = cps_text(e.buf)
+        e.hp_cursor = e.cur
+    }
+    var h = e.h + (if up then -1 else 1)
+    while h >= 0 && h <= e.hist.len {
+        if h == e.hist.len || e.hist[h].starts_with(e.hp_prefix) {
+            show_hist(mut e, h, true)
+            if h == e.hist.len {
+                e.cur = if e.hp_cursor < e.buf.len then e.hp_cursor else e.buf.len
+                place(mut e)
+            }
+            return
+        }
+        h += if up then -1 else 1
+    }
+    bell(mut e)
+}
+
+fn pager_filter(mut e: Ed) {
+    let query = cps_text(e.pager_query)
+    e.pager_hits = List[int]()
+    var h = e.hist.len
+    while h > 0 {
+        h -= 1
+        if e.hist[h].contains(query) { (mut e.pager_hits).push(h) }
+    }
+    e.pager_at = 0
+}
+
+fn pager_clear(mut e: Ed) {
+    let (r, c) = pos_at(e, e.cur)
+    move_to(mut e, e.er, 0)
+    put_s(mut e, "\r\n")
+    e.tr += 1
+    e.tc = 0
+    put_esc(mut e.out, "[J")
+    move_to(mut e, r, c)
+}
+
+/// Display a bounded, control-safe row, never wrapping at the right margin.
+fn pager_text(mut e: Ed, s: str) {
+    var width = 0
+    for cp in cps_of(s) {
+        let w = cells(cp)
+        if width + w >= e.cols { break }
+        show_cp(mut e.out, cp)
+        width += w
+    }
+    e.tc = width
+}
+
+fn pager_draw(mut e: Ed) {
+    pager_clear(mut e)
+    let (r, c) = pos_at(e, e.cur)
+    move_to(mut e, e.er, 0)
+    put_s(mut e, "\r\n")
+    e.tr += 1
+    e.tc = 0
+    pager_text(mut e, "history: {cps_text(e.pager_query)}")
+    var limit = if e.rows > 3 then e.rows - 3 else 1
+    if limit > 5 { limit = 5 }
+    let start = e.pager_at / limit * limit
+    var i = start
+    while i < e.pager_hits.len && i < start + limit {
+        put_s(mut e, "\r\n")
+        e.tr += 1
+        e.tc = 0
+        let marker = if i == e.pager_at then "> " else "  "
+        pager_text(mut e, marker + e.hist[e.pager_hits[i]])
+        i += 1
+    }
+    if e.pager_hits.len == 0 {
+        put_s(mut e, "\r\n")
+        e.tr += 1
+        e.tc = 0
+        pager_text(mut e, "  (no matches)")
+    }
+    move_to(mut e, r, c)
+}
+
+fn history_pager(mut e: Ed) {
+    e.pager = true
+    e.pager_query = copy e.buf
+    pager_filter(mut e)
+    pager_draw(mut e)
+    loop {
+        let k = next_key(mut e)
+        if k == 27 || k == 7 || k == 3 || k == K_INTR || k == K_QUIT {
+            pager_clear(mut e)
+            e.pager = false
+            return
+        }
+        if k == K_EOF || k == K_HUP || k == K_CHILD {
+            pager_clear(mut e)
+            e.pager = false
+            let _ended = ends_line(mut e, k)
+            return
+        }
+        if k == 13 || k == 10 {
+            pager_clear(mut e)
+            e.pager = false
+            if e.pager_hits.len > 0 {
+                touch(mut e)
+                let line = cps_of(e.hist[e.pager_hits[e.pager_at]])
+                set_line(mut e, line, line.len)
+            }
+            return
+        }
+        if k == K_UP || k == 16 {
+            if e.pager_at > 0 { e.pager_at -= 1 } else { bell(mut e) }
+        } else if k == K_DOWN || k == 14 || k == 18 {
+            if e.pager_hits.len > 0 { e.pager_at = (e.pager_at + 1) % e.pager_hits.len }
+        } else if k == 127 || k == 8 {
+            if e.pager_query.len > 0 {
+                var end = e.pager_query.len - 1
+                while end > 0 && zero_w(e.pager_query[end]) { end -= 1 }
+                e.pager_query = slice_of(e.pager_query, 0, end)
+                pager_filter(mut e)
+            }
+        } else if k == 21 {
+            e.pager_query = List[int]()
+            pager_filter(mut e)
+        } else if is_char_key(k) && k < K_RAW {
+            (mut e.pager_query).push(k)
+            pager_filter(mut e)
+        }
+        pager_draw(mut e)
+    }
+}

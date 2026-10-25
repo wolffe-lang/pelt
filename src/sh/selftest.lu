@@ -913,6 +913,7 @@ pub fn self_test() -> List[str] {
     want_hist(mut bad)
     want_complete(mut bad)
     want_friendly(mut bad)
+    want_shadow(mut bad)
     want_read(mut bad, ":", "a:b:c:", 3, "[a][b][c]")
     want_read(mut bad, ":", "a:b:c::", 3, "[a][b][c::]")
     want_read(mut bad, ": ", "a:b:c :", 3, "[a][b][c]")
@@ -1342,5 +1343,30 @@ fn want_friendly(mut bad: List[str]) {
                 }
             }
         }
+    }
+}
+
+/// Exact history suffixes, empty input and independent option frames.
+fn want_shadow(mut bad: List[str]) {
+    let history = ["echo alpha_old", "echo beta", "echo alpha_new"]
+    if shadow_history(history, "echo alpha") != "_new" ||
+        shadow_history(history, "") != "" ||
+        shadow_history(history, "alpha") != "" ||
+        shadow_history(history, "echo alpha_new") != "" {
+        (mut bad).push("shadow exact-prefix order or empty input")
+    }
+    var sh = new_sh("shadow-test")
+    if sh.opt_suggest || sh.opt_histsearch {
+        (mut bad).push("shadow options default on before argv0 pin")
+    }
+    let _s = option_name(mut sh, "suggest", true)
+    let _h = option_name(mut sh, "histsearch", true)
+    let bits = opts_bits(sh)
+    frame_open(mut sh)
+    let _off = option_name(mut sh, "suggest", false)
+    let _offh = option_name(mut sh, "histsearch", false)
+    frame_close(mut sh)
+    if opts_bits(sh) != bits || !sh.opt_suggest || !sh.opt_histsearch || friendly_active(sh) {
+        (mut bad).push("shadow option restoration or noninteractive gate")
     }
 }

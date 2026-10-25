@@ -578,6 +578,17 @@ struct Ed {
     vi: bool,
     vi_ins: bool,
     friendly: bool,
+    suggest: bool,
+    histsearch: bool,
+    shadow: List[int],
+    shadow_drawn: bool,
+    hp_active: bool,
+    hp_prefix: str,
+    hp_cursor: int,
+    pager: bool,
+    pager_query: List[int],
+    pager_hits: List[int],
+    pager_at: int,
     last_cmd: int,
     arg_active: bool,
     arg_digits: bool,
@@ -689,6 +700,17 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         vi: sh.opt_vi,
         vi_ins: true,
         friendly: friendly_active(sh) && sh.opt_friendly_keys,
+        suggest: friendly_active(sh) && sh.opt_suggest,
+        histsearch: friendly_active(sh) && sh.opt_histsearch,
+        shadow: List[int](),
+        shadow_drawn: false,
+        hp_active: false,
+        hp_prefix: "",
+        hp_cursor: 0,
+        pager: false,
+        pager_query: List[int](),
+        pager_hits: List[int](),
+        pager_at: 0,
         last_cmd: -1,
         arg_active: false,
         arg_digits: false,
@@ -1241,6 +1263,7 @@ fn place(mut e: Ed) {
 /// prompt and the edit line again; the cursor stays where it was in the
 /// text. `COLUMNS`, when set, keeps the width, and nothing is drawn.
 fn resized(mut e: Ed) {
+    shadow_clear(mut e)
     let (w, h) = term_width(e.fixed)
     e.rows = h
     if w == e.cols {
@@ -1271,6 +1294,7 @@ fn resized(mut e: Ed) {
     e.at = 0
     e.cur = k
     draw_from(mut e, 0)
+    if e.pager { pager_draw(mut e) } else { shadow_refresh(mut e) }
 }
 
 /// The prompt's last line: what follows its last newline.
@@ -1593,7 +1617,7 @@ fn key_raw(mut e: Ed) -> int {
         }
         return utf8_rest(mut e, b)
     }
-    if e.vi {
+    if e.vi || e.pager {
         let n = peek_byte(mut e)
         if n == 91 {
             return csi(mut e)
@@ -1854,7 +1878,10 @@ fn word_back(e: Ed, from: int) -> int {
 
 fn emacs_loop(mut e: Ed) {
     while e.done < 0 {
+        shadow_refresh(mut e)
         var k = next_key(mut e)
+        shadow_clear(mut e)
+        if k != K_UP && k != K_DOWN && k != 16 && k != 14 { e.hp_active = false }
         if e.friendly && k >= K_ALT + 65 && k <= K_ALT + 90 {
             k += 32
         }
@@ -1901,6 +1928,7 @@ fn emacs_loop(mut e: Ed) {
 
 fn emacs_key(mut e: Ed, k: int) {
     if k == K_QUIT { return }
+    if shadow_accept(mut e, k) { return }
     let was_kill = e.last_kill
     e.last_kill = false
     let again = e.tabs > 0
@@ -1999,7 +2027,9 @@ fn emacs_key(mut e: Ed, k: int) {
     } else if k == 12 {
         redraw_all(mut e, true)
     } else if k == 18 {
-        let _ended = isearch(mut e)
+        if e.histsearch { history_pager(mut e) } else { let _ended = isearch(mut e) }
+    } else if e.histsearch && (k == K_UP || k == 16 || k == K_DOWN || k == 14) {
+        history_prefix(mut e, k == K_UP || k == 16)
     } else if k == K_UP || k == 16 {
         if e.h > 0 {
             show_hist(mut e, e.h - 1, true)
