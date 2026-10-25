@@ -771,6 +771,9 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
     }
     var e = editor_state(sh, shown, q, term_chars())
     highlight_prepare(mut e)
+    if e.highlight {
+        for name in sh.ast.aliases.keys() { e.commands[name] = true }
+    }
     e.h = e.hist.len
     var k = 0
     while k <= e.hist.len {

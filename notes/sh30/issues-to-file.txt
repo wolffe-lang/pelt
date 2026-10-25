@@ -1,0 +1,21 @@
+No issue filed or closed by this lane.
+
+pelt: pin a reproducible oracle image/package set for hasu and CI. Upstream
+Arch dash0.5.13.4-1/bash5.3.20-1 differ from CachyOS rebuilds -1.1/-2;
+fish4.9.3 SHA matches. Recorded expected corpus was not regenerated.
+
+Existing wolf-lang#904 adoption: argv[0] pin bump owns sh-name exclusion
+and the default-on friendly policy. Remains opt-in at wolf0.2.35.
+
+PAX: px-owned framebuffer/serial pelt-session slot is still needed. Exact
+sh29/sh30 pending inputs are in tests/session/PENDING.md. No PAX result claimed.
+
+pelt follow-on: nested substitution bodies are a single variable colour
+span; aliases are recognized by name but not expanded for syntax colouring.
+A deeper semantic highlighter could refine these without executing input.
+The command census deliberately lasts one prompt; an external PATH/file
+change needs a fresh prompt. Measure invalidation before adding background work.
+
+Known inherited docs count: docs/KEYS.md's F0 history paragraph mentions its
+then-current375 sessions; the new final section explicitly states488. It is
+historical context, not the current count.
