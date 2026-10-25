@@ -1,0 +1,22 @@
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+ok extension bindings_basic
+ok extension bindings_actions
+ok extension bindings_featureoff
+ok extension bindings_disabled
+ok extension bindings_readonly
+ok extension kill_ring_cap
+session: pelt = /home/mfwolffe/lanes/sh28/pelt/target/native/pelt
+ok   sh28_bindings_actions
+ok   sh28_bindings_basic
+ok   sh28_bindings_disabled
+ok   sh28_bindings_featureoff
+ok   sh28_bindings_readonly
+ok   sh28_kill_ring_cap
+ok   sh28_numeric_quoted
+ok   sh28_quit_remapped
+ok   sh28_quit_search
+ok   sh28_quit_status
+ok   sh28_transpose_negative
+ok   sh28_vi_quit_command
+ok   sh28_vi_quit_insert
+session: pass 13  fail 0  pending 0 (0)

@@ -1142,7 +1142,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
         if fnode >= 0 {
             return slow()
         }
-        if is_special_builtin(cmd) || is_regular_builtin(cmd) {
+        if is_special_builtin(cmd) || is_available_builtin(sh, cmd) {
             if assigns.len > 0 {
                 return slow()
             }
@@ -1677,7 +1677,7 @@ fn run_slow(mut sh: Sh, n: int, nowait: bool) -> int {
         if na == 0 && !sh.opt_x {
             let name = pre.enc[0..nul_at(pre.enc, 0)]
             let fnode = sh.funcs[name] else -1
-            let bi = name != "exec" && (is_special_builtin(name) || is_regular_builtin(name))
+            let bi = name != "exec" && (is_special_builtin(name) || is_available_builtin(sh, name))
             if sh.ast.nodes[n].redirs.len == 0 {
                 // a function called with no assignment or redirection:
                 // its operands become `$@` in place, no list built
@@ -1828,7 +1828,7 @@ fn run_fields(mut sh: Sh, n: int, na: int, fields: List[str], nowait: bool) -> i
     }
     var st = 0
     let fnode = sh.funcs[cmd] else -1
-    if fnode >= 0 || is_regular_builtin(cmd) {
+    if fnode >= 0 || is_available_builtin(sh, cmd) {
         // temporary assignments, undone after (XCU 2.9.1)
         var old = List[str]()
         var had = List[bool]()

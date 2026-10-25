@@ -7,7 +7,7 @@ import lib_session as ls
 oracle = ROOT/'notes/sh28-evidence/oracle-transcripts'
 oracle.mkdir(exist_ok=True)
 pelt = str(ROOT/'target/native/pelt')
-for name, keys in ls.cases([p.stem for p in (ROOT/'tests/session').glob('sh28_*.keys')]):
+for name, keys in ls.cases(sys.argv[1:] or [p.stem for p in (ROOT/'tests/session').glob('sh28_*.keys')]):
     meta = ls.read_meta(keys[:-5] + '.meta')
     tr = Path(keys[:-5]+'.tr')
     saved = oracle/(name+'.tr')
@@ -26,6 +26,10 @@ for name, keys in ls.cases([p.stem for p in (ROOT/'tests/session').glob('sh28_*.
         if 'out "abcdX\\n"' not in a or a[-1] != 'exit 0 at step 3':
             raise SystemExit('C-@ does not set mark: ' + str(a))
         meta['why'] += '; R-sh28-4: C-@ sets mark per documented intent; bash NUL non-effect retained in oracle-transcripts'
+    elif name == 'sh28_quit_status':
+        if 'out "status:1:end\\n"' not in a or any('trapped' in line for line in a if line.startswith('out ')):
+            raise SystemExit('QUIT changed status or ran a trap: '+str(a))
+        meta['why'] += '; R-sh28-5: editor-only quit flush, no signal or trap; bash actual tty QUIT trap output retained in oracle-transcripts'
     elif ls.stdout_and_exit(a) != ls.stdout_and_exit(expected):
         raise SystemExit('BASH DISAGREEMENT ' + name + ': ' + str(ls.stdout_and_exit(a)))
     tr.write_text('\n'.join(a)+'\n')

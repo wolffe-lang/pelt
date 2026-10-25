@@ -1,0 +1,77 @@
+//! The read-only live editor listing. No rebinding or inputrc language.
+
+fn binding_rows(vi: bool, extra: bool) -> List[str] {
+    var rows = List[str]()
+    let common = "Enter\t0d 0a\taccept-line~~C-C\tstty intr\tinterrupt~~Quit\tstty quit\tdiscard-pending-line~~C-D\tstty eof\tdelete-or-eof~~Backspace\t7f 08 / stty erase\tbackward-delete-char~~C-U\tstty kill\tunix-line-discard~~C-W\tstty werase\tunix-word-rubout~~C-V\tstty lnext\tquoted-insert~~Tab\t09\tcomplete~~C-L\t0c\tclear-screen~~Left\tESC[D ESCOD\tbackward-char~~Right\tESC[C ESCOC\tforward-char~~Home\tESC[H ESCOH ESC[1~ ESC[7~\tbeginning-of-line~~End\tESC[F ESCOF ESC[4~ ESC[8~\tend-of-line~~Up\tESC[A ESCOA\tprevious-history~~Down\tESC[B ESCOB\tnext-history"
+    for row in common.split("~~") { (mut rows).push(row) }
+    if vi {
+        let commands = "ESC\t1b\tvi-command-mode~~h / l / space\t68 / 6c / 20\tvi-character-motion~~0 / ^ / $ / \u{7c}\t30 / 5e / 24 / 7c\tvi-line-motion~~w W b B e E\t77 57 62 42 65 45\tvi-word-motion~~f F t T ; ,\t66 46 74 54 3b 2c\tvi-find~~i I a A R\t69 49 61 41 52\tvi-insert~~c / cc / C / S\t63 / 63 63 / 43 / 53\tvi-change~~d / dd / D / x X\t64 / 64 64 / 44 / 78 58\tvi-delete~~y / yy / Y / p P\t79 / 79 79 / 59 / 70 50\tvi-yank-put~~r / ~\t72 / 7e\tvi-replace-case~~. / u U\t2e / 75 55\tvi-repeat-undo~~k - j + G\t6b 2d 6a 2b 47\tvi-history~~/ ? n N\t2f 3f 6e 4e\tvi-history-search~~_\t5f\tvi-yank-argument~~v\t76\tvi-edit-command~~#\t23\tvi-comment~~= / \\ / *\t3d / 5c / 2a\tvi-path-expansion~~@letter\t40 letter\tvi-alias"
+        for row in commands.split("~~") { (mut rows).push(row) }
+        return rows
+    }
+    let emacs = "C-A\t01\tbeginning-of-line~~C-E\t05\tend-of-line~~C-B\t02\tbackward-char~~C-F\t06\tforward-char~~M-B\tESC b B\tbackward-word~~M-F\tESC f F\tforward-word~~Ctrl-Left\tESC[1\u{3b}5D ESC[1\u{3b}3D\tbackward-word~~Ctrl-Right\tESC[1\u{3b}5C ESC[1\u{3b}3C\tforward-word~~M-D\tESC d D\tkill-word~~M-Backspace\tESC 7f ESC 08\tbackward-kill-word~~C-K\t0b\tkill-line~~C-Y\t19\tyank~~Delete\tESC[3~\tdelete-char~~C-P\t10\tprevious-history~~C-N\t0e\tnext-history~~C-R\t12\treverse-search-history"
+    for row in emacs.split("~~") { (mut rows).push(row) }
+    if extra {
+        let friendly = "M-. / M-_\tESC . / ESC _\tyank-last-arg~~M-Y\tESC y Y\tyank-pop~~C-T\t14\ttranspose-chars~~M-T\tESC t T\ttranspose-words~~M-U\tESC u U\tupcase-word~~M-L\tESC l L\tdowncase-word~~M-C\tESC c C\tcapitalize-word~~C-_ / C-X C-U\t1f / 18 15\tundo~~M-R\tESC r R\trevert-line~~M-< / PageUp\tESC < / ESC[5~\tbeginning-of-history~~M-> / PageDown\tESC > / ESC[6~\tend-of-history~~M-#\tESC #\tinsert-comment~~M-\\\tESC 5c\tdelete-horizontal-space~~C-]\t1d\tcharacter-search~~M-C-]\tESC 1d\tcharacter-search-backward~~M-0..9 / M--\tESC 30..39 / ESC 2d\tdigit-argument~~C-G\t07 / ESC 07 / 18 07\tabort~~C-@ / M-Space\t00 / ESC 20\tset-mark~~C-X C-X\t18 18\texchange-point-and-mark"
+        for row in friendly.split("~~") { (mut rows).push(row) }
+    }
+    rows
+}
+
+fn bi_bindings(mut sh: Sh, args: List[str]) -> int {
+    if !friendly_active(sh) { return 127 }
+    let actions = args.len == 1 && args[0] == "-l"
+    if args.len > 1 || args.len == 1 && !actions {
+        diag(mut sh, "bindings: usage: bindings [-l]")
+        return 2
+    }
+    if !sh.opt_vi && !sh.opt_emacs {
+        if !actions { emit(mut sh, "mode\t-\tdisabled\n") }
+        return 0
+    }
+    var seen = Map[str, bool]()
+    for row in binding_rows(sh.opt_vi, sh.opt_friendly_keys) {
+        let parts = row.split("\t")
+        if actions {
+            let name = parts[2]
+            if !(seen[name] else false) {
+                emit(mut sh, "{name}\n")
+                seen[name] = true
+            }
+        } else {
+            emit(mut sh, "{parts[0]}\t{parts[1]}\t{parts[2]}\n")
+        }
+    }
+    if !actions {
+        let chars = term_chars()
+        let names = [
+            "erase",
+            "kill",
+            "intr",
+            "quit",
+            "susp",
+            "eof",
+            "werase",
+            "lnext",
+            "start",
+            "stop",
+        ]
+        var i = 0
+        while i < chars.len && i < names.len {
+            let value = if chars[i] < 0 then "disabled" else hex2(chars[i])
+            emit(mut sh, "stty {names[i]}\t{value}\tterminal-character\n")
+            i += 1
+        }
+    }
+    0
+}
+
+fn is_available_builtin(sh: Sh, name: str) -> bool {
+    is_regular_builtin(name) || name == "bindings" && friendly_active(sh)
+}
+
+fn editor_function_names(sh: Sh) -> List[str] {
+    var names = sh.funcs.keys()
+    if friendly_active(sh) { (mut names).push("bindings") }
+    names
+}

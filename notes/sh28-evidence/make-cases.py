@@ -1,5 +1,6 @@
 """Create sh28's oracle inputs; expectations are recorded, never inferred."""
 from pathlib import Path
+import sys
 ROOT = Path(__file__).resolve().parents[2]
 CASES = {
  'last_arg': [': alpha', r'\k echo \e.\r'],
@@ -45,6 +46,13 @@ CASES = {
  'vi_last_quote': [": 'two words'", r'\k echo\e_\r'],
 }
 CASES.update({
+ 'quit_status': ["trap 'echo trapped' QUIT", 'false', r'\k echo forbidden\x1c', "printf 'status:%s\\n' $?:end"],
+ 'quit_remapped': ["stty quit '^E'", r'\k echo forbidden\x05', 'echo survived'],
+ 'vi_quit_insert': [r'\k echo forbidden\x1c', 'echo survived'],
+ 'vi_quit_command': [r'\k echo forbidden\e\x1c', 'echo survived'],
+ 'quit_search': [': old', 'false', r'\k \x12old\x1c', "printf 'status:%s\\n' $?:end"],
+ 'numeric_quoted': [r'\k echo \e3\x16x\r'],
+ 'transpose_negative': [r'\k echo one two three\e-\et!\r'],
  'mark_meta_space': [r'\k echo abcd\e \x02\x02\x18\x18X\r'],
  'mark_tracks_insert': [r'\k echo abcd\e \x01 \x18\x18X\r'],
  'abort_character_search_back': [r'\k echo kept\e\x1d\x07\r'],
@@ -65,6 +73,8 @@ CASES.update({
  'kill_across_lines': [r'\k echo first\x01\ef\x06\x0b\r', r'\k echo second\x01\ef\x06\x0b\r', r'\k echo \x19\ey\r'],
 })
 for name, steps in CASES.items():
+    if sys.argv[1:] and "sh28_"+name not in sys.argv[1:]:
+        continue
     base = ROOT / 'tests/session' / ('sh28_' + name)
     base.with_suffix('.keys').write_text('\n'.join(['exec 2>&0'] + steps + ['exit']) + '\n')
     vi = name.startswith('vi_')

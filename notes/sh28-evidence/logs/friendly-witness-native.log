@@ -1,0 +1,9 @@
+ok gate on b'ba\n'
+ok gate default-off b'ab\n'
+ok gate no-stderr-tty b'ab\n'
+ok gate posix-hard-disable b'ab\n'
+ok gate feature-off b'ab\n'
+ok gates script, pipe, -c builtin absence
+ok empty history bell; live bindings, actions, remapped stty, vi
+ok friendly idle 10s: contexts 0, RSS pages 2997->2997
+last-arg 32767 entries: median 0.016698 ms, p99 0.058822 ms, 100 samples after warmup

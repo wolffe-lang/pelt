@@ -725,7 +725,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         vnum: 0,
         tabs: 0,
         wait_child: false,
-        fnames: sh.funcs.keys(),
+        fnames: editor_function_names(sh),
         vnames: var_names(sh),
         cpath: sh.vals["PATH"] else "",
         home: sh.vals["HOME"] else "",

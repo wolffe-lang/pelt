@@ -100,6 +100,8 @@ fn builtin_args(mut sh: Sh, name: str, args: List[str]) -> int {
         st = bi_alias(mut sh, args)
     } else if name == "unalias" {
         st = bi_unalias(mut sh, args)
+    } else if name == "bindings" {
+        st = bi_bindings(mut sh, args)
     } else if name == "jobs" {
         st = bi_jobs(mut sh, args)
     } else if name == "fg" {
@@ -801,7 +803,7 @@ fn bi_command(mut sh: Sh, args: List[str]) -> int {
     if show {
         return show_one(mut sh, name, via)
     }
-    if is_special_builtin(name) || is_regular_builtin(name) {
+    if is_special_builtin(name) || is_available_builtin(sh, name) {
         // the built-in's operands in a list from the state's pool, given
         // back cleared: no slice, no `args_of` copy (pelt#39)
         var sub = (mut sh.argpool).pop() else List[str]()
@@ -847,7 +849,7 @@ fn show_one(mut sh: Sh, name: str, via: str) -> int {
     }
     if sh.funcs.has(name) ||
         is_special_builtin(name) ||
-        is_regular_builtin(name) ||
+        is_available_builtin(sh, name) ||
         is_reserved(name) {
         emit(mut sh, "{name}\n")
         return 0
@@ -888,7 +890,7 @@ fn type_one(mut sh: Sh, name: str, via: str) -> int {
         emit(mut sh, "{name} is a function\n")
         return 0
     }
-    if is_regular_builtin(name) {
+    if is_available_builtin(sh, name) {
         emit(mut sh, "{name} is a built-in\n")
         return 0
     }
@@ -964,7 +966,7 @@ fn bi_hash(mut sh: Sh, args: List[str]) -> int {
         if (n.find("/") else -1) >= 0 ||
             sh.funcs.has(n) ||
             is_special_builtin(n) ||
-            is_regular_builtin(n) {
+            is_available_builtin(sh, n) {
             continue
         }
         hash_del(mut sh, n)

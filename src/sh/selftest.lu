@@ -905,6 +905,7 @@ pub fn self_test() -> List[str] {
     want_mask_texts(mut bad)
     want_hist(mut bad)
     want_complete(mut bad)
+    want_friendly(mut bad)
     want_read(mut bad, ":", "a:b:c:", 3, "[a][b][c]")
     want_read(mut bad, ":", "a:b:c::", 3, "[a][b][c::]")
     want_read(mut bad, ": ", "a:b:c :", 3, "[a][b][c]")
@@ -1285,6 +1286,54 @@ fn want_complete(mut bad: List[str]) {
     for w in builtin_names() {
         if !is_special_builtin(w) && !is_regular_builtin(w) {
             (mut bad).push("builtin_names: {w} is not a built-in")
+        }
+    }
+}
+
+/// Own data invariants; history spellings are the recorded sh28 oracle cases.
+fn want_friendly(mut bad: List[str]) {
+    let words = history_words(cps_of(": 'two words'"))
+    if words.len != 2 || ints_txt(words[1]) != ints_txt(cps_of("'two words'")) {
+        (mut bad).push("history_words lost quoted spelling")
+    }
+    let escaped_words = history_words(cps_of(": one\\ two"))
+    if escaped_words.len != 2 || ints_txt(escaped_words[1]) != ints_txt(cps_of("one\\ two")) {
+        (mut bad).push("history_words split an escaped blank")
+    }
+    let redir = history_words(cps_of(": word > output"))
+    if redir.len != 4 || ints_txt(redir[3]) != ints_txt(cps_of("output")) {
+        (mut bad).push("history_words redirection operand")
+    }
+    var mem = new_edmem()
+    mem.kill = cps_of("new;|\n")
+    (mut mem.ring).push(cps_of("old;|\n"))
+    mem.pat = "a;b|c"
+    let encoded = mem_txt(mem)
+    if mem_txt(txt_mem(encoded)) != encoded {
+        (mut bad).push("editor memory roundtrip lost kill ring")
+    }
+    var sh = new_sh("friendly-test")
+    let _on = option_name(mut sh, "friendly", true)
+    let bits = opts_bits(sh)
+    frame_open(mut sh)
+    let _off = option_name(mut sh, "friendly", false)
+    let _keys = option_name(mut sh, "friendly_keys", false)
+    frame_close(mut sh)
+    if opts_bits(sh) != bits || friendly_active(sh) || is_available_builtin(sh, "bindings") {
+        (mut bad).push("friendly option frame or non-interactive gate")
+    }
+    sh.posix_mode = true
+    let _posix = option_name(mut sh, "friendly", true)
+    if sh.opt_friendly || friendly_invocation_allowed(sh) {
+        (mut bad).push("--posix allowed friendly")
+    }
+    for vi in [false, true] {
+        for extra in [false, true] {
+            for row in binding_rows(vi, extra) {
+                if row.split("\t").len != 3 {
+                    (mut bad).push("malformed binding row: {row}")
+                }
+            }
         }
     }
 }
