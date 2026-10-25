@@ -1,0 +1,182 @@
+{
+  "sh30_command": {
+    "steps": 4,
+    "visible": "echo"
+  },
+  "sh30_unknown": {
+    "steps": 4,
+    "visible": "zz_sh30_absent"
+  },
+  "sh30_argument": {
+    "steps": 4,
+    "visible": "echo argument"
+  },
+  "sh30_reserved": {
+    "steps": 4,
+    "visible": "if true; then echo x; fi"
+  },
+  "sh30_quote": {
+    "steps": 4,
+    "visible": "echo 'hello'"
+  },
+  "sh30_double_quote": {
+    "steps": 4,
+    "visible": "echo \"hello $HOME\""
+  },
+  "sh30_variable": {
+    "steps": 4,
+    "visible": "echo $HOME"
+  },
+  "sh30_braced": {
+    "steps": 4,
+    "visible": "echo ${HOME}"
+  },
+  "sh30_arithmetic": {
+    "steps": 4,
+    "visible": "echo $((2+3))"
+  },
+  "sh30_substitution": {
+    "steps": 4,
+    "visible": "echo $(echo not-run > side-effect)"
+  },
+  "sh30_redirection": {
+    "steps": 4,
+    "visible": "echo > output"
+  },
+  "sh30_comment": {
+    "steps": 4,
+    "visible": "echo word # comment"
+  },
+  "sh30_operator": {
+    "steps": 4,
+    "visible": "echo | cat"
+  },
+  "sh30_bang": {
+    "steps": 4,
+    "visible": "!!"
+  },
+  "sh30_bang_last": {
+    "steps": 4,
+    "visible": "!$"
+  },
+  "sh30_unicode": {
+    "steps": 4,
+    "visible": "echo 界界"
+  },
+  "sh30_combining": {
+    "steps": 4,
+    "visible": "echo ábc"
+  },
+  "sh30_open_single": {
+    "steps": 4,
+    "visible": "echo 'hello"
+  },
+  "sh30_open_double": {
+    "steps": 4,
+    "visible": "echo \"hello"
+  },
+  "sh30_open_if": {
+    "steps": 4,
+    "visible": "if true; then echo x"
+  },
+  "sh30_open_subshell": {
+    "steps": 4,
+    "visible": "(echo x"
+  },
+  "sh30_open_pipeline": {
+    "steps": 4,
+    "visible": "echo |"
+  },
+  "sh30_open_parameter": {
+    "steps": 4,
+    "visible": "echo ${HOME"
+  },
+  "sh30_open_substitution": {
+    "steps": 4,
+    "visible": "echo $(true"
+  },
+  "sh30_open_arithmetic": {
+    "steps": 4,
+    "visible": "echo $((1+"
+  },
+  "sh30_linux": {
+    "steps": 4,
+    "visible": "echo colour"
+  },
+  "sh30_rgb": {
+    "steps": 4,
+    "visible": "echo colour"
+  },
+  "sh30_indexed": {
+    "steps": 4,
+    "visible": "echo colour"
+  },
+  "sh30_malformed": {
+    "steps": 4,
+    "visible": "echo colour"
+  },
+  "sh30_error": {
+    "steps": 5,
+    "visible": "^"
+  },
+  "sh30_error_unicode": {
+    "steps": 5,
+    "visible": "^"
+  },
+  "sh30_resize": {
+    "steps": 6,
+    "visible": "echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "sh30_resize_midline": {
+    "steps": 6,
+    "visible": "echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  "sh30_shadow": {
+    "steps": 6,
+    "visible": "echo prefix_suffix"
+  },
+  "sh30_shadow_enter": {
+    "steps": 7,
+    "visible": "prefix"
+  },
+  "sh30_undo": {
+    "steps": 6,
+    "visible": "echo kept"
+  },
+  "sh30_kill_yank": {
+    "steps": 6,
+    "visible": "echo kept"
+  },
+  "sh30_pager": {
+    "steps": 8,
+    "visible": "history: echo al"
+  },
+  "sh30_pager_restore": {
+    "steps": 8,
+    "visible": "echo al"
+  },
+  "sh30_completion": {
+    "steps": 5,
+    "visible": "shared-one"
+  },
+  "sh30_highlight_off": {
+    "steps": 5,
+    "visible": "echo plain"
+  },
+  "sh30_umbrella_off": {
+    "steps": 6,
+    "visible": "echo plain"
+  },
+  "sh30_independent": {
+    "steps": 4,
+    "visible": "echo independent"
+  },
+  "sh30_posix": {
+    "steps": 4,
+    "visible": "echo plain"
+  },
+  "sh30_dumb": {
+    "steps": 3,
+    "visible": "plain"
+  }
+}

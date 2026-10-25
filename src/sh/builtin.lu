@@ -406,7 +406,7 @@ fn print_options(mut sh: Sh, reinput: bool) {
 /// Friendly options appear only after opting in, so POSIX option listings
 /// and existing dash sessions stay unchanged at this pin.
 fn print_friendly_options(mut sh: Sh, reinput: bool) {
-    if !friendly_active(sh) {
+    if !friendly_active(sh) && !highlight_active(sh) {
         return
     }
     if colour_terminal(sh) {
@@ -422,7 +422,7 @@ fn print_friendly_options(mut sh: Sh, reinput: bool) {
             "friendly_keys" => sh.opt_friendly_keys,
             "suggest" => sh.opt_suggest,
             "histsearch" => sh.opt_histsearch,
-            _ => true,
+            _ => sh.opt_friendly,
         }
         if reinput {
             emit(mut sh, "set {if on then "-o" else "+o"} {name}\n")

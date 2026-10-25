@@ -1,0 +1,31 @@
+step 1
+| $ exec 1>&0 2>&0
+| $
+cursor 1 2
+step 2
+| $ set -o friendly -o histsearch
+| $
+cursor 1 2
+step 3
+| $ echo alpha
+| alpha
+| $
+cursor 2 2
+step 4
+| $ echo al
+cursor 0 9
+step 5
+| $ echo al
+| history: echo al
+| > echo alpha
+cursor 0 9
+step 6
+| $ echo al
+cursor 0 9
+step 7
+| $
+cursor 0 2
+step 8
+| $ exit 0
+| 
+cursor 1 0

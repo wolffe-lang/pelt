@@ -1,0 +1,21 @@
+step 1
+| $ exec 1>&0 2>&0
+| $
+cursor 1 2
+step 2
+| $ echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+cursor 0 47
+step 3
+| $ echo xxxxxxxxx
+| xxxxxxxxxxxxxxxx
+| xxxxxxxxxxxxxxx
+cursor 2 15
+step 4
+cursor -2 47
+step 5
+| $
+cursor 0 2
+step 6
+| $ exit 0
+| 
+cursor 1 0
