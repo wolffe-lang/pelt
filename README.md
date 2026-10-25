@@ -15,7 +15,7 @@ shell's source is ever read: pelt is clean-room, black-box only.
 |---|---|
 | POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 532 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
 | differential corpus against dash, both tiers | 1,038 cases: 1,023 passing, 0 failing, 15 pending on a named primitive (`tests/diff/`) |
-| typed sessions through a pseudo-terminal | 488 recorded expectations, none pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
+| typed sessions through a pseudo-terminal | 552 recorded expectations, none pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
 | real `sh` scripts that run as under dash | 78 of 80, the other two not pelt's to change (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts): `configure-sed` prints a timestamp resolution it measures from the shell's own speed, a coin that flips for dash itself and is counted apart, and `pfetch`'s memory line differs between dash's own runs |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
 | toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
@@ -130,6 +130,18 @@ colours. All three standard descriptors must be terminals; scripts, `-c`,
 pipes, `--posix` and `TERM=dumb` are unchanged. Details and fish-variable
 equivalents are in [`docs/FRIENDLY.md`](docs/FRIENDLY.md).
 
+**Words at the prompt (opt-in).** `friendly` also enables `abbr`,
+`complete` and `histexpand`. `abbr add/erase/list` persists abbreviations
+under `$HOME/.pelt/abbr`; a whole unquoted command word expands on Space
+or Enter. Tab offers descriptions in a bounded pager; selecting a row
+never executes, and Enter accepts it without running the line. An explicit
+option-completion Tab may run a literal command's `--help` under a 50 ms
+collection budget, cached per prompt. At Enter, `!!` recalls the previous
+command and `!$` its last spelled shell word; the expanded line is echoed
+and stored in history. All three options are separately switchable and
+never change scripts, `-c` or piped input. Quoting, limits and controls are
+in [`docs/FRIENDLY.md`](docs/FRIENDLY.md).
+
 **Job control.** `set -m` (on by default at an interactive prompt, also
 in a script): each pipeline of programs runs in its own process group
 and is handed the terminal, Ctrl-Z stops it, `jobs` (`-l`, `-p`), `fg`
@@ -192,7 +204,7 @@ the tree so the measurement can be taken again.
 | `tools/session --bin target/release` | typed sessions through a pseudo-terminal, byte for byte against `dash -i` |
 | `tools/oracle-record`, `tools/session-record` | record a new case's expectation from the oracle |
 | `tools/exec-witness`, `tools/signal-witness`, `tools/hist-witness`, `tools/edit-witness` | one behaviour each, measured on the live process (the same pid after `exec`, a signal's disposition, the history file, the editor) |
-| `tools/shadow-witness`, `tools/colour-witness` | display-only suggestions and syntax colours, raw resets, resize, idle memory and per-key latency |
+| `tools/shadow-witness`, `tools/colour-witness`, `tools/words-witness` | display-only suggestions, syntax colours, abbreviations, history events, described completion, raw resets, resize, idle memory and per-key latency |
 | `tools/reap-witness` | a test case that times out leaves nothing running |
 | `tools/script-census` | the 80 real scripts, run as under dash |
 | `tools/clause-census` | the POSIX statement table, counted |
@@ -210,7 +222,8 @@ left undone.
 ```
 src/pelt.lu        the program (over the module src/sh/)
 src/sh/            parse, expand, exec, redir, builtin, jobs, signal, kill,
-                   edit, complete, hist, interact, arith, pattern, umask, …
+                   edit, edit_abbr, edit_events, edit_completion, edit_help,
+                   complete, hist, interact, arith, pattern, umask, …
 tests/diff/        the differential corpus (.sh cases, .meta expectations)
 tests/session/     the typed sessions (.tr transcripts, .meta)
 tests/reap/        the reaper's cases
