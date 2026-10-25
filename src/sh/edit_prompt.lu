@@ -35,11 +35,32 @@ fn prompt_safe(s: str) -> str {
     text(Buf { b: out })
 }
 
+/// Match a whole directory component, not a sibling with the same prefix.
+fn prompt_fold_home(pwd: str, home: str) -> str ! {none} {
+    var base = home
+    while base.len > 1 && base.ends_with("/") { base = base[0..base.len - 1] }
+    if base.len == 0 { return none }
+    if pwd == base { return "~" }
+    if base == "/" && pwd.starts_with("/") { return "~" + pwd }
+    if pwd.starts_with(base + "/") { return "~" + pwd[base.len..pwd.len] }
+    none
+}
+
+/// Keep the shell's logical PWD when it names a path under HOME. A physical
+/// spelling also counts: Darwin's /var and a user-created HOME symlink need
+/// not have the spelling returned by the kernel. Only fall back to physical
+/// cwd after trying both home spellings against the logical one.
+fn prompt_paths(pwd: str, physical_pwd: str, home: str, physical_home: str) -> str {
+    let path = prompt_fold_home(pwd, home) else (
+        prompt_fold_home(pwd, physical_home) else (
+            prompt_fold_home(physical_pwd, physical_home) else pwd
+        )
+    )
+    prompt_path(path, "")
+}
+
 fn prompt_path(pwd: str, home: str) -> str {
-    var path = pwd
-    if home.len > 0 && (pwd == home || pwd.starts_with(home + "/")) {
-        path = "~" + pwd[home.len..pwd.len]
-    }
+    let path = prompt_fold_home(pwd, home) else pwd
     let parts = path.split("/")
     var out = List[byte]()
     var i = 0
@@ -190,7 +211,11 @@ fn prompt_prepare(mut sh: Sh, first: bool) {
 
 fn prompt_left(sh: Sh, cols: int) -> str {
     let user = prompt_safe(sh.vals["USER"] else (sh.vals["LOGNAME"] else "?"))
-    let path = prompt_path(sh.vals["PWD"] else "?", sh.vals["HOME"] else "")
+    let home = sh.vals["HOME"] else ""
+    // Once per primary prompt, never per key; failure leaves logical folding
+    // available and does not change HOME, PWD, cd or pwd -L semantics.
+    let physical_home = if home.len == 0 then "" else (fs_realpath(home) else "")
+    let path = prompt_paths(sh.vals["PWD"] else sh.phys, sh.phys, home, physical_home)
     let status = if sh.status == 0 then "" else " [{sh.status}]"
     let marker = if (os_euid() else -1) == 0 then "# " else "> "
     let vcs = if sh.prompt_vcs.value.len == 0 then "" else " " + sh.prompt_vcs.value

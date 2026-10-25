@@ -35,6 +35,41 @@ fn want_prompt(mut bad: List[str]) {
             (mut bad).push("prompt-HOME-path: " + pair[0])
         }
     }
+    for row in [
+        ["/physical/home", "/physical/home", "/logical/home", "/physical/home", "~"],
+        [
+            "/physical/home/alpha/beta",
+            "/physical/home/alpha/beta",
+            "/logical/home",
+            "/physical/home",
+            "~/a/beta",
+        ],
+        ["/logical/home/away", "/outside", "/logical/home", "/physical/home", "~/away"],
+        [
+            "/alias/alpha/beta",
+            "/physical/home/alpha/beta",
+            "/logical/home",
+            "/physical/home",
+            "~/a/beta",
+        ],
+        [
+            "/physical/home-neighbor",
+            "/physical/home-neighbor",
+            "/logical/home",
+            "/physical/home",
+            "/p/home-neighbor",
+        ],
+        ["/logical/home", "/physical/home", "/logical/home/", "/physical/home", "~"],
+        ["/logical/home/alpha", "/physical/home/alpha", "/logical/home", "", "~/alpha"],
+        ["/other/alpha", "/other/alpha", "/missing", "", "/o/alpha"],
+        ["/other/alpha", "/other/alpha", "", "", "/o/alpha"],
+        ["/", "/", "/", "/", "~"],
+        ["/alpha/beta", "/alpha/beta", "/", "/", "~/a/beta"],
+    ] {
+        if prompt_paths(row[0], row[1], row[2], row[3]) != row[4] {
+            (mut bad).push("prompt-logical-physical-HOME: " + row[0])
+        }
+    }
     if prompt_right_bound("RIGHT", 39) != "" ||
         prompt_right_bound("RIGHT", 40) != "RIGHT" ||
         prompt_right_bound("abcdefghijklmnopqrstuvwxyz", 40) != "abcdefghijkl…" ||
