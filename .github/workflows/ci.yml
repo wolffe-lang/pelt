@@ -316,6 +316,11 @@ jobs:
         timeout-minutes: 15
         run: tools/session --bin target/${{ matrix.tier }}
 
+      - name: shadow bytes, bounded lookup and idle, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/shadow-witness target/${{ matrix.tier }}/pelt
+
       # sh11: the editor gives the terminal back, asked from outside: the
       # modes after SIGHUP (pelt dies of it, as dash), SIGTERM (ignored),
       # SIGINT (the line abandoned, $? 130) and a hangup (tools/edit-witness).

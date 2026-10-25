@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Raw-byte shadow law, bounded lookup and idle evidence in an owned pty.
+Linux idle counters require child-only THP disable. No process other than
+this fixture's child is signalled, and cleanup always waits for that pid.
+"""
+from pathlib import Path
+import json, statistics, sys, tempfile, time
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/'notes/sh28-evidence'))
+from witness import Shell, idle_snapshot
+
+def settled(shell, seconds=.03):
+    until=time.monotonic()+seconds
+    while time.monotonic()<until: shell.pump(.001)
+
+def raw_law(binary,home):
+    sh=Shell(binary,home,['-o','friendly','-o','suggest','-o','histsearch'])
+    try:
+        sh.command(b'echo prefix_suffix\r'); settled(sh)
+        start=len(sh.data['tty']);sh.type(b'echo prefix');settled(sh,.2)
+        raw=sh.data['tty'][start:]
+        assert b'\x1b[K\x1b[90m_suffix\x1b[39m\x1b[7D' in raw,repr(raw)
+        before=len(sh.data['out']);start=len(sh.data['tty']);sh.type(b'\r')
+        sh.until(lambda:len(sh.data['out'])>before);settled(sh)
+        assert sh.data['out'][before:]==b'prefix\n',sh.data
+        assert sh.data['tty'][start:].startswith(b'\x1b[K'),repr(sh.data['tty'][start:])
+        print('ok drawn-never-typed: visible SGR90, Enter output prefix only, EL before finish',flush=True)
+        sh.type(b'echo prefix');settled(sh,.2)
+        start=len(sh.data['tty']);sh.type(b'\x15');settled(sh,.1)
+        clear=sh.data['tty'][start:]
+        assert clear.startswith(b'\x1b[K'),repr(clear)
+        assert b'\x1b[90m' not in clear,repr(clear)
+        print('ok clear-cu: EL before deleting typed prefix; no new shadow on empty line',flush=True)
+        sh.type(b'echo alpha1\r');settled(sh,.2)
+        sh.type(b'echo beta\r');settled(sh,.2)
+        before=len(sh.data['out']);sh.type(b'echo al\x1b[A\r')
+        sh.until(lambda:len(sh.data['out'])>before);settled(sh)
+        assert sh.data['out'][before:]==b'alpha1\n',sh.data
+        print('ok histsearch: Up bypasses unrelated newest history',flush=True)
+    finally:
+        assert sh.close(),'terminal mode not restored'
+
+def cost(binary,home):
+    hist=home/'large-history'
+    hist.write_text('echo needle_tail\n'+''.join(f': other{i}\n' for i in range(32766)))
+    sh=Shell(binary,home,['-o','friendly','-o','suggest','-o','histsearch'],history=hist,disable_thp=sys.platform.startswith('linux'))
+    try:
+        sh.type(b'\x07');settled(sh,.2)
+        if sys.platform.startswith('linux'):
+            a=idle_snapshot(sh.p.pid);time.sleep(10);b=idle_snapshot(sh.p.pid)
+            print('idle before',json.dumps(a,sort_keys=True),flush=True)
+            print('idle after',json.dumps(b,sort_keys=True),flush=True)
+            assert a['contexts']==b['contexts'],(a,b)
+            for k in ['cpu_ticks','minor_faults','major_faults','statm_resident_pages']:
+                assert a[k]==b[k],(k,a[k],b[k])
+            assert a['status']['THP_enabled']==b['status']['THP_enabled']=='0'
+            assert a['smaps_rollup']['Anonymous']==b['smaps_rollup']['Anonymous']
+            print('ok idle 10s: zero context switches; unchanged resident/anonymous memory; child THP disabled',flush=True)
+        else:
+            print('SKIP idle /proc counters: Linux only (raw and cost rows still run)',flush=True)
+        samples=[];byte_counts=[]
+        for i in range(101):
+            old=len(sh.data['tty']);sh.type(b'\x15echo needl')
+            sh.until(lambda:b'\x1b[90me_tail\x1b[39m\x1b[6D' in sh.data['tty'][old:])
+            old=len(sh.data['tty']);start=time.perf_counter_ns();sh.type(b'e')
+            sh.until(lambda:b'\x1b[90m_tail\x1b[39m\x1b[5D' in sh.data['tty'][old:])
+            samples.append((time.perf_counter_ns()-start)/1e6);byte_counts.append(len(sh.data['tty'])-old)
+        med=statistics.median(samples[1:]);p99=sorted(samples[1:])[98]
+        print(f'lookup 32767 entries oldest-match: median {med:.6f} ms p99 {p99:.6f} ms; 100 samples after warmup; bytes/key {min(byte_counts[1:])}..{max(byte_counts[1:])}',flush=True)
+        assert med<5.5,(med,p99)
+        assert p99<5.5,(med,p99)
+        assert max(byte_counts[1:])<=80,byte_counts
+    finally:
+        assert sh.close(),'terminal mode not restored'
+
+if __name__=='__main__':
+    binary=Path(sys.argv[1]).resolve()
+    with tempfile.TemporaryDirectory(prefix='sh29-witness-') as temp:
+        home=Path(temp)
+        raw_law(binary,home)
+        if '--raw-only' not in sys.argv: cost(binary,home)
