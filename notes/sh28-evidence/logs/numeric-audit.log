@@ -1,0 +1,15 @@
+zero_case_undo DIFF
+bash ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abc\\\\e0\\\\eu\\\\x1f\\\\r"', 'step 3 "exit"', 'exit 0 at step 3']
+pelt ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abc\\\\e0\\\\eu\\\\x1f\\\\r"', 'out "abc\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+numeric_insert_undo DIFF
+bash ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo \\\\e3x\\\\x1f\\\\r"', 'out "\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+pelt ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo \\\\e3x\\\\x1f\\\\r"', 'step 3 "exit"', 'exit 0 at step 3']
+numeric_transpose_chars_end DIFF
+bash ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abc\\\\e2\\\\x14\\\\r"', 'out "acb\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+pelt ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abc\\\\e2\\\\x14\\\\r"', 'out "abc\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+numeric_transpose_words_end DIFF
+bash ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo one two three\\\\e2\\\\et\\\\r"', 'out "three two one\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+pelt ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo one two three\\\\e2\\\\et\\\\r"', 'out "one two three\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+numeric_delete_yank DIFF
+bash ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abcde\\\\e3\\\\x7f \\\\x19\\\\r"', 'out "ab cde\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+pelt ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo abcde\\\\e3\\\\x7f \\\\x19\\\\r"', 'out "ab\\n"', 'step 3 "exit"', 'exit 0 at step 3']

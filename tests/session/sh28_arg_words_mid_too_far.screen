@@ -1,0 +1,9 @@
+step 2
+| $ D A B C echo
+| pelt: line 2: D: not found
+| $
+cursor 2 2
+step 3
+| $ exit
+| 
+cursor 1 0

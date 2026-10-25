@@ -25,6 +25,7 @@ fn numeric_key(mut e: Ed, k: int) -> bool {
     let meta = k >= K_ALT + 48 && k <= K_ALT + 57
     let plain = e.arg_active && k >= 48 && k <= 57
     if meta || plain {
+        if !e.arg_active { e.last_insert = false }
         let digit = (if meta then k - K_ALT else k) - 48
         e.arg_active = true
         e.arg_digits = true
@@ -32,6 +33,7 @@ fn numeric_key(mut e: Ed, k: int) -> bool {
         return true
     }
     if k == K_ALT + 45 || e.arg_active && k == 45 && !e.arg_digits {
+        if !e.arg_active { e.last_insert = false }
         e.arg_active = true
         e.arg_sign = 0 - e.arg_sign
         return true
@@ -186,18 +188,26 @@ fn transpose_chars(mut e: Ed) {
     draw_from(mut e, start)
 }
 
-fn transpose_words(mut e: Ed) {
-    var end = word_fwd(e, e.cur)
-    var right = word_back(e, end)
-    if e.cur == e.buf.len || right == 0 {
-        end = e.cur
-        while end > 0 && !is_wordch(e.buf[prv(e, end)]) { end = prv(e, end) }
-        right = word_back(e, end)
+fn transpose_words(mut e: Ed, n: int) {
+    if n <= 0 { return }
+    // Readline's counted operation exchanges the selected endpoint words,
+    // not n repeated pair swaps. Both motions clamp at the line boundaries.
+    var end = e.cur
+    var i = 0
+    while i < n && end < e.buf.len {
+        end = word_fwd(e, end)
+        i += 1
     }
-    var mid = right
-    while mid > 0 && !is_wordch(e.buf[prv(e, mid)]) { mid = prv(e, mid) }
-    let start = word_back(e, mid)
-    if start == mid || right == end {
+    while end > 0 && !is_wordch(e.buf[prv(e, end)]) { end = prv(e, end) }
+    let right = word_back(e, end)
+    var start = end
+    i = 0
+    while i <= n && start > 0 {
+        start = word_back(e, start)
+        i += 1
+    }
+    let mid = word_fwd(e, start)
+    if start >= right || right == end {
         bell(mut e)
         return
     }
@@ -211,6 +221,7 @@ fn transpose_words(mut e: Ed) {
 }
 
 fn case_word(mut e: Ed, key: int, n: int) {
+    if n == 0 { return }
     let old = e.cur
     var count = if n < 0 then 0 - n else n
     var start = e.cur
@@ -261,13 +272,22 @@ fn friendly_command(mut e: Ed, k: int, n: int, counted: bool) -> bool {
         yank_last_arg(mut e, n, counted)
     } else if k == 25 || k == K_ALT + 121 {
         yank_ring(mut e, k != 25, n)
-    } else if k == 20 || k == K_ALT + 116 {
+    } else if k == 20 {
         var i = 0
-        let times = if n < 0 then 0 else n
-        while i < times {
-            if k == 20 { transpose_chars(mut e) } else { transpose_words(mut e) }
+        while i < n {
+            let before = e.cur
+            transpose_chars(mut e)
             i += 1
+            if e.cur == e.buf.len || e.cur == before { break }
         }
+    } else if k == K_ALT + 116 {
+        transpose_words(mut e, n)
+    } else if counted &&
+        (k == 127 || k == 8 || k == K_DEL || k == 4) &&
+        !(k == 4 && e.buf.len == 0 && n > 0) {
+        numeric_delete(mut e, k, n)
+        e.tabs = 0
+        return true
     } else if k == K_ALT + 117 || k == K_ALT + 108 || k == K_ALT + 99 {
         case_word(mut e, k - K_ALT, n)
     } else if k == 31 {
@@ -329,4 +349,34 @@ fn friendly_command(mut e: Ed, k: int, n: int, counted: bool) -> bool {
     e.last_kill = false
     e.tabs = 0
     true
+}
+
+/// Explicitly counted deletion is a kill (readline manual / pty audit).
+/// Ordinary uncounted Backspace/Delete keeps its original behavior.
+fn numeric_delete(mut e: Ed, k: int, n: int) {
+    if n == 0 { e.last_kill = false; return }
+    var backward = k == 127 || k == 8
+    if n < 0 { backward = !backward }
+    let count = if n < 0 then 0 - n else n
+    var a = e.cur
+    var b = e.cur
+    var i = 0
+    while i < count {
+        if backward && a > 0 {
+            a = prv(e, a)
+        } else if !backward && b < e.buf.len {
+            b = nxt(e, b)
+        } else {
+            break
+        }
+        i += 1
+    }
+    if a == b {
+        bell(mut e)
+        e.last_kill = false
+        return
+    }
+    kill_text(mut e, slice_of(e.buf, a, b), backward)
+    e.last_kill = true
+    delete(mut e, a, b)
 }

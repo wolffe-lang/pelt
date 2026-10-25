@@ -1,0 +1,8 @@
+step 2
+| $ echo A B! C D
+| $
+cursor 1 2
+step 3
+| $ exit
+| 
+cursor 1 0

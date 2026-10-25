@@ -1,0 +1,14 @@
+build: target/native/pelt
+ok numeric regression zero_case_undo
+ok numeric regression numeric_insert_undo
+ok numeric regression numeric_transpose_chars_end
+ok numeric regression numeric_transpose_words_end
+ok numeric regression numeric_delete_yank
+ok numeric regression words_end_2
+ok numeric regression words_mid_2
+ok numeric regression words_mid_negative
+ok numeric regression words_mid_negative2
+ok numeric regression words_end_too_far
+ok numeric regression words_mid_too_far
+ok numeric regression chars_end_too_far
+ok numeric regression chars_mid_2

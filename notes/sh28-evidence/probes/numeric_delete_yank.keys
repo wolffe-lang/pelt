@@ -1,0 +1,3 @@
+exec 2>&0
+\k echo abcde\e3\x7f \x19\r
+exit
