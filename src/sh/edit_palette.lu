@@ -218,13 +218,26 @@ fn highlight_active(sh: Sh) -> bool {
 
 fn highlight_warning(mut sh: Sh) {
     if !highlight_active(sh) { return }
-    let theme = hl_theme(
-        sh.vals["PELT_COLORS"] else "",
-        sh.vals["TERM"] else "",
-        sh.vals["COLORTERM"] else "",
-    )
-    if theme.warning.len > 0 {
-        write_fd(mut sh, 2, "pelt: PELT_COLORS: invalid entry '{theme.warning}'; using defaults\n")
+    let warning = copy region theme_check {
+        hl_theme(
+            sh.vals["PELT_COLORS"] else "",
+            sh.vals["TERM"] else "",
+            sh.vals["COLORTERM"] else "",
+        ).warning
+    }
+    if warning.len > 0 {
+        var safe = List[byte]()
+        var count = 0
+        for cp in cps_of(warning) {
+            if count >= 64 { break }
+            show_cp(mut safe, cp)
+            count += 1
+        }
+        write_fd(
+            mut sh,
+            2,
+            "pelt: PELT_COLORS: invalid entry '{text(Buf { b: safe })}'; using defaults\n",
+        )
     }
 }
 

@@ -146,7 +146,7 @@ fn hl_classify(cps: List[int], commands: Map[str, bool]) -> HlLine {
                 target = true
             } else {
                 hl_paint(mut kinds, start, i, HC_OPERATOR)
-                command = c != 41
+                command = true
                 target = false
                 header = false
             }
@@ -190,10 +190,12 @@ fn hl_classify(cps: List[int], commands: Map[str, bool]) -> HlLine {
         if target {
             kind = HC_REDIRECTION
             target = false
+        } else if plain && i < cps.len && (cps[i] == 60 || cps[i] == 62) && is_digits(word) {
+            kind = HC_REDIRECTION
         } else if plain && (command || header) && hl_reserved(word) {
             kind = HC_RESERVED
-            header = word == "for" || word == "case"
-            command = leads_command(word) || word == "in"
+            header = word == "for" || word == "case" || word == "in"
+            command = leads_command(word)
         } else if command {
             // Assignments and IO numbers do not consume command position.
             if is_assignment(word) {

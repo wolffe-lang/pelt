@@ -1,0 +1,6 @@
+exec 1>&0 2>&0
+\k echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\x01\x06\x06
+\size 16 24
+\size 80 24
+\k \x07\x05\x15
+exit 0

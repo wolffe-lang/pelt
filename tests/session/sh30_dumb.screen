@@ -1,0 +1,13 @@
+step 1
+| $ exec 1>&0 2>&0
+| $
+cursor 1 2
+step 2
+| $ echo plain
+| plain
+| $
+cursor 2 2
+step 3
+| $ exit 0
+| 
+cursor 1 0

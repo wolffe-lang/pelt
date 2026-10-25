@@ -1,0 +1,8 @@
+exec 1>&0 2>&0
+set -o friendly -o histsearch
+echo alpha
+\k echo al
+\k \x12
+\k \x07
+\k \x07\x05\x15
+exit 0

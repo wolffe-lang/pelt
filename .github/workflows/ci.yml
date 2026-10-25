@@ -314,13 +314,18 @@ jobs:
       # Linux at 15 and the whole-job ceiling at 45. No cases are skipped.
       - name: the session corpus, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: ${{ matrix.os == 'macos-latest' && 45 || 15 }}
+        timeout-minutes: ${{ matrix.os == 'macos-latest' && 45 || 25 }}
         run: tools/session --bin target/${{ matrix.tier }}
 
       - name: shadow bytes, bounded lookup and idle, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 5
         run: tools/shadow-witness target/${{ matrix.tier }}/pelt
+
+      - name: colour bytes, reset boundaries and idle, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/colour-witness target/${{ matrix.tier }}/pelt
 
       # sh11: the editor gives the terminal back, asked from outside: the
       # modes after SIGHUP (pelt dies of it, as dash), SIGTERM (ignored),

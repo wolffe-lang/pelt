@@ -1,0 +1,19 @@
+step 1
+| $ exec 1>&0 2>&0
+| $
+cursor 1 2
+step 2
+| $ echo ./shared
+cursor 0 15
+step 3
+| $ echo ./shared-
+| shared-one  shared-two
+| $ echo ./shared-
+cursor 2 16
+step 4
+| $
+cursor 0 2
+step 5
+| $ exit 0
+| 
+cursor 1 0

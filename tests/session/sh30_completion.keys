@@ -1,0 +1,5 @@
+exec 1>&0 2>&0
+\k echo ./shared
+\k \t\t
+\k \x07\x05\x15
+exit 0

@@ -1,0 +1,6 @@
+args=--posix -o highlight
+env=PS1=$\s TERM=xterm-256color
+tr_by=hand
+why=sh30 independent typed text and no-execution expectations; pelt-owned screen; raw SGR checked by colour-witness
+screen=1
+screen_by=hand
