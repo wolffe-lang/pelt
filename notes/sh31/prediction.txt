@@ -1,0 +1,15 @@
+sh31 prediction, before implementation or oracle measurements.
+Fish 4.9.3 expands a default abbreviation on Space and Enter.
+At 80 columns the pager fits two candidate/description cells when their
+width permits; narrow terminals collapse to one column.
+Expect about 70 new typed sessions, all old expectations unchanged.
+Enter-time !! expansion will leave release 80-column key-response p99
+under 1 ms; an idle prompt still has zero wakeups.
+R-sh31-1 A: atomic name<TAB>expansion records, not executable scripts.
+R-sh31-2 A: whole first word on Space only in pelt (Enter measured separately).
+R-sh31-3: measured fish keys where available, otherwise Tab/backtab/arrows,
+Enter accepts without execution and Escape dismisses.
+R-sh31-4 A: own error, preserve original line for editing.
+R-sh31-5 A: !$ preserves the shell word as typed.
+R-sh31-6 A: store expanded executed text, never display escapes.
+These are recommendations, not maintainer rulings.
