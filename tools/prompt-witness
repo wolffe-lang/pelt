@@ -16,6 +16,50 @@ def ready(binary,home,cols=80,env=None,args=(),thp=False):
     colour.settled(sh);step(sh,b'\x0c')
     return sh
 
+def home_aliases(binary,base):
+    """Native regression: HOME's spelling need not be the kernel cwd spelling."""
+    physical=base/'physical';physical.mkdir()
+    (physical/'alpha/beta/日本語').mkdir(parents=True)
+    home=base/'home';home.symlink_to(physical,target_is_directory=True)
+    alias=base/'alias';alias.symlink_to(physical,target_is_directory=True)
+    outside=base/'outside';outside.mkdir()
+    (physical/'away').symlink_to(outside,target_is_directory=True)
+    neighbor=base/'physical-neighbor';neighbor.mkdir()
+    sh=ready(binary,home)
+    def expect(raw,path,name):
+        wanted=b'tester@box '+path.encode()+b'\x1b[0m'+MARK
+        assert wanted in raw,(name,wanted,raw)
+    try:
+        raw=step(sh,b'printf "HOME=%s\\n" "$HOME"; pwd; pwd -P\r')
+        expected=str(physical.resolve()).encode()+b'\r\n'
+        assert raw.count(expected)>=2,('prompt-home-physical-pwd',raw)
+        print('prompt-home-paths HOME='+str(home)+' pwd='+str(physical.resolve())+' pwd-P='+str(physical.resolve()),flush=True)
+        expect(raw,'~','prompt-symlink-HOME')
+        raw=step(sh,b'cd alpha/beta/'+ '日本語'.encode()+b'\r')
+        expect(raw,'~/a/b/日本語','prompt-symlink-HOME-child')
+        raw=step(sh,b'cd "$HOME/away"\r')
+        expect(raw,'~/away','prompt-logical-HOME-preferred')
+        raw=step(sh,b'pwd; pwd -P\r')
+        assert str(home/'away').encode()+b'\r\n' in raw and str(outside.resolve()).encode()+b'\r\n' in raw,('prompt-logical-pwd',raw)
+        raw=step(sh,('cd "'+str(alias)+'/alpha/beta/日本語"\r').encode())
+        expect(raw,'~/a/b/日本語','prompt-physical-HOME-via-other-alias')
+        raw=step(sh,b'HOME="$HOME/"; cd -P "$HOME"\r')
+        expect(raw,'~','prompt-symlink-HOME-trailing-slash')
+        raw=step(sh,('cd "'+str(neighbor)+'"\r').encode())
+        assert b'tester@box ~' not in raw,('prompt-HOME-component-boundary',raw)
+        raw=step(sh,b'cd "$HOME"; HOME="$HOME/missing"\r')
+        assert b'tester@box ~' not in raw,('prompt-missing-HOME',raw)
+        raw=step(sh,b'unset HOME\r')
+        assert b'tester@box ~' not in raw,('prompt-unset-HOME',raw)
+    finally:assert sh.close()
+    sh=ready(binary,home,env={'PWD':str(home)})
+    try:
+        expect(sh.data['tty'],'~','prompt-inherited-logical-PWD')
+        raw=step(sh,b'pwd\r')
+        assert str(home).encode()+b'\r\n' in raw,('prompt-inherited-pwd-kept',raw)
+    finally:assert sh.close()
+    print('ok prompt-symlink-HOME/logical-PWD/physical-fallback/boundary/missing',flush=True)
+
 def laws(binary,home):
     (home/'alpha/beta/日本語').mkdir(parents=True)
     for cols in (24,39,40,80,200):
@@ -144,6 +188,7 @@ def cost(binary,home):
 
 if __name__=='__main__':
     binary=Path(sys.argv[1]).resolve()
+    with tempfile.TemporaryDirectory(prefix='sh32b-home-') as temp:home_aliases(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-laws-') as temp: laws(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-vcs-') as temp:vcs(binary,Path(temp))
     if '--raw-only' not in sys.argv:
