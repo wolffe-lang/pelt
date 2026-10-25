@@ -1,2 +1,2 @@
 FROM docker.io/library/archlinux:base
-RUN taskset -c 6-11 pacman -Syu --noconfirm --needed dash bash fish python gcc clang lld git curl strace time procps-ng && taskset -c 6-11 pacman -Scc --noconfirm
+RUN taskset -c 6-11 pacman -Syu --noconfirm --needed dash bash fish python gcc clang lld git curl strace time procps-ng diffutils && taskset -c 6-11 pacman -Scc --noconfirm

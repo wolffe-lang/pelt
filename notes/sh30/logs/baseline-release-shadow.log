@@ -1,0 +1,7 @@
+ok drawn-never-typed: visible SGR90, Enter output prefix only, EL before finish
+ok clear-cu: EL before deleting typed prefix; no new shadow on empty line
+ok histsearch: Up bypasses unrelated newest history
+idle before {"contexts": 9, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2492, "page_size_bytes": 4096, "pid": 11798, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7324 kB", "Pss_Anon": "7324 kB", "Pss_File": "2361 kB", "Pss_Shmem": "0 kB", "Rss": "11240 kB"}, "statm_resident_pages": 2810, "status": {"RssAnon": "7324 kB", "RssFile": "3916 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "11240 kB"}, "thp_enabled": "always [madvise] never"}
+idle after {"contexts": 9, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2492, "page_size_bytes": 4096, "pid": 11798, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7324 kB", "Pss_Anon": "7324 kB", "Pss_File": "2361 kB", "Pss_Shmem": "0 kB", "Rss": "11240 kB"}, "statm_resident_pages": 2810, "status": {"RssAnon": "7324 kB", "RssFile": "3916 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "11240 kB"}, "thp_enabled": "always [madvise] never"}
+ok idle 10s: zero context switches; unchanged resident/anonymous memory; child THP disabled
+lookup 32767 entries oldest-match: median 0.094393 ms p99 0.346919 ms; 100 samples after warmup; bytes/key 26..26
