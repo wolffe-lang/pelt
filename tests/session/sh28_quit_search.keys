@@ -1,0 +1,6 @@
+exec 2>&0
+: old
+false
+\k \x12old\x1c
+printf 'status:%s\n' $?:end
+exit

@@ -1,0 +1,6 @@
+exec 2>&0
+trap 'echo trapped' QUIT
+false
+\k echo forbidden\x1c
+printf 'status:%s\n' $?:end
+exit

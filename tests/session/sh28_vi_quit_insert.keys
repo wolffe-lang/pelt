@@ -1,0 +1,4 @@
+exec 2>&0
+\k echo forbidden\x1c
+echo survived
+exit

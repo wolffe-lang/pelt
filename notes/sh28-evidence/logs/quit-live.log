@@ -1,0 +1,14 @@
+build: target/native/pelt
+dash raw b'$ ^\\\r\n$ exit\r\n'
+dash screens [['| $', 'cursor 0 2'], ['| $ ^\\', '| $', 'cursor 1 2'], ['| $ exit', '| ', 'cursor 1 0']]
+bash raw b'$ \n$ exit\nexit\n'
+bash screens [['| $', 'cursor 0 2'], ['| $', '|   $', 'cursor 1 4'], ['|   $ exit', '|         exit', '| ', 'cursor 2 12']]
+ok gate on b'ba\n'
+ok gate default-off b'ab\n'
+ok gate no-stderr-tty b'ab\n'
+ok gate posix-hard-disable b'ab\n'
+ok gate feature-off b'ab\n'
+ok gates script, pipe, -c builtin absence
+ok empty history bell; live bindings, actions, remapped stty, vi
+ok friendly idle 10s: contexts 0, RSS pages 3001->3001
+last-arg 32767 entries: median 0.032948 ms, p99 0.057763 ms, 100 samples after warmup

@@ -48,7 +48,7 @@
 //! vi insert mode; in vi command mode only interrupt and end of file
 //! (a printable erase stays vi's command there). A default key whose
 //! character was moved or disabled does nothing; `^?` and `^H` always
-//! erase unless one of them is another special character. Quit,
+//! erase unless one of them is another special character. Quit clears the pending line without a signal or status change;
 //! suspend, start and stop do nothing in the editor (`role_key`).
 //!
 //! **Drawing.** The prompt is the shell's (standard error, as POSIX
@@ -130,6 +130,8 @@ const K_DEL: int = 3145735
 const K_WLEFT: int = 3145736
 
 const K_WRIGHT: int = 3145737
+
+const K_QUIT: int = 3145739
 
 const K_NONE: int = 3145738
 
@@ -1570,6 +1572,10 @@ fn next_key(mut e: Ed) -> int {
         return k
     }
     let k = key_raw(mut e)
+    if k == K_QUIT {
+        clear_quit(mut e)
+        return k
+    }
     if e.recording && k >= 0 {
         (mut e.rec).push(k)
     }
@@ -1619,7 +1625,7 @@ fn key_raw(mut e: Ed) -> int {
 /// A one-byte key as the editor takes it (module doc): the user's
 /// special character acts as the editor's default key for it does
 /// (interrupt `^C`, end of file `^D`, erase `^?`, kill `^U`, word erase
-/// `^W`, literal next `^V`); quit, suspend, start and stop are nothing;
+/// `^W`, literal next `^V`); quit clears the line, suspend/start/stop do nothing;
 /// a default key whose character the user moved or disabled is nothing.
 /// In vi command mode only interrupt and end of file are the terminal's.
 fn role_key(e: Ed, b: int) -> int {
@@ -1644,9 +1650,15 @@ fn role_key(e: Ed, b: int) -> int {
         if b == c[TC_LNEXT] {
             return 22
         }
-        if b == c[TC_QUIT] || b == c[TC_SUSP] || b == c[TC_START] || b == c[TC_STOP] {
+        if b == c[TC_QUIT] {
+            return K_QUIT
+        }
+        if b == c[TC_SUSP] || b == c[TC_START] || b == c[TC_STOP] {
             return K_NONE
         }
+    }
+    if !all && b == c[TC_QUIT] {
+        return K_QUIT
     }
     if b == 3 || b == 4 {
         return K_NONE
@@ -1886,6 +1898,7 @@ fn emacs_loop(mut e: Ed) {
 }
 
 fn emacs_key(mut e: Ed, k: int) {
+    if k == K_QUIT { return }
     let was_kill = e.last_kill
     e.last_kill = false
     let again = e.tabs > 0
@@ -2079,6 +2092,7 @@ fn isearch(mut e: Ed) -> bool {
     show_search(mut e, pat, line, -1, false)
     loop {
         let k = next_key(mut e)
+        if k == K_QUIT { return false }
         var again = false
         if k == K_HUP || k == K_EOF || k == K_INTR || k == K_CHILD || k == 3 && !e.int_ignored {
             // the line ends; what is shown is the match
@@ -2282,6 +2296,7 @@ fn vi_insert(mut e: Ed, replace: bool) {
     e.tabs = 0
     while e.done < 0 {
         let k = next_key(mut e)
+        if k == K_QUIT { return }
         if ends_line(mut e, k) {
             return
         }
@@ -2421,6 +2436,7 @@ fn alert(mut e: Ed) {
 
 /// One command-mode command `k` with `count` (0: none given).
 fn vi_command(mut e: Ed, k: int, count: int) {
+    if k == K_QUIT { return }
     let n = if count > 0 then count else 1
     if k == 13 || k == 10 {
         finish(mut e, ED_OK)
@@ -3092,6 +3108,7 @@ fn vi_search_cmd(mut e: Ed, c: int) {
     set_line(mut e, pb, 1)
     loop {
         let k = next_key(mut e)
+        if k == K_QUIT { return }
         if ends_line(mut e, k) {
             return
         }
@@ -3272,4 +3289,26 @@ fn friendly_active(sh: Sh) -> bool {
         fd_get(sh, 0) == 0 &&
         (os_isatty(0) else false) &&
         (os_isatty(fd_get(sh, 2)) else false)
+}
+
+/// Honour the terminal's quit character as an editor flush, not a signal.
+/// No status/trap/job change: the line is still waiting for input.
+fn clear_quit(mut e: Ed) {
+    e.h = e.hist.len
+    e.orig = List[int]()
+    e.orig_set = false
+    e.changes = List[EdChange]()
+    e.arg_active = false
+    e.arg_digits = false
+    e.arg_value = 0
+    e.arg_sign = 1
+    e.mark = 0
+    e.last_cmd = -1
+    e.last_insert = false
+    e.last_kill = false
+    e.tabs = 0
+    e.vi_ins = true
+    e.recording = false
+    e.rec = List[int]()
+    set_line(mut e, List[int](), 0)
 }

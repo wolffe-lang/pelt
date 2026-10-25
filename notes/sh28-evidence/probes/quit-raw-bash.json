@@ -1,0 +1,38 @@
+{
+  "chunks_hex": [
+    "2420",
+    "0a",
+    "2420",
+    "657869740a",
+    "657869740a"
+  ],
+  "transcript": [
+    "step 0",
+    "err no",
+    "prompt \"$ \"",
+    "step 1 \"\\\\k echo kept\\\\x1c\\\\r\"",
+    "err no",
+    "prompt \"$ \"",
+    "step 2 \"exit\"",
+    "err yes",
+    "prompt \"\"",
+    "exit 0 at step 2"
+  ],
+  "screens": [
+    [
+      "| $",
+      "cursor 0 2"
+    ],
+    [
+      "| $",
+      "|   $",
+      "cursor 1 4"
+    ],
+    [
+      "|   $ exit",
+      "|         exit",
+      "| ",
+      "cursor 2 12"
+    ]
+  ]
+}

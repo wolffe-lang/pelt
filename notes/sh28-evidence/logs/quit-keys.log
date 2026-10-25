@@ -1,0 +1,69 @@
+build: target/native/pelt
+sh28_numeric_quoted ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo \\\\e3\\\\x16x\\\\r"', 'out "xxx\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_quit_remapped ['step 0', 'step 1 "exec 2>&0"', 'step 2 "stty quit \'^E\'"', 'step 3 "\\\\k echo forbidden\\\\x05"', 'step 4 "echo survived"', 'out "survived\\n"', 'step 5 "exit"', 'exit 0 at step 5']
+sh28_quit_search ['step 0', 'step 1 "exec 2>&0"', 'step 2 ": old"', 'step 3 "false"', 'step 4 "\\\\k \\\\x12old\\\\x1c"', 'step 5 "printf \'status:%s\\\\n\' $?:end"', 'out "status:1:end\\n"', 'step 6 "exit"', 'exit 0 at step 6']
+sh28_quit_status ['step 0', 'step 1 "exec 2>&0"', 'step 2 "trap \'echo trapped\' QUIT"', 'step 3 "false"', 'step 4 "\\\\k echo forbidden\\\\x1c"', 'out "trapped\\n"', 'step 5 "printf \'status:%s\\\\n\' $?:end"', 'out "status:1:end\\n"', 'step 6 "exit"', 'exit 0 at step 6']
+sh28_transpose_negative ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo one two three\\\\e-\\\\et!\\\\r"', 'out "one two three!\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+sh28_vi_quit_command ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo forbidden\\\\e\\\\x1c"', 'step 3 "echo survived"', 'out "survived\\n"', 'step 4 "exit"', 'exit 0 at step 4']
+sh28_vi_quit_insert ['step 0', 'step 1 "exec 2>&0"', 'step 2 "\\\\k echo forbidden\\\\x1c"', 'step 3 "echo survived"', 'out "survived\\n"', 'step 4 "exit"', 'exit 0 at step 4']
+session: pelt = /home/mfwolffe/lanes/sh28/pelt/target/native/pelt
+ok   sh28_numeric_quoted
+ok   sh28_quit_remapped
+ok   sh28_quit_search
+FAIL sh28_quit_status
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "exec 2>&0"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt step 2 "trap 'echo trapped' QUIT"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "false"
+       pelt err no
+       pelt prompt ""
+       pelt step 4 "\\k echo forbidden\\x1c"
+     ! pelt err no
+       dash out "trapped\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 5 "printf 'status:%s\\n' $?:end"
+       dash prompt ""
+     ! pelt out "status:1:end\n"
+       dash step 5 "printf 'status:%s\\n' $?:end"
+     ! pelt err no
+       dash out "status:1:end\n"
+     ! pelt prompt ""
+       dash err no
+     ! pelt step 6 "exit"
+       dash prompt ""
+     ! pelt err no
+       dash step 6 "exit"
+     ! pelt prompt ""
+       dash err no
+     ! pelt exit 0 at step 6
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 6
+FAIL sh28_transpose_negative
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "exec 2>&0"
+     ! pelt err no
+       dash err yes
+       pelt prompt ""
+       pelt step 2 "\\k echo one two three\\e-\\et!\\r"
+     ! pelt out "one three! two\n"
+       dash out "one two three!\n"
+       pelt err no
+       pelt prompt ""
+       pelt step 3 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 3
+ok   sh28_vi_quit_command
+ok   sh28_vi_quit_insert
+session: pass 5  fail 2  pending 0 (0)
