@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Friendly prompt raw-byte, storage, refresh, gate and strict cost laws."""
+from pathlib import Path
+import fcntl,importlib.machinery,importlib.util,json,os,statistics,struct,subprocess,sys,tempfile,termios,time
+ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'tools'))
+from lib_shadow import Shell,idle_snapshot
+loader=importlib.machinery.SourceFileLoader('prompt_colour',str(ROOT/'tools/colour-witness'))
+spec=importlib.util.spec_from_loader(loader.name,loader);colour=importlib.util.module_from_spec(spec);loader.exec_module(colour)
+step=colour.step
+MARK=b'# ' if os.geteuid()==0 else b'> '
+def ready(binary,home,cols=80,env=None,args=(),thp=False):
+    values={'PS1':None,'USER':'tester','HOSTNAME':'box.example','COLUMNS':None,'TERM':'xterm-256color'}
+    values.update(env or {})
+    marker=MARK if values['PS1'] is None and '--posix' not in args and values['TERM']!='dumb' else (values['PS1'] or '$ ').encode()
+    sh=Shell(binary,home,['-o','friendly',*args],tty_out=True,cols=cols,env_overrides=values,ready_marker=marker,disable_thp=thp)
+    colour.settled(sh);step(sh,b'\x0c')
+    return sh
+
+def laws(binary,home):
+    (home/'alpha/beta/日本語').mkdir(parents=True)
+    for cols in (24,39,40,80,200):
+        sh=ready(binary,home,cols)
+        try:
+            assert b'tester@box ~\x1b[0m'+MARK in sh.data['tty'],('prompt-home',cols,sh.data['tty'])
+            raw=step(sh,b'cd alpha/beta/'+ '日本語'.encode()+b'\r')
+            assert '~/a/b/日本語'.encode() in raw,('prompt-path',cols,raw)
+            raw=step(sh,b'false\r');assert b'[\x1b[1m1\x1b[0m]' in raw,('prompt-status',raw)
+            raw=step(sh,b'echo $?\r');assert b'\r\n1\r\n' in raw,('prompt-preserves-status',raw)
+            step(sh,b"prompt_right() { printf RIGHT; printf x >> \"$HOME/calls\"; }\r")
+            count=(home/'calls').read_bytes()
+            raw=step(sh,b'echo kept')
+            assert (home/'calls').read_bytes()==count,('prompt-right-per-key-execution',raw)
+            if cols>=40:assert b'RIGHT' in sh.data['tty'],('prompt-right-absent',raw)
+            else:assert b'RIGHT' not in raw,('prompt-right-narrow',raw)
+            raw=step(sh,b'\r');assert b'\r\nkept\r\n' in raw,('prompt-right-storage',raw)
+            colour.assert_resets(raw)
+            step(sh,b'echo '+b'x'*(cols+10))
+            assert not sh.screen.snapshot(0)[-2].endswith('RIGHT'),sh.screen.snapshot(0)
+            step(sh,b'\x03')
+            print('ok prompt-home/path/status/right-storage/one-call',cols,flush=True)
+        finally:assert sh.close()
+    sh=ready(binary,home)
+    try:
+        step(sh,b'prompt_right() { printf RIGHT; }\r')
+        step(sh,b'echo draft')
+        step(sh,b'\x01')
+        for cols in (39,80,200,40,80):
+            sh.screen.resize(cols,24);fcntl.ioctl(sh.master,termios.TIOCSWINSZ,struct.pack('HHHH',24,cols,0,0));colour.settled(sh,.2)
+        raw=step(sh,b'\x05\r');assert b'\r\ndraft\r\n' in raw,('prompt-resize-cursor',raw)
+        step(sh,b'echo draft');step(sh,b'\x17');step(sh,b'\x19');raw=step(sh,b'\r');assert b'\r\ndraft\r\n' in raw,raw
+        step(sh,b'echo ');raw=step(sh,b'\t');assert b'completions' in raw,raw
+        step(sh,b'\x1b');colour.settled(sh,.2);raw=step(sh,b'pager-kept\r');assert b'\r\npager-kept\r\n' in raw,raw
+        step(sh,b'set -o histsearch\r');step(sh,b'echo original');step(sh,b'\x12');step(sh,b'\x07');raw=step(sh,b'\r');assert b'\r\noriginal\r\n' in raw,raw
+        step(sh,b"prompt_right() { printf '\\033[31mBAD\\nLINE'; }\r")
+        raw=step(sh,b'\x0c');assert b'^[[31mBAD^JLINE' in raw and b'\x1b[31mBAD' not in raw,raw
+        step(sh,b"PS1='EXPLICIT '; prompt_right() { echo BAD > marker; }\r")
+        raw=step(sh,b'echo explicit\r');assert b'EXPLICIT ' in raw and b'tester@box' not in raw,('prompt-PS1-precedence',raw)
+        assert not (home/'marker').exists(),'explicit PS1 ran prompt_right'
+        print('ok prompt-resize/pagers/kill/control-escaping/PS1-assignment',flush=True)
+    finally:assert sh.close()
+    for history in home.glob('history-*'):
+        text=history.read_bytes();assert b'\x1b' not in text and b'tester@box ~' not in text,('prompt-history-storage',text)
+    for ps1 in ('$ ','EXPLICIT ', ''):
+        # Empty PS1 still gets an editor acknowledgement; use initial CPR bytes.
+        marker=ps1.encode() if ps1 else b'\x1b[6n'
+        sh=Shell(binary,home,['-o','friendly'],tty_out=True,env_overrides={'PS1':ps1,'HOSTNAME':'box','USER':'tester'},ready_marker=marker)
+        try:
+            colour.settled(sh);raw=step(sh,b'echo explicit\r')
+            assert b'tester@box' not in raw and b'\r\nexplicit\r\n' in raw,('prompt-PS1-precedence',ps1,raw)
+        finally:assert sh.close()
+    for args,env in [(['--posix'],{}),([],{"TERM":"dumb"})]:
+        sh=ready(binary,home,args=args,env=env)
+        try:
+            raw=step(sh,b'echo gate\r');assert b'tester@box' not in raw and b'\x1b[0m' not in raw,('prompt-gate',raw)
+        finally:assert sh.close()
+    for argv,data in [([str(binary),'-o','friendly','-c','echo gate'],None),([str(binary),'-o','friendly'],b'echo gate\n')]:
+        p=subprocess.run(argv,input=data,capture_output=True,timeout=10)
+        assert p.returncode==0 and p.stdout==b'gate\n' and p.stderr==b'',('prompt-noninteractive',p)
+    print('ok prompt-PS1-precedence/environment/empty/gates/history',flush=True)
+
+def cost(binary,home):
+    metrics=[]
+    for right in (False,True):
+        sh=ready(binary,home,thp=sys.platform.startswith('linux'))
+        try:
+            if right:step(sh,b'prompt_right() { printf RIGHT; }\r')
+            step(sh,b'echo ')
+            timings=[]
+            for _ in range(110):
+                old=len(sh.data['tty']);start=time.perf_counter_ns();sh.type(b'x')
+                sh.until(lambda: b'x' in sh.data['tty'][old:]);timings.append((time.perf_counter_ns()-start)/1e6)
+                step(sh,b'\x7f')
+            timings=sorted(timings[10:]);median=statistics.median(timings);p99=timings[98]
+            metrics.append((median,p99));print('prompt-cost',right,'median_ms',median,'p99_ms',p99,flush=True)
+            if '--strict-cost' in sys.argv:assert median<1 and p99<1,('prompt-cost',right,median,p99)
+            step(sh,b'\x07');colour.settled(sh,.2)
+            if sys.platform.startswith('linux'):
+                a=idle_snapshot(sh.p.pid);time.sleep(10);b=idle_snapshot(sh.p.pid)
+                print('prompt-idle',right,json.dumps([a,b]),flush=True)
+                for key in ('contexts','cpu_ticks','minor_faults','major_faults'):assert a[key]==b[key],(key,a,b)
+                for key in ('Rss','Anonymous','AnonHugePages'):assert a['smaps_rollup'][key]==b['smaps_rollup'][key],(key,a,b)
+            else:print('SKIP prompt-idle Linux proc counters unavailable',flush=True)
+        finally:assert sh.close()
+    print('prompt-cost-delta median_ms',metrics[1][0]-metrics[0][0],'p99_ms',metrics[1][1]-metrics[0][1],flush=True)
+
+if __name__=='__main__':
+    binary=Path(sys.argv[1]).resolve()
+    with tempfile.TemporaryDirectory(prefix='sh32-laws-') as temp: laws(binary,Path(temp))
+    if '--raw-only' not in sys.argv:
+        with tempfile.TemporaryDirectory(prefix='sh32-cost-') as temp:cost(binary,Path(temp))

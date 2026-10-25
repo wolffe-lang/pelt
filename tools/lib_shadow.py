@@ -18,7 +18,7 @@ def ctty_without_thp():
         raise RuntimeError('PR_GET_THP_DISABLE did not confirm complete disable')
 
 class Shell:
-    def __init__(self, binary, home, args=(), tty_err=True, history=None, fullargv=None, tty_out=False, disable_thp=False, env_overrides=None, cols=1000):
+    def __init__(self, binary, home, args=(), tty_err=True, history=None, fullargv=None, tty_out=False, disable_thp=False, env_overrides=None, cols=1000, ready_marker=b'$ '):
         self.master, slave = pty.openpty()
         self.mode = ls._lmode(slave)
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, cols, 0, 0))
@@ -41,7 +41,7 @@ class Shell:
             self.fds[self.p.stderr.fileno()] = 'err'
         self.data = dict(tty=b'', out=b'', err=b'')
         self.screen = ls.Screen(cols, 24)
-        self.until(lambda: any(b'$ ' in data for data in self.data.values()))
+        self.until(lambda: any(ready_marker in data for data in self.data.values()))
     def pump(self, timeout=.01):
         for fd in select.select(list(self.fds), [], [], timeout)[0]:
             try:
