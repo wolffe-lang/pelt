@@ -1,0 +1,7 @@
+Post-CI script-simple regression prediction, before correction.
+CI at be80068: 10000/20000 turns grew2644KiB (270B/turn), above100B+1MiB.
+A script never constructs an editor, so first compare be80068 with887ce12
+under the same hasu container, including a larger N to distinguish retained
+per-turn allocation from peak-RSS page steps. Predict that a per-command
+ungated allocation or compiler-sensitive call shape, not terminal rendering
+itself, explains the native-only growth. Keep existing gate bounds unchanged.
