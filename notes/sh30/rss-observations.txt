@@ -1,0 +1,28 @@
+CI RSS regression investigation; no cause or fix claimed yet.
+
+Failing CI run40176838905: Ubuntu24.04 native, script-simple10000=5132KB,
+20000=7776KB, delta2644KB/270B per turn. Existing100B+1024KiB bound remains.
+
+Hasu B, --memory12g, exact pinned toolchain and source content ofbe80068:
+- Arch image:30 paired peak repetitions per arm. Trunk delta-660..744KiB;
+  colour delta-324..740KiB. No pair crosses the unchanged2000KiB bar.
+- Larger100000/200000 controls: trunk3..10B/turn, colour2..13B/turn.
+- Live child component samples at10k/20k/100k/200k: anonymous memory is
+  practically identical between arms; no anonymous huge pages observed.
+  Child-onlyTHP disable did not change that finding.
+- Fresh Ubuntu24.04-native builds (not reused Arch link output): the EXACT
+  CI command tools/shape-rss target/native/pelt passes EVERY shape at both
+  trunk887ce12 and colourbe80068 source. Script-simple deltas-20/-28KiB.
+-30 further Ubuntu peak pairs per arm: trunk-232..452KiB;
+  colour-152..632KiB; none over the unchanged bar.
+- One-process100000-turn script, observations every10000turns: anonymous
+  memory grows124KiB over the last90000turns for BOTH arms. Final intervals
+  are12..20KiB/10000turns, not the CI pair's2644KiB step. AnonHugePages=0
+  throughout. With child-onlyTHP disable, the same124KiB slope remains.
+
+This does NOT waive the CI red or identify THP as its cause. Full raw data
+is retained in /home/mfwolffe/lanes/sh30/rss-*.log/jsonl and on Mac under
+/Users/mfwolffe/lanes/sh30/rss-evidence/. The next step, directed by the
+orchestrator, is a draft diagnostic PR printing the same components and
+per10000-turn series on the actual CI runner. Main application source and
+memory-gate thresholds are unchanged while that evidence is collected.

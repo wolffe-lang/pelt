@@ -1,0 +1,2 @@
+FROM docker.io/library/ubuntu:24.04
+RUN taskset -c 6-11 sh -c 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc clang lld python3 git time diffutils procps ca-certificates strace && rm -rf /var/lib/apt/lists/*'
