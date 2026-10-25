@@ -6,6 +6,18 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- Friendly interactive keys, opt-in with `set -o friendly`: Alt-./Alt-_
+  insert spelled history words and cycle older entries; yank-pop through
+  ten kills; character/word transpose, word case, grouped per-line undo,
+  history ends, numeric arguments, mark/exchange, comment-and-accept and
+  character search. PageUp/PageDown use readline's history ends. `bindings`
+  and `bindings -l` are read-only live listings. Scripts, pipes and `-c`
+  do not get these keys; `--posix` is a hard disable. The complete census
+  and measured reference differences are in `docs/KEYS.md`.
+- The stty quit character clears pending editor input without a signal,
+  status change or trap of its own. Vi `_` keeps quoted history words.
+
+
 - `pwd` rejects unknown options with status 2 while accepting `--` and
   grouped `-L`/`-P`. `cd -e` is accepted and, with `-P`, reports failure
   to resolve the new physical directory. `printf` prints the converted

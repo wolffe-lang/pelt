@@ -16,8 +16,8 @@ dash **0.5.13.4-1.1**, bash **5.3.20-2**, fish **4.9.3-1**, on kasumi,
 CPUs 12–15, inside the lane's rootless Arch container. Image id
 `3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f`,
 digest `sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785`.
-`notes/sh28-evidence/logs/` retains `bind -p`, fish `bind`, `stty -a`,
-reference commands. Documentation was read with `info --subnodes '(bash) Bindable Readline Commands'` and `fish --no-config -c 'bind --help'`.
+`notes/sh28-evidence/logs/` retains `bind -p`, fish `bind` and `stty -a`.
+Documentation was read with `info --subnodes '(bash) Bindable Readline Commands'` and `fish --no-config -c 'bind --help'`.
 Those are documentation and black-box outputs, not implementation sources.
 Pelt CI itself has no pinned oracle image: its runners are ubuntu-latest
 and macOS. Reproducing the oracle environment in CI is a track gap.
@@ -99,8 +99,8 @@ reports disabled. Outside a friendly terminal prompt it is not a built-in.
 |---|---|---|---|---|---|
 | M-. / M-_ | `ESC .`, `ESC _` | yank previous history line's last word, quotes kept | yank-last-arg | history-token-search-backward | line-by-line readline semantics; repeat replaces insertion, past oldest removes it and rings |
 | M-y | `ESC y`, `ESC Y` | cycle the preceding yank through 10 kills | yank-pop | yank-pop | only immediately after C-Y / M-y; consecutive kills join |
-| C-t | `14` | transpose characters, including combining clusters | transpose-chars | transpose-chars | at end, last two; negative count has no effect |
-| M-t | `ESC t`, `ESC T` | transpose words | transpose-words | transpose-words | negative count has no effect in the measured bash session |
+| C-t | `14` | transpose characters, including combining clusters | transpose-chars | transpose-chars | at end, last two; counted motion clamps at end rather than swapping back; negative count has no effect |
+| M-t | `ESC t`, `ESC T` | transpose words | transpose-words | transpose-words | positive count exchanges endpoint words and clamps motions; negative count has no effect in the measured bash session |
 | M-u | `ESC u`, `ESC U` | upper-case word forward | upcase-word | upcase-word | ASCII case conversion, as tested in C locale; negative count works backward without moving point |
 | M-l | `ESC l`, `ESC L` | lower-case word forward | downcase-word | file listing helper | readline action; not fish's listing helper |
 | M-c | `ESC c`, `ESC C` | capitalise word forward | capitalize-word | capitalize-word | same word boundaries as M-f |
@@ -111,7 +111,7 @@ reports disabled. Outside a friendly terminal prompt it is not a built-in.
 | M-# | `ESC #` | prepend # and accept as comment | insert-comment | comment toggle without accepting | numeric argument toggles an existing leading # before accepting |
 | M-\ | `ESC 5c` | delete blanks/tabs on both sides of point | delete-horizontal-space | unbound | not a kill |
 | C-] / M-C-] | `1d`, `ESC 1d` | find next / previous character | character-search / backward | unbound | C-g cancels the awaited character; negative count reverses direction |
-| M-0..9 / M-- | `ESC 30..39`, `ESC 2d` | argument to next command | digit-argument | unbound | following digits may be plain or Alt; zero and negative arguments, bounded at 99,999 |
+| M-0..9 / M-- | `ESC 30..39`, `ESC 2d` | argument to next command | digit-argument | unbound | following digits may be plain or Alt; zero and negative arguments, bounded at 99,999; explicit counted deletion is a kill |
 | C-g | `07`, `ESC 07`, `18 07` | abort multi-key command or search and ring | abort | cancel | resets numeric argument; search restores pre-search line |
 | C-@ / C-Space / M-Space | `00`, `ESC 20` | set mark at point (or numbered position) | set-mark | space insertion | documented readline intent; bash's measured NUL non-effect is not copied |
 | C-x C-x | `18 18` | exchange point and mark | exchange-point-and-mark | unbound | mark is a saved index; the measured M-Space mark is not shifted by later insertions |
@@ -406,3 +406,28 @@ measured Alt+Shift+a emits nothing.
 - The prompt's quit event is an editor flush, never a new signal sender.
 - Preserve the ten-entry kill ring, grouped per-line undo and saved draft
   when adding suggestions/search. Suggestions are not edits or undo entries.
+
+## Cost and regression coverage
+
+85 new typed sessions pin these keys, their undo/kill-ring boundaries, live
+listing, quit remaps and vi/search flushes. There are 375 active session
+expectations and two named pending cases in the tree; the full gauntlet and
+CI decide the final head. No pre-existing session expectation was changed.
+
+The final focused witness (kasumi, CPUs 12–15, the pinned container and
+compiler pair above) loads 32,767 history entries and measures 100 M-.
+responses after one warmup. It waits for the requested word, not just the
+first output byte. Idle measurement begins only after a C-g acknowledgement,
+so prompt initialization is not mistaken for idle allocation.
+
+| tier | M-. median | p99 | idle 10 seconds |
+|---|---:|---:|---|
+| native | 0.020292 ms | 0.062855 ms | 0 context switches, RSS 2961 → 2961 pages |
+| release | 0.016817 ms | 0.028302 ms | 0 context switches, RSS 2612 → 2612 pages |
+
+These are live-process observations, not allocation-counter readings or a
+universal latency guarantee. The external witness also verifies empty-history
+bells, C-g cancellation/bells in CSI, SS3, C-x, numeric input, character search
+and incremental search; script/pipe/POSIX/terminal gates; read-only listing,
+remapped stty characters and mode restoration. Commands and raw results are
+under `notes/sh28-evidence/`.

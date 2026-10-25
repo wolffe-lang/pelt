@@ -1,0 +1,428 @@
+session: pelt = /home/mfwolffe/lanes/sh28/pelt/target/native/pelt
+ok   alias_prompt_forms
+ok   arith_assign
+ok   arith_error
+ok   autocd_bare
+ok   autocd_hook
+ok   autocd_invoked
+ok   autocd_list
+ok   autocd_not_dir
+ok   autocd_off
+ok   autocd_slash
+ok   autocd_status
+ok   autocd_subshell
+ok   autocd_wins
+ok   autocd_words
+ok   background
+ok   background_status
+ok   c_alias_interactive
+ok   c_ed_alt_word
+ok   c_ed_backspace_delete
+ok   c_ed_combining
+ok   c_ed_complete_abs
+ok   c_ed_complete_after_assign
+ok   c_ed_complete_after_ops
+ok   c_ed_complete_command
+ok   c_ed_complete_dirs
+ok   c_ed_complete_file
+ok   c_ed_complete_hidden
+ok   c_ed_complete_in_quotes
+ok   c_ed_complete_lcp
+ok   c_ed_complete_list
+ok   c_ed_complete_list_prompt
+ok   c_ed_complete_list_vars
+ok   c_ed_complete_list_wide
+ok   c_ed_complete_mid_word
+ok   c_ed_complete_names
+ok   c_ed_complete_newline
+ok   c_ed_complete_nomatch
+ok   c_ed_complete_query
+ok   c_ed_complete_quoting
+ok   c_ed_complete_redirect
+ok   c_ed_complete_slash_cmd
+ok   c_ed_complete_tilde
+ok   c_ed_complete_tilde_alone
+ok   c_ed_complete_var
+ok   c_ed_complete_var_in_word
+     (c_ed_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c
+     (c_ed_ctrl_c_continued: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_continued
+     (c_ed_ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_ignored
+     (c_ed_ctrl_c_trap: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_ctrl_c_trap
+ok   c_ed_ctrl_k_y
+ok   c_ed_ctrl_l
+ok   c_ed_ctrl_u_y
+ok   c_ed_ctrl_v
+ok   c_ed_ctrl_w
+ok   c_ed_delete_char
+ok   c_ed_flow_stop
+ok   c_ed_history_screen
+ok   c_ed_home_end
+ok   c_ed_home_end_keys
+ok   c_ed_insert_mid
+ok   c_ed_keys_abf
+ok   c_ed_kill_to_end
+ok   c_ed_left_insert
+     (c_ed_mode_after_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_ed_mode_after_ctrl_c
+ok   c_ed_mode_command
+ok   c_ed_mode_exec
+ok   c_ed_resize_narrow
+ok   c_ed_resize_trap
+ok   c_ed_search
+ok   c_ed_search_abort
+ok   c_ed_search_again
+ok   c_ed_search_backspace
+ok   c_ed_search_edit
+ok   c_ed_search_screen
+ok   c_ed_stty_eof
+ok   c_ed_stty_erase
+ok   c_ed_stty_intr
+ok   c_ed_stty_kill
+ok   c_ed_stty_lnext
+ok   c_ed_stty_werase
+ok   c_ed_tab_literal
+ok   c_ed_up_arrow
+ok   c_ed_up_down_edit
+ok   c_ed_utf8_erase
+ok   c_ed_utf8_left
+ok   c_ed_wide_insert
+ok   c_ed_wide_wrap
+ok   c_ed_wide_wrap_edit
+ok   c_ed_word_motion
+ok   c_ed_wrap_erase
+ok   c_ed_wrap_exact
+ok   c_ed_wrap_insert
+ok   c_hist_fc_e_fail
+ok   c_hist_fc_e_range
+ok   c_hist_fc_edit
+ok   c_hist_fc_fcedit
+ok   c_hist_fc_list
+ok   c_hist_fc_list_clamp
+ok   c_hist_fc_list_default
+ok   c_hist_fc_list_reverse
+ok   c_hist_fc_list_string
+ok   c_hist_fc_notfound
+ok   c_hist_fc_s
+ok   c_hist_fc_s_prev
+ok   c_hist_fc_s_string
+ok   c_hist_file_read
+ok   c_hist_histsize
+PEND-fail c_ignoreeof (waits on ignoreeof)
+       pelt step 0
+       pelt err no
+       pelt prompt "$"
+       pelt step 1 "set -o ignoreeof"
+       pelt err no
+       pelt prompt "$"
+       pelt step 2 "^D"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$"
+     ! pelt exit 0 at step 2
+       dash step 3 "echo still-here"
+     ! pelt <none>
+       dash out "still-here\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$"
+     ! pelt <none>
+       dash step 4 "exit"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash exit 0 at step 4
+ok   c_jc_background_group
+ok   c_jc_background_job
+ok   c_jc_bg
+ok   c_jc_bg_running
+ok   c_jc_bg_ttin
+     (c_jc_ctrl_c_job_only: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+ok   c_jc_ctrl_c_job_only
+     (c_jc_ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+ok   c_jc_ctrl_c_loop
+ok   c_jc_ctrl_z
+ok   c_jc_done_message
+ok   c_jc_exit_stopped
+ok   c_jc_fg
+ok   c_jc_fg_number
+     (c_jc_fg_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+ok   c_jc_fg_pipeline
+ok   c_jc_foreground_group
+ok   c_jc_job_ids
+ok   c_jc_jobs_l_pipeline
+ok   c_jc_jobs_list
+ok   c_jc_jobs_states
+ok   c_jc_kill_group
+ok   c_jc_mixed_pipeline
+ok   c_jc_numbering
+ok   c_jc_shell_ignores_tstp
+ok   c_jc_shell_is_leader
+ok   c_jc_states
+ok   c_jc_terminal_back
+ok   c_jc_wait_stopped
+ok   c_long_line
+PEND-fail c_mail (waits on mail)
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "MAIL=$HOME/mbox MAILCHECK=0"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "echo x > $HOME/mbox"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo next"
+       pelt out "next\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+ok   c_paste_two_lines
+ok   c_ps1_bang
+ok   c_ps1_bang_number
+ok   c_redirect_error
+ok   c_tty_erase
+ok   c_vi_D_C
+ok   c_vi_E_e
+ok   c_vi_R
+ok   c_vi_S
+ok   c_vi_X
+ok   c_vi_arrows_insert
+ok   c_vi_at_letter
+ok   c_vi_back_find
+ok   c_vi_backslash
+ok   c_vi_bar
+ok   c_vi_basic
+ok   c_vi_bigword
+ok   c_vi_caret
+ok   c_vi_complete
+ok   c_vi_count_x
+     (c_vi_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   c_vi_ctrl_c
+ok   c_vi_cw
+ok   c_vi_dd_cc
+ok   c_vi_dollar_append
+ok   c_vi_dot
+ok   c_vi_dot_count
+ok   c_vi_dw
+ok   c_vi_emacs_switch
+ok   c_vi_eof
+ok   c_vi_find
+ok   c_vi_hash
+ok   c_vi_history
+ok   c_vi_history_G
+ok   c_vi_history_jk
+ok   c_vi_insert
+ok   c_vi_insert_ctrl_v
+ok   c_vi_insert_ctrl_w
+ok   c_vi_insert_erase
+ok   c_vi_insert_kill
+ok   c_vi_insert_start
+ok   c_vi_motion
+ok   c_vi_motions
+ok   c_vi_replace_char
+ok   c_vi_search
+ok   c_vi_search_anchor
+ok   c_vi_search_n
+ok   c_vi_star
+ok   c_vi_stty_erase
+ok   c_vi_stty_intr
+ok   c_vi_tilde
+ok   c_vi_till
+ok   c_vi_underscore
+ok   c_vi_undo
+ok   c_vi_undo_all
+ok   c_vi_v
+ok   c_vi_v_fail
+ok   c_vi_v_number
+ok   c_vi_yank_put
+ok   cd_cdpath
+ok   cd_fail_continues
+ok   cd_minus
+ok   cd_root
+ok   cd_then_program
+ok   child_stdin
+ok   cmdsub_program
+ok   cnf_127
+ok   cnf_assign
+ok   cnf_cd
+ok   cnf_contexts
+ok   cnf_redirect
+ok   cnf_rerun
+ok   cnf_skipped
+ok   cnf_status
+ok   cnf_words
+ok   comment_and_blank
+     (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_child
+     (ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_ignored
+     (ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_loop
+     (ctrl_c_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_pipeline
+     (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_prompt
+     (ctrl_c_subshell: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_subshell
+     (ctrl_c_trap_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_trap_child
+     (ctrl_c_trap_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+ok   ctrl_c_trap_prompt
+ok   dash_s_args
+ok   default_interactive
+ok   dollar_dash
+ok   echo_hi
+ok   env_file
+ok   env_missing
+ok   eof_at_once
+ok   eof_in_if
+ok   eof_in_if_trap
+ok   eof_last_status
+ok   exec_missing
+ok   exec_program
+ok   exit_in_function
+ok   exit_last_status
+ok   exit_n
+ok   expansion_error
+ok   externals
+ok   for_loop
+ok   func_define_call
+ok   heredoc
+ok   jc_background_subshell
+ok   jc_subshell_redir_stop
+ok   jc_subshell_stop
+ok   jc_wait_frees
+ok   kill_job_prompt
+ok   kill_self_prompt
+ok   long_session
+ok   ls_dir
+ok   not_found_continues
+ok   pipe
+ok   pipe_builtin_stage
+ok   pipe_status
+ok   pipe_three
+ok   ps1_arith_cmdsub
+ok   ps1_param
+ok   ps1_status
+ok   ps1_unchanged_status
+ok   ps2_andor
+ok   ps2_backslash
+ok   ps2_brace_func
+ok   ps2_case
+ok   ps2_cmdsub
+ok   ps2_custom
+ok   ps2_double_quote
+ok   ps2_if
+ok   ps2_single_quote
+ok   ps2_while
+ok   pwd_is_cwd
+ok   read_at_eof
+ok   read_builtin
+ok   readonly_assign
+ok   redirect_append
+ok   redirect_exec_fd
+ok   redirect_file
+ok   redirect_heredoc_quoted
+ok   redirect_read
+ok   redirect_stderr
+ok   return_top
+ok   set_e_exits
+ok   set_u_error
+ok   set_v_echo
+ok   sh28_abort_character_search_back
+ok   sh28_abort_numeric
+ok   sh28_abort_prefix
+ok   sh28_abort_search
+ok   sh28_bindings_actions
+ok   sh28_bindings_basic
+ok   sh28_bindings_disabled
+ok   sh28_bindings_featureoff
+ok   sh28_bindings_readonly
+ok   sh28_capitalize
+ok   sh28_case_negative
+ok   sh28_case_upper_alias
+ok   sh28_character_search
+ok   sh28_character_search_back
+ok   sh28_comment
+ok   sh28_comment_toggle
+ok   sh28_downcase
+ok   sh28_history_first
+ok   sh28_history_last
+ok   sh28_horizontal_space
+ok   sh28_kill_across_lines
+ok   sh28_kill_ring_cap
+ok   sh28_kill_ring_ten
+ok   sh28_last_alias
+ok   sh28_last_arg
+ok   sh28_last_interrupted
+ok   sh28_last_midline
+ok   sh28_last_negative
+ok   sh28_last_numeric
+ok   sh28_last_oldest
+ok   sh28_last_quote
+ok   sh28_last_redir
+ok   sh28_last_repeat
+ok   sh28_last_reverse
+ok   sh28_last_single
+ok   sh28_last_zero
+ok   sh28_mark_exchange
+ok   sh28_mark_exchange_twice
+ok   sh28_mark_meta_space
+ok   sh28_mark_tracks_insert
+ok   sh28_numeric_delete
+ok   sh28_numeric_insert
+ok   sh28_numeric_motion
+ok   sh28_numeric_multi
+ok   sh28_numeric_negative
+ok   sh28_numeric_quoted
+ok   sh28_numeric_zero
+ok   sh28_pagedown
+ok   sh28_pageup
+ok   sh28_quit_remapped
+ok   sh28_quit_search
+ok   sh28_quit_status
+ok   sh28_quoted_last_arg
+ok   sh28_revert
+ok   sh28_search_abort
+ok   sh28_transpose_chars
+ok   sh28_transpose_chars_middle
+ok   sh28_transpose_negative
+ok   sh28_transpose_words
+ok   sh28_undo
+ok   sh28_undo_after_move
+ok   sh28_undo_alias
+ok   sh28_undo_recalled
+ok   sh28_undo_twice
+ok   sh28_upcase
+ok   sh28_vi_last_arg
+ok   sh28_vi_last_quote
+ok   sh28_vi_quit_command
+ok   sh28_vi_quit_insert
+ok   sh28_yank_pop
+ok   sh28_yank_pop_invalid
+ok   sh28_yank_pop_wrap
+ok   signal_status
+ok   special_builtin_error
+ok   subshell_error
+ok   subshell_jobs
+ok   syntax_error_continues
+ok   syntax_error_midline
+ok   term_at_prompt
+ok   trap_exit_eof
+ok   trap_exit_exit
+ok   trap_term
+ok   trap_usr1_prompt
+ok   unset_env
+session: pass 362  fail 0  pending 2 (0)

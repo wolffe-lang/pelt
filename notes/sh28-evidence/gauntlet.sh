@@ -5,7 +5,8 @@ ulimit -c 0
 tier=${1:?native or release}
 case "$tier" in native|release) ;; *) exit 2;; esac
 root=$(pwd)
-logs=$root/notes/sh28-evidence/logs
+logs=${SH28_LOG_DIR:-$root/notes/sh28-evidence/logs}
+mkdir -p "$logs"
 status=$logs/final-$tier.status
 : > "$status"
 bad=0

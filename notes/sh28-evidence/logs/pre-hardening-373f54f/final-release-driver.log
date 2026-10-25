@@ -1,0 +1,36 @@
+BEGIN build 2026-10-25T00:36:51+00:00
+build: target/release/pelt
+END build status=0 2026-10-25T00:37:21+00:00
+BEGIN fmt 2026-10-25T00:37:21+00:00
+END fmt status=0 2026-10-25T00:37:21+00:00
+BEGIN selfcheck 2026-10-25T00:37:21+00:00
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+END selfcheck status=0 2026-10-25T00:37:52+00:00
+BEGIN corpus 2026-10-25T00:37:52+00:00
+difftest: umask          9     0     0 (0)
+difftest: wait          13     0     0 (0)
+difftest: total        998     0    25 (2)
+END corpus status=0 2026-10-25T00:38:16+00:00
+BEGIN sessions 2026-10-25T00:38:16+00:00
+ok   trap_usr1_prompt
+ok   unset_env
+session: pass 362  fail 0  pending 2 (0)
+END sessions status=0 2026-10-25T00:48:19+00:00
+BEGIN terminal 2026-10-25T00:48:19+00:00
+ok   resize: redrawn after the resize True (10.1 ms), output b'part\n', status 0, modes restored True
+ok   tab-latency: Tab at an empty command name, 10 times: the bell median 12.8 ms (max 13.7), the question median 12.8 ms (max 13.8), status 0, modes restored True
+edit-witness: 11 ok, 0 failed, 0 skipped
+END terminal status=0 2026-10-25T00:48:44+00:00
+BEGIN history 2026-10-25T00:48:44+00:00
+hist-witness: foreign  ok   no directory: fc b'\techo a\n', said b''; binary file: fc -l b'1\techo b\n', file kept True, said b''
+hist-witness: default  ok   $HOME/.sh_history b'echo z\nexit\n', mode 600
+hist-witness: 6 of 6 hold
+END history status=0 2026-10-25T00:48:49+00:00
+BEGIN friendly 2026-10-25T00:48:49+00:00
+ok empty history bell; live bindings, actions, remapped stty, vi
+ok friendly idle 10s: contexts 0, RSS pages 2607->2607
+last-arg 32767 entries: median 0.014008 ms, p99 0.110324 ms, 100 samples after warmup
+END friendly status=0 2026-10-25T00:48:59+00:00
+BEGIN sources-stable 2026-10-25T00:48:59+00:00
+END sources-stable status=0 2026-10-25T00:48:59+00:00
+GAUNTLET release: 0 failed
