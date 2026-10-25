@@ -1,0 +1,51 @@
+Item 1: fish 4.9.3, measured through an owned pty on hasu B (CPUs 6-11)
+
+36 fresh-HOME sessions: all 12 cases under each of xterm-256color, linux,
+and dumb. fish-probe.py records hex bytes before/after each typed step,
+SGR subsequences, and fish's public set --show / commandline outputs.
+No implementation source read. These are the shipped default theme, not
+colours recollected from another fish version. Raw evidence: fish/*.json.
+
+Settled text palette; xterm-256color and linux agree:
+  resolved command and reserved word: default/reset foreground (39)
+  unresolved command: bright red (91), including the unfinished e/ec/ech
+  closed quote: yellow (33)
+  unclosed quote: opening delimiter bright red (91), body yellow (33)
+  variable: bright cyan (96), including inside a double quote
+  redirection operator and target: cyan + bold (36;1), reset ESC[m
+  comment: red (31)
+  pipe and command separator: green (32), fish_color_end, NOT fish_color_operator
+  argument: cyan (36), fish_color_param
+  shadow: bright black (90), reset foreground (39)
+  syntax error token ')': bright red (91)
+  Enter: fish emits the diagnostic/echoed line/caret without SGR; the retained
+    edit line is redrawn with ')' bright red. Pelt's coloured caret is therefore
+    a requested pelt behavior, not measured fish parity.
+  TERM=dumb: no SGR in any measured typed step, including Enter error.
+
+Fish initially echoes using a preceding style, then asynchronously repaints;
+raw recordings retain both. Palette claims above refer to the settled line.
+For echo, red e/ec/ech repaints to default when the o resolves the command.
+A lone ! is default (fish negation); !! is bright red. F2's explicit contract
+keeps leading ! literal as an ordinary word, not fish's negation classification.
+
+Recommendations (not rulings):
+R-sh30-1 A: unresolved command red immediately, as measured.
+R-sh30-2 A: portable defaults match the deterministic measured linux palette.
+R-sh30-3 A: pager rows keep their own styles, not syntax highlighting.
+R-sh30-4 A: resolved commands default/reset, NOT green. The campaign's green
+parenthesis conflicts with the measured fish default; follow the measured
+palette and let PELT_COLORS command=green opt in to green.
+
+Oracle packaging distinction: fish 4.9.3-1 has exactly sh29's SHA256
+(a7f62f606704b055039e229d5a46e589b2b9c4a8699c95eedbcd656ccb876adc).
+Rebuilt upstream Arch provides dash 0.5.13.4-1 / bash 5.3.20-1, versus
+sh29's CachyOS package rebuilds dash 0.5.13.4-1.1 / bash 5.3.20-2. Do not
+claim package-byte identity. The unchanged recorded corpus remains the
+oracle; do not re-record or change any expectation to this container.
+
+PAX basis: pax#162, final 09471da41cee86eb2c1d9aa5a8f647532b48551c,
+notes/px70/final-validation.txt and the SGR/OSC-P rows. Cell foreground and
+background use 4-bit palette indices; RGB maps to those 16 entries, not
+arbitrary RGB pixels. All sixteen OSC-P entries measured. No PAX built or
+run here; framebuffer/serial sessions still require a px-owned slot.

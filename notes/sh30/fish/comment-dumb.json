@@ -1,0 +1,18 @@
+{
+  "name": "comment",
+  "term": "dumb",
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "0d0d2420"
+    },
+    {
+      "input": "6563686f20776f7264202320636f6d6d656e74",
+      "raw": "0d24206563686f200d24206563686f20776f7264200d24206563686f20776f72642023200d24206563686f20776f7264202320636f6d6d656e740d24206563686f20776f7264202320636f6d6d656e74",
+      "sgr": []
+    }
+  ],
+  "variables": "$fish_color_normal: set in global scope, unexported, with 2 elements\n$fish_color_normal[1]: |--reset|\n$fish_color_normal[2]: |--theme=default|\n$fish_color_command: set in global scope, unexported, with 2 elements\n$fish_color_command[1]: |--reset|\n$fish_color_command[2]: |--theme=default|\n$fish_color_quote: set in global scope, unexported, with 2 elements\n$fish_color_quote[1]: |yellow|\n$fish_color_quote[2]: |--theme=default|\n$fish_color_redirection: set in global scope, unexported, with 3 elements\n$fish_color_redirection[1]: |cyan|\n$fish_color_redirection[2]: |--bold|\n$fish_color_redirection[3]: |--theme=default|\n$fish_color_end: set in global scope, unexported, with 2 elements\n$fish_color_end[1]: |green|\n$fish_color_end[2]: |--theme=default|\n$fish_color_error: set in global scope, unexported, with 2 elements\n$fish_color_error[1]: |brred|\n$fish_color_error[2]: |--theme=default|\n$fish_color_param: set in global scope, unexported, with 2 elements\n$fish_color_param[1]: |cyan|\n$fish_color_param[2]: |--theme=default|\n$fish_color_comment: set in global scope, unexported, with 2 elements\n$fish_color_comment[1]: |red|\n$fish_color_comment[2]: |--theme=default|\n$fish_color_operator: set in global scope, unexported, with 2 elements\n$fish_color_operator[1]: |brcyan|\n$fish_color_operator[2]: |--theme=default|\n$fish_color_escape: set in global scope, unexported, with 2 elements\n$fish_color_escape[1]: |brcyan|\n$fish_color_escape[2]: |--theme=default|\n$fish_color_autosuggestion: set in global scope, unexported, with 2 elements\n$fish_color_autosuggestion[1]: |brblack|\n$fish_color_autosuggestion[2]: |--theme=default|\n",
+  "snapshot": "echo word # comment\n19\n",
+  "probe_raw": ""
+}

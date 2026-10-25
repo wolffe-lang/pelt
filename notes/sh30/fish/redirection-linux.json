@@ -1,0 +1,35 @@
+{
+  "name": "redirection",
+  "term": "linux",
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f751b5b3e30711b5d31313b3f1b5c1b5b3f31303439681b502b7136393665363436651b5c1b502b7137313735363537323739326436663733326436653631366436351b5c1b5b3f313034396c1b5b30630d1b5d373b66696c653a2f2f3563313531363830303566362f686f6d652f6d66776f6c6666652f6c616e65732f736833302f746d702f736833302d666973682d3366673679697134071b5d303b7e1b5c1b5b6d1b5d31313b3f1b5c1b5b366e1b5b30631b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d1b5d3133333b413b636c69636b5f6576656e74733d311b5c24201b5d3133333b421b5c1b5b4b0d1b5b3243"
+    },
+    {
+      "input": "6563686f203e",
+      "raw": "6563686f200d1b5b37433e0d1b5b38431b5b36446563686f201b5b33363b316d3e1b5b6d0d1b5b38431b5b39306d7661726961626c6573201b5b33396d0d1b5b3843",
+      "sgr": [
+        "1b5b33363b316d",
+        "1b5b6d",
+        "1b5b39306d",
+        "1b5b33396d"
+      ]
+    },
+    {
+      "input": "206f7574707574",
+      "raw": "1b5b33363b316d201b5b6d1b5b4b0d1b5b39431b5b33363b316d6f75747075741b5b6d0d1b5b3135431b5b3744201b5b33363b316d6f75747075741b5b6d0d1b5b313543",
+      "sgr": [
+        "1b5b33363b316d",
+        "1b5b6d",
+        "1b5b33363b316d",
+        "1b5b6d",
+        "1b5b33363b316d",
+        "1b5b6d"
+      ]
+    }
+  ],
+  "variables": "$fish_color_normal: set in global scope, unexported, with 2 elements\n$fish_color_normal[1]: |--reset|\n$fish_color_normal[2]: |--theme=default|\n$fish_color_command: set in global scope, unexported, with 2 elements\n$fish_color_command[1]: |--reset|\n$fish_color_command[2]: |--theme=default|\n$fish_color_quote: set in global scope, unexported, with 2 elements\n$fish_color_quote[1]: |yellow|\n$fish_color_quote[2]: |--theme=default|\n$fish_color_redirection: set in global scope, unexported, with 3 elements\n$fish_color_redirection[1]: |cyan|\n$fish_color_redirection[2]: |--bold|\n$fish_color_redirection[3]: |--theme=default|\n$fish_color_end: set in global scope, unexported, with 2 elements\n$fish_color_end[1]: |green|\n$fish_color_end[2]: |--theme=default|\n$fish_color_error: set in global scope, unexported, with 2 elements\n$fish_color_error[1]: |brred|\n$fish_color_error[2]: |--theme=default|\n$fish_color_param: set in global scope, unexported, with 2 elements\n$fish_color_param[1]: |cyan|\n$fish_color_param[2]: |--theme=default|\n$fish_color_comment: set in global scope, unexported, with 2 elements\n$fish_color_comment[1]: |red|\n$fish_color_comment[2]: |--theme=default|\n$fish_color_operator: set in global scope, unexported, with 2 elements\n$fish_color_operator[1]: |brcyan|\n$fish_color_operator[2]: |--theme=default|\n$fish_color_escape: set in global scope, unexported, with 2 elements\n$fish_color_escape[1]: |brcyan|\n$fish_color_escape[2]: |--theme=default|\n$fish_color_autosuggestion: set in global scope, unexported, with 2 elements\n$fish_color_autosuggestion[1]: |brblack|\n$fish_color_autosuggestion[2]: |--theme=default|\n",
+  "snapshot": "echo > output\n13\n",
+  "probe_raw": "1b5b3f323030346c1b5b3f323033316c1b5b3e343b306d1b3e1b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d"
+}
