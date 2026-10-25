@@ -336,6 +336,11 @@ jobs:
         timeout-minutes: 5
         run: tools/words-witness target/${{ matrix.tier }}/pelt
 
+      - name: prompt bytes, precedence, VCS deadline and idle, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/prompt-witness target/${{ matrix.tier }}/pelt
+
       # sh11: the editor gives the terminal back, asked from outside: the
       # modes after SIGHUP (pelt dies of it, as dash), SIGTERM (ignored),
       # SIGINT (the line abandoned, $? 130) and a hangup (tools/edit-witness).

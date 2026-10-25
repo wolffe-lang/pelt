@@ -153,6 +153,9 @@ def extra_checks(say, plan, expect, blocks, wf):
     say("run: tools/words-witness target/${{ matrix.tier }}/pelt" in g,
         "T4 words raw bytes, script isolation, pager and explicit-help budget run on each built tier")
 
+    say("run: tools/prompt-witness target/${{ matrix.tier }}/pelt" in g,
+        "T4 prompt precedence, storage, VCS deadline and idle gate runs on each built tier")
+
 # --- end of this repository's ------------------------------------------------------
 WORKFLOW = os.path.join(ROOT, ".github", "workflows", WORKFLOW_FILE)
 NIGHTLY = NIGHTLY or ("all", FULL_JOBS)
