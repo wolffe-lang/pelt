@@ -1,0 +1,16 @@
+sh29 prediction, before implementation or fish measurement
+
+I expect fish to prefer the newest exact whole-line prefix and otherwise
+complete the last token from a history word without changing earlier text.
+I expect Alt-F to accept punctuation-delimited word segments and Ctrl-Right
+to accept a whole shell token, a difference requiring an explicit recommendation.
+I expect Ctrl-R Enter to accept into the editor, not execute; Escape restores
+the draft. I expect default grey to use SGR 90 on a basic terminal and indexed
+244 on xterm-256color, with RGB 8a8a8a only with truecolour advertised.
+I predict a one-pass indexed lookup at 32767 lines will take under 5.5 ms
+median and under 10 ms p99 native; release under 2 ms median and 5.5 ms p99.
+I predict 65 new typed sessions. The first byte disagreement will be colour
+reset/clear ordering: pelt will explicitly EL before each shadow redraw,
+where fish optimizes changed suffixes and may wrap at the edge.
+Recommendations are not rulings; reference measurements will decide what to
+recommend for R-sh29-1..3 before implementation.
