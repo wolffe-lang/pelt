@@ -1,0 +1,244 @@
+//! Friendly prompt data is sampled once before editing. Only this renderer
+//! creates prompt styles; no prompt data is ever an editor operation.
+
+struct PromptVcs {
+    cwd: str,
+    value: str,
+    stale: bool,
+    deadline: int,
+}
+
+fn empty_prompt_vcs() -> PromptVcs {
+    PromptVcs { cwd: "", value: "", stale: false, deadline: 0 }
+}
+
+fn prompt_enabled(sh: Sh) -> bool {
+    prompt_eligible(friendly_active(sh) && sh.opt_prompt_friendly, sh.ps1_explicit) &&
+        colour_terminal(sh)
+}
+
+/// Same session precedence even when PS1 was assigned its default value or
+/// subsequently unset. Never infer explicitness by comparing its bytes.
+fn prompt_eligible(friendly: bool, explicit: bool) -> bool {
+    friendly && !explicit
+}
+
+/// Escape controls as visible text; bound retained data before rendering.
+fn prompt_safe(s: str) -> str {
+    var out = List[byte]()
+    var count = 0
+    for cp in cps_of(s) {
+        if count >= 1024 { break }
+        show_cp(mut out, cp)
+        count += 1
+    }
+    text(Buf { b: out })
+}
+
+fn prompt_path(pwd: str, home: str) -> str {
+    var path = pwd
+    if home.len > 0 && (pwd == home || pwd.starts_with(home + "/")) {
+        path = "~" + pwd[home.len..pwd.len]
+    }
+    let parts = path.split("/")
+    var out = List[byte]()
+    var i = 0
+    while i < parts.len {
+        if i > 0 { (mut out).push(47 as byte) }
+        let part = parts[i]
+        if i + 1 == parts.len || part == "~" {
+            for b in part.bytes() { (mut out).push(b) }
+        } else {
+            let cps = cps_of(part)
+            var n = 0
+            if cps.len > 0 {
+                n = 1
+                if cps[0] == 46 && cps.len > 1 { n = 2 }
+                while n < cps.len && zero_w(cps[n]) { n += 1 }
+            }
+            encode_into(mut out, cps, 0, n)
+        }
+        i += 1
+    }
+    prompt_safe(text(Buf { b: out }))
+}
+
+/// Prefix truncation for the left prompt preserves the working-directory tail.
+fn prompt_tail(s: str, budget: int) -> str {
+    if text_cells(s) <= budget { return s }
+    if budget <= 1 { return "…" }
+    let cps = cps_of(s)
+    var at = cps.len
+    var width = 1
+    while at > 0 {
+        let w = cells(cps[at - 1])
+        if width + w > budget { break }
+        at -= 1
+        width += w
+    }
+    while at < cps.len && zero_w(cps[at]) { at += 1 }
+    "…" + cps_text(slice_of(cps, at, cps.len))
+}
+
+fn prompt_right_bound(s: str, cols: int) -> str {
+    if cols < 40 { return "" }
+    let safe = prompt_safe(s)
+    let budget = cols / 3
+    if text_cells(safe) <= budget { return safe }
+    completion_clip(safe, budget - 1) + "…"
+}
+
+/// A bounded direct program invocation, not shell interpretation. The caller
+/// owns this child, closes both pipe ends, and never waits on any shell job.
+fn prompt_probe(exe: str, args: List[str], deadline: int) -> (bool, str) {
+    let (rd, wr) = os_pipe() else |_| { return (false, "") }
+    let child = os_spawn_fds(exe, args, [0, -1, 1, wr, 2, -1]) else |_| {
+        fs_close(rd) else |_| {}
+        fs_close(wr) else |_| {}
+        return (false, "")
+    }
+    fs_close(wr) else |_| {}
+    var bytes = List[byte]()
+    var ended = false
+    while bytes.len < 32768 {
+        let remaining = deadline - os_clock_ns()
+        if remaining <= 0 { break }
+        let (ready, _signal) = os_signal_wait_fds([rd], 0, (remaining + 999999) / 1000000) else (
+            -1,
+            0,
+        )
+        if ready != 0 { break }
+        let room = 32768 - bytes.len
+        let part = fs_read_chunk(rd, if room < 4096 then room else 4096) else |err| match err {
+            eof => { ended = true; break },
+            _ => { break },
+        }
+        for b in part { (mut bytes).push(b) }
+    }
+    fs_close(rd) else |_| {}
+    os_kill(child) else |_| {}
+    let status = os_wait_status(child) else -1
+    let value = str_from_utf8(bytes) else { return (false, "") }
+    (ended && status == 0 && bytes.len < 32768 && os_clock_ns() <= deadline, value)
+}
+
+/// Completion time, not read time, decides whether the probe met its budget.
+/// Never present a previous directory's segment as this directory's status.
+fn prompt_vcs_result(
+    old: PromptVcs,
+    cwd: str,
+    raw: str,
+    ok: bool,
+    now: int,
+    deadline: int,
+) -> PromptVcs {
+    if !ok || now > deadline {
+        return PromptVcs {
+            cwd: cwd,
+            value: if old.cwd == cwd then old.value else "",
+            stale: true,
+            deadline: deadline,
+        }
+    }
+    var count = 0
+    for line in raw.lines() { if line.len > 0 { count += 1 } }
+    PromptVcs {
+        cwd: cwd,
+        value: if count == 0 then "[vcs:clean]" else "[vcs:{count}]",
+        stale: false,
+        deadline: deadline,
+    }
+}
+
+fn prompt_prepare(mut sh: Sh, first: bool) {
+    sh.right_prompt = ""
+    if !first || !prompt_enabled(sh) { return }
+    if sh.prompt_host.len == 0 {
+        sh.prompt_host = prompt_safe(sh.vals["HOSTNAME"] else "")
+        if sh.prompt_host.len == 0 {
+            let exe = completion_exe("hostname", sh.vals["PATH"] else "")
+            if exe.len > 0 {
+                let (ok, host) = prompt_probe(exe, [], os_clock_ns() + 50000000)
+                if ok { sh.prompt_host = prompt_safe(host.trim()) }
+            }
+        }
+        if sh.prompt_host.len == 0 { sh.prompt_host = "?" }
+        let dot = sh.prompt_host.find(".") else -1
+        if dot >= 0 { sh.prompt_host = sh.prompt_host[0..dot] }
+    }
+    let cwd = os_cwd() else ""
+    let den = completion_exe("den", sh.vals["PATH"] else "")
+    if den.len > 0 {
+        let deadline = os_clock_ns() + 50000000
+        let (ok, raw) = prompt_probe(den, ["status", "--porcelain"], deadline)
+        sh.prompt_vcs = prompt_vcs_result(sh.prompt_vcs, cwd, raw, ok, os_clock_ns(), deadline)
+    } else {
+        sh.prompt_vcs = empty_prompt_vcs()
+    }
+    if sh.funcs.has("prompt_right") {
+        let status = sh.status
+        let cs = sh.cs_status
+        let ran = sh.cs_ran
+        sh.right_prompt = prompt_safe(expand_one(mut sh, "$(prompt_right)", X_DQ))
+        sh.status = status
+        sh.cs_status = cs
+        sh.cs_ran = ran
+    }
+}
+
+fn prompt_left(sh: Sh, cols: int) -> str {
+    let user = prompt_safe(sh.vals["USER"] else (sh.vals["LOGNAME"] else "?"))
+    let path = prompt_path(sh.vals["PWD"] else "?", sh.vals["HOME"] else "")
+    let status = if sh.status == 0 then "" else " [{sh.status}]"
+    let marker = if (os_euid() else -1) == 0 then "# " else "> "
+    let vcs = if sh.prompt_vcs.value.len == 0 then "" else " " + sh.prompt_vcs.value
+    let text = user + "@" + sh.prompt_host + " " + path + vcs + status
+    let body = prompt_tail(text, if cols > 4 then cols - 3 else 1)
+    if !sh.opt_highlight { return body + marker }
+    // Measured no-config fish uses default foreground and bold status.
+    var styled = body
+    if vcs.len > 0 && sh.prompt_vcs.stale {
+        styled = styled.replace(vcs, "\x1b[0;2m" + vcs + "\x1b[0m")
+    }
+    if status.len > 0 {
+        styled = styled.replace(status, " [\x1b[1m{sh.status}\x1b[0m]")
+    }
+    "\x1b[0m" + styled + "\x1b[0m" + marker
+}
+
+fn right_clear(mut e: Ed) {
+    if !e.right_drawn { return }
+    let r = e.tr
+    let c = e.tc
+    move_to(mut e, 0, e.right_col)
+    colour_reset(mut e)
+    put_esc(mut e.out, "[K")
+    move_to(mut e, r, c)
+    e.right_drawn = false
+}
+
+fn right_draw(mut e: Ed) {
+    if e.right_drawn ||
+        e.done >= 0 ||
+        e.pager ||
+        e.cp_active ||
+        e.shadow_drawn ||
+        e.r0 != 0 ||
+        e.er != 0 {
+        return
+    }
+    let shown = prompt_right_bound(e.right_prompt, e.cols)
+    let width = text_cells(shown)
+    let col = e.cols - width - 1
+    if width == 0 || e.ec + 1 >= col { return }
+    let r = e.tr
+    let c = e.tc
+    move_to(mut e, 0, col)
+    colour_reset(mut e)
+    put_s(mut e, shown)
+    e.tc += width
+    colour_reset(mut e)
+    move_to(mut e, r, c)
+    e.right_col = col
+    e.right_drawn = true
+}

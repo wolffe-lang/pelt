@@ -546,6 +546,9 @@ struct Ed {
     c0: int,
     /// The prompt as written, and the column its last line starts in.
     prompt: str,
+    right_prompt: str,
+    right_drawn: bool,
+    right_col: int,
     col0: int,
     /// Where the terminal's cursor is, and the index it stands for.
     tr: int,
@@ -688,6 +691,9 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
         r0: 0,
         c0: 0,
         prompt: shown,
+        right_prompt: sh.right_prompt,
+        right_drawn: false,
+        right_col: 0,
         col0: q.col0,
         tr: 0,
         tc: 0,
@@ -1237,6 +1243,7 @@ fn move_to(mut e: Ed, r: int, c: int) {
 
 /// Redraw from cluster `k` to the end, then put the cursor at `e.cur`.
 fn draw_from(mut e: Ed, from: int) {
+    right_clear(mut e)
     let k = if e.highlight then 0 else from
     var colour = HlLine { spans: List[HlSpan](), incomplete: false, error_at: -1 }
     if e.highlight {
@@ -1331,6 +1338,7 @@ fn place(mut e: Ed) {
 /// prompt and the edit line again; the cursor stays where it was in the
 /// text. `COLUMNS`, when set, keeps the width, and nothing is drawn.
 fn resized(mut e: Ed) {
+    right_clear(mut e)
     colour_reset(mut e)
     shadow_clear(mut e)
     let (w, h) = term_width(e.fixed)
@@ -1388,6 +1396,7 @@ fn prompt_last(p: str) -> str {
 /// Clear the screen (or just start below), write the prompt again and
 /// the whole line.
 fn redraw_all(mut e: Ed, clear: bool) {
+    right_clear(mut e)
     colour_reset(mut e)
     if clear {
         put_esc(mut e.out, "[H")
@@ -1664,6 +1673,7 @@ fn utf8_rest(mut e: Ed, b: int) -> int {
 /// the rest; vi waits a tenth of a second for `[` or `O`, and otherwise
 /// ESC is a key of its own.
 fn next_key(mut e: Ed) -> int {
+    right_draw(mut e)
     if e.ii < e.inj.len {
         let k = e.inj[e.ii]
         e.ii += 1
@@ -1873,6 +1883,7 @@ fn ss3(mut e: Ed) -> int {
 // ----------------------------------------------------- ending the line
 
 fn finish(mut e: Ed, how: int) {
+    right_clear(mut e)
     if how == ED_OK {
         abbr_expand(mut e, e.cur)
         if !event_accept(mut e) { return }

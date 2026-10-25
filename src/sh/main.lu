@@ -281,6 +281,7 @@ fn import_env(mut sh: Sh) {
     let _e = (mut sh.exported).remove("IFS") else false
     // the prompts from the environment win over the defaults (dash,
     // black-box: `env PS1=a dash -c 'echo $PS1'` prints `a`)
+    sh.ps1_explicit = sh.vals.has("PS1")
     if !sh.vals.has("PS1") {
         sh.vals["PS1"] = "$ "
     }

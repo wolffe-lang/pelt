@@ -1,0 +1,91 @@
+//! Prompt laws use the real renderer and an explicit clock, not a live VCS.
+
+fn want_prompt(mut bad: List[str]) {
+    if prompt_eligible(true, true) ||
+        !prompt_eligible(true, false) ||
+        prompt_eligible(false, false) {
+        (mut bad).push("prompt-PS1-precedence")
+    }
+    var sh = new_sh("prompt-test")
+    sh.vals["PS1"] = "$ "
+    let _set = set_var(mut sh, "PS1", "$ ")
+    if !sh.ps1_explicit || (sh.vals["PS1"] else "") != "$ " {
+        (mut bad).push("prompt-PS1-explicit-default")
+    }
+    let _unset = unset_var(mut sh, "PS1")
+    if !sh.ps1_explicit { (mut bad).push("prompt-PS1-sticky-unset") }
+    sh.opt_prompt_friendly = true
+    let bits = opts_bits(sh)
+    sh.opt_prompt_friendly = false
+    set_opts_bits(mut sh, bits)
+    if !sh.opt_prompt_friendly { (mut bad).push("prompt-option-save") }
+    for pair in [
+        ["/home/user", "~"],
+        ["/home/user/alpha/beta/日本語", "~/a/b/日本語"],
+        ["/home/username/x", "/h/u/x"],
+        ["/home/user/.config/pelt", "~/.c/pelt"],
+        ["/", "/"],
+    ] {
+        if prompt_path(pair[0], "/home/user") != pair[1] {
+            (mut bad).push("prompt-HOME-path: " + pair[0])
+        }
+    }
+    if prompt_right_bound("RIGHT", 39) != "" ||
+        prompt_right_bound("RIGHT", 40) != "RIGHT" ||
+        prompt_right_bound("abcdefghijklmnopqrstuvwxyz", 40) != "abcdefghijkl…" ||
+        text_cells(prompt_right_bound("日本語日本語日本語", 40)) > 13 ||
+        prompt_safe("a\x1b[31m\nb") != "a^[[31m^Jb" {
+        (mut bad).push("prompt-right-width-controls")
+    }
+    let fresh = prompt_vcs_result(empty_prompt_vcs(), "/one", "?? x\n", true, 49, 50)
+    let late = prompt_vcs_result(fresh, "/one", "", true, 51, 50)
+    if fresh.value != "[vcs:1]" || fresh.stale || late.value != "[vcs:1]" || !late.stale {
+        (mut bad).push("prompt-vcs-deadline")
+    }
+    if prompt_vcs_result(fresh, "/two", "", false, 51, 50).value != "" {
+        (mut bad).push("prompt-vcs-directory-invalidation")
+    }
+    if prompt_vcs_result(fresh, "/one", "", true, 50, 50).value != "[vcs:clean]" {
+        (mut bad).push("prompt-vcs-timely-clean")
+    }
+    let q = Query { cols: 80, rows: 24, fixed: 80, col0: 0, cpr: 0, pend: "" }
+    var e = editor_state(sh, "$ ", q, default_chars())
+    e.right_prompt = "RIGHT"
+    e.friendly = true
+    start_line(mut e)
+    insert(mut e, cps_of("echo hello"))
+    let before = cps_text(e.buf)
+    let undo = cps_text(e.undo)
+    let mem = mem_txt(e.mem)
+    let cursor = e.cur
+    let tr = e.tr
+    let tc = e.tc
+    right_draw(mut e)
+    if !e.right_drawn || e.tr != tr || e.tc != tc { (mut bad).push("prompt-right-cursor") }
+    if cps_text(e.buf) != before ||
+        cps_text(e.undo) != undo ||
+        mem_txt(e.mem) != mem ||
+        e.cur != cursor {
+        (mut bad).push("prompt-right-storage")
+    }
+    right_clear(mut e)
+    if e.right_drawn || e.tr != tr || e.tc != tc { (mut bad).push("prompt-right-clear") }
+    e.cols = 39
+    right_draw(mut e)
+    if e.right_drawn { (mut bad).push("prompt-right-narrow") }
+    e.cols = 80
+    e.pager = true
+    right_draw(mut e)
+    if e.right_drawn { (mut bad).push("prompt-right-pager") }
+    e.pager = false
+    e.er = 1
+    right_draw(mut e)
+    if e.right_drawn { (mut bad).push("prompt-right-wrap") }
+    e.er = 0
+    e.done = ED_OK
+    right_draw(mut e)
+    if e.right_drawn { (mut bad).push("prompt-right-execution") }
+    for change in e.changes {
+        if !stored_plain(change.line) { (mut bad).push("prompt-right-undo-style") }
+    }
+}

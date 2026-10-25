@@ -126,6 +126,11 @@ struct Sh {
     opt_abbr: bool,
     opt_histexpand: bool,
     opt_complete: bool,
+    opt_prompt_friendly: bool,
+    ps1_explicit: bool,
+    right_prompt: str,
+    prompt_host: str,
+    prompt_vcs: PromptVcs,
     posix_mode: bool,
     /// `set -o ignoreeof`: an interactive shell's end of file is not its
     /// end (`sh.interact`'s `run_lines`)
@@ -426,6 +431,11 @@ fn new_sh(name: str) -> Sh {
         opt_abbr: false,
         opt_histexpand: false,
         opt_complete: false,
+        opt_prompt_friendly: false,
+        ps1_explicit: false,
+        right_prompt: "",
+        prompt_host: "",
+        prompt_vcs: empty_prompt_vcs(),
         posix_mode: false,
         opt_ignoreeof: false,
         eof_count: 0,
@@ -643,6 +653,7 @@ fn opts_bits(sh: Sh) -> int {
     if sh.opt_abbr { b = b | 2097152 }
     if sh.opt_histexpand { b = b | 4194304 }
     if sh.opt_complete { b = b | 8388608 }
+    if sh.opt_prompt_friendly { b = b | 16777216 }
     b
 }
 
@@ -671,6 +682,7 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_abbr = b & 2097152 != 0
     sh.opt_histexpand = b & 4194304 != 0
     sh.opt_complete = b & 8388608 != 0
+    sh.opt_prompt_friendly = b & 16777216 != 0
 }
 
 /// Where a frame's record keeps its fields on `istk`, from the record's
@@ -992,11 +1004,13 @@ fn journal_back(mut sh: Sh, base: int) {
 // The writers: every write to the tables goes through one of these.
 
 fn vset(mut sh: Sh, name: str, v: str) {
+    if name == "PS1" { sh.ps1_explicit = true }
     jot(mut sh, J_VAL, name)
     sh.vals[name] = v
 }
 
 fn vdel(mut sh: Sh, name: str) {
+    if name == "PS1" { sh.ps1_explicit = true }
     jot(mut sh, J_VAL, name)
     let _v = (mut sh.vals).remove(name) else ""
 }

@@ -39,6 +39,7 @@ fn shadow_clear(mut e: Ed) {
 /// One physical row only. Reserve the last cell to avoid pending-wrap state.
 /// A cluster and its combining marks are either all drawn or all omitted.
 fn shadow_refresh(mut e: Ed) {
+    right_clear(mut e)
     colour_reset(mut e)
     if !e.suggest || e.vi || e.pager { return }
     shadow_clear(mut e)
@@ -133,6 +134,7 @@ fn pager_filter(mut e: Ed) {
 }
 
 fn pager_clear(mut e: Ed) {
+    right_clear(mut e)
     let (r, c) = pos_at(e, e.cur)
     move_to(mut e, e.er, 0)
     put_s(mut e, "\r\n")

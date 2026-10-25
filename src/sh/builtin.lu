@@ -328,11 +328,13 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
         sh.opt_abbr = on && !sh.posix_mode
         sh.opt_histexpand = on && !sh.posix_mode
         sh.opt_complete = on && !sh.posix_mode
+        sh.opt_prompt_friendly = on && !sh.posix_mode
         sh.opt_highlight = on && !sh.posix_mode
         return true
     }
     if name == "abbr" { sh.opt_abbr = on && !sh.posix_mode; return true }
     if name == "histexpand" { sh.opt_histexpand = on && !sh.posix_mode; return true }
+    if name == "prompt_friendly" { sh.opt_prompt_friendly = on && !sh.posix_mode; return true }
     if name == "complete" { sh.opt_complete = on && !sh.posix_mode; return true }
     if name == "suggest" {
         sh.opt_suggest = on
@@ -424,6 +426,17 @@ fn print_friendly_options(mut sh: Sh, reinput: bool) {
         } else {
             emit(mut sh, "highlight\t{if sh.opt_highlight then "on" else "off"}\n")
         }
+    }
+    if !sh.ps1_explicit {
+        let on = sh.opt_prompt_friendly
+        emit(
+            mut sh,
+            if reinput {
+                "set {if on then "-o" else "+o"} prompt_friendly\n"
+            } else {
+                "prompt_friendly\t{if on then "on" else "off"}\n"
+            },
+        )
     }
     for name in [
         "friendly",

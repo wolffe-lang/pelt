@@ -159,7 +159,14 @@ fn next_line(mut sh: Sh, first: bool, previous: str) -> (str, int) {
         ed_query(sh, cpr)
     }
     sh.ed.cpr = q.cpr
-    let shown = prompt(mut sh, name, true)
+    prompt_prepare(mut sh, first)
+    let shown = if first && prompt_enabled(sh) {
+        let rendered = prompt_left(sh, q.cols)
+        write_fd(mut sh, 2, rendered)
+        rendered
+    } else {
+        prompt(mut sh, name, true)
+    }
     let r = copy region el {
         ed_line(sh, shown, q, previous)
     }
