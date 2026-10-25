@@ -142,6 +142,8 @@ pub fn run_main(args: List[str]) -> int {
     // `-c` with `-s`: the string, then standard input (unspecified by
     // POSIX; dash, black-box: `echo 'echo b' | sh -cs 'echo a'` prints
     // both)
+    let abbreviations = abbr_load(env_get("HOME") else "")
+    if abbreviations.has(src.trim()) { src = abbreviations[src.trim()] else src }
     run_source(src, name, rest, opts, cmd_string && read_stdin, posix_mode, !cmd_string)
 }
 
