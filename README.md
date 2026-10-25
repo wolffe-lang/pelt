@@ -15,7 +15,7 @@ shell's source is ever read: pelt is clean-room, black-box only.
 |---|---|
 | POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 532 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
 | differential corpus against dash, both tiers | 1,038 cases: 1,023 passing, 0 failing, 15 pending on a named primitive (`tests/diff/`) |
-| typed sessions through a pseudo-terminal | 380 recorded expectations, none pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
+| typed sessions through a pseudo-terminal | 443 recorded expectations, none pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
 | real `sh` scripts that run as under dash | 78 of 80, the other two not pelt's to change (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts): `configure-sed` prints a timestamp resolution it measures from the shell's own speed, a coin that flips for dash itself and is counted apart, and `pfetch`'s memory line differs between dash's own runs |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
 | toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
@@ -110,6 +110,15 @@ scripts, `-c`, pipes and `--posix`, and can be disabled with `set +o friendly`
 or, for these keys alone, `set +o friendly_keys`. It remains opt-in until
 the pinned compiler can report argv[0], so a future default can exclude an
 invocation named `sh`.
+
+**Suggestions and filtered history (opt-in).** Add
+`set -o friendly -o suggest -o histsearch` to enable bright-black history,
+file and command suggestions plus prefix-filtered Up/Down and a Ctrl-R
+history pager. Suggestions are drawn, not typed: Enter runs only the input
+you entered. Right/End/Ctrl-E/Ctrl-F accept a suffix; Alt-F accepts a word,
+Ctrl-Right a token. Enter in the pager copies a selection into the editor
+without running it. The options default off at this pin. See
+[`docs/FRIENDLY.md`](docs/FRIENDLY.md) for controls and the planned default.
 
 **Job control.** `set -m` (on by default at an interactive prompt, also
 in a script): each pipeline of programs runs in its own process group
