@@ -27,7 +27,7 @@ fn event_last(previous: str) -> str {
         }
         lex(mut parser, mut ast)
         if parser.tk == T_EOF || parser.err.len > 0 { break }
-        if parser.tk == T_WORD { last = previous[start..parser.pos] }
+        if parser.tk == T_WORD && last.len == 0 { last = previous[start..parser.pos] }
     }
     last
 }
