@@ -46,7 +46,47 @@ def abbreviations(binary,home):
         assert p.returncode==0 and p.stdout==b'zz\n',('abbr-script-gate',p)
     print('ok abbr-script-gate',flush=True)
 
+def event_step(sh,keys):
+    raw=step(sh,keys)
+    colour.assert_resets(raw)
+    return raw.replace(b"\r\r\n",b"\r\n")
+
+def events(binary,home):
+    sh=shell(binary,home)
+    try:
+        raw=event_step(sh,b'!!\r')
+        assert b'pelt: history: no previous word or command' in raw,raw
+        assert any('!!' in row for row in sh.screen.snapshot(0)),sh.screen.snapshot(0)
+        event_step(sh,b'\x15echo first last\r')
+        raw=event_step(sh,b'!!\r');assert b'\r\necho first last\r\nfirst last\r\n' in raw,raw
+        event_step(sh,b"echo one 'two three' # ignored comment\r")
+        raw=event_step(sh,b'echo !$\r');assert b"\r\necho 'two three'\r\ntwo three\r\n" in raw,raw
+        raw=event_step(sh,b"echo '!!'\r");assert b'\r\n!!\r\n' in raw,raw
+        event_step(sh,b'echo old last\r')
+        raw=event_step(sh,b'echo "!!"\r');assert b'\r\necho "echo old last"\r\necho old last\r\n' in raw,raw
+        raw=event_step(sh,b'echo \\!! # !!\r');assert b'\r\n!!\r\n' in raw,raw
+        raw=event_step(sh,b'echo !1 !name !-1 !\r');assert b'\r\n!1 !name !-1 !\r\n' in raw,raw
+        event_step(sh,b'!!');event_step(sh,b'\x03');raw=event_step(sh,b'echo after-cancel\r');assert b'\r\nafter-cancel\r\n' in raw,raw
+        event_step(sh,b"abbr add zz 'echo !$'\r")
+        event_step(sh,b'echo before ORDER\r')
+        raw=event_step(sh,b'zz \r');assert b'\r\necho ORDER \r\nORDER\r\n' in raw,raw
+        event_step(sh,b'set +o histexpand\r')
+        raw=event_step(sh,b'echo !! !$\r');assert b'\r\n!! !$\r\n' in raw,raw
+        print('ok events echo/last-word/quotes/comments/literals/cancel/abbr-order/toggle',flush=True)
+    finally:assert sh.close()
+    entries=[p.read_bytes() for p in home.glob('history-*')]
+    assert any(b"echo 'two three'\n" in p for p in entries),entries
+    assert all(b'\x1b' not in p for p in entries),entries
+    print('ok events expanded-history-no-style-bytes',flush=True)
+    env=dict(os.environ,HOME=str(home))
+    for argv,data in [([str(binary),'-o','friendly','-o','histexpand','-c','echo !! !$'],None),([str(binary),'-o','friendly','-o','histexpand'],b'echo !! !$\n')]:
+        p=subprocess.run(argv,input=data,env=env,capture_output=True,timeout=10)
+        assert p.returncode==0 and p.stdout==b'!! !$\n',('event-script-gate',p)
+    print('ok event-script-gate',flush=True)
+
 if __name__=='__main__':
     binary=Path(sys.argv[1]).resolve()
     with tempfile.TemporaryDirectory(prefix='sh31-words-') as temp:
         abbreviations(binary,Path(temp))
+    with tempfile.TemporaryDirectory(prefix="sh31-events-") as temp:
+        events(binary,Path(temp))

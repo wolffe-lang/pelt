@@ -582,6 +582,9 @@ struct Ed {
     histsearch: bool,
     highlight: bool,
     abbreviate: bool,
+    histexpand: bool,
+    event_line: str,
+    event_changed: bool,
     abbrs: Map[str, str],
     prefix: List[int],
     colour_off: bool,
@@ -706,6 +709,9 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
         histsearch: friendly_active(sh) && sh.opt_histsearch,
         highlight: highlight_active(sh),
         abbreviate: friendly_active(sh) && sh.opt_abbr,
+        histexpand: friendly_active(sh) && sh.opt_histexpand,
+        event_line: "",
+        event_changed: false,
         abbrs: if friendly_active(sh) && sh.opt_abbr {
             abbr_load(sh.vals["HOME"] else "")
         } else {
@@ -780,7 +786,7 @@ fn ed_line(sh: Sh, shown: str, q: Query, previous: str) -> EdOut {
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     var e = editor_state(sh, shown, q, term_chars())
-    if e.highlight { e.prefix = cps_of(previous) }
+    e.prefix = cps_of(previous)
     highlight_prepare(mut e)
     if e.highlight {
         for name in sh.ast.aliases.keys() { e.commands[name] = true }
@@ -858,7 +864,7 @@ fn ed_line(sh: Sh, shown: str, q: Query, previous: str) -> EdOut {
         var o = List[byte]()
         encode_into(mut o, e.buf, 0, e.buf.len)
         (mut o).push(10 as byte)
-        line = text(Buf { b: o })
+        line = if e.event_changed then e.event_line + "\n" else text(Buf { b: o })
     }
     EdOut {
         line: line,
@@ -1845,6 +1851,7 @@ fn ss3(mut e: Ed) -> int {
 // ----------------------------------------------------- ending the line
 
 fn finish(mut e: Ed, how: int) {
+    if how == ED_OK && !event_accept(mut e) { return }
     colour_reset(mut e)
     if how == ED_INTR {
         // `^C` where the cursor is, as the terminal echoes it for dash
@@ -1868,6 +1875,10 @@ fn finish(mut e: Ed, how: int) {
         if !(c == 0 && r > e.r0) {
             put_s(mut e, "\r\n")
         }
+    }
+    if how == ED_OK && e.event_changed {
+        put_shown(mut e, e.event_line)
+        put_s(mut e, "\r\n")
     }
     e.done = how
 }
@@ -2389,7 +2400,8 @@ fn vi_insert(mut e: Ed, replace: bool) {
         e.tabs = 0
         if k == 13 || k == 10 {
             finish(mut e, ED_OK)
-            return
+            if e.done >= 0 { return }
+            continue
         }
         if k == 3 {
             continue

@@ -1,0 +1,113 @@
+//! Only !! and !$, at acceptance, never during colouring or shadow lookup.
+//! Bash 5.3 black-box echo/quotes/comments in notes/sh31/oracle.
+
+struct EventLine {
+    line: str,
+    changed: bool,
+    missing: bool,
+}
+
+/// Comments are not history words; spelling and quote delimiters survive.
+/// Unlike Alt-dot, event extraction ignores trailing operators and comments.
+fn event_last(previous: str) -> str {
+    let cps = cps_of(previous)
+    var plain = List[int]()
+    var quote = 0
+    var start = true
+    var i = 0
+    while i < cps.len {
+        let c = cps[i]
+        if c == 35 && quote == 0 && start {
+            while i < cps.len && cps[i] != 10 { i += 1 }
+            continue
+        }
+        (mut plain).push(c)
+        if c == 92 && quote != 39 && i + 1 < cps.len {
+            i += 1
+            (mut plain).push(cps[i])
+            start = false
+        } else if c == quote {
+            quote = 0
+        } else if quote == 0 && (c == 39 || c == 34) {
+            quote = c
+            start = false
+        } else if quote == 0 {
+            start = hl_meta(c)
+        }
+        i += 1
+    }
+    let words = history_words(plain)
+    var last = ""
+    for word in words {
+        if word.len > 0 && !history_operator(word[0]) { last = cps_text(word) }
+    }
+    last
+}
+
+/// Prefix is already accepted PS2 context: scan it to recover quote state,
+/// but never expand it a second time. Substituted text is not rescanned.
+fn event_expand(line: str, previous: str, prefix: str) -> EventLine {
+    let all = cps_of(prefix + line)
+    let begin = cps_of(prefix).len
+    var out = List[int]()
+    var quote = 0
+    var start = true
+    var comment = false
+    var changed = false
+    var i = 0
+    while i < all.len {
+        let c = all[i]
+        if c == 10 { comment = false; start = true }
+        if !comment && quote == 0 && start && c == 35 { comment = true }
+        if !comment && c == 92 && quote != 39 {
+            if i >= begin { (mut out).push(c) }
+            i += 1
+            if i < all.len && i >= begin { (mut out).push(all[i]) }
+            i += 1
+            start = false
+            continue
+        }
+        if !comment &&
+            c == 33 &&
+            quote != 39 &&
+            i >= begin &&
+            i + 1 < all.len &&
+            (all[i + 1] == 33 || all[i + 1] == 36) {
+            let value = if all[i + 1] == 33 then previous else event_last(previous)
+            if value.len == 0 { return EventLine { line: line, changed: false, missing: true } }
+            for cp in cps_of(value) { (mut out).push(cp) }
+            changed = true
+            start = false
+            i += 2
+            continue
+        }
+        if !comment {
+            if c == quote {
+                quote = 0
+            } else if quote == 0 && (c == 39 || c == 34) {
+                quote = c
+            }
+            start = quote == 0 && hl_meta(c)
+        }
+        if i >= begin { (mut out).push(c) }
+        i += 1
+    }
+    EventLine { line: cps_text(out), changed: changed, missing: false }
+}
+
+fn event_accept(mut e: Ed) -> bool {
+    if !e.histexpand { return true }
+    let result = event_expand(cps_text(e.buf), e.prev_line, cps_text(e.prefix))
+    if result.missing {
+        colour_reset(mut e)
+        let (r, c) = pos_at(e, e.buf.len)
+        move_to(mut e, r, c)
+        put_s(mut e, "\r\npelt: history: no previous word or command\r\n")
+        redraw_all(mut e, false)
+        return false
+    }
+    // An accepted result is separate from all editable/undo/kill state.
+    e.event_line = result.line
+    e.event_changed = result.changed
+    true
+}

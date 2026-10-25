@@ -326,10 +326,12 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
     if name == "friendly" {
         sh.opt_friendly = on && !sh.posix_mode
         sh.opt_abbr = on && !sh.posix_mode
+        sh.opt_histexpand = on && !sh.posix_mode
         sh.opt_highlight = on && !sh.posix_mode
         return true
     }
     if name == "abbr" { sh.opt_abbr = on && !sh.posix_mode; return true }
+    if name == "histexpand" { sh.opt_histexpand = on && !sh.posix_mode; return true }
     if name == "suggest" {
         sh.opt_suggest = on
         return true
