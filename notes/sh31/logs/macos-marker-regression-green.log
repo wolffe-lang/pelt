@@ -1,0 +1,4 @@
+free+inactive+speculative bytes 15048343552
+TMPDIR=/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/
+ok words-loader: extensionless helpers load without load_module
+ok words-fixture: warm-up retains an empty marker for later rows

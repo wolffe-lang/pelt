@@ -1,0 +1,43 @@
+sh31 follow-up: retain help fixture counters after warm-up
+
+Run40209085844, Mac native job121216424171, failed reading slow-probes:
+FileNotFoundError under the runner's /var/folders/.../T/sh31-help-* HOME.
+The previous warm-up unlinked its counter files. It then assumed the slow
+fixture's /usr/bin/python3 had started and recreated one inside50ms.
+That assumption is not a cache invariant and was not made safe by warming.
+
+An old full-witness run on nomad's actual /var/folders TMPDIR passed, so
+I do NOT claim to have reproduced the whole timing race deterministically.
+The extracted old warm-up plus the new marker-lifecycle regression did
+reproduce the exact FileNotFoundError there before the fix (retained red).
+
+warm_help_fixture now creates/truncates its marker before warm-up and
+leaves a zero-length marker afterwards, never unlinks it. Highlighting
+must leave the fast counter empty; the actual two-Tab probes must leave
+exactly one x, as before. Missing/empty starts are not accepted as cache
+success. The slow fixture records entry in the same warmed /bin/sh as
+the fast fixture, BEFORE exec of the witness's Python and its200ms delay.
+exec keeps the one owned pid; it creates no sleeping descendant.
+No application source or50ms budget changed. No assertion was waived.
+
+words-loader-test now also exercises this lifecycle twice, checks the
+empty marker survives, and distinguishes the probe's append. This existing
+CI step already runs on every built host/tier; its name now mentions both
+loader and fixture contracts. Tests passed under Python3.15 on nomad:
+- deterministic marker regression red before fix, green after;
+- full native words witness under the executable8GiB memory guard
+  (15.05GB available), using the Mac's real /var/folders TMPDIR;
+- eight additional help lifecycle/cache/timeout repetitions,8/8;
+- native key response median0.111333ms/p990.227708ms;
+- the Linux /proc idle row prints its explicit Mac SKIP.
+
+Hasu B: updated regression and full words witnesses green on native and
+release. Strict release median0.160571ms/p990.322963ms; both idle10s samples
+unchanged with zero context-switch delta. The application binaries remain
+1148708's; no .lu or existing session/corpus expectation changed.
+README read: current. No package/config/label changes; no issue filed.
+
+Evidence under logs/: macos-temp-marker-before.log (intermittent full
+case passed), macos-marker-regression-red.log, macos-marker-regression-green.log,
+macos-temp-marker-fixed.log, macos-temp-marker-repeat.log,
+macos-marker-ci-red.log, marker-fix-linux.log.

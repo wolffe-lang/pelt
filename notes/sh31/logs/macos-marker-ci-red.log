@@ -1,0 +1,30 @@
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	﻿2026-10-25T16:37:42.6890390Z ##[group]Run tools/words-witness target/native/pelt
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:42.6890710Z ^[[36;1mtools/words-witness target/native/pelt^[[0m
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:42.6924840Z shell: /bin/bash -e {0}
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:42.6925050Z ##[endgroup]
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:44.1077750Z ok abbr space/Enter/quoted/empty/undo/cancel/command-position
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:44.5154120Z ok abbr persistence/atomic/malformed/erase/exclusive-temp
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:44.5512620Z ok abbr-script-gate
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:45.8638720Z ok events echo/last-word/quotes/comments/literals/cancel/abbr-order/toggle
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:45.8671100Z ok events expanded-history-no-style-bytes
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:45.8829850Z ok event-script-gate
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:47.0055380Z ok completion columns/navigation/accept-not-execute/escape 24
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:48.1003750Z ok completion columns/navigation/accept-not-execute/escape 40
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:49.2502230Z ok completion columns/navigation/accept-not-execute/escape 80
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:50.3867430Z ok completion columns/navigation/accept-not-execute/escape 120
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:51.6752880Z ok completion resize/restored-line
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7755680Z Traceback (most recent call last):
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7765860Z   File "/Users/runner/work/pelt/pelt/tools/words-witness", line 178, in <module>
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7766460Z     help_probe(binary,Path(temp))
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7766800Z     ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7767180Z   File "/Users/runner/work/pelt/pelt/tools/words-witness", line 165, in help_probe
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7767650Z     step(sh,b'\t');assert (home/'slow-probes').read_text()=='x','uncached timeout'
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7768060Z                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7768660Z   File "/opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/pathlib/__init__.py", line 986, in read_text
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7769380Z     with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7769780Z          ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7770400Z   File "/opt/homebrew/Cellar/python@3.15/3.15.0_1/Frameworks/Python.framework/Versions/3.15/lib/python3.15/pathlib/__init__.py", line 970, in open
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7771150Z     return io.open(self, mode, buffering, encoding, errors, newline)
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7771500Z            ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7772100Z FileNotFoundError: [Errno 2] No such file or directory: '/var/folders/n6/hn37q6pj7sj_9dmqqc2113800000gn/T/sh31-help-7a_zffx7/slow-probes'
+gauntlet (macos-latest, true, native)	words bytes, abbreviation isolation and bounded pager, native tier	2026-10-25T16:37:52.7861950Z ##[error]Process completed with exit code 1.

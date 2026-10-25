@@ -327,7 +327,7 @@ jobs:
         timeout-minutes: 5
         run: tools/colour-witness target/${{ matrix.tier }}/pelt
 
-      - name: words witness imports without the removed Python loader API
+      - name: words witness loader and fixture contracts
         if: ${{ matrix.builds && !cancelled() }}
         run: python3 tools/words-loader-test
 

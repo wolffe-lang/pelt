@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Words raw-byte and cross-process persistence laws, owned fresh-HOME ptys."""
 from pathlib import Path
-import importlib.machinery, importlib.util, os, subprocess, sys, tempfile
+import importlib.machinery, importlib.util, os, shlex, subprocess, sys, tempfile
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
 from lib_shadow import Shell
@@ -137,26 +137,36 @@ def completion(binary,home):
     finally:assert sh.close()
 
 
+def warm_help_fixture(fixture,marker):
+    """Warm an owned executable; leave a readable, zero-count marker."""
+    marker.write_text('')
+    warm=subprocess.run([str(fixture),'--help'],cwd=marker.parent,capture_output=True,timeout=10)
+    assert warm.returncode==0,(fixture,warm)
+    assert marker.read_text()=='x',(fixture,'fixture did not run')
+    marker.write_text('')
+
+
 def help_probe(binary,home):
     fast=home/'probe';slow=home/'slow'
     fast.write_text('#!/bin/sh\nprintf x >> probes\nprintf "  --alpha  First choice\\n  --beta  Second choice\\n"\n')
-    slow.write_text('#!/usr/bin/python3\nimport time\nopen("slow-probes","a").write("x")\ntime.sleep(.2)\nprint("  --slow  Too late")\n')
+    # Record entry in the warmed shell before interpreter startup can consume
+    # the budget. exec preserves the one owned child: no sleeping descendant.
+    delay='import time; time.sleep(.2); print("  --slow  Too late")'
+    slow.write_text('#!/bin/sh\nprintf x >> slow-probes\nexec '+
+                    shlex.quote(sys.executable)+' -c '+shlex.quote(delay)+'\n')
     fast.chmod(0o755);slow.chmod(0o755)
     # A newly created executable's first launch can exceed 50ms on macOS
     # before its code runs (measured 142.5ms vs 3.2-3.6ms thereafter).
-    # Warm only these owned fixtures, then remove their markers so the
-    # no-execution and once-per-prompt assertions still start from zero.
+    # Warm only these owned fixtures, then retain zero-length markers so
+    # later rows always have a counter and still start from zero.
     # The application's 50ms deadline is unchanged: a cold program may
     # correctly produce no completions and is not our positive fixture.
     for fixture,marker in [(fast,'probes'),(slow,'slow-probes')]:
-        warm=subprocess.run([str(fixture),'--help'],cwd=home,capture_output=True,timeout=10)
-        assert warm.returncode==0,(fixture,warm)
-        assert (home/marker).read_text()=='x',(fixture,'fixture did not run')
-        (home/marker).unlink()
+        warm_help_fixture(fixture,home/marker)
     sh=shell(binary,home)
     try:
         step(sh,b'./probe --')
-        assert not (home/'probes').exists(),'highlight executed help'
+        assert (home/'probes').read_text()=='','highlight executed help'
         raw=step(sh,b'\t');assert b'First choice' in raw and b'Second choice' in raw,raw
         step(sh,b'\x07');step(sh,b'\t');step(sh,b'\x07')
         assert (home/'probes').read_text()=='x','uncached help'

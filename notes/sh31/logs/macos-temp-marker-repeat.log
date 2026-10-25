@@ -1,0 +1,19 @@
+free+inactive+speculative bytes 15040069632
+TMPDIR=/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/
+repeat 1 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-onlx7yqg
+ok explicit-help-only/description/cache/timeout
+repeat 2 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-x9fj9ycc
+ok explicit-help-only/description/cache/timeout
+repeat 3 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-jbdcvde5
+ok explicit-help-only/description/cache/timeout
+repeat 4 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-jrpwlvgr
+ok explicit-help-only/description/cache/timeout
+repeat 5 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-_bqe8uix
+ok explicit-help-only/description/cache/timeout
+repeat 6 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-yxfdqu2q
+ok explicit-help-only/description/cache/timeout
+repeat 7 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-qq5qrjo8
+ok explicit-help-only/description/cache/timeout
+repeat 8 home /var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh31-help-repeat-ooqmb4nh
+ok explicit-help-only/description/cache/timeout
+PASS 8/8 help fixture lifecycle/cache/timeout repetitions

@@ -1,0 +1,34 @@
+ok words-loader: extensionless helpers load without load_module
+ok words-fixture: warm-up retains an empty marker for later rows
+ok abbr space/Enter/quoted/empty/undo/cancel/command-position
+ok abbr persistence/atomic/malformed/erase/exclusive-temp
+ok abbr-script-gate
+ok events echo/last-word/quotes/comments/literals/cancel/abbr-order/toggle
+ok events expanded-history-no-style-bytes
+ok event-script-gate
+ok completion columns/navigation/accept-not-execute/escape 24
+ok completion columns/navigation/accept-not-execute/escape 40
+ok completion columns/navigation/accept-not-execute/escape 80
+ok completion columns/navigation/accept-not-execute/escape 120
+ok completion resize/restored-line
+ok explicit-help-only/description/cache/timeout
+colour idle before {"contexts": 14, "cpu_ticks": 5, "major_faults": 0, "minor_faults": 2277, "page_size_bytes": 4096, "pid": 42, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4120 kB", "Pss_Anon": "4120 kB", "Pss_File": "5682 kB", "Pss_Shmem": "0 kB", "Rss": "11228 kB"}, "statm_resident_pages": 2807, "status": {"RssAnon": "4120 kB", "RssFile": "7108 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "11228 kB"}, "thp_enabled": "always [madvise] never"}
+colour idle after {"contexts": 14, "cpu_ticks": 5, "major_faults": 0, "minor_faults": 2277, "page_size_bytes": 4096, "pid": 42, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4120 kB", "Pss_Anon": "4120 kB", "Pss_File": "5682 kB", "Pss_Shmem": "0 kB", "Rss": "11228 kB"}, "statm_resident_pages": 2807, "status": {"RssAnon": "4120 kB", "RssFile": "7108 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "11228 kB"}, "thp_enabled": "always [madvise] never"}
+ok colour idle-10s: zero wakeups, unchanged RSS, child THP disabled
+colour 80-column line: median 0.238721ms p99 0.420506ms; 100 keys after warmup
+ok abbr space/Enter/quoted/empty/undo/cancel/command-position
+ok abbr persistence/atomic/malformed/erase/exclusive-temp
+ok abbr-script-gate
+ok events echo/last-word/quotes/comments/literals/cancel/abbr-order/toggle
+ok events expanded-history-no-style-bytes
+ok event-script-gate
+ok completion columns/navigation/accept-not-execute/escape 24
+ok completion columns/navigation/accept-not-execute/escape 40
+ok completion columns/navigation/accept-not-execute/escape 80
+ok completion columns/navigation/accept-not-execute/escape 120
+ok completion resize/restored-line
+ok explicit-help-only/description/cache/timeout
+colour idle before {"contexts": 15, "cpu_ticks": 5, "major_faults": 0, "minor_faults": 2210, "page_size_bytes": 4096, "pid": 80, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4024 kB", "Pss_Anon": "4024 kB", "Pss_File": "2744 kB", "Pss_Shmem": "0 kB", "Rss": "7936 kB"}, "statm_resident_pages": 1984, "status": {"RssAnon": "4024 kB", "RssFile": "3912 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "7936 kB"}, "thp_enabled": "always [madvise] never"}
+colour idle after {"contexts": 15, "cpu_ticks": 5, "major_faults": 0, "minor_faults": 2210, "page_size_bytes": 4096, "pid": 80, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4024 kB", "Pss_Anon": "4024 kB", "Pss_File": "2744 kB", "Pss_Shmem": "0 kB", "Rss": "7936 kB"}, "statm_resident_pages": 1984, "status": {"RssAnon": "4024 kB", "RssFile": "3912 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "7936 kB"}, "thp_enabled": "always [madvise] never"}
+ok colour idle-10s: zero wakeups, unchanged RSS, child THP disabled
+colour 80-column line: median 0.160571ms p99 0.322963ms; 100 keys after warmup

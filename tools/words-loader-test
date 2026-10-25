@@ -3,10 +3,12 @@
 
 The macOS CI interpreter has removed that API. Hide it on older Python too,
 so every host reproduces the same compatibility boundary without a binary.
+Also verify that warm-up retains empty marker files for later timeout rows.
 """
 import importlib.machinery
 from pathlib import Path
 import runpy
+import tempfile
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,3 +33,21 @@ for name in ('step', 'ready', 'assert_resets', 'cost'):
 for name in ('abbreviations', 'events', 'completion', 'help_probe'):
     assert callable(witness[name]), ('words witness missing', name)
 print('ok words-loader: extensionless helpers load without load_module')
+
+# The timeout row reads this file even when startup uses its entire budget.
+# Exercise the lifecycle directly, independent of the host's scheduling.
+with tempfile.TemporaryDirectory(prefix='sh31-marker-regression-') as temp:
+    home = Path(temp)
+    fixture = home / 'fixture'
+    marker = home / 'marker'
+    fixture.write_text('#!/bin/sh\nprintf x >> marker\n')
+    fixture.chmod(0o755)
+    for _ in range(2):
+        witness['warm_help_fixture'](fixture, marker)
+        assert marker.read_text() == '', 'warm-up did not leave a zero-count marker'
+        # The actual probe's one append remains distinguishable from warm-up.
+        with marker.open('a') as stream:
+            stream.write('x')
+        assert marker.read_text() == 'x'
+        marker.write_text('')
+print('ok words-fixture: warm-up retains an empty marker for later rows')
