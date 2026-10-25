@@ -1,0 +1,5 @@
+exec 2>&0
+echo alpha beta_suffix
+\k echo beta
+\k \e[C\r
+exit

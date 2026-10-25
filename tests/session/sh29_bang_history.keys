@@ -1,0 +1,6 @@
+exec 2>&0
+! true
+\k !
+\k \e[C\r
+true
+exit

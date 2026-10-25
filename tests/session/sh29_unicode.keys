@@ -1,0 +1,5 @@
+exec 2>&0
+echo 界界界
+\k echo 界
+\k \e[C\r
+exit

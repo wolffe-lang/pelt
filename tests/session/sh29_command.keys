@@ -1,0 +1,4 @@
+exec 2>&0
+\k pri
+\k \e[C ok\\n\r
+exit

@@ -1,0 +1,6 @@
+exec 2>&0
+echo prefix_old
+echo prefix_new
+\k echo prefix_
+\k \e[C\r
+exit

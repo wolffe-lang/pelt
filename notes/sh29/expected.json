@@ -1,0 +1,488 @@
+{
+  "sh29_accept_right": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_accept_ss3right": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_accept_end": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_accept_ss3end": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_accept_end4": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_accept_end8": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_accept_ce": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_accept_cf": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_never_typed": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_undo_accept": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_undo_shadow": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "clean\n",
+    ""
+  ],
+  "sh29_kill_ring": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_clear_cu": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "clean\n",
+    ""
+  ],
+  "sh29_clear_cc": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "clean\n",
+    ""
+  ],
+  "sh29_clear_quit": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "clean\n",
+    ""
+  ],
+  "sh29_clear_cl": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_midline_right": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_midline_end": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_delete": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefi\n",
+    ""
+  ],
+  "sh29_edit": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefixZ\n",
+    ""
+  ],
+  "sh29_tab": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_toggle_off": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_friendly_off": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_feature_off": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_umbrella_off": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_posix_off": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_keys_off": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_color_linux": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_color_rgb": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix\n",
+    ""
+  ],
+  "sh29_edge": [
+    "",
+    "prefix_suffix\n",
+    "",
+    "prefix_suffix\n",
+    ""
+  ],
+  "sh29_empty": [
+    "",
+    "previous\n",
+    "clean\n",
+    ""
+  ],
+  "sh29_alt_word": [
+    "",
+    "alpha-beta/gamma delta\n",
+    "",
+    "alpha\n",
+    ""
+  ],
+  "sh29_ctrl_token": [
+    "",
+    "alpha-beta/gamma delta\n",
+    "",
+    "alpha-beta/gamma\n",
+    ""
+  ],
+  "sh29_recent": [
+    "",
+    "prefix_old\n",
+    "prefix_new\n",
+    "",
+    "prefix_new\n",
+    ""
+  ],
+  "sh29_no_word_fallback": [
+    "",
+    "alpha beta_suffix\n",
+    "",
+    "beta\n",
+    ""
+  ],
+  "sh29_unicode": [
+    "",
+    "界界界\n",
+    "",
+    "界界界\n",
+    ""
+  ],
+  "sh29_combining": [
+    "",
+    "ábc\n",
+    "",
+    "ábc\n",
+    ""
+  ],
+  "sh29_file_one": [
+    "",
+    "",
+    "./unique-file\n",
+    ""
+  ],
+  "sh29_file_many": [
+    "",
+    "",
+    "./shared-one\n",
+    ""
+  ],
+  "sh29_file_quote": [
+    "",
+    "",
+    "./unique file\n",
+    ""
+  ],
+  "sh29_file_dir": [
+    "",
+    "",
+    "./unique-dir/\n",
+    ""
+  ],
+  "sh29_command": [
+    "",
+    "",
+    "okn",
+    ""
+  ],
+  "sh29_history_up": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "alpha2\n",
+    ""
+  ],
+  "sh29_history_cp": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "alpha2\n",
+    ""
+  ],
+  "sh29_history_twice": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "alpha1\n",
+    ""
+  ],
+  "sh29_history_down": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "alpha2\n",
+    ""
+  ],
+  "sh29_history_restore": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "al\n",
+    ""
+  ],
+  "sh29_history_plain": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "alpha2\n",
+    ""
+  ],
+  "sh29_history_pageup": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "",
+    ""
+  ],
+  "sh29_history_pagedown": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "al\n",
+    ""
+  ],
+  "sh29_pager_enter": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "",
+    "",
+    "alpha2\n",
+    ""
+  ],
+  "sh29_pager_down": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "",
+    "",
+    "alpha1\n",
+    ""
+  ],
+  "sh29_pager_cycle": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "",
+    "",
+    "alpha1\n",
+    ""
+  ],
+  "sh29_pager_escape": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "",
+    "",
+    "al\n",
+    ""
+  ],
+  "sh29_pager_cc": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "",
+    "",
+    "al\n",
+    ""
+  ],
+  "sh29_pager_cg": [
+    "",
+    "alpha1\n",
+    "beta\n",
+    "alpha2\n",
+    "",
+    "",
+    "",
+    "al\n",
+    ""
+  ],
+  "sh29_pager_filter": [
+    "",
+    "alpha\n",
+    "beta\n",
+    "",
+    "",
+    "",
+    "alpha\n",
+    ""
+  ],
+  "sh29_pager_nomatch": [
+    "",
+    "alpha\n",
+    "",
+    "",
+    "",
+    "draft\n",
+    ""
+  ],
+  "sh29_pager_undo": [
+    "",
+    "alpha\n",
+    "",
+    "",
+    "al\n",
+    ""
+  ],
+  "sh29_bang": [
+    "",
+    "",
+    "clean\n",
+    ""
+  ],
+  "sh29_bang_history": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "sh29_history_off": [
+    "",
+    "alpha\n",
+    "beta\n",
+    "",
+    "beta\n",
+    ""
+  ],
+  "sh29_isearch_off": [
+    "",
+    "alpha\n",
+    "alpha\n",
+    ""
+  ]
+}

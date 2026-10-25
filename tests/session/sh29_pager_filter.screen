@@ -1,0 +1,35 @@
+step 1
+| $ exec 2>&0
+| $
+cursor 1 2
+step 2
+| $ echo alpha
+| $
+cursor 1 2
+step 3
+| $ echo beta
+| $
+cursor 1 2
+step 4
+| $
+| history:
+| > echo beta
+|   echo alpha
+|   exec 2>&0
+cursor 0 2
+step 5
+| $
+| history: alpha
+| > echo alpha
+cursor 0 2
+step 6
+| $ echo alpha
+cursor 0 12
+step 7
+| $ echo alpha
+| $
+cursor 1 2
+step 8
+| $ exit
+| 
+cursor 1 0

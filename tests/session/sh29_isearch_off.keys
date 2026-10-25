@@ -1,0 +1,4 @@
+exec 2>&0
+echo alpha
+\k \x12alpha\r
+exit

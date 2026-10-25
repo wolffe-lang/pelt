@@ -1,0 +1,15 @@
+step 1
+| $ exec 2>&0
+| $
+cursor 1 2
+step 2
+| $ printf
+cursor 0 5
+step 3
+| $ printf  ok\n
+| $
+cursor 1 2
+step 4
+| $ exit
+| 
+cursor 1 0

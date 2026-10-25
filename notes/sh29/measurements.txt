@@ -28,10 +28,14 @@ and truncates on cluster boundaries, avoiding a terminal pending-wrap state.
 
 A unique file prefix ./uni suggests que-file plus a space. Multiple ./sha
 matches suggest red-one plus a space, not just the common prefix red-.
-The conservative pelt choice is a unique file suffix only; ambiguous
-completion remains Tab's existing common-prefix/list UI. This departure
-is a recommendation requiring the coordinator's ruling.
+The ruling is to follow fish: suggest the first sorted candidate, even
+when several match. Acceptance is explicit; Tab still uses its existing
+common-prefix/list UI. A wrong drawn guess does not change the buffer.
 
 At this pin suggest and histsearch default off, independent of friendly_keys.
 The argv[0] re-pin will turn both on with friendly per ruling #126. Leading
 ! remains shell input; no new expansion or command completion policy for it.
+
+Leading ! alone remains literal; after ! true, fish draws a history suffix
+ true. !! receives no command suffix. Pelt mirrors this: history may match,
+but leading ! never reaches command/file completion. No expansion added.

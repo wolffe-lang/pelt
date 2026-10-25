@@ -1,0 +1,25 @@
+step 0
+err no
+prompt "$ "
+step 1 "exec 2>&0"
+err no
+prompt ""
+step 2 "echo prefix_old"
+out "prefix_old\n"
+err no
+prompt ""
+step 3 "echo prefix_new"
+out "prefix_new\n"
+err no
+prompt ""
+step 4 "\\k echo prefix_"
+err no
+prompt ""
+step 5 "\\k \\e[C\\r"
+out "prefix_new\n"
+err no
+prompt ""
+step 6 "exit"
+err no
+prompt ""
+exit 0 at step 6

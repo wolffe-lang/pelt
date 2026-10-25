@@ -1,0 +1,4 @@
+exec 2>&0
+echo previous
+\k \e[Cecho clean\r
+exit

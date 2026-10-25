@@ -1,0 +1,7 @@
+exec 2>&0
+echo alpha
+\k echo draft
+\k \x12zzzz
+\k \r
+\k \r
+exit

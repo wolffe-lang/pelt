@@ -1,0 +1,6 @@
+exec 2>&0
+echo alpha
+\k echo al
+\k \x12\r
+\k \x1f\r
+exit

@@ -1,0 +1,5 @@
+exec 2>&0
+echo ábc
+\k echo a
+\k \e[C\r
+exit

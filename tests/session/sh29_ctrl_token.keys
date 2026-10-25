@@ -1,0 +1,5 @@
+exec 2>&0
+echo alpha-beta/gamma delta
+\k echo al
+\k \e[1;5C\r
+exit

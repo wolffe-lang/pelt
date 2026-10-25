@@ -1,0 +1,31 @@
+step 0
+err no
+prompt "$ "
+step 1 "exec 2>&0"
+err no
+prompt ""
+step 2 "echo alpha"
+out "alpha\n"
+err no
+prompt ""
+step 3 "echo beta"
+out "beta\n"
+err no
+prompt ""
+step 4 "\\k \\x12"
+err no
+prompt ""
+step 5 "\\k alpha"
+err no
+prompt ""
+step 6 "\\k \\r"
+err no
+prompt ""
+step 7 "\\k \\r"
+out "alpha\n"
+err no
+prompt ""
+step 8 "exit"
+err no
+prompt ""
+exit 0 at step 8

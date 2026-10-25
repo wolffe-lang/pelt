@@ -1,0 +1,7 @@
+exec 2>&0
+echo alpha1
+echo beta
+echo alpha2
+\k echo al
+\k \e[A\r
+exit
