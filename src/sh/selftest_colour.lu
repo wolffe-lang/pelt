@@ -151,6 +151,13 @@ fn want_colour_storage(mut bad: List[str]) {
     e.highlight = true
     e.friendly = true
     e.commands["echo"] = true
+    e.prefix = cps_of("echo 'first\n")
+    e.buf = cps_of("second'")
+    if colour_kind(highlight_line(e), 0) != HC_QUOTE || highlight_line(e).incomplete {
+        (mut bad).push("continued quote lost parser context")
+    }
+    e.prefix = List[int]()
+    e.buf = List[int]()
     start_line(mut e)
     insert(mut e, cps_of("echo red"))
     // Read the actual editor buffer, vi undo, grouped undo, history and

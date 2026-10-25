@@ -77,6 +77,11 @@ def palette(binary, home):
             raw=step(sh,b'\x15/usr/bin/true')
             assert b'\x1b[0m/usr/bin/true' in raw,raw
             print('ok colour-command-census function/alias/explicit-path',term,flush=True)
+            step(sh,b"\x15echo 'first\r")
+            raw=step(sh,b"second'")
+            assert b"\x1b[0;33msecond'" in raw,('PS2 quote context',raw)
+            step(sh,b'\r')
+            print('ok colour-continued-quote',term,flush=True)
         finally: assert sh.close(), 'mode not restored'
 
     for name, env, want in [

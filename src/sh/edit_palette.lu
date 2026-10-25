@@ -310,3 +310,23 @@ fn highlight_error(mut sh: Sh, src: str, offset: int) {
     (mut out).push(10 as byte)
     write_fd(mut sh, 2, text(Buf { b: out }))
 }
+
+/// Include already accepted PS2 input for classification, but return only
+/// spans belonging to the live edit buffer. Earlier lines are never redrawn.
+fn highlight_line(e: Ed) -> HlLine {
+    if e.prefix.len == 0 { return hl_classify(e.buf, e.commands) }
+    let whole = spliced(e.prefix, e.prefix.len, e.prefix.len, e.buf)
+    let line = hl_classify(whole, e.commands)
+    var spans = List[HlSpan]()
+    for span in line.spans {
+        if span.end > e.prefix.len {
+            let start = if span.start < e.prefix.len then 0 else span.start - e.prefix.len
+            (mut spans).push(HlSpan { start: start, end: span.end - e.prefix.len, kind: span.kind })
+        }
+    }
+    HlLine {
+        spans: spans,
+        incomplete: line.incomplete,
+        error_at: if line.error_at < e.prefix.len then -1 else line.error_at - e.prefix.len,
+    }
+}
