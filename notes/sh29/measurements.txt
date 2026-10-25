@@ -1,0 +1,37 @@
+Fish measured as a program through an 80-column pty in the pinned Arch
+container, kasumi CPUs 4-7, no implementation source read. Exact packages:
+dash 0.5.13.4-1.1, bash 5.3.20-2, fish 4.9.3-1. Raw per-step bytes and final
+commandline/cursor queries are in fish/*.json. Effects were separately
+written by the out function; a final-only Ctrl-O binding queried the real
+edit buffer, never the shadow. The fixture answers terminal DA and CPR.
+Initial probes without the DA answer never reached a prompt and are not
+measurements. --no-config omits the default colours; final probes use a
+fresh HOME and normal initialization, without reading installed sources.
+
+Exact-prefix history prefers the most recent line. The contract's
+prefix-of-a-word fallback was the coordinator's assumption: out beta after
+out alpha beta_suffix gives no shadow, nor echo beta nor beta. Measurement
+refuted that rule; R-sh29-1 B chooses exact-prefix only.
+
+Right, End, Ctrl-E and Ctrl-F accept the whole shadow. Alt-F accepts alpha
+from alpha-beta/gamma; Ctrl-Right accepts alpha-beta/gamma, not the space.
+Ctrl-R Enter accepts a selected line without executing. Escape restores
+the draft. Fish Ctrl-C clears it; pelt deliberately restores instead.
+
+Fish default shadow bytes are ESC[90m suffix ESC[39m on xterm-256color,
+linux and COLORTERM=truecolor; no SGR 2. TERM=dumb draws no shadow. The
+contract's indexed/RGB palette was wrong: the revised default is SGR 90,
+16-colour-compatible on PAX; F2 may offer indexed/RGB PELT_COLORS choices.
+At width 16 fish displays ghi plus an ellipsis after out abcdef, without
+wrapping. No fish wrap bug was reproduced. Pelt reserves the final column
+and truncates on cluster boundaries, avoiding a terminal pending-wrap state.
+
+A unique file prefix ./uni suggests que-file plus a space. Multiple ./sha
+matches suggest red-one plus a space, not just the common prefix red-.
+The conservative pelt choice is a unique file suffix only; ambiguous
+completion remains Tab's existing common-prefix/list UI. This departure
+is a recommendation requiring the coordinator's ruling.
+
+At this pin suggest and histsearch default off, independent of friendly_keys.
+The argv[0] re-pin will turn both on with friendly per ruling #126. Leading
+! remains shell input; no new expansion or command completion policy for it.
