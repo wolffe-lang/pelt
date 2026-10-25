@@ -1,4 +1,4 @@
 exit=0
 stderr=no
 bash=agree
-pending=enoexec
+why=R-sh26-1: dash hands a file with no #! line that the kernel refused to /bin/sh, as /bin/sh FILE ARG..., a binary file too, so its status is this host's /bin/sh's (126 where that is bash, 127 where it is dash); the case compares with /bin/sh's own answer; bash runs the file itself and bypasses a binary (126)

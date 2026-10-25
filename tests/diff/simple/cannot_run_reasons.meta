@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+bash=differs
+why=pelt#61: dash names the reason after its own prefix: not found (ENOENT, ENOTDIR, a missing interpreter), the host's words for ELOOP and ENAMETOOLONG, all 127; Permission denied for a directory, a file without x and an unsearchable directory, 126 (sh26 probe/p07, p21); pelt asks the file why, since the os family sets no os_error() at wolf 0.2.35

@@ -1,0 +1,7 @@
+ran t [a] [b c] 2
+st=3
+ran t [d] [] 1
+st=3
+ran t [e] [] 1
+st=3
+ran t [f] [] 1 st=3

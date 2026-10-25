@@ -184,7 +184,7 @@ id	kind	statement	cases	note
 2.8.1/12	S	An interactive shell does not exit on any of these errors, and drops the rest of the command	session:syntax_error_continues session:special_builtin_error session:expansion_error session:c_redirect_error session:readonly_assign	
 2.8.1/13	T	A special built-in's own diagnostic goes to standard error and can be redirected like a utility's	builtin/c_special_diag_redirect	
 2.8.1/14	U	An unrecoverable read error while reading commands makes the shell exit 128 after any EXIT trap		needs a descriptor that fails mid-read (EIO); no portable way to make one in the corpus
-2.8.2/1	T	Not found is 127; found but not executable is 126	exec/not_found exec/not_executable exec/directory simple/slash_not_found simple/c_126_127	
+2.8.2/1	T	Not found is 127; found but not executable is 126	exec/not_found exec/not_executable exec/directory simple/slash_not_found simple/c_126_127 simple/cannot_run_reasons	
 2.8.2/2	T	A command ended by a signal has a status above 128 that identifies the signal	signal/child_term signal/child_kill signal/child_hup signal/child_int	
 2.8.2/3	T	Otherwise the status is the low eight bits of what the command exited with	simple/c_exit_mod_256	
 2.9/1	T	The exit status of a command is that of the last simple command it executed, unless stated otherwise	control/loop_status control/if_status	
@@ -207,8 +207,8 @@ id	kind	statement	cases	note
 2.9.1.4/5	T	An empty PATH component or an unset PATH names the current directory or the default	simple/c_path_empty_component	
 2.9.1.4/6	T	A name with a slash is executed directly, without a PATH search	simple/slash_not_found simple/c_slash_direct	
 2.9.1.6/1	T	The utility is run with arg0 the command name and the arguments as given	simple/external_args simple/c_arg0	
-2.9.1.6/2	T	A file the system refuses with ENOEXEC is run as a shell script by the shell	exec/script_no_shebang simple/script_no_shebang simple/c_enoexec	
-2.9.1.6/3	T	A file that cannot be a script (a NUL before a newline) is refused with status 126	simple/c_enoexec_binary	
+2.9.1.6/2	T	A file the system refuses with ENOEXEC is run as a shell script by the shell	exec/script_no_shebang simple/script_no_shebang simple/c_enoexec simple/no_shebang_plain	
+2.9.1.6/3	T	A file the system refuses with ENOEXEC that is not a text file goes to the shell as well, which may refuse it with status 126 (optional); dash hands it to /bin/sh, so it answers as /bin/sh does	simple/c_enoexec_binary	R-sh26-1: dash 0.5.13.4 runs a refused file with no #! line as /bin/sh FILE ARG..., on the plain path and after exec, a binary too (126 where /bin/sh is bash, 127 where it is dash); pelt does the same, and the case compares with /bin/sh's own answer (sh26 probe/p02, p06, p20)
 2.9.2/1	T	Each command's standard output is connected to the next command's standard input	pipe/three pipe/many_stages pipe/stdin_through	
 2.9.2/2	T	The pipe is assigned before the command's own redirections	pipe/c_redirect_overrides	
 2.9.2/3	T	The pipeline's status is the last command's	pipe/status_last pipe/pipeline_status pipe/c_status_last	

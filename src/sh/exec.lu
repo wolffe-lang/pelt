@@ -2465,14 +2465,13 @@ fn start_child(
         io => { -125 },
         unsupported => { -126 },
     }
-    if hd == -125 {
-        // the kernel would not run it: a script with no `#!` line is
-        // the shell's to run (XCU 2.9.1.4)
-        hd = -126
-        if is_script(path) {
-            let me = os_exe() else ""
-            hd = spawn_fds(mut sh, me, script_args(path, args), map) else -126
-        }
+    if hd == -125 && no_magic(path) {
+        // the kernel would not run it and it has no `#!` line: a shell
+        // is invoked with the file as its operand (XCU 2.9.1.4), and as
+        // dash's that shell is `/bin/sh` (R-sh26-1). At wolf 0.2.35 the
+        // runtime still does this itself (wolf-lang#682, fixed in s260
+        // and in no release), so this is for the release after it.
+        hd = spawn_fds(mut sh, sh_path(), script_args(path, args), map) else -126
     }
     if cap_w >= 0 {
         fs_close(cap_w) else |_| {}
@@ -2484,14 +2483,11 @@ fn start_child(
         if cap_r >= 0 {
             fs_close(cap_r) else |_| {}
         }
-        if hd == -127 {
-            if !quiet_missing {
-                diag(mut sh, "{cmd}: not found")
-            }
-        } else {
-            diag(mut sh, "{cmd}: cannot be run")
+        let (why, st) = cannot_run(path, -hd)
+        if st != 127 || !quiet_missing {
+            diag(mut sh, "{cmd}: {why}")
         }
-        return (-1, -hd)
+        return (-1, st)
     }
     if cap_r >= 0 {
         drain(mut sh, cap_r)
@@ -2675,31 +2671,59 @@ fn run_cnf(mut sh: Sh, fnode: int, fields: List[str], names: List[str], values: 
     st
 }
 
-/// Whether the file at `path` is one the shell runs itself when the
-/// kernel will not: text with no `#!` line. A file that starts like a
-/// program (a NUL in its first bytes) is not. A guess from the file,
-/// because `os_exec`'s `io` does not say `ENOEXEC` (wolf-lang#682; and
-/// `os_spawn_fds` at 0.2.27 hands such a file to `/bin/sh` itself
-/// before pelt is asked).
-fn is_script(path: str) -> bool {
+/// The shell a file with no `#!` line is handed to when the kernel will
+/// not run it (XCU 2.9.1.4): `/bin/sh`, as dash's (black-box, sh26: the
+/// plain path and `exec` alike, argv `/bin/sh FILE ARG…`, a binary file
+/// too: R-sh26-1).
+fn sh_path() -> str {
+    "/bin/sh"
+}
+
+/// Whether the file at `path` can be read and does not start with `#!`:
+/// a file the kernel refused (`io`, which at this pin is how `os_exec`
+/// says `ENOEXEC`, wolf-lang#682) that a shell is to run. A binary file
+/// is handed over too, as dash hands it (the shell it starts decides).
+fn no_magic(path: str) -> bool {
     let h = fs_open(path) else -1
     if h < 0 {
         return false
     }
-    let head = fs_read_chunk(h, 256) else |_| List[byte]()
+    let head = fs_read_chunk(h, 2) else |_| List[byte]()
     fs_close(h) else |_| {}
-    if head.len >= 2 && head[0] as int == 35 && head[1] as int == 33 {
-        return false
-    }
-    for b in head {
-        if b as int == 0 {
-            return false
-        }
-    }
-    true
+    !(head.len >= 2 && head[0] as int == 35 && head[1] as int == 33)
 }
 
-/// The operands for pelt run on script `path` with `args`.
+/// Why the program at `path` could not be run, as dash words it, and the
+/// status (XCU 2.8.2: 127 when it was not found, 126 when it was and
+/// could not be run). `row` is the spawn's: 127 `not_found`, 126
+/// `denied`, `invalid` or `unsupported`, 125 `io`. The os family sets
+/// no `os_error()` at this pin, so the reason is asked of the file
+/// itself: a path that does not resolve is `not found` (`ENOENT`,
+/// `ENOTDIR`) or the host's words for why (`ELOOP`, `ENAMETOOLONG`),
+/// 127 either way; a directory or a file without the execute bit is
+/// `Permission denied`, 126; a missing `#!` interpreter `not found`
+/// (dash, black-box: `notes/sh26-evidence/probe/p07`, `p21`; pelt#61).
+fn cannot_run(path: str, row: int) -> (str, int) {
+    let rec = fs_stat(path) else |_| {
+        let e = os_error()
+        if e == 13 {
+            return ("Permission denied", 126)
+        }
+        if e == 0 || e == 2 || e == 20 {
+            return ("not found", 127)
+        }
+        return (os_error_text(e), 127)
+    }
+    if rec[0] == K_DIR || row == 126 {
+        return ("Permission denied", 126)
+    }
+    if row == 127 {
+        return ("not found", 127)
+    }
+    ("cannot be run", 126)
+}
+
+/// The operands for a shell run on script `path` with `args`.
 fn script_args(path: str, args: List[str]) -> List[str] {
     var out = List[str]()
     (mut out).push(path)
@@ -2791,27 +2815,19 @@ fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
     // the terminal, the group and the three job-control signals go back
     // first: the program is the shell's process from here on
     jc_leave(mut sh)
-    var st = try_exec(path, args, env, map)
-    if st == 125 {
-        st = 126
-        if is_script(path) {
-            let me = os_exe() else ""
-            var argv = List[str]()
-            (mut argv).push("pelt")
-            for a in script_args(path, args[1..args.len]) {
-                (mut argv).push(a)
-            }
-            st = try_exec(me, argv, env, map)
-            if st == 125 {
-                st = 126
-            }
+    let first = try_exec(path, args, env, map)
+    if first == 125 && no_magic(path) {
+        // no `#!` line: `/bin/sh FILE ARG…` in the shell's place, as
+        // dash's (R-sh26-1)
+        var argv = List[str]()
+        (mut argv).push(sh_path())
+        for a in script_args(path, args[1..args.len]) {
+            (mut argv).push(a)
         }
+        let _st = try_exec(sh_path(), argv, env, map)
     }
-    if st == 127 {
-        diag(mut sh, "exec: {cmd}: not found")
-    } else {
-        diag(mut sh, "exec: {cmd}: cannot be run")
-    }
+    let (why, st) = cannot_run(path, first)
+    diag(mut sh, "exec: {cmd}: {why}")
     st
 }
 

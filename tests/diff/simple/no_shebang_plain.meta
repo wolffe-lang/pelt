@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+bash=agree
+why=pelt#63: a #!-less executable text file is a shell script on the plain path, through PATH, after exec and in a substitution
