@@ -153,6 +153,7 @@ fn next_line(mut sh: Sh, first: bool) -> (str, int) {
         }
         return read_raw_line(mut sh)
     }
+    highlight_warning(mut sh)
     let cpr = sh.ed.cpr
     let q = copy region eq {
         ed_query(sh, cpr)

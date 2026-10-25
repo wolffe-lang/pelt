@@ -1,0 +1,299 @@
+//! PELT_COLORS is parsed once per prompt, never into an input buffer.
+
+struct HlTheme {
+    styles: List[str],
+    warning: str,
+}
+
+fn hl_defaults() -> List[str] {
+    [
+        "0",
+        "0",
+        "0;36",
+        "0",
+        "0;33",
+        "0;91",
+        "0;96",
+        "0;36;1",
+        "0;31",
+        "0;32",
+        "0;91",
+        "0;91",
+        "0;90",
+    ]
+}
+
+fn hl_role(name: str) -> int {
+    match name {
+        "normal" => HC_PLAIN,
+        "command" => HC_COMMAND,
+        "argument" | "param" => HC_ARGUMENT,
+        "reserved" => HC_RESERVED,
+        "quote" => HC_QUOTE,
+        "quote_open" => HC_OPEN,
+        "variable" => HC_VARIABLE,
+        "redirection" => HC_REDIRECTION,
+        "comment" => HC_COMMENT,
+        "operator" | "end" => HC_OPERATOR,
+        "error" => HC_ERROR,
+        "unknown" => HC_UNKNOWN,
+        "shadow" | "autosuggestion" => HC_SHADOW,
+        _ => -1,
+    }
+}
+
+fn hl_hex(c: int) -> int {
+    if c >= 48 && c <= 57 { return c - 48 }
+    if c >= 65 && c <= 70 { return c - 65 + 10 }
+    if c >= 97 && c <= 102 { return c - 97 + 10 }
+    -1
+}
+
+fn hl_rgb(n: int) -> (int, int, int) {
+    let table = [
+        0x000000,
+        0x800000,
+        0x008000,
+        0x808000,
+        0x000080,
+        0x800080,
+        0x008080,
+        0xc0c0c0,
+        0x808080,
+        0xff0000,
+        0x00ff00,
+        0xffff00,
+        0x0000ff,
+        0xff00ff,
+        0x00ffff,
+        0xffffff,
+    ]
+    if n < 16 {
+        let v = table[n]
+        return (v >> 16 & 255, v >> 8 & 255, v & 255)
+    }
+    if n >= 232 { let v = 8 + (n - 232) * 10; return (v, v, v) }
+    let v = n - 16
+    let steps = [0, 95, 135, 175, 215, 255]
+    (steps[v / 36], steps[v / 6 % 6], steps[v % 6])
+}
+
+fn hl_nearest(r: int, g: int, b: int, count: int) -> int {
+    var best = 0
+    var distance = 999999
+    var i = 0
+    while i < count {
+        let (rr, gg, bb) = hl_rgb(i)
+        let d = (r - rr) * (r - rr) + (g - gg) * (g - gg) + (b - bb) * (b - bb)
+        if d < distance { distance = d; best = i }
+        i += 1
+    }
+    best
+}
+
+fn hl_index(n: int, colors: int) -> str {
+    var at = n
+    if colors == 16 && n >= 16 {
+        let (r, g, b) = hl_rgb(n)
+        at = hl_nearest(r, g, b, 16)
+    }
+    if at < 8 { return "0;{30 + at}" }
+    if at < 16 { return "0;{90 + at - 8}" }
+    "0;38;5;{at}"
+}
+
+fn hl_style(value: str, colors: int) -> str ! {invalid} {
+    let bits = value.split("+")
+    if bits.len > 2 || bits.len == 0 { return invalid }
+    let base = bits[0]
+    var suffix = ""
+    if bits.len == 2 {
+        if bits[1] == "bold" {
+            suffix = ";1"
+        } else if bits[1] == "dim" {
+            suffix = ";2"
+        } else if bits[1] == "underline" {
+            suffix = ";4"
+        } else {
+            return invalid
+        }
+    }
+    if base == "normal" || base == "default" { return "0" + suffix }
+    let names = [
+        "black",
+        "red",
+        "green",
+        "yellow",
+        "blue",
+        "magenta",
+        "cyan",
+        "white",
+        "brblack",
+        "brred",
+        "brgreen",
+        "bryellow",
+        "brblue",
+        "brmagenta",
+        "brcyan",
+        "brwhite",
+    ]
+    var i = 0
+    for name in names {
+        if base == name { return hl_index(i, colors) + suffix }
+        i += 1
+    }
+    if base.starts_with("idx") {
+        let raw = base[3..base.len]
+        if !is_digits(raw) { return invalid }
+        let n = raw.to_int() else -1
+        if n < 0 || n > 255 { return invalid }
+        return hl_index(n, colors) + suffix
+    }
+    if base.len == 7 && base.starts_with("#") {
+        var n = 0
+        i = 1
+        while i < 7 {
+            let v = hl_hex(byte_at(base, i))
+            if v < 0 { return invalid }
+            n = n * 16 + v
+            i += 1
+        }
+        let r = n >> 16 & 255
+        let g = n >> 8 & 255
+        let b = n & 255
+        if colors == 16777216 { return "0;38;2;{r};{g};{b}" + suffix }
+        return hl_index(hl_nearest(r, g, b, colors), colors) + suffix
+    }
+    invalid
+}
+
+fn hl_colors(term: str, colorterm: str) -> int {
+    if term == "dumb" || term == "linux" { return 16 }
+    if colorterm == "truecolor" || colorterm == "24bit" { return 16777216 }
+    if term.contains("256color") { return 256 }
+    16
+}
+
+fn hl_theme(spec: str, term: str, colorterm: str) -> HlTheme {
+    var styles = hl_defaults()
+    let colors = hl_colors(term, colorterm)
+    if spec.len > 0 {
+        for entry in spec.split(":") {
+            let eq = entry.find("=") else -1
+            let name = if eq > 0 then entry[0..eq] else entry
+            let role = hl_role(name)
+            if eq <= 0 || role < 0 {
+                return HlTheme {
+                    styles: hl_defaults(),
+                    warning: if name.len == 0 then "<empty>" else name,
+                }
+            }
+            let value = hl_style(entry[eq + 1..entry.len], colors) else |_| {
+                return HlTheme {
+                    styles: hl_defaults(),
+                    warning: if name.len == 0 then "<empty>" else name,
+                }
+            }
+            styles[role] = value
+        }
+    }
+    HlTheme { styles: styles, warning: "" }
+}
+
+fn colour_terminal(sh: Sh) -> bool {
+    sh.interactive &&
+        sh.sub == 0 &&
+        !sh.jc_hold &&
+        !sh.posix_mode &&
+        fd_get(sh, 0) == 0 &&
+        (sh.vals["TERM"] else "") != "dumb" &&
+        (os_isatty(0) else false) &&
+        (os_isatty(fd_get(sh, 1)) else false) &&
+        (os_isatty(fd_get(sh, 2)) else false)
+}
+
+fn highlight_active(sh: Sh) -> bool {
+    sh.opt_highlight && colour_terminal(sh)
+}
+
+fn highlight_warning(mut sh: Sh) {
+    if !highlight_active(sh) { return }
+    let theme = hl_theme(
+        sh.vals["PELT_COLORS"] else "",
+        sh.vals["TERM"] else "",
+        sh.vals["COLORTERM"] else "",
+    )
+    if theme.warning.len > 0 {
+        write_fd(mut sh, 2, "pelt: PELT_COLORS: invalid entry '{theme.warning}'; using defaults\n")
+    }
+}
+
+/// One PATH census at prompt initialization, reusing completion's executable,
+/// builtin, reserved-word and function enumeration. The classifier gets a map.
+fn highlight_prepare(mut e: Ed) {
+    if !e.highlight { return }
+    for name in find_commands("", e.fnames, e.cpath) { e.commands[name] = true }
+}
+
+/// Explicit paths cost at most one stat per distinct spelling this prompt;
+/// names never trigger another PATH scan. No glob, expansion, exec or fork.
+fn highlight_paths(mut e: Ed, line: HlLine) -> bool {
+    var changed = false
+    for span in line.spans {
+        if span.kind == HC_UNKNOWN {
+            let word = hl_word(e.buf, span.start, span.end)
+            if word.contains("/") && !e.commands.has(word) {
+                let st = stat_of(word, false)
+                e.commands[word] = st.len > 4 && st[0] == K_FILE && st[4] & 73 != 0
+                changed = true
+            }
+        }
+    }
+    changed
+}
+
+fn colour_reset(mut e: Ed) {
+    if e.highlight { put_esc(mut e.out, "[0m") }
+}
+
+fn colour_span(mut e: Ed, kind: int) {
+    if e.highlight { put_esc(mut e.out, "[" + e.palette[kind] + "m") }
+}
+
+/// Draw the parser's offending source span and caret before its ordinary
+/// message. Neither the source nor the history entry receives style bytes.
+fn highlight_error(mut sh: Sh, src: str, offset: int) {
+    if !highlight_active(sh) || sh.dots > 0 { return }
+    let at = if offset > src.len then src.len else offset
+    var a = at
+    while a > 0 && byte_at(src, a - 1) != 10 { a -= 1 }
+    var b = at
+    while b < src.len && byte_at(src, b) != 10 { b += 1 }
+    let prefix = cps_of(src[a..at])
+    let tail = cps_of(src[at..b])
+    let theme = hl_theme(
+        sh.vals["PELT_COLORS"] else "",
+        sh.vals["TERM"] else "",
+        sh.vals["COLORTERM"] else "",
+    )
+    var out = List[byte]()
+    put_esc(mut out, "[0m")
+    var width = 0
+    for cp in prefix { show_cp(mut out, cp); width += cells(cp) }
+    put_esc(mut out, "[" + theme.styles[HC_ERROR] + "m")
+    var end = 0
+    while end < tail.len && (end == 0 || !hl_meta(tail[end])) {
+        show_cp(mut out, tail[end])
+        end += 1
+    }
+    put_esc(mut out, "[0m")
+    while end < tail.len { show_cp(mut out, tail[end]); end += 1 }
+    (mut out).push(10 as byte)
+    var col = 0
+    while col < width { (mut out).push(32 as byte); col += 1 }
+    put_esc(mut out, "[" + theme.styles[HC_ERROR] + "m")
+    (mut out).push(94 as byte)
+    put_esc(mut out, "[0m")
+    (mut out).push(10 as byte)
+    write_fd(mut sh, 2, text(Buf { b: out }))
+}

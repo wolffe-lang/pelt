@@ -30,6 +30,8 @@ fn want_colour_kind(mut bad: List[str], text: str, at: int, kind: int) {
 }
 
 fn want_colour(mut bad: List[str]) {
+    want_palette(mut bad)
+    want_colour_storage(mut bad)
     want_colour_kind(mut bad, "echo argument", 0, HC_COMMAND)
     want_colour_kind(mut bad, "e", 0, HC_UNKNOWN)
     want_colour_kind(mut bad, "absent_command", 0, HC_UNKNOWN)
@@ -81,4 +83,98 @@ fn want_colour(mut bad: List[str]) {
     if empty.spans.len != 0 || empty.incomplete || empty.error_at != -1 {
         (mut bad).push("colour empty state")
     }
+}
+
+fn want_palette(mut bad: List[str]) {
+    let defaults = hl_defaults()
+    for role in [HC_COMMAND, HC_RESERVED, HC_PLAIN] {
+        if defaults[role] != "0" { (mut bad).push("default command palette") }
+    }
+    let indexed = hl_theme(
+        "command=green:quote=idx244:shadow=#123456",
+        "xterm-256color",
+        "truecolor",
+    )
+    if indexed.warning != "" ||
+        indexed.styles[HC_COMMAND] != "0;32" ||
+        indexed.styles[HC_QUOTE] != "0;38;5;244" ||
+        indexed.styles[HC_SHADOW] != "0;38;2;18;52;86" {
+        (mut bad).push("indexed/RGB palette")
+    }
+    let linux = hl_theme("command=#ff0000:shadow=idx244", "linux", "truecolor")
+    if linux.styles[HC_COMMAND] != "0;91" || linux.styles[HC_SHADOW].contains("38;") {
+        (mut bad).push("portable palette fallback")
+    }
+    for value in [
+        "unknownrole=red",
+        "quote=idx256",
+        "command=green:quote=#bad",
+        "quote=red+inverse",
+        "quote=\x1b[31m",
+        "=red",
+    ] {
+        let theme = hl_theme(value, "xterm-256color", "")
+        if theme.warning == "" && value != "=red" {
+            (mut bad).push("palette invalid entry not named")
+        }
+        if joined(theme.styles) != joined(defaults) {
+            (mut bad).push("malformed palette applied partially")
+        }
+    }
+    var sh = new_sh("colour-test")
+    if sh.opt_highlight { (mut bad).push("highlight default on before argv0 pin") }
+    let _set = option_name(mut sh, "highlight", true)
+    if !sh.opt_highlight || opts_bits(sh) & 1048576 == 0 || highlight_active(sh) {
+        (mut bad).push("highlight bit/noninteractive gate")
+    }
+    let bits = opts_bits(sh)
+    frame_open(mut sh)
+    let _off = option_name(mut sh, "highlight", false)
+    frame_close(mut sh)
+    if opts_bits(sh) != bits { (mut bad).push("highlight option restoration") }
+    let _umbrella = option_name(mut sh, "friendly", false)
+    if sh.opt_highlight { (mut bad).push("friendly off left highlight on") }
+}
+
+fn stored_plain(xs: List[int]) -> bool {
+    for cp in xs { if cp == 27 { return false } }
+    true
+}
+
+fn want_colour_storage(mut bad: List[str]) {
+    let q = Query { cols: 80, rows: 24, fixed: 80, col0: 0, cpr: 0, pend: "" }
+    let sh = new_sh("display-test")
+    var e = editor_state(sh, "$ ", q, default_chars())
+    e.highlight = true
+    e.friendly = true
+    e.commands["echo"] = true
+    start_line(mut e)
+    insert(mut e, cps_of("echo red"))
+    // Read the actual editor buffer, vi undo, grouped undo, history and
+    // kill ring after coloured insert, redraw, kill, yank and undo paths.
+    snapshot(mut e)
+    e.command_saved = false
+    insert(mut e, cps_of(" more"))
+    let killed = slice_of(e.buf, 5, e.buf.len)
+    kill_text(mut e, killed, false)
+    delete(mut e, 5, e.buf.len)
+    e.last_kill = false
+    kill_text(mut e, cps_of("second"), false)
+    insert(mut e, copy e.mem.kill)
+    emacs_undo(mut e)
+    draw_from(mut e, 0)
+    let stored = cps_text(e.buf)
+    (mut e.hist).push(stored)
+    if !text(Buf { b: copy e.out }).contains("\x1b[") { (mut bad).push("storage witness never drew colour") }
+    if !stored_plain(e.buf) || !stored_plain(e.undo) || !stored_plain(e.mem.kill) {
+        (mut bad).push("colour escape in buffer, undo or kill")
+    }
+    for change in e.changes {
+        if !stored_plain(change.line) { (mut bad).push("colour escape in undo stack") }
+    }
+    for entry in e.mem.ring {
+        if !stored_plain(entry) { (mut bad).push("colour escape in kill ring") }
+    }
+    for entry in e.hist { if entry.contains("\x1b") { (mut bad).push("colour escape in history") } }
+    if stored != "echo red" { (mut bad).push("colour storage witness text: {stored}") }
 }

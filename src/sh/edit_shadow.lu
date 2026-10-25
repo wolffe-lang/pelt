@@ -39,6 +39,7 @@ fn shadow_clear(mut e: Ed) {
 /// One physical row only. Reserve the last cell to avoid pending-wrap state.
 /// A cluster and its combining marks are either all drawn or all omitted.
 fn shadow_refresh(mut e: Ed) {
+    colour_reset(mut e)
     if !e.suggest || e.vi || e.pager { return }
     shadow_clear(mut e)
     e.shadow = cps_of(shadow_source(e))
@@ -57,9 +58,17 @@ fn shadow_refresh(mut e: Ed) {
     }
     if end == 0 { return }
     put_esc(mut e.out, "[K")
-    put_esc(mut e.out, "[90m")
+    if e.highlight {
+        colour_span(mut e, HC_SHADOW)
+    } else if !e.colour_off {
+        put_esc(mut e.out, "[90m")
+    }
     encode_into(mut e.out, e.shadow, 0, end)
-    put_esc(mut e.out, "[39m")
+    if e.highlight {
+        colour_reset(mut e)
+    } else if !e.colour_off {
+        put_esc(mut e.out, "[39m")
+    }
     if used > 0 {
         put_esc(mut e.out, "[")
         put_n(mut e, used)
@@ -135,6 +144,7 @@ fn pager_clear(mut e: Ed) {
 
 /// Display a bounded, control-safe row, never wrapping at the right margin.
 fn pager_text(mut e: Ed, s: str) {
+    colour_reset(mut e)
     var width = 0
     for cp in cps_of(s) {
         let w = cells(cp)

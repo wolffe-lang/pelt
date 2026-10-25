@@ -323,10 +323,15 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
     // (`run_autocd`)
     if name == "friendly" {
         sh.opt_friendly = on && !sh.posix_mode
+        sh.opt_highlight = on && !sh.posix_mode
         return true
     }
     if name == "suggest" {
         sh.opt_suggest = on
+        return true
+    }
+    if name == "highlight" {
+        sh.opt_highlight = on && !sh.posix_mode
         return true
     }
     if name == "histsearch" {
@@ -403,6 +408,14 @@ fn print_options(mut sh: Sh, reinput: bool) {
 fn print_friendly_options(mut sh: Sh, reinput: bool) {
     if !friendly_active(sh) {
         return
+    }
+    if colour_terminal(sh) {
+        let sign = if sh.opt_highlight then "-o" else "+o"
+        if reinput {
+            emit(mut sh, "set {sign} highlight\n")
+        } else {
+            emit(mut sh, "highlight\t{if sh.opt_highlight then "on" else "off"}\n")
+        }
     }
     for name in ["friendly", "friendly_keys", "suggest", "histsearch"] {
         let on = match name {
