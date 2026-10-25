@@ -1,0 +1,35 @@
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	﻿2026-10-25T22:27:46.8585860Z ##[group]Run tools/prompt-witness target/native/pelt
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:46.8586820Z ^[[36;1mtools/prompt-witness target/native/pelt^[[0m
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:46.8618740Z shell: /bin/bash -e {0}
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:46.8618970Z ##[endgroup]
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1179680Z Traceback (most recent call last):
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1181100Z   File "/Users/runner/work/pelt/pelt/tools/prompt-witness", line 147, in <module>
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1182510Z     with tempfile.TemporaryDirectory(prefix='sh32-laws-') as temp: laws(binary,Path(temp))
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1183560Z                                                                    ~~~~^^^^^^^^^^^^^^^^^^^
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1184530Z   File "/Users/runner/work/pelt/pelt/tools/prompt-witness", line 24, in laws
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1185700Z     assert b'tester@box ~\x1b[0m'+MARK in sh.data['tty'],('prompt-home',cols,sh.data['tty'])
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1186620Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1188640Z AssertionError: ('prompt-home', 24, b'\x1b[6n\x1b[0m\xe2\x80\xa6T/sh32-laws-h99kvoqk\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0m\xe2\x80\xa6T/sh32-laws-h99kvoqk\x1b[0m> \x1b[0m\x1b[0m\x1b[0m')
+gauntlet (macos-latest, true, native)	prompt bytes, precedence, VCS deadline and idle, native tier	2026-10-25T22:27:47.1271460Z ##[error]Process completed with exit code 1.
+tier full	every chosen job succeeded, every other was skipped	﻿2026-10-25T22:29:11.9829595Z ##[group]Run python3 ci/tiers.py verdict
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:11.9831141Z ^[[36;1mpython3 ci/tiers.py verdict^[[0m
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:12.0091837Z shell: /usr/bin/bash -e {0}
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:12.0093140Z env:
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:12.0099762Z   NEEDS: {
+tier full	every chosen job succeeded, every other was skipped	  "plan": {
+tier full	every chosen job succeeded, every other was skipped	    "result": "success",
+tier full	every chosen job succeeded, every other was skipped	    "outputs": {
+tier full	every chosen job succeeded, every other was skipped	      "tier": "full",
+tier full	every chosen job succeeded, every other was skipped	      "jobs": "[\"gauntlet\"]",
+tier full	every chosen job succeeded, every other was skipped	      "matrix_gauntlet": "[{\"os\":\"ubuntu-latest\",\"builds\":true,\"tier\":\"native\"},{\"os\":\"ubuntu-latest\",\"builds\":true,\"tier\":\"release\"},{\"os\":\"macos-latest\",\"builds\":true,\"tier\":\"native\"},{\"os\":\"ubuntu-24.04-arm\",\"builds\":false,\"tier\":\"native\"},{\"os\":\"ubuntu-24.04-arm\",\"builds\":false,\"tier\":\"release\"}]"
+tier full	every chosen job succeeded, every other was skipped	    }
+tier full	every chosen job succeeded, every other was skipped	  },
+tier full	every chosen job succeeded, every other was skipped	  "gauntlet": {
+tier full	every chosen job succeeded, every other was skipped	    "result": "failure",
+tier full	every chosen job succeeded, every other was skipped	    "outputs": {}
+tier full	every chosen job succeeded, every other was skipped	  }
+tier full	every chosen job succeeded, every other was skipped	}
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:12.0106869Z ##[endgroup]
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:12.0502580Z tier full: 1 of 1 job(s) chosen
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:12.0504984Z   gauntlet           failure   WANTED success
+tier full	every chosen job succeeded, every other was skipped	2026-10-25T22:29:12.0559282Z ##[error]Process completed with exit code 1.

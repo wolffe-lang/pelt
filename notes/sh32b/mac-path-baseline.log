@@ -1,0 +1,5 @@
+Existing sh31 native binary; same startup PWD logic as sh32.
+HOME=/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh32b-path-euq4bo8q
+pwd=/private/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh32b-path-euq4bo8q
+pwd-P=/private/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh32b-path-euq4bo8q
+realpath-HOME=/private/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh32b-path-euq4bo8q

@@ -1,0 +1,17 @@
+prompt-home-paths HOME=/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh32b-home-y86gn6r3/home pwd=/private/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh32b-home-y86gn6r3/physical pwd-P=/private/var/folders/9b/_fvnxkt53q38gcg63wtp3w9r0000gn/T/sh32b-home-y86gn6r3/physical
+ok prompt-symlink-HOME/logical-PWD/physical-fallback/boundary/missing
+ok prompt-home/path/status/right-storage/one-call 24
+ok prompt-home/path/status/right-storage/one-call 39
+ok prompt-home/path/status/right-storage/one-call 40
+ok prompt-home/path/status/right-storage/one-call 80
+ok prompt-home/path/status/right-storage/one-call 200
+ok prompt-resize/pagers/kill/control-escaping/PS1-assignment
+ok prompt-PS1-precedence/environment/empty/gates/history
+ok prompt-vcs-real-probe/deadline/invalid/clean/directory/zero-key-probes
+prompt-cost False median_ms 0.123375 p99_ms 0.214125
+SKIP prompt-idle Linux proc counters unavailable
+prompt-cost True median_ms 0.156958 p99_ms 0.224709
+SKIP prompt-idle Linux proc counters unavailable
+prompt-cost-delta median_ms 0.03358299999999999 p99_ms 0.010583999999999982
+SKIP colour idle counters: Linux /proc only
+colour 80-column line: median 0.053229ms p99 0.067959ms; 100 keys after warmup

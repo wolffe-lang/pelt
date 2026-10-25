@@ -1,0 +1,23 @@
+build: target/native/pelt
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+prompt-home-paths HOME=/home/mfwolffe/lanes/sh32b/pelt/tmp/sh32b-home-vax9x12v/home pwd=/home/mfwolffe/lanes/sh32b/pelt/tmp/sh32b-home-vax9x12v/physical pwd-P=/home/mfwolffe/lanes/sh32b/pelt/tmp/sh32b-home-vax9x12v/physical
+ok prompt-symlink-HOME/logical-PWD/physical-fallback/boundary/missing
+ok prompt-home/path/status/right-storage/one-call 24
+ok prompt-home/path/status/right-storage/one-call 39
+ok prompt-home/path/status/right-storage/one-call 40
+ok prompt-home/path/status/right-storage/one-call 80
+ok prompt-home/path/status/right-storage/one-call 200
+ok prompt-resize/pagers/kill/control-escaping/PS1-assignment
+ok prompt-PS1-precedence/environment/empty/gates/history
+ok prompt-vcs-real-probe/deadline/invalid/clean/directory/zero-key-probes
+prompt-cost False median_ms 0.18550899999999998 p99_ms 0.412727
+prompt-idle False [{"pid": 162, "page_size_bytes": 4096, "statm_resident_pages": 2931, "status": {"VmRSS": "11724 kB", "RssAnon": "5092 kB", "RssFile": "6632 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "11724 kB", "Pss_Anon": "5092 kB", "Pss_File": "5510 kB", "Pss_Shmem": "0 kB", "Anonymous": "5092 kB", "AnonHugePages": "0 kB"}, "contexts": 235, "cpu_ticks": 2, "minor_faults": 1653, "major_faults": 0, "thp_enabled": "always [madvise] never"}, {"pid": 162, "page_size_bytes": 4096, "statm_resident_pages": 2931, "status": {"VmRSS": "11724 kB", "RssAnon": "5092 kB", "RssFile": "6632 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "11724 kB", "Pss_Anon": "5092 kB", "Pss_File": "5510 kB", "Pss_Shmem": "0 kB", "Anonymous": "5092 kB", "AnonHugePages": "0 kB"}, "contexts": 235, "cpu_ticks": 2, "minor_faults": 1653, "major_faults": 0, "thp_enabled": "always [madvise] never"}]
+prompt-cost True median_ms 0.223527 p99_ms 0.585799
+prompt-idle True [{"pid": 164, "page_size_bytes": 4096, "statm_resident_pages": 3277, "status": {"VmRSS": "13108 kB", "RssAnon": "5360 kB", "RssFile": "7748 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "13108 kB", "Pss_Anon": "5360 kB", "Pss_File": "6704 kB", "Pss_Shmem": "0 kB", "Anonymous": "5360 kB", "AnonHugePages": "0 kB"}, "contexts": 239, "cpu_ticks": 5, "minor_faults": 2770, "major_faults": 0, "thp_enabled": "always [madvise] never"}, {"pid": 164, "page_size_bytes": 4096, "statm_resident_pages": 3277, "status": {"VmRSS": "13108 kB", "RssAnon": "5360 kB", "RssFile": "7748 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "13108 kB", "Pss_Anon": "5360 kB", "Pss_File": "6704 kB", "Pss_Shmem": "0 kB", "Anonymous": "5360 kB", "AnonHugePages": "0 kB"}, "contexts": 239, "cpu_ticks": 5, "minor_faults": 2770, "major_faults": 0, "thp_enabled": "always [madvise] never"}]
+prompt-cost-delta median_ms 0.038018000000000024 p99_ms 0.17307199999999995
+colour idle before {"contexts": 12, "cpu_ticks": 3, "major_faults": 0, "minor_faults": 2509, "page_size_bytes": 4096, "pid": 167, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4320 kB", "Pss_Anon": "4320 kB", "Pss_File": "6508 kB", "Pss_Shmem": "0 kB", "Rss": "11844 kB"}, "statm_resident_pages": 2961, "status": {"RssAnon": "4320 kB", "RssFile": "7524 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "11844 kB"}, "thp_enabled": "always [madvise] never"}
+colour idle after {"contexts": 12, "cpu_ticks": 3, "major_faults": 0, "minor_faults": 2509, "page_size_bytes": 4096, "pid": 167, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4320 kB", "Pss_Anon": "4320 kB", "Pss_File": "6508 kB", "Pss_Shmem": "0 kB", "Rss": "11844 kB"}, "statm_resident_pages": 2961, "status": {"RssAnon": "4320 kB", "RssFile": "7524 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "11844 kB"}, "thp_enabled": "always [madvise] never"}
+ok colour idle-10s: zero wakeups, unchanged RSS, child THP disabled
+colour 80-column line: median 0.071307ms p99 0.192337ms; 100 keys after warmup
