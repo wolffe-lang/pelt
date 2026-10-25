@@ -1,0 +1,49 @@
+For the coordinator to file; no issue was filed or closed by this lane.
+
+wolf-std (paired runtime request to wolf-lang)
+Title: Expose VEOL, VEOL2, VREPRINT and VDISCARD in the terminal character API
+
+Pinned wolf 0.2.35 os_term_chars exposes ten characters: erase, kill,
+intr, quit, susp, eof, werase, lnext, start, stop. pelt cannot see remapped
+secondary line delimiters, reprint or discard. It must not spawn stty at
+each prompt to compensate. Extend the runtime/API and std.term together,
+preserving the ten existing positions and disabled=-1. Proposed appended
+slots: 10 eol, 11 eol2, 12 rprnt, 13 discard, with named std accessors.
+
+The termios c_cc indices are platform constants, not those result-list
+positions. Measured with Python's termios module inside the Linux oracle
+container: VEOL=11, VEOL2=16, VREPRINT=12, VDISCARD=13. Use the host's
+constants rather than baking those numbers into portable code. Darwin
+indices were not measured in this Mac-editing-only lane. VSWTC=7 exists
+on Linux as a legacy slot; dsusp is not exposed by this API either.
+
+Proposed pelt use once available (not implemented or decided here):
+- VEOL/VEOL2: recognize an enabled secondary accept character with explicit
+  precedence over ordinary insertion; first measure/document its editor
+  semantics, since this lane found @/% literal in dash, bash and pelt when
+  followed by Enter.
+- VREPRINT: preserve default C-R's editor search; identify remapped reprint
+  explicitly so a policy can honour it as redraw rather than inserting it.
+- VDISCARD: identify/remap the ignored prompt character without putting it
+  into the command; real output discard remains the terminal's outside the
+  editor, with its original mode restored before any command runs.
+The upstream change enables an explicit policy; it must not silently choose
+one for shells. Test default, disabled and printable remaps on both hosts.
+
+pelt
+Title: Reproduce the pinned oracle environment in CI
+The oracle corpus names dash 0.5.13.4 and this pass records bash 5.3.20-2,
+fish 4.9.3-1. CI currently uses ubuntu-latest/macOS, not a pinned oracle
+image. Recorded expectations are stable inputs, but recording/re-measuring
+on CI is not reproducible from that runner declaration alone. Keep normal
+PR CI cheap; provide a separate digest-pinned reference-recording image/job.
+
+pelt / existing wolf-lang#904
+Do not duplicate #904: argv[0] is merged after the 0.2.35 pin. A follow-on
+pin adoption must reject basename sh, then seek/implement the recommended
+friendly default-on policy. The named seam is friendly_invocation_allowed.
+
+PAX
+No new issue filed. F1 needs a px-owned pelt-session harness slot before
+new framebuffer/serial sessions; F5 owns it. Preserve the delivery limits
+in docs/KEYS.md, especially unestablished shifted-Alt chords.

@@ -1,0 +1,26 @@
+quit dash ['step 0', 'step 1 "\\\\k echo kept\\\\x1c\\\\r"', 'step 2 "exit"', 'exit 0 at step 2']
+quit bash ['step 0', 'step 1 "\\\\k echo kept\\\\x1c\\\\r"', 'step 2 "exit"', 'exit 0 at step 2']
+quit pelt ['step 0', 'step 1 "\\\\k echo kept\\\\x1c\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+eol dash ['step 0', 'step 1 "stty eol @"', 'step 2 "\\\\k echo term@\\\\r"', 'out "term@\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+eol bash ['step 0', 'step 1 "stty eol @"', 'step 2 "\\\\k echo term@\\\\r"', 'out "term@\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+eol pelt ['step 0', 'step 1 "stty eol @"', 'step 2 "\\\\k echo term@\\\\r"', 'out "term@\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+eol2 dash ['step 0', 'step 1 "stty eol2 %"', 'step 2 "\\\\k echo term%\\\\r"', 'out "term%\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+eol2 bash ['step 0', 'step 1 "stty eol2 %"', 'step 2 "\\\\k echo term%\\\\r"', 'out "term%\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+eol2 pelt ['step 0', 'step 1 "stty eol2 %"', 'step 2 "\\\\k echo term%\\\\r"', 'out "term%\\n"', 'step 3 "exit"', 'exit 0 at step 3']
+flow dash ['step 0', 'step 1 "\\\\k echo kept\\\\x13\\\\x11\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+flow bash ['step 0', 'step 1 "\\\\k echo kept\\\\x13\\\\x11\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+flow pelt ['step 0', 'step 1 "\\\\k echo kept\\\\x13\\\\x11\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+rprnt dash ['step 0', 'step 1 "\\\\k echo kept\\\\x12\\\\x07\\\\r"', 'out "kept\\u0007\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+rprnt bash ['step 0', 'step 1 "\\\\k echo kept\\\\x12\\\\x07\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+rprnt pelt ['step 0', 'step 1 "\\\\k echo kept\\\\x12\\\\x07\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+discard dash ['step 0', 'step 1 "\\\\k echo kept\\\\x0f\\\\r"', 'out "kept\\u000f\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+discard bash ['step 0', 'step 1 "\\\\k echo kept\\\\x0f\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+discard pelt ['step 0', 'step 1 "\\\\k echo kept\\\\x0f\\\\r"', 'out "kept\\n"', 'step 2 "exit"', 'exit 0 at step 2']
+termios VEOL 11
+termios VEOL2 16
+termios VREPRINT 12
+termios VDISCARD 13
+termios VSWTC 7
+fish-pageup 'oldest\nnewest\n'
+fish-pagedown 'prior\ndraft\n'
+fish-last-arg 'older\nnewer\nnewer\n'

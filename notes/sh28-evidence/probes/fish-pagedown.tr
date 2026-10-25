@@ -1,0 +1,17 @@
+step 0
+out "\r\u001b]0;/h/m/l/s/t/p/w\u001b\\\u001b[m\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b]133;A;click_events=1\u001b\\mfwolffe\u001b[m@189c3e547e90\u001b[m /h/m/l/s/t/p/w\u001b[m\u001b[m> \u001b]133;B\u001b\\\u001b[K\r\u001b[38C"
+err yes
+prompt ""
+step 1 "echo prior"
+out "echo \r\u001b[43C\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>prior\r\u001b[48C\u001b[10Decho prior\r\u001b[48C\n\u001b[m\u001b]133;C;cmdline_url=echo%20prior\u001b\\\u001b]0;echo prior /h/m/l/s/t/p/w\u001b\\\u001b[m\rprior\n\u001b]133;D;0\u001b\\\u001b[?25h\u001b[2m\u23ce\u001b[m                                                                               \r\u23ce \r\u001b[K\u001b]0;/h/m/l/s/t/p/w\u001b\\\u001b[m\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b]133;A;click_events=1\u001b\\mfwolffe\u001b[m@189c3e547e90\u001b[m /h/m/l/s/t/p/w\u001b[m\u001b[m> \u001b]133;B\u001b\\\u001b[K\r\u001b[38C"
+err no
+prompt ""
+step 2 "\\k echo draft\\x10\\e[6~\\r"
+out "echo \r\u001b[43C\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>draft\r\u001b[48C\u001b[10Decho draft\r\u001b[48C\u001b[10Decho draft\r\u001b[48C\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>\u001b[10Decho draft\r\u001b[48C\n\u001b[m\u001b]133;C;cmdline_url=echo%20draft\u001b\\\u001b]0;echo draft /h/m/l/s/t/p/w\u001b\\\u001b[m\rdraft\n\u001b]133;D;0\u001b\\\u001b[?25h\u001b[2m\u23ce\u001b[m                                                                               \r\u23ce \r\u001b[K\u001b]0;/h/m/l/s/t/p/w\u001b\\\u001b[m\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b]133;A;click_events=1\u001b\\mfwolffe\u001b[m@189c3e547e90\u001b[m /h/m/l/s/t/p/w\u001b[m\u001b[m> \u001b]133;B\u001b\\\u001b[K\r\u001b[38C"
+err no
+prompt ""
+step 3 "exit"
+out "\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>exit\r\u001b[42C\n\u001b[m\u001b]133;C;cmdline_url=exit\u001b\\\u001b]0;exit /h/m/l/s/t/p/w\u001b\\\u001b[m\r\u001b]133;D;0\u001b\\\u001b[?25h\u001b[m"
+err no
+prompt ""
+exit 0 at step 3

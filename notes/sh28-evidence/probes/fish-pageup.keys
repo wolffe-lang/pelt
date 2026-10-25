@@ -1,0 +1,4 @@
+echo oldest
+echo newest
+\k \e[5~\r
+exit

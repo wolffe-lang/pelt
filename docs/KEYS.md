@@ -17,7 +17,7 @@ CPUs 12–15, inside the lane's rootless Arch container. Image id
 `3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f`,
 digest `sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785`.
 `notes/sh28-evidence/logs/` retains `bind -p`, fish `bind`, `stty -a`,
-the installed bash 5.3 manual's Readline chapter and fish's bind manual.
+reference commands. Documentation was read with `info --subnodes '(bash) Bindable Readline Commands'` and `fish --no-config -c 'bind --help'`.
 Those are documentation and black-box outputs, not implementation sources.
 Pelt CI itself has no pinned oracle image: its runners are ubuntu-latest
 and macOS. Reproducing the oracle environment in CI is a track gap.
@@ -54,7 +54,8 @@ characters insert themselves; C-V quotes the following byte.
 | C-V | `16` or stty lnext | quote next byte | quoted-insert | clipboard paste | honours stty; not fish's clipboard |
 | Tab | `09` | complete; second Tab lists | complete | complete | editor key; commands/files/variables only |
 | Enter | `0d`, `0a` | accept line | accept-line | execute | editor key |
-| C-\\, C-Z, C-Q, C-S | `1c`, `1a`, `11`, `13` by default | ignored while editing | terminal/editor dependent | cancel/undo/pager functions vary | quit/susp/start/stop: ignore at prompt; restored for jobs |
+| C-\\ | `1c` or stty quit | clear pending input (updated in this pass) | terminal flush | not a default editing action | honoured, no editor signal |
+| C-Z, C-Q, C-S | `1a`, `11`, `13` by default | ignored while editing | terminal/editor dependent | undo/pager functions vary | susp/start/stop ignored at prompt; restored for jobs |
 
 ## vi mode
 
@@ -86,12 +87,55 @@ vi commands. Counts apply where XCU defines them.
 
 ## Friendly additions
 
-This section is completed from the measured sessions as implementations land.
-The complete measured readline and fish inventories follow; a missing action
-is not silently claimed as supported. PageUp/PageDown follow measured fish
-beginning/end-of-history, not prefix search. Bash's repeated M-. removes the
-last insertion on running past the oldest entry. Both correct the initial
-campaign guesses (R-sh28-2).
+These act only with `friendly` and `friendly_keys` on at an interactive
+terminal prompt. Stty characters take precedence over editor defaults.
+Lower-case Alt letters have upper-case aliases. `bindings` prints the
+current mode's keys, bytes and actions, followed by the live stty values;
+`bindings -l` lists actions once. It cannot change a binding and rejects
+operands other than `-l` with status 2. With both editing modes off it
+reports disabled. Outside a friendly terminal prompt it is not a built-in.
+
+| pelt key | bytes | action | readline | fish | verdict |
+|---|---|---|---|---|---|
+| M-. / M-_ | `ESC .`, `ESC _` | yank previous history line's last word, quotes kept | yank-last-arg | history-token-search-backward | line-by-line readline semantics; repeat replaces insertion, past oldest removes it and rings |
+| M-y | `ESC y`, `ESC Y` | cycle the preceding yank through 10 kills | yank-pop | yank-pop | only immediately after C-Y / M-y; consecutive kills join |
+| C-t | `14` | transpose characters, including combining clusters | transpose-chars | transpose-chars | at end, last two; negative count has no effect |
+| M-t | `ESC t`, `ESC T` | transpose words | transpose-words | transpose-words | negative count has no effect in the measured bash session |
+| M-u | `ESC u`, `ESC U` | upper-case word forward | upcase-word | upcase-word | ASCII case conversion, as tested in C locale; negative count works backward without moving point |
+| M-l | `ESC l`, `ESC L` | lower-case word forward | downcase-word | file listing helper | readline action; not fish's listing helper |
+| M-c | `ESC c`, `ESC C` | capitalise word forward | capitalize-word | capitalize-word | same word boundaries as M-f |
+| C-_ / C-x C-u | `1f`, `18 15` | undo one edit group per press | undo | undo | consecutive insertion is one group; retained separately for each recalled line |
+| M-r | `ESC r`, `ESC R` | revert current line to its original text | revert-line | unbound | recalled history restored; a fresh draft becomes empty |
+| M-< / PageUp | `ESC <`, `ESC[5~` | oldest history entry | beginning-of-history | binding named beginning-of-history | readline's behavior; see fish observation below |
+| M-> / PageDown | `ESC >`, `ESC[6~` | saved draft after newest entry | end-of-history | binding named end-of-history | readline's behavior |
+| M-# | `ESC #` | prepend # and accept as comment | insert-comment | comment toggle without accepting | numeric argument toggles an existing leading # before accepting |
+| M-\ | `ESC 5c` | delete blanks/tabs on both sides of point | delete-horizontal-space | unbound | not a kill |
+| C-] / M-C-] | `1d`, `ESC 1d` | find next / previous character | character-search / backward | unbound | C-g cancels the awaited character; negative count reverses direction |
+| M-0..9 / M-- | `ESC 30..39`, `ESC 2d` | argument to next command | digit-argument | unbound | following digits may be plain or Alt; zero and negative arguments, bounded at 99,999 |
+| C-g | `07`, `ESC 07`, `18 07` | abort multi-key command or search and ring | abort | cancel | resets numeric argument; search restores pre-search line |
+| C-@ / C-Space / M-Space | `00`, `ESC 20` | set mark at point (or numbered position) | set-mark | space insertion | documented readline intent; bash's measured NUL non-effect is not copied |
+| C-x C-x | `18 18` | exchange point and mark | exchange-point-and-mark | unbound | mark is a saved index; the measured M-Space mark is not shifted by later insertions |
+
+A numeric argument to the first M-. chooses history word n (command word
+is 0); negative n selects backwards from the last word with 0-based offset.
+A negative argument on a repeated M-. reverses traversal. A redirection's
+operand is a word; a one-word command yanks itself. Empty history rings.
+This does not expand the shell language: `!!` and `!$` remain absent.
+
+**Measured fish context.** Fish's `bind` names PageUp/PageDown
+beginning/end-of-history. In the all-tty black-box probe, PageUp at a
+fresh empty line did nothing; after C-p it left the newest entry selected,
+not the oldest. PageDown restored the draft. Pelt deliberately uses the
+readline history-end behavior consistently. Fish's filtered Up/Down and
+history UI belong to the autosuggestion phase, not this key pass.
+
+**Measured exceptions.** Bash C-@ did not set mark in this pty, although
+its bind table and manual assign set-mark; M-Space did work. Pelt accepts
+both. Pelt's kill ring is capped at 10 entries, unlike bash's longer ring.
+The editor's quit flush does not itself send QUIT, change status or run a
+trap; an explicitly installed QUIT trap still follows pelt's existing
+signal machinery. The bash reference with an actual tty QUIT signal ran
+that trap. Own transcripts pin these intentional differences.
 
 ## Terminal characters
 
@@ -102,7 +146,7 @@ Every mode is restored before a command, job or child runs.
 | stty name | Linux default | pelt at the prompt | verdict |
 |---|---|---|---|
 | intr | C-C | abort line; ignored with ignored INT | honoured |
-| quit | C-\\ | no effect | ignored (dash/bash interactive shells ignore QUIT) |
+| quit | C-\\ | discard pending input and redraw empty edit line | honoured: pending input cleared; no signal/status/trap of its own |
 | erase | DEL | backward erase | honoured |
 | kill | C-U | kill to beginning | honoured |
 | eof | C-D | EOF only on empty line, otherwise delete | honoured |
@@ -117,8 +161,248 @@ Every mode is restored before a command, job or child runs.
 | dsusp | absent on Linux | no pinned API slot on either host | platform legacy / API gap |
 
 When exposed characters collide, intr wins, then eof, then erase, kill,
-werase and lnext, then ignored quit/susp/start/stop. Default C-U/C-W/C-V
+werase and lnext, then quit flush, then ignored susp/start/stop. Default C-U/C-W/C-V
 stop working when moved or disabled; DEL/C-H remain erase aliases unless
 another special character claims them. Remapped rprnt/eol/eol2/discard
 cannot be honoured until the terminal API exposes them. No `stty` subprocess
 is spawned at a prompt.
+
+## Complete readline inventory
+
+`bind -p` reported **83 named bound actions**, **82** after treating `insert-last-argument` as the alias of `yank-last-arg`. At the baseline pelt covered **22** of these actions, leaving **60** absent. This pass adds **19** distinct actions. These are action counts, not counts of key aliases. The original prediction counted too few of the full default inventory. Rows below retain every measured byte alias, including aliases pelt does not accept; the pelt column lists its own accepted keys. A shared action name is not a promise that every bash alias or every numeric corner is present.
+
+| readline action | measured readline bytes | pelt key | fish comparison | stty / verdict |
+|---|---|---|---|---|
+| abort | `\C-g` / `\C-x\C-g` / `\e\C-g` | C-g | see fish inventory | friendly addition; terminal precedence as above |
+| accept-line | `\C-j` / `\C-m` | Enter | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| backward-char | `\C-b` / `\eOD` / `\e[D` | C-b / Left | same named action | present at baseline; aliases/terminal precedence as above |
+| backward-delete-char | `\C-h` / `\C-?` | Backspace / C-h | same named action | present at baseline; aliases/terminal precedence as above |
+| backward-kill-line | `\C-x\C-?` | — | same named action | not this lane: C-x Rubout alias not added; C-u supplies this edit |
+| backward-kill-word | `\e\C-h` / `\e\C-?` | M-Backspace | same named action | present at baseline; aliases/terminal precedence as above |
+| backward-word | `\e\e[D` / `\e[1;3D` / `\e[1;5D` / `\e[5D` / `\eb` | M-b / Ctrl-Left | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| beginning-of-history | `\e<` / `\e[5~` | M-< / PageUp | same named action | friendly addition; terminal precedence as above |
+| beginning-of-line | `\C-a` / `\eOH` / `\e[1~` / `\e[7~` / `\e[H` | C-a / Home | same named action | present at baseline; aliases/terminal precedence as above |
+| bracketed-paste-begin | `\e[200~` | — | see fish inventory | not this lane: paste protocol is not this lane; control-safe paste needs its own sessions |
+| call-last-kbd-macro | `\C-xe` | — | see fish inventory | not this lane: keyboard macro recording/replay is not this lane |
+| capitalize-word | `\ec` | M-c | same named action | friendly addition; terminal precedence as above |
+| character-search | `\C-]` | C-] | see fish inventory | friendly addition; terminal precedence as above |
+| character-search-backward | `\e\C-]` | M-C-] | see fish inventory | friendly addition; terminal precedence as above |
+| clear-display | `\e\C-l` | — | see fish inventory | not this lane: scrollback erase is not portable to the PAX target; C-l redraws the screen |
+| clear-screen | `\C-l` | C-l | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| complete | `\C-i` / `\e\e` | Tab | same named action | present at baseline; aliases/terminal precedence as above |
+| complete-command | `\e!` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| complete-filename | `\e/` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| complete-hostname | `\e@` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| complete-into-braces | `\e{` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| complete-username | `\e~` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| complete-variable | `\e$` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| delete-char | `\C-d` / `\e[3~` | C-d / Delete | same named action | present at baseline; aliases/terminal precedence as above |
+| delete-horizontal-space | `\e\\` | M-\ | see fish inventory | friendly addition; terminal precedence as above |
+| digit-argument | `\e-` / `\e0` / `\e1` / `\e2` / `\e3` / `\e4` / `\e5` / `\e6` / `\e7` / `\e8` / `\e9` | M-digits / M-- | see fish inventory | friendly addition; terminal precedence as above |
+| display-shell-version | `\C-x\C-v` | — | see fish inventory | not this lane: version-display chord, not an edit; no inputrc interpreter |
+| do-lowercase-version | `\C-xA` / `\C-xB` / `\C-xC` / `\C-xD` / `\C-xE` / `\C-xF` / `\C-xG` / `\C-xH` / `\C-xI` / `\C-xJ` / `\C-xK` / `\C-xL` / `\C-xM` / `\C-xN` / `\C-xO` / `\C-xP` / `\C-xQ` / `\C-xR` / `\C-xS` / `\C-xT` / `\C-xU` / `\C-xV` / `\C-xW` / `\C-xX` / `\C-xY` / `\C-xZ` / `\eA` / `\eB` / `\eC` / `\eD` / `\eE` / `\eF` / `\eG` / `\eH` / `\eI` / `\eJ` / `\eK` / `\eL` / `\eM` / `\eN` / `\eP` / `\eQ` / `\eR` / `\eS` / `\eT` / `\eU` / `\eV` / `\eW` / `\eX` / `\eY` / `\eZ` | — | see fish inventory | not this lane: partial: M-uppercase aliases work; C-x uppercase dispatch is not added |
+| downcase-word | `\el` | M-l | see fish inventory | friendly addition; terminal precedence as above |
+| dynamic-complete-history | `\e\C-i` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| edit-and-execute-command | `\C-x\C-e` | — | see fish inventory | not this lane: use fc (or vi v); no new C-x C-e launch path |
+| end-kbd-macro | `\C-x)` | — | see fish inventory | not this lane: keyboard macro recording/replay is not this lane |
+| end-of-history | `\e>` / `\e[6~` | M-> / PageDown | same named action | friendly addition; terminal precedence as above |
+| end-of-line | `\C-e` / `\eOF` / `\e[4~` / `\e[8~` / `\e[F` | C-e / End | same named action | present at baseline; aliases/terminal precedence as above |
+| exchange-point-and-mark | `\C-x\C-x` | C-x C-x | see fish inventory | friendly addition; terminal precedence as above |
+| execute-named-command | `\ex` | — | see fish inventory | not this lane: requires named command dispatch/rebinding; read-only bindings only |
+| forward-char | `\C-f` / `\eOC` / `\e[C` | C-f / Right | same named action | present at baseline; aliases/terminal precedence as above |
+| forward-search-history | `\C-s` | — | see fish inventory | not this lane: forward incremental/history UI is the autosuggestion phase |
+| forward-word | `\e\e[C` / `\e[1;3C` / `\e[1;5C` / `\e[5C` / `\ef` | M-f / Ctrl-Right | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| glob-complete-word | `\eg` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| glob-expand-word | `\C-x*` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| glob-list-expansions | `\C-xg` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| history-expand-line | `\e^` | — | see fish inventory | not this lane: line/history expansion is not added; POSIX expansion still happens when accepted |
+| insert-comment | `\e#` | M-# | see fish inventory | friendly addition; terminal precedence as above |
+| insert-completions | `\e*` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| insert-last-argument | `\e.` / `\e_` | M-. / M-_ | see fish inventory | friendly addition; terminal precedence as above |
+| kill-line | `\C-k` | C-k | same named action | present at baseline; aliases/terminal precedence as above |
+| kill-word | `\e[3;5~` / `\ed` | M-d | same named action | present at baseline; aliases/terminal precedence as above |
+| next-history | `\C-n` / `\eOB` / `\e[B` | C-n / Down | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| non-incremental-forward-search-history | `\en` | — | see fish inventory | not this lane: vi ?/n/N and C-r cover this pass; extra emacs search not added |
+| non-incremental-reverse-search-history | `\ep` | — | see fish inventory | not this lane: vi / and C-r cover this pass; extra emacs search not added |
+| operate-and-get-next | `\C-o` | — | see fish inventory | not this lane: default C-o overlaps discard; operation-and-next command not added |
+| possible-command-completions | `\C-x!` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| possible-completions | `\e=` / `\e?` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| possible-filename-completions | `\C-x/` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| possible-hostname-completions | `\C-x@` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| possible-username-completions | `\C-x~` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| possible-variable-completions | `\C-x$` | — | see fish inventory | not this lane: specialised completion chord not added; Tab and vi =/\/* are available |
+| previous-history | `\C-p` / `\eOA` / `\e[A` | C-p / Up | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| quoted-insert | `\C-q` / `\C-v` / `\e[2~` | C-v / stty lnext | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| re-read-init-file | `\C-x\C-r` | — | see fish inventory | not this lane: no inputrc language; bindings is read-only |
+| reverse-search-history | `\C-r` | C-r | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| revert-line | `\e\C-r` / `\er` | M-r | see fish inventory | friendly addition; terminal precedence as above |
+| self-insert | ` ` / `!` / `\"` / `#` / `$` / `%` / `&` / `'` / `(` / `)` / `*` / `+` / `,` / `-` / `.` / `/` / `0` / `1` / `2` / `3` / `4` / `5` / `6` / `7` / `8` / `9` / `:` / `;` / `<` / `=` / `>` / `?` / `@` / `A` / `B` / `C` / `D` / `E` / `F` / `G` / `H` / `I` / `J` / `K` / `L` / `M` / `N` / `O` / `P` / `Q` / `R` / `S` / `T` / `U` / `V` / `W` / `X` / `Y` / `Z` / `[` / `\\` / `]` / `^` / `_` / ``` / `a` / `b` / `c` / `d` / `e` / `f` / `g` / `h` / `i` / `j` / `k` / `l` / `m` / `n` / `o` / `p` / `q` / `r` / `s` / `t` / `u` / `v` / `w` / `x` / `y` / `z` / `{` / `\|` / `}` / `~` / `\200` / `\201` / `\202` / `\203` / `\204` / `\205` / `\206` / `\207` / `\210` / `\211` / `\212` / `\213` / `\214` / `\215` / `\216` / `\217` / `\220` / `\221` / `\222` / `\223` / `\224` / `\225` / `\226` / `\227` / `\230` / `\231` / `\232` / `\233` / `\234` / `\235` / `\236` / `\237` / `\240` / `\241` / `\242` / `\243` / `\244` / `\245` / `\246` / `\247` / `\250` / `\251` / `\252` / `\253` / `\254` / `\255` / `\256` / `\257` / `\260` / `\261` / `\262` / `\263` / `\264` / `\265` / `\266` / `\267` / `\270` / `\271` / `\272` / `\273` / `\274` / `\275` / `\276` / `\277` / `\300` / `\301` / `\302` / `\303` / `\304` / `\305` / `\306` / `\307` / `\310` / `\311` / `\312` / `\313` / `\314` / `\315` / `\316` / `\317` / `\320` / `\321` / `\322` / `\323` / `\324` / `\325` / `\326` / `\327` / `\330` / `\331` / `\332` / `\333` / `\334` / `\335` / `\336` / `\337` / `\340` / `\341` / `\342` / `\343` / `\344` / `\345` / `\346` / `\347` / `\350` / `\351` / `\352` / `\353` / `\354` / `\355` / `\356` / `\357` / `\360` / `\361` / `\362` / `\363` / `\364` / `\365` / `\366` / `\367` / `\370` / `\371` / `\372` / `\373` / `\374` / `\375` / `\376` / `\377` | printable UTF-8 | same named action | present at baseline; aliases/terminal precedence as above |
+| set-mark | `\C-@` / `\e ` | C-@ / M-Space | see fish inventory | friendly addition; terminal precedence as above |
+| shell-backward-word | `\e\C-b` | — | see fish inventory | not this lane: shell-token editing family not added; ordinary word editing is available |
+| shell-expand-line | `\e\C-e` | — | see fish inventory | not this lane: line/history expansion is not added; POSIX expansion still happens when accepted |
+| shell-forward-word | `\e\C-f` | — | see fish inventory | not this lane: shell-token editing family not added; ordinary word editing is available |
+| shell-kill-word | `\e\C-d` | — | see fish inventory | not this lane: shell-token editing family not added; ordinary word editing is available |
+| shell-transpose-words | `\e\C-t` | — | see fish inventory | not this lane: shell-token editing family not added; ordinary word editing is available |
+| spell-correct-word | `\C-xs` | — | see fish inventory | not this lane: no spelling oracle or dictionary subsystem in this pass |
+| start-kbd-macro | `\C-x(` | — | see fish inventory | not this lane: keyboard macro recording/replay is not this lane |
+| tilde-expand | `\e&` | — | see fish inventory | not this lane: line/history expansion is not added; POSIX expansion still happens when accepted |
+| transpose-chars | `\C-t` | C-t | same named action | friendly addition; terminal precedence as above |
+| transpose-words | `\et` | M-t | same named action | friendly addition; terminal precedence as above |
+| undo | `\C-x\C-u` / `\C-_` | C-_ / C-x C-u | same named action | friendly addition; terminal precedence as above |
+| unix-line-discard | `\C-u` | C-u / stty kill | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| unix-word-rubout | `\C-w` | C-w / stty werase | see fish inventory | present at baseline; aliases/terminal precedence as above |
+| upcase-word | `\eu` | M-u | same named action | friendly addition; terminal precedence as above |
+| yank | `\C-y` | C-y | same named action | present at baseline; aliases/terminal precedence as above |
+| yank-last-arg | `\e.` / `\e_` | M-. / M-_ | see fish inventory | friendly addition; terminal precedence as above |
+| yank-nth-arg | `\e\C-y` | — | see fish inventory | not this lane: use M-n M-.; the M-C-y alias is not bound |
+| yank-pop | `\ey` | M-y | same named action | friendly addition; terminal precedence as above |
+
+## Complete fish default inventory
+
+All **95** measured default rows follow. Of the distinct command payloads, **28** have no same-named readline action or mapped basic editor equivalent (up/down-or-search, buffer ends, cancel, execute, delete-or-exit, directory/word motion, path rubout and token-history insertion are mapped). This is a reproducible payload count, not a claim that fish has only that many extra behaviors: a conditional fish command payload may perform several operations.
+
+| fish key | measured fish action / command payload | pelt equivalent | stty / verdict |
+|---|---|---|---|
+| ctrl-y | yank | C-y | action or basic equivalent present; stty precedence applies |
+| alt-y | yank-pop | M-y | action or basic equivalent present; stty precedence applies |
+| right | forward-char | C-f / Right | action or basic equivalent present; stty precedence applies |
+| left | backward-char | C-b / Left | action or basic equivalent present; stty precedence applies |
+| ctrl-right | forward-token | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| ctrl-left | backward-token | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| pageup | beginning-of-history | M-< / PageUp | pelt uses readline history ends; fish contextual observation above |
+| pagedown | end-of-history | M-> / PageDown | pelt uses readline history ends; fish contextual observation above |
+| ctrl-x | fish_clipboard_copy | — | no clipboard integration; PAX needs a portable policy first |
+| ctrl-v | fish_clipboard_paste | — | no clipboard integration; PAX needs a portable policy first |
+| escape | cancel | C-g | action or basic equivalent present; stty precedence applies |
+| ctrl-[ | cancel | C-g | action or basic equivalent present; stty precedence applies |
+| tab | complete | Tab | action or basic equivalent present; stty precedence applies |
+| ctrl-i | complete | Tab | action or basic equivalent present; stty precedence applies |
+| ctrl-s | pager-toggle-search | — | fish filtered history/pager is the autosuggestion/completion campaign, not this pass |
+| shift-tab | complete-and-search | — | fish filtered history/pager is the autosuggestion/completion campaign, not this pass |
+| shift-delete | history-delete or backward-delete-char | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| down | down-or-search | C-n / Down | fish filtered history/pager is the autosuggestion/completion campaign, not this pass |
+| up | up-or-search | C-p / Up | fish filtered history/pager is the autosuggestion/completion campaign, not this pass |
+| shift-right | forward-bigword | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| shift-left | backward-bigword | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-b | prevd-or-backward-word | M-b / Ctrl-Left | word motion only; no directory-history action |
+| alt-f | nextd-or-forward-word | M-f / Ctrl-Right | word motion only; no directory-history action |
+| alt-right | nextd-or-forward-word | M-f / Ctrl-Right | word motion only; no directory-history action |
+| e[1;9C | nextd-or-forward-word | M-f / Ctrl-Right | word motion only; no directory-history action |
+| alt-left | prevd-or-backward-word | M-b / Ctrl-Left | word motion only; no directory-history action |
+| e[1;9D | prevd-or-backward-word | M-b / Ctrl-Left | word motion only; no directory-history action |
+| alt-up | history-token-search-backward | M-. / M-_ | pelt M-. walks lines and selects their last words, not fish token-search UI |
+| alt-down | history-token-search-forward | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| e[1;9A | history-token-search-backward | M-. / M-_ | pelt M-. walks lines and selects their last words, not fish token-search UI |
+| e[1;9B | history-token-search-forward | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-. | history-token-search-backward | M-. / M-_ | pelt M-. walks lines and selects their last words, not fish token-search UI |
+| alt-l | __fish_list_current_token | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-o | __fish_preview_current_file | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-w | __fish_whatis_current_token | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| ctrl-l | status test-terminal-feature scroll-content-up && commandline -f scrollback-push clear-screen | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| ctrl-c | clear-commandline | C-g | action or basic equivalent present; stty precedence applies |
+| ctrl-u | backward-kill-line | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| ctrl-k | kill-line | C-k | action or basic equivalent present; stty precedence applies |
+| ctrl-w | backward-kill-path-component | C-w / stty werase | pelt C-w is stty werase, blanks rather than path components |
+| end | end-of-line | C-e / End | action or basic equivalent present; stty precedence applies |
+| home | beginning-of-line | C-a / Home | action or basic equivalent present; stty precedence applies |
+| alt-d | if test "$(commandline; printf .)" = \\n.; __fish_echo dirh; else; commandline -f kill-word; end | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| ctrl-d | delete-or-exit | C-d / Delete | action or basic equivalent present; stty precedence applies |
+| alt-s | for cmd in sudo doas please run0; if command -q $cmd; fish_commandline_prepend $cmd; break; end; end | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| f1 | __fish_man_page | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-h | __fish_man_page | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-p | __fish_paginate | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-# | __fish_toggle_comment_commandline | — | M-# comments and accepts, rather than toggling in place |
+| alt-e | edit_command_buffer | — | use fc or vi v; no fish external-editor chord |
+| alt-v | edit_command_buffer | — | use fc or vi v; no fish external-editor chord |
+| (default printable) | self-insert | printable UTF-8 | action or basic equivalent present; stty precedence applies |
+| space | self-insert expand-abbr | — | abbreviations/completion phase, not this pass |
+| ; | self-insert expand-abbr | — | abbreviations/completion phase, not this pass |
+| \| | self-insert expand-abbr | — | abbreviations/completion phase, not this pass |
+| & | self-insert expand-abbr | — | abbreviations/completion phase, not this pass |
+| > | self-insert expand-abbr | — | abbreviations/completion phase, not this pass |
+| < | self-insert expand-abbr | — | abbreviations/completion phase, not this pass |
+| shift-enter | commandline -i \\n (commandline --search-field >/dev/null && echo --search-field) expand-abbr | — | abbreviations/completion phase, not this pass |
+| alt-enter | commandline -i \\n (commandline --search-field >/dev/null && echo --search-field) expand-abbr | — | abbreviations/completion phase, not this pass |
+| ) | self-insert expand-abbr | — | abbreviations/completion phase, not this pass |
+| ctrl-space | test -n "$(commandline)" && commandline -i " " (commandline --search-field >/dev/null && echo --search-field) | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| shift-space | commandline -i " " (commandline --search-field >/dev/null && echo --search-field) expand-abbr | — | abbreviations/completion phase, not this pass |
+| enter | execute | Enter | action or basic equivalent present; stty precedence applies |
+| ctrl-j | execute | Enter | action or basic equivalent present; stty precedence applies |
+| ctrl-m | execute | Enter | action or basic equivalent present; stty precedence applies |
+| ctrl-enter | execute | Enter | action or basic equivalent present; stty precedence applies |
+| delete | delete-char | C-d / Delete | action or basic equivalent present; stty precedence applies |
+| backspace | backward-delete-char | Backspace / C-h | action or basic equivalent present; stty precedence applies |
+| shift-backspace | backward-delete-char | Backspace / C-h | action or basic equivalent present; stty precedence applies |
+| ctrl-a | beginning-of-line | C-a / Home | action or basic equivalent present; stty precedence applies |
+| ctrl-e | end-of-line | C-e / End | action or basic equivalent present; stty precedence applies |
+| ctrl-h | backward-delete-char | Backspace / C-h | action or basic equivalent present; stty precedence applies |
+| ctrl-p | up-or-search | C-p / Up | fish filtered history/pager is the autosuggestion/completion campaign, not this pass |
+| ctrl-n | down-or-search | C-n / Down | fish filtered history/pager is the autosuggestion/completion campaign, not this pass |
+| ctrl-f | forward-char | C-f / Right | action or basic equivalent present; stty precedence applies |
+| ctrl-b | backward-char | C-b / Left | action or basic equivalent present; stty precedence applies |
+| ctrl-t | transpose-chars | C-t | action or basic equivalent present; stty precedence applies |
+| ctrl-g | cancel | C-g | action or basic equivalent present; stty precedence applies |
+| ctrl-/ | undo | C-_ / C-x C-u | action or basic equivalent present; stty precedence applies |
+| ctrl-_ | undo | C-_ / C-x C-u | action or basic equivalent present; stty precedence applies |
+| ctrl-z | undo | C-_ / C-x C-u | pelt honours prompt suspend policy (ignored); undo is C-_ |
+| ctrl-shift-z | redo | — | not this lane: undo only |
+| alt-/ | redo | — | not this lane: undo only |
+| alt-t | transpose-words | M-t | action or basic equivalent present; stty precedence applies |
+| alt-u | upcase-word | M-u | action or basic equivalent present; stty precedence applies |
+| alt-c | capitalize-word | M-c | action or basic equivalent present; stty precedence applies |
+| alt-backspace | backward-kill-word | M-Backspace | action or basic equivalent present; stty precedence applies |
+| ctrl-alt-h | backward-kill-word | M-Backspace | action or basic equivalent present; stty precedence applies |
+| ctrl-backspace | backward-kill-token | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-delete | kill-word | M-d | action or basic equivalent present; stty precedence applies |
+| ctrl-delete | kill-token | — | not this lane: fish helper/token/completion UI action; no equivalent claimed |
+| alt-< | beginning-of-buffer | C-a / Home | action or basic equivalent present; stty precedence applies |
+| alt-> | end-of-buffer | C-e / End | action or basic equivalent present; stty precedence applies |
+| ctrl-r | history-pager | — | fish filtered history/pager is the autosuggestion/completion campaign, not this pass |
+
+## PAX delivery
+
+No new PAX session was run in this pass. The framebuffer evidence is
+[pax#162 at 09471da4](https://github.com/wolffe-lang/pax/pull/162),
+`notes/px70/keys-hex.rows` and `tests/mpx5-yew`'s PS2_TABLE (lines 322–345).
+Copies of the measured rows are in `notes/sh28-evidence/px70-*`.
+The serial console passes every byte through; the host terminal chooses
+its physical key encodings. F1 needs a px-owned pelt-session slot before
+console sessions begin; F5 owns that fixture and the new-console runs.
+
+The table distinguishes bytes actually present in the measured rows from
+inferences about the same key families. A two-key ESC prefix is always an
+alternative to an Alt chord; do not assume Alt+Shift works, since the
+measured Alt+Shift+a emits nothing.
+
+| new editor key | framebuffer delivery of required bytes | serial |
+|---|---|---|
+| M-. | ESC then `.`; direct Alt follows the measured left-Alt prefix family (alt-a/alt-z); dot chord not individually measured | yes |
+| M-_ | ESC then `_`; direct shifted Alt chord not established | yes |
+| M-y / M-t / M-u / M-l / M-c / M-r | ESC then letter; same measured left-Alt letter-prefix family; upper-case aliases can use sequential ESC then shifted letter | yes |
+| C-t | control byte 14; numeric Alt-keypad entry can deliver byte 20 decimal; direct C-t not individually in px70 rows | yes |
+| C-_ | control byte 1f; numeric entry can deliver 31 decimal; direct chord not individually measured | yes |
+| C-x C-u / C-x C-x | bytes 18 15 / 18 18; numeric entry mechanism can deliver these control bytes; direct chords not individually measured | yes |
+| M-< / M-> | sequential ESC then `<` / `>`; shifted Alt chords not established | yes |
+| PageUp / PageDown | **measured** `off-9` = `1b 5b 35 7e`, `off-3` = `1b 5b 36 7e` | yes |
+| M-# | sequential ESC then `#`; direct shifted Alt chord not established | yes |
+| M-\ | ESC then backslash; direct punctuation chord not individually measured | yes |
+| C-] / M-C-] | byte 1d / ESC then 1d; numeric entry can deliver 29 decimal; ctrl-alt-a demonstrates ESC plus a control byte | yes |
+| M-0..9 / M-- | ESC then digit/minus; **measured** alt-1 = `1b 31`; other digits/minus are family inference, not Alt-keypad (which is numeric entry) | yes |
+| C-g | **measured** Alt-keypad 7 produces `07`; direct C-g not individually in this table | yes |
+| C-@ / C-Space / M-Space | **measured** Alt-keypad 0 produces `00`; ESC then space supplies M-Space; physical Ctrl-Space not separately measured | yes |
+| quit flush (default C-\) | byte 1c via numeric entry 28; direct chord not separately in this table; a remapped printable quit can be typed directly | yes |
+| vi `_` (spelling correction) | ordinary `_` in command mode; not an Alt chord | yes |
+
+## Follow-on boundaries
+
+- After wolf-lang#904 is in the pin, read argv[0], reject basename `sh`,
+  and reconsider the recommended default-on policy. Until then opt-in is
+  deliberate; `--posix` is a hard disable today.
+- Autosuggestions must keep all shadow text out of the edit buffer. Keep
+  readline Up/Down when friendly is off; fish-style filtered Up/Down and
+  the history UI belong to that phase. PageUp/PageDown stay history ends.
+- Expose VEOL, VEOL2, VREPRINT and VDISCARD through the terminal API before
+  honoring remapped values. No `stty` subprocess at a prompt.
+- The prompt's quit event is an editor flush, never a new signal sender.
+- Preserve the ten-entry kill ring, grouped per-line undo and saved draft
+  when adding suggestions/search. Suggestions are not edits or undo entries.

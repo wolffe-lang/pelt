@@ -1,0 +1,17 @@
+build: target/native/pelt
+pinned sh28_numeric_quoted
+pinned sh28_quit_remapped
+pinned sh28_quit_search
+pinned sh28_quit_status
+pinned sh28_transpose_negative
+pinned sh28_vi_quit_command
+pinned sh28_vi_quit_insert
+termios VEOL 11
+termios VEOL2 16
+termios VREPRINT 12
+termios VDISCARD 13
+termios VSWTC 7
+fish-pageup 'oldest\nnewest\n'
+fish-pageup-active 'oldest\nnewest\nnewest\n'
+fish-pagedown 'prior\ndraft\n'
+fish-last-arg 'older\nnewer\nnewer\n'

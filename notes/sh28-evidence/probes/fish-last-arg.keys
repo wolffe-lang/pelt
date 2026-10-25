@@ -1,0 +1,4 @@
+echo older
+echo newer
+\k echo \e.\r
+exit

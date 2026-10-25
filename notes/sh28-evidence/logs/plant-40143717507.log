@@ -1,0 +1,1202 @@
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	﻿2026-10-24T23:50:54.7536745Z ##[group]Run tools/session --bin target/release
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:54.7537192Z ^[[36;1mtools/session --bin target/release^[[0m
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:54.7597637Z shell: /usr/bin/bash -e {0}
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:54.7597916Z ##[endgroup]
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:54.7995511Z session: pelt = /home/runner/work/pelt/pelt/target/release/pelt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:55.1670109Z ok   alias_prompt_forms
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:55.3294998Z ok   arith_assign
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:55.4917244Z ok   arith_error
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:56.0155682Z ok   autocd_bare
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:56.4379657Z ok   autocd_hook
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:56.7555575Z ok   autocd_invoked
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:57.2851833Z ok   autocd_list
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:57.6534197Z ok   autocd_not_dir
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:58.0230110Z ok   autocd_off
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:58.4959608Z ok   autocd_slash
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:59.2285222Z ok   autocd_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:50:59.8082139Z ok   autocd_subshell
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:00.4370498Z ok   autocd_wins
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:00.7562500Z ok   autocd_words
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:00.9703663Z ok   background
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:01.1847633Z ok   background_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:01.4490356Z ok   c_alias_interactive
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:03.8680105Z ok   c_ed_alt_word
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:06.2875233Z ok   c_ed_backspace_delete
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:08.7071494Z ok   c_ed_combining
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:10.5247976Z ok   c_ed_complete_abs
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:14.1683151Z ok   c_ed_complete_after_assign
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:18.4163450Z ok   c_ed_complete_after_ops
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:20.2377907Z ok   c_ed_complete_command
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:21.4530761Z ok   c_ed_complete_dirs
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:23.8748542Z ok   c_ed_complete_file
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:26.2955019Z ok   c_ed_complete_hidden
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:29.3190147Z ok   c_ed_complete_in_quotes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:31.7563213Z ok   c_ed_complete_lcp
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:34.7795702Z ok   c_ed_complete_list
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:37.8035027Z ok   c_ed_complete_list_prompt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:40.8248770Z ok   c_ed_complete_list_vars
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:43.2452390Z ok   c_ed_complete_list_wide
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:45.6658525Z ok   c_ed_complete_mid_word
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:49.9058159Z ok   c_ed_complete_names
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:51.7250056Z ok   c_ed_complete_newline
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:53.5455699Z ok   c_ed_complete_nomatch
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:51:57.7757935Z ok   c_ed_complete_query
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:02.6065136Z ok   c_ed_complete_quoting
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:06.2341260Z ok   c_ed_complete_redirect
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:08.0531374Z ok   c_ed_complete_slash_cmd
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:09.2704393Z ok   c_ed_complete_tilde
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:10.4879979Z ok   c_ed_complete_tilde_alone
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:14.1135804Z ok   c_ed_complete_var
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:15.9311385Z ok   c_ed_complete_var_in_word
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:18.9524934Z      (c_ed_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:18.9525541Z ok   c_ed_ctrl_c
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:22.5758843Z      (c_ed_ctrl_c_continued: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:22.5759453Z ok   c_ed_ctrl_c_continued
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:26.1989808Z      (c_ed_ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:26.1990461Z ok   c_ed_ctrl_c_ignored
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:29.8224413Z      (c_ed_ctrl_c_trap: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:29.8224941Z ok   c_ed_ctrl_c_trap
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:32.2414706Z ok   c_ed_ctrl_k_y
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:35.2623388Z ok   c_ed_ctrl_l
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:37.6822940Z ok   c_ed_ctrl_u_y
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:39.5023915Z ok   c_ed_ctrl_v
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:41.9228893Z ok   c_ed_ctrl_w
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:43.7401483Z ok   c_ed_delete_char
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:46.1589088Z ok   c_ed_flow_stop
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:49.7835972Z ok   c_ed_history_screen
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:51.6015684Z ok   c_ed_home_end
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:54.0230948Z ok   c_ed_home_end_keys
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:56.4445603Z ok   c_ed_insert_mid
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:52:58.8658002Z ok   c_ed_keys_abf
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:00.6849688Z ok   c_ed_kill_to_end
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:02.5036281Z ok   c_ed_left_insert
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:04.9275095Z      (c_ed_mode_after_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:04.9276430Z ok   c_ed_mode_after_ctrl_c
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:05.0419216Z ok   c_ed_mode_command
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:05.1055465Z ok   c_ed_mode_exec
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:07.5260105Z ok   c_ed_resize_narrow
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:10.5490228Z ok   c_ed_resize_trap
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:13.5726061Z ok   c_ed_search
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:15.9934974Z ok   c_ed_search_abort
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:19.6197371Z ok   c_ed_search_again
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:22.6430847Z ok   c_ed_search_backspace
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:25.0642579Z ok   c_ed_search_edit
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:28.0872501Z ok   c_ed_search_screen
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:29.9063005Z ok   c_ed_stty_eof
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:32.3283901Z ok   c_ed_stty_erase
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:35.9540286Z ok   c_ed_stty_intr
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:38.3756251Z ok   c_ed_stty_kill
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:40.7987832Z ok   c_ed_stty_lnext
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:43.2200752Z ok   c_ed_stty_werase
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:45.0392362Z ok   c_ed_tab_literal
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:47.4588284Z ok   c_ed_up_arrow
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:50.4805066Z ok   c_ed_up_down_edit
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:52.2974596Z ok   c_ed_utf8_erase
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:54.1149422Z ok   c_ed_utf8_left
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:56.5344639Z ok   c_ed_wide_insert
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:53:58.9560411Z ok   c_ed_wide_wrap
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:01.3754665Z ok   c_ed_wide_wrap_edit
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:03.1927780Z ok   c_ed_word_motion
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:05.6121126Z ok   c_ed_wrap_erase
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:08.0310439Z ok   c_ed_wrap_exact
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:10.4507778Z ok   c_ed_wrap_insert
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:13.4729122Z ok   c_hist_fc_e_fail
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:16.4949374Z ok   c_hist_fc_e_range
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:18.9176601Z ok   c_hist_fc_edit
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:21.9394228Z ok   c_hist_fc_fcedit
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:24.9615268Z ok   c_hist_fc_list
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:29.1879770Z ok   c_hist_fc_list_clamp
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:32.8109584Z ok   c_hist_fc_list_default
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:37.0377599Z ok   c_hist_fc_list_reverse
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:41.2660247Z ok   c_hist_fc_list_string
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:44.8899824Z ok   c_hist_fc_notfound
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:47.3097983Z ok   c_hist_fc_s
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:49.7295863Z ok   c_hist_fc_s_prev
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:52.7515627Z ok   c_hist_fc_s_string
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:52.9659029Z ok   c_hist_file_read
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.5900928Z ok   c_hist_histsize
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7021292Z PEND-fail c_ignoreeof (waits on ignoreeof)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7021865Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7022289Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7022673Z        pelt prompt "$"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7025684Z        pelt step 1 "set -o ignoreeof"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7026452Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7026872Z        pelt prompt "$"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7027308Z        pelt step 2 "^D"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7027748Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7028167Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7028568Z      ! pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7028935Z        dash prompt "$"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7029215Z      ! pelt exit 0 at step 2
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7029529Z        dash step 3 "echo still-here"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7029894Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7030177Z        dash out "still-here\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7030478Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7030729Z        dash err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7030977Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7031233Z        dash prompt "$"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7031496Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7031748Z        dash step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7032026Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7032272Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7032524Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7032776Z        dash prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7033035Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.7033291Z        dash exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:56.9182581Z ok   c_jc_background_group
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:57.2848150Z ok   c_jc_background_job
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:58.4994238Z ok   c_jc_bg
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:59.3697160Z ok   c_jc_bg_running
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:54:59.6847441Z ok   c_jc_bg_ttin
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:00.4497284Z      (c_jc_ctrl_c_job_only: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:00.4498732Z ok   c_jc_ctrl_c_job_only
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:01.9690233Z      (c_jc_ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:01.9691025Z ok   c_jc_ctrl_c_loop
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:02.8871979Z ok   c_jc_ctrl_z
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:03.4020415Z ok   c_jc_done_message
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:04.5708604Z ok   c_jc_exit_stopped
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:05.9887019Z ok   c_jc_fg
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:07.2547185Z ok   c_jc_fg_number
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:08.7736555Z      (c_jc_fg_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:08.7737208Z ok   c_jc_fg_pipeline
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:08.9085675Z ok   c_jc_foreground_group
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:09.9344947Z ok   c_jc_job_ids
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:10.5539354Z ok   c_jc_jobs_l_pipeline
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:10.9246642Z ok   c_jc_jobs_list
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:11.5422644Z ok   c_jc_jobs_states
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:13.0244599Z ok   c_jc_kill_group
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:21.9430491Z ok   c_jc_mixed_pipeline
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:23.0681930Z ok   c_jc_numbering
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:23.7836547Z ok   c_jc_shell_ignores_tstp
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:23.9122278Z ok   c_jc_shell_is_leader
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:25.1426411Z ok   c_jc_states
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:25.4105623Z ok   c_jc_terminal_back
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:27.7356475Z ok   c_jc_wait_stopped
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.6211637Z ok   c_long_line
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8357152Z PEND-fail c_mail (waits on mail)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8357608Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8357906Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8358198Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8358565Z        pelt step 1 "MAIL=$HOME/mbox MAILCHECK=0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8358988Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8359277Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8359625Z        pelt step 2 "echo x > $HOME/mbox"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8360000Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8360275Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8360561Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8360875Z        pelt step 3 "echo next"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8361241Z        pelt out "next\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8361790Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8362075Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8362383Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8362693Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8362972Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.8363283Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:29.9481732Z ok   c_paste_two_lines
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:30.0611470Z ok   c_ps1_bang
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:30.2756589Z ok   c_ps1_bang_number
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:30.5405315Z ok   c_redirect_error
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:30.7548213Z ok   c_tty_erase
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:33.1774849Z ok   c_vi_D_C
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:35.6005210Z ok   c_vi_E_e
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:38.0227634Z ok   c_vi_R
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:40.4453830Z ok   c_vi_S
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:42.8680151Z ok   c_vi_X
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:45.2900138Z ok   c_vi_arrows_insert
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:47.7123418Z ok   c_vi_at_letter
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:50.1337155Z ok   c_vi_back_find
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:52.5561604Z ok   c_vi_backslash
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:54.9789255Z ok   c_vi_bar
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:57.4010666Z ok   c_vi_basic
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:55:59.8238938Z ok   c_vi_bigword
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:02.2465120Z ok   c_vi_caret
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:04.6707531Z ok   c_vi_complete
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:07.0924616Z ok   c_vi_count_x
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:10.8241044Z      (c_vi_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:10.8241736Z ok   c_vi_ctrl_c
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:13.2462511Z ok   c_vi_cw
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:15.6682939Z ok   c_vi_dd_cc
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:18.0903855Z ok   c_vi_dollar_append
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:20.5121321Z ok   c_vi_dot
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:22.9333326Z ok   c_vi_dot_count
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:25.3552344Z ok   c_vi_dw
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:28.3797061Z ok   c_vi_emacs_switch
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:30.1984468Z ok   c_vi_eof
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:32.6201009Z ok   c_vi_find
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:35.6443200Z ok   c_vi_hash
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:38.6684223Z ok   c_vi_history
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:42.2950463Z ok   c_vi_history_G
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:45.9217752Z ok   c_vi_history_jk
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:48.3430360Z ok   c_vi_insert
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:50.7664147Z ok   c_vi_insert_ctrl_v
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:53.1882633Z ok   c_vi_insert_ctrl_w
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:55.6094975Z ok   c_vi_insert_erase
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:56:58.0313244Z ok   c_vi_insert_kill
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:00.4540357Z ok   c_vi_insert_start
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:02.8767663Z ok   c_vi_motion
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:05.2990944Z ok   c_vi_motions
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:07.7205585Z ok   c_vi_replace_char
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:11.9495234Z ok   c_vi_search
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:15.5755921Z ok   c_vi_search_anchor
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:19.8036756Z ok   c_vi_search_n
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:22.2252815Z ok   c_vi_star
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:25.2506349Z ok   c_vi_stty_erase
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:29.4811117Z ok   c_vi_stty_intr
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:31.9010793Z ok   c_vi_tilde
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:34.3223931Z ok   c_vi_till
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:37.3464114Z ok   c_vi_underscore
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:39.7687433Z ok   c_vi_undo
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:42.1909915Z ok   c_vi_undo_all
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:44.6168161Z ok   c_vi_v
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:47.0401243Z ok   c_vi_v_fail
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:50.0681531Z ok   c_vi_v_number
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:52.4904552Z ok   c_vi_yank_put
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:52.7046719Z ok   cd_cdpath
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:52.8683022Z ok   cd_fail_continues
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:53.1330719Z ok   cd_minus
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:53.2961274Z ok   cd_root
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:53.4600196Z ok   cd_then_program
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:54.8284106Z ok   child_stdin
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:54.9943286Z ok   cmdsub_program
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:55.2615660Z ok   cnf_127
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:55.4274795Z ok   cnf_assign
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:55.8494828Z ok   cnf_cd
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:56.1700048Z ok   cnf_contexts
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:56.4388373Z ok   cnf_redirect
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:56.6537381Z ok   cnf_rerun
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:56.9726413Z ok   cnf_skipped
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:57.3937265Z ok   cnf_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:57.6613354Z ok   cnf_words
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:57.9261085Z ok   comment_and_blank
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:58.6921314Z      (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:58.6921875Z ok   ctrl_c_child
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:59.9075053Z      (ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:57:59.9076444Z ok   ctrl_c_ignored
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:00.6733539Z      (ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:00.6734347Z ok   ctrl_c_loop
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:01.4395752Z      (ctrl_c_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:01.4396852Z ok   ctrl_c_pipeline
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:02.2046953Z      (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:02.2047664Z ok   ctrl_c_prompt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:02.9706270Z      (ctrl_c_subshell: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:02.9706975Z ok   ctrl_c_subshell
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:03.7879069Z      (ctrl_c_trap_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:03.7879815Z ok   ctrl_c_trap_child
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:04.5526635Z      (ctrl_c_trap_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:04.5527411Z ok   ctrl_c_trap_prompt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:04.6654152Z ok   dash_s_args
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:05.8804956Z ok   default_interactive
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.0948513Z ok   dollar_dash
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.2073040Z ok   echo_hi
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.3710959Z ok   env_file
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.4833810Z ok   env_missing
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.5447379Z ok   eof_at_once
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.6574380Z ok   eof_in_if
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.8210380Z ok   eof_in_if_trap
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.9335964Z ok   eof_last_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:06.9953678Z ok   exec_missing
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:07.1080086Z ok   exec_program
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:07.2209748Z ok   exit_in_function
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:07.3333870Z ok   exit_last_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:07.3950269Z ok   exit_n
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:07.5583634Z ok   expansion_error
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:07.7752268Z ok   externals
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:07.8882261Z ok   for_loop
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:08.1022848Z ok   func_define_call
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:08.3170069Z ok   heredoc
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:08.6821631Z ok   jc_background_subshell
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:09.8477033Z ok   jc_subshell_redir_stop
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:11.0131416Z ok   jc_subshell_stop
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:11.5024278Z ok   jc_wait_frees
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:11.8707698Z ok   kill_job_prompt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:12.3904058Z ok   kill_self_prompt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:13.1642011Z ok   long_session
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:13.3304497Z ok   ls_dir
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:13.5440260Z ok   not_found_continues
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:13.6574845Z ok   pipe
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:13.7711632Z ok   pipe_builtin_stage
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:14.0358444Z ok   pipe_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:14.1498900Z ok   pipe_three
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:14.3130115Z ok   ps1_arith_cmdsub
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:14.5269199Z ok   ps1_param
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:14.7403655Z ok   ps1_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:14.9542372Z ok   ps1_unchanged_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:15.2186934Z ok   ps2_andor
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:15.3818826Z ok   ps2_backslash
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:15.6462656Z ok   ps2_brace_func
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:15.9110310Z ok   ps2_case
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:16.0749586Z ok   ps2_cmdsub
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:16.3398662Z ok   ps2_custom
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:16.5031214Z ok   ps2_double_quote
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:16.7672247Z ok   ps2_if
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:16.9303347Z ok   ps2_single_quote
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:17.2464862Z ok   ps2_while
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:17.4100190Z ok   pwd_is_cwd
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:18.0735900Z ok   read_at_eof
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:18.8391499Z ok   read_builtin
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:19.0535878Z ok   readonly_assign
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:19.2691957Z ok   redirect_append
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:19.5353042Z ok   redirect_exec_fd
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:19.6991694Z ok   redirect_file
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:19.9645920Z ok   redirect_heredoc_quoted
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:20.1784444Z ok   redirect_read
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:20.3412610Z ok   redirect_stderr
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:20.4021785Z ok   return_top
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:20.5138681Z ok   set_e_exits
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:20.7272796Z ok   set_u_error
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:20.9915520Z ok   set_v_echo
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4130022Z FAIL sh28_last_alias
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4130458Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4130833Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4131432Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4131798Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4132175Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4132490Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4132809Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4133155Z        pelt step 2 ": alpha"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4133517Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4133832Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4134181Z        pelt step 3 "\\k echo \\e_\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4134591Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4134920Z        dash out "alpha\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4135267Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4135575Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4135909Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4136543Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4136866Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:23.4137211Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8338410Z FAIL sh28_last_arg
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8338810Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8339098Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8339359Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8339659Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8339963Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8340213Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8340470Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8340749Z        pelt step 2 ": alpha"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8341042Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8341295Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8341582Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8341918Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8342186Z        dash out "alpha\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8342466Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8342721Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8342993Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8343268Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8343521Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:25.8343811Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8586329Z FAIL sh28_last_interrupted
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8587290Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8587641Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8588024Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8588453Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8588852Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8589209Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8589622Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8590057Z        pelt step 2 ": one"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8590441Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8590703Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8590978Z        pelt step 3 ": two"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8591259Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8591514Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8591798Z        pelt step 4 "\\k echo \\e. \\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8592144Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8592411Z        dash out "two two\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8592699Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8592971Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8593239Z        pelt step 5 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8593529Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8593790Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:28.8594066Z        pelt exit 0 at step 5
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2817821Z FAIL sh28_last_midline
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2818366Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2818723Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2819069Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2819451Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2819834Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2820175Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2820513Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2820896Z        pelt step 2 ": inserted"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2821307Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2821669Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2822103Z        pelt step 3 "\\k echo  tail\\x01\\ef \\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2822577Z      ! pelt out "tail\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2822939Z        dash out "inserted tail\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2823328Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2823637Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2824046Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2824850Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2825220Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:31.2835056Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7048488Z FAIL sh28_last_negative
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7049068Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7049446Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7049717Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7050024Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7050331Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7050590Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7050858Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7051162Z        pelt step 2 ": one two three"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7051501Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7051776Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7052100Z        pelt step 3 "\\k echo \\e-2\\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7052486Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7052783Z        dash out "one\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7053084Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7053381Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7053730Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7054050Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7054332Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:33.7054658Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1247722Z FAIL sh28_last_numeric
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1250264Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1250639Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1251000Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1251397Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1251871Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1252225Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1252583Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1253000Z        pelt step 2 ": first second third"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1253486Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1253815Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1254136Z        pelt step 3 "\\k echo \\e1\\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1254514Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1254816Z        dash out "first\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1255127Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1255665Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1255974Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1256633Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1256922Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:36.1257230Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:38.5469402Z ok   sh28_last_oldest
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9678775Z FAIL sh28_last_quote
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9679307Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9679659Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9680014Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9680406Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9680815Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9681162Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9681524Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9681919Z        pelt step 2 ": 'two words'"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9682360Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9682699Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9683070Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9683491Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9683916Z        dash out "two words\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9684346Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9684705Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9685091Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9685494Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9685852Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:40.9686618Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3890364Z FAIL sh28_last_redir
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3890920Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3891338Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3891761Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3892223Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3892705Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3893103Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3893512Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3893959Z        pelt step 2 ": value > output"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3894368Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3894634Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3894922Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3895289Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3895832Z        dash out "output\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3896343Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3896622Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3896913Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3897198Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3897452Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:43.3897725Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4135323Z FAIL sh28_last_repeat
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4136583Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4137222Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4137636Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4138037Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4138447Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4138799Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4139161Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4139543Z        pelt step 2 ": older"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4139917Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4140237Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4140594Z        pelt step 3 ": newer"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4141028Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4141400Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4141801Z        pelt step 4 "\\k echo \\e.\\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4142269Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4142643Z        dash out "older\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4143028Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4143380Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4143763Z        pelt step 5 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4144148Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4144494Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:46.4144868Z        pelt exit 0 at step 5
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8361622Z FAIL sh28_last_single
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8362163Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8362577Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8363011Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8363348Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8363651Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8363900Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8364158Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8364436Z        pelt step 2 "true"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8365025Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8365285Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8365575Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8365905Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8366590Z        dash out "true\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8366885Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8367150Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8367431Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8367715Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8367971Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:48.8368247Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2587021Z FAIL sh28_last_zero
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2587597Z        pelt step 0
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2588106Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2588616Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2589142Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2589664Z      ! pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2590154Z        dash err yes
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2590647Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2591192Z        pelt step 2 ": first second"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2591753Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2592243Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2592773Z        pelt step 3 "\\k echo \\e0\\e.\\r"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2593340Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2593846Z        dash out ":\n"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2594358Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2594839Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2595341Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2595853Z        pelt err no
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2596601Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:51.2597164Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:53.6815187Z ok   sh28_vi_last_arg
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:56.1036356Z ok   sh28_vi_last_quote
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:56.2681528Z ok   signal_status
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:56.4822852Z ok   special_builtin_error
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:56.6462839Z ok   subshell_error
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:57.7603696Z ok   subshell_jobs
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:57.9239675Z ok   syntax_error_continues
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:58.0880628Z ok   syntax_error_midline
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:58.2531540Z ok   term_at_prompt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:58.4164257Z ok   trap_exit_eof
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:58.5287671Z ok   trap_exit_exit
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:58.7445948Z ok   trap_term
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:59.0611376Z ok   trap_usr1_prompt
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:59.2770892Z ok   unset_env
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:59.2771278Z session: pass 293  fail 11  pending 2 (0)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-24T23:58:59.2851109Z ##[error]Process completed with exit code 1.
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	﻿2026-10-24T23:51:58.9588784Z ##[group]Run tools/session --bin target/native
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:51:58.9589422Z ^[[36;1mtools/session --bin target/native^[[0m
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:51:58.9657023Z shell: /usr/bin/bash -e {0}
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:51:58.9657285Z ##[endgroup]
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:51:59.0054347Z session: pelt = /home/runner/work/pelt/pelt/target/native/pelt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:51:59.3790623Z ok   alias_prompt_forms
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:51:59.5426841Z ok   arith_assign
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:51:59.7064999Z ok   arith_error
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:00.2339375Z ok   autocd_bare
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:00.6580528Z ok   autocd_hook
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:00.9778255Z ok   autocd_invoked
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:01.5181370Z ok   autocd_list
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:01.8895238Z ok   autocd_not_dir
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:02.2620893Z ok   autocd_off
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:02.7375621Z ok   autocd_slash
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:03.4790350Z ok   autocd_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:04.0694923Z ok   autocd_subshell
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:04.7008453Z ok   autocd_wins
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:05.0214111Z ok   autocd_words
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:05.2368623Z ok   background
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:05.4517164Z ok   background_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:05.7165827Z ok   c_alias_interactive
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:08.1359698Z ok   c_ed_alt_word
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:10.5563840Z ok   c_ed_backspace_delete
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:12.9760097Z ok   c_ed_combining
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:14.7939323Z ok   c_ed_complete_abs
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:18.4366602Z ok   c_ed_complete_after_assign
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:22.6856128Z ok   c_ed_complete_after_ops
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:24.5082871Z ok   c_ed_complete_command
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:25.7240044Z ok   c_ed_complete_dirs
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:28.1456523Z ok   c_ed_complete_file
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:30.5663091Z ok   c_ed_complete_hidden
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:33.5892702Z ok   c_ed_complete_in_quotes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:36.0257809Z ok   c_ed_complete_lcp
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:39.0482691Z ok   c_ed_complete_list
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:42.0713530Z ok   c_ed_complete_list_prompt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:45.0927934Z ok   c_ed_complete_list_vars
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:47.5139848Z ok   c_ed_complete_list_wide
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:49.9350650Z ok   c_ed_complete_mid_word
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:54.1755426Z ok   c_ed_complete_names
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:55.9940519Z ok   c_ed_complete_newline
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:52:57.8147402Z ok   c_ed_complete_nomatch
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:02.0495656Z ok   c_ed_complete_query
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:06.8813953Z ok   c_ed_complete_quoting
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:10.5088634Z ok   c_ed_complete_redirect
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:12.3281188Z ok   c_ed_complete_slash_cmd
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:13.5448808Z ok   c_ed_complete_tilde
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:14.7617144Z ok   c_ed_complete_tilde_alone
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:18.3867470Z ok   c_ed_complete_var
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:20.2039559Z ok   c_ed_complete_var_in_word
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:23.2260988Z      (c_ed_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:23.2261684Z ok   c_ed_ctrl_c
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:26.8502397Z      (c_ed_ctrl_c_continued: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:26.8503145Z ok   c_ed_ctrl_c_continued
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:30.4748134Z      (c_ed_ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:30.4748922Z ok   c_ed_ctrl_c_ignored
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:34.0996320Z      (c_ed_ctrl_c_trap: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:34.0996900Z ok   c_ed_ctrl_c_trap
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:36.5189847Z ok   c_ed_ctrl_k_y
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:39.5408600Z ok   c_ed_ctrl_l
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:41.9602492Z ok   c_ed_ctrl_u_y
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:43.7798085Z ok   c_ed_ctrl_v
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:46.1990910Z ok   c_ed_ctrl_w
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:48.0167110Z ok   c_ed_delete_char
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:50.4356765Z ok   c_ed_flow_stop
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:54.0589248Z ok   c_ed_history_screen
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:55.8759878Z ok   c_ed_home_end
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:53:58.2958297Z ok   c_ed_home_end_keys
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:00.7157913Z ok   c_ed_insert_mid
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:03.1358967Z ok   c_ed_keys_abf
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:04.9531871Z ok   c_ed_kill_to_end
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:06.7701682Z ok   c_ed_left_insert
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:09.1929277Z      (c_ed_mode_after_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:09.1930323Z ok   c_ed_mode_after_ctrl_c
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:09.3077060Z ok   c_ed_mode_command
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:09.3722128Z ok   c_ed_mode_exec
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:11.7913197Z ok   c_ed_resize_narrow
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:14.8123031Z ok   c_ed_resize_trap
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:17.8333195Z ok   c_ed_search
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:20.2531906Z ok   c_ed_search_abort
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:23.8781942Z ok   c_ed_search_again
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:26.9002915Z ok   c_ed_search_backspace
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:29.3200737Z ok   c_ed_search_edit
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:32.3421454Z ok   c_ed_search_screen
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:34.1603831Z ok   c_ed_stty_eof
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:36.5819182Z ok   c_ed_stty_erase
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:40.2080706Z ok   c_ed_stty_intr
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:42.6292480Z ok   c_ed_stty_kill
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:45.0530538Z ok   c_ed_stty_lnext
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:47.4745800Z ok   c_ed_stty_werase
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:49.2945823Z ok   c_ed_tab_literal
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:51.7141120Z ok   c_ed_up_arrow
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:54.7353499Z ok   c_ed_up_down_edit
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:56.5526807Z ok   c_ed_utf8_erase
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:54:58.3700998Z ok   c_ed_utf8_left
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:00.7896151Z ok   c_ed_wide_insert
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:03.2096780Z ok   c_ed_wide_wrap
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:05.6294927Z ok   c_ed_wide_wrap_edit
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:07.4469624Z ok   c_ed_word_motion
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:09.8664520Z ok   c_ed_wrap_erase
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:12.2850222Z ok   c_ed_wrap_exact
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:14.7048655Z ok   c_ed_wrap_insert
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:17.7267101Z ok   c_hist_fc_e_fail
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:20.7495037Z ok   c_hist_fc_e_range
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:23.1739726Z ok   c_hist_fc_edit
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:26.1971022Z ok   c_hist_fc_fcedit
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:29.2203482Z ok   c_hist_fc_list
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:33.4467583Z ok   c_hist_fc_list_clamp
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:37.0702984Z ok   c_hist_fc_list_default
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:41.2964818Z ok   c_hist_fc_list_reverse
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:45.5225066Z ok   c_hist_fc_list_string
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:49.1465558Z ok   c_hist_fc_notfound
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:51.5660226Z ok   c_hist_fc_s
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:53.9866283Z ok   c_hist_fc_s_prev
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:57.0099660Z ok   c_hist_fc_s_string
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:55:57.2252504Z ok   c_hist_file_read
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.8502543Z ok   c_hist_histsize
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9622790Z PEND-fail c_ignoreeof (waits on ignoreeof)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9623502Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9623935Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9624209Z        pelt prompt "$"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9624565Z        pelt step 1 "set -o ignoreeof"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9624903Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9625184Z        pelt prompt "$"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9625458Z        pelt step 2 "^D"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9625739Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9625983Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9626235Z      ! pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9626541Z        dash prompt "$"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9626831Z      ! pelt exit 0 at step 2
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9627146Z        dash step 3 "echo still-here"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9627479Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9627742Z        dash out "still-here\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9628036Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9628279Z        dash err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9628521Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9628775Z        dash prompt "$"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9629034Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9629284Z        dash step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9629558Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9629799Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9630056Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9630303Z        dash prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9630559Z      ! pelt <none>
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:00.9631147Z        dash exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:01.1794433Z ok   c_jc_background_group
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:01.5468274Z ok   c_jc_background_job
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:02.7626317Z ok   c_jc_bg
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:03.6347190Z ok   c_jc_bg_running
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:03.9514884Z ok   c_jc_bg_ttin
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:04.7174489Z      (c_jc_ctrl_c_job_only: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:04.7175449Z ok   c_jc_ctrl_c_job_only
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:06.2374580Z      (c_jc_ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:06.2375149Z ok   c_jc_ctrl_c_loop
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:07.1594762Z ok   c_jc_ctrl_z
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:07.6750043Z ok   c_jc_done_message
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:08.8454162Z ok   c_jc_exit_stopped
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:10.2637191Z ok   c_jc_fg
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:11.5309296Z ok   c_jc_fg_number
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:13.0505398Z      (c_jc_fg_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000280000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:13.0506106Z ok   c_jc_fg_pipeline
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:13.1855608Z ok   c_jc_foreground_group
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:14.2125109Z ok   c_jc_job_ids
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:14.8333824Z ok   c_jc_jobs_l_pipeline
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:15.2056630Z ok   c_jc_jobs_list
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:15.8237742Z ok   c_jc_jobs_states
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:17.3082235Z ok   c_jc_kill_group
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:26.2240497Z ok   c_jc_mixed_pipeline
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:27.3495792Z ok   c_jc_numbering
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:28.0641431Z ok   c_jc_shell_ignores_tstp
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:28.1929022Z ok   c_jc_shell_is_leader
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:29.4268375Z ok   c_jc_states
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:29.6941863Z ok   c_jc_terminal_back
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:32.0224217Z ok   c_jc_wait_stopped
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:33.9342663Z ok   c_long_line
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1486445Z PEND-fail c_mail (waits on mail)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1487039Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1487393Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1487784Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1488210Z        pelt step 1 "MAIL=$HOME/mbox MAILCHECK=0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1488690Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1489040Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1489448Z        pelt step 2 "echo x > $HOME/mbox"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1489906Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1490264Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1490630Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1491312Z        pelt step 3 "echo next"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1491743Z        pelt out "next\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1492103Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1492461Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1492854Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1493245Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1493600Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.1493990Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.2614995Z ok   c_paste_two_lines
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.3745619Z ok   c_ps1_bang
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.5887858Z ok   c_ps1_bang_number
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:34.8536393Z ok   c_redirect_error
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:35.0683520Z ok   c_tty_erase
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:37.4897639Z ok   c_vi_D_C
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:39.9105937Z ok   c_vi_E_e
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:42.3307362Z ok   c_vi_R
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:44.7508519Z ok   c_vi_S
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:47.1713506Z ok   c_vi_X
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:49.5915532Z ok   c_vi_arrows_insert
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:52.0118564Z ok   c_vi_at_letter
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:54.4325204Z ok   c_vi_back_find
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:56.8530085Z ok   c_vi_backslash
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:56:59.2738863Z ok   c_vi_bar
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:01.6943652Z ok   c_vi_basic
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:04.1149138Z ok   c_vi_bigword
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:06.5351939Z ok   c_vi_caret
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:08.9572096Z ok   c_vi_complete
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:11.3787167Z ok   c_vi_count_x
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:15.1096355Z      (c_vi_ctrl_c: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:15.1096820Z ok   c_vi_ctrl_c
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:17.5297589Z ok   c_vi_cw
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:19.9506483Z ok   c_vi_dd_cc
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:22.3709852Z ok   c_vi_dollar_append
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:24.7912177Z ok   c_vi_dot
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:27.2111990Z ok   c_vi_dot_count
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:29.6309434Z ok   c_vi_dw
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:32.6535206Z ok   c_vi_emacs_switch
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:34.4714420Z ok   c_vi_eof
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:36.8916690Z ok   c_vi_find
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:39.9143272Z ok   c_vi_hash
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:42.9365481Z ok   c_vi_history
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:46.5611049Z ok   c_vi_history_G
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:50.1856668Z ok   c_vi_history_jk
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:52.6060145Z ok   c_vi_insert
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:55.0281525Z ok   c_vi_insert_ctrl_v
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:57.4481673Z ok   c_vi_insert_ctrl_w
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:57:59.8684376Z ok   c_vi_insert_erase
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:02.2895102Z ok   c_vi_insert_kill
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:04.7099952Z ok   c_vi_insert_start
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:07.1305777Z ok   c_vi_motion
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:09.5518463Z ok   c_vi_motions
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:11.9734129Z ok   c_vi_replace_char
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:16.2010191Z ok   c_vi_search
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:19.8261523Z ok   c_vi_search_anchor
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:24.0522500Z ok   c_vi_search_n
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:26.4727142Z ok   c_vi_star
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:29.4973078Z ok   c_vi_stty_erase
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:33.7254340Z ok   c_vi_stty_intr
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:36.1454907Z ok   c_vi_tilde
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:38.5653912Z ok   c_vi_till
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:41.5879629Z ok   c_vi_underscore
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:44.0095302Z ok   c_vi_undo
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:46.4305207Z ok   c_vi_undo_all
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:48.8540850Z ok   c_vi_v
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:51.2758818Z ok   c_vi_v_fail
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:54.3021832Z ok   c_vi_v_number
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:56.7210772Z ok   c_vi_yank_put
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:56.9349410Z ok   cd_cdpath
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:57.0984981Z ok   cd_fail_continues
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:57.3626112Z ok   cd_minus
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:57.5255444Z ok   cd_root
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:57.6896217Z ok   cd_then_program
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:59.0561265Z ok   child_stdin
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:59.2239987Z ok   cmdsub_program
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:59.4919256Z ok   cnf_127
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:58:59.6575174Z ok   cnf_assign
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:00.0801048Z ok   cnf_cd
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:00.4073302Z ok   cnf_contexts
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:00.6781759Z ok   cnf_redirect
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:00.8937167Z ok   cnf_rerun
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:01.2130398Z ok   cnf_skipped
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:01.6336318Z ok   cnf_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:01.9011964Z ok   cnf_words
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:02.1655334Z ok   comment_and_blank
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:02.9307759Z      (ctrl_c_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:02.9308446Z ok   ctrl_c_child
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:04.1461235Z      (ctrl_c_ignored: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:04.1462497Z ok   ctrl_c_ignored
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:04.9110434Z      (ctrl_c_loop: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:04.9111306Z ok   ctrl_c_loop
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:05.6764840Z      (ctrl_c_pipeline: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:05.6765462Z ok   ctrl_c_pipeline
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:06.4404512Z      (ctrl_c_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:06.4405082Z ok   ctrl_c_prompt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:07.2064417Z      (ctrl_c_subshell: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:07.2065344Z ok   ctrl_c_subshell
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:08.0226856Z      (ctrl_c_trap_child: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:08.0227588Z ok   ctrl_c_trap_child
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:08.7871581Z      (ctrl_c_trap_prompt: pelt SigBlk 0000000000000000 SigIgn 0000000000000000)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:08.7872229Z ok   ctrl_c_trap_prompt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:08.8993187Z ok   dash_s_args
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:10.1130557Z ok   default_interactive
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:10.3269708Z ok   dollar_dash
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:10.4392776Z ok   echo_hi
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:10.6029236Z ok   env_file
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:10.7149695Z ok   env_missing
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:10.7761769Z ok   eof_at_once
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:10.8882504Z ok   eof_in_if
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.0515032Z ok   eof_in_if_trap
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.1645767Z ok   eof_last_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.2263023Z ok   exec_missing
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.3387544Z ok   exec_program
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.4512862Z ok   exit_in_function
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.5635017Z ok   exit_last_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.6248913Z ok   exit_n
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:11.7880889Z ok   expansion_error
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:12.0053736Z ok   externals
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:12.1182360Z ok   for_loop
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:12.3320306Z ok   func_define_call
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:12.5463849Z ok   heredoc
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:12.9121489Z ok   jc_background_subshell
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:14.0777852Z ok   jc_subshell_redir_stop
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:15.2426216Z ok   jc_subshell_stop
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:15.7316424Z ok   jc_wait_frees
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:16.0994501Z ok   kill_job_prompt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:16.6178216Z ok   kill_self_prompt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:17.3898838Z ok   long_session
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:17.5555858Z ok   ls_dir
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:17.7691816Z ok   not_found_continues
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:17.8825670Z ok   pipe
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:17.9964935Z ok   pipe_builtin_stage
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:18.2615156Z ok   pipe_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:18.3755753Z ok   pipe_three
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:18.5393202Z ok   ps1_arith_cmdsub
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:18.7527525Z ok   ps1_param
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:18.9663507Z ok   ps1_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:19.1805493Z ok   ps1_unchanged_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:19.4446006Z ok   ps2_andor
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:19.6074064Z ok   ps2_backslash
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:19.8714950Z ok   ps2_brace_func
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:20.1362415Z ok   ps2_case
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:20.3038185Z ok   ps2_cmdsub
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:20.5684355Z ok   ps2_custom
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:20.7318233Z ok   ps2_double_quote
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:20.9966764Z ok   ps2_if
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:21.1596499Z ok   ps2_single_quote
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:21.4748798Z ok   ps2_while
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:21.6391068Z ok   pwd_is_cwd
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:22.3025299Z ok   read_at_eof
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:23.0668377Z ok   read_builtin
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:23.2810254Z ok   readonly_assign
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:23.4957750Z ok   redirect_append
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:23.7616407Z ok   redirect_exec_fd
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:23.9258897Z ok   redirect_file
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:24.1915158Z ok   redirect_heredoc_quoted
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:24.4055658Z ok   redirect_read
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:24.5691278Z ok   redirect_stderr
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:24.6309259Z ok   return_top
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:24.7429052Z ok   set_e_exits
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:24.9569078Z ok   set_u_error
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:25.2213052Z ok   set_v_echo
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6412995Z FAIL sh28_last_alias
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6413505Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6413915Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6414259Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6414649Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6415047Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6415613Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6416099Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6416635Z        pelt step 2 ": alpha"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6417151Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6417569Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6418020Z        pelt step 3 "\\k echo \\e_\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6418485Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6418903Z        dash out "alpha\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6419388Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6419868Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6420371Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6421297Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6421893Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:27.6422401Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0623813Z FAIL sh28_last_arg
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0624334Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0624709Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0625089Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0625468Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0625865Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0626204Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0626566Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0626938Z        pelt step 2 ": alpha"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0627351Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0627705Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0628095Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0628493Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0628810Z        dash out "alpha\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0629143Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0629458Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0629812Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0630293Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0630646Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:30.0631413Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0850131Z FAIL sh28_last_interrupted
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0851275Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0851623Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0851981Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0852353Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0852745Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0853085Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0853442Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0853822Z        pelt step 2 ": one"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0854230Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0854869Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0855235Z        pelt step 3 ": two"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0855598Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0855936Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0856329Z        pelt step 4 "\\k echo \\e. \\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0856812Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0857192Z        dash out "two two\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0857591Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0857948Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0858332Z        pelt step 5 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0858738Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0859095Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:33.0859490Z        pelt exit 0 at step 5
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5049698Z FAIL sh28_last_midline
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5050270Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5050880Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5051243Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5051539Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5051845Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5052136Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5052391Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5052667Z        pelt step 2 ": inserted"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5052965Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5053226Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5053536Z        pelt step 3 "\\k echo  tail\\x01\\ef \\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5053915Z      ! pelt out "tail\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5054210Z        dash out "inserted tail\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5054516Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5054774Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5055053Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5055331Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5055579Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:35.5055847Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9249258Z FAIL sh28_last_negative
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9249806Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9250152Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9250495Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9251165Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9251630Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9251970Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9252332Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9252729Z        pelt step 2 ": one two three"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9253193Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9253566Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9253966Z        pelt step 3 "\\k echo \\e-2\\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9254428Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9254770Z        dash out "one\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9255203Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9255566Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9255978Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9256379Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9256744Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:37.9257129Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3457942Z FAIL sh28_last_numeric
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3458469Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3458805Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3459147Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3459523Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3459958Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3460300Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3460648Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3461325Z        pelt step 2 ": first second third"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3461810Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3462165Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3462532Z        pelt step 3 "\\k echo \\e1\\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3462964Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3463308Z        dash out "first\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3463679Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3464381Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3464763Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3465144Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3465497Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:40.3465881Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:42.7668293Z ok   sh28_last_oldest
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1871922Z FAIL sh28_last_quote
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1874389Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1874734Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1875453Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1875817Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1876199Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1876561Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1876891Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1877285Z        pelt step 2 ": 'two words'"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1877710Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1878074Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1878473Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1878921Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1879280Z        dash out "two words\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1879662Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1879975Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1880241Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1880516Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1881113Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:45.1881423Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6072700Z FAIL sh28_last_redir
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6073209Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6073596Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6073937Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6074313Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6074755Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6075083Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6075432Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6075826Z        pelt step 2 ": value > output"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6076285Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6076677Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6077048Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6077488Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6077825Z        dash out "output\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6078196Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6078568Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6079041Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6079436Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6079792Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:47.6080168Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6295059Z FAIL sh28_last_repeat
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6295622Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6296063Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6296398Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6296705Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6297005Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6297253Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6297505Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6297783Z        pelt step 2 ": older"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6298069Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6298318Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6298581Z        pelt step 3 ": newer"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6298876Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6299125Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6299407Z        pelt step 4 "\\k echo \\e.\\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6299750Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6300016Z        dash out "older\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6300290Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6300538Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6301056Z        pelt step 5 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6301344Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6301603Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:50.6301875Z        pelt exit 0 at step 5
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0494773Z FAIL sh28_last_single
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0495298Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0495646Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0495995Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0496384Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0496782Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0497117Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0497471Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0497847Z        pelt step 2 "true"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0498585Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0498935Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0499380Z        pelt step 3 "\\k echo \\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0499808Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0500159Z        dash out "true\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0500536Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0501170Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0501568Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0501962Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0502601Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:53.0502989Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4694702Z FAIL sh28_last_zero
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4695225Z        pelt step 0
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4695594Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4695875Z        pelt prompt "$ "
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4696171Z        pelt step 1 "exec 2>&0"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4696454Z      ! pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4696687Z        dash err yes
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4696931Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4697229Z        pelt step 2 ": first second"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4697521Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4697761Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4698024Z        pelt step 3 "\\k echo \\e0\\e.\\r"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4698337Z      ! pelt out "\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4698578Z        dash out ":\n"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4698819Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4699050Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4699296Z        pelt step 4 "exit"
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4699565Z        pelt err no
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4699794Z        pelt prompt ""
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:55.4700054Z        pelt exit 0 at step 4
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-24T23:59:57.8894082Z ok   sh28_vi_last_arg
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:00.3087419Z ok   sh28_vi_last_quote
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:00.4734457Z ok   signal_status
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:00.6878908Z ok   special_builtin_error
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:00.8523395Z ok   subshell_error
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:01.9669548Z ok   subshell_jobs
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:02.1309157Z ok   syntax_error_continues
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:02.2950397Z ok   syntax_error_midline
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:02.4606603Z ok   term_at_prompt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:02.6252873Z ok   trap_exit_eof
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:02.7386246Z ok   trap_exit_exit
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:02.9552408Z ok   trap_term
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:03.2718359Z ok   trap_usr1_prompt
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:03.4886709Z ok   unset_env
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:03.4887184Z session: pass 293  fail 11  pending 2 (0)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T00:00:03.4960538Z ##[error]Process completed with exit code 1.
+tier pr	every chosen job succeeded, every other was skipped	﻿2026-10-25T00:01:02.9599544Z ##[group]Run python3 ci/tiers.py verdict
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:02.9601234Z ^[[36;1mpython3 ci/tiers.py verdict^[[0m
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:02.9881716Z shell: /usr/bin/bash -e {0}
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:02.9882515Z env:
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:02.9883622Z   NEEDS: {
+tier pr	every chosen job succeeded, every other was skipped	  "plan": {
+tier pr	every chosen job succeeded, every other was skipped	    "result": "success",
+tier pr	every chosen job succeeded, every other was skipped	    "outputs": {
+tier pr	every chosen job succeeded, every other was skipped	      "tier": "pr",
+tier pr	every chosen job succeeded, every other was skipped	      "jobs": "[\"gauntlet\"]",
+tier pr	every chosen job succeeded, every other was skipped	      "matrix_gauntlet": "[{\"os\":\"ubuntu-latest\",\"builds\":true,\"tier\":\"native\"},{\"os\":\"ubuntu-latest\",\"builds\":true,\"tier\":\"release\"}]"
+tier pr	every chosen job succeeded, every other was skipped	    }
+tier pr	every chosen job succeeded, every other was skipped	  },
+tier pr	every chosen job succeeded, every other was skipped	  "gauntlet": {
+tier pr	every chosen job succeeded, every other was skipped	    "result": "failure",
+tier pr	every chosen job succeeded, every other was skipped	    "outputs": {}
+tier pr	every chosen job succeeded, every other was skipped	  }
+tier pr	every chosen job succeeded, every other was skipped	}
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:02.9884822Z ##[endgroup]
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:03.0401498Z tier pr: 1 of 1 job(s) chosen
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:03.0402495Z   gauntlet           failure   WANTED success
+tier pr	every chosen job succeeded, every other was skipped	2026-10-25T00:01:03.0440777Z ##[error]Process completed with exit code 1.

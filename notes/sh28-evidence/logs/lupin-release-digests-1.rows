@@ -1,0 +1,4 @@
+lupin-0.1.56-aarch64-apple-darwin.tar.gz	sha256:9133bfdbb95f6a18745439bf0b2b5280860a5bfeaf9ae038ea120a72d58f7687
+lupin-0.1.56-aarch64-unknown-linux-gnu.tar.gz	sha256:e2719ab28df566ad7b92714191bac00599fbca6c95b6b579d470497b482dd591
+lupin-0.1.56-x86_64-unknown-linux-gnu.tar.gz	sha256:ad703550ac4787e8e4bb26989d591a731410274d7332f2b4e8b9a64c878822cc
+lupin-0.1.56-x86_64-unknown-linux-musl.tar.gz	sha256:6303b47a8634e21d30336227022d4e70cf7cc6272946aa523b8edcee205cceb3

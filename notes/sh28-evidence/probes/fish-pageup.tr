@@ -1,0 +1,21 @@
+step 0
+out "\r\u001b]0;/h/m/l/s/t/p/w\u001b\\\u001b[m\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b]133;A;click_events=1\u001b\\mfwolffe\u001b[m@189c3e547e90\u001b[m /h/m/l/s/t/p/w\u001b[m\u001b[m> \u001b]133;B\u001b\\\u001b[K\r\u001b[38C"
+err yes
+prompt ""
+step 1 "echo oldest"
+out "echo \r\u001b[43C\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>oldest\r\u001b[49C\u001b[11Decho oldest\r\u001b[49C\n\u001b[m\u001b]133;C;cmdline_url=echo%20oldest\u001b\\\u001b]0;echo oldest /h/m/l/s/t/p/w\u001b\\\u001b[m\roldest\n\u001b]133;D;0\u001b\\\u001b[?25h\u001b[2m\u23ce\u001b[m                                                                               \r\u23ce \r\u001b[K\u001b]0;/h/m/l/s/t/p/w\u001b\\\u001b[m\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b]133;A;click_events=1\u001b\\mfwolffe\u001b[m@189c3e547e90\u001b[m /h/m/l/s/t/p/w\u001b[m\u001b[m> \u001b]133;B\u001b\\\u001b[K\r\u001b[38C"
+err no
+prompt ""
+step 2 "echo newest"
+out "echo \r\u001b[43C\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>newest\r\u001b[49C\u001b[11Decho newest\r\u001b[49C\n\u001b[m\u001b]133;C;cmdline_url=echo%20newest\u001b\\\u001b]0;echo newest /h/m/l/s/t/p/w\u001b\\\u001b[m\rnewest\n\u001b]133;D;0\u001b\\\u001b[?25h\u001b[2m\u23ce\u001b[m                                                                               \r\u23ce \r\u001b[K\u001b]0;/h/m/l/s/t/p/w\u001b\\\u001b[m\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b]133;A;click_events=1\u001b\\mfwolffe\u001b[m@189c3e547e90\u001b[m /h/m/l/s/t/p/w\u001b[m\u001b[m> \u001b]133;B\u001b\\\u001b[K\r\u001b[38C"
+err no
+prompt ""
+step 3 "\\k \\e[5~\\r"
+out "\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>\n\u001b[m\u001b[2m\u23ce\u001b[m                                                                               \r\u23ce \r\u001b[K\u001b]0;/h/m/l/s/t/p/w\u001b\\\u001b[m\u001b[?2004h\u001b[?2031h\u001b[>4;1m\u001b=\u001b]133;A;click_events=1\u001b\\mfwolffe\u001b[m@189c3e547e90\u001b[m /h/m/l/s/t/p/w\u001b[m\u001b[m> \u001b]133;B\u001b\\\u001b[K\r\u001b[38C"
+err no
+prompt ""
+step 4 "exit"
+out "\u001b[?2004l\u001b[?2031l\u001b[>4;0m\u001b>exit\r\u001b[42C\n\u001b[m\u001b]133;C;cmdline_url=exit\u001b\\\u001b]0;exit /h/m/l/s/t/p/w\u001b\\\u001b[m\r\u001b]133;D;0\u001b\\\u001b[?25h\u001b[m"
+err no
+prompt ""
+exit 0 at step 4
