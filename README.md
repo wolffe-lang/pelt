@@ -15,7 +15,7 @@ shell's source is ever read: pelt is clean-room, black-box only.
 |---|---|
 | POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 519 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
 | differential corpus against dash, both tiers | 998 cases, 0 failing, 25 pending on a named primitive (`tests/diff/`) |
-| typed sessions against `dash -i` through a pseudo-terminal | 290 sessions, 0 failing, 2 pending (`tests/session/`) |
+| typed sessions through a pseudo-terminal | 375 recorded expectations, 2 named pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
 | real `sh` scripts that run as under dash | 76 of 80 when the census last ran, before the fork (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts); the three it missed for want of a process per pipeline stage (xzgrep, zgrep, zdiff) wait on its next run |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
 | toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
@@ -93,6 +93,21 @@ after `$` or `${`; a second Tab lists the candidates in columns sized to
 the window. History: `fc`, a shared `HISTFILE` kept to `HISTSIZE`,
 Ctrl-R, vi's `v`, and `!` in `PS1`. An idle prompt costs nothing: it
 waits for a key or a signal without waking.
+
+**Friendly keys (opt-in).** `set -o friendly` adds Alt-. (Alt-_ too) to
+insert a previous history word, cycling backward on repeats; a ten-entry
+kill ring and yank-pop; transpose, case, grouped undo, history-end, numeric
+argument and mark keys. `bindings` prints the live key table for emacs or
+vi mode; `bindings -l` lists actions, and neither changes a binding. The
+complete bytes, stty precedence, reference comparisons and named omissions
+are in [`docs/KEYS.md`](docs/KEYS.md). The quit character clears pending
+input without sending a signal or changing status.
+
+Friendly requires an interactive terminal on stdin and stderr, is off for
+scripts, `-c`, pipes and `--posix`, and can be disabled with `set +o friendly`
+or, for these keys alone, `set +o friendly_keys`. It remains opt-in until
+the pinned compiler can report argv[0], so a future default can exclude an
+invocation named `sh`.
 
 **Job control.** `set -m` (on by default at an interactive prompt, also
 in a script): each pipeline of programs runs in its own process group
