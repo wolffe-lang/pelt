@@ -1,0 +1,22 @@
+//! sh26 probe: what a failed `os_spawn_fds` answers (its row and
+//! `os_error()`), and `fs_stat`'s `os_error()`, for each reason a slashed
+//! command cannot run. Run in a scratch directory the driver prepares.
+fn try_one(path: str) {
+    let h = os_spawn_fds(path, List[str](), List[int]()) else |e| {
+        let code = os_error()
+        let st = fs_stat(path) else |f| {
+            print("{path}: spawn {e} os_error {code}; stat {f} os_error {os_error()} '{os_error_text(os_error())}'")
+            return
+        }
+        print("{path}: spawn {e} os_error {code}; stat ok kind {st[0]} mode {st[4]}")
+        return
+    }
+    let _s = os_wait_status(h) else 0
+    print("{path}: spawned")
+}
+
+fn main() {
+    for p in env_args() {
+        try_one(p)
+    }
+}

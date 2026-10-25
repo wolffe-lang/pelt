@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""gen-configure-shaped — write bench/configure-shaped.sh.
+
+A script in the shape autoconf's output has: a long run of short
+checks, each a little `test`, `case`, command substitution, a
+here-document into a file, a program run on it, and a cleanup. Every
+line is written here for the benchmark; none comes from a generated
+configure. usage: gen-configure-shaped [CHECKS] >configure-shaped.sh
+"""
+import sys
+
+n = int(sys.argv[1]) if len(sys.argv) > 1 else 1200
+o = ['''# bench/configure-shaped.sh — written by bench/gen-configure-shaped; do
+# not edit. A script in the shape autoconf's output has, of our own
+# writing: see the generator.
+as_nl='
+'
+ac_n=0
+ac_cache=
+say() { printf 'checking %s... ' "$1"; }
+res() { printf '%s\\n' "$1"; ac_n=$((ac_n + 1)); }
+have() { command -v "$1" >/dev/null 2>&1; }
+tmp=conf$$
+rm -rf "$tmp" && mkdir "$tmp" || exit 1
+trap 'rm -rf "$tmp"' 0
+''']
+progs = ['cat', 'sed', 'grep', 'ls', 'rm', 'mkdir', 'sort', 'tr', 'wc', 'head']
+for k in range(n):
+    p = progs[k % len(progs)]
+    kind = k % 6
+    if kind == 0:
+        o.append(f'''say "for {p} ({k})"
+if have {p}; then
+    ac_path=$(command -v {p})
+    res "$ac_path"
+else
+    res no
+fi
+''')
+    elif kind == 1:
+        o.append(f'''say "whether feature {k} is wanted"
+ac_val=feature-{k}-value
+case $ac_val in
+*-{k}-*) ac_res=yes ;;
+*) ac_res=no ;;
+esac
+ac_cache="$ac_cache${{as_nl}}ac_cv_feature_{k}=$ac_res"
+res "$ac_res"
+''')
+    elif kind == 2:
+        o.append(f'''say "size of thing {k}"
+cat >"$tmp/conftest.{k}" <<_EOF
+#define THING_{k} {k}
+line two of $ac_n
+_EOF
+ac_res=$(wc -l <"$tmp/conftest.{k}" | tr -d ' ')
+rm -f "$tmp/conftest.{k}"
+res "$ac_res"
+''')
+    elif kind == 3:
+        o.append(f'''say "that name {k} is sane"
+ac_word=lib{k}.so.{k % 7}.{k % 3}
+ac_base=${{ac_word%%.*}}
+ac_ext=${{ac_word#*.}}
+if test "x$ac_base" = "xlib{k}" && test -n "$ac_ext"; then
+    res "$ac_base ($ac_ext)"
+else
+    res unknown
+fi
+''')
+    elif kind == 4:
+        o.append(f'''say "how to sed {k}"
+ac_res=$(echo "prefix-{k}-suffix" | sed 's/^prefix-//; s/-suffix$//')
+if test "$ac_res" -eq {k} 2>/dev/null; then
+    res "$ac_res"
+else
+    res failed
+fi
+''')
+    else:
+        o.append(f'''say "for list member {k}"
+ac_res=no
+for ac_item in alpha beta gamma item{k} delta; do
+    if test "$ac_item" = "item{k}"; then
+        ac_res=yes
+        break
+    fi
+done
+( exit 0 ) && res "$ac_res"
+''')
+o.append('''echo "$ac_cache" | sort >"$tmp/cache"
+ac_lines=$(grep -c ac_cv_ "$tmp/cache")
+echo "configure-shaped: $ac_n checks, $ac_lines cached"
+''')
+sys.stdout.write(''.join(o))
