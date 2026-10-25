@@ -45,7 +45,8 @@ fn completion_help(mut e: Ed, exe: str) -> str {
             break
         }
         if ready != 0 { break }
-        let bytes = fs_read_chunk(rd, 4096) else |err| match err {
+        let room = 32768 - out.len
+        let bytes = fs_read_chunk(rd, if room < 4096 then room else 4096) else |err| match err {
             eof => { ended = true; break },
             _ => { break },
         }
