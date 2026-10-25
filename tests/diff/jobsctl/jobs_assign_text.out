@@ -1,0 +1,8 @@
+[1] + Done                       
+[1] + Done                       
+[1] + Done                       true
+[1] + Done                       (; echo x 1>/dev/null; :)
+[1] + Done                       ; :
+[1] + Done                        1>/dev/null
+[1] + Done                        1>/dev/null
+[1] + Done                       true 2>/dev/null

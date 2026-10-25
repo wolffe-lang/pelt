@@ -549,8 +549,8 @@ fc/2	S	fc -s re-executes a command, optionally with old=new substituted	session:
 fc/3	S	fc first last edits the commands with FCEDIT or -e editor and then runs the result	session:c_hist_fc_edit session:c_hist_fc_e_fail session:c_hist_fc_e_range session:c_hist_fc_fcedit	
 fc/4	T	fc in a non-interactive shell with no history fails without ending the shell	fc/c_noninteractive	
 fc/5	S	A string operand that names no command is an error (status >0) and the shell goes on	session:c_hist_fc_notfound	
-jobs/1	S	jobs lists each job: [n], current (+) or previous (-), state, command; -l adds process IDs; -p writes only process group IDs	session:c_jc_jobs_list session:c_jc_job_ids session:c_jc_jobs_l_pipeline	
-jobs/2	T	jobs in a non-interactive shell lists background commands and jobs -p writes their process IDs	jobsctl/c_jobs_script	
+jobs/1	S	jobs lists each job: [n], current (+) or previous (-), state, command; -l adds process IDs; -p writes only process group IDs	session:c_jc_jobs_list session:c_jc_job_ids session:c_jc_jobs_l_pipeline session:jc_assign_text	
+jobs/2	T	jobs in a non-interactive shell lists background commands and jobs -p writes their process IDs	jobsctl/c_jobs_script jobsctl/jobs_assign_text	
 jobs/3	S	A job's state is reported as Running, Done, Done(n), Stopped (signal) as the page lists	session:c_jc_jobs_states session:c_jc_states	
 jobs/4	X	One simple command forked as a command substitution or a pipeline stage lists the shell's jobs; a ( … ) subshell, and a pipeline inside a substitution, start with none, and in no subshell is a job one to wait for or signal by its job ID	jobs/subshell_jobs session:subshell_jobs	POSIX gives jobs the current shell environment's jobs and leaves a subshell's copy of them unspecified; dash, black-box (sh20, notes/sh20-the-fork.md)
 fg/1	S	fg with no operand runs the current job in the foreground; fg %n that job; its command is written first	session:c_jc_fg session:c_jc_fg_number session:c_jc_fg_pipeline	

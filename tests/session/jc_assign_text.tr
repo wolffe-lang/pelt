@@ -1,0 +1,24 @@
+step 0
+err no
+prompt "$ "
+step 1 "FOO=bar &"
+err no
+prompt "$ "
+step 2 "jobs"
+out "[1] + Done                       \n"
+err no
+prompt "$ "
+step 3 "a=1 sleep 30 &"
+err no
+prompt "$ "
+step 4 "jobs"
+out "[1] + Running                    sleep 30\n"
+err no
+prompt "$ "
+step 5 "kill %1"
+err no
+prompt "$ "
+step 6 "exit"
+err no
+prompt ""
+exit 0 at step 6

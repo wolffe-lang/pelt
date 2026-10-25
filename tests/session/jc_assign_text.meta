@@ -1,0 +1,4 @@
+pelt_args=-i -m
+oracle_args=-i -m
+bash=differs
+why=pelt#56, R-sh20-1 (copy dash): typed at an interactive shell with job control, a job line leaves the assignments out (dash, black-box sh26 probe/p23)

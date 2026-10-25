@@ -1684,8 +1684,11 @@ fn bi_bg(mut sh: Sh, args: List[str]) -> int {
 
 /// A command as dash writes it in a job line (black-box: p01, p19):
 /// words with quoted parts in double quotes, `$x` as `${x}`, a command
-/// substitution as `$(...)`, every redirection with its descriptor, a
-/// here-document as `<<...`, `{ … }` as its body.
+/// substitution as `$(...)`, every redirection with its descriptor and
+/// a blank before it, a here-document as `<<...`, `{ … }` as its body;
+/// a simple command's assignments are left out, so an assignment-only
+/// command is no text at all (R-sh20-1, pelt#56; dash, black-box: sh26
+/// `probe/p05`, `p10`, R-sh26-3).
 fn node_text(a: Ast, n: int) -> str {
     var o = buf()
     put_node(mut o, a, n)
@@ -1698,15 +1701,20 @@ fn put_node(mut o: Buf, a: Ast, n: int) {
     }
     let k = a.nodes[n].kind
     if k == K_SIMPLE {
+        let na = if a.nodes[n].ints.len > 0 then a.nodes[n].ints[0] else 0
         var first = true
+        var i = 0
         for w in a.nodes[n].words {
-            if !first {
-                putc(mut o, ' ')
+            if i >= na {
+                if !first {
+                    putc(mut o, ' ')
+                }
+                put_word(mut o, w)
+                first = false
             }
-            put_word(mut o, w)
-            first = false
+            i += 1
         }
-        put_redirs(mut o, a, n, first)
+        put_redirs(mut o, a, n, false)
         return
     }
     if k == K_LIST {

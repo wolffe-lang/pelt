@@ -1,0 +1,4 @@
+exit=0
+stderr=no
+bash=differs
+why=pelt#56, R-sh20-1 (copy dash): dash leaves the assignments out of a job line; for an assignment-only command whose value has a command substitution, after other commands, dash writes a stale or uninitialised text (sh26 probe/p10: jobs, bytes c0 58 d0 0b f0 55), so this case has none (R-sh26-3)
