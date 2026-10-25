@@ -1959,8 +1959,12 @@ fn run_assign_only(mut sh: Sh, n: int, na: int) -> int {
         }
     }
     var ai = 0
-    var names = List[str]()
-    var values = List[str]()
+    // `set -x` writes an assignment-only command too, its values
+    // expanded, after the substitutions in them have been traced (XCU
+    // `set -x`; dash, black-box: `probe/p09`, `option/c_xtrace_forms`);
+    // the line is built only with the option on, so a loop of
+    // assignments allocates nothing more for it
+    var traced = ""
     while ai < na {
         let (name, raw) = split_assign(sh.ast.nodes[n].words[ai])
         let v = assign_value(mut sh, raw)
@@ -1972,16 +1976,13 @@ fn run_assign_only(mut sh: Sh, n: int, na: int) -> int {
             return 2
         }
         if sh.opt_x {
-            (mut names).push(name)
-            (mut values).push(v)
+            traced = if traced.len == 0 then "{name}={v}" else "{traced} {name}={v}"
         }
         ai += 1
     }
-    // `set -x` writes an assignment-only command too, its values
-    // expanded, after the substitutions in them have been traced (XCU
-    // `set -x`; dash, black-box: `probe/p09`, `option/c_xtrace_forms`)
-    if names.len > 0 {
-        xtrace(mut sh, names, values, List[str]())
+    if sh.opt_x && na > 0 {
+        let ps4 = ps4_text(mut sh)
+        write_fd(mut sh, 2, "{ps4}{traced}\n")
     }
     let st = if sh.cs_ran then sh.cs_status else 0
     sh.status = st
