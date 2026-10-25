@@ -1,0 +1,12 @@
+echo: echo: I/O error
+st=1
+printf: printf: I/O error
+st=1
+pwd: pwd: I/O error
+st=1
+echo: echo: I/O error
+st=1
+printf: printf: I/O error
+st=1
+3: Bad file descriptor
+st=2

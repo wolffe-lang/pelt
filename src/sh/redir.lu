@@ -303,7 +303,8 @@ fn redir_one(mut sh: Sh, rd: Rd, framed: bool) -> bool {
         let m = to_int(target) else -1
         let h = fd_get(sh, m)
         if h == FD_CLOSED {
-            diag(mut sh, "{m}: bad file descriptor")
+            // dash's words (black-box `probe/p04`)
+            diag(mut sh, "{m}: Bad file descriptor")
             return false
         }
         install(mut sh, fd, h, framed)

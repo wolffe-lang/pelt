@@ -112,13 +112,13 @@ fn builtin_args(mut sh: Sh, name: str, args: List[str]) -> int {
     if sh.out.len > 0 && fd_get(sh, 1) == FD_CLOSED {
         // output to a closed descriptor is a write error (dash: status 1)
         (mut sh.out).clear()
-        diag(mut sh, "{name}: write error: bad file descriptor")
+        write_failed(mut sh, name)
         st = 1
     } else if sh.out.len > 0 && !sh.bail && !flush_checked(mut sh) {
         // Every refused write is the command's error, not just EPIPE
         // under an ignored PIPE (pelt#28). Default SIGPIPE still ends
         // the process before write returns.
-        diag(mut sh, "{name}: write error")
+        write_failed(mut sh, name)
         st = 1
     }
     if sh.flow == F_NONE || sh.flow == F_EXIT {
@@ -127,6 +127,14 @@ fn builtin_args(mut sh: Sh, name: str, args: List[str]) -> int {
         }
     }
     st
+}
+
+/// A built-in's output that could not be written, whatever the reason
+/// (a closed descriptor, a full device, a read-only one): dash's words,
+/// the built-in named twice as dash names it (black-box `probe/p04`,
+/// `p22`; pelt#28); the command's status is 1.
+fn write_failed(mut sh: Sh, name: str) {
+    diag(mut sh, "{name}: {name}: I/O error")
 }
 
 fn bi_exit(mut sh: Sh, args: List[str]) -> int {

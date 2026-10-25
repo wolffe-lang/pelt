@@ -1560,7 +1560,7 @@ fn jobs_emit(mut sh: Sh, j: int, pids: bool, long: bool) -> bool {
             ok
         }
         if !wrote {
-            diag(mut sh, "jobs: write error")
+            write_failed(mut sh, "jobs")
         }
         return wrote
     }
