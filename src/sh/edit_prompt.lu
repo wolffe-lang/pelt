@@ -238,6 +238,7 @@ fn right_draw(mut e: Ed) {
     move_to(mut e, 0, col)
     colour_reset(mut e)
     put_s(mut e, shown)
+    (mut e.buf).push(27)
     e.tc += width
     colour_reset(mut e)
     move_to(mut e, r, c)
