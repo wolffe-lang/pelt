@@ -480,23 +480,34 @@ fn set_pos(mut sh: Sh, args: List[str], from: int) {
 /// `export` and `readonly`, including `-p`.
 fn bi_export(mut sh: Sh, name: str, args: List[str]) -> int {
     let ro = name == "readonly"
-    if args.len == 0 || args.len == 1 && args[0] == "-p" {
-        for k in sort_strs(sh.vals.keys()) {
+    // `-p` and `--` (XCU 2.15 `export`, `readonly`; XBD 12.2's `--`):
+    // either alone, or both, lists
+    var i = 0
+    if i < args.len && args[i] == "-p" {
+        i += 1
+    }
+    if i < args.len && args[i] == "--" {
+        i += 1
+    }
+    if i >= args.len {
+        // every marked name in one sorted list, a name with no value
+        // without `=` (dash, black-box: `probe/p24`; `readonly -p` lists
+        // an unset readonly too, pelt#16)
+        let marks = if ro then sh.ronly.keys() else sh.exported.keys()
+        for k in sort_strs(marks) {
             let marked = if ro then is_ronly(sh, k) else is_exported(sh, k)
-            if marked {
-                emit(mut sh, "{name} {k}={squote(sh.vals[k] else "")}\n")
+            if !marked {
+                continue
             }
-        }
-        if !ro {
-            for k in sort_strs(sh.exported.keys()) {
-                if !has_var(sh, k) && (sh.exported[k] else false) {
-                    emit(mut sh, "{name} {k}\n")
-                }
+            if has_var(sh, k) {
+                emit(mut sh, "{name} {k}={squote(sh.vals[k] else "")}\n")
+            } else {
+                emit(mut sh, "{name} {k}\n")
             }
         }
         return 0
     }
-    for a in args {
+    for a in args[i..args.len] {
         let eq = a.find("=") else -1
         let vname = if eq >= 0 then a[0..eq] else a
         if !is_name(vname) {

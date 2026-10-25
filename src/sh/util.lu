@@ -222,12 +222,15 @@ fn pad(s: str, width: int, left: bool, zero: bool) -> str {
 /// `printf format [argument…]`: the format is reused while arguments
 /// remain and it consumed at least one.
 fn bi_printf(mut sh: Sh, args: List[str]) -> int {
-    if args.len == 0 {
+    // `--` ends the options (XBD 12.2; printf has none): `printf -- fmt`
+    // (dash, black-box `probe/p08`; pelt#16)
+    let skip = if args.len > 0 && args[0] == "--" then 1 else 0
+    if args.len <= skip {
         diag(mut sh, "printf: a format is required")
         return 2
     }
-    let fmt = args[0]
-    var ai = 1
+    let fmt = args[skip]
+    var ai = skip + 1
     var bad = false
     loop {
         let start_ai = ai

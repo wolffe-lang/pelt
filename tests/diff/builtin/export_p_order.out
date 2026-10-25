@@ -1,0 +1,10 @@
+readonly aa
+readonly mm='x y'
+readonly zz='1'
+export AA
+export MM='x y'
+export ZZ='1'
+export QQ='2'
+readonly RR='3'
+export AA
+export QQ='2'

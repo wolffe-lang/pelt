@@ -354,11 +354,11 @@ exit/3	T	exit in an EXIT or signal trap action with no operand uses the status f
 exit/4	T	exit in a function, loop, dot script or eval ends the whole shell	builtin/exit_in_function builtin/c_exit_everywhere	
 exit/5	X	exit with an operand above 256 that names a signal status ends the shell as if by that signal (new in 2024)	builtin/c_exit_signal_status	POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 --posix does it (both exit n mod 256); recorded, not counted
 export/1	T	export name gives the variable the export attribute: later commands see it	env/reexport env/export_no_value builtin/c_export	
-export/2	T	export -p writes export name=value lines suitable for reinput	builtin/export_p builtin/c_export_p	
+export/2	T	export -p writes export name=value lines suitable for reinput	builtin/export_p builtin/c_export_p builtin/export_p_order	
 export/3	T	export of a readonly variable with a new value fails	builtin/c_export_readonly	
 export/4	T	export -- and invalid names	builtin/c_export_invalid	
 readonly/1	T	readonly name makes later assignment and unset fail	builtin/readonly_error builtin/unset_readonly builtin/c_readonly	
-readonly/2	T	readonly -p writes readonly name=value lines suitable for reinput	builtin/readonly_p builtin/c_readonly_p	
+readonly/2	T	readonly -p writes readonly name=value lines suitable for reinput	builtin/readonly_p builtin/c_readonly_p builtin/export_p_order	
 readonly/3	T	A readonly variable cannot be changed by read, getopts, for, export, or an arithmetic assignment	builtin/c_readonly_everywhere getopts/readonly_target	
 return/1	T	return n ends the function with status n; without n, with the last status	builtin/return_status builtin/c_return	
 return/2	T	return in a trap action with no operand uses the status from before the trap	builtin/c_return_in_trap	
