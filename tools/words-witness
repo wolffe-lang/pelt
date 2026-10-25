@@ -38,7 +38,13 @@ def abbreviations(binary,home):
         raw=step(sh,b'zz second\r');assert b'\r\nexpanded second\r\n' in raw,raw
         step(sh,b'abbr erase zz\r')
         raw=step(sh,b'abbr list\r');assert b'zz\t' not in raw and b'qq\t' in raw,raw
-        print('ok abbr persistence/atomic/malformed/erase',flush=True)
+        before=file.read_bytes()
+        collision=home/'.pelt'/('abbr.new.'+str(sh.p.pid));collision.write_text('untouched')
+        raw=step(sh,b"abbr add nope 'echo NO'\r")
+        assert b'cannot replace abbreviation file' in raw,raw
+        assert file.read_bytes()==before and collision.read_text()=='untouched'
+        collision.unlink()
+        print('ok abbr persistence/atomic/malformed/erase/exclusive-temp',flush=True)
     finally:assert sh.close()
     # A script's text is not edited, even when the option is explicitly on.
     file.write_text('zz\techo EXPANDED\n')
@@ -46,6 +52,10 @@ def abbreviations(binary,home):
     for argv,data in [([str(binary),'-o','friendly','-c','echo zz'],None),([str(binary),'-o','friendly'],b'echo zz\n')]:
         p=subprocess.run(argv,input=data,env=env,capture_output=True,timeout=10)
         assert p.returncode==0 and p.stdout==b'zz\n',('abbr-script-gate',p)
+    script=home/'isolation.sh';script.write_text('zz\n')
+    for argv,data in [([str(binary),'-o','friendly','-c','zz'],None),([str(binary),'-o','friendly',str(script)],None),([str(binary),'-o','friendly'],b'zz\n')]:
+        p=subprocess.run(argv,input=data,env=env,capture_output=True,timeout=10)
+        assert p.returncode==127 and p.stdout==b'',('abbr-script-gate',p)
     print('ok abbr-script-gate',flush=True)
 
 def event_step(sh,keys):
@@ -151,3 +161,14 @@ if __name__=='__main__':
         completion(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix="sh31-help-") as temp:
         help_probe(binary,Path(temp))
+    if '--raw-only' not in sys.argv:
+        original_ready=colour.ready
+        def words_ready(binary,home,**kw):
+            sh=original_ready(binary,home,args=['-o','friendly'],**kw)
+            event_step(sh,b'echo COST_READY\r')
+            raw=event_step(sh,b'!!\r')
+            assert b'echo COST_READY' in raw
+            return sh
+        colour.ready=words_ready
+        with tempfile.TemporaryDirectory(prefix="sh31-cost-") as temp:
+            colour.cost(binary,Path(temp))

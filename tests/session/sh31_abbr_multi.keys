@@ -1,0 +1,5 @@
+exec 2>&0
+abbr add zz 'echo one two'
+\k zz three\r
+\k \x07\x05\x15
+exit 0

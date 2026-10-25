@@ -1,0 +1,15 @@
+step 1
+| $ exec 2>&0
+| $
+cursor 1 2
+step 2
+| $ echo VALID
+| $
+cursor 1 2
+step 3
+| $
+cursor 0 2
+step 4
+| $ exit 0
+| 
+cursor 1 0

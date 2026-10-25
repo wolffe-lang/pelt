@@ -1,0 +1,39 @@
+step 1
+| $ exec 2>&0
+| $
+cursor 1 2
+step 2
+| $ echo
+cursor 0 7
+step 3
+| $ echo
+| completions 1-6/6
+|   alpha (file, 6 bytes)        delta (file, 6 bytes)        gamma (file, 6 bytes)
+|   beta (file, 5 bytes)         epsilon (file, 8 bytes)      zeta (file, 5 bytes)
+cursor 0 7
+step 4
+| $ echo
+| completions 1-6/6
+| > alpha (file, 6 bytes)        delta (file, 6 bytes)        gamma (file, 6 bytes)
+|   beta (file, 5 bytes)         epsilon (file, 8 bytes)      zeta (file, 5 bytes)
+cursor 0 7
+step 5
+| $ echo
+| completions 1-6/6
+|   alpha (file, 6 bytes)        delta (file, 6 bytes)        gamma (file, 6 bytes)
+| > beta (file, 5 bytes)         epsilon (file, 8 bytes)      zeta (file, 5 bytes)
+cursor 0 7
+step 6
+| $ echo beta
+cursor 0 12
+step 7
+| $ echo beta
+| $
+cursor 1 2
+step 8
+| $
+cursor 0 2
+step 9
+| $ exit 0
+| 
+cursor 1 0

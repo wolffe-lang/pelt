@@ -1,0 +1,8 @@
+exec 2>&0
+\k echo 
+\k \t
+\k \e[Z
+\k \r
+\k \r
+\k \x07\x05\x15
+exit 0

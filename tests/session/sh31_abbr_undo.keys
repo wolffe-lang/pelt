@@ -1,0 +1,7 @@
+exec 2>&0
+abbr add zz 'echo NO'
+\k zz 
+\k \x1f
+\k \x01echo \x05\r
+\k \x07\x05\x15
+exit 0

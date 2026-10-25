@@ -1,0 +1,23 @@
+step 0
+err no
+prompt "$ "
+step 1 "exec 2>&0"
+err no
+prompt ""
+step 2 "abbr add zz 'echo NO'"
+err no
+prompt ""
+step 3 "set +o abbr"
+err no
+prompt ""
+step 4 "echo zz"
+out "zz\n"
+err no
+prompt ""
+step 5 "\\k \\x07\\x05\\x15"
+err no
+prompt ""
+step 6 "exit 0"
+err no
+prompt ""
+exit 0 at step 6
