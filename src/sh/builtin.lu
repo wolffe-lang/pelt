@@ -325,6 +325,14 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
         sh.opt_friendly = on && !sh.posix_mode
         return true
     }
+    if name == "suggest" {
+        sh.opt_suggest = on
+        return true
+    }
+    if name == "histsearch" {
+        sh.opt_histsearch = on
+        return true
+    }
     if name == "friendly_keys" {
         sh.opt_friendly_keys = on
         return true
@@ -396,8 +404,13 @@ fn print_friendly_options(mut sh: Sh, reinput: bool) {
     if !friendly_active(sh) {
         return
     }
-    for name in ["friendly", "friendly_keys"] {
-        let on = name == "friendly" || sh.opt_friendly_keys
+    for name in ["friendly", "friendly_keys", "suggest", "histsearch"] {
+        let on = match name {
+            "friendly_keys" => sh.opt_friendly_keys,
+            "suggest" => sh.opt_suggest,
+            "histsearch" => sh.opt_histsearch,
+            _ => true,
+        }
         if reinput {
             emit(mut sh, "set {if on then "-o" else "+o"} {name}\n")
         } else {
