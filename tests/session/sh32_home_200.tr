@@ -1,0 +1,20 @@
+step 0
+err no
+prompt "$ "
+step 1 "cd \"$HOME\"; exec 3>&1 1>&0 2>&0"
+err no
+prompt ""
+step 2 "cd \"$HOME\""
+err no
+prompt ""
+step 3 "echo HOME >&3"
+out "HOME\n"
+err no
+prompt ""
+step 4 "\\k \\x07\\x05\\x15"
+err no
+prompt ""
+step 5 "exit 0"
+err no
+prompt ""
+exit 0 at step 5

@@ -1,0 +1,7 @@
+cd "$HOME"; exec 3>&1 1>&0 2>&0
+cd "$HOME"
+prompt_right() { printf '\033[31mBAD\nLINE'; }
+\k echo safe
+\k \r
+\k \x07\x05\x15
+exit 0

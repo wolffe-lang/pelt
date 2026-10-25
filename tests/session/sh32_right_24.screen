@@ -1,0 +1,33 @@
+step 1
+| $ cd "$HOME"; exec 3>&1
+| 1>&0 2>&0
+| tester@box ~>
+cursor 2 14
+step 2
+| tester@box ~> cd "$HOME"
+| tester@box ~>
+cursor 1 14
+step 3
+| tester@box ~> prompt_rig
+| ht() { printf RIGHT; }
+| tester@box ~>
+cursor 2 14
+step 4
+| tester@box ~> echo kept
+cursor 0 23
+step 5
+| tester@box ~> echo kept
+| kept
+| tester@box ~>
+cursor 2 14
+step 6
+| cho DONE >&3> echo DONE>
+| tester@box ~>
+cursor 1 14
+step 7
+| tester@box ~>
+cursor 0 14
+step 8
+| tester@box ~> exit 0
+| 
+cursor 1 0

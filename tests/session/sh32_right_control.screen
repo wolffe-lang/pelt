@@ -1,0 +1,27 @@
+step 1
+| $ cd "$HOME"; exec 3>&1 1>&0 2>&0
+| tester@box ~>
+cursor 1 14
+step 2
+| tester@box ~> cd "$HOME"
+| tester@box ~>
+cursor 1 14
+step 3
+| tester@box ~> prompt_right() { printf '\033[31mBAD\nLINE'; }
+| tester@box ~>                                                   ^[[31mBAD^JLINE
+cursor 1 14
+step 4
+| tester@box ~> echo safe                                         ^[[31mBAD^JLINE
+cursor 0 23
+step 5
+| tester@box ~> echo safe
+| safe
+| tester@box ~>                                                   ^[[31mBAD^JLINE
+cursor 2 14
+step 6
+| tester@box ~>                                                   ^[[31mBAD^JLINE
+cursor 0 14
+step 7
+| tester@box ~> exit 0
+| 
+cursor 1 0

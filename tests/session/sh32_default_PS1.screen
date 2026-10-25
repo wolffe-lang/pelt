@@ -1,0 +1,23 @@
+step 1
+| $ cd "$HOME"; exec 3>&1 1>&0 2>&0
+| tester@box ~>
+cursor 1 14
+step 2
+| tester@box ~> cd "$HOME"
+| tester@box ~>
+cursor 1 14
+step 3
+| tester@box ~> PS1='$ '
+| $
+cursor 1 2
+step 4
+| $ echo DEFAULT >&3
+| $
+cursor 1 2
+step 5
+| $
+cursor 0 2
+step 6
+| $ exit 0
+| 
+cursor 1 0

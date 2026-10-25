@@ -1,0 +1,7 @@
+cd "$HOME"; exec 3>&1 1>&0 2>&0
+cd "$HOME"
+set +o highlight
+prompt_right() { printf PLAIN; }
+\k echo PLAIN >&3\r
+\k \x07\x05\x15
+exit 0

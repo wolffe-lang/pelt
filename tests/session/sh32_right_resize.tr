@@ -1,0 +1,38 @@
+step 0
+err no
+prompt "$ "
+step 1 "cd \"$HOME\"; exec 3>&1 1>&0 2>&0"
+err no
+prompt ""
+step 2 "cd \"$HOME\""
+err no
+prompt ""
+step 3 "prompt_right() { printf RIGHT; }"
+err no
+prompt ""
+step 4 "\\k echo resize"
+err no
+prompt ""
+step 5 "\\k \\x01"
+err no
+prompt ""
+step 6 "\\size 39 24"
+err no
+prompt ""
+step 7 "\\size 80 24"
+err no
+prompt ""
+step 8 "\\k \\x05\\r"
+err no
+prompt ""
+step 9 "echo RESIZED >&3"
+out "RESIZED\n"
+err no
+prompt ""
+step 10 "\\k \\x07\\x05\\x15"
+err no
+prompt ""
+step 11 "exit 0"
+err no
+prompt ""
+exit 0 at step 11

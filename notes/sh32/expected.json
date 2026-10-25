@@ -1,0 +1,483 @@
+{
+  "sh32_home_24": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "echo HOME >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "HOME\n",
+    "extra": {
+      "cols": "24"
+    },
+    "visible": "tester@box ~"
+  },
+  "sh32_right_24": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo kept",
+      "\\k \\r",
+      "echo DONE >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "DONE\n",
+    "extra": {
+      "cols": "24"
+    },
+    "visible": null
+  },
+  "sh32_wrap_24": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "\\k \\x03",
+      "echo CANCELED >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "CANCELED\n",
+    "extra": {
+      "cols": "24"
+    },
+    "visible": null
+  },
+  "sh32_home_39": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "echo HOME >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "HOME\n",
+    "extra": {
+      "cols": "39"
+    },
+    "visible": "tester@box ~"
+  },
+  "sh32_right_39": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo kept",
+      "\\k \\r",
+      "echo DONE >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "DONE\n",
+    "extra": {
+      "cols": "39"
+    },
+    "visible": null
+  },
+  "sh32_wrap_39": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "\\k \\x03",
+      "echo CANCELED >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "CANCELED\n",
+    "extra": {
+      "cols": "39"
+    },
+    "visible": null
+  },
+  "sh32_home_40": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "echo HOME >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "HOME\n",
+    "extra": {
+      "cols": "40"
+    },
+    "visible": "tester@box ~"
+  },
+  "sh32_right_40": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo kept",
+      "\\k \\r",
+      "echo DONE >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "DONE\n",
+    "extra": {
+      "cols": "40"
+    },
+    "visible": null
+  },
+  "sh32_wrap_40": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "\\k \\x03",
+      "echo CANCELED >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "CANCELED\n",
+    "extra": {
+      "cols": "40"
+    },
+    "visible": null
+  },
+  "sh32_home_80": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "echo HOME >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "HOME\n",
+    "extra": {
+      "cols": "80"
+    },
+    "visible": "tester@box ~"
+  },
+  "sh32_right_80": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo kept",
+      "\\k \\r",
+      "echo DONE >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "DONE\n",
+    "extra": {
+      "cols": "80"
+    },
+    "visible": null
+  },
+  "sh32_wrap_80": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "\\k \\x03",
+      "echo CANCELED >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "CANCELED\n",
+    "extra": {
+      "cols": "80"
+    },
+    "visible": null
+  },
+  "sh32_home_200": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "echo HOME >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "HOME\n",
+    "extra": {
+      "cols": "200"
+    },
+    "visible": "tester@box ~"
+  },
+  "sh32_right_200": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo kept",
+      "\\k \\r",
+      "echo DONE >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "DONE\n",
+    "extra": {
+      "cols": "200"
+    },
+    "visible": null
+  },
+  "sh32_wrap_200": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "\\k \\x03",
+      "echo CANCELED >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "CANCELED\n",
+    "extra": {
+      "cols": "200"
+    },
+    "visible": null
+  },
+  "sh32_status": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "false",
+      "echo $? >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "1\n",
+    "extra": {},
+    "visible": "[1]"
+  },
+  "sh32_unicode": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "mkdir -p alpha/beta/日本語",
+      "cd alpha/beta/日本語",
+      "echo PATH >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "PATH\n",
+    "extra": {},
+    "visible": "~/a/b/日本語"
+  },
+  "sh32_custom_PS1": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "PS1='CUSTOM '",
+      "echo CUSTOM >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "CUSTOM\n",
+    "extra": {},
+    "visible": "CUSTOM "
+  },
+  "sh32_empty_PS1": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "PS1=''",
+      "echo EMPTY >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "EMPTY\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_default_PS1": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "PS1='$ '",
+      "echo DEFAULT >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "DEFAULT\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_unset_PS1": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "PS1='CUSTOM '",
+      "unset PS1",
+      "echo UNSET >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "UNSET\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_right_resize": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo resize",
+      "\\k \\x01",
+      "\\size 39 24",
+      "\\size 80 24",
+      "\\k \\x05\\r",
+      "echo RESIZED >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "RESIZED\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_right_undo": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo undo",
+      "\\k \\x1f",
+      "\\k echo UNDO >&3\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "UNDO\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_right_kill": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "\\k echo KILL",
+      "\\k \\x17",
+      "\\k \\x19",
+      "\\k  >&3\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "KILL\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_right_control": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf '\\033[31mBAD\\nLINE'; }",
+      "\\k echo safe",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "",
+    "extra": {},
+    "visible": "^[[31mBAD^JLINE"
+  },
+  "sh32_right_long": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf abcdefghijklmnopqrstuvwxyz0123456789; }",
+      "\\k echo trimmed",
+      "\\k \\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "",
+    "extra": {
+      "cols": "40"
+    },
+    "visible": "abcdefghijkl…"
+  },
+  "sh32_right_vi": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { printf RIGHT; }",
+      "set -o vi",
+      "\\k echo VI >&3\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "VI\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_prompt_off": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "set +o prompt_friendly",
+      "echo OFF >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OFF\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_umbrella_off": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "set +o friendly",
+      "echo OFF >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OFF\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_colour_off": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "set +o highlight",
+      "prompt_right() { printf PLAIN; }",
+      "\\k echo PLAIN >&3\\r",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "PLAIN\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_right_status": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "prompt_right() { false; }",
+      "false",
+      "echo $? >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "1\n",
+    "extra": {},
+    "visible": null
+  },
+  "sh32_right_isolation": {
+    "steps": [
+      "cd \"$HOME\"; exec 3>&1 1>&0 2>&0",
+      "cd \"$HOME\"",
+      "v=OLD",
+      "prompt_right() { v=NEW; cd /; printf RIGHT; }",
+      "echo \"$v\" >&3",
+      "\\k \\x07\\x05\\x15",
+      "exit 0"
+    ],
+    "out": "OLD\n",
+    "extra": {},
+    "visible": null
+  }
+}

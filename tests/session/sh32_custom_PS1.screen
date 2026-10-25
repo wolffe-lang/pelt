@@ -1,0 +1,23 @@
+step 1
+| $ cd "$HOME"; exec 3>&1 1>&0 2>&0
+| tester@box ~>
+cursor 1 14
+step 2
+| tester@box ~> cd "$HOME"
+| tester@box ~>
+cursor 1 14
+step 3
+| tester@box ~> PS1='CUSTOM '
+| CUSTOM
+cursor 1 7
+step 4
+| CUSTOM echo CUSTOM >&3
+| CUSTOM
+cursor 1 7
+step 5
+| CUSTOM
+cursor 0 7
+step 6
+| CUSTOM exit 0
+| 
+cursor 1 0

@@ -1,0 +1,40 @@
+step 1
+| $ cd "$HOME"; exec 3>&1 1>&0 2>&0
+| tester@box ~>
+cursor 1 14
+step 2
+| tester@box ~> cd "$HOME"
+| tester@box ~>
+cursor 1 14
+step 3
+| tester@box ~> prompt_right() { printf RIGHT; }
+| tester@box ~>                                                             RIGHT
+cursor 1 14
+step 4
+| tester@box ~> echo resize                                                 RIGHT
+cursor 0 25
+step 5
+| tester@box ~> echo resize                                                 RIGHT
+cursor 0 14
+step 6
+| tester@box ~> echo resize
+cursor 0 14
+step 7
+| tester@box ~> echo resize                                                 RIGHT
+cursor 0 14
+step 8
+| tester@box ~> echo resize
+| resize
+| tester@box ~>                                                             RIGHT
+cursor 2 14
+step 9
+| tester@box ~> echo RESIZED >&3
+| tester@box ~>                                                             RIGHT
+cursor 1 14
+step 10
+| tester@box ~>                                                             RIGHT
+cursor 0 14
+step 11
+| tester@box ~> exit 0
+| 
+cursor 1 0

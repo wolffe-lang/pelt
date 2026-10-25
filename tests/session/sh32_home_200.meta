@@ -1,0 +1,7 @@
+args=-o friendly
+env=USER=tester HOSTNAME=box TERM=xterm-256color
+tr_by=hand
+why=sh32 independent stdout assertions; pelt-owned prompt screens; prompt-witness raw laws
+cols=200
+screen=1
+screen_by=hand

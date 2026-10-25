@@ -1,0 +1,27 @@
+step 1
+| $ cd "$HOME"; exec 3>&1 1>&0 2>&0
+| tester@box ~>
+cursor 1 14
+step 2
+| tester@box ~> cd "$HOME"
+| tester@box ~>
+cursor 1 14
+step 3
+| tester@box ~> mkdir -p alpha/beta/日本語
+| tester@box ~>
+cursor 1 14
+step 4
+| tester@box ~> cd alpha/beta/日本語
+| tester@box ~/a/b/日本語>
+cursor 1 25
+step 5
+| tester@box ~/a/b/日本語> echo PATH >&3
+| tester@box ~/a/b/日本語>
+cursor 1 25
+step 6
+| tester@box ~/a/b/日本語>
+cursor 0 25
+step 7
+| tester@box ~/a/b/日本語> exit 0
+| 
+cursor 1 0

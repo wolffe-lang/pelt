@@ -1,0 +1,6 @@
+cd "$HOME"; exec 3>&1 1>&0 2>&0
+cd "$HOME"
+set +o prompt_friendly
+echo OFF >&3
+\k \x07\x05\x15
+exit 0

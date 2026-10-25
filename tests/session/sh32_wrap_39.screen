@@ -1,0 +1,32 @@
+step 1
+| $ cd "$HOME"; exec 3>&1 1>&0 2>&0
+| tester@box ~>
+cursor 1 14
+step 2
+| tester@box ~> cd "$HOME"
+| tester@box ~>
+cursor 1 14
+step 3
+| tester@box ~> prompt_right() { printf R
+| IGHT; }
+| tester@box ~>
+cursor 2 14
+step 4
+| tester@box ~> echo xxxxxxxxxxxxxxxxxxxx
+| xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+cursor 1 29
+step 5
+| xxxxxxxxxxxxxxxxxxxxxxxxxxxxx^C
+| tester@box ~ [130]>
+cursor 1 20
+step 6
+| tester@box ~ [130]> echo CANCELED >&3
+| tester@box ~>
+cursor 1 14
+step 7
+| tester@box ~>
+cursor 0 14
+step 8
+| tester@box ~> exit 0
+| 
+cursor 1 0

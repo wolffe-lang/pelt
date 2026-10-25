@@ -1,0 +1,23 @@
+step 0
+err no
+prompt "$ "
+step 1 "cd \"$HOME\"; exec 3>&1 1>&0 2>&0"
+err no
+prompt ""
+step 2 "cd \"$HOME\""
+err no
+prompt ""
+step 3 "PS1='$ '"
+err no
+prompt ""
+step 4 "echo DEFAULT >&3"
+out "DEFAULT\n"
+err no
+prompt ""
+step 5 "\\k \\x07\\x05\\x15"
+err no
+prompt ""
+step 6 "exit 0"
+err no
+prompt ""
+exit 0 at step 6

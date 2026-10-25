@@ -1,0 +1,8 @@
+cd "$HOME"; exec 3>&1 1>&0 2>&0
+cd "$HOME"
+prompt_right() { printf RIGHT; }
+\k echo undo
+\k \x1f
+\k echo UNDO >&3\r
+\k \x07\x05\x15
+exit 0
