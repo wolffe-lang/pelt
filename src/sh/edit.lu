@@ -1209,6 +1209,7 @@ fn move_to(mut e: Ed, r: int, c: int) {
 
 /// Redraw from cluster `k` to the end, then put the cursor at `e.cur`.
 fn draw_from(mut e: Ed, from: int) {
+    if e.highlight { (mut e.buf).push(27) }
     let k = if e.highlight then 0 else from
     var colour = HlLine { spans: List[HlSpan](), incomplete: false, error_at: -1 }
     if e.highlight {
