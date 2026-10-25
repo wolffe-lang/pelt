@@ -1,0 +1,241 @@
+//! Descriptions and a bounded, renderer-owned completion pager. Fish's
+//! adaptive down-then-across layout measured in notes/sh31/oracle.
+
+fn command_description(name: str) -> str {
+    match name {
+        "cd" => "change directory",
+        "pwd" => "print working directory",
+        "echo" => "print arguments",
+        "printf" => "format output",
+        "read" => "read input into variables",
+        "test" | "[" => "test a condition",
+        "set" => "set options or arguments",
+        "export" => "export variables",
+        "readonly" => "protect variables",
+        "unset" => "remove variables or functions",
+        "alias" | "unalias" => "manage aliases",
+        "abbr" => "manage editor abbreviations",
+        "bindings" => "list editor keys",
+        "fc" => "list or edit command history",
+        "jobs" => "list shell jobs",
+        "fg" | "bg" => "resume a job",
+        "wait" => "wait for children",
+        "kill" => "send a signal",
+        "trap" => "set signal actions",
+        "umask" => "set creation permissions",
+        "type" | "command" | "hash" => "resolve command names",
+        "exit" => "leave the shell",
+        "exec" => "replace the shell",
+        "eval" => "evaluate shell text",
+        "." => "read shell commands from a file",
+        "shift" => "shift positional arguments",
+        "getopts" => "parse option arguments",
+        "local" => "declare function variables",
+        "return" => "return from a function",
+        "break" | "continue" => "control a loop",
+        "times" => "print process times",
+        "true" | ":" => "succeed",
+        "false" => "fail",
+        _ => {
+            if hl_reserved(name) { "shell grammar" } else { "command" }
+        },
+    }
+}
+
+fn completion_description(e: Ed, c: Ctx, f: Found, at: int) -> str {
+    let name = f.names[at]
+    if c.kind == CK_CMD { return command_description(name) }
+    if c.kind == CK_VAR { return "shell variable" }
+    if f.dirs[at] { return "directory" }
+    var look = c.lit
+    if look.starts_with("~/") { look = e.home + look[1..look.len] }
+    let slash = look.rfind("/") else -1
+    let path = (if slash < 0 then "" else look[0..slash + 1]) + name
+    let st = stat_of(path, true)
+    if st.len < 2 { return "file" }
+    if st[0] == K_LINK { return "symbolic link" }
+    if st[0] == K_FILE { return "file, {st[1]} bytes" }
+    "special file"
+}
+
+/// Display width includes escaped controls, exactly as show_cp renders them.
+fn completion_clip(s: str, budget: int) -> str {
+    var out = List[byte]()
+    var width = 0
+    for cp in cps_of(s) {
+        let w = cells(cp)
+        if width + w > budget { break }
+        show_cp(mut out, cp)
+        width += w
+    }
+    text(Buf { b: out })
+}
+
+fn completion_shape(e: Ed) -> (int, int, int) {
+    var widest = 1
+    for row in e.cp_rows {
+        let w = text_cells(row) + 2
+        if w > widest { widest = w }
+    }
+    var columns = (e.cols - 1) / widest
+    if columns < 1 { columns = 1 }
+    if columns > e.cp_rows.len { columns = e.cp_rows.len }
+    if columns < 1 { columns = 1 }
+    let total = (e.cp_rows.len + columns - 1) / columns
+    var height = e.rows - e.er - 3
+    if height > 5 { height = 5 }
+    if height < 1 { height = 1 }
+    if height > total { height = total }
+    (columns, height, (e.cols - 1) / columns)
+}
+
+fn completion_draw(mut e: Ed) {
+    colour_reset(mut e)
+    pager_clear(mut e)
+    let (r, c) = pos_at(e, e.cur)
+    let (columns, height, width) = completion_shape(e)
+    let page_size = columns * height
+    let page = if e.cp_at < 0 then 0 else e.cp_at / page_size * page_size
+    move_to(mut e, e.er, 0)
+    put_s(mut e, "\r\n")
+    e.tr += 1
+    e.tc = 0
+    pager_text(
+        mut e,
+        "completions {page + 1}-{if page + page_size > e.cp_rows.len then e.cp_rows.len else page + page_size}/{e.cp_rows.len}",
+    )
+    var row = 0
+    while row < height {
+        colour_reset(mut e)
+        put_s(mut e, "\r\n")
+        e.tr += 1
+        e.tc = 0
+        var col = 0
+        while col < columns {
+            let at = page + col * height + row
+            if at < e.cp_rows.len {
+                let marker = if at == e.cp_at then "> " else "  "
+                let cell = completion_clip(marker + e.cp_rows[at], width - 1)
+                // Already control-escaped by completion_clip, never stored in
+                // Ed.buf. No syntax colour applies to a pager row.
+                put_s(mut e, cell)
+                e.tc += text_cells(cell)
+                var pad = width - text_cells(cell)
+                if col + 1 < columns {
+                    while pad > 0 {
+                        put_s(mut e, " ")
+                        e.tc += 1
+                        pad -= 1
+                    }
+                }
+            }
+            col += 1
+        }
+        row += 1
+    }
+    colour_reset(mut e)
+    move_to(mut e, r, c)
+}
+
+fn completion_pager(mut e: Ed, c: Ctx, f: Found, descriptions: List[str]) {
+    e.cp_rows = List[str]()
+    e.cp_insertions = List[str]()
+    var i = 0
+    while i < f.names.len && i < 256 {
+        let desc = if i < descriptions.len {
+            descriptions[i]
+        } else {
+            completion_description(e, c, f, i)
+        }
+        (mut e.cp_rows).push(comp_shown(c, f.names[i], f.dirs[i]) + " (" + desc + ")")
+        (mut e.
+            cp_insertions).push(comp_unique(c, f.base, f.names[i], f.dirs[i], e.cur == e.buf.len))
+        i += 1
+    }
+    e.cp_at = -1
+    e.cp_active = true
+    completion_draw(mut e)
+    loop {
+        let key = next_key(mut e)
+        if key == 27 || key == 7 || key == 3 || key == K_INTR || key == K_QUIT {
+            pager_clear(mut e)
+            e.cp_active = false
+            return
+        }
+        if key == K_EOF || key == K_HUP || key == K_CHILD {
+            pager_clear(mut e)
+            e.cp_active = false
+            let _ended = ends_line(mut e, key)
+            return
+        }
+        if key == 13 || key == 10 {
+            pager_clear(mut e)
+            e.cp_active = false
+            if e.cp_at >= 0 {
+                e.last_insert = false
+                e.this_insert = false
+                e.command_saved = false
+                insert(mut e, cps_of(e.cp_insertions[e.cp_at]))
+            }
+            return
+        }
+        let (columns, height, _width) = completion_shape(e)
+        var delta = 0
+        if key == 9 || key == K_DOWN || key == 14 { delta = 1 }
+        if key == K_BACKTAB || key == K_UP || key == 16 { delta = -1 }
+        if key == K_RIGHT { delta = height }
+        if key == K_LEFT { delta = 0 - height }
+        if key == K_ALT + 62 { delta = columns * height }
+        if key == K_ALT + 60 { delta = 0 - columns * height }
+        if delta != 0 {
+            let n = e.cp_rows.len
+            e.cp_at = if e.cp_at < 0 {
+                (if delta < 0 then n - 1 else 0)
+            } else {
+                (e.cp_at + delta + n * 4) % n
+            }
+        } else if key != K_NONE {
+            // Editing dismisses the pager and replays the key normally.
+            pager_clear(mut e)
+            e.cp_active = false
+            e.inj = [key]
+            e.ii = 0
+            return
+        }
+        completion_draw(mut e)
+    }
+}
+
+fn described_complete(mut e: Ed, c: Ctx) -> bool {
+    var f = Found { names: List[str](), dirs: List[bool](), base: c.lit }
+    var descriptions = List[str]()
+    if c.kind == CK_FILE && c.lit.starts_with("-") {
+        let words = history_words(slice_of(e.buf, 0, e.cur))
+        if words.len > 1 {
+            let exe = completion_exe(cps_text(words[0]), e.cpath)
+            if exe.len > 0 {
+                let options = help_options(completion_help(mut e, exe), c.lit)
+                f.names = copy options.names
+                descriptions = copy options.descriptions
+                for _name in f.names { (mut f.dirs).push(false) }
+            }
+        }
+    }
+    if f.names.len == 0 { f = comp_find(c, e.fnames, e.vnames, e.cpath, e.home) }
+    if f.names.len == 0 { bell(mut e); return true }
+    if f.names.len == 1 {
+        insert(mut e, cps_of(comp_unique(c, f.base, f.names[0], f.dirs[0], e.cur == e.buf.len)))
+        return true
+    }
+    let common = common_prefix(f.names)
+    if common.len > f.base.len {
+        insert(
+            mut e,
+            cps_of(comp_quote(common[f.base.len..common.len], c.q, c.lead && f.base.len == 0)),
+        )
+        e.tabs = 1
+        return true
+    }
+    completion_pager(mut e, c, f, descriptions)
+    true
+}

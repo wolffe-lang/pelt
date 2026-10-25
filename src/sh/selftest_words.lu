@@ -2,6 +2,7 @@
 
 fn want_words(mut bad: List[str]) {
     want_events(mut bad)
+    want_completion_words(mut bad)
     let records = abbr_records(
         "zz\techo expanded\nempty\t\nquoted\techo 'two words'\nmalformed\nno name\tx\nbad\tx\tmore\nesc\t\x1b[31m\nzz\techo latest\n",
     )
@@ -71,4 +72,48 @@ fn want_events(mut bad: List[str]) {
         e.mem.kill.len != 0 {
         (mut bad).push("event touched editable storage")
     }
+}
+
+fn want_completion_words(mut bad: List[str]) {
+    let parsed = help_options(
+        "Usage: tool\n  -a, --alpha  First choice\n  --beta=VALUE\tSecond choice\n  --alpha  duplicate\n  --bad\x1b[31m  control\n",
+        "--",
+    )
+    if joined(parsed.names) != "[--alpha][--beta][--bad]" {
+        (mut bad).push("help option lexical extraction")
+    }
+    let sh = new_sh("completion-test")
+    let q = Query { cols: 80, rows: 24, fixed: 80, col0: 0, cpr: 0, pend: "" }
+    var e = editor_state(sh, "$ ", q, default_chars())
+    e.highlight = true
+    e.buf = cps_of("echo draft")
+    e.cur = 7
+    start_line(mut e)
+    draw_from(mut e, 0)
+    e.cp_rows = [
+        "alpha (First choice)",
+        "beta (Second choice)",
+        "gamma (Third choice)",
+        "delta (Fourth choice)",
+        "epsilon (Fifth choice)",
+        "zeta (Sixth choice)",
+    ]
+    let before = ints_txt(e.buf)
+    let cursor = e.cur
+    e.cp_at = 2
+    e.out = List[byte]()
+    completion_draw(mut e)
+    if ints_txt(e.buf) != before || e.cur != cursor || !stored_plain(e.buf) || e.changes.len != 0 {
+        (mut bad).push("completion-pager-storage: row changed edit buffer or undo")
+    }
+    if text(Buf { b: copy e.out }).contains("\x1b[0;36m") { (mut bad).push("completion pager inherited line syntax colour") }
+    let (cols, rows, _width) = completion_shape(e)
+    if cols != 3 || rows != 2 { (mut bad).push("completion 80-column adaptive layout") }
+    e.cols = 24
+    let (narrow, high, _w) = completion_shape(e)
+    if narrow != 1 || high != 5 { (mut bad).push("completion narrow row bound") }
+    for change in e.changes {
+        if !stored_plain(change.line) { (mut bad).push("completion style entered undo") }
+    }
+    if !stored_plain(e.mem.kill) { (mut bad).push("completion style entered kill ring") }
 }

@@ -125,6 +125,7 @@ struct Sh {
     opt_highlight: bool,
     opt_abbr: bool,
     opt_histexpand: bool,
+    opt_complete: bool,
     posix_mode: bool,
     /// `set -o ignoreeof`: an interactive shell's end of file is not its
     /// end (`sh.interact`'s `run_lines`)
@@ -424,6 +425,7 @@ fn new_sh(name: str) -> Sh {
         opt_highlight: false,
         opt_abbr: false,
         opt_histexpand: false,
+        opt_complete: false,
         posix_mode: false,
         opt_ignoreeof: false,
         eof_count: 0,
@@ -640,6 +642,7 @@ fn opts_bits(sh: Sh) -> int {
     if sh.opt_highlight { b = b | 1048576 }
     if sh.opt_abbr { b = b | 2097152 }
     if sh.opt_histexpand { b = b | 4194304 }
+    if sh.opt_complete { b = b | 8388608 }
     b
 }
 
@@ -667,6 +670,7 @@ fn set_opts_bits(mut sh: Sh, b: int) {
     sh.opt_highlight = b & 1048576 != 0
     sh.opt_abbr = b & 2097152 != 0
     sh.opt_histexpand = b & 4194304 != 0
+    sh.opt_complete = b & 8388608 != 0
 }
 
 /// Where a frame's record keeps its fields on `istk`, from the record's

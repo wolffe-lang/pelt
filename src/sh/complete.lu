@@ -535,6 +535,7 @@ fn ed_complete(mut e: Ed, again: bool) {
         bell(mut e)
         return
     }
+    if e.complete && described_complete(mut e, c) { return }
     let f = comp_find(c, e.fnames, e.vnames, e.cpath, e.home)
     if f.names.len == 0 {
         bell(mut e)

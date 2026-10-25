@@ -1,0 +1,16 @@
+build: target/release/pelt
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+ok abbr space/quoted/empty/undo/cancel/nonfirst
+ok abbr persistence/atomic/malformed/erase
+ok abbr-script-gate
+ok events echo/last-word/quotes/comments/literals/cancel/abbr-order/toggle
+ok events expanded-history-no-style-bytes
+ok event-script-gate
+ok completion columns/navigation/accept-not-execute/escape 24
+ok completion columns/navigation/accept-not-execute/escape 40
+ok completion columns/navigation/accept-not-execute/escape 80
+ok completion columns/navigation/accept-not-execute/escape 120
+ok completion resize/restored-line
+ok explicit-help-only/description/cache/timeout
