@@ -1273,7 +1273,7 @@ fn draw_from(mut e: Ed, from: int) {
     }
     e.tr = r
     e.tc = c
-    if r < e.er || r == e.er && c < e.ec {
+    if !e.highlight && (r < e.er || r == e.er && c < e.ec) {
         put_esc(mut e.out, "[J")
     }
     e.er = r
@@ -1326,7 +1326,7 @@ fn resized(mut e: Ed) {
         put_n(mut e, col0)
         put_s(mut e, "C")
     }
-    put_esc(mut e.out, "[J")
+    if !e.highlight { put_esc(mut e.out, "[J") }
     put_s(mut e, prompt_last(e.prompt))
     e.cols = if w < 2 then 2 else w
     e.col0 = col0
