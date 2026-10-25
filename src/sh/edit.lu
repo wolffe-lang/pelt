@@ -581,6 +581,7 @@ struct Ed {
     suggest: bool,
     histsearch: bool,
     highlight: bool,
+    prefix: List[int],
     colour_off: bool,
     palette: List[str],
     commands: Map[str, bool],
@@ -702,6 +703,7 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
         suggest: friendly_active(sh) && sh.opt_suggest,
         histsearch: friendly_active(sh) && sh.opt_histsearch,
         highlight: highlight_active(sh),
+        prefix: List[int](),
         colour_off: colour_terminal(sh) && !sh.opt_highlight,
         palette: hl_theme(
             sh.vals["PELT_COLORS"] else "",
@@ -765,11 +767,12 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
 /// Edit one line at the terminal. `shown` is the prompt as written,
 /// `q` what `ed_query` learned. Answers the line with its newline, and
 /// how it ended (`ED_OK`, `ED_EOF`, `ED_INTR`).
-fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
+fn ed_line(sh: Sh, shown: str, q: Query, previous: str) -> EdOut {
     let old = os_term_mode(0) else |_| {
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     var e = editor_state(sh, shown, q, term_chars())
+    if e.highlight { e.prefix = cps_of(previous) }
     highlight_prepare(mut e)
     if e.highlight {
         for name in sh.ast.aliases.keys() { e.commands[name] = true }
@@ -1209,8 +1212,8 @@ fn draw_from(mut e: Ed, from: int) {
     let k = if e.highlight then 0 else from
     var colour = HlLine { spans: List[HlSpan](), incomplete: false, error_at: -1 }
     if e.highlight {
-        colour = hl_classify(e.buf, e.commands)
-        if highlight_paths(mut e, colour) { colour = hl_classify(e.buf, e.commands) }
+        colour = highlight_line(e)
+        if highlight_paths(mut e, colour) { colour = highlight_line(e) }
     }
     var span = 0
     var active = -1
