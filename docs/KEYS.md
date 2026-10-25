@@ -57,6 +57,22 @@ characters insert themselves; C-V quotes the following byte.
 | C-\\ | `1c` or stty quit | clear pending input (updated in this pass) | terminal flush | not a default editing action | honoured, no editor signal |
 | C-Z, C-Q, C-S | `1a`, `11`, `13` by default | ignored while editing | terminal/editor dependent | undo/pager functions vary | susp/start/stop ignored at prompt; restored for jobs |
 
+## Foreground jobs and terminal keys
+
+These are terminal actions while a foreground job, rather than the line
+editor, owns the terminal. They are not new friendly key bindings. The
+saved terminal mode is restored before a command runs (sh17/sh18's job
+sessions and the current job-control sessions cover the separation).
+
+| key / stty character | bytes by default | at the prompt | with a foreground job | verdict |
+|---|---|---|---|---|
+| C-C / intr | `03` | abandon edit, status 130 unless INT ignored | terminal delivers INT to foreground group; pelt takes terminal back when it ends | honoured; foreground action is not an editor injection |
+| C-Z / susp | `1a` | ignored, not undo | terminal stops foreground job; `fg` resumes it and `bg` resumes in background | honoured outside editor; shell itself stays at prompt |
+| C-\ / quit | `1c` | clear pending edit, no signal/status change | terminal's normal QUIT action for foreground group | editor flush and actual signal are distinct |
+| C-D / eof | `04` | EOF on empty edit, otherwise delete | terminal's canonical EOF character / child's own read policy | honoured; it is not a signal |
+| C-S / stop, C-Q / start | `13`, `11` | ignored with FLOW off | terminal flow control if the restored mode enables it | passed to terminal outside editor |
+| C-V / lnext, C-W / werase, erase, kill | `16`, `17`, `7f`, `15` | editor implements the configured values | restored line discipline or foreground program interprets them | terminal mode, not a second pelt editor |
+
 ## vi mode
 
 Insert mode honours stty erase, kill, intr, eof, werase, lnext, CR/LF,
