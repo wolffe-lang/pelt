@@ -66,6 +66,11 @@ fn want_events(mut bad: List[str]) {
     if event_expand("!!'", previous, "echo '\n").changed {
         (mut bad).push("event continued single quote")
     }
+    if event_last("echo $(printf 'two words')") != "$(printf 'two words')" ||
+        event_last("echo ${{value:-two words}}") != "${{value:-two words}}" ||
+        event_last("echo 界") != "界" {
+        (mut bad).push("event-last-word compound shell spelling")
+    }
     let sh = new_sh("event-test")
     let q = Query { cols: 80, rows: 24, fixed: 80, col0: 0, cpr: 0, pend: "" }
     var e = editor_state(sh, "$ ", q, default_chars())
