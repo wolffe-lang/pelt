@@ -1,0 +1,256 @@
+//! Display-only classification. POSIX XCU 2.3/2.10 and pelt's parser;
+//! fish palette measured black-box in notes/sh30/fish, never its source.
+//! No expansion, globbing, filesystem query or execution in hl_classify.
+
+const HC_PLAIN: int = 0
+
+const HC_COMMAND: int = 1
+
+const HC_ARGUMENT: int = 2
+
+const HC_RESERVED: int = 3
+
+const HC_QUOTE: int = 4
+
+const HC_OPEN: int = 5
+
+const HC_VARIABLE: int = 6
+
+const HC_REDIRECTION: int = 7
+
+const HC_COMMENT: int = 8
+
+const HC_OPERATOR: int = 9
+
+const HC_ERROR: int = 10
+
+const HC_UNKNOWN: int = 11
+
+const HC_SHADOW: int = 12
+
+struct HlSpan {
+    start: int,
+    end: int,
+    kind: int,
+}
+
+struct HlLine {
+    spans: List[HlSpan],
+    incomplete: bool,
+    error_at: int,
+}
+
+fn hl_paint(mut kinds: List[int], a: int, b: int, kind: int) {
+    var i = a
+    while i < b && i < kinds.len { kinds[i] = kind; i += 1 }
+}
+
+fn hl_meta(c: int) -> bool {
+    c == 32 ||
+        c == 9 ||
+        c == 10 ||
+        c == 59 ||
+        c == 38 ||
+        c == 124 ||
+        c == 40 ||
+        c == 41 ||
+        c == 60 ||
+        c == 62
+}
+
+fn hl_word(cps: List[int], a: int, b: int) -> str {
+    var out = List[byte]()
+    encode_into(mut out, cps, a, b)
+    text(Buf { b: out })
+}
+
+fn hl_reserved(word: str) -> bool {
+    // Leading ! belongs to F3's literal/history-expansion policy, not a
+    // display-time negation or history operation.
+    if word.starts_with("!") { return false }
+    for w in reserved_words() { if w == word { return true } }
+    false
+}
+
+fn hl_known(commands: Map[str, bool], word: str) -> bool {
+    commands[word] else false
+}
+
+/// A variable/parameter/substitution is syntax, not its value. Balanced
+/// substitution bodies are deliberately one span, never interpreted.
+fn hl_variable(cps: List[int], start: int) -> int {
+    var i = start + 1
+    if i >= cps.len { return i }
+    let c = cps[i]
+    if c == 123 || c == 40 {
+        let close = if c == 123 then 125 else 41
+        var depth = 1
+        var quote = 0
+        i += 1
+        while i < cps.len && depth > 0 {
+            let v = cps[i]
+            if v == 92 && quote != 39 { i += if i + 1 < cps.len then 2 else 1; continue }
+            if quote != 0 {
+                if v == quote { quote = 0 }
+            } else if v == 39 || v == 34 {
+                quote = v
+            } else if v == c {
+                depth += 1
+            } else if v == close {
+                depth -= 1
+            }
+            i += 1
+        }
+        return i
+    }
+    if c == 63 ||
+        c == 36 ||
+        c == 33 ||
+        c == 35 ||
+        c == 64 ||
+        c == 42 ||
+        c == 45 ||
+        c >= 48 && c <= 57 {
+        return i + 1
+    }
+    while i < cps.len && is_name_cp(cps[i], i == start + 1) { i += 1 }
+    i
+}
+
+/// Codepoint spans are coalesced after lexical overlays. Parser state comes
+/// from the same non-executing parser the shell uses for PS2, with no aliases.
+/// A command census is an explicit input; this function has no I/O.
+fn hl_classify(cps: List[int], commands: Map[str, bool]) -> HlLine {
+    var kinds = List[int]()
+    for _cp in cps { (mut kinds).push(HC_PLAIN) }
+    var i = 0
+    var command = true
+    var target = false
+    var header = false
+    while i < cps.len {
+        let c = cps[i]
+        if c == 32 || c == 9 { i += 1; continue }
+        if c == 35 {
+            let start = i
+            while i < cps.len && cps[i] != 10 { i += 1 }
+            hl_paint(mut kinds, start, i, HC_COMMENT)
+            continue
+        }
+        if hl_meta(c) {
+            let start = i
+            i += 1
+            if c == 60 || c == 62 {
+                while i < cps.len &&
+                    (cps[i] == c || cps[i] == 38 || cps[i] == 124 || cps[i] == 45) { i += 1 }
+                hl_paint(mut kinds, start, i, HC_REDIRECTION)
+                target = true
+            } else {
+                hl_paint(mut kinds, start, i, HC_OPERATOR)
+                command = c != 41
+                target = false
+                header = false
+            }
+            continue
+        }
+        let start = i
+        var quote = 0
+        var opening = -1
+        var plain = true
+        while i < cps.len {
+            let v = cps[i]
+            if quote == 0 && hl_meta(v) { break }
+            if v == 92 && quote != 39 {
+                plain = false
+                kinds[i] = HC_QUOTE
+                i += 1
+                if i < cps.len { kinds[i] = HC_QUOTE; i += 1 }
+                continue
+            }
+            if v == 36 && quote != 39 {
+                plain = false
+                let end = hl_variable(cps, i)
+                hl_paint(mut kinds, i, end, HC_VARIABLE)
+                i = end
+                continue
+            }
+            if quote != 0 {
+                kinds[i] = HC_QUOTE
+                if v == quote { quote = 0 }
+            } else if v == 39 || v == 34 || v == 96 {
+                plain = false
+                quote = v
+                opening = i
+                kinds[i] = HC_QUOTE
+            }
+            i += 1
+        }
+        if quote != 0 && opening >= 0 { kinds[opening] = HC_OPEN }
+        let word = hl_word(cps, start, i)
+        var kind = HC_ARGUMENT
+        if target {
+            kind = HC_REDIRECTION
+            target = false
+        } else if plain && (command || header) && hl_reserved(word) {
+            kind = HC_RESERVED
+            header = word == "for" || word == "case"
+            command = leads_command(word) || word == "in"
+        } else if command {
+            // Assignments and IO numbers do not consume command position.
+            if is_assignment(word) {
+                kind = HC_ARGUMENT
+            } else if plain && i < cps.len && (cps[i] == 60 || cps[i] == 62) && is_digits(word) {
+                kind = HC_REDIRECTION
+            } else {
+                kind = if word.starts_with("!") {
+                    HC_ARGUMENT
+                } else if !plain || hl_known(commands, word) {
+                    HC_COMMAND
+                } else {
+                    HC_UNKNOWN
+                }
+                command = false
+            }
+        }
+        var k = start
+        while k < i {
+            if kinds[k] == HC_PLAIN { kinds[k] = kind }
+            k += 1
+        }
+    }
+    var p = new_parser(cps_text(cps), 1)
+    var ast = new_ast()
+    loop { if parse_complete(mut p, mut ast) < 0 { break } }
+    var error_at = -1
+    if p.err.len > 0 && !p.more {
+        // tstart is a UTF-8 byte offset, while the editor indexes codepoints.
+        var bytes = 0
+        var at = 0
+        while at < cps.len && bytes < p.tstart {
+            bytes += if cps[at] < 128 || cps[at] >= K_RAW {
+                1
+            } else if cps[at] < 2048 {
+                2
+            } else if cps[at] < 65536 {
+                3
+            } else {
+                4
+            }
+            at += 1
+        }
+        error_at = at
+        if at < kinds.len {
+            var end = at + 1
+            while end < kinds.len && !hl_meta(cps[end]) { end += 1 }
+            hl_paint(mut kinds, at, end, HC_ERROR)
+        }
+    }
+    var spans = List[HlSpan]()
+    i = 0
+    while i < kinds.len {
+        let start = i
+        let kind = kinds[i]
+        while i < kinds.len && kinds[i] == kind { i += 1 }
+        (mut spans).push(HlSpan { start: start, end: i, kind: kind })
+    }
+    HlLine { spans: spans, incomplete: p.more, error_at: error_at }
+}
