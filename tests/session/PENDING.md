@@ -88,3 +88,20 @@ polls for it after the line is read and after the child is reaped).
 and `default_interactive` types into pelt with standard error a pipe;
 in both, pelt (`os_isatty(0)` and `os_isatty(2)`) and dash decide the
 shell is not interactive.
+
+
+## PAX friendly display rows (pending harness slot)
+
+These are pending targets, not runnable host cases or claimed PAX passes.
+A px-owned pelt-session slot is required; run each once on framebuffer and
+serial (`TERM=linux`). Use the current pelt on both consoles.
+
+| target | exact input bytes, in order | expected observation |
+|---|---|---|
+| `sh29_pax_framebuffer_shadow` (pending) | `set -o friendly -o suggest -o histsearch\r` then `echo shadow_tail\r` then `echo shadow` then `\r` then `echo shadow` then `\x15` | SGR 90 suffix `_tail`, cursor after typed `shadow`; Enter prints `shadow` only; EL clears after Ctrl-U |
+| `sh29_pax_serial_history` (pending) | `set -o friendly -o suggest -o histsearch\r` then `echo alpha\r` then `echo beta\r` then `echo al` then `\x1b[A` then `\x1b[B` then `\x12` then `\r` then `\x03` | Up selects alpha, Down restores `echo al`; Ctrl-R list below line; Enter accepts without running; Ctrl-C leaves the editor with its normal next prompt |
+
+The byte notation is the session harness's: `\r` is 0d, `\x15` is Ctrl-U,
+`\x12` is Ctrl-R, `\x03` is Ctrl-C, `\x1b[A/B` are Up/Down. Pause at each
+`then` until the screen has settled. The framebuffer's SGR basis is px70's
+16-entry palette; serial rendering belongs to the host terminal.

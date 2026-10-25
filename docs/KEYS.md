@@ -466,3 +466,44 @@ requires exactly zero context switches plus unchanged anonymous and total
 resident memory. Eight isolated release repetitions passed those stronger
 guards. The earlier timing rows above retain their original uncontrolled-THP
 provenance; full gauntlets are rerun with the isolated fixture.
+
+## Suggestions and filtered history
+
+With `friendly` and `suggest`, emacs mode draws the newest exact-prefix
+history suffix, otherwise the first sorted file/command completion. It uses
+SGR 90, resets with SGR 39, clears with EL (`ESC[K`) before edits, and restores
+the cursor. It never wraps the suffix; the last cell is reserved. No shadow
+is drawn for an empty line, mid-line cursor or `TERM=dumb`.
+
+| keys | bytes | precedence with these options enabled |
+|---|---|---|
+| Right / Ctrl-F | `ESC[C`, `ESCOC`, `06` | at end accept whole shadow; otherwise ordinary character motion |
+| End / Ctrl-E | `ESC[F`, `ESCOF`, `ESC[4~`, `ESC[8~`, `05` | at end accept whole shadow; otherwise move to end without accepting |
+| Alt-F | `ESC f`, `ESC F` | at end accept next word; otherwise ordinary word motion |
+| Ctrl-Right | `ESC[1;5C`, `ESC[1;3C` | at end accept next blank-delimited token; otherwise ordinary word motion |
+| Tab | `09` | existing completion, never implicit suggestion acceptance |
+| Up / Ctrl-P | `ESC[A`, `ESCOA`, `10` | with `histsearch`, previous exact-prefix history match |
+| Down / Ctrl-N | `ESC[B`, `ESCOB`, `0e` | next prefix match, then restore original draft and cursor |
+| PageUp / PageDown | `ESC[5~`, `ESC[6~` | unchanged oldest-history / saved-draft actions |
+| Ctrl-R | `12` | with `histsearch`, filtered history pager; without it, existing incremental search |
+| Enter in pager | `0d`, `0a` | accept selected line into editor, never execute it |
+| Escape / Ctrl-G / Ctrl-C in pager | `1b`, `07`, stty intr | restore original draft and clear list; Ctrl-C deliberately differs from fish's clear-draft action |
+
+Stty remappings still win before editor dispatch. Unaccepted shadow text is
+absent from Enter, undo, every kill, Ctrl-C, Ctrl-U and Ctrl-L. Accepted text
+is one undo group. `friendly_keys` does not gate `suggest` or `histsearch`.
+Both new options default off at this pin; enable them explicitly. See
+[FRIENDLY.md](FRIENDLY.md) for the future invocation-name-gated default.
+
+Fish 4.9.3 was measured through a pty on kasumi, CPUs 4–7, using the same
+Arch image and package versions recorded above. It emits SGR 90, not SGR 2,
+indexed 244 or RGB grey, even with truecolour advertised. Its narrow shadow
+uses an ellipsis and does not wrap in the measured case; pelt truncates
+without an ellipsis. No prefix-of-a-word history fallback appeared in the
+measurements. Raw reference bytes are in `notes/sh29/fish/`.
+
+PAX evidence is px70's `notes/px70/final-validation.txt`, its SGR and palette
+rows, and pax#162. Dim, indexed and RGB inputs are mapped to the framebuffer
+console's 16-entry palette; serial passes terminal bytes through. This pass
+runs no PAX session: the two exact-byte rows in `tests/session/PENDING.md`
+await a px-owned session slot. It does not claim a PAX rendering result.

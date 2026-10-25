@@ -6,6 +6,15 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Suggestions and filtered history.** Opt-in `suggest` draws an exact
+  history suffix or sorted file/command completion without inserting it.
+  Right/End/Ctrl-E/Ctrl-F accept all; Alt-F accepts a word and Ctrl-Right a
+  token. `histsearch` gives Up/Down a prefix filter and Ctrl-R a pager whose
+  Enter accepts without executing. Both require `friendly` and default off
+  at this pin. Bright-black suggestions never wrap or enter undo/kill state
+  until accepted. 63 new typed sessions and a raw-byte/idle/cost gate cover
+  the feature; existing corpus and session expectations are unchanged.
+
 - **The corners (sh26).** `set -v` writes a script's input, and a file
   `.` reads, to standard error as it is read, every line of a compound
   command and a here-document's body included; a `-c` string and an
