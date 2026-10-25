@@ -90,6 +90,7 @@ fn completion_shape(e: Ed) -> (int, int, int) {
 }
 
 fn completion_draw(mut e: Ed) {
+    (mut e.buf).push(27)
     colour_reset(mut e)
     pager_clear(mut e)
     let (r, c) = pos_at(e, e.cur)
