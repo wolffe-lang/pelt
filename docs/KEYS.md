@@ -136,7 +136,8 @@ A numeric argument to the first M-. chooses history word n (command word
 is 0); negative n selects backwards from the last word with 0-based offset.
 A negative argument on a repeated M-. reverses traversal. A redirection's
 operand is a word; a one-word command yanks itself. Empty history rings.
-This does not expand the shell language: `!!` and `!$` remain absent.
+Alt-dot itself does not expand the shell language. The separate friendly
+`histexpand` option now recognizes `!!` and `!$` at Enter (see below).
 
 **Measured fish context.** Fish's `bind` names PageUp/PageDown
 beginning/end-of-history. In the all-tty black-box probe, PageUp at a
@@ -521,7 +522,7 @@ the history pager, Ctrl-C and Enter reset the style before other output.
 45 additional typed sessions cover colours and open syntax, Unicode,
 resize with the cursor at the end and mid-line, completion rows, history
 pager rows, shadow acceptance boundaries, undo, kill/yank, custom themes,
-malformed themes and disable gates. The complete tree now has 488 sessions;
+malformed themes and disable gates. The colour pass brought the tree to 488 sessions;
 all 443 pre-colour expectations are unchanged. `tools/colour-witness` also
 asserts raw SGR/reset bytes, persistent history, non-execution while typing,
 idle counters and per-key cost. The compiled and checked selfchecks read the
@@ -530,3 +531,40 @@ actual buffer, both undo stores and the kill ring after coloured edits.
 The PAX palette basis remains pax#162's sixteen entries. No new PAX result
 is claimed; the exact framebuffer and serial input rows in
 `tests/session/PENDING.md` wait for a px-owned harness slot.
+
+
+## Words and completion
+
+The words pass adds 64 independently asserted typed sessions, for 552
+recorded sessions total. All earlier expectations stay unchanged.
+`tools/words-witness` additionally checks raw reset boundaries, expanded
+history, separate-shell abbreviation persistence, script isolation,
+exclusive temporary-file failure, the explicit help probe/cache/deadline,
+idle counters and per-key cost after an executed history event.
+
+| key | bytes | friendly words action |
+|---|---|---|
+| Space | `20` | expand an unquoted command abbreviation; ordinary arguments stay literal |
+| Enter | `0d` / `0a` | expand a command abbreviation, then `!!` / `!$`, then accept |
+| Tab | `09` | complete a unique/common prefix or open the described pager; advance within it |
+| Shift-Tab | `ESC[Z` | previous pager candidate |
+| Up / Down | `ESC[A` / `ESC[B` | previous / next pager candidate |
+| Left / Right | `ESC[D` / `ESC[C` | move across pager columns |
+| PageUp / PageDown | `ESC[5~` / `ESC[6~` | move one pager page |
+| Enter in pager | `0d` / `0a` | accept selection, never execute; with none, dismiss |
+| Escape / Ctrl-G / Ctrl-C in pager | `1b` / `07` / `03` | dismiss and restore line/cursor |
+
+Fish 4.9.3 was measured through fresh-HOME ptys, never its source.
+Abbreviations expanded on both Space and Enter, and after command
+separators; quoted spellings stayed literal. Undo after Space restored the
+abbreviation plus its space. Six described choices occupied three columns
+at 80 and 120 columns, one at 24 and 40: there is no fixed two-column rule.
+Pelt deliberately shows selection only in the pager until Enter, whereas
+fish's measured commandline includes the candidate during navigation.
+Both accept without executing on that Enter. See `docs/FRIENDLY.md` for
+persistence limits, help-probe effects and event quoting.
+
+PAX remains pending the px-owned session slot. The exact framebuffer and
+serial rows already in `tests/session/PENDING.md` are retained unchanged;
+px70's sixteen-entry palette/cell evidence remains the rendering basis.
+No PAX session or new key-delivery measurement is claimed here.

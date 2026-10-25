@@ -6,6 +6,17 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Words at the prompt.** Friendly editing now includes persistent
+  `abbr add/erase/list`, command-position abbreviation expansion on Space
+  and Enter, a bounded described-completion pager, and Enter-only `!!` / `!$`.
+  Each has its own option (`abbr`, `complete`, `histexpand`). Pager selection
+  never executes, and history events are echoed and stored as expanded text
+  without changing editable/undo/kill state. Explicit option-completion Tab
+  may probe a literal external command's `--help` within a 50 ms collection
+  budget; results are cached per prompt, with no idle or highlighting work.
+  Scripts, `-c`, pipes and POSIX mode are unchanged; opt-in remains.
+  64 new typed sessions and the raw words witness cover these boundaries.
+
 - **Syntax colours while typing.** `set -o highlight`, also enabled by
   `friendly`, colours commands, arguments, quotes, variables, redirections,
   comments and operators without modifying input, history, undo or kills.
