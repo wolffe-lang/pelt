@@ -430,7 +430,8 @@ listing, quit remaps and vi/search flushes. There are 375 active session
 expectations and two named pending cases in the tree; the full gauntlet and
 CI decide the final head. No pre-existing session expectation was changed.
 
-The final focused witness (kasumi, CPUs 12–15, the pinned container and
+The focused witness before the idle-accounting correction (kasumi, CPUs
+12–15, the pinned container and
 compiler pair above) loads 32,767 history entries and measures 100 M-.
 responses after one warmup. It waits for the requested word, not just the
 first output byte. Idle measurement begins only after a C-g acknowledgement,
@@ -447,3 +448,21 @@ bells, C-g cancellation/bells in CSI, SS3, C-x, numeric input, character search
 and incremental search; script/pipe/POSIX/terminal gates; read-only listing,
 remapped stty characters and mode restoration. Commands and raw results are
 under `notes/sh28-evidence/`.
+
+### Idle accounting isolation
+
+A later full release run saw resident pages grow with zero context switches.
+Repeated isolated measurements reproduced background transparent-huge-page
+promotion: AnonHugePages rose by 4096 KiB while anonymous RSS rose by 236 KiB,
+with unchanged CPU ticks and page-fault counters. This was not recorded as
+pelt allocation. `notes/sh28-evidence/idle-accounting.txt` preserves the
+original failure, component counters and the distinction between statm pages
+and the kernel's kB fields.
+
+The idle/cost fixture now disables THP only in its child before exec with
+PR_SET_THP_DISABLE; the application and host setting are unchanged. It
+verifies the disabled flag after exec, emits RSS/THP/CPU/fault counters and
+requires exactly zero context switches plus unchanged anonymous and total
+resident memory. Eight isolated release repetitions passed those stronger
+guards. The earlier timing rows above retain their original uncontrolled-THP
+provenance; full gauntlets are rerun with the isolated fixture.

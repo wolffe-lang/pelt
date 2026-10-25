@@ -1,0 +1,7 @@
+2026-10-25T01:51:50+00:00
+[always] madvise never
+idle before {"contexts": 10, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2326, "page_size_bytes": 4096, "pid": 6, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1259 kB", "Pss_Shmem": "0 kB", "Rss": "10440 kB"}, "statm_resident_pages": 2610, "status": {"RssAnon": "7064 kB", "RssFile": "3376 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10440 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 10, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2326, "page_size_bytes": 4096, "pid": 6, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1259 kB", "Pss_Shmem": "0 kB", "Rss": "10440 kB"}, "statm_resident_pages": 2610, "status": {"RssAnon": "7064 kB", "RssFile": "3376 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10440 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2610->2610
+last-arg 32767 entries: median 0.019346 ms, p99 0.086168 ms, 100 samples after warmup
+[always] madvise never

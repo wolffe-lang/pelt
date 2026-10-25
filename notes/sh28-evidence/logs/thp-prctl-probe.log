@@ -1,0 +1,9 @@
+/usr/share/man/man3/FcConfigSubstituteWithPat.3.gz
+/usr/share/man/man3/Esys_PCR_SetAuthPolicy.3.gz
+/usr/share/man/man3/OSSL_HPKE_CTX_set1_authpriv.3ssl.gz
+/usr/share/man/man3/OSSL_HPKE_CTX_set1_authpub.3ssl.gz
+/usr/share/man/man2const/PR_GET_THP_DISABLE.2const.gz
+/usr/share/man/man2const/PR_SET_THP_DISABLE.2const.gz
+before 0
+set 0 errno 0
+after 1

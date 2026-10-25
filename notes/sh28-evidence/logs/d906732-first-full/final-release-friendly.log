@@ -1,0 +1,21 @@
+ok gate on b'ba\n'
+ok gate default-off b'ab\n'
+ok gate no-stderr-tty b'ab\n'
+ok gate posix-hard-disable b'ab\n'
+ok gate feature-off b'ab\n'
+ok gates script, pipe, -c builtin absence
+probe abort prefix CSI
+probe abort prefix SS3
+probe abort prefix C-x
+probe abort prefix numeric
+probe abort prefix find
+ok abort bells in CSI, SS3, C-x, numeric, find and search
+ok empty history bell; live bindings, actions, remapped stty, vi
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh28/pelt/notes/sh28-evidence/witness.py", line 203, in <module>
+    cost(binary, home)
+    ~~~~^^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh28/pelt/notes/sh28-evidence/witness.py", line 178, in cost
+    assert after - before <= 2 and rss == rss2, (before, after, rss, rss2)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (10, 10, '2596', '2728')

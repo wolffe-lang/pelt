@@ -1,0 +1,54 @@
+Idle RSS accounting correction (no pelt implementation change)
+
+The first full run at d906732 ended native=0, release=1. Every release gate
+except friendly was green, including corpus 998/0/25 and sessions 375/0/2.
+The failed tuple was (10, 10, '2596', '2728'): zero context switches but a
+change in /proc/PID/statm resident pages. Those fields are pages, not kB.
+The measured page size is 4096 bytes: the original increase was 132 pages,
+528 KiB. That original sample had no THP/component counters, so its exact
+kernel mechanism cannot be established retrospectively. It is not recorded
+as pelt allocation. The completed original logs/status/source hashes are
+retained in logs/d906732-first-full/.
+
+Diagnosis, with the original exact-RSS assertion still active:
+- logs/idle-isolation-thp.log: first isolated release sample green; host
+  THP setting [always] madvise never; AnonHugePages stayed 0.
+- logs/idle-isolation-repeats.log: sample 8 reproduced background THP
+  promotion. AnonHugePages 0 -> 4096 kB; RssAnon and smaps Anonymous
+  7064 -> 7300 kB (+236 KiB); RssFile 3440 -> 3440 kB; RssShmem 0.
+  Accurate smaps RSS 10504 -> 10740 kB, statm 2626 -> 2685 pages
+  (also +236 KiB). All-thread context switches 10 -> 10, process CPU
+  ticks 0 -> 0, minor faults 2329 -> 2329 and major faults 0 -> 0.
+- This demonstrates physical/accounting growth associated with kernel THP
+  promotion while no application work was observed. The 4096 KiB huge-page
+  delta is not the newly resident amount: promotion also covers previously
+  resident pages. Subtracting the whole THP delta would be incorrect.
+
+The idle fixture now uses the explicitly allowed child-only alternative:
+PR_SET_THP_DISABLE with value 1, flags 0, in the pty child before exec.
+PR_GET_THP_DISABLE must return 1; /proc/PID/status THP_enabled must remain
+0 after exec; AnonHugePages must remain 0 in both snapshots. The setting
+is documented to survive exec and affects this fixture process, not global
+THP controls. No sysfs write, setarch, host configuration or pelt change.
+setpriv did not offer the option; the launcher invokes libc's public prctl
+ABI directly using Python ctypes. Constants 41/42 are independently decoded
+as PR_SET_THP_DISABLE/PR_GET_THP_DISABLE in logs/thp-prctl-trace.log.
+Documentation read: installed Linux man-pages 6.19,
+PR_SET_THP_DISABLE(2const), PR_GET_THP_DISABLE(2const); no implementation
+source read.
+
+No guard was relaxed. The former <=2-context-switch allowance is tightened
+to exactly zero. CPU ticks and minor/major faults must not increase;
+RssAnon, smaps Anonymous and total resident pages must be unchanged.
+Host THP controls are recorded before/after and must be unchanged. All
+counters and units are printed before any assertion, so a future failure
+can be attributed rather than guessed. --allow-thp retains the diagnostic
+uncontrolled mode; --cost-only runs the isolated sample.
+
+logs/idle-child-thp-disabled.log: eight of eight isolated release samples
+passed the stronger guards with child THP_enabled=0 and AnonHugePages=0.
+Every sample had zero context/CPU/fault deltas and unchanged anonymous and
+total RSS. Host THP remained [always] madvise never. M-. medians across
+those samples: 0.013912..0.016369 ms, each 100 samples after one warmup.
+A fresh full native+release gauntlet rerun is required at the new witness
+head; these isolated results are not substituted for that rerun.

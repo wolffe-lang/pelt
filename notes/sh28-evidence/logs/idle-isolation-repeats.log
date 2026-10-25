@@ -1,0 +1,48 @@
+SAMPLE 1 2026-10-25T01:53:08+00:00
+idle before {"contexts": 9, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2325, "page_size_bytes": 4096, "pid": 5, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1256 kB", "Pss_Shmem": "0 kB", "Rss": "10424 kB"}, "statm_resident_pages": 2606, "status": {"RssAnon": "7064 kB", "RssFile": "3360 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10424 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 9, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2325, "page_size_bytes": 4096, "pid": 5, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1255 kB", "Pss_Shmem": "0 kB", "Rss": "10424 kB"}, "statm_resident_pages": 2606, "status": {"RssAnon": "7064 kB", "RssFile": "3360 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10424 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2606->2606
+last-arg 32767 entries: median 0.014520 ms, p99 0.072390 ms, 100 samples after warmup
+SAMPLE 2 2026-10-25T01:53:18+00:00
+idle before {"contexts": 8, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2324, "page_size_bytes": 4096, "pid": 9, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1243 kB", "Pss_Shmem": "0 kB", "Rss": "10396 kB"}, "statm_resident_pages": 2599, "status": {"RssAnon": "7064 kB", "RssFile": "3332 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10396 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 8, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2324, "page_size_bytes": 4096, "pid": 9, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1243 kB", "Pss_Shmem": "0 kB", "Rss": "10396 kB"}, "statm_resident_pages": 2599, "status": {"RssAnon": "7064 kB", "RssFile": "3332 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10396 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2599->2599
+last-arg 32767 entries: median 0.014330 ms, p99 0.028746 ms, 100 samples after warmup
+SAMPLE 3 2026-10-25T01:53:28+00:00
+idle before {"contexts": 8, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2330, "page_size_bytes": 4096, "pid": 13, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1335 kB", "Pss_Shmem": "0 kB", "Rss": "10488 kB"}, "statm_resident_pages": 2622, "status": {"RssAnon": "7064 kB", "RssFile": "3424 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10488 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 8, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2330, "page_size_bytes": 4096, "pid": 13, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1335 kB", "Pss_Shmem": "0 kB", "Rss": "10488 kB"}, "statm_resident_pages": 2622, "status": {"RssAnon": "7064 kB", "RssFile": "3424 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10488 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2622->2622
+last-arg 32767 entries: median 0.015309 ms, p99 0.069056 ms, 100 samples after warmup
+SAMPLE 4 2026-10-25T01:53:38+00:00
+idle before {"contexts": 9, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2327, "page_size_bytes": 4096, "pid": 17, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1335 kB", "Pss_Shmem": "0 kB", "Rss": "10512 kB"}, "statm_resident_pages": 2628, "status": {"RssAnon": "7064 kB", "RssFile": "3448 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10512 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 9, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2327, "page_size_bytes": 4096, "pid": 17, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1335 kB", "Pss_Shmem": "0 kB", "Rss": "10512 kB"}, "statm_resident_pages": 2628, "status": {"RssAnon": "7064 kB", "RssFile": "3448 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10512 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2628->2628
+last-arg 32767 entries: median 0.015373 ms, p99 0.031849 ms, 100 samples after warmup
+SAMPLE 5 2026-10-25T01:53:48+00:00
+idle before {"contexts": 11, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2327, "page_size_bytes": 4096, "pid": 21, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1323 kB", "Pss_Shmem": "0 kB", "Rss": "10484 kB"}, "statm_resident_pages": 2621, "status": {"RssAnon": "7064 kB", "RssFile": "3420 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10484 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 11, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2327, "page_size_bytes": 4096, "pid": 21, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1323 kB", "Pss_Shmem": "0 kB", "Rss": "10484 kB"}, "statm_resident_pages": 2621, "status": {"RssAnon": "7064 kB", "RssFile": "3420 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10484 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2621->2621
+last-arg 32767 entries: median 0.018852 ms, p99 0.028009 ms, 100 samples after warmup
+SAMPLE 6 2026-10-25T01:53:58+00:00
+idle before {"contexts": 10, "cpu_ticks": 0, "major_faults": 2, "minor_faults": 2327, "page_size_bytes": 4096, "pid": 25, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7068 kB", "Pss_Anon": "7068 kB", "Pss_File": "1219 kB", "Pss_Shmem": "0 kB", "Rss": "10404 kB"}, "statm_resident_pages": 2601, "status": {"RssAnon": "7068 kB", "RssFile": "3336 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10404 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 10, "cpu_ticks": 0, "major_faults": 2, "minor_faults": 2327, "page_size_bytes": 4096, "pid": 25, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7068 kB", "Pss_Anon": "7068 kB", "Pss_File": "1219 kB", "Pss_Shmem": "0 kB", "Rss": "10404 kB"}, "statm_resident_pages": 2601, "status": {"RssAnon": "7068 kB", "RssFile": "3336 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10404 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2601->2601
+last-arg 32767 entries: median 0.015919 ms, p99 0.083154 ms, 100 samples after warmup
+SAMPLE 7 2026-10-25T01:54:09+00:00
+idle before {"contexts": 8, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2324, "page_size_bytes": 4096, "pid": 29, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1240 kB", "Pss_Shmem": "0 kB", "Rss": "10448 kB"}, "statm_resident_pages": 2612, "status": {"RssAnon": "7064 kB", "RssFile": "3384 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10448 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 8, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2324, "page_size_bytes": 4096, "pid": 29, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1247 kB", "Pss_Shmem": "0 kB", "Rss": "10448 kB"}, "statm_resident_pages": 2612, "status": {"RssAnon": "7064 kB", "RssFile": "3384 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10448 kB"}, "thp_enabled": "[always] madvise never"}
+ok friendly idle 10s: contexts 0, RSS pages 2612->2612
+last-arg 32767 entries: median 0.014222 ms, p99 0.016120 ms, 100 samples after warmup
+SAMPLE 8 2026-10-25T01:54:19+00:00
+idle before {"contexts": 10, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2329, "page_size_bytes": 4096, "pid": 33, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "7064 kB", "Pss_Anon": "7064 kB", "Pss_File": "1329 kB", "Pss_Shmem": "0 kB", "Rss": "10504 kB"}, "statm_resident_pages": 2626, "status": {"RssAnon": "7064 kB", "RssFile": "3440 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10504 kB"}, "thp_enabled": "[always] madvise never"}
+idle after {"contexts": 10, "cpu_ticks": 0, "major_faults": 0, "minor_faults": 2329, "page_size_bytes": 4096, "pid": 33, "smaps_rollup": {"AnonHugePages": "4096 kB", "Anonymous": "7300 kB", "Pss_Anon": "7300 kB", "Pss_File": "1329 kB", "Pss_Shmem": "0 kB", "Rss": "10740 kB"}, "statm_resident_pages": 2685, "status": {"RssAnon": "7300 kB", "RssFile": "3440 kB", "RssShmem": "0 kB", "Threads": "2", "VmRSS": "10740 kB"}, "thp_enabled": "[always] madvise never"}
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh28/pelt/notes/sh28-evidence/witness.py", line 235, in <module>
+    cost(binary, home)
+    ~~~~^^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh28/pelt/notes/sh28-evidence/witness.py", line 209, in cost
+    assert after - before <= 2 and rss == rss2, (before, after, rss, rss2)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: (10, 10, 2626, 2685)
+sample failures=1
+[always] madvise never
