@@ -1,0 +1,60 @@
+######## /home/mfwolffe/lanes/sh26/probe/p24-ro-order.sh
+=== dash st=0
+--- out
+readonly aa\n
+readonly mm='x y'\n
+readonly zz='1'\n
+export AA\n
+export MM='x y'\n
+export ZZ='1'\n
+export QQ='2'\n
+st=0\n
+readonly RR='3'\n
+export AA\n
+export HOME='/home/pelt'\n
+export LC_ALL='C'\n
+export MM='x y'\n
+export PATH='/usr/bin:/bin'\n
+export PWD='/home/mfwolffe/lanes/sh26/tmp/probe.nKmVQs/w'\n
+export QQ='2'\n
+export ZZ='1'\n
+export-dd st=0\n
+
+--- err
+
+=== bash st=0
+--- out
+readonly aa\n
+readonly mm="x y"\n
+readonly zz="1"\n
+export AA\n
+export MM="x y"\n
+export ZZ="1"\n
+export QQ="2"\n
+st=0\n
+readonly RR="3"\n
+export AA\n
+export HOME="/home/pelt"\n
+export LC_ALL="C"\n
+export MM="x y"\n
+export OLDPWD\n
+export PATH="/usr/bin:/bin"\n
+export PWD="/home/mfwolffe/lanes/sh26/tmp/probe.Xks9sh/w"\n
+export QQ="2"\n
+export SHLVL="1"\n
+export ZZ="1"\n
+export-dd st=0\n
+
+--- err
+
+=== pelt st=2
+--- out
+readonly mm='x y'\n
+readonly zz='1'\n
+export MM='x y'\n
+export ZZ='1'\n
+export AA\n
+
+--- err
+pelt: ../s.sh: line 6: export: --: not a valid name\n
+

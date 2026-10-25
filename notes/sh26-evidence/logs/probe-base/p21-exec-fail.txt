@@ -1,0 +1,52 @@
+######## /home/mfwolffe/lanes/sh26/probe/p21-exec-fail.sh
+=== dash st=0
+--- out
+st=127\n
+st=127\n
+st=126\n
+st=126\n
+st=127\n
+st=127\n
+
+--- err
+../s.sh: 2: exec: ./nope: not found\n
+../s.sh: 3: exec: ./f/x: not found\n
+../s.sh: 4: exec: ./d: Permission denied\n
+../s.sh: 5: exec: ./nox: Permission denied\n
+../s.sh: 6: exec: ./l1: Too many levels of symbolic links\n
+../s.sh: 7: exec: nosuch_sh26: not found\n
+
+=== bash st=0
+--- out
+st=127\n
+st=126\n
+st=126\n
+st=126\n
+st=126\n
+st=127\n
+
+--- err
+../s.sh: line 2: /home/mfwolffe/lanes/sh26/tmp/probe.3Wt174/w/nope: No such file or directory\n
+../s.sh: line 3: /home/mfwolffe/lanes/sh26/tmp/probe.3Wt174/w/f/x: Not a directory\n
+../s.sh: line 4: /home/mfwolffe/lanes/sh26/tmp/probe.3Wt174/w/d: Is a directory\n
+../s.sh: line 5: /home/mfwolffe/lanes/sh26/tmp/probe.3Wt174/w/nox: Permission denied\n
+../s.sh: line 6: /home/mfwolffe/lanes/sh26/tmp/probe.3Wt174/w/l1: Too many levels of symbolic links\n
+../s.sh: line 7: exec: nosuch_sh26: not found\n
+
+=== pelt st=0
+--- out
+st=127\n
+st=127\n
+st=126\n
+st=126\n
+st=126\n
+st=127\n
+
+--- err
+pelt: ../s.sh: line 2: exec: ./nope: not found\n
+pelt: ../s.sh: line 3: exec: ./f/x: not found\n
+pelt: ../s.sh: line 4: exec: ./d: cannot be run\n
+pelt: ../s.sh: line 5: exec: ./nox: cannot be run\n
+pelt: ../s.sh: line 6: exec: ./l1: cannot be run\n
+pelt: ../s.sh: line 7: exec: nosuch_sh26: not found\n
+

@@ -1,0 +1,13 @@
+######## /home/mfwolffe/lanes/sh26/probe/p05-jobs-assign.sh
+=== pelt st=0
+--- out
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       true\n
+[1] + Done                       (; echo x 1>/dev/null; :)\n
+[1] + Done                       ; :\n
+[1] + Done                        1>/dev/null\n
+[1] + Done                       \n
+
+--- err
+

@@ -1,0 +1,7 @@
+build: target/native/pelt
+session: pelt = /home/mfwolffe/lanes/sh26/plant-session/target/native/pelt
+ok   c_mail
+FAIL mail_interval
+     ! pelt err yes
+ok   mail_path
+session: pass 2  fail 1  pending 0 (0)

@@ -1,0 +1,94 @@
+######## /home/mfwolffe/lanes/sh26/probe/p15-verbose-c.sh
+=== dash st=0
+--- out
+a\n
+b\n
+st=0\n
+c\n
+d\n
+st=0\n
+e\n
+st=0\n
+echo f\n
+f\n
+set +v\n
+g\n
+st=0\n
+echo h\n
+h\n
+st=0\n
+echo i\n
+i\n
+echo jj\n
+st=0\n
+k\n
+echo l\n
+l\n
+set +v\n
+m\n
+st=0\n
+
+--- err
+
+=== bash st=0
+--- out
+echo a\n
+a\n
+echo b\n
+b\n
+st=0\n
+echo c\n
+c\n
+echo d\n
+d\n
+st=0\n
+e\n
+st=0\n
+echo f\n
+f\n
+set +v\n
+g\n
+st=0\n
+echo h\n
+h\n
+st=0\n
+echo i\n
+i\n
+echo j\n
+j\n
+st=0\n
+k\n
+echo l\n
+l\n
+set +v\n
+m\n
+st=0\n
+
+--- err
+
+=== pelt st=0
+--- out
+a\n
+b\n
+st=0\n
+c\n
+d\n
+st=0\n
+e\n
+st=0\n
+f\n
+g\n
+st=0\n
+echo h\n
+h\n
+st=0\n
+i\n
+j\n
+st=0\n
+k\n
+l\n
+m\n
+st=0\n
+
+--- err
+

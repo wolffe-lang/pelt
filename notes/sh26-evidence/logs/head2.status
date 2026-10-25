@@ -1,0 +1,68 @@
+tag=head2 head=cf1e7cdde39b2bb7565c751707702d2cb4f562b0 dirty=1
+cpus=pid 2's current affinity list: 0-3 core=0
+2026-10-25T01:04:13+00:00 start fmt 1.61 1.81 2.08
+fmt=0 
+2026-10-25T01:04:14+00:00 start build 1.61 1.81 2.08
+build=0 build: target/release/pelt
+2026-10-25T01:04:52+00:00 start build-static 2.53 2.01 2.14
+build-static=0 build: target/static/pelt
+0e80cc57c89a939cc21a41f8f858049d4fcda6d79bf502253831bb511e3fe788  /home/mfwolffe/lanes/sh26/bin/head2/native/pelt
+4e5f59222e4c3cc28d386ef9da827916f8ead8860bcd1f3e22616accf88158f0  /home/mfwolffe/lanes/sh26/bin/head2/release/pelt
+723a79226bdef72ad3fd82c78e0b2b2619eb28a218b03f74af94b94e6bf758e4  /home/mfwolffe/lanes/sh26/bin/head2/static/pelt
+2026-10-25T01:05:44+00:00 start test 4.22 2.56 2.32
+test=0 wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+2026-10-25T01:05:45+00:00 start clause 4.28 2.60 2.34
+clause=0 clause-census: not counted (kind X): 43; statements with a passing case older than the census: 331
+2026-10-25T01:05:46+00:00 start diff-native 4.28 2.60 2.34
+diff-native=0 difftest: total       1023     0    15 (1)
+2026-10-25T01:06:18+00:00 start sess-native 4.22 2.76 2.40
+sess-native=0 session: pass 295  fail 0  pending 0 (0)
+2026-10-25T01:13:47+00:00 start diff-release 3.83 3.04 2.57
+diff-release=0 difftest: total       1023     0    15 (1)
+2026-10-25T01:14:12+00:00 start sess-release 3.45 3.00 2.57
+sess-release=0 session: pass 295  fail 0  pending 0 (0)
+2026-10-25T01:21:40+00:00 start width 4.05 3.66 3.08
+width=0 
+2026-10-25T01:21:41+00:00 start self-native 4.05 3.66 3.08
+self-native=0 selfcheck: every table check passed; a fork with a task live is busy and runs in process
+2026-10-25T01:21:46+00:00 start glob-rss-native 4.37 3.73 3.11
+glob-rss-native=0 glob-rss: ok (12180 KB with 64 files, 12148 KB empty, bound 15410)
+2026-10-25T01:21:47+00:00 start loop-rss-native 4.37 3.73 3.11
+loop-rss-native=0 loop-rss: ok (10000 more turns grew 212 KB, about 21 B a turn; bound 2000 KB)
+2026-10-25T01:21:48+00:00 start exec-witness-native 4.37 3.73 3.11
+exec-witness-native=0 exec-witness: status  ok   returncode -15 (want -15), stderr ''
+2026-10-25T01:21:49+00:00 start edit-witness-native 4.37 3.73 3.11
+edit-witness-native=0 edit-witness: 11 ok, 0 failed, 0 skipped
+2026-10-25T01:22:15+00:00 start hist-witness-native 3.93 3.69 3.11
+hist-witness-native=0 hist-witness: 6 of 6 hold
+2026-10-25T01:22:21+00:00 start signal-witness-native 4.01 3.72 3.12
+signal-witness-native=0 signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+2026-10-25T01:22:23+00:00 start reap-native 4.01 3.72 3.12
+reap-native=0 reap-witness: ok (0 failed, 0 skipped)
+2026-10-25T01:22:45+00:00 start shape-native 3.76 3.69 3.13
+shape-native=0 shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)
+2026-10-25T01:26:49+00:00 start self-release 2.37 3.03 2.99
+self-release=0 selfcheck: every table check passed; a fork with a task live is busy and runs in process
+2026-10-25T01:27:20+00:00 start glob-rss-release 2.27 2.93 2.96
+glob-rss-release=0 glob-rss: ok (12208 KB with 64 files, 12200 KB empty, bound 15468)
+2026-10-25T01:27:21+00:00 start loop-rss-release 2.27 2.93 2.96
+loop-rss-release=0 loop-rss: ok (10000 more turns grew 164 KB, about 16 B a turn; bound 2000 KB)
+2026-10-25T01:27:22+00:00 start exec-witness-release 2.27 2.93 2.96
+exec-witness-release=0 exec-witness: status  ok   returncode -15 (want -15), stderr ''
+2026-10-25T01:27:23+00:00 start edit-witness-release 2.27 2.93 2.96
+edit-witness-release=0 edit-witness: 11 ok, 0 failed, 0 skipped
+2026-10-25T01:27:50+00:00 start hist-witness-release 1.90 2.79 2.91
+hist-witness-release=0 hist-witness: 6 of 6 hold
+2026-10-25T01:27:56+00:00 start signal-witness-release 1.83 2.75 2.89
+signal-witness-release=0 signal-witness: chld    ok   exit 0, wrote 'st=3\nc\nst=4\n'
+2026-10-25T01:27:58+00:00 start reap-release 1.83 2.75 2.89
+reap-release=0 reap-witness: ok (0 failed, 0 skipped)
+2026-10-25T01:28:20+00:00 start shape-release 1.55 2.61 2.84
+shape-release=0 shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)
+2026-10-25T01:31:18+00:00 start diff-selftest 1.67 2.27 2.67
+diff-selftest=0 difftest-selftest: unlisted exits 1 as it must
+2026-10-25T01:31:19+00:00 start sess-selftest 1.67 2.27 2.67
+sess-selftest=0 session-selftest: unlisted exits 1 as it must
+2026-10-25T01:31:36+00:00 start oracle-check 1.20 2.13 2.62
+oracle-check=0 oracle-record: 0 drifted
+done 2026-10-25T01:32:34+00:00

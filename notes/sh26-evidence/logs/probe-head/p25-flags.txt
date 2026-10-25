@@ -1,0 +1,15 @@
+######## /home/mfwolffe/lanes/sh26/probe/p25-flags.sh
+=== pelt st=0
+--- out
+I\n
+ubaCIfe\n
+mI\n
+ubaCvxmIfe\n
+bm\n
+bx\n
+bv\n
+bn\n
+n-done\n
+
+--- err
+

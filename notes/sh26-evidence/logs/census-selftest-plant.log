@@ -1,0 +1,20 @@
+FAIL coin, every line the same: same (want coin)
+FAIL coin, pelt's coin line parts: same (want coin)
+FAIL coin, dash's own coin line parts: same (want coin)
+ok   coin, another line parts: differs (want differs)
+ok   coin, the status parts: differs (want differs)
+ok   no coin, that line parts: differs (want differs)
+ok   no coin, every line the same: same (want same)
+ok   no coin, dash parts from dash: unstable (want unstable)
+script-census --selftest: 5 of 8
+plant exit=1
+ok   coin, every line the same: coin (want coin)
+ok   coin, pelt's coin line parts: coin (want coin)
+ok   coin, dash's own coin line parts: coin (want coin)
+ok   coin, another line parts: differs (want differs)
+ok   coin, the status parts: differs (want differs)
+ok   no coin, that line parts: differs (want differs)
+ok   no coin, every line the same: same (want same)
+ok   no coin, dash parts from dash: unstable (want unstable)
+script-census --selftest: 8 of 8
+head exit=0

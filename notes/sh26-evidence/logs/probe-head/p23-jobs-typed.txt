@@ -1,0 +1,6 @@
+##### /usr/bin/dash
+$ <<a=1 sleep 0.3 &>>a=1 sleep 0.3 &\r\n$ <<jobs>>jobs\r\n[1] + Done                       sleep 0.3\r\n$ <<FOO=bar &>>FOO=bar &\r\n$ <<jobs>>jobs\r\n[1] + Done                       \r\n$ <<p=1 >/dev/null &>>p=1 >/dev/null &\r\n$ <<jobs>>jobs\r\n[1] + Done                        1>/dev/null\r\n$ <<FOO=$(echo a) &>>FOO=$(echo a) &\r\n$ <<jobs>>jobs\r\n[1] + Done                       \r\n$ <<exit>>exit\r\n
+status 0
+##### /home/mfwolffe/lanes/sh26/bin/head2/release/pelt
+$ <<a=1 sleep 0.3 &>>a=1 sleep 0.3 &\r\n$ <<jobs>>jobs\r\n[1] + Done                       sleep 0.3\r\n$ <<FOO=bar &>>FOO=bar &\r\n$ <<jobs>>jobs\r\n[1] + Done                       \r\n$ <<p=1 >/dev/null &>>p=1 >/dev/null &\r\n$ <<jobs>>jobs\r\n[1] + Done                        1>/dev/null\r\n$ <<FOO=$(echo a) &>>FOO=$(echo a) &\r\n$ <<jobs>>jobs\r\n[1] + Done                       \r\n$ <<exit>>exit\r\n
+status 0

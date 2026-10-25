@@ -1,0 +1,34 @@
+######## /home/mfwolffe/lanes/sh26/probe/p20-enoexec-argv.sh
+=== dash st=0
+--- out
+./who|a|b c|\n
+/bin/sh|./who|a|b c|\n
+./who|d|\n
+/bin/sh|./who|d|\n
+/home/mfwolffe/lanes/sh26/tmp/probe.CZJRfr/w/who|e|\n
+/bin/sh|/home/mfwolffe/lanes/sh26/tmp/probe.CZJRfr/w/who|e|\n
+
+--- err
+
+=== bash st=0
+--- out
+./who|a|b c|\n
+../sh|../s.sh|\n
+/home/mfwolffe/lanes/sh26/tmp/probe.xfP7TT/w/who|d|\n
+../sh|../s.sh|\n
+/home/mfwolffe/lanes/sh26/tmp/probe.xfP7TT/w/who|e|\n
+../sh|../s.sh|\n
+
+--- err
+
+=== pelt st=0
+--- out
+./who|a|b c|\n
+/bin/sh|./who|a|b c|\n
+./who|d|\n
+pelt|./who|d|\n
+/home/mfwolffe/lanes/sh26/tmp/probe.TpgJoZ/w/who|e|\n
+/bin/sh|/home/mfwolffe/lanes/sh26/tmp/probe.TpgJoZ/w/who|e|\n
+
+--- err
+

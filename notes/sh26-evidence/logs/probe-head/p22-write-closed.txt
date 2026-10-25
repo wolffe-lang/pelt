@@ -1,0 +1,15 @@
+######## /home/mfwolffe/lanes/sh26/probe/p22-write-closed.sh
+=== pelt st=0
+--- out
+echo-closed1 st=1\n
+printf-closed1 st=1\n
+pwd-closed1 st=1\n
+trap-xy st=2\n
+trap-dd st=0\n
+
+--- err
+pelt: ../s.sh: line 2: echo: echo: I/O error\n
+pelt: ../s.sh: line 3: printf: printf: I/O error\n
+pelt: ../s.sh: line 4: pwd: pwd: I/O error\n
+pelt: ../s.sh: line 5: trap: Illegal option -x\n
+

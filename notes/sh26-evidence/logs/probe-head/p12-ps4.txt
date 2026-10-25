@@ -1,0 +1,14 @@
+######## /home/mfwolffe/lanes/sh26/probe/p12-ps4.sh
+=== pelt st=0
+--- out
+
+--- err
+1-2-c-dflt> : one\n
+1-2-c-dflt> set +x\n
+[9] : two\n
+[10] set +x\n
+: three\n
+set +x\n
+: four\n
+set +x\n
+

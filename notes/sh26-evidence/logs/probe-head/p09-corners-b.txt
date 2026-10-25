@@ -1,0 +1,47 @@
+######## /home/mfwolffe/lanes/sh26/probe/p09-corners-b.sh
+=== pelt st=0
+--- out
+trap -- - INT\n
+trap-p st=0\n
+sub st=0\n
+trap -- 'echo i' INT\n
+trap st=0\n
+traced\n
+a b a b q"t it's a b   $x\n
+notify st=0\n
+b-in-flags\n
+set +o ignoreeof\n
+set -o notify\n
+set +o verbose\n
+set +o xtrace\n
+
+--- err
+tag> echo traced\n
+tag> set +x\n
++ y=1\n
++ y=2 true\n
++ z=a b w=a b\n
++ echo a b a b q"t it's a b   $x\n
++ :\n
++ :\n
++ [ a = a ]\n
++ f arg\n
++ :\n
++ echo sub\n
++ v=sub\n
++ echo inner\n
++ : inner\n
++ echo hi\n
++ x=1\n
++ echo brace\n
++ false\n
++ true\n
++ :\n
++ true\n
++ true\n
++ false\n
++ true\n
++ echo a\n
++ cat\n
++ set +x\n
+

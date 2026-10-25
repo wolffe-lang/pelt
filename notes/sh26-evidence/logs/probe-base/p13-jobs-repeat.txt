@@ -1,0 +1,22 @@
+######## /home/mfwolffe/lanes/sh26/probe/p13-jobs-repeat.sh
+=== dash st=0
+--- out
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       \n
+
+--- err
+
+=== bash st=0
+--- out
+
+--- err
+
+=== pelt st=0
+--- out
+[1] + Done                       FOO=bar\n
+[1] + Done                       FOO=bar BAZ=q\n
+[1] + Done                       FOO=$(...)\n
+
+--- err
+

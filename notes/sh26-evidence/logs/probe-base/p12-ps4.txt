@@ -1,0 +1,40 @@
+######## /home/mfwolffe/lanes/sh26/probe/p12-ps4.sh
+=== dash st=0
+--- out
+
+--- err
+1-2-c-dflt> : one\n
+1-2-c-dflt> set +x\n
+[9] : two\n
+[10] set +x\n
+: three\n
+set +x\n
+: four\n
+set +x\n
+
+=== bash st=0
+--- out
+
+--- err
+1-2-c-dflt> : one\n
+1-2-c-dflt> set +x\n
+[9] : two\n
+[10] set +x\n
+: three\n
+set +x\n
+: four\n
+set +x\n
+
+=== pelt st=0
+--- out
+
+--- err
+${n}-$((n+1))-$(echo c)-${u:-dflt}> : one\n
+${n}-$((n+1))-$(echo c)-${u:-dflt}> set +x\n
+[$LINENO] : two\n
+[$LINENO] set +x\n
+: three\n
+set +x\n
++ : four\n
++ set +x\n
+

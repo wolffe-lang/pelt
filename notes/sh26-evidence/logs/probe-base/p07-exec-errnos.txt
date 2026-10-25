@@ -1,0 +1,64 @@
+######## /home/mfwolffe/lanes/sh26/probe/p07-exec-errnos.sh
+=== dash st=0
+--- out
+enotdir st=127\n
+eloop st=127\n
+dangling st=127\n
+enametoolong st=127\n
+etxtbsy st=126\n
+bad-interp st=127\n
+dir-on-path st=127\n
+eacces-dir st=126\n
+
+--- err
+../s.sh: 2: ./f/x: not found\n
+../s.sh: 3: ./loop1: Too many levels of symbolic links\n
+../s.sh: 4: ./dangle: not found\n
+../s.sh: 5: ./000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: File name too long\n
+../s.sh: 6: ./busy: Text file busy\n
+../s.sh: 7: ./badi: not found\n
+../s.sh: 8: sub: Permission denied\n
+../s.sh: 9: ./dd/sub: Permission denied\n
+
+=== bash st=0
+--- out
+enotdir st=126\n
+eloop st=126\n
+dangling st=127\n
+enametoolong st=126\n
+etxtbsy st=126\n
+bad-interp st=126\n
+dir-on-path st=127\n
+eacces-dir st=126\n
+
+--- err
+../s.sh: line 2: ./f/x: Not a directory\n
+../s.sh: line 3: ./loop1: Too many levels of symbolic links\n
+../s.sh: line 4: ./dangle: No such file or directory\n
+../s.sh: line 5: ./000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: File name too long\n
+../s.sh: ./busy: /bin/sh: bad interpreter: Text file busy\n
+../s.sh: ./badi: /nonexistent/interp: bad interpreter: No such file or directory\n
+../s.sh: line 8: sub: command not found\n
+../s.sh: line 9: ./dd/sub: Permission denied\n
+
+=== pelt st=0
+--- out
+enotdir st=126\n
+eloop st=126\n
+dangling st=127\n
+enametoolong st=126\n
+etxtbsy st=126\n
+bad-interp st=127\n
+dir-on-path st=127\n
+eacces-dir st=126\n
+
+--- err
+pelt: ../s.sh: line 2: ./f/x: cannot be run\n
+pelt: ../s.sh: line 3: ./loop1: cannot be run\n
+pelt: ../s.sh: line 4: ./dangle: not found\n
+pelt: ../s.sh: line 5: ./000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: cannot be run\n
+pelt: ../s.sh: line 6: ./busy: cannot be run\n
+pelt: ../s.sh: line 7: ./badi: not found\n
+pelt: ../s.sh: line 8: sub: not found\n
+pelt: ../s.sh: line 9: ./dd/sub: cannot be run\n
+

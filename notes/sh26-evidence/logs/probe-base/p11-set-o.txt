@@ -1,0 +1,244 @@
+######## /home/mfwolffe/lanes/sh26/probe/p11-set-o.sh
+=== dash st=0
+--- out
+set +o errexit\n
+set +o noglob\n
+set +o ignoreeof\n
+set +o interactive\n
+set +o monitor\n
+set +o noexec\n
+set +o stdin\n
+set +o xtrace\n
+set +o verbose\n
+set +o vi\n
+set +o emacs\n
+set +o noclobber\n
+set +o allexport\n
+set +o notify\n
+set +o nounset\n
+set +o nolog\n
+set +o pipefail\n
+set +o debug\n
+---\n
+Current option settings\n
+errexit         off\n
+noglob          off\n
+ignoreeof       off\n
+interactive     off\n
+monitor         off\n
+noexec          off\n
+stdin           off\n
+xtrace          off\n
+verbose         off\n
+vi              off\n
+emacs           off\n
+noclobber       off\n
+allexport       off\n
+notify          off\n
+nounset         off\n
+nolog           off\n
+pipefail        off\n
+debug           off\n
+---\n
+bI\n
+set -o ignoreeof\n
+set -o notify\n
+
+--- err
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+\n
+Use "exit" to leave shell.\n
+
+=== bash st=0
+--- out
+set +o allexport\n
+set -o braceexpand\n
+set +o emacs\n
+set +o errexit\n
+set +o errtrace\n
+set +o functrace\n
+set -o hashall\n
+set +o histexpand\n
+set +o history\n
+set +o ignoreeof\n
+set -o interactive-comments\n
+set +o keyword\n
+set +o monitor\n
+set +o noclobber\n
+set +o noexec\n
+set +o noglob\n
+set +o nolog\n
+set +o notify\n
+set +o nounset\n
+set +o onecmd\n
+set +o physical\n
+set +o pipefail\n
+set -o posix\n
+set +o privileged\n
+set +o verbose\n
+set +o vi\n
+set +o xtrace\n
+---\n
+allexport      \toff\n
+braceexpand    \ton\n
+emacs          \toff\n
+errexit        \toff\n
+errtrace       \toff\n
+functrace      \toff\n
+hashall        \ton\n
+histexpand     \toff\n
+history        \toff\n
+ignoreeof      \toff\n
+interactive-comments\ton\n
+keyword        \toff\n
+monitor        \toff\n
+noclobber      \toff\n
+noexec         \toff\n
+noglob         \toff\n
+nolog          \toff\n
+notify         \toff\n
+nounset        \toff\n
+onecmd         \toff\n
+physical       \toff\n
+pipefail       \toff\n
+posix          \ton\n
+privileged     \toff\n
+verbose        \toff\n
+vi             \toff\n
+xtrace         \toff\n
+---\n
+bhB\n
+set -o ignoreeof\n
+set -o notify\n
+
+--- err
+
+=== pelt st=1
+--- out
+set +o allexport\n
+set +o autocd\n
+set +o emacs\n
+set +o errexit\n
+set +o noclobber\n
+set +o noexec\n
+set +o noglob\n
+set +o nounset\n
+set +o pipefail\n
+set +o verbose\n
+set +o vi\n
+set +o xtrace\n
+---\n
+allexport\toff\n
+autocd\toff\n
+emacs\toff\n
+errexit\toff\n
+noclobber\toff\n
+noexec\toff\n
+noglob\toff\n
+nounset\toff\n
+pipefail\toff\n
+verbose\toff\n
+vi\toff\n
+xtrace\toff\n
+---\n
+b\n
+
+--- err
+

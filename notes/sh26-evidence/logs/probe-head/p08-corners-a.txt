@@ -1,0 +1,34 @@
+######## /home/mfwolffe/lanes/sh26/probe/p08-corners-a.sh
+=== pelt st=0
+--- out
+dot st=2\n
+set st=2\n
+exec st=2\n
+export ok=1\n
+export HOME='/home/pelt'\n
+export LC_ALL='C'\n
+export PATH='/usr/bin:/bin'\n
+export PWD='/home/mfwolffe/lanes/sh26/tmp/probe.oX0gmm/w'\n
+export ok='1'\n
+export-empty st=0\n
+dashdash\n
+printf st=0\n
+printf-only-dd st=2\n
+exit-in-trap st=7\n
+exit-in-trap2 st=0\n
+exit-n-in-trap st=4\n
+readonly a='x y'\n
+readonly b\n
+pwd-x st=2\n
+pwd-LP st=0\n
+cd-e st=0\n
+cd-Pe st=0\n
+survived\n
+
+--- err
+pelt: ../s.sh: line 2: .: /nonexistent/file: not found\n
+pelt: ../s.sh: line 3: set: nosuchoption: no such option\n
+pelt: ../s.sh: line 4: cannot open /nonexistent: No such file or directory\n
+pelt: ../s.sh: line 9: printf: a format is required\n
+pelt: ../s.sh: line 15: pwd: -x: no such option\n
+

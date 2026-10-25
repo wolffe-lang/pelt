@@ -1,0 +1,27 @@
+##### /usr/bin/dash MAIL MAILCHECK=0
+$ <<MAIL=$HOME/mbox MAILCHECK=0>>MAIL=$HOME/mbox MAILCHECK=0\r\n$ <<echo x > $HOME/mbox>>echo x > $HOME/mbox\r\nyou have mail\r\n$ <<echo next>>echo next\r\nnext\r\n$ <<echo y >> $HOME/mbox>>echo y >> $HOME/mbox\r\nyou have mail\r\n$ <<: > $HOME/mbox>>: > $HOME/mbox\r\n$ <<echo z > $HOME/mbox>>echo z > $HOME/mbox\r\nyou have mail\r\n$ <<MAIL=$HOME/pre>>MAIL=$HOME/pre\r\n$ <<echo more >> $HOME/pre>>echo more >> $HOME/pre\r\nyou have mail\r\n$ <<exit>>exit\r\n
+status 0
+##### /usr/bin/dash MAILPATH
+$ <<MAILCHECK=0 MAILPATH=$HOME/m2%got-it-$_:$HOME/m3>>MAILCHECK=0 MAILPATH=$HOME/m2%got-it-$_:$HOME/m3\r\n$ <<echo z > $HOME/m2>>echo z > $HOME/m2\r\ngot-it-:/home/mfwolffe/lanes/sh26/tmp/mailh/m3\r\n$ <<echo w > $HOME/m3>>echo w > $HOME/m3\r\nyou have mail\r\n$ <<MAIL=$HOME/m4>>MAIL=$HOME/m4\r\n$ <<echo q > $HOME/m4>>echo q > $HOME/m4\r\n$ <<exit>>exit\r\n
+status 0
+##### /usr/bin/dash MAILCHECK default and 1
+$ <<MAIL=$HOME/mbox>>MAIL=$HOME/mbox\r\n$ <<echo x > $HOME/mbox>>echo x > $HOME/mbox\r\nyou have mail\r\n$ <<:>>:\r\n$ <<MAILCHECK=1>>MAILCHECK=1\r\n$ <<echo y >> $HOME/mbox>>echo y >> $HOME/mbox\r\nyou have mail\r\n$ <<:>>:\r\n$ <<:>>:\r\n$ <<exit>>exit\r\n
+status 0
+##### /usr/bin/bash MAIL MAILCHECK=0
+$ <<MAIL=$HOME/mbox MAILCHECK=0>>MAIL=$HOME/mbox MAILCHECK=0\r\n$ <<echo x > $HOME/mbox>>echo x > $HOME/mbox\r\nYou have mail in /home/mfwolffe/lanes/sh26/tmp/mailh/mbox\r\n$ <<echo next>>echo next\r\nnext\r\n$ <<echo y >> $HOME/mbox>>echo y >> $HOME/mbox\r\nYou have new mail in /home/mfwolffe/lanes/sh26/tmp/mailh/mbox\r\n$ <<: > $HOME/mbox>>: > $HOME/mbox\r\n$ <<echo z > $HOME/mbox>>echo z > $HOME/mbox\r\n$ <<MAIL=$HOME/pre>>MAIL=$HOME/pre\r\n$ <<echo more >> $HOME/pre>>echo more >> $HOME/pre\r\nYou have new mail in /home/mfwolffe/lanes/sh26/tmp/mailh/pre\r\n$ <<exit>>exit\r\nexit\r\n
+status 0
+##### /usr/bin/bash MAILPATH
+$ <<MAILCHECK=0 MAILPATH=$HOME/m2%got-it-$_:$HOME/m3>>MAILCHECK=0 MAILPATH=$HOME/m2%got-it-$_:$HOME/m3\r\n$ <<echo z > $HOME/m2>>echo z > $HOME/m2\r\ngot-it-/usr/share/bash-completion/bash_completion\r\n$ <<echo w > $HOME/m3>>echo w > $HOME/m3\r\nYou have mail in /home/mfwolffe/lanes/sh26/tmp/mailh/m3\r\n$ <<MAIL=$HOME/m4>>MAIL=$HOME/m4\r\n$ <<echo q > $HOME/m4>>echo q > $HOME/m4\r\n$ <<exit>>exit\r\nexit\r\n
+status 0
+##### /usr/bin/bash MAILCHECK default and 1
+$ <<MAIL=$HOME/mbox>>MAIL=$HOME/mbox\r\n$ <<echo x > $HOME/mbox>>echo x > $HOME/mbox\r\n$ <<:>>:\r\n$ <<MAILCHECK=1>>MAILCHECK=1\r\n$ <<echo y >> $HOME/mbox>>echo y >> $HOME/mbox\r\n$ <<:>>:\r\n$ <<:>>:\r\nYou have new mail in /home/mfwolffe/lanes/sh26/tmp/mailh/mbox\r\n$ <<exit>>exit\r\nexit\r\n
+status 0
+##### /home/mfwolffe/lanes/sh26/bin/head2/release/pelt MAIL MAILCHECK=0
+$ <<MAIL=$HOME/mbox MAILCHECK=0>>MAIL=$HOME/mbox MAILCHECK=0\r\n$ <<echo x > $HOME/mbox>>echo x > $HOME/mbox\r\nyou have mail\r\n$ <<echo next>>echo next\r\nnext\r\n$ <<echo y >> $HOME/mbox>>echo y >> $HOME/mbox\r\nyou have mail\r\n$ <<: > $HOME/mbox>>: > $HOME/mbox\r\nyou have mail\r\n$ <<echo z > $HOME/mbox>>echo z > $HOME/mbox\r\n$ <<MAIL=$HOME/pre>>MAIL=$HOME/pre\r\n$ <<echo more >> $HOME/pre>>echo more >> $HOME/pre\r\nyou have mail\r\n$ <<exit>>exit\r\n
+status 0
+##### /home/mfwolffe/lanes/sh26/bin/head2/release/pelt MAILPATH
+$ <<MAILCHECK=0 MAILPATH=$HOME/m2%got-it-$_:$HOME/m3>>MAILCHECK=0 MAILPATH=$HOME/m2%got-it-$_:$HOME/m3\r\n$ <<echo z > $HOME/m2>>echo z > $HOME/m2\r\ngot-it-\r\n$ <<echo w > $HOME/m3>>echo w > $HOME/m3\r\nyou have mail\r\n$ <<MAIL=$HOME/m4>>MAIL=$HOME/m4\r\n$ <<echo q > $HOME/m4>>echo q > $HOME/m4\r\n$ <<exit>>exit\r\n
+status 0
+##### /home/mfwolffe/lanes/sh26/bin/head2/release/pelt MAILCHECK default and 1
+$ <<MAIL=$HOME/mbox>>MAIL=$HOME/mbox\r\n$ <<echo x > $HOME/mbox>>echo x > $HOME/mbox\r\n$ <<:>>:\r\n$ <<MAILCHECK=1>>MAILCHECK=1\r\nyou have mail\r\n$ <<echo y >> $HOME/mbox>>echo y >> $HOME/mbox\r\n$ <<:>>:\r\n$ <<:>>:\r\n$ <<exit>>exit\r\n
+status 0

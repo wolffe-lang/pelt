@@ -1,0 +1,106 @@
+session: pelt = /home/mfwolffe/lanes/sh26/bin/base/native/pelt
+FAIL c_ignoreeof
+       pelt step 0
+       pelt err no
+       pelt prompt "$"
+       pelt step 1 "set -o ignoreeof"
+       pelt err no
+       pelt prompt "$"
+       pelt step 2 "^D"
+     ! pelt err no
+       dash err yes
+     ! pelt prompt ""
+       dash prompt "$"
+     ! pelt exit 0 at step 2
+       dash step 3 "echo still-here"
+     ! pelt <none>
+       dash out "still-here\n"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt "$"
+     ! pelt <none>
+       dash step 4 "^D"
+     ! pelt <none>
+       dash err yes
+     ! pelt <none>
+       dash prompt "$"
+     ! pelt <none>
+       dash step 5 "kill -KILL $$"
+     ! pelt <none>
+       dash err no
+     ! pelt <none>
+       dash prompt ""
+     ! pelt <none>
+       dash signal 9 at step 5
+FAIL c_mail
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "MAIL=$HOME/mbox MAILCHECK=0"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "echo x > $HOME/mbox"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo next"
+       pelt out "next\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 4
+FAIL jc_assign_text
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "FOO=bar &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "jobs"
+     ! pelt out "[1] + Done                       FOO=bar\n"
+       dash out "[1] + Done                       \n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 3 "a=1 sleep 30 &"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 4 "jobs"
+     ! pelt out "[1] + Running                    a=1 sleep 30\n"
+       dash out "[1] + Running                    sleep 30\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "kill %1"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 6 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 6
+ok   mail_interval
+FAIL mail_path
+       pelt step 0
+       pelt err no
+       pelt prompt "$ "
+       pelt step 1 "MAILCHECK=0 MAILPATH=\"$HOME/m3:$HOME/m2%got mail\""
+       pelt err no
+       pelt prompt "$ "
+       pelt step 2 "echo z > $HOME/m2"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 3 "echo w > $HOME/m3"
+     ! pelt err no
+       dash err yes
+       pelt prompt "$ "
+       pelt step 4 "echo next"
+       pelt out "next\n"
+       pelt err no
+       pelt prompt "$ "
+       pelt step 5 "exit"
+       pelt err no
+       pelt prompt ""
+       pelt exit 0 at step 5
+session: pass 1  fail 4  pending 0 (0)

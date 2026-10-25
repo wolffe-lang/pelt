@@ -1,0 +1,29 @@
+######## /home/mfwolffe/lanes/sh26/probe/p27-ds-crash.sh
+/home/mfwolffe/lanes/sh26/probe/run.sh: line 18:     8 Segmentation fault         (core dumped) env -i PATH=/usr/bin:/bin HOME=/home/pelt LC_ALL=C ${PROBE_ENV:-} ../sh ../s.sh ${PROBE_ARGS:-} > $d/out 2> $d/err < /dev/null
+=== dash st=139
+--- out
+
+--- err
+
+=== bash st=0
+--- out
+printf1 st=0\n
+ 78 e2 82 ac 79\n
+printf2 st=0\n
+ e2 82 ac\n
+assign st=0\n
+ e2 82 ac 0a\n
+
+--- err
+
+=== pelt st=0
+--- out
+printf1 st=0\n
+ 78 e2 82 ac 79\n
+printf2 st=0\n
+ e2 82 ac\n
+assign st=0\n
+ e2 82 ac 0a\n
+
+--- err
+

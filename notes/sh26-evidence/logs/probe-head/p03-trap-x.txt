@@ -1,0 +1,7 @@
+######## /home/mfwolffe/lanes/sh26/probe/p03-trap-x.sh
+=== pelt st=2
+--- out
+
+--- err
+pelt: ../s.sh: line 2: trap: Illegal option -x\n
+

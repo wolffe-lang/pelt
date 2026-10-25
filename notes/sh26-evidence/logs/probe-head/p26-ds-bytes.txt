@@ -1,0 +1,13 @@
+######## /home/mfwolffe/lanes/sh26/probe/p26-ds-bytes.sh
+=== pelt st=2
+--- out
+ c3 a9\n
+ c3 a9\n
+
+--- err
+pelt: ../s.sh: line 2: $'\\377': a byte that is not UTF-8 cannot be carried yet (pelt#65)\n
+pelt: ../s.sh: line 3: $'\\xff': a byte that is not UTF-8 cannot be carried yet (pelt#65)\n
+pelt: ../s.sh: line 6: $'\\377': a byte that is not UTF-8 cannot be carried yet (pelt#65)\n
+pelt: ../s.sh: line 7: $'\\377': a byte that is not UTF-8 cannot be carried yet (pelt#65)\n
+pelt: ../s.sh: line 8: $'\\377': a byte that is not UTF-8 cannot be carried yet (pelt#65)\n
+

@@ -1,0 +1,135 @@
+######## /home/mfwolffe/lanes/sh26/probe/p09-corners-b.sh
+=== dash st=0
+--- out
+sub st=2\n
+trap -- 'echo i' INT\n
+trap st=0\n
+traced\n
+a b a b q"t it's a b   $x\n
+notify st=0\n
+b-in-flags\n
+set +o ignoreeof\n
+set +o xtrace\n
+set +o verbose\n
+set -o notify\n
+
+--- err
+../s.sh: 4: trap: Illegal option -p\n
+tag> echo traced\n
+tag> set +x\n
++ y=1\n
++ y=2 true\n
++ z=a b w=a b\n
++ echo a b a b q"t it's a b   $x\n
++ :\n
++ :\n
++ [ a = a ]\n
++ f arg\n
++ :\n
++ echo sub\n
++ v=sub\n
++ echo inner\n
++ : inner\n
++ echo hi\n
++ x=1\n
++ echo brace\n
++ false\n
++ true\n
++ :\n
++ true\n
++ true\n
++ false\n
++ true\n
++ echo a\n
++ cat\n
++ set +x\n
+
+=== bash st=0
+--- out
+trap -- 'echo i' INT\n
+trap-p st=0\n
+sub st=0\n
+trap -- 'echo i' INT\n
+trap st=0\n
+traced\n
+a b a b q"t it's a b   $x\n
+notify st=0\n
+b-in-flags\n
+set +o ignoreeof\n
+set -o notify\n
+set +o verbose\n
+set +o xtrace\n
+
+--- err
+tag> echo traced\n
+tag> set +x\n
++ y=1\n
++ y=2\n
++ true\n
++ z='a b'\n
++ w='a b'\n
++ echo 'a b' a b 'q"t' 'it'\\''s' 'a b' '' '' '$x'\n
++ for i in 1\n
++ :\n
++ case a in\n
++ :\n
++ '[' a = a ']'\n
++ f arg\n
++ :\n
+++ echo sub\n
++ v=sub\n
+++ echo inner\n
++ : inner\n
++ echo hi\n
++ x=1\n
++ echo brace\n
++ false\n
++ true\n
++ :\n
++ true\n
++ true\n
++ false\n
++ true\n
++ echo a\n
++ cat\n
++ set +x\n
+
+=== pelt st=0
+--- out
+sub st=2\n
+trap -- 'echo i' INT\n
+trap st=0\n
+traced\n
+a b a b q"t it's a b   $x\n
+notify st=0\n
+b-in-flags\n
+set +o verbose\n
+set +o xtrace\n
+
+--- err
+pelt: ../s.sh: line 4: trap: -p: no such option\n
+$x> echo traced\n
+$x> set +x\n
++ y=2 true\n
++ echo a b a b q"t it's a b   $x\n
++ :\n
++ :\n
++ [ a = a ]\n
++ f arg\n
++ :\n
++ echo sub\n
++ echo inner\n
++ : inner\n
++ echo hi\n
++ echo brace\n
++ false\n
++ true\n
++ :\n
++ true\n
++ true\n
++ false\n
++ true\n
++ echo a\n
++ cat\n
++ set +x\n
+

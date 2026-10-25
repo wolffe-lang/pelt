@@ -1,0 +1,9 @@
+######## /home/mfwolffe/lanes/sh26/probe/p13-jobs-repeat.sh
+=== pelt st=0
+--- out
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       \n
+
+--- err
+

@@ -1,0 +1,18 @@
+tag=base head=70eec1437d04859504cae3d1382c7b51292cf2eb dirty=0
+cpus=pid 2's current affinity list: 0-15 core=0
+2026-10-24T23:31:49+00:00 start fmt 1.21 2.18 3.27
+fmt=0 
+2026-10-24T23:31:50+00:00 start build 1.21 2.18 3.27
+build=0 build: target/release/pelt
+2026-10-24T23:32:25+00:00 start build-static 3.77 2.66 3.39
+build-static=0 build: target/static/pelt
+baa09739be896924d4e78d98c3c997b16a15189d547024e4a566260994f14085  /home/mfwolffe/lanes/sh26/bin/base/native/pelt
+99a372a1a77e9e704985df352231c39eab26859c6b968ae1945a93471f8d067e  /home/mfwolffe/lanes/sh26/bin/base/release/pelt
+5c06c86eacdc8e740ca54b43a362e160fa83c5322843f20b509909bbe351b0e2  /home/mfwolffe/lanes/sh26/bin/base/static/pelt
+2026-10-24T23:32:51+00:00 start test 3.55 2.68 3.38
+test=0 wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+2026-10-24T23:32:52+00:00 start clause 3.55 2.68 3.38
+clause=0 clause-census: not counted (kind X): 43; statements with a passing case older than the census: 323
+2026-10-24T23:32:53+00:00 start diff-native 4.06 2.80 3.41
+diff-native=0 difftest: total        998     0    25 (2)
+2026-10-24T23:33:24+00:00 start sess-native 4.54 3.06 3.48

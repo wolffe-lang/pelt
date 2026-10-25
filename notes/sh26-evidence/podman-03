@@ -1,0 +1,10 @@
+#!/bin/bash
+# sh26: podman with this lane's own store, every build and container on
+# CPUs 0-3 (kasumi delegates the cpuset controller to the user's
+# cgroups; crun resets a taskset affinity, so the cpuset is the bound)
+S=$HOME/lanes/sh26
+sub=$1; shift
+case $sub in
+run|build) exec podman --root $S/sc/store --runroot $S/sc/run-podman "$sub" --cpuset-cpus 0-3 "$@" ;;
+*) exec podman --root $S/sc/store --runroot $S/sc/run-podman "$sub" "$@" ;;
+esac

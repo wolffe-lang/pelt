@@ -1,0 +1,27 @@
+##### /usr/bin/dash env MAIL, MAILCHECK=100
+$ <<echo a > $HOME/mbox>>echo a > $HOME/mbox\r\nyou have mail\r\n$ <<echo b >> $HOME/mbox>>echo b >> $HOME/mbox\r\nyou have mail\r\n$ <<:>>:\r\n$ <<echo c >> $HOME/mbox>>echo c >> $HOME/mbox\r\n$ <<exit>>exit\r\n
+status 0
+##### /usr/bin/dash env MAIL existing, MAILCHECK=0, same-size rewrite, touch
+$ <<:>>:\r\n$ <<echo b > $HOME/mbox>>echo b > $HOME/mbox\r\nyou have mail\r\n$ <<echo c > $HOME/mbox>>echo c > $HOME/mbox\r\nyou have mail\r\n$ <<touch $HOME/mbox>>touch $HOME/mbox\r\nyou have mail\r\n$ <<echo dd > $HOME/mbox>>echo dd > $HOME/mbox\r\n$ <<rm $HOME/mbox>>rm $HOME/mbox\r\n$ <<echo e > $HOME/mbox>>echo e > $HOME/mbox\r\nyou have mail\r\n$ <<exit>>exit\r\n
+status 0
+##### /usr/bin/dash MAILPATH quoted messages
+$ <<MAILPATH='$HOME/m2%got $HOME:$HOME/m3%three:$HOME/a\\%b'>>MAILPATH='$HOME/m2%got $HOME:$HOME/m3%three:$HOME/a\\%b'\r\n$ <<echo z > $HOME/m2>>echo z > $HOME/m2\r\n$ <<echo w > $HOME/m3>>echo w > $HOME/m3\r\n$ <<echo v > $HOME/a%b>>echo v > $HOME/a%b\r\n$ <<exit>>exit\r\n
+status 0
+##### /usr/bin/bash env MAIL, MAILCHECK=100
+$ <<echo a > $HOME/mbox>>echo a > $HOME/mbox\r\n$ <<echo b >> $HOME/mbox>>echo b >> $HOME/mbox\r\n$ <<:>>:\r\n$ <<echo c >> $HOME/mbox>>echo c >> $HOME/mbox\r\n$ <<exit>>exit\r\nexit\r\n
+status 0
+##### /usr/bin/bash env MAIL existing, MAILCHECK=0, same-size rewrite, touch
+$ <<:>>:\r\n$ <<echo b > $HOME/mbox>>echo b > $HOME/mbox\r\nYou have new mail in /home/mfwolffe/lanes/sh26/tmp/mailh/mbox\r\n$ <<echo c > $HOME/mbox>>echo c > $HOME/mbox\r\nYou have mail in /home/mfwolffe/lanes/sh26/tmp/mailh/mbox\r\n$ <<touch $HOME/mbox>>touch $HOME/mbox\r\n$ <<echo dd > $HOME/mbox>>echo dd > $HOME/mbox\r\n$ <<rm $HOME/mbox>>rm $HOME/mbox\r\n$ <<echo e > $HOME/mbox>>echo e > $HOME/mbox\r\n$ <<exit>>exit\r\nexit\r\n
+status 0
+##### /usr/bin/bash MAILPATH quoted messages
+$ <<MAILPATH='$HOME/m2%got $HOME:$HOME/m3%three:$HOME/a\\%b'>>MAILPATH='$HOME/m2%got $HOME:$HOME/m3%three:$HOME/a\\%b'\r\n$ <<echo z > $HOME/m2>>echo z > $HOME/m2\r\n$ <<echo w > $HOME/m3>>echo w > $HOME/m3\r\n$ <<echo v > $HOME/a%b>>echo v > $HOME/a%b\r\n$ <<exit>>exit\r\nexit\r\n
+status 0
+##### /home/mfwolffe/lanes/sh26/bin/head2/release/pelt env MAIL, MAILCHECK=100
+$ <<echo a > $HOME/mbox>>echo a > $HOME/mbox\r\n$ <<echo b >> $HOME/mbox>>echo b >> $HOME/mbox\r\n$ <<:>>:\r\n$ <<echo c >> $HOME/mbox>>echo c >> $HOME/mbox\r\n$ <<exit>>exit\r\n
+status 0
+##### /home/mfwolffe/lanes/sh26/bin/head2/release/pelt env MAIL existing, MAILCHECK=0, same-size rewrite, touch
+$ <<:>>:\r\n$ <<echo b > $HOME/mbox>>echo b > $HOME/mbox\r\nyou have mail\r\n$ <<echo c > $HOME/mbox>>echo c > $HOME/mbox\r\nyou have mail\r\n$ <<touch $HOME/mbox>>touch $HOME/mbox\r\n$ <<echo dd > $HOME/mbox>>echo dd > $HOME/mbox\r\nyou have mail\r\n$ <<rm $HOME/mbox>>rm $HOME/mbox\r\n$ <<echo e > $HOME/mbox>>echo e > $HOME/mbox\r\nyou have mail\r\n$ <<exit>>exit\r\n
+status 0
+##### /home/mfwolffe/lanes/sh26/bin/head2/release/pelt MAILPATH quoted messages
+$ <<MAILPATH='$HOME/m2%got $HOME:$HOME/m3%three:$HOME/a\\%b'>>MAILPATH='$HOME/m2%got $HOME:$HOME/m3%three:$HOME/a\\%b'\r\n$ <<echo z > $HOME/m2>>echo z > $HOME/m2\r\n$ <<echo w > $HOME/m3>>echo w > $HOME/m3\r\n$ <<echo v > $HOME/a%b>>echo v > $HOME/a%b\r\n$ <<exit>>exit\r\n
+status 0

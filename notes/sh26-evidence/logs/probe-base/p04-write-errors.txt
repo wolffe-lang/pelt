@@ -1,0 +1,55 @@
+######## /home/mfwolffe/lanes/sh26/probe/p04-write-errors.sh
+=== dash st=0
+--- out
+echo-closed st=2\n
+printf-closed st=2\n
+echo-full st=1\n
+printf-full st=1\n
+pwd-full st=1\n
+echo-rdonly st=1\n
+end\n
+
+--- err
+../s.sh: 2: 3: Bad file descriptor\n
+../s.sh: 3: 3: Bad file descriptor\n
+../s.sh: 4: echo: echo: I/O error\n
+../s.sh: 5: printf: printf: I/O error\n
+../s.sh: 6: pwd: pwd: I/O error\n
+../s.sh: 7: echo: echo: I/O error\n
+
+=== bash st=0
+--- out
+echo-closed st=1\n
+printf-closed st=1\n
+echo-full st=1\n
+printf-full st=1\n
+pwd-full st=1\n
+echo-rdonly st=1\n
+end\n
+
+--- err
+../s.sh: line 2: 3: Bad file descriptor\n
+../s.sh: line 3: 3: Bad file descriptor\n
+../s.sh: line 4: echo: write error: No space left on device\n
+../s.sh: line 5: printf: write error: No space left on device\n
+../s.sh: line 6: pwd: write error: No space left on device\n
+../s.sh: line 7: echo: write error: Bad file descriptor\n
+
+=== pelt st=0
+--- out
+echo-closed st=2\n
+printf-closed st=2\n
+echo-full st=1\n
+printf-full st=1\n
+pwd-full st=1\n
+echo-rdonly st=1\n
+end\n
+
+--- err
+pelt: ../s.sh: line 2: 3: bad file descriptor\n
+pelt: ../s.sh: line 3: 3: bad file descriptor\n
+pelt: ../s.sh: line 4: echo: write error\n
+pelt: ../s.sh: line 5: printf: write error\n
+pelt: ../s.sh: line 6: pwd: write error\n
+pelt: ../s.sh: line 7: echo: write error\n
+

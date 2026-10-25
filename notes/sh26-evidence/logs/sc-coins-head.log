@@ -1,0 +1,3 @@
+script-census: pelt = /home/mfwolffe/lanes/sh26/bin/head2/static/pelt sha256 723a79226bdef72ad3fd82c78e0b2b2619eb28a218b03f74af94b94e6bf758e4
+coin     configure-sed  300 runs a shell, 56 s: dash 262x'2' 38x'1' (flip 12.7%), pelt 276x'2' 24x'1' (flip 8.0%), load 14.81
+script-census: coins (/home/mfwolffe/lanes/sh26/sc/coins.tsv)

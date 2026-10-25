@@ -1,0 +1,20 @@
+######## /home/mfwolffe/lanes/sh26/probe/p03-trap-x.sh
+=== dash st=2
+--- out
+
+--- err
+../s.sh: 2: trap: Illegal option -x\n
+
+=== bash st=2
+--- out
+
+--- err
+../s.sh: line 2: trap: -x: invalid option\n
+trap: usage: trap [-Plp] [[action] signal_spec ...]\n
+
+=== pelt st=2
+--- out
+
+--- err
+pelt: ../s.sh: line 2: trap: -x: no such option\n
+

@@ -1,0 +1,38 @@
+######## /home/mfwolffe/lanes/sh26/probe/p10-jobs-assign-2.sh
+=== dash st=0
+--- out
+[1] + Done                        1>/dev/null\n
+[1] + Done                        2>&1\n
+[1] + Done(127)                  cmdx arg 2>/dev/null\n
+[1] + Done                       true 1>/dev/null\n
+[1] + Done                       \n
+[1] + Done                       jobs\n
+[1] + Done                       jobs\n
+[1] + Done                       \n
+[1] + Done                       \xc08\x06yPV\n
+[1] + Done                       jobs\n
+[1] + Done                       true FOO=$(...)\n
+
+--- err
+
+=== bash st=0
+--- out
+
+--- err
+
+=== pelt st=0
+--- out
+[1] + Done                       1>/dev/null\n
+[1] + Done                       p=1 2>&1\n
+[1] + Done(127)                  FOO=bar cmdx arg 2>/dev/null\n
+[1] + Done                       x=1 y=2 true 1>/dev/null\n
+[1] + Done                       FOO=$(...)\n
+[1] + Done                       FOO=$(...)\n
+[1] + Done                       FOO="$(...)"\n
+[1] + Done                       FOO=$(...)\n
+[1] + Done                       FOO=$((1+2))\n
+[1] + Done                       FOO=${HOME}\n
+[1] + Done                       true FOO=$(...)\n
+
+--- err
+

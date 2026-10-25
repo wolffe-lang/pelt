@@ -1,0 +1,16 @@
+######## /home/mfwolffe/lanes/sh26/probe/p01-slash-missing.sh
+=== pelt st=0
+--- out
+st=127\n
+st=127\n
+st=126\n
+st=126\n
+st=127\n
+
+--- err
+pelt: ../s.sh: line 3: ../nonexistent/x: not found\n
+pelt: ../s.sh: line 4: ./nope: not found\n
+pelt: ../s.sh: line 5: ./d: Permission denied\n
+pelt: ../s.sh: line 6: ./nox: Permission denied\n
+pelt: ../s.sh: line 7: nosuchcmd_sh26: not found\n
+

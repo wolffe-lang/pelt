@@ -1,0 +1,41 @@
+######## /home/mfwolffe/lanes/sh26/probe/p25-flags.sh
+=== dash st=0
+--- out
+I\n
+ubaCIfe\n
+mI\n
+ubaCvxmIfe\n
+bm\n
+bx\n
+bv\n
+n-done\n
+
+--- err
+
+=== bash st=0
+--- out
+hB\n
+abefhuBC\n
+hmB\n
+abefhmuvxBC\n
+bhmB\n
+bhxB\n
+bhvB\n
+n-done\n
+
+--- err
+
+=== pelt st=0
+--- out
+\n
+uaCbfe\n
+m\n
+uaCvxbmfe\n
+bm\n
+xb\n
+vb\n
+bn\n
+n-done\n
+
+--- err
+

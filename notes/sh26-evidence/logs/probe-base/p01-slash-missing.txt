@@ -1,0 +1,46 @@
+######## /home/mfwolffe/lanes/sh26/probe/p01-slash-missing.sh
+=== dash st=0
+--- out
+st=127\n
+st=127\n
+st=126\n
+st=126\n
+st=127\n
+
+--- err
+../s.sh: 3: ../nonexistent/x: not found\n
+../s.sh: 4: ./nope: not found\n
+../s.sh: 5: ./d: Permission denied\n
+../s.sh: 6: ./nox: Permission denied\n
+../s.sh: 7: nosuchcmd_sh26: not found\n
+
+=== bash st=0
+--- out
+st=127\n
+st=127\n
+st=126\n
+st=126\n
+st=127\n
+
+--- err
+../s.sh: line 3: ../nonexistent/x: No such file or directory\n
+../s.sh: line 4: ./nope: No such file or directory\n
+../s.sh: line 5: ./d: Is a directory\n
+../s.sh: line 6: ./nox: Permission denied\n
+../s.sh: line 7: nosuchcmd_sh26: command not found\n
+
+=== pelt st=0
+--- out
+st=127\n
+st=127\n
+st=126\n
+st=126\n
+st=127\n
+
+--- err
+pelt: ../s.sh: line 3: ../nonexistent/x: not found\n
+pelt: ../s.sh: line 4: ./nope: not found\n
+pelt: ../s.sh: line 5: ./d: cannot be run\n
+pelt: ../s.sh: line 6: ./nox: cannot be run\n
+pelt: ../s.sh: line 7: nosuchcmd_sh26: not found\n
+

@@ -1,0 +1,12 @@
+######## /home/mfwolffe/lanes/sh26/probe/p27-ds-crash.sh
+=== pelt st=0
+--- out
+printf1 st=0\n
+ 78 e2 82 ac 79\n
+printf2 st=0\n
+ e2 82 ac\n
+assign st=0\n
+ e2 82 ac 0a\n
+
+--- err
+

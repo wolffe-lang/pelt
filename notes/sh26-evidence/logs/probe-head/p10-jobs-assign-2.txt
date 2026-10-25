@@ -1,0 +1,17 @@
+######## /home/mfwolffe/lanes/sh26/probe/p10-jobs-assign-2.sh
+=== pelt st=0
+--- out
+[1] + Done                        1>/dev/null\n
+[1] + Done                        2>&1\n
+[1] + Done(127)                  cmdx arg 2>/dev/null\n
+[1] + Done                       true 1>/dev/null\n
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       true FOO=$(...)\n
+
+--- err
+

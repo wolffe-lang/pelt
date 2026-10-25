@@ -1,0 +1,56 @@
+gauntlet (ubuntu-latest, true, native)	wolf test (the table checks)	2026-10-25T01:04:43.5953470Z   stderr: node_text(a=1 sleep 35) = [a=1 sleep 35], want [sleep 35]
+gauntlet (ubuntu-latest, true, native)	wolf test (the table checks)	2026-10-25T01:04:43.5954287Z   stderr: node_text(a=1 b=2 sleep 35 >/dev/null) = [a=1 b=2 sleep 35 1>/dev/null], want [sleep 35 1>/dev/null]
+gauntlet (ubuntu-latest, true, native)	wolf test (the table checks)	2026-10-25T01:04:43.5955029Z   stderr: node_text(FOO=bar) = [FOO=bar], want []
+gauntlet (ubuntu-latest, true, native)	wolf test (the table checks)	2026-10-25T01:04:43.5955628Z   stderr: node_text(p=1 >/dev/null) = [p=1 1>/dev/null], want [ 1>/dev/null]
+gauntlet (ubuntu-latest, true, native)	wolf test (the table checks)	2026-10-25T01:04:43.5956766Z   stderr: node_text((p=1; echo x >/dev/null; :)) = [(p=1; echo x 1>/dev/null; :)], want [(; echo x 1>/dev/null; :)]
+gauntlet (ubuntu-latest, true, native)	wolf test (the table checks)	2026-10-25T01:04:43.6287140Z wolf test: 0 passed; 1 failed; 0 rejected; 0 unsupported; 0 filtered out
+gauntlet (ubuntu-latest, true, native)	the table checks on the native tier, busy's row with them	2026-10-25T01:04:50.2844478Z node_text(a=1 sleep 35) = [a=1 sleep 35], want [sleep 35]
+gauntlet (ubuntu-latest, true, native)	the table checks on the native tier, busy's row with them	2026-10-25T01:04:50.2845111Z node_text(a=1 b=2 sleep 35 >/dev/null) = [a=1 b=2 sleep 35 1>/dev/null], want [sleep 35 1>/dev/null]
+gauntlet (ubuntu-latest, true, native)	the table checks on the native tier, busy's row with them	2026-10-25T01:04:50.2845563Z node_text(FOO=bar) = [FOO=bar], want []
+gauntlet (ubuntu-latest, true, native)	the table checks on the native tier, busy's row with them	2026-10-25T01:04:50.2846065Z node_text(p=1 >/dev/null) = [p=1 1>/dev/null], want [ 1>/dev/null]
+gauntlet (ubuntu-latest, true, native)	the table checks on the native tier, busy's row with them	2026-10-25T01:04:50.2847218Z node_text((p=1; echo x >/dev/null; :)) = [(p=1; echo x 1>/dev/null; :)], want [(; echo x 1>/dev/null; :)]
+gauntlet (ubuntu-latest, true, native)	the table checks on the native tier, busy's row with them	2026-10-25T01:04:50.2847933Z selfcheck: 5 table checks failed
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:34.5461827Z PEND-fail arith/c_incr_optional (waits on arith-increment)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:52.0612222Z FAIL jobsctl/jobs_assign_text: stdout
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:55.7378957Z PEND-fail printf/c_floats (waits on printf-float)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:55.7696286Z PEND-fail printf/c_numbered (waits on printf-numbered)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:55.9946057Z PEND-fail quote/c_ds_hex_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:56.0182709Z PEND-fail quote/c_ds_octal_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:56.0831654Z PEND-fail quote/c_s_high_bytes (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:07.6886608Z PEND-fail simple/c_special_not_shadowed (waits on special-name-function)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.2631639Z PEND-fail test/c_files (waits on host-dir-size)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.2922644Z PEND-fail test/c_owner (waits on uid)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.4271880Z PEND-fail tilde/c_user_root (waits on user database)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.4648838Z PEND-fail tilde/user (waits on user database)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.5170865Z PEND-fail ulimit/c_bad (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.5313570Z PEND-fail ulimit/c_enforced (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.5414642Z PEND-fail ulimit/c_file_size (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:09.5514347Z PEND-fail ulimit/c_resources (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:15:13.9011127Z difftest: total       1022     1    15 (0)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T01:22:28.1881836Z FAIL jc_assign_text
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T01:22:44.5606696Z session: pass 294  fail 1  pending 0 (0)
+gauntlet (ubuntu-latest, true, release)	the table checks on the release tier, busy's row with them	2026-10-25T01:06:19.9919928Z node_text(a=1 sleep 35) = [a=1 sleep 35], want [sleep 35]
+gauntlet (ubuntu-latest, true, release)	the table checks on the release tier, busy's row with them	2026-10-25T01:06:19.9920602Z node_text(a=1 b=2 sleep 35 >/dev/null) = [a=1 b=2 sleep 35 1>/dev/null], want [sleep 35 1>/dev/null]
+gauntlet (ubuntu-latest, true, release)	the table checks on the release tier, busy's row with them	2026-10-25T01:06:19.9921356Z node_text(FOO=bar) = [FOO=bar], want []
+gauntlet (ubuntu-latest, true, release)	the table checks on the release tier, busy's row with them	2026-10-25T01:06:19.9922201Z node_text(p=1 >/dev/null) = [p=1 1>/dev/null], want [ 1>/dev/null]
+gauntlet (ubuntu-latest, true, release)	the table checks on the release tier, busy's row with them	2026-10-25T01:06:19.9923187Z node_text((p=1; echo x >/dev/null; :)) = [(p=1; echo x 1>/dev/null; :)], want [(; echo x 1>/dev/null; :)]
+gauntlet (ubuntu-latest, true, release)	the table checks on the release tier, busy's row with them	2026-10-25T01:06:19.9923994Z selfcheck: 5 table checks failed
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:59.7661615Z PEND-fail arith/c_incr_optional (waits on arith-increment)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:11.8576021Z FAIL jobsctl/jobs_assign_text: stdout
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:15.3106302Z PEND-fail printf/c_floats (waits on printf-float)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:15.3397679Z PEND-fail printf/c_numbered (waits on printf-numbered)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:15.5545034Z PEND-fail quote/c_ds_hex_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:15.5778834Z PEND-fail quote/c_ds_octal_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:15.6376392Z PEND-fail quote/c_s_high_bytes (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:27.0105978Z PEND-fail simple/c_special_not_shadowed (waits on special-name-function)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.5733614Z PEND-fail test/c_files (waits on host-dir-size)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.6025843Z PEND-fail test/c_owner (waits on uid)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.7317417Z PEND-fail tilde/c_user_root (waits on user database)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.7687688Z PEND-fail tilde/user (waits on user database)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.8183361Z PEND-fail ulimit/c_bad (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.8322405Z PEND-fail ulimit/c_enforced (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.8420985Z PEND-fail ulimit/c_file_size (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:28.8517735Z PEND-fail ulimit/c_resources (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:33.0864984Z difftest: total       1022     1    15 (0)
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-25T01:21:47.6348111Z FAIL jc_assign_text
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-25T01:22:03.9761231Z session: pass 294  fail 1  pending 0 (0)

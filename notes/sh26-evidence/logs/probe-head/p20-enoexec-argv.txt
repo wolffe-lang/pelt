@@ -1,0 +1,12 @@
+######## /home/mfwolffe/lanes/sh26/probe/p20-enoexec-argv.sh
+=== pelt st=0
+--- out
+./who|a|b c|\n
+/bin/sh|./who|a|b c|\n
+./who|d|\n
+/bin/sh|./who|d|\n
+/home/mfwolffe/lanes/sh26/tmp/probe.PCTtt8/w/who|e|\n
+/bin/sh|/home/mfwolffe/lanes/sh26/tmp/probe.PCTtt8/w/who|e|\n
+
+--- err
+

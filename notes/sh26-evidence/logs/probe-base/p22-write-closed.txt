@@ -1,0 +1,44 @@
+######## /home/mfwolffe/lanes/sh26/probe/p22-write-closed.sh
+=== dash st=0
+--- out
+echo-closed1 st=1\n
+printf-closed1 st=1\n
+pwd-closed1 st=1\n
+trap-xy st=2\n
+trap-dd st=0\n
+
+--- err
+../s.sh: 2: echo: echo: I/O error\n
+../s.sh: 3: printf: printf: I/O error\n
+../s.sh: 4: pwd: pwd: I/O error\n
+../s.sh: 5: trap: Illegal option -x\n
+
+=== bash st=0
+--- out
+echo-closed1 st=1\n
+printf-closed1 st=1\n
+pwd-closed1 st=1\n
+trap-xy st=2\n
+trap-dd st=0\n
+
+--- err
+../s.sh: line 2: echo: write error: Bad file descriptor\n
+../s.sh: line 3: printf: write error: Bad file descriptor\n
+../s.sh: line 4: pwd: write error: Bad file descriptor\n
+../s.sh: line 5: trap: -x: invalid option\n
+trap: usage: trap [-Plp] [[action] signal_spec ...]\n
+
+=== pelt st=0
+--- out
+echo-closed1 st=1\n
+printf-closed1 st=1\n
+pwd-closed1 st=1\n
+trap-xy st=2\n
+trap-dd st=0\n
+
+--- err
+pelt: ../s.sh: line 2: echo: write error: bad file descriptor\n
+pelt: ../s.sh: line 3: printf: write error: bad file descriptor\n
+pelt: ../s.sh: line 4: pwd: write error: bad file descriptor\n
+pelt: ../s.sh: line 5: trap: -xy: no such option\n
+

@@ -1,0 +1,30 @@
+######## /home/mfwolffe/lanes/sh26/probe/p05-jobs-assign.sh
+=== dash st=0
+--- out
+[1] + Done                       \n
+[1] + Done                       \n
+[1] + Done                       true\n
+[1] + Done                       (; echo x 1>/dev/null; :)\n
+[1] + Done                       ; :\n
+[1] + Done                        1>/dev/null\n
+[1] + Done                       \xc8\xf7T\xe9tU\n
+
+--- err
+
+=== bash st=0
+--- out
+
+--- err
+
+=== pelt st=0
+--- out
+[1] + Done                       FOO=bar\n
+[1] + Done                       FOO=bar BAZ=q\n
+[1] + Done                       FOO=bar true\n
+[1] + Done                       (p=1; echo x 1>/dev/null; :)\n
+[1] + Done                       p=1; :\n
+[1] + Done                       p=1 1>/dev/null\n
+[1] + Done                       FOO=$(...)\n
+
+--- err
+

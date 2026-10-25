@@ -6,6 +6,37 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **The corners (sh26).** `set -v` writes a script's input, and a file
+  `.` reads, to standard error as it is read, every line of a compound
+  command and a here-document's body included; a `-c` string and an
+  `eval` string are not input, as in dash (pelt#6). A command that
+  cannot run is said in dash's words with dash's status: `not found`
+  (127) for a path that does not resolve, the host's words for a link
+  loop or a name too long (127), `Permission denied` (126) for a
+  directory or a file without the execute bit (pelt#61). A file with no
+  `#!` line that the kernel refuses is run as `/bin/sh FILE ARG…`, as
+  dash runs it, after `exec` too (pelt#63, R-sh26-1). `trap -p` lists
+  conditions (POSIX.1-2024), and a bad option to `trap` is dash's
+  `Illegal option`; a built-in's failed write is dash's `I/O error`,
+  status 1 (pelt#28). A special built-in's error under `command` no
+  longer ends the shell; `export --`, `readonly --` and `printf --` take
+  `--`; `export -p` and `readonly -p` list every marked name in one
+  sorted list, an unset one too; `exit` in an `EXIT` trap keeps the
+  status the shell was leaving with; `PWD` comes from the environment
+  when it names the directory (pelt#16). `PS4` is expanded (parameters,
+  arithmetic, command substitution) and an unset `PS4` is no prefix;
+  `set -x` traces an assignment-only command; `$-` writes `b` where
+  dash does and `I` for `ignoreeof`, and `set +o` lists `ignoreeof` and
+  `notify`; `set -o ignoreeof` keeps an interactive shell at
+  end-of-file with dash's words (R-sh26-4); `MAIL`, `MAILPATH` and
+  `MAILCHECK` tell of new mail before the prompt (R-sh26-5) (pelt#17).
+  A job's text leaves a simple command's assignments out, as dash's
+  (pelt#56, R-sh20-1). A `$'…'` whose bytes are not UTF-8 is refused as
+  an expansion error rather than written as `?` (pelt#65, R-sh26-6).
+  `tools/script-census` counts a declared coin (a line that flips for
+  dash itself, `configure-sed`'s timestamp-resolution check) apart, and
+  `--coins N` measures its flip rates; `--selftest` checks the verdict
+  rules (pelt#28).
 - Friendly interactive keys, opt-in with `set -o friendly`: Alt-./Alt-_
   insert spelled history words and cycle older entries; yank-pop through
   ten kills; character/word transpose, word case, grouped per-line undo,

@@ -1,0 +1,6 @@
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-25T01:16:33.7012523Z FAIL c_mail
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-25T01:19:17.2620299Z FAIL mail_path
+gauntlet (ubuntu-latest, true, release)	the session corpus, release tier	2026-10-25T01:19:27.9055982Z session: pass 293  fail 2  pending 0 (0)
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T01:19:47.5104547Z FAIL c_mail
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T01:22:31.6792890Z FAIL mail_path
+gauntlet (ubuntu-latest, true, native)	the session corpus, native tier	2026-10-25T01:22:42.5068664Z session: pass 293  fail 2  pending 0 (0)

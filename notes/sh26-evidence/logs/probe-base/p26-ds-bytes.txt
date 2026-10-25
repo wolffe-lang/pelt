@@ -1,0 +1,43 @@
+######## /home/mfwolffe/lanes/sh26/probe/p26-ds-bytes.sh
+=== dash st=0
+--- out
+ ff\n
+ c3 bf\n
+ c3 a9\n
+ c3 a9\n
+ 61 ff 62\n
+ ff\n
+ ff\n
+ ff\n
+end st=0\n
+
+--- err
+
+=== bash st=0
+--- out
+ ff\n
+ ff\n
+ c3 a9\n
+ c3 a9\n
+ 61 ff 62\n
+ ff\n
+ ff\n
+ ff\n
+end st=0\n
+
+--- err
+
+=== pelt st=0
+--- out
+ 3f\n
+ 3f\n
+ c3 a9\n
+ c3 a9\n
+ 61 3f 62\n
+ 3f\n
+ 3f\n
+ ff\n
+end st=0\n
+
+--- err
+

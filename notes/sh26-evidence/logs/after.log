@@ -1,0 +1,58 @@
+after: start 2026-10-24T21:33:01-04:00
+census=0 script-census: coin 1  same 78  unstable 1  of 80  (/home/mfwolffe/lanes/sh26/sc/head-unaided.tsv) 2026-10-24T21:46:38-04:00
+coin     configure-sed  300 runs a shell, 61 s: dash 274x'2' 26x'1' (flip 8.7%), pelt 280x'2' 20x'1' (flip 6.7%), load 37.66
+coin     configure-sed  300 runs a shell, 56 s: dash 262x'2' 38x'1' (flip 12.7%), pelt 276x'2' 24x'1' (flip 8.0%), load 14.81
+s-cmdsub2        release     0.360   0.357   0.254   0.137   2.12
+s-cmdsub2        native      0.556   0.541   0.389   0.204   3.28
+s-bg-sub         dash        0.164   0.163   0.101   0.075   1.00
+s-bg-sub         release     0.312   0.307   0.227   0.140   1.90
+s-bg-sub         native      0.423   0.415   0.328   0.184   2.58
+s-bg-brace       dash        0.168   0.167   0.103   0.075   1.00
+s-bg-brace       release     0.321   0.317   0.234   0.142   1.91
+s-bg-brace       native      0.430   0.423   0.329   0.190   2.55
+s-stage          dash        0.239   0.233   0.207   0.146   1.00
+s-stage          release     0.016   0.016   0.012   0.004   0.07
+s-stage          native      0.071   0.070   0.064   0.007   0.30
+s-func-pipe      dash        0.239   0.236   0.209   0.147   1.00
+s-func-pipe      release     0.336   0.330   0.246   0.140   1.40
+s-func-pipe      native      0.476   0.464   0.377   0.212   1.99
+s-stage-read     dash        0.256   0.251   0.229   0.149   1.00
+s-stage-read     release     0.360   0.350   0.247   0.132   1.40
+s-stage-read     native      0.509   0.503   0.353   0.179   1.98
+s-program        dash        0.323   0.317   0.262   0.058   1.00
+s-program        release     0.515   0.506   0.364   0.173   1.59
+s-program        native      0.569   0.559   0.406   0.189   1.76
+FAIL builtin/c_exit_in_trap_status: stdout
+FAIL builtin/c_export_invalid: stdout, exit 2 (oracle 0), stderr present
+FAIL builtin/c_readonly_p: stdout
+FAIL builtin/c_special_error_command: stdout, exit 2 (oracle 0), stderr absent
+FAIL builtin/export_p_order: stdout, exit 2 (oracle 0), stderr present
+FAIL builtin/trap_bad_option_text: stdout
+FAIL builtin/write_error_text: stdout
+FAIL cd/c_pwd_from_env: stdout
+FAIL jobsctl/jobs_assign_text: stdout
+FAIL option/c_ps4: stdout
+FAIL option/c_verbose: stderr absent
+FAIL option/c_verbose_stderr: stdout
+FAIL option/c_xtrace_forms: stdout
+FAIL option/notify_ignoreeof_flags: stdout
+FAIL option/ps4_forms: stdout
+FAIL option/verbose_forms: stdout
+FAIL option/verbose_inputs: stdout
+FAIL option/xtrace_assign: stdout
+FAIL printf/c_usage: stdout
+FAIL signal/c_trap_p: stdout, exit 2 (oracle 0), stderr present
+FAIL signal/trap_p_forms: stdout, exit 2 (oracle 0), stderr present
+FAIL simple/cannot_run_reasons: stdout
+difftest: total        353    22     6 (0)
+session: pelt = /home/mfwolffe/lanes/sh26/bin/base/native/pelt
+FAIL c_ignoreeof
+FAIL c_mail
+FAIL jc_assign_text
+ok   mail_interval
+FAIL mail_path
+session: pass 1  fail 4  pending 0 (0)
+script-census --selftest: 8 of 8
+selftest=0
+after: done 2026-10-24T21:52:15-04:00
+after: probes 2026-10-24T21:54:10-04:00

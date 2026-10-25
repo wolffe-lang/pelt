@@ -1,0 +1,40 @@
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:18.8797907Z PEND-fail arith/c_incr_optional (waits on arith-increment)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:36.6986995Z FAIL option/c_verbose: stderr absent
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:36.7107299Z FAIL option/c_verbose_stderr: stdout
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:36.8954849Z FAIL option/verbose_forms: stdout
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:36.9136865Z FAIL option/verbose_inputs: stdout
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:39.7384218Z PEND-fail printf/c_floats (waits on printf-float)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:39.7670139Z PEND-fail printf/c_numbered (waits on printf-numbered)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:39.9784176Z PEND-fail quote/c_ds_hex_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:40.0008634Z PEND-fail quote/c_ds_octal_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:40.0620418Z PEND-fail quote/c_s_high_bytes (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:51.5554049Z PEND-fail simple/c_special_not_shadowed (waits on special-name-function)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.1163713Z PEND-fail test/c_files (waits on host-dir-size)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.1443480Z PEND-fail test/c_owner (waits on uid)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.2745289Z PEND-fail tilde/c_user_root (waits on user database)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.3108232Z PEND-fail tilde/user (waits on user database)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.3610476Z PEND-fail ulimit/c_bad (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.3753727Z PEND-fail ulimit/c_enforced (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.3852970Z PEND-fail ulimit/c_file_size (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:53.3950889Z PEND-fail ulimit/c_resources (waits on ulimit)
+gauntlet (ubuntu-latest, true, native)	the differential corpus, native tier	2026-10-25T01:14:57.7207421Z difftest: total       1019     4    15 (0)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:38.8566023Z PEND-fail arith/c_incr_optional (waits on arith-increment)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:51.3915646Z FAIL option/c_verbose: stderr absent
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:51.4039602Z FAIL option/c_verbose_stderr: stdout
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:51.5852279Z FAIL option/verbose_forms: stdout
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:51.6026109Z FAIL option/verbose_inputs: stdout
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:54.3984139Z PEND-fail printf/c_floats (waits on printf-float)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:54.4280980Z PEND-fail printf/c_numbered (waits on printf-numbered)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:54.6416305Z PEND-fail quote/c_ds_hex_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:54.6650946Z PEND-fail quote/c_ds_octal_high (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:13:54.7261844Z PEND-fail quote/c_s_high_bytes (waits on non-utf8-bytes)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:06.1542915Z PEND-fail simple/c_special_not_shadowed (waits on special-name-function)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:07.7297746Z PEND-fail test/c_files (waits on host-dir-size)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:07.7589374Z PEND-fail test/c_owner (waits on uid)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:07.8898657Z PEND-fail tilde/c_user_root (waits on user database)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:07.9283324Z PEND-fail tilde/user (waits on user database)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:07.9794218Z PEND-fail ulimit/c_bad (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:07.9938015Z PEND-fail ulimit/c_enforced (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:08.0040561Z PEND-fail ulimit/c_file_size (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:08.0139668Z PEND-fail ulimit/c_resources (waits on ulimit)
+gauntlet (ubuntu-latest, true, release)	the differential corpus, release tier	2026-10-25T01:14:12.2493985Z difftest: total       1019     4    15 (0)

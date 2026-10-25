@@ -1,0 +1,39 @@
+######## /home/mfwolffe/lanes/sh26/probe/p11-set-o.sh
+=== pelt st=0
+--- out
+set +o allexport\n
+set +o autocd\n
+set +o emacs\n
+set +o errexit\n
+set +o ignoreeof\n
+set +o noclobber\n
+set +o noexec\n
+set +o noglob\n
+set +o notify\n
+set +o nounset\n
+set +o pipefail\n
+set +o verbose\n
+set +o vi\n
+set +o xtrace\n
+---\n
+allexport\toff\n
+autocd\toff\n
+emacs\toff\n
+errexit\toff\n
+ignoreeof\toff\n
+noclobber\toff\n
+noexec\toff\n
+noglob\toff\n
+notify\toff\n
+nounset\toff\n
+pipefail\toff\n
+verbose\toff\n
+vi\toff\n
+xtrace\toff\n
+---\n
+bI\n
+set -o ignoreeof\n
+set -o notify\n
+
+--- err
+

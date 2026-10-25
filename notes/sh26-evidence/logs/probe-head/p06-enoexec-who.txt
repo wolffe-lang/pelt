@@ -1,0 +1,12 @@
+######## /home/mfwolffe/lanes/sh26/probe/p06-enoexec-who.sh
+=== pelt st=0
+--- out
+0=./who 1=a bash=yes\n
+plain st=0\n
+0=./who 1=b bash=yes\n
+exec st=0\n
+0=/home/mfwolffe/lanes/sh26/tmp/probe.mFUoME/w/who 1=c bash=yes\n
+path st=0\n
+
+--- err
+

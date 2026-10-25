@@ -1,0 +1,18 @@
+######## /home/mfwolffe/lanes/sh26/probe/p02-enoexec.sh
+=== pelt st=0
+--- out
+script ran: ./t arg\n
+st=3\n
+st=126\n
+st=126\n
+st=126\n
+st=127\n
+script ran: ./t a2\n
+exec st=3\n
+
+--- err
+./bin: ./bin: cannot execute binary file\n
+./elf: ./elf: cannot execute binary file\n
+./nul2: ./nul2: cannot execute binary file\n
+./late: line 2: foo: command not found\n
+

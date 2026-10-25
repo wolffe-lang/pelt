@@ -1,0 +1,34 @@
+######## /home/mfwolffe/lanes/sh26/probe/p06-enoexec-who.sh
+=== dash st=0
+--- out
+0=./who 1=a bash=yes\n
+plain st=0\n
+0=./who 1=b bash=yes\n
+exec st=0\n
+0=/home/mfwolffe/lanes/sh26/tmp/probe.JxKnh1/w/who 1=c bash=yes\n
+path st=0\n
+
+--- err
+
+=== bash st=0
+--- out
+0=./who 1=a bash=yes\n
+plain st=0\n
+0=/home/mfwolffe/lanes/sh26/tmp/probe.jjijv0/w/who 1=b bash=yes\n
+exec st=0\n
+0=/home/mfwolffe/lanes/sh26/tmp/probe.jjijv0/w/who 1=c bash=yes\n
+path st=0\n
+
+--- err
+
+=== pelt st=0
+--- out
+0=./who 1=a bash=yes\n
+plain st=0\n
+0=./who 1=b bash=\n
+exec st=0\n
+0=/home/mfwolffe/lanes/sh26/tmp/probe.pWi7pZ/w/who 1=c bash=yes\n
+path st=0\n
+
+--- err
+

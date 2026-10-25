@@ -1,0 +1,84 @@
+######## /home/mfwolffe/lanes/sh26/probe/p08-corners-a.sh
+=== dash st=0
+--- out
+dot st=2\n
+set st=2\n
+exec st=2\n
+export ok=1\n
+export HOME='/home/pelt'\n
+export LC_ALL='C'\n
+export PATH='/usr/bin:/bin'\n
+export PWD='/home/mfwolffe/lanes/sh26/tmp/probe.E19HRc/w'\n
+export ok='1'\n
+export-empty st=0\n
+dashdash\n
+printf st=0\n
+printf-only-dd st=2\n
+exit-in-trap st=7\n
+exit-in-trap2 st=0\n
+exit-n-in-trap st=4\n
+readonly a='x y'\n
+readonly b\n
+pwd-x st=2\n
+pwd-LP st=0\n
+cd-e st=2\n
+cd-Pe st=2\n
+survived\n
+
+--- err
+../s.sh: 2: .: cannot open /nonexistent/file: No such file\n
+../s.sh: 3: set: Illegal option -o nosuchoption\n
+../s.sh: 4: cannot open /nonexistent: No such file\n
+../s.sh: 9: printf: usage: printf format [arg ...]\n
+../s.sh: 15: pwd: Illegal option -x\n
+../s.sh: 17: cd: Illegal option -e\n
+../s.sh: 18: cd: Illegal option -e\n
+
+=== bash st=0
+--- out
+dot st=1\n
+set st=2\n
+exec st=1\n
+readonly BASHOPTS="checkwinsize:cmdhist:complete_fullquote:extquote:force_fignore:globasciiranges:globskipdots:hostcomplete:interactive_comments:patsub_replacement:progcomp:promptvars:sourcepath"\n
+readonly -a BASH_VERSINFO=([0]="5" [1]="3" [2]="20" [3]="1" [4]="release" [5]="x86_64-pc-linux-gnu")\n
+readonly EUID="1000"\n
+readonly PPID="23"\n
+readonly SHELLOPTS="braceexpand:hashall:interactive-comments:posix"\n
+readonly UID="1000"\n
+export ok=1\n
+export HOME="/home/pelt"\n
+export LC_ALL="C"\n
+export OLDPWD\n
+export PATH="/usr/bin:/bin"\n
+export PWD="/home/mfwolffe/lanes/sh26/tmp/probe.VCbWn0/w"\n
+export SHLVL="1"\n
+export ok="1"\n
+export-empty st=0\n
+dashdash\n
+printf st=0\n
+printf-only-dd st=2\n
+exit-in-trap st=7\n
+exit-in-trap2 st=0\n
+exit-n-in-trap st=4\n
+readonly a="x y"\n
+readonly b\n
+pwd-x st=2\n
+pwd-LP st=0\n
+cd-e st=0\n
+cd-Pe st=0\n
+survived\n
+
+--- err
+../s.sh: line 2: /nonexistent/file: No such file or directory\n
+../s.sh: line 3: set: nosuchoption: invalid option name\n
+../s.sh: line 4: /nonexistent: No such file or directory\n
+printf: usage: printf [-v var] format [arguments]\n
+../s.sh: line 15: pwd: -x: invalid option\n
+pwd: usage: pwd [-LP]\n
+
+=== pelt st=2
+--- out
+
+--- err
+pelt: ../s.sh: line 2: .: /nonexistent/file: not found\n
+

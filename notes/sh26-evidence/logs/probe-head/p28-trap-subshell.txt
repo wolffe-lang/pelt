@@ -1,0 +1,17 @@
+######## /home/mfwolffe/lanes/sh26/probe/p28-trap-subshell.sh
+=== pelt st=0
+--- out
+pipe:\n
+trap -- '' QUIT\n
+sub:\n
+trap -- '' QUIT\n
+cmdsub:\n
+trap -- 'echo i' INT\n
+trap -- '' QUIT\n
+cmdsub2:\n
+trap -- '' QUIT\n
+brace pipe:\n
+trap -- '' QUIT\n
+
+--- err
+

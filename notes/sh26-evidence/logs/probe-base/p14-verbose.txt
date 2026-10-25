@@ -1,0 +1,85 @@
+######## /home/mfwolffe/lanes/sh26/probe/p14-verbose.sh
+=== dash st=0
+--- out
+echo one   # a comment\n
+one\n
+# a comment line\n
+\n
+echo two; echo three\n
+two\n
+three\n
+if true\n
+then\n
+  echo four\n
+fi\n
+four\n
+cat <<EOF\n
+body $HOME\n
+EOF\n
+body /home/pelt\n
+f() {\n
+  echo in-f\n
+}\n
+f\n
+in-f\n
+eval 'echo ev'\n
+ev\n
+echo 'echo dotted' > d.sh; . ./d.sh\n
+echo dotted\n
+dotted\n
+x=$(echo sub\n
+)\n
+set +v\n
+quiet\n
+
+--- err
+
+=== bash st=0
+--- out
+echo one   # a comment\n
+one\n
+# a comment line\n
+\n
+echo two; echo three\n
+two\n
+three\n
+if true\n
+then\n
+  echo four\n
+fi\n
+four\n
+cat <<EOF\n
+body $HOME\n
+EOF\n
+body /home/pelt\n
+f() {\n
+  echo in-f\n
+}\n
+f\n
+in-f\n
+eval 'echo ev'\n
+echo ev\n
+ev\n
+echo 'echo dotted' > d.sh; . ./d.sh\n
+echo dotted\n
+dotted\n
+x=$(echo sub\n
+set +v\n
+quiet\n
+
+--- err
+
+=== pelt st=0
+--- out
+one\n
+two\n
+three\n
+four\n
+body /home/pelt\n
+in-f\n
+ev\n
+dotted\n
+quiet\n
+
+--- err
+
