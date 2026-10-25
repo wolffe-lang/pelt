@@ -3,6 +3,8 @@ Run inside ctr.sh only; every child belongs to this container. No signals
 are sent except SIGKILL to the exact still-live child pid during cleanup.
 """
 import os
+import json
+import ctypes
 from pathlib import Path
 import pty
 import select
@@ -16,8 +18,21 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'tools'))
 import lib_session as ls
 
+def ctty_without_thp():
+    """Child-only setting, inherited by pelt across exec (prctl(2const))."""
+    ls._ctty()
+    prctl = ctypes.CDLL(None, use_errno=True).prctl
+    prctl.argtypes = [ctypes.c_int] + [ctypes.c_ulong] * 4
+    prctl.restype = ctypes.c_int
+    # Linux ABI values independently decoded in thp-prctl-trace.log.
+    if prctl(41, 1, 0, 0, 0) != 0:
+        raise OSError(ctypes.get_errno(), 'PR_SET_THP_DISABLE failed')
+    if prctl(42, 0, 0, 0, 0) != 1:
+        raise RuntimeError('PR_GET_THP_DISABLE did not confirm complete disable')
+
+
 class Shell:
-    def __init__(self, binary, home, args=(), tty_err=True, history=None, fullargv=None, tty_out=False):
+    def __init__(self, binary, home, args=(), tty_err=True, history=None, fullargv=None, tty_out=False, disable_thp=False):
         self.master, slave = pty.openpty()
         self.mode = ls._lmode(slave)
         env = dict(PATH='/usr/bin:/bin', HOME=str(home), LC_ALL='C', PS1='$ ', TERM='xterm', COLUMNS='1000')
@@ -26,7 +41,7 @@ class Shell:
             env.update(HISTFILE=str(history), HISTSIZE='32767')
         self.p = subprocess.Popen(fullargv or [str(binary), '-i', '+m', *args], stdin=slave,
             stderr=slave if tty_err else subprocess.PIPE, stdout=slave if tty_out else subprocess.PIPE,
-            env=env, cwd=home, start_new_session=True, preexec_fn=ls._ctty)
+            env=env, cwd=home, start_new_session=True, preexec_fn=ctty_without_thp if disable_thp else ls._ctty)
         os.close(slave)
         self.fds = {self.master: 'tty'}
         if not tty_out:
@@ -160,23 +175,63 @@ def interactive(binary, home):
         assert shell.close(), 'mode not restored'
 
 
+def idle_snapshot(pid):
+    status = {}
+    for row in Path(f'/proc/{pid}/status').read_text().splitlines():
+        name, _, value = row.partition(':')
+        if name in ('RssAnon', 'RssFile', 'RssShmem', 'VmRSS', 'Threads', 'THP_enabled'):
+            status[name] = value.strip()
+    rollup = {}
+    for row in Path(f'/proc/{pid}/smaps_rollup').read_text().splitlines():
+        name, _, value = row.partition(':')
+        if name in ('Rss', 'Anonymous', 'AnonHugePages', 'Pss_Anon', 'Pss_File', 'Pss_Shmem'):
+            rollup[name] = value.strip()
+    stat = Path(f'/proc/{pid}/stat').read_text().split(') ', 1)[1].split()
+    return {
+        'pid': pid,
+        'page_size_bytes': os.sysconf('SC_PAGE_SIZE'),
+        'statm_resident_pages': int(Path(f'/proc/{pid}/statm').read_text().split()[1]),
+        'status': status,
+        'smaps_rollup': rollup,
+        'contexts': contexts(pid),
+        'cpu_ticks': int(stat[11]) + int(stat[12]),
+        'minor_faults': int(stat[7]),
+        'major_faults': int(stat[9]),
+        'thp_enabled': Path('/sys/kernel/mm/transparent_hugepage/enabled').read_text().strip(),
+    }
+
+
 def cost(binary, home):
     history = home/'large-history'
     history.write_text(''.join(': z'+str(i)+'\n' for i in range(32767)))
-    shell = Shell(binary, home, ['-o','friendly'], history=history)
+    disable_thp = '--allow-thp' not in sys.argv[2:]
+    shell = Shell(binary, home, ['-o','friendly'], history=history, disable_thp=disable_thp)
     try:
         ready = len(shell.data['tty'])
         shell.type(b'\x07')
         shell.until(lambda: b'\x07' in shell.data['tty'][ready:])
         for _ in range(10):
             shell.pump(.01)
-        before = contexts(shell.p.pid)
-        rss = Path(f'/proc/{shell.p.pid}/statm').read_text().split()[1]
+        snap_before = idle_snapshot(shell.p.pid)
+        print('idle before '+json.dumps(snap_before, sort_keys=True), flush=True)
+        before = snap_before['contexts']
+        rss = snap_before['statm_resident_pages']
         time.sleep(10)
-        after = contexts(shell.p.pid)
-        rss2 = Path(f'/proc/{shell.p.pid}/statm').read_text().split()[1]
-        assert after - before <= 2 and rss == rss2, (before, after, rss, rss2)
-        print(f'ok friendly idle 10s: contexts {after-before}, RSS pages {rss}->{rss2}', flush=True)
+        snap_after = idle_snapshot(shell.p.pid)
+        print('idle after '+json.dumps(snap_after, sort_keys=True), flush=True)
+        after = snap_after['contexts']
+        rss2 = snap_after['statm_resident_pages']
+        if disable_thp:
+            assert snap_before['status']['THP_enabled'] == snap_after['status']['THP_enabled'] == '0'
+            assert snap_before['smaps_rollup']['AnonHugePages'] == snap_after['smaps_rollup']['AnonHugePages'] == '0 kB'
+        assert snap_before['thp_enabled'] == snap_after['thp_enabled'], 'host THP controls changed during sample'
+        assert after == before, ('idle context switches', before, after)
+        for counter in ('cpu_ticks', 'minor_faults', 'major_faults'):
+            assert snap_before[counter] == snap_after[counter], ('idle process work', counter, snap_before[counter], snap_after[counter])
+        assert snap_before['status']['RssAnon'] == snap_after['status']['RssAnon'], 'idle RssAnon changed'
+        assert snap_before['smaps_rollup']['Anonymous'] == snap_after['smaps_rollup']['Anonymous'], 'idle accurate anonymous RSS changed'
+        assert rss == rss2, ('idle total resident pages changed', rss, rss2)
+        print(f'ok friendly idle 10s: contexts {after-before}, RSS pages {rss}->{rss2}, RssAnon {snap_before["status"]["RssAnon"]}->{snap_after["status"]["RssAnon"]}, child THP disabled={disable_thp}', flush=True)
         samples=[]
         for i in range(101):
             old = len(shell.data['tty'])
@@ -198,6 +253,7 @@ if __name__ == '__main__':
     binary = Path(sys.argv[1]).resolve()
     with tempfile.TemporaryDirectory(prefix='sh28-witness.') as directory:
         home = Path(directory)
-        gates(binary, home)
-        interactive(binary, home)
+        if '--cost-only' not in sys.argv[2:]:
+            gates(binary, home)
+            interactive(binary, home)
         cost(binary, home)
