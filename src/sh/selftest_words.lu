@@ -1,6 +1,7 @@
 //! Editor-only words: pure parsing plus direct storage/undo assertions.
 
 fn want_words(mut bad: List[str]) {
+    want_events(mut bad)
     let records = abbr_records(
         "zz\techo expanded\nempty\t\nquoted\techo 'two words'\nmalformed\nno name\tx\nbad\tx\tmore\nesc\t\x1b[31m\nzz\techo latest\n",
     )
@@ -30,5 +31,44 @@ fn want_words(mut bad: List[str]) {
     if cps_text(e.buf) != "zz " { (mut bad).push("abbr disabled gate") }
     if !stored_plain(e.buf) || !stored_plain(e.mem.kill) {
         (mut bad).push("abbr control in storage")
+    }
+}
+
+fn want_events(mut bad: List[str]) {
+    let previous = "echo one 'two three' # not a word"
+    for pair in [
+        ["!!", previous],
+        ["echo !$", "echo 'two three'"],
+        ["echo '!!'", "echo '!!'"],
+        ["echo \\!! # !!", "echo \\!! # !!"],
+        ["echo \"!!\"", "echo \"" + previous + "\""],
+        ["echo !1 !name !-1 !", "echo !1 !name !-1 !"],
+        ["echo !$ !$", "echo 'two three' 'two three'"],
+    ] {
+        let got = event_expand(pair[0], previous, "")
+        if got.line != pair[1] || got.missing {
+            (mut bad).push("event expansion: {pair[0]} => {got.line}")
+        }
+    }
+    if !event_expand("!!", "", "").missing || !event_expand("!$", "", "").missing {
+        (mut bad).push("event missing reference")
+    }
+    if event_last("echo one > output") != "output" { (mut bad).push("event-last-word redirection") }
+    if event_expand("!!'", previous, "echo '\n").changed {
+        (mut bad).push("event continued single quote")
+    }
+    let sh = new_sh("event-test")
+    let q = Query { cols: 80, rows: 24, fixed: 80, col0: 0, cpr: 0, pend: "" }
+    var e = editor_state(sh, "$ ", q, default_chars())
+    e.histexpand = true
+    e.prev_line = previous
+    e.buf = cps_of("echo !$")
+    let before = ints_txt(e.buf)
+    if !event_accept(mut e) ||
+        e.event_line != "echo 'two three'" ||
+        ints_txt(e.buf) != before ||
+        e.changes.len != 0 ||
+        e.mem.kill.len != 0 {
+        (mut bad).push("event touched editable storage")
     }
 }
