@@ -1,0 +1,20 @@
+sh30 prediction, before measurement or implementation
+
+Fish 4.9.3 guessed palette: command/reserved normal (SGR39), unknown
+command red (31) while the word is still being typed, quoted text yellow
+(33), variable cyan (36), redirection normal, comment bright black (90),
+operator cyan, argument normal, Enter error red. xterm-256color and linux
+probably use these same portable defaults, with dumb either no escapes or
+minimal 16-colour output. These are predictions, not reference evidence.
+
+Pure classifier: 250-350 lines plus 150-200 palette/render lines. Reuse a
+single prompt-time completion census rather than PATH scans on each key.
+Release 80-column per-key median 0.20ms, p99 0.80ms after warmup. Predict
+60 new typed sessions; retain all 1038 corpus cases and 443 sessions.
+First discrepancy expected: fish incremental repaint bytes differ from
+pelt's owned full-span recolouring; semantic colours should still agree.
+
+R-sh30-1 provisional recommendation A if fish is red before a separator.
+R-sh30-2 provisional A if TERM=linux mapping is deterministic.
+R-sh30-3 recommendation A: pager rows keep their own, unhighlighted styles.
+All recommendations await the maintainer; measurements may change them.
