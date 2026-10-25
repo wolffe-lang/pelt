@@ -452,7 +452,8 @@ fn run_lines(mut sh: Sh) -> int {
             }
         }
         if !fast {
-            let _st = eval_top(mut sh, mut lp, src, line)
+            // the line was written as read (`set -v`) above
+            let _st = eval_top(mut sh, mut lp, src, line, false)
         }
         line += count_lines(src)
         sh.ed.h.cur = false

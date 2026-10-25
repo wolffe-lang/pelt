@@ -618,7 +618,7 @@ fn bi_dot(mut sh: Sh, args: List[str]) -> int {
     }
     let line = sh.line
     sh.dots += 1
-    var st = eval_string(mut sh, src, path)
+    var st = eval_input(mut sh, src)
     sh.dots -= 1
     if sh.flow == F_RETURN {
         sh.flow = F_NONE

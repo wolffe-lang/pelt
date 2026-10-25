@@ -1,0 +1,30 @@
+echo one   # a comment
+one
+# a comment line
+
+echo two; echo three
+two
+three
+if true
+then
+  echo four
+fi
+four
+cat <<EOF
+body $HOME
+EOF
+body /home/pelt
+f() {
+  echo in-f
+}
+f
+in-f
+eval 'echo ev'
+ev
+echo 'echo dotted' > d.sh; . ./d.sh
+echo dotted
+dotted
+x=$(echo sub
+)
+set +v
+quiet

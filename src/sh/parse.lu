@@ -1010,6 +1010,16 @@ fn expect_op(mut p: P, mut a: Ast, op: str) -> bool {
 
 /// The next complete command (XCU 2.10's `complete_command`): its LIST
 /// node, -1 at end of input, -2 on a syntax error (in `p.err`).
+/// How far into the text `reset_parser` was given the parser has read:
+/// while an alias's value is being read, where the line it came from
+/// goes on (its end: the line was read whole), else the parser's place.
+fn read_point(p: P) -> int {
+    if p.ast_pos.len > 0 {
+        return p.ast_pos[0]
+    }
+    p.pos
+}
+
 fn parse_complete(mut p: P, mut a: Ast) -> int {
     skip_nl(mut p, mut a)
     if p.err.len > 0 {

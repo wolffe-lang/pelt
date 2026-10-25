@@ -142,7 +142,7 @@ pub fn run_main(args: List[str]) -> int {
     // `-c` with `-s`: the string, then standard input (unspecified by
     // POSIX; dash, black-box: `echo 'echo b' | sh -cs 'echo a'` prints
     // both)
-    run_source(src, name, rest, opts, cmd_string && read_stdin, posix_mode)
+    run_source(src, name, rest, opts, cmd_string && read_stdin, posix_mode, !cmd_string)
 }
 
 fn report(name: str, line: int, msg: str) {
@@ -185,6 +185,8 @@ fn check_all(src: str, name: str) -> int {
     0
 }
 
+/// `echo`: `src` is the shell's input (a script operand), which `set
+/// -v` writes as it is read; a `-c` string is not (dash, black-box).
 fn run_source(
     src: str,
     name: str,
@@ -192,6 +194,7 @@ fn run_source(
     opts: List[str],
     then_stdin: bool,
     posix_mode: bool,
+    echo: bool,
 ) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
@@ -207,7 +210,7 @@ fn run_source(
     jc_sync(mut sh)
     // the script's parser, reset for it (`sh.exec`'s `eval_top`)
     var p = new_parser("", 1)
-    var st = eval_top(mut sh, mut p, src, 1)
+    var st = eval_top(mut sh, mut p, src, 1, echo)
     if then_stdin && sh.flow == F_NONE {
         sh.from_stdin = true
         st = run_lines(mut sh)

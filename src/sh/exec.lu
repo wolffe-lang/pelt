@@ -725,17 +725,24 @@ fn run_exit_trap(mut sh: Sh, st: int) -> int {
 /// `-c` string, `eval` and `.` all are: a syntax error ends it after
 /// whatever came before has already run.
 fn eval_string(mut sh: Sh, src: str, what: str) -> int {
-    eval_from(mut sh, src, 1)
+    eval_from(mut sh, src, 1, false)
+}
+
+/// `eval_string` for a file `.` reads: the shell's input, so `set -v`
+/// writes it as it is read (XCU `set -v`; dash, black-box: a sourced
+/// file's lines are written, an `eval` string's are not).
+fn eval_input(mut sh: Sh, src: str) -> int {
+    eval_from(mut sh, src, 1, true)
 }
 
 /// `eval_string` for text whose first line is line `line` of a longer
 /// input: what an interactive shell runs after each prompt, so its
 /// diagnostics count lines from the start of the session.
-fn eval_from(mut sh: Sh, src: str, line: int) -> int {
+fn eval_from(mut sh: Sh, src: str, line: int, echo: bool) -> int {
     // a parser from the state's pool, given back after; an `eval` inside
     // this one takes another (pelt#39)
     var p = (mut sh.ppool).pop() else new_parser(src, line)
-    let st = eval_top(mut sh, mut p, src, line)
+    let st = eval_top(mut sh, mut p, src, line, echo)
     (mut sh.ppool).push(take p)
     st
 }
@@ -746,13 +753,18 @@ fn eval_from(mut sh: Sh, src: str, line: int) -> int {
 /// builds none (pelt#19). After each complete command has run, the
 /// nodes it added are dead unless kept (`sh.ast`'s `recycle`); a
 /// here-document still to be read belongs to what follows.
-fn eval_top(mut sh: Sh, mut p: P, src: str, line: int) -> int {
+fn eval_top(mut sh: Sh, mut p: P, src: str, line: int, echo: bool) -> int {
     reset_parser(mut p, src, line)
     var st = 0
+    // `set -v` (pelt#6): where the text written so far ends
+    var shown = 0
     loop {
         let top = sh.ast.top
         let dtop = sh.ast.dtop
         let n = parse_complete(mut p, mut sh.ast)
+        if echo {
+            shown = verbose_to(mut sh, src, shown, if n == -1 then src.len else read_point(p))
+        }
         if n == -1 {
             break
         }
@@ -777,6 +789,29 @@ fn eval_top(mut sh: Sh, mut p: P, src: str, line: int) -> int {
         }
     }
     st
+}
+
+/// `set -v` for input `src` (a script operand or a file `.` reads):
+/// with the option on, the text from `from` to `to` — what the parser
+/// has read for the next complete command, every line of it, a
+/// here-document's body, the comment and blank lines before it — is
+/// written to standard error before the command runs, byte for byte
+/// (no newline added at the end of a file that has none), as dash's is
+/// (black-box: `notes/sh26-evidence/probe/p14`, `p15`). Read with the
+/// option off, it is passed over all the same. Answers where the text
+/// written now ends. A `-c` string and an `eval`'s are not input here
+/// and are never written, as in dash.
+fn verbose_to(mut sh: Sh, src: str, from: int, to: int) -> int {
+    if to <= from {
+        return from
+    }
+    if sh.opt_v {
+        let piece = src.get(from..to) else ""
+        if piece.len > 0 {
+            write_fd(mut sh, 2, piece)
+        }
+    }
+    to
 }
 
 // ------------------------------------------------------- simple commands
