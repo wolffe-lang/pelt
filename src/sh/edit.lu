@@ -580,6 +580,10 @@ struct Ed {
     friendly: bool,
     suggest: bool,
     histsearch: bool,
+    highlight: bool,
+    colour_off: bool,
+    palette: List[str],
+    commands: Map[str, bool],
     shadow: List[int],
     shadow_drawn: bool,
     hp_active: bool,
@@ -654,13 +658,8 @@ struct EdOut {
     num: int,
 }
 
-/// Edit one line at the terminal. `shown` is the prompt as written,
-/// `q` what `ed_query` learned. Answers the line with its newline, and
-/// how it ended (`ED_OK`, `ED_EOF`, `ED_INTR`).
-fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
-    let old = os_term_mode(0) else |_| {
-        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
-    }
+/// Input state construction also used by the stored-bytes invariant test.
+fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
     var hist = List[str]()
     var i = 0
     while i < sh.ed.h.n {
@@ -668,7 +667,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         i += 1
     }
     let prev = if hist.len > 0 then hist[hist.len - 1] else ""
-    var e = Ed {
+    let e = Ed {
         buf: List[int](),
         cur: 0,
         cols: q.cols,
@@ -690,7 +689,7 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         poll_hup: (sh.sig_listen | sh.sig_ignore) & m_hup() == 0,
         poll_int: sh.sig_listen & m_int() != 0,
         int_ignored: sh.sig_ignore & m_int() != 0,
-        chars: term_chars(),
+        chars: copy chars,
         wait_set: 0,
         wait_ok: true,
         rs_listen: (sh.sig_listen | sh.sig_ignore) & m_resize() == 0,
@@ -702,6 +701,14 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         friendly: friendly_active(sh) && sh.opt_friendly_keys,
         suggest: friendly_active(sh) && sh.opt_suggest,
         histsearch: friendly_active(sh) && sh.opt_histsearch,
+        highlight: highlight_active(sh),
+        colour_off: colour_terminal(sh) && !sh.opt_highlight,
+        palette: hl_theme(
+            sh.vals["PELT_COLORS"] else "",
+            sh.vals["TERM"] else "",
+            sh.vals["COLORTERM"] else "",
+        ).styles,
+        commands: Map[str, bool](),
         shadow: List[int](),
         shadow_drawn: false,
         hp_active: false,
@@ -752,6 +759,18 @@ fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
         cpath: sh.vals["PATH"] else "",
         home: sh.vals["HOME"] else "",
     }
+    e
+}
+
+/// Edit one line at the terminal. `shown` is the prompt as written,
+/// `q` what `ed_query` learned. Answers the line with its newline, and
+/// how it ended (`ED_OK`, `ED_EOF`, `ED_INTR`).
+fn ed_line(sh: Sh, shown: str, q: Query) -> EdOut {
+    let old = os_term_mode(0) else |_| {
+        return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
+    }
+    var e = editor_state(sh, shown, q, term_chars())
+    highlight_prepare(mut e)
     e.h = e.hist.len
     var k = 0
     while k <= e.hist.len {
@@ -1153,6 +1172,7 @@ fn pos_at(e: Ed, i: int) -> (int, int) {
 
 /// Move the terminal's cursor to (r, c) with relative moves.
 fn move_to(mut e: Ed, r: int, c: int) {
+    colour_reset(mut e)
     if r < e.tr {
         put_esc(mut e.out, "[")
         put_n(mut e, e.tr - r)
@@ -1182,7 +1202,15 @@ fn move_to(mut e: Ed, r: int, c: int) {
 }
 
 /// Redraw from cluster `k` to the end, then put the cursor at `e.cur`.
-fn draw_from(mut e: Ed, k: int) {
+fn draw_from(mut e: Ed, from: int) {
+    let k = if e.highlight then 0 else from
+    var colour = HlLine { spans: List[HlSpan](), incomplete: false, error_at: -1 }
+    if e.highlight {
+        colour = hl_classify(e.buf, e.commands)
+        if highlight_paths(mut e, colour) { colour = hl_classify(e.buf, e.commands) }
+    }
+    var span = 0
+    var active = -1
     var r = e.tr
     var c = e.tc
     if k != e.at {
@@ -1202,6 +1230,11 @@ fn draw_from(mut e: Ed, k: int) {
     var pending = false
     var i = k
     while i < e.buf.len {
+        if e.highlight {
+            while span + 1 < colour.spans.len && i >= colour.spans[span].end { span += 1 }
+            let kind = colour.spans[span].kind
+            if kind != active { colour_span(mut e, kind); active = kind }
+        }
         let w = cells(e.buf[i])
         if w == 2 && c == e.cols - 1 {
             (mut e.out).push(32 as byte)
@@ -1228,6 +1261,7 @@ fn draw_from(mut e: Ed, k: int) {
         }
         i = j
     }
+    colour_reset(mut e)
     if pending {
         put_s(mut e, "\r\n")
     }
@@ -1263,6 +1297,7 @@ fn place(mut e: Ed) {
 /// prompt and the edit line again; the cursor stays where it was in the
 /// text. `COLUMNS`, when set, keeps the width, and nothing is drawn.
 fn resized(mut e: Ed) {
+    colour_reset(mut e)
     shadow_clear(mut e)
     let (w, h) = term_width(e.fixed)
     e.rows = h
@@ -1312,6 +1347,7 @@ fn prompt_last(p: str) -> str {
 /// Clear the screen (or just start below), write the prompt again and
 /// the whole line.
 fn redraw_all(mut e: Ed, clear: bool) {
+    colour_reset(mut e)
     if clear {
         put_esc(mut e.out, "[H")
         put_esc(mut e.out, "[2J")
@@ -1795,6 +1831,7 @@ fn ss3(mut e: Ed) -> int {
 // ----------------------------------------------------- ending the line
 
 fn finish(mut e: Ed, how: int) {
+    colour_reset(mut e)
     if how == ED_INTR {
         // `^C` where the cursor is, as the terminal echoes it for dash
         // and bash, then a new line below the whole line
