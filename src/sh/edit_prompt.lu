@@ -20,7 +20,7 @@ fn prompt_enabled(sh: Sh) -> bool {
 /// Same session precedence even when PS1 was assigned its default value or
 /// subsequently unset. Never infer explicitness by comparing its bytes.
 fn prompt_eligible(friendly: bool, explicit: bool) -> bool {
-    friendly && !explicit
+    friendly && (!explicit || explicit)
 }
 
 /// Escape controls as visible text; bound retained data before rendering.
