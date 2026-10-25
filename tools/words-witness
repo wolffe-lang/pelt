@@ -26,7 +26,9 @@ def abbreviations(binary,home):
         step(sh,b'zz ');step(sh,b'\x03');raw=step(sh,b'echo cancel-ok\r');assert b'\r\ncancel-ok\r\n' in raw,raw
         for typed in [b"echo zz ",b"echo 'zz' "]:
             raw=step(sh,typed+b'\r');assert b'\r\nzz\r\n' in raw,raw
-        print('ok abbr space/quoted/empty/undo/cancel/nonfirst',flush=True)
+        raw=event_step(sh,b'zz\r');assert b'\r\nexpanded\r\n' in raw,raw
+        raw=event_step(sh,b'echo before; zz after\r');assert b'\r\nbefore\r\nexpanded after\r\n' in raw,raw
+        print('ok abbr space/Enter/quoted/empty/undo/cancel/command-position',flush=True)
     finally:assert sh.close()
     file=home/'.pelt/abbr';assert file.exists() and b'\x1b' not in file.read_bytes()
     assert file.stat().st_mode & 0o777 == 0o600

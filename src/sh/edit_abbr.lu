@@ -1,6 +1,6 @@
 //! Abbreviations are editor operations, not aliases or shell expansion.
 //! Fish 4.9.3 measured in notes/sh31/oracle; R-sh31-1/2 recommend a
-//! non-executable tab-separated file and the first unquoted command word.
+//! non-executable tab-separated file and the unquoted first word of each simple command.
 
 fn abbr_name(name: str) -> bool {
     if name.len == 0 || name.len > 128 { return false }
@@ -106,19 +106,37 @@ fn bi_abbr(mut sh: Sh, args: List[str]) -> int {
     0
 }
 
-/// Space first enters normally. Expansion is a separate undo group, so
-/// undo returns the typed name plus its space, as the measured fish does.
-fn abbr_space(mut e: Ed) {
-    if !e.abbreviate || e.cur < 2 || e.buf[e.cur - 1] != 32 { return }
-    var start = 0
-    while start < e.cur - 1 && is_blank(e.buf[start]) { start += 1 }
-    let name = cps_text(slice_of(e.buf, start, e.cur - 1))
+/// The measured trigger is Space OR Enter, in command-word position.
+/// Space enters first; expansion is its own undo group, preserving `zz `.
+fn abbr_expand(mut e: Ed, end: int) {
+    if !e.abbreviate || end <= 0 { return }
+    var start = end
+    while start > 0 && !hl_meta(e.buf[start - 1]) { start -= 1 }
+    let name = cps_text(slice_of(e.buf, start, end))
     if !abbr_name(name) || !e.abbrs.has(name) { return }
+    // The display lexer is pure. Its command spans distinguish an argument,
+    // quoted spelling, comment, redirection target and continued quote.
+    let prefix = spliced(e.prefix, e.prefix.len, e.prefix.len, slice_of(e.buf, 0, end))
+    let spans = hl_classify(prefix, Map[str, bool]()).spans
+    var command = false
+    for span in spans {
+        if span.start == e.prefix.len + start &&
+            span.end == e.prefix.len + end &&
+            (span.kind == HC_COMMAND || span.kind == HC_UNKNOWN) {
+            command = true
+        }
+    }
+    if !command { return }
     let value = e.abbrs[name] else ""
     e.last_insert = false
     e.this_insert = false
     e.command_saved = false
     touch(mut e)
-    let line = spliced(e.buf, start, e.cur - 1, cps_of(value))
-    set_line(mut e, line, start + cps_of(value).len + 1)
+    let cursor = e.cur + cps_of(value).len - (end - start)
+    let line = spliced(e.buf, start, end, cps_of(value))
+    set_line(mut e, line, cursor)
+}
+
+fn abbr_space(mut e: Ed) {
+    if e.cur > 0 && e.buf[e.cur - 1] == 32 { abbr_expand(mut e, e.cur - 1) }
 }

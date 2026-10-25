@@ -1872,7 +1872,10 @@ fn ss3(mut e: Ed) -> int {
 // ----------------------------------------------------- ending the line
 
 fn finish(mut e: Ed, how: int) {
-    if how == ED_OK && !event_accept(mut e) { return }
+    if how == ED_OK {
+        abbr_expand(mut e, e.cur)
+        if !event_accept(mut e) { return }
+    }
     colour_reset(mut e)
     if how == ED_INTR {
         // `^C` where the cursor is, as the terminal echoes it for dash
