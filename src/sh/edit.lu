@@ -581,6 +581,8 @@ struct Ed {
     suggest: bool,
     histsearch: bool,
     highlight: bool,
+    abbreviate: bool,
+    abbrs: Map[str, str],
     prefix: List[int],
     colour_off: bool,
     palette: List[str],
@@ -703,6 +705,12 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
         suggest: friendly_active(sh) && sh.opt_suggest,
         histsearch: friendly_active(sh) && sh.opt_histsearch,
         highlight: highlight_active(sh),
+        abbreviate: friendly_active(sh) && sh.opt_abbr,
+        abbrs: if friendly_active(sh) && sh.opt_abbr {
+            abbr_load(sh.vals["HOME"] else "")
+        } else {
+            Map[str, str]()
+        },
         prefix: List[int](),
         colour_off: colour_terminal(sh) && !sh.opt_highlight,
         palette: hl_theme(
@@ -2099,6 +2107,7 @@ fn emacs_key(mut e: Ed, k: int) {
         var one = List[int]()
         (mut one).push(k)
         insert(mut e, one)
+        if k == 32 { abbr_space(mut e) }
     }
 }
 
@@ -2489,6 +2498,7 @@ fn vi_insert(mut e: Ed, replace: bool) {
             } else {
                 insert(mut e, one)
             }
+            if k == 32 { abbr_space(mut e) }
         }
     }
 }

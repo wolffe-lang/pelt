@@ -1,0 +1,34 @@
+//! Editor-only words: pure parsing plus direct storage/undo assertions.
+
+fn want_words(mut bad: List[str]) {
+    let records = abbr_records(
+        "zz\techo expanded\nempty\t\nquoted\techo 'two words'\nmalformed\nno name\tx\nbad\tx\tmore\nesc\t\x1b[31m\nzz\techo latest\n",
+    )
+    if records.len != 3 || (records["zz"] else "") != "echo latest" || !records.has("empty") {
+        (mut bad).push("abbr malformed records / empty / duplicate")
+    }
+    let sh = new_sh("words-test")
+    let q = Query { cols: 80, rows: 24, fixed: 80, col0: 0, cpr: 0, pend: "" }
+    var e = editor_state(sh, "$ ", q, default_chars())
+    e.abbrs = copy records
+    e.abbreviate = true
+    e.friendly = true
+    start_line(mut e)
+    insert(mut e, cps_of("zz "))
+    abbr_space(mut e)
+    if cps_text(e.buf) != "echo latest " { (mut bad).push("abbr first word space") }
+    emacs_undo(mut e)
+    if cps_text(e.buf) != "zz " { (mut bad).push("abbr undo restores typed word and space") }
+    for literal in ["echo zz ", "'zz' ", "z\\z ", "echo x; zz "] {
+        set_line(mut e, cps_of(literal), cps_of(literal).len)
+        abbr_space(mut e)
+        if cps_text(e.buf) != literal { (mut bad).push("abbr changed quoted/nonfirst word") }
+    }
+    e.abbreviate = false
+    set_line(mut e, cps_of("zz "), 3)
+    abbr_space(mut e)
+    if cps_text(e.buf) != "zz " { (mut bad).push("abbr disabled gate") }
+    if !stored_plain(e.buf) || !stored_plain(e.mem.kill) {
+        (mut bad).push("abbr control in storage")
+    }
+}

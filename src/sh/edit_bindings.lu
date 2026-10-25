@@ -68,12 +68,12 @@ fn bi_bindings(mut sh: Sh, args: List[str]) -> int {
 }
 
 fn is_available_builtin(sh: Sh, name: str) -> bool {
-    is_regular_builtin(name) || name == "bindings" && friendly_active(sh)
+    is_regular_builtin(name) || (name == "bindings" || name == "abbr") && friendly_active(sh)
 }
 
 fn editor_function_names(sh: Sh) -> List[str] {
     var names = sh.funcs.keys()
-    if friendly_active(sh) { (mut names).push("bindings") }
+    if friendly_active(sh) { (mut names).push("bindings"); (mut names).push("abbr") }
     names
 }
 

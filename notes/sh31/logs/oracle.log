@@ -1,0 +1,30 @@
+fish, version 4.9.3
+GNU bash, version 5.3.20(1)-release (x86_64-pc-linux-gnu)
+fish 4.9.3-1
+bash 5.3.20-1
+dash 0.5.13.4-1
+diffutils 3.12-2
+a7f62f606704b055039e229d5a46e589b2b9c4a8699c95eedbcd656ccb876adc  /usr/bin/fish
+c14c8f498f3be96f076ceb07d65dba584a86dca3c86b5dce65ed0f6cae73358d  /usr/bin/bash
+954b8837f636e6956a6c377d80829b72dd2e94a015fbe198bb1272973742447d  /usr/bin/dash
+fish abbr-space [(b'zz', 'zz\n2\n'), (b' ', 'echo expanded \n14\n'), (b'argument', 'echo expanded argument\n22\n'), (b'\r', '\n0\n')]
+fish abbr-enter [(b'zz', 'zz\n2\n'), (b'\r', '\n0\n')]
+fish abbr-position [(b'echo zz ', 'echo zz \n8\n'), (b'\x15  zz ', '  echo expanded \n16\n'), (b'\x15echo x; zz ', 'echo x; echo expanded \n22\n')]
+fish abbr-quoted [(b"'zz' ", "'zz' \n5\n"), (b'\x15"zz" ', '"zz" \n5\n'), (b'\x15z\\z ', 'z\\z \n4\n')]
+fish abbr-undo [(b'zz ', 'echo expanded \n14\n'), (b'\x1f', 'zz \n3\n'), (b'\x03', '\n0\n')]
+fish abbr-empty [(b'zz ', ' \n1\n'), (b'\r', '\n0\n')]
+fish pager-24 [(b'zz ', 'zz \n3\n'), (b'\t', 'zz \n3\n'), (b'\t', 'zz alpha \n9\n'), (b'\x1b[Z', 'zz zeta \n8\n'), (b'\x1b[B', 'zz alpha \n9\n'), (b'\r', 'zz alpha \n9\n'), (b'\x1b', 'zz alpha \n9\n')]
+fish pager-40 [(b'zz ', 'zz \n3\n'), (b'\t', 'zz \n3\n'), (b'\t', 'zz alpha \n9\n'), (b'\x1b[Z', 'zz zeta \n8\n'), (b'\x1b[B', 'zz alpha \n9\n'), (b'\r', 'zz alpha \n9\n'), (b'\x1b', 'zz alpha \n9\n')]
+fish pager-80 [(b'zz ', 'zz \n3\n'), (b'\t', 'zz \n3\n'), (b'\t', 'zz alpha \n9\n'), (b'\x1b[Z', 'zz zeta \n8\n'), (b'\x1b[B', 'zz alpha \n9\n'), (b'\r', 'zz alpha \n9\n'), (b'\x1b', 'zz alpha \n9\n')]
+fish pager-120 [(b'zz ', 'zz \n3\n'), (b'\t', 'zz \n3\n'), (b'\t', 'zz alpha \n9\n'), (b'\x1b[Z', 'zz zeta \n8\n'), (b'\x1b[B', 'zz alpha \n9\n'), (b'\r', 'zz alpha \n9\n'), (b'\x1b', 'zz alpha \n9\n')]
+bash previous [(b'echo first last\r', b'echo first last\r\n\x1b[?2004l\rfirst last\r\n\x1b[?2004h$ '), (b'!!\r', b'!!\r\n\x1b[?2004l\recho first last\r\nfirst last\r\n\x1b[?2004h$ '), (b'history 3\r', b'history 3\r\n\x1b[?2004l\r    1  echo first last\r\n    2  echo first last\r\n    3  history 3\r\n\x1b[?2004h$ ')]
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh31/pelt/notes/sh31/oracle-probe.py", line 59, in <module>
+    os.write(master,b'\x03\x15exit\r');drain(.2);p.wait(timeout=5);os.close(master)
+                                                 ~~~~~~^^^^^^^^^^^
+  File "/usr/lib/python3.14/subprocess.py", line 1279, in wait
+    return self._wait(timeout=timeout)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/subprocess.py", line 2076, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['bash', '--noprofile', '--norc', '-i']' timed out after 5 seconds

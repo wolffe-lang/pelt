@@ -1,0 +1,38 @@
+{
+  "shell": "fish",
+  "name": "abbr-quoted",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f751b5b3e30711b5d31313b3f1b5c1b5b3f31303439681b502b7136393665363436651b5c1b502b7137313735363537323739326436663733326436653631366436351b5c1b5b3f313034396c1b5b30630d1b5d303b7e1b5c1b5b6d1b5d31313b3f1b5c1b5b366e1b5b30631b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d1b5d3133333b413b636c69636b5f6576656e74733d311b5c24201b5d3133333b421b5c1b5b4b0d1b5b3243"
+    },
+    {
+      "input": "277a7a2720",
+      "raw": "277a7a27200d1b5b37431b5b3544277a7a27200d1b5b3743",
+      "buffer": "'zz' \n5\n",
+      "screen": [
+        "| $ 'zz'",
+        "cursor 0 7"
+      ]
+    },
+    {
+      "input": "15227a7a2220",
+      "raw": "1b5b35441b5b4b0d1b5b3243227a7a22200d1b5b37431b5b3544227a7a22200d1b5b3743",
+      "buffer": "\"zz\" \n5\n",
+      "screen": [
+        "| $ \"zz\"",
+        "cursor 0 7"
+      ]
+    },
+    {
+      "input": "157a5c7a20",
+      "raw": "1b5b35441b5b4b0d1b5b32437a5c7a200d1b5b36431b5b34447a5c7a200d1b5b3643",
+      "buffer": "z\\z \n4\n",
+      "screen": [
+        "| $ z\\z",
+        "cursor 0 6"
+      ]
+    }
+  ]
+}

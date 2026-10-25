@@ -100,6 +100,8 @@ fn builtin_args(mut sh: Sh, name: str, args: List[str]) -> int {
         st = bi_alias(mut sh, args)
     } else if name == "unalias" {
         st = bi_unalias(mut sh, args)
+    } else if name == "abbr" {
+        st = bi_abbr(mut sh, args)
     } else if name == "bindings" {
         st = bi_bindings(mut sh, args)
     } else if name == "jobs" {
@@ -323,9 +325,11 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
     // (`run_autocd`)
     if name == "friendly" {
         sh.opt_friendly = on && !sh.posix_mode
+        sh.opt_abbr = on && !sh.posix_mode
         sh.opt_highlight = on && !sh.posix_mode
         return true
     }
+    if name == "abbr" { sh.opt_abbr = on && !sh.posix_mode; return true }
     if name == "suggest" {
         sh.opt_suggest = on
         return true

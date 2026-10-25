@@ -1,0 +1,124 @@
+//! Abbreviations are editor operations, not aliases or shell expansion.
+//! Fish 4.9.3 measured in notes/sh31/oracle; R-sh31-1/2 recommend a
+//! non-executable tab-separated file and the first unquoted command word.
+
+fn abbr_name(name: str) -> bool {
+    if name.len == 0 || name.len > 128 { return false }
+    for cp in cps_of(name) {
+        if cp <= 32 ||
+            cp == 127 ||
+            hl_meta(cp) ||
+            cp == 39 ||
+            cp == 34 ||
+            cp == 92 ||
+            cp == 36 ||
+            cp == 96 ||
+            cp == 35 {
+            return false
+        }
+    }
+    true
+}
+
+fn abbr_value(value: str) -> bool {
+    if value.len > 4096 { return false }
+    for cp in cps_of(value) { if cp < 32 || cp == 127 { return false } }
+    true
+}
+
+fn abbr_records(raw: str) -> Map[str, str] {
+    var result = Map[str, str]()
+    for row in raw.split("\n") {
+        let at = row.find("\t") else -1
+        if at > 0 {
+            let name = row[0..at]
+            let value = row[at + 1..row.len]
+            if abbr_name(name) && abbr_value(value) && (result.has(name) || result.len < 256) {
+                result[name] = value
+            }
+        }
+    }
+    result
+}
+
+fn abbr_load(home: str) -> Map[str, str] {
+    if home.len == 0 { return Map[str, str]() }
+    let path = home + "/.pelt/abbr"
+    let st = stat_of(path, false)
+    if st.len < 2 || st[0] != K_FILE || st[1] > 65536 { return Map[str, str]() }
+    let fd = fs_open(path) else |_| { return Map[str, str]() }
+    defer fs_close(fd) else |_| {}
+    let bytes = fs_read_chunk(fd, 65537) else |_| { return Map[str, str]() }
+    let raw = str_from_utf8(bytes) else |_| { return Map[str, str]() }
+    if raw.len > 65536 { return Map[str, str]() }
+    abbr_records(raw)
+}
+
+fn abbr_save(home: str, records: Map[str, str]) -> bool {
+    if home.len == 0 { return false }
+    let dir = home + "/.pelt"
+    fs_create_dir_mode(dir, 0o700) else |e| match e {
+        exists => {},
+        _ => { return false },
+    }
+    let path = dir + "/abbr"
+    var out = buf()
+    for name in sort_strs(records.keys()) {
+        put(mut out, name + "\t" + (records[name] else "") + "\n")
+    }
+    if out.b.len > 65536 { return false }
+    // Exclusive creation prevents following an existing temporary symlink.
+    let temp = path + ".new.{os_pid()}"
+    let fd = fs_open_perm(temp, 4, 0o600) else |_| { return false }
+    var ok = true
+    fs_write_chunk(fd, out.b) else |_| { ok = false }
+    fs_close(fd) else |_| { ok = false }
+    if ok { fs_rename(temp, path) else |_| { ok = false } }
+    if !ok { fs_remove(temp) else |_| {} }
+    ok
+}
+
+fn bi_abbr(mut sh: Sh, args: List[str]) -> int {
+    let home = sh.vals["HOME"] else ""
+    var records = abbr_load(home)
+    if args.len == 1 && args[0] == "list" {
+        for name in sort_strs(records.keys()) {
+            emit(mut sh, name + "\t" + (records[name] else "") + "\n")
+        }
+        return 0
+    }
+    if args.len == 3 && args[0] == "add" && abbr_name(args[1]) && abbr_value(args[2]) {
+        if !records.has(args[1]) && records.len >= 256 {
+            diag(mut sh, "abbr: table is full")
+            return 1
+        }
+        records[args[1]] = args[2]
+    } else if args.len == 2 && args[0] == "erase" && abbr_name(args[1]) {
+        let _old = (mut records).remove(args[1]) else ""
+    } else {
+        diag(mut sh, "abbr: use add NAME TEXT, erase NAME, or list; no control characters")
+        return 2
+    }
+    if !abbr_save(home, records) {
+        diag(mut sh, "abbr: cannot replace abbreviation file")
+        return 1
+    }
+    0
+}
+
+/// Space first enters normally. Expansion is a separate undo group, so
+/// undo returns the typed name plus its space, as the measured fish does.
+fn abbr_space(mut e: Ed) {
+    if !e.abbreviate || e.cur < 2 || e.buf[e.cur - 1] != 32 { return }
+    var start = 0
+    while start < e.cur - 1 && is_blank(e.buf[start]) { start += 1 }
+    let name = cps_text(slice_of(e.buf, start, e.cur - 1))
+    if !abbr_name(name) || !e.abbrs.has(name) { return }
+    let value = e.abbrs[name] else ""
+    e.last_insert = false
+    e.this_insert = false
+    e.command_saved = false
+    touch(mut e)
+    let line = spliced(e.buf, start, e.cur - 1, cps_of(value))
+    set_line(mut e, line, start + cps_of(value).len + 1)
+}

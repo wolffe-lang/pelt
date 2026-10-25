@@ -1,0 +1,82 @@
+{
+  "shell": "fish",
+  "name": "pager-80",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f751b5b3e30711b5d31313b3f1b5c1b5b3f31303439681b502b7136393665363436651b5c1b502b7137313735363537323739326436663733326436653631366436351b5c1b5b3f313034396c1b5b30630d1b5d303b7e1b5c1b5b6d1b5d31313b3f1b5c1b5b366e1b5b30631b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d1b5d3133333b413b636c69636b5f6576656e74733d311b5c24201b5d3133333b421b5c1b5b4b0d1b5b3243"
+    },
+    {
+      "input": "7a7a20",
+      "raw": "7a7a200d1b5b35431b5b33447a7a200d1b5b3543616c706861200d1b5b3543",
+      "buffer": "zz \n3\n",
+      "screen": [
+        "| $ zz alpha",
+        "cursor 0 5"
+      ]
+    },
+    {
+      "input": "09",
+      "raw": "1b5b3f323030346c1b5b3f323033316c1b5b3e343b306d1b3e1b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d0d0a616c70686120202846697273742063686f6963652920202064656c74612020202028466f757274682063686f69636529202067616d6d6120202854686972642063686f696365290d0a62657461202020285365636f6e642063686f696365292020657073696c6f6e20202846696674682063686f696365292020207a6574612020202853697874682063686f696365290d1b5b411b5b411b5b3543",
+      "buffer": "zz \n3\n",
+      "screen": [
+        "| $ zz alpha",
+        "| alpha  (First choice)   delta    (Fourth choice)  gamma  (Third choice)",
+        "| beta   (Second choice)  epsilon  (Fifth choice)   zeta   (Sixth choice)",
+        "cursor 0 5"
+      ]
+    },
+    {
+      "input": "09",
+      "raw": "1b5b33447a7a20616c706861200d0a616c70686120202846697273742063686f6963652920202064656c74612020202028466f757274682063686f69636529202067616d6d6120202854686972642063686f696365290d1b5b411b5b313143616c706861200d1b5b3131431b5b39447a7a20616c70686120616c706861200d1b5b313143",
+      "buffer": "zz alpha \n9\n",
+      "screen": [
+        "| $ zz alpha alpha",
+        "| alpha  (First choice)   delta    (Fourth choice)  gamma  (Third choice)",
+        "| beta   (Second choice)  epsilon  (Fifth choice)   zeta   (Sixth choice)",
+        "cursor 0 11"
+      ]
+    },
+    {
+      "input": "1b5b5a",
+      "raw": "1b5b39447a7a207a657461201b5b4b0d0a616c70686120202846697273742063686f6963652920202064656c74612020202028466f757274682063686f69636529202067616d6d6120202854686972642063686f696365290d0a1b5b3530437a6574612020202853697874682063686f696365290d1b5b411b5b411b5b313043616c706861200d1b5b3130431b5b38447a7a207a65746120616c706861200d1b5b313043",
+      "buffer": "zz zeta \n8\n",
+      "screen": [
+        "| $ zz zeta alpha",
+        "| alpha  (First choice)   delta    (Fourth choice)  gamma  (Third choice)",
+        "| beta   (Second choice)  epsilon  (Fifth choice)   zeta   (Sixth choice)",
+        "cursor 0 10"
+      ]
+    },
+    {
+      "input": "1b5b42",
+      "raw": "1b5b3f323030346c1b5b3f323033316c1b5b3e343b306d1b3e1b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d1b5b38447a7a20616c706861201b5b4b0d0a616c70686120202846697273742063686f6963652920202064656c74612020202028466f757274682063686f69636529202067616d6d6120202854686972642063686f696365290d0a1b5b3530437a6574612020202853697874682063686f696365290d1b5b411b5b411b5b313143616c706861200d1b5b3131431b5b39447a7a20616c70686120616c706861200d1b5b313143",
+      "buffer": "zz alpha \n9\n",
+      "screen": [
+        "| $ zz alpha alpha",
+        "| alpha  (First choice)   delta    (Fourth choice)  gamma  (Third choice)",
+        "| beta   (Second choice)  epsilon  (Fifth choice)   zeta   (Sixth choice)",
+        "cursor 0 11"
+      ]
+    },
+    {
+      "input": "0d",
+      "raw": "1b5b36431b5b4a0d1b5b313143",
+      "buffer": "zz alpha \n9\n",
+      "screen": [
+        "| $ zz alpha alpha",
+        "cursor 0 11"
+      ]
+    },
+    {
+      "input": "1b",
+      "raw": "",
+      "buffer": "zz alpha \n9\n",
+      "screen": [
+        "| $ zz alpha alpha",
+        "cursor 0 11"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "shell": "bash",
+  "name": "comment-word",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f32303034682420"
+    },
+    {
+      "input": "6563686f206f6e652023206c61737420636f6d6d656e740d",
+      "raw": "6563686f206f6e652023206c61737420636f6d6d656e740d0a1b5b3f323030346c0d6f6e650d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo one # last comment",
+        "| one",
+        "| $",
+        "cursor 2 2"
+      ]
+    },
+    {
+      "input": "6563686f2021240d",
+      "raw": "6563686f2021240d0a1b5b3f323030346c0d6563686f206f6e650d0a6f6e650d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo one # last comment",
+        "| one",
+        "| $ echo !$",
+        "| echo one",
+        "| one",
+        "| $",
+        "cursor 5 2"
+      ]
+    }
+  ]
+}
