@@ -712,7 +712,16 @@ fn run_exit_trap(mut sh: Sh, st: int) -> int {
     sh.status = st
     let saved_flow = sh.flow
     sh.flow = F_NONE
+    // `exit` with no operand in the action leaves with the status the
+    // shell was leaving with (XCU `exit`; pelt#16), as in a signal's
+    // (`sh.signal`'s `run_trap_action`)
+    let was_in = sh.in_trap
+    let was_status = sh.trap_status
+    sh.in_trap = true
+    sh.trap_status = st
     eval_string(mut sh, action, "trap")
+    sh.in_trap = was_in
+    sh.trap_status = was_status
     var out = st
     if sh.flow == F_EXIT {
         out = sh.status
