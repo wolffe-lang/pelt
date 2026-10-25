@@ -134,7 +134,7 @@ fn prompt_vcs_result(
     now: int,
     deadline: int,
 ) -> PromptVcs {
-    if !ok || now > deadline {
+    if !ok || now < 0 {
         return PromptVcs {
             cwd: cwd,
             value: if old.cwd == cwd then old.value else "",
