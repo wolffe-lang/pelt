@@ -38,6 +38,11 @@ THE VERDICT, per script, over all its runs:
   hang      pelt was killed by the timeout where dash finished
   unstable  dash disagrees with a second run of itself (the script
             prints a date, a pid, …): not counted either way
+  coin      a row with a declared coin (`COIN`: a line whose answer
+            flips for dash itself, because it measures the shell's own
+            speed) that agrees everywhere but that line: counted apart,
+            never as `same`, the line's three answers in the notes; the
+            coin's flip rates come from `--coins N` (pelt#28)
 
 THE AIDED PASS (--aided). A script that stops at its first missing
 piece says nothing about what lies behind it. With --aided the wrapper
@@ -60,11 +65,18 @@ usage: tools/script-census --dir SCRATCH --pelt STATIC_PELT [options] [id …]
   --pin          write tools/script-census.pins from what is fetched
                  instead of checking against it
   --list         print the set and stop
+  --selftest     check the verdict rules (coins among them) on made-up
+                 runs and stop; needs no podman
   --aided        the second pass (below)
   --tsv FILE     write the verdict table there (default D/scripts.tsv)
+  --coins N      run no script: run each coin row's witness
+                 (tools/census-coins/) N times under dash and N times
+                 under pelt, one container per row, and write how often
+                 each shell gave each answer and its flip rate (the share
+                 not dash's commonest answer) to D/coins.tsv
 Exit 0 when every script ran (whatever the verdicts), 2 when the
 harness could not run or a digest was refused. With --strict, exit 1
-unless every verdict is `same`.
+unless every verdict is `same` or `coin`.
 """
 
 import hashlib
@@ -161,6 +173,18 @@ def R(args="", setup="", env=None, stdin="", timeout=120, ignore="", mask=""):
             "timeout": timeout, "ignore": ignore, "mask": mask}
 
 
+def COIN(line, witness):
+    """A coin (pelt#28): `line` (a Python regular expression, matched
+    against each line of standard output) is a line whose answer flips
+    for dash itself from run to run, because it measures how fast the
+    shell runs; `witness` (a script under tools/census-coins/, ours)
+    is the measurement alone, which `--coins N` runs N times under each
+    shell to give the flip rates. A row with a coin is never `same`:
+    when everything but its coin line agrees its verdict is `coin`,
+    counted apart, with the line's answers in the notes."""
+    return {"line": line, "witness": witness}
+
+
 # Version and licence of each package whose script comes from an image
 # (Debian's from /usr/share/doc/PKG/copyright, the most frequent
 # `License:` field; Alpine's from `apk info`). The package scripts of
@@ -200,14 +224,15 @@ PKGS = {
 APK = {"openssh-server": ("10.0_p1-r10 (Alpine 3.22)", "SSH-OpenSSH")}
 
 
-def S(sid, group, image, pkg, version, licence, src, path, runs, cwd="/s/w", also=""):
+def S(sid, group, image, pkg, version, licence, src, path, runs, cwd="/s/w", also="", coin=None):
     """`also` names the other shell files the script sources or runs
-    under its own shell (a glob list); only the aided pass uses it."""
+    under its own shell (a glob list); only the aided pass uses it.
+    `coin` is a `COIN` (pelt#28)."""
     if not version:
         version, licence = (APK if image == "alpine" and pkg in APK else PKGS)[pkg]
     return {"id": sid, "group": group, "image": image, "pkg": pkg,
             "version": version, "licence": licence, "src": src, "path": path,
-            "runs": runs, "cwd": cwd, "also": also}
+            "runs": runs, "cwd": cwd, "also": also, "coin": coin}
 
 
 CC_SETUP = "printf 'int main(void){return 0;}\\n' >x.c; "
@@ -220,7 +245,9 @@ SET = [
       also="build-aux/config.guess build-aux/config.sub build-aux/install-sh build-aux/missing build-aux/compile build-aux/depcomp"),
     S("configure-sed", "configure", "arch", "GNU sed", "4.9", "GPL-3.0-or-later",
       "sed", "./configure", [R(env={"CONFIG_SHELL": "/s/bin/sh"}, timeout=900, ignore=CONF_IGNORE)], cwd="/s/t",
-      also="build-aux/config.guess build-aux/config.sub build-aux/install-sh build-aux/missing build-aux/compile build-aux/depcomp"),
+      also="build-aux/config.guess build-aux/config.sub build-aux/install-sh build-aux/missing build-aux/compile build-aux/depcomp",
+      # 0.1 or 0.2 by how fast the shell writes two files (sh14)
+      coin=COIN(r"^checking the filesystem timestamp resolution\.\.\. ", "fs-timestamp-resolution.sh")),
     S("configure-gzip", "configure", "arch", "GNU gzip", "1.14", "GPL-3.0-or-later",
       "gzip", "./configure", [R(env={"CONFIG_SHELL": "/s/bin/sh"}, timeout=900, ignore=CONF_IGNORE)], cwd="/s/t",
       also="build-aux/config.guess build-aux/config.sub build-aux/install-sh build-aux/missing build-aux/compile build-aux/depcomp"),
@@ -642,60 +669,179 @@ exit 0
 
     def script(self, s):
         """Answers (verdict, dash exits, pelt exits, notes)."""
-        notes = []
-        verdict = "same"
-        de, pe = [], []
+        runs = []
         for n, r in enumerate(s["runs"]):
             d = self.run(s, n, r, "dash")
             self.check_pin(s, d["sha"])
             d2 = self.run(s, n, r, "dash", "dash2")
             p = self.run(s, n, r, "pelt")
-            de.append(str(d["exit"]))
-            pe.append("hang" if p["hung"] else str(p["exit"]))
-            if d["hung"]:
-                notes.append(f"run {n}: dash itself timed out")
+            runs.append((r, d, d2, p))
+        return judge(s, runs)
+
+    def coins(self, s, n):
+        """The coin's witness run `n` times under dash and `n` under pelt,
+        one after the other in one container of the row's image (network
+        off): answers {shell: {answer: count}}."""
+        name = f"sh06-coin-{s['id']}"
+        hold = os.path.join(self.root, "run", name)
+        shutil.rmtree(hold, ignore_errors=True)
+        for dd in ("bin", "meta", "w"):
+            os.makedirs(os.path.join(hold, dd))
+        shutil.copy(os.path.join(HERE, "census-coins", s["coin"]["witness"]),
+                    os.path.join(hold, "meta", "witness.sh"))
+        shutil.copy(self.pelt, os.path.join(hold, "bin", "pelt"))
+        wrap = f"""#!/bin/sh
+# The wrapper: ours, run by the image's own /bin/sh.
+cp "$(command -v dash)" /s/bin/dash
+cd /s/w || exit 99
+for sh in dash pelt; do
+  i=0
+  while [ $i -lt {n} ]; do
+    env -i PATH=/usr/bin:/bin LC_ALL=C /s/bin/$sh /s/meta/witness.sh >>/s/meta/$sh 2>&1
+    i=$((i + 1))
+  done
+done
+chmod -R a+rwX /s 2>/dev/null
+"""
+        with open(os.path.join(hold, "meta", "wrap.sh"), "w", encoding="utf-8") as fh:
+            fh.write(wrap)
+        subprocess.run(self.podman + ["run", "--rm", "--network", "none",
+                                      "--hostname", "census", "--name", name,
+                                      "-v", f"{hold}:/s", f"sh06-{s['image']}",
+                                      "sh", "/s/meta/wrap.sh"], capture_output=True)
+        res = {}
+        for sh in ("dash", "pelt"):
+            count = {}
+            pth = os.path.join(hold, "meta", sh)
+            lines = open(pth, encoding="utf-8", errors="replace").read().splitlines() if os.path.exists(pth) else []
+            for ln in lines:
+                count[ln] = count.get(ln, 0) + 1
+            res[sh] = count
+        subprocess.run(["chmod", "-R", "u+rwX", hold], capture_output=True)
+        shutil.rmtree(hold, ignore_errors=True)
+        return res
+
+
+def judge(s, runs):
+    """The verdict on row `s` from its runs, each (r, dash, dash again,
+    pelt) as `Census.run` answers them: (verdict, dash exits, pelt
+    exits, notes). Pure, so `--selftest` can ask it."""
+    notes = []
+    verdict = "same"
+    de, pe = [], []
+    coin_seen = []
+    for n, (r, d, d2, p) in enumerate(runs):
+        de.append(str(d["exit"]))
+        pe.append("hang" if p["hung"] else str(p["exit"]))
+        if s["coin"]:
+            # the coin's lines are compared apart (pelt#28)
+            got = [coin_lines(x["out"], s["coin"]["line"]) for x in (d, d2, p)]
+            d, d2, p = [dict(x, out=coin_mask(x["out"], s["coin"]["line"])) for x in (d, d2, p)]
+            coin_seen.append(f"run {n}: dash {got[0]!r}, dash again {got[1]!r}, pelt {got[2]!r}")
+        if d["hung"]:
+            notes.append(f"run {n}: dash itself timed out")
+            verdict = "unstable"
+            continue
+        stable = (d["out"] == d2["out"] and d["exit"] == d2["exit"]
+                  and d["files"] == d2["files"])
+        if p["hung"]:
+            notes.append(f"run {n} [{r['args']}]: pelt killed at {r['timeout']} s")
+            verdict = "hang"
+            continue
+        why = []
+        if p["exit"] != d["exit"]:
+            why.append(f"exit {p['exit']} (dash {d['exit']})")
+        if stable and p["out"] != d["out"]:
+            why.append("stdout")
+        if bool(p["err"].strip()) != bool(d["err"].strip()):
+            why.append("stderr " + ("present" if p["err"].strip() else "absent"))
+        if stable and p["files"] != d["files"]:
+            why.append("files")
+        if why:
+            notes.append(f"run {n} [{r['args']}]: " + ", ".join(why))
+            if verdict == "same" or verdict == "unstable":
+                verdict = "differs"
+        elif not stable:
+            what = [k for k in ("out", "exit", "files") if d[k] != d2[k]]
+            notes.append(f"run {n}: dash disagrees with itself ({', '.join(what)}); "
+                         "exit and stderr only")
+            if verdict == "same":
                 verdict = "unstable"
-                continue
-            stable = (d["out"] == d2["out"] and d["exit"] == d2["exit"]
-                      and d["files"] == d2["files"])
-            if p["hung"]:
-                notes.append(f"run {n} [{r['args']}]: pelt killed at {r['timeout']} s")
-                verdict = "hang"
-                continue
-            why = []
-            if p["exit"] != d["exit"]:
-                why.append(f"exit {p['exit']} (dash {d['exit']})")
-            if stable and p["out"] != d["out"]:
-                why.append("stdout")
-            if bool(p["err"].strip()) != bool(d["err"].strip()):
-                why.append("stderr " + ("present" if p["err"].strip() else "absent"))
-            if stable and p["files"] != d["files"]:
-                why.append("files")
-            if why:
-                notes.append(f"run {n} [{r['args']}]: " + ", ".join(why))
-                if verdict == "same" or verdict == "unstable":
-                    verdict = "differs"
-            elif not stable:
-                what = [k for k in ("out", "exit", "files") if d[k] != d2[k]]
-                notes.append(f"run {n}: dash disagrees with itself ({', '.join(what)}); "
-                             "exit and stderr only")
-                if verdict == "same":
-                    verdict = "unstable"
-        return verdict, de, pe, notes
+    if s["coin"]:
+        # never silently green: a coin row that agrees everywhere else is
+        # counted apart, its line's answers said
+        notes.append("coin line " + "; ".join(coin_seen))
+        if verdict == "same":
+            verdict = "coin"
+    return verdict, de, pe, notes
+
+
+def selftest():
+    """`judge` on made-up runs: a coin row is `coin` whether or not its
+    line agreed, `differs` when another line or the status parts, and a
+    row with no coin is still `differs` on that same line. Exit 0 when
+    every answer is the one written here."""
+    line = r"^checking the filesystem timestamp resolution\.\.\. "
+    coin = {"id": "c", "coin": COIN(line, "fs-timestamp-resolution.sh")}
+    plain = {"id": "p", "coin": None}
+    r = R()
+
+    def res(out, exit=0, err=b"", files=""):
+        return {"exit": exit, "out": out, "err": err, "files": files, "hung": False}
+    a = b"checking x... yes\nchecking the filesystem timestamp resolution... 0.2\nok\n"
+    b = a.replace(b"0.2", b"0.1")
+    c = a.replace(b"ok", b"no")
+    rows = [
+        ("coin, every line the same", coin, [(r, res(a), res(a), res(a))], "coin"),
+        ("coin, pelt's coin line parts", coin, [(r, res(a), res(a), res(b))], "coin"),
+        ("coin, dash's own coin line parts", coin, [(r, res(a), res(b), res(a))], "coin"),
+        ("coin, another line parts", coin, [(r, res(a), res(a), res(c))], "differs"),
+        ("coin, the status parts", coin, [(r, res(a), res(a), res(a, exit=1))], "differs"),
+        ("no coin, that line parts", plain, [(r, res(a), res(a), res(b))], "differs"),
+        ("no coin, every line the same", plain, [(r, res(a), res(a), res(a))], "same"),
+        ("no coin, dash parts from dash", plain, [(r, res(a), res(b), res(a))], "unstable"),
+    ]
+    bad = 0
+    for what, s, runs, want in rows:
+        got = judge(s, runs)[0]
+        ok = got == want
+        bad += not ok
+        print(f"{'ok  ' if ok else 'FAIL'} {what}: {got} (want {want})")
+    print(f"script-census --selftest: {len(rows) - bad} of {len(rows)}")
+    return 1 if bad else 0
+
+
+def coin_lines(out, rx):
+    """The lines of `out` (bytes) a coin pattern matches, as text."""
+    pat = re.compile(rx.encode())
+    return [ln.decode(errors="replace") for ln in out.split(b"\n") if pat.search(ln)]
+
+
+def coin_mask(out, rx):
+    """`out` with each line a coin pattern matches replaced by `~coin~`."""
+    pat = re.compile(rx.encode())
+    return b"\n".join(b"~coin~" if pat.search(ln) else ln for ln in out.split(b"\n"))
+
+
+def flip_rate(count, n, expect):
+    """The share of `n` answers that are not `expect` (dash's commonest)."""
+    return (n - count.get(expect, 0)) / n if n else 0.0
 
 
 def main(argv):
-    opt = {"dir": None, "pelt": None, "podman": "podman", "tsv": None}
+    opt = {"dir": None, "pelt": None, "podman": "podman", "tsv": None, "coins": None}
     flags = set()
     ids = []
     i = 0
     while i < len(argv):
         a = argv[i]
-        if a in ("--dir", "--pelt", "--podman", "--tsv"):
+        if a in ("--dir", "--pelt", "--podman", "--tsv", "--coins"):
             if i + 1 >= len(argv):
                 die(f"{a} needs a value")
             opt[a[2:]] = argv[i + 1]
             i += 2
+        elif a == "--selftest":
+            return selftest()
         elif a in ("--build", "--pin", "--list", "--strict", "--aided"):
             flags.add(a)
             i += 1
@@ -720,6 +866,36 @@ def main(argv):
     if "--build" in flags:
         c.build()
     print(f"script-census: pelt = {c.pelt} sha256 {sha256(c.pelt)}", flush=True)
+    if opt["coins"] is not None:
+        # the coins alone: each coin row's witness, N runs a shell
+        try:
+            n = int(opt["coins"])
+        except ValueError:
+            die("--coins needs a number of runs")
+        out = os.path.join(c.root, "coins.tsv")
+        with open(out, "w", encoding="utf-8") as fh:
+            fh.write("id\twitness\truns\tdash\tpelt\tdash_flip\tpelt_flip\n")
+            for s in todo:
+                if not s["coin"]:
+                    continue
+                t0 = time.time()
+                res = c.coins(s, n)
+                dash_n = sum(res["dash"].values())
+                pelt_n = sum(res["pelt"].values())
+                if dash_n != n or pelt_n != n:
+                    die(f"coin {s['id']}: {dash_n} dash and {pelt_n} pelt answers of {n}")
+                expect = max(res["dash"], key=lambda k: res["dash"][k])
+                fd = flip_rate(res["dash"], n, expect)
+                fp = flip_rate(res["pelt"], n, expect)
+                shown = {sh: " ".join(f"{v}x{k!r}" for k, v in sorted(res[sh].items(), key=lambda kv: -kv[1]))
+                         for sh in res}
+                print(f"coin     {s['id']}  {n} runs a shell, {time.time() - t0:.0f} s: dash {shown['dash']} "
+                      f"(flip {100 * fd:.1f}%), pelt {shown['pelt']} (flip {100 * fp:.1f}%), "
+                      f"load {open('/proc/loadavg').read().split()[0]}", flush=True)
+                fh.write(f"{s['id']}\t{s['coin']['witness']}\t{n}\t{shown['dash']}\t{shown['pelt']}"
+                         f"\t{fd:.4f}\t{fp:.4f}\n")
+        print(f"script-census: coins ({out})")
+        return 0
     rows = []
     count = {}
     for s in todo:
@@ -746,7 +922,7 @@ def main(argv):
     total = sum(count.values())
     print("script-census: " + "  ".join(f"{k} {v}" for k, v in sorted(count.items()))
           + f"  of {total}  ({tsv})")
-    if "--strict" in flags and count.get("same", 0) != total:
+    if "--strict" in flags and count.get("same", 0) + count.get("coin", 0) != total:
         return 1
     return 0
 
