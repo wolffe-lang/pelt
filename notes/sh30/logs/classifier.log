@@ -1,0 +1,6 @@
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+build: target/native/pelt
+build: target/release/pelt
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+selfcheck: every table check passed; a fork with a task live is busy and runs in process

@@ -1,0 +1,84 @@
+//! Pure classifier checks run in the existing selfcheck and checked test.
+
+fn colour_kind(line: HlLine, at: int) -> int {
+    for span in line.spans {
+        if at >= span.start && at < span.end { return span.kind }
+    }
+    -1
+}
+
+fn want_colour_kind(mut bad: List[str], text: str, at: int, kind: int) {
+    var commands = Map[str, bool]()
+    commands["echo"] = true
+    commands["cat"] = true
+    commands["true"] = true
+    commands["myfunc"] = true
+    let cps = cps_of(text)
+    let before = ints_txt(cps)
+    let line = hl_classify(cps, commands)
+    let got = colour_kind(line, at)
+    if got != kind { (mut bad).push("colour {text} at {at}: {got}, wanted {kind}") }
+    if before != ints_txt(cps) { (mut bad).push("classifier mutated its input") }
+    var end = 0
+    for span in line.spans {
+        if span.start != end || span.end <= span.start || span.end > cps.len {
+            (mut bad).push("colour span coverage: {text}")
+        }
+        end = span.end
+    }
+    if end != cps.len { (mut bad).push("colour span coverage ended early") }
+}
+
+fn want_colour(mut bad: List[str]) {
+    want_colour_kind(mut bad, "echo argument", 0, HC_COMMAND)
+    want_colour_kind(mut bad, "e", 0, HC_UNKNOWN)
+    want_colour_kind(mut bad, "absent_command", 0, HC_UNKNOWN)
+    want_colour_kind(mut bad, "echo argument", 5, HC_ARGUMENT)
+    want_colour_kind(mut bad, "echo argument", 4, HC_PLAIN)
+    want_colour_kind(mut bad, "if true; then echo x; fi", 0, HC_RESERVED)
+    want_colour_kind(mut bad, "if true; then echo x; fi", 3, HC_COMMAND)
+    want_colour_kind(mut bad, "echo if", 5, HC_ARGUMENT)
+    want_colour_kind(mut bad, "echo 'hi'", 5, HC_QUOTE)
+    want_colour_kind(mut bad, "echo 'hi", 5, HC_OPEN)
+    want_colour_kind(mut bad, "echo 'hi", 6, HC_QUOTE)
+    want_colour_kind(mut bad, "echo \"hi $HOME\"", 9, HC_VARIABLE)
+    want_colour_kind(mut bad, "echo '$HOME'", 6, HC_QUOTE)
+    want_colour_kind(mut bad, "echo $HOME", 5, HC_VARIABLE)
+    want_colour_kind(mut bad, "echo ${{HOME}}", 5, HC_VARIABLE)
+    want_colour_kind(mut bad, "echo $((2+3))", 5, HC_VARIABLE)
+    want_colour_kind(mut bad, "echo $(touch nope)", 5, HC_VARIABLE)
+    want_colour_kind(mut bad, "echo \\$HOME", 5, HC_QUOTE)
+    want_colour_kind(mut bad, "echo > output", 5, HC_REDIRECTION)
+    want_colour_kind(mut bad, "echo > output", 7, HC_REDIRECTION)
+    want_colour_kind(mut bad, "2>output echo", 0, HC_REDIRECTION)
+    want_colour_kind(mut bad, "2>output echo", 9, HC_COMMAND)
+    want_colour_kind(mut bad, "X=one echo", 6, HC_COMMAND)
+    want_colour_kind(mut bad, "X='hi' echo", 7, HC_COMMAND)
+    want_colour_kind(mut bad, "echo # comment", 5, HC_COMMENT)
+    want_colour_kind(mut bad, "echo word#literal", 9, HC_ARGUMENT)
+    want_colour_kind(mut bad, "echo | cat", 5, HC_OPERATOR)
+    want_colour_kind(mut bad, "echo | cat", 7, HC_COMMAND)
+    want_colour_kind(mut bad, "echo )", 5, HC_ERROR)
+    want_colour_kind(mut bad, "echo é )", 7, HC_ERROR)
+    want_colour_kind(mut bad, "!", 0, HC_ARGUMENT)
+    want_colour_kind(mut bad, "!!", 0, HC_ARGUMENT)
+    want_colour_kind(mut bad, "!$", 0, HC_ARGUMENT)
+    want_colour_kind(mut bad, "myfunc", 0, HC_COMMAND)
+    for text in [
+        "echo '",
+        "echo \"",
+        "if true; then echo x",
+        "(echo x",
+        "echo |",
+        "echo ${{HOME",
+        "echo $(true",
+        "echo $((1+",
+    ] {
+        let line = hl_classify(cps_of(text), Map[str, bool]())
+        if !line.incomplete { (mut bad).push("colour incomplete state: {text}") }
+    }
+    let empty = hl_classify(List[int](), Map[str, bool]())
+    if empty.spans.len != 0 || empty.incomplete || empty.error_at != -1 {
+        (mut bad).push("colour empty state")
+    }
+}
