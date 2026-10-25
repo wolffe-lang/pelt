@@ -1,0 +1,12 @@
+After the final job and merge evidence are retained:
+- kasumi /home/mfwolffe/lanes/sh29/archives (verified release downloads)
+- kasumi /home/mfwolffe/lanes/sh29/sh29.bundle
+- kasumi /home/mfwolffe/lanes/sh29/pelt/target and .wolf-bin
+- kasumi /home/mfwolffe/lanes/sh29/tmp (use podman unshare rm -rf for any
+  container-owned leftovers); keep final-job.log, final-job.exit, final-job.pid
+  and pelt/notes/sh29/logs until the regression results are copied back.
+- nomad /Users/mfwolffe/lanes/sh29/sh29.bundle
+- three plant worktrees /Users/mfwolffe/lanes/sh29/plant-enter, plant-el,
+  plant-prefix via git worktree remove, after their PRs close unmerged.
+- main worktree /Users/mfwolffe/lanes/sh29/pelt only after merge and every
+  process started from it has ended. No other lane's path is in this list.

@@ -1,0 +1,15 @@
+Fixes committed before every plant; draft PRs must never merge.
+No CI wait: run id and first state read once; red verdicts belong to the
+orchestrator's watch, not a predicted result.
+
+PR74 sh29-plant-enter ce4db64f41195dcdb19eae47947f37718525c380
+run 40159960460 first state in_progress
+Expected: sh29_never_typed and raw drawn-never-typed fail (Enter inserts ghost).
+
+PR75 sh29-plant-el 15b9dc8933ec3b248ecf4d04975a33e4bc757403
+run 40159965478 first state queued
+Expected: shadow-witness EL assertion fails (erase omits ESC[K).
+
+PR76 sh29-plant-prefix 96f3e155f0dcd450fa35933490f7563cb0e0430c
+run 40159969642 first state in_progress
+Expected: sh29_history_twice and raw histsearch fail (Up walks unfiltered).

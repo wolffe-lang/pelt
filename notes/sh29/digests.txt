@@ -1,0 +1,15 @@
+Linux x86-64 release asset digest fields read twice from GitHub release API;
+archives separately downloaded under /home/mfwolffe/lanes/sh29/archives and
+SHA256 read twice, both times matching the unchanged wolf-toolchain.toml:
+4cc4045bbbb605c07835bc4f32685953c784eeef4cd3139a48b457dfc90dad1a wolf 0.2.35
+ad703550ac4787e8e4bb26989d591a731410274d7332f2b4e8b9a64c878822cc lupin 0.1.56
+std 2386522eb059cca5a84108562c2c0a0e72345d34 (bundled and staged tree agree).
+The complete archives, including libwolf_rt.a, were staged by fetch-toolchain.
+
+Oracle image id:
+3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f
+Arch base-devel, host /usr and pacman metadata mounted read-only, network off.
+Exact measured packages: dash 0.5.13.4-1.1, bash 5.3.20-2, fish 4.9.3-1.
+c6221703b6197ce2ad79dad071b0ee0d3ec1355762fb9883e5ae0105e954e855 /usr/bin/dash
+a8ce2b3c38c818534d093009d08df58977878b86a0497d3f207eff57fec595f5 /usr/bin/bash
+a7f62f606704b055039e229d5a46e589b2b9c4a8699c95eedbcd656ccb876adc /usr/bin/fish

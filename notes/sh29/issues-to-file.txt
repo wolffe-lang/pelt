@@ -1,0 +1,19 @@
+No issue was filed or closed by sh29.
+
+Existing follow-ons, do not duplicate:
+- wolf-lang#904 / pelt invocation pin: after argv[0] adoption, exclude sh and
+  enable friendly+suggest+histsearch at interactive tty prompts by default.
+- wolf-std#102: appended terminal-character slots; retain stty precedence.
+- pelt#69: reproduce digest-pinned oracle environment in CI.
+- PAX F5: px-owned framebuffer/serial pelt-session slot. Two pending byte
+  sequences are in tests/session/PENDING.md; no PAX pass is claimed.
+
+Suggested pelt follow-on, if not already covered by F2/F3:
+Measure PATH completion-source latency independently of history lookup and
+consider per-prompt command-name caching. sh29's 32767-entry oldest-history
+hit is under the 5.5ms bar on both tiers; it is not a claim about cold
+filesystem completion over arbitrary PATH contents. Existing completion
+enumeration is reused; no background workers or prompt wakeups are added.
+
+No issue to close. The three draft plant PRs are for the orchestrator to
+close unmerged once the named failure is confirmed.

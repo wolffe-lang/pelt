@@ -1,0 +1,31 @@
+sh30 draft: F2 the colour
+
+Base the work on sh29's final merge, not the initial 1102894 checkout.
+The owned display layer has buffer codepoints, cluster widths, pos_at,
+move_to, draw_from and explicit EL-based shadow clearing. Shadow suffixes
+are separate Ed.shadow values; only shadow_accept may insert them.
+The pager owns rows below the prompt and restores the cursor on every draw.
+Do not put colour escapes into Ed.buf, history, undo, or the kill ring.
+
+First measure fish's default command/reserved-word/quote/variable/error
+palette through a pty, separately for xterm-256color, linux and dumb.
+Preserve SGR90 as the shadow default; indexed/RGB greys are optional
+PELT_COLORS settings, not falsely described as fish defaults. Reset style
+before ordinary input, cursor motion, pager rows and command execution.
+The default-on friendly/suggest/histsearch switch waits on argv[0]'s re-pin;
+exclude basename sh, -c, scripts, pipes and --posix. No !! or !$ work here:
+F3 owns opt-in interactive histexpand; leading ! remains literal for F2.
+
+Proposed implementation items:
+1. A pure, nonexecuting line classifier; never expand/evaluate while drawing.
+2. Command resolution and parser-state colours, including incomplete quotes.
+3. One themed renderer shared by full redraw, incremental edit and resize.
+4. PELT_COLORS names and 16/256/RGB selection with portable defaults.
+5. Opt-in highlight, default policy coordinated with the argv[0] re-pin.
+6. Typed colour/reset/resize/pager/shadow-interaction cases on both tiers.
+7. Release per-key highlighting below 1ms for an 80-column line, no idle
+   wakeups; planted wrong colour, leaked escape, and stale redraw rows.
+
+PAX sessions remain pending until a px-owned harness slot exists. Cite
+px70's actual palette/cell rows, not a claim of arbitrary RGB framebuffer
+pixels. Do not build PAX or enter another lane's directory/CPU block.
