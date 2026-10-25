@@ -6,6 +6,17 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Syntax colours while typing.** `set -o highlight`, also enabled by
+  `friendly`, colours commands, arguments, quotes, variables, redirections,
+  comments and operators without modifying input, history, undo or kills.
+  `PELT_COLORS` selects portable, indexed or RGB colours with atomic fallback
+  on malformed entries. Syntax errors gain a coloured source span and caret.
+  Full redraw, incremental editing and resize share one renderer, with
+  resets before cursor motion, pager rows, suggestions and execution.
+  Highlighting stays opt-in at this pin and off for scripts, pipes, `-c`,
+  `--posix`, `TERM=dumb` or a non-terminal standard descriptor. 45 new typed
+  sessions and a raw-colour/reset/idle witness extend the unchanged corpus.
+
 - **Suggestions and filtered history.** Opt-in `suggest` draws an exact
   history suffix or sorted file/command completion without inserting it.
   Right/End/Ctrl-E/Ctrl-F accept all; Alt-F accepts a word and Ctrl-Right a

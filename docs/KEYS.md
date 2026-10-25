@@ -507,3 +507,26 @@ rows, and pax#162. Dim, indexed and RGB inputs are mapped to the framebuffer
 console's 16-entry palette; serial passes terminal bytes through. This pass
 runs no PAX session: the two exact-byte rows in `tests/session/PENDING.md`
 await a px-owned session slot. It does not claim a PAX rendering result.
+
+
+## Highlighted editing
+
+`set -o highlight` enables display-only syntax colours independently;
+`set -o friendly` enables it as part of friendly editing. All three standard
+descriptors must be terminals. `set +o highlight` removes syntax and shadow
+colours at that terminal without accepting, deleting or changing any text.
+No editing key's meaning changes. Cursor motion, resize, completion lists,
+the history pager, Ctrl-C and Enter reset the style before other output.
+
+45 additional typed sessions cover colours and open syntax, Unicode,
+resize with the cursor at the end and mid-line, completion rows, history
+pager rows, shadow acceptance boundaries, undo, kill/yank, custom themes,
+malformed themes and disable gates. The complete tree now has 488 sessions;
+all 443 pre-colour expectations are unchanged. `tools/colour-witness` also
+asserts raw SGR/reset bytes, persistent history, non-execution while typing,
+idle counters and per-key cost. The compiled and checked selfchecks read the
+actual buffer, both undo stores and the kill ring after coloured edits.
+
+The PAX palette basis remains pax#162's sixteen entries. No new PAX result
+is claimed; the exact framebuffer and serial input rows in
+`tests/session/PENDING.md` wait for a px-owned harness slot.

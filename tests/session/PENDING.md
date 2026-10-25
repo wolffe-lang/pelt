@@ -105,3 +105,18 @@ The byte notation is the session harness's: `\r` is 0d, `\x15` is Ctrl-U,
 `\x12` is Ctrl-R, `\x03` is Ctrl-C, `\x1b[A/B` are Up/Down. Pause at each
 `then` until the screen has settled. The framebuffer's SGR basis is px70's
 16-entry palette; serial rendering belongs to the host terminal.
+
+
+## PAX colour rows (pending harness slot)
+
+Run on both framebuffer and serial, with `TERM=linux`; these are pending
+targets, not host passes. px70's measured 16-entry palette is the basis.
+
+| target | exact input bytes, in order | expected observation |
+|---|---|---|
+| `sh30_pax_framebuffer_colour` | `set -o friendly -o suggest\r`, `echo prefix_suffix\r`, `echo prefix`, `\x0c`, `\r` | command default, typed argument cyan, shadow SGR90; redraw keeps the cursor; Enter prints only prefix; no coloured text enters history |
+| `sh30_pax_serial_colour` | `set -o highlight\r`, `echo )`, `\r`, `set +o highlight\r`, `echo plain\r` | erroneous token and caret bright red, ordinary message reset; after disabling, no syntax colours; terminal modes restored |
+
+At a px-owned resize step, narrow the first row's live edit to 16 columns
+and widen to 80 before Enter. No stale wrapped row may remain. This lane
+has not run either console or built PAX.
