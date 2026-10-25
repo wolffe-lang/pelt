@@ -99,7 +99,7 @@ fn history_prefix(mut e: Ed, up: bool) {
     }
     var h = e.h + (if up then -1 else 1)
     while h >= 0 && h <= e.hist.len {
-        if h == e.hist.len || e.hist[h].starts_with(e.hp_prefix) {
+        if h <= e.hist.len {
             show_hist(mut e, h, true)
             if h == e.hist.len {
                 e.cur = if e.hp_cursor < e.buf.len then e.hp_cursor else e.buf.len
