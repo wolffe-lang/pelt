@@ -15,8 +15,9 @@
 //! both references keep it. A NUL, from any escape, ends the string:
 //! what follows up to the closing quote is dropped (POSIX lets either
 //! happen; dash and bash drop it). A byte that is not UTF-8 cannot
-//! leave pelt (W06, pelt#20): `\xe9` alone becomes `?`, while `\xc3\xa9`
-//! is `é`.
+//! leave pelt (W06, pelt#20, pelt#65): `\xe9` or `\377` alone is refused
+//! as an expansion error (`sh.expand`'s `xw`, R-sh26-6), never written
+//! as `?`, while `\xc3\xa9` is `é`.
 
 /// The index just past the `'` closing the `$'` at `i`, or `w.len` when
 /// it is not closed. A backslash quotes the byte after it.

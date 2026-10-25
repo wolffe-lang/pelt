@@ -69,6 +69,28 @@ fn lit(mut o: Buf, b: int) {
     putb(mut o, b)
 }
 
+/// Whether the bytes of `o` from `mark` on are UTF-8 (the marks the
+/// expansion writes, bytes 1 to 6, are ASCII).
+fn utf8_from(o: Buf, mark: int) -> bool {
+    var any = false
+    var k = mark
+    while k < o.b.len {
+        if o.b[k] as int > 127 {
+            any = true
+            break
+        }
+        k += 1
+    }
+    if !any {
+        return true
+    }
+    let tail = o.b[mark..o.b.len]
+    let _s = str_from_utf8(tail) else {
+        return false
+    }
+    true
+}
+
 fn qlit(mut o: Buf, b: int) {
     if b < 128 {
         putb(mut o, Q)
@@ -476,7 +498,27 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
             continue
         }
         if c == '$' && ch(w, i + 1) == '\'' {
+            // a run of `$'…'` side by side is decoded whole, so that
+            // `$'\303'$'\251'` is `é`; bytes that are not UTF-8 are
+            // refused, never written as `?` (pelt#65: a word is a `str`
+            // from here to the program's argv, and `os_spawn_fds` and
+            // `os_exec` take `List[str]`, UTF-8 by type; wolf-lang#687,
+            // #912). The refusal is an expansion error (R-sh26-6)
+            let start = i
+            let mark = o.b.len
             i = ds_put(w, i, mut o)
+            while i + 1 < to && ch(w, i) == '$' && ch(w, i + 1) == '\'' {
+                i = ds_put(w, i, mut o)
+            }
+            if !utf8_from(o, mark) {
+                let shown = w.get(start..i) else "$'...'"
+                fatal(
+                    mut sh,
+                    "{shown}: a byte that is not UTF-8 cannot be carried yet (pelt#65)",
+                    2,
+                )
+                return
+            }
             continue
         }
         if c == '$' {

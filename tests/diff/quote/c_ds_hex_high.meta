@@ -1,0 +1,6 @@
+exit=0
+stderr=no
+oracle=bash
+pending=non-utf8-bytes
+why=pelt#65: \xHH is the byte (XCU 2.2.4), as quote/ds_utf8_bytes; dash 0.5.13.4 writes U+00HH in UTF-8 (c3bf for \xff); a pelt word is a str (UTF-8), so pelt refuses it (R-sh26-6) where it used to write ?
+dash=differs

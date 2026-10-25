@@ -22,23 +22,13 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
 | **host-dir-size** | nothing pelt lacks: the case's `-s` row asks whether an empty directory has a size, and the oracle was recorded on kasumi's btrfs, where it has none; on ext4 (the linux runners) and APFS (macOS) an empty directory has a size, so dash there answers `-s` true for it as pelt does (sh07). PEND-ok on btrfs | the oracle's host | `test/c_files` |
-| **command-special** | `command .`/`command set`/`command exec` with an error still ends the shell (XCU 2.8.1 note 1) | pelt (P09) | `builtin/c_special_error_command` |
-| **builtin-dashdash** | `export -- name` and `printf -- format`: `--` is taken as an operand | pelt (P09) | `builtin/c_export_invalid`, `printf/c_usage` |
-| **exit-in-exit-trap** | `exit` with no operand inside an EXIT trap action uses the action's last status, not the status from before the trap | pelt (P09) | `builtin/c_exit_in_trap_status` |
-| **readonly-p-unset** | `readonly -p` omits a readonly variable that has no value | pelt (P09) | `builtin/c_readonly_p` |
-| **pwd-from-env** | `PWD` is not taken from the environment at start, so a shell started in a directory reached through a symbolic link reports the physical path (XCU 2.5.3) | pelt (P09) | `cd/c_pwd_from_env` |
 | **printf-float** | `printf` `%e %f %g` (optional in POSIX; dash has them and configure scripts use `%f`) | pelt (P09); wolf has float formatting | `printf/c_floats` |
 | **printf-numbered** | `printf '%2$s'` (new in POSIX.1-2024; neither oracle has it) | not counted in the census | `printf/c_numbered` |
-| **trap-p** | `trap -p` (new in POSIX.1-2024) | pelt (P10) | `signal/c_trap_p` |
-| **ps4-expansion** | `PS4` is written as is, not parameter-expanded (XCU 2.5.3) | pelt (P10) | `option/c_ps4` |
-| **xtrace-assignment** | `set -x` does not trace a command that is only assignments | pelt (P10) | `option/c_xtrace_forms` |
-| **verbose** | `set -v` writes nothing | pelt#6 | `option/c_verbose`, `option/c_verbose_stderr` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
 | **ulimit** | `ulimit` | wolf-lang: no `getrlimit`/`setrlimit` surface (W02) | `ulimit/c_bad`, `ulimit/c_enforced`, `ulimit/c_file_size`, `ulimit/c_resources` |
 | **uid** | `test -O`, `test -G` | wolf-lang#633 | `test/c_owner` |
-| **enoexec** | a file with no `#!` that cannot be a script (a NUL before the first newline): pelt hands it to the host's `/bin/sh` and answers whatever that shell answers (127 under dash, 126 under bash), where POSIX says 126 | wolf-lang#682 | `simple/c_enoexec_binary` |
-| **non-utf8-bytes** | a byte that is not UTF-8 (`a\377b` from a command substitution) cannot be a program's argument, since a wolf `str` is UTF-8: it reaches the program as `?`. Valid UTF-8 passes unchanged everywhere since sh07 (`quote/utf8_bytes`); this case's other lines pass | wolf-lang W06 (byte strings) | `quote/c_s_high_bytes` |
+| **non-utf8-bytes** | a byte that is not UTF-8 (`a\377b` from a command substitution, `$'\377'`, `$'\xff'`) cannot be a word: a pelt word is a `str` from expansion to the argv, and `os_spawn_fds`/`os_exec` take `List[str]` (UTF-8 by type). A substitution's byte reaches a program as `?`; since sh26 a `$'…'` that yields one is refused as an expansion error (R-sh26-6), never written as `?`. Valid UTF-8 passes unchanged everywhere since sh07 (`quote/utf8_bytes`, `quote/ds_split_utf8`) | wolf-lang W06 (byte strings), #687, #912; pelt#20, pelt#65 | `quote/c_s_high_bytes`, `quote/c_ds_octal_high`, `quote/c_ds_hex_high` |
 | **user database** | `~login` | wolf-lang: no `getpwnam` surface (W04) | `tilde/c_user_root` |
 <!-- census:end -->
 
@@ -59,6 +49,20 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
   `%name` and `%?text` match the job's command text, which with job
   control off is empty, as dash's (black-box: s02), so they name no job
   in a script.
+
+**Cleared by sh26 (the corners, wolf 0.2.35):** `builtin/c_special_error_command`
+(a special built-in's error through `command` is the command's failure),
+`builtin/c_export_invalid` and `printf/c_usage` (`--` ends the options),
+`builtin/c_exit_in_trap_status` (`exit` in an `EXIT` trap keeps the
+status the shell was leaving with), `builtin/c_readonly_p` (an unset
+readonly is listed), `cd/c_pwd_from_env` (`PWD` from the environment when
+it names the directory), `signal/c_trap_p` (`trap -p`), `option/c_ps4`
+(`PS4` expanded), `option/c_xtrace_forms` (an assignment-only command
+traced), `option/c_verbose` and `option/c_verbose_stderr` (`set -v`
+writes a script's input as it is read, pelt#6), and
+`simple/c_enoexec_binary` (rewritten for R-sh26-1: a file the kernel
+refuses is handed to `/bin/sh` as dash hands it, so the case compares
+with `/bin/sh`'s own answer on every host).
 
 **Cleared by sh20 (wolf 0.2.34), the fork:** `builtin/c_s_dot_special_file`,
 `env/c_subshell_concurrent`, `pending/subshell_signal` (now

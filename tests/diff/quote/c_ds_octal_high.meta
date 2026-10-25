@@ -1,0 +1,5 @@
+exit=0
+stderr=no
+bash=agree
+pending=non-utf8-bytes
+why=pelt#65: dash and bash write the byte; a pelt word is a str (UTF-8) from expansion to the argv (os_spawn_fds and os_exec take List[str], wolf-lang#687, #912), so pelt refuses the word as an expansion error (R-sh26-6) where it used to write ?
