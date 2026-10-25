@@ -1,0 +1,38 @@
+{
+  "shell": "fish",
+  "name": "abbr-undo",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f751b5b3e30711b5d31313b3f1b5c1b5b3f31303439681b502b7136393665363436651b5c1b502b7137313735363537323739326436663733326436653631366436351b5c1b5b3f313034396c1b5b30630d1b5d303b7e1b5c1b5b6d1b5d31313b3f1b5c1b5b366e1b5b30631b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d1b5d3133333b413b636c69636b5f6576656e74733d311b5c24201b5d3133333b421b5c1b5b4b0d1b5b3243"
+    },
+    {
+      "input": "7a7a20",
+      "raw": "7a7a200d1b5b35431b5b33446563686f20657870616e646564200d1b5b3136431b5b3134446563686f20657870616e646564200d1b5b313643",
+      "buffer": "echo expanded \n14\n",
+      "screen": [
+        "| $ echo expanded",
+        "cursor 0 16"
+      ]
+    },
+    {
+      "input": "1f",
+      "raw": "1b5b3134447a7a201b5b4b0d1b5b35431b5b33447a7a200d1b5b3543",
+      "buffer": "zz \n3\n",
+      "screen": [
+        "| $ zz",
+        "cursor 0 5"
+      ]
+    },
+    {
+      "input": "03",
+      "raw": "1b5b33441b5b4b0d1b5b3243",
+      "buffer": "\n0\n",
+      "screen": [
+        "| $",
+        "cursor 0 2"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "shell": "bash",
+  "name": "quotes",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f32303034682420"
+    },
+    {
+      "input": "6563686f206f6c64206c6173740d",
+      "raw": "6563686f206f6c64206c6173740d0a1b5b3f323030346c0d6f6c64206c6173740d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo old last",
+        "| old last",
+        "| $",
+        "cursor 2 2"
+      ]
+    },
+    {
+      "input": "6563686f20272121270d",
+      "raw": "6563686f20272121270d0a1b5b3f323030346c0d21210d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo old last",
+        "| old last",
+        "| $ echo '!!'",
+        "| !!",
+        "| $",
+        "cursor 4 2"
+      ]
+    },
+    {
+      "input": "6563686f20222121220d",
+      "raw": "6563686f20222121220d0a1b5b3f323030346c0d6563686f20226563686f2027212127220d0a6563686f20272121270d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo old last",
+        "| old last",
+        "| $ echo '!!'",
+        "| !!",
+        "| $ echo \"!!\"",
+        "| echo \"echo '!!'\"",
+        "| echo '!!'",
+        "| $",
+        "cursor 7 2"
+      ]
+    }
+  ]
+}

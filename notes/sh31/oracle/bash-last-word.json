@@ -1,0 +1,54 @@
+{
+  "shell": "bash",
+  "name": "last-word",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f32303034682420"
+    },
+    {
+      "input": "6563686f206f6e65202774776f207468726565270d",
+      "raw": "6563686f206f6e65202774776f207468726565270d0a1b5b3f323030346c0d6f6e652074776f2074687265650d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo one 'two three'",
+        "| one two three",
+        "| $",
+        "cursor 2 2"
+      ]
+    },
+    {
+      "input": "6563686f2021240d",
+      "raw": "6563686f2021240d0a1b5b3f323030346c0d6563686f202774776f207468726565270d0a74776f2074687265650d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo one 'two three'",
+        "| one two three",
+        "| $ echo !$",
+        "| echo 'two three'",
+        "| two three",
+        "| $",
+        "cursor 5 2"
+      ]
+    },
+    {
+      "input": "686973746f727920330d",
+      "raw": "686973746f727920330d0a1b5b3f323030346c0d202020203120206563686f206f6e65202774776f207468726565270d0a202020203220206563686f202774776f207468726565270d0a20202020332020686973746f727920330d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo one 'two three'",
+        "| one two three",
+        "| $ echo !$",
+        "| echo 'two three'",
+        "| two three",
+        "| $ history 3",
+        "|     1  echo one 'two three'",
+        "|     2  echo 'two three'",
+        "|     3  history 3",
+        "| $",
+        "cursor 9 2"
+      ]
+    }
+  ]
+}

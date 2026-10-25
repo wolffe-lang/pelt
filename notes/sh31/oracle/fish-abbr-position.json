@@ -1,0 +1,38 @@
+{
+  "shell": "fish",
+  "name": "abbr-position",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f751b5b3e30711b5d31313b3f1b5c1b5b3f31303439681b502b7136393665363436651b5c1b502b7137313735363537323739326436663733326436653631366436351b5c1b5b3f313034396c1b5b30630d1b5d303b7e1b5c1b5b6d1b5d31313b3f1b5c1b5b366e1b5b30631b5b3f32303034681b5b3f32303331681b5b3e343b316d1b3d1b5d3133333b413b636c69636b5f6576656e74733d311b5c24201b5d3133333b421b5c1b5b4b0d1b5b3243"
+    },
+    {
+      "input": "6563686f207a7a20",
+      "raw": "6563686f200d1b5b37437a7a200d1b5b3130431b5b38446563686f207a7a200d1b5b313043",
+      "buffer": "echo zz \n8\n",
+      "screen": [
+        "| $ echo zz",
+        "cursor 0 10"
+      ]
+    },
+    {
+      "input": "1520207a7a20",
+      "raw": "1b5b38441b5b4b0d1b5b3243200d1b5b3343200d1b5b34437a7a200d1b5b37431b5b33446563686f20657870616e646564200d1b5b3138431b5b3134446563686f20657870616e646564200d1b5b313843",
+      "buffer": "  echo expanded \n16\n",
+      "screen": [
+        "| $   echo expanded",
+        "cursor 0 18"
+      ]
+    },
+    {
+      "input": "156563686f20783b207a7a20",
+      "raw": "1b5b3136441b5b4b0d1b5b32436563686f200d1b5b3743783b0d1b5b3943200d1b5b3130437a7a200d1b5b3133431b5b33446563686f20657870616e646564200d1b5b3234431b5b3232446563686f20783b206563686f20657870616e646564200d1b5b323443",
+      "buffer": "echo x; echo expanded \n22\n",
+      "screen": [
+        "| $ echo x; echo expanded",
+        "cursor 0 24"
+      ]
+    }
+  ]
+}

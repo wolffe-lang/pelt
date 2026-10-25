@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""Words raw-byte and cross-process persistence laws, owned fresh-HOME ptys."""
+from pathlib import Path
+import importlib.machinery, os, subprocess, sys, tempfile
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/'tools'))
+from lib_shadow import Shell
+colour=importlib.machinery.SourceFileLoader('colour',str(ROOT/'tools/colour-witness')).load_module()
+step=colour.step
+
+def shell(binary,home,args=(),**kw):
+    return colour.ready(binary,home,['-o','friendly',*args],**kw)
+
+def abbreviations(binary,home):
+    sh=shell(binary,home)
+    try:
+        step(sh,b"abbr add zz 'echo expanded'\r")
+        raw=step(sh,b'zz ')
+        assert b'expanded' in raw,('abbr-space',raw)
+        raw=step(sh,b'argument\r'); assert b'\r\nexpanded argument\r\n' in raw,raw
+        step(sh,b"abbr add qq \"echo 'two words'\"\r")
+        raw=step(sh,b'qq \r');assert b'\r\ntwo words\r\n' in raw,raw
+        step(sh,b"abbr add empty ''\r")
+        step(sh,b'empty ');raw=step(sh,b'echo empty-ok\r');assert b'\r\nempty-ok\r\n' in raw,raw
+        step(sh,b'zz ');step(sh,b'\x1f');raw=step(sh,b'\x01echo \x05\r');assert b'\r\nzz\r\n' in raw,raw
+        step(sh,b'zz ');step(sh,b'\x03');raw=step(sh,b'echo cancel-ok\r');assert b'\r\ncancel-ok\r\n' in raw,raw
+        for typed in [b"echo zz ",b"echo 'zz' "]:
+            raw=step(sh,typed+b'\r');assert b'\r\nzz\r\n' in raw,raw
+        print('ok abbr space/quoted/empty/undo/cancel/nonfirst',flush=True)
+    finally:assert sh.close()
+    file=home/'.pelt/abbr';assert file.exists() and b'\x1b' not in file.read_bytes()
+    assert file.stat().st_mode & 0o777 == 0o600
+    file.write_bytes(file.read_bytes()+b'malformed\ninvalid name\techo BAD\nbad\tbad\tbad\n')
+    sh=shell(binary,home)
+    try:
+        raw=step(sh,b'zz second\r');assert b'\r\nexpanded second\r\n' in raw,raw
+        step(sh,b'abbr erase zz\r')
+        raw=step(sh,b'abbr list\r');assert b'zz\t' not in raw and b'qq\t' in raw,raw
+        print('ok abbr persistence/atomic/malformed/erase',flush=True)
+    finally:assert sh.close()
+    # A script's text is not edited, even when the option is explicitly on.
+    file.write_text('zz\techo EXPANDED\n')
+    env=dict(os.environ,HOME=str(home))
+    for argv,data in [([str(binary),'-o','friendly','-c','echo zz'],None),([str(binary),'-o','friendly'],b'echo zz\n')]:
+        p=subprocess.run(argv,input=data,env=env,capture_output=True,timeout=10)
+        assert p.returncode==0 and p.stdout==b'zz\n',('abbr-script-gate',p)
+    print('ok abbr-script-gate',flush=True)
+
+if __name__=='__main__':
+    binary=Path(sys.argv[1]).resolve()
+    with tempfile.TemporaryDirectory(prefix='sh31-words-') as temp:
+        abbreviations(binary,Path(temp))

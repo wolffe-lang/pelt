@@ -1,0 +1,54 @@
+{
+  "shell": "bash",
+  "name": "previous",
+  "cols": 80,
+  "rows": [
+    {
+      "kind": "start",
+      "raw": "1b5b3f32303034682420"
+    },
+    {
+      "input": "6563686f206669727374206c6173740d",
+      "raw": "6563686f206669727374206c6173740d0a1b5b3f323030346c0d6669727374206c6173740d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo first last",
+        "| first last",
+        "| $",
+        "cursor 2 2"
+      ]
+    },
+    {
+      "input": "21210d",
+      "raw": "21210d0a1b5b3f323030346c0d6563686f206669727374206c6173740d0a6669727374206c6173740d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo first last",
+        "| first last",
+        "| $ !!",
+        "| echo first last",
+        "| first last",
+        "| $",
+        "cursor 5 2"
+      ]
+    },
+    {
+      "input": "686973746f727920330d",
+      "raw": "686973746f727920330d0a1b5b3f323030346c0d202020203120206563686f206669727374206c6173740d0a202020203220206563686f206669727374206c6173740d0a20202020332020686973746f727920330d0a1b5b3f32303034682420",
+      "buffer": null,
+      "screen": [
+        "| $ echo first last",
+        "| first last",
+        "| $ !!",
+        "| echo first last",
+        "| first last",
+        "| $ history 3",
+        "|     1  echo first last",
+        "|     2  echo first last",
+        "|     3  history 3",
+        "| $",
+        "cursor 9 2"
+      ]
+    }
+  ]
+}

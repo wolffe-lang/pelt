@@ -732,6 +732,7 @@ pub fn self_test() -> List[str] {
     var bad = List[str]()
     want_job_slots(mut bad)
     want_colour(mut bad)
+    want_words(mut bad)
     want_match(mut bad, "*", "", true)
     want_match(mut bad, "a*c", "abbbc", true)
     want_match(mut bad, "a*c", "abbb", false)
