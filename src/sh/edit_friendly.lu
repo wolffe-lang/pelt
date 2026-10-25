@@ -186,10 +186,10 @@ fn transpose_chars(mut e: Ed) {
     draw_from(mut e, start)
 }
 
-fn transpose_words(mut e: Ed, backward: bool) {
+fn transpose_words(mut e: Ed) {
     var end = word_fwd(e, e.cur)
     var right = word_back(e, end)
-    if backward || e.cur == e.buf.len || right == 0 {
+    if e.cur == e.buf.len || right == 0 {
         end = e.cur
         while end > 0 && !is_wordch(e.buf[prv(e, end)]) { end = prv(e, end) }
         right = word_back(e, end)
@@ -206,7 +206,7 @@ fn transpose_words(mut e: Ed, backward: bool) {
     ins = spliced(ins, ins.len, ins.len, slice_of(e.buf, start, mid))
     touch(mut e)
     e.buf = spliced(e.buf, start, end, ins)
-    e.cur = if backward then start + end - right else end
+    e.cur = end
     draw_from(mut e, start)
 }
 
@@ -263,9 +263,9 @@ fn friendly_command(mut e: Ed, k: int, n: int, counted: bool) -> bool {
         yank_ring(mut e, k != 25, n)
     } else if k == 20 || k == K_ALT + 116 {
         var i = 0
-        let times = if k == 20 && n < 0 then 0 else (if n < 0 then 0 - n else n)
+        let times = if n < 0 then 0 else n
         while i < times {
-            if k == 20 { transpose_chars(mut e) } else { transpose_words(mut e, n < 0) }
+            if k == 20 { transpose_chars(mut e) } else { transpose_words(mut e) }
             i += 1
         }
     } else if k == K_ALT + 117 || k == K_ALT + 108 || k == K_ALT + 99 {
