@@ -1,0 +1,43 @@
+build: target/native/pelt
+ok prompt-home/path/status/right-storage/one-call 24
+ok prompt-home/path/status/right-storage/one-call 39
+ok prompt-home/path/status/right-storage/one-call 40
+ok prompt-home/path/status/right-storage/one-call 80
+ok prompt-home/path/status/right-storage/one-call 200
+ok prompt-resize/pagers/kill/control-escaping/PS1-assignment
+ok prompt-PS1-precedence/environment/empty/gates/history
+ok prompt-vcs-real-probe/deadline/invalid/clean/directory/zero-key-probes
+32 cases
+PIN sh32_home_24
+PIN sh32_right_24
+PIN sh32_wrap_24
+PIN sh32_home_39
+PIN sh32_right_39
+PIN sh32_wrap_39
+PIN sh32_home_40
+PIN sh32_right_40
+PIN sh32_wrap_40
+PIN sh32_home_80
+PIN sh32_right_80
+PIN sh32_wrap_80
+PIN sh32_home_200
+PIN sh32_right_200
+PIN sh32_wrap_200
+PIN sh32_status
+PIN sh32_unicode
+PIN sh32_custom_PS1
+PIN sh32_empty_PS1
+PIN sh32_default_PS1
+PIN sh32_unset_PS1
+PIN sh32_right_resize
+PIN sh32_right_undo
+PIN sh32_right_kill
+PIN sh32_right_control
+PIN sh32_right_long
+PIN sh32_right_vi
+PIN sh32_prompt_off
+PIN sh32_umbrella_off
+PIN sh32_colour_off
+PIN sh32_right_status
+PIN sh32_right_isolation
+PIN FAILURES 0

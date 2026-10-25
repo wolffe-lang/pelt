@@ -1,0 +1,21 @@
+Pruned on hasu after each local named plant test:
+/home/mfwolffe/lanes/sh32/plant-ps1/target and .lu-cache
+/home/mfwolffe/lanes/sh32/plant-storage/target and .lu-cache
+/home/mfwolffe/lanes/sh32/plant-deadline/target and .lu-cache
+Lane footprint737MiB before full regression, below3GiB.
+
+Retain through final-job exit and review (not pruned):
+/home/mfwolffe/lanes/sh32/pelt/target, .lu-cache, .wolf-bin
+/home/mfwolffe/lanes/sh32/{logs,pelt/notes/sh32/logs,final-job.*}
+/home/mfwolffe/lanes/sh32/den-probe and den-status (black-box den witness)
+/home/mfwolffe/lanes/sh32/plant-{ps1,storage,deadline} source copies
+/home/mfwolffe/lanes/sh32/pelt.bundle
+Owned container image localhost/sh32-oracle, id297c33670738652c5931aa77fd8b231fa6490387b016ef0a943d1ff82765f0f7.
+
+Mac owned worktrees, retain until orchestration closes the PRs:
+/Users/mfwolffe/lanes/sh32/pelt (sh32)
+/Users/mfwolffe/lanes/sh32/plant-ps1 (sh32-plant-ps1)
+/Users/mfwolffe/lanes/sh32/plant-storage (sh32-plant-storage)
+/Users/mfwolffe/lanes/sh32/plant-deadline (sh32-plant-deadline)
+/Users/mfwolffe/lanes/sh32/den-probe is a lane-owned clone, not a worktree.
+No repo-wide prune, no forced worktree removal, no maintainer data touched.

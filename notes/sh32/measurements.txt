@@ -1,0 +1,62 @@
+Fish 4.9.3 black-box, fresh HOME, hasu A, rootless Arch container.
+Raw input/output hex and screen snapshots: oracle/fish-{uid}-{cols}.json.
+User uid1000 and container root, widths24/40/80/200; HOME, nested Unicode
+path, status1, default marker, right function, typed text and Ctrl-C.
+At80/200: mfwolffe@<container-host> ~> ; nested ~/a/b/日本語; status [1]
+before marker; root uses #. No-config colors were default/reset, not the
+predicted green/blue. Status digit is bold. At24 the left prefix is elided.
+Prediction path/status/marker: correct. Color prediction: wrong. Dynamic
+host name differs per container; exact bytes are recorded, not normalized.
+
+Den trunk fd42d7fff07cb0bd84a4839835edd6c7af6a8574 was built from its own
+source with this pin inside the lane container, then actually run:
+den init; create untracked; den status --porcelain => ?? untracked, exit0.
+The initial outside-repository call exited1 with its not-a-repository
+error. Therefore this pass implements the real direct den status probe,
+not the unavailable-provider seam. No git/libgit2 implementation read.
+
+Recommendations, not rulings:
+R-sh32-1 A measured visible shape, pelt-owned reset/style protocol.
+R-sh32-2 A explicit PS1 wins, including empty/default-valued assignments
+and subsequent unset. Preserve existing PS1 expansion semantics.
+R-sh32-3 A right prompt at most one third, ellipsis, hidden under40.
+R-sh32-4 A one den status per prompt;50ms collection deadline; same-directory
+stale cache dimmed; changed directory invalidates; zero idle refresh.
+R-sh32-5 custom prompt_right runs once in command-substitution isolation,
+with existing shell-function semantics (like PS1 substitutions). Its time
+and capture memory are user-code costs, not the den50ms deadline; drawn
+output is control-escaped and bounded to1024 codepoints before width trim.
+R-sh32-6 absent host name uses HOSTNAME or one bounded hostname invocation,
+then ?; USER/LOGNAME or ? supplies display identity. Root marker is euid,
+not the environment's USER. No passwd-source inspection or idle work.
+R-sh32-7 prompt_friendly's option listing is shown only without explicit
+PS1, preserving the immutable old explicit-PS1 option transcripts.
+
+Final reviewed application, hasu A release (logs/prompt-reviewed.log):
+- Native/release builds and compiled selfchecks GREEN; checked test1/0,
+  zero rejected/unsupported.32 new typed expectations independently pinned.
+- Prior release32/0/0 sessions GREEN; reviewed head reruns in full job.
+- Raw reset/cursor/storage/PS1/isolation/resize/gates and executable VCS
+  deadline/invalid UTF-8/directory invalidation/zero-key-probe laws GREEN.
+- Visible right prompt: median0.406661ms, p990.577726ms; without right:
+  median0.318649ms,p990.501811ms. Median delta+0.088012ms: prediction<.10 hit.
+-80-character line (right hidden on overlap): median0.055718ms,p990.267165ms.
+  Both measurement shapes strict median AND p99<1ms, no scheduling waiver.
+-10s idle: zero context switch/CPU tick/fault deltas; RSS8628->8628kB
+  without right,9280->9280kB with right; Anonymous unchanged. Child THP
+  disabled only in measurement fixture; no host setting changed.
+- Three fault plants local RED by name, one table failure each, formatter
+  GREEN. Their CI named reds remain orchestration's confirmation.
+- Pinned release assets read twice from release API; archive hashes and
+  staged driver/runtime/lupin hashes read twice, recorded pin-digests.log.
+
+Reviewed application native regression (logs/native-regression.log):
+formatter and CI planner GREEN;32 new sessions32/0/0; raw laws GREEN;
+whole differential corpus1023 pass/0 fail/15 existing pending.
+Native visible right median0.458452ms/p990.595958ms; without right
+0.369569ms/0.527489ms; median delta+0.088883ms. Native80-character line
+median0.174984ms/p990.578579ms. Idle counters unchanged on all shapes.
+Both old expectation diff checks GREEN; pin and PAX pending rows unchanged.
+Full old-session and terminal/history regression is launched separately at
+the final head using final.sh; its exit marker, not these focused results,
+is the full-local verdict. A long job is handed back, not waited on.

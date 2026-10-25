@@ -1,0 +1,10 @@
+build: target/native/pelt
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh32/pelt/tools/prompt-witness", line 108, in <module>
+    with tempfile.TemporaryDirectory(prefix='sh32-laws-') as temp: laws(binary,Path(temp))
+                                                                   ~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh32/pelt/tools/prompt-witness", line 24, in laws
+    assert b'tester@box ~'+MARK in sh.data['tty'],('prompt-home',cols,sh.data['tty'])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('prompt-home', 24, b'\x1b[6n\x1b[0mtester@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0mtester@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[0m')

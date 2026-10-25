@@ -1,0 +1,8 @@
+usage: wolf fmt [--check] <file.lu|dir|->...
+(`wolf fmt --help` says more)
+wolf build: cannot compile this yet — `==` on a container, tuple or handle (no `Eq` for these this edition) (pipeline is honest through `resolve`; the conservatism ledger, not a bug in your program)
+   --> src/sh/edit_prompt.lu:118:15
+    |
+118 |     (ended && status == 0 && bytes.len < 32768 && os_clock_ns() <= deadline, value)
+    |               ^^^^^^
+    |

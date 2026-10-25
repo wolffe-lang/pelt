@@ -1,0 +1,18 @@
+Fix/gates committed first: ec62583,845fb4f,16ed74a. Plants from4bb50cf.
+Every local plant passed formatter then exited1 from the compiled native
+selfcheck, exactly one intended named row (logs/plant-*.log).
+
+PS1: draft PR89, branch sh32-plant-ps1, head5ea33ed (full sha in handback).
+Expected row prompt-PS1-precedence: explicit PS1 is replaced by the friendly
+prompt instead of preserved. Local RED by name.
+Storage: draft PR90, branch sh32-plant-storage, head857e1b1.
+Expected row prompt-right-storage: right_draw appends ESC to Ed.buf.
+Deadline: draft PR91, branch sh32-plant-deadline, head167a79c.
+Expected row prompt-vcs-deadline: late status replaces the cache as fresh.
+
+Run list for EACH branch read once immediately after push+draft creation:
+all three returned []. No run id existed in those responses; no later
+lookup/poll made. Orchestration must find their eventual run ids and
+confirm named reds, not formatter/build failures. Drafts left open.
+Prediction that deadline would be hardest: wrong; deterministic explicit
+clock made all three straightforward, each exactly one named local red.

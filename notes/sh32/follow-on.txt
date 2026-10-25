@@ -1,0 +1,33 @@
+sh33 draft: finish the friendly campaign's policy and target integration
+
+Start only after sh32's labelled full CI and final local job are green.
+32 new typed sessions make584; all1038 corpus and552 older sessions are
+immutable. Read docs/FRIENDLY.md, docs/KEYS.md, src/sh/edit_prompt.lu,
+selftest_prompt.lu, tools/prompt-witness, notes/sh32/ and the sh32 PR Note.
+
+1. Coordinate with the pin lane: wolf0.2.36's env_arg0, basename sh
+   exclusion and the already-ruled default-on policy belong to that lane.
+   sh32 deliberately leaves0.2.35/lupin0.1.56 and opt-in unchanged. At the
+   new policy, enable prompt_friendly with friendly while retaining exact
+   explicit-PS1/PS2 gates, terminal/POSIX/script gates, and old expectations.
+2. Coordinate the px-owned pelt-session slot: retain exact framebuffer and
+   serial pending rows until px supplies the harness; build no PAX here.
+3. Measure custom right-function capture cost. sh32 bounds its display, not
+   arbitrary user function execution/capture allocation (same semantics as
+   PS1 substitution). Recommend a separate explicit-budget design only
+   after preserving custom-function side effects/status/isolation rules.
+4. DenM2 now exists: fd42d7f status --porcelain actually returned ?? untracked.
+   The segment is porcelain-row count, no branch claim. Extend only after
+   black-box measurements; no git/libgit2 source. Cache has one direct probe
+   per primary prompt,50ms/32KiB; stale same-directory value is dim, directory
+   change invalidates, idle never refreshes. No reuse of completion help.
+5. Add tests and docs for anything adopted; native/release raw and typed,
+   strict release median/p99<1ms, idle counters, named fault plants. Keep
+   renderer-only styles and text out of Ed.buf/history/undo/kill ring.
+
+Bits: prompt_friendly16777216; PS1 session explicitness33554432 is saved
+in frame bits for subshell rollback. Derive the next free bit from state.lu.
+Prompt controls are caret text; prompt_right display<=1024codepoints,
+<=columns/3, ellipsis, hidden below40/overlap/wrap/pager/shadow. Explicit
+PS1 also suppresses the hook/probe; later unset stays ordinary-empty.
+No ruling decided here: recommendations R-sh32-1 through7 in measurements.

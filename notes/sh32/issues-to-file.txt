@@ -1,0 +1,14 @@
+No issues filed or closed by this lane.
+- Existing argv[0]/default-on pin follow-on remains, no re-pin here.
+- Existing PAX framebuffer/serial slot remains px-owned; exact pending
+  rows unchanged, no PAX result claimed.
+- Custom prompt_right uses existing command-substitution semantics:
+  display bounded, arbitrary user-function runtime/capture memory not.
+  Documented; recommendation R-sh32-5, not a 50ms function-runtime claim.
+- Host identity lacks a dedicated prelude hostname/user-name surface;
+  environment plus bounded hostname fallback, documented R-sh32-6.
+- CI run lists for all three plants were empty on their one immediate
+  read; orchestration must retrieve eventual ids and confirm named reds.
+- Materialize Note from PR body as notes/sh32-the-prompt.md on merge.
+  This wrapper cannot write a Markdown lane report; planning/~/.claude
+  untouched. Contract source filenames are under src/sh/, not repo root.

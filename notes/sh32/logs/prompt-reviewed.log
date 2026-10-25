@@ -1,0 +1,57 @@
+build: target/native/pelt
+build: target/release/pelt
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+32 cases
+PIN sh32_home_24
+PIN sh32_right_24
+PIN sh32_wrap_24
+PIN sh32_home_39
+PIN sh32_right_39
+PIN sh32_wrap_39
+PIN sh32_home_40
+PIN sh32_right_40
+PIN sh32_wrap_40
+PIN sh32_home_80
+PIN sh32_right_80
+PIN sh32_wrap_80
+PIN sh32_home_200
+PIN sh32_right_200
+PIN sh32_wrap_200
+PIN sh32_status
+PIN sh32_unicode
+PIN sh32_custom_PS1
+PIN sh32_empty_PS1
+PIN sh32_default_PS1
+PIN sh32_unset_PS1
+PIN sh32_right_resize
+PIN sh32_right_undo
+PIN sh32_right_kill
+PIN sh32_right_control
+PIN sh32_right_long
+PIN sh32_right_vi
+PIN sh32_prompt_off
+PIN sh32_umbrella_off
+PIN sh32_colour_off
+PIN sh32_right_status
+PIN sh32_right_isolation
+PIN FAILURES 0
+ok prompt-home/path/status/right-storage/one-call 24
+ok prompt-home/path/status/right-storage/one-call 39
+ok prompt-home/path/status/right-storage/one-call 40
+ok prompt-home/path/status/right-storage/one-call 80
+ok prompt-home/path/status/right-storage/one-call 200
+ok prompt-resize/pagers/kill/control-escaping/PS1-assignment
+ok prompt-PS1-precedence/environment/empty/gates/history
+ok prompt-vcs-real-probe/deadline/invalid/clean/directory/zero-key-probes
+prompt-cost False median_ms 0.318649 p99_ms 0.501811
+prompt-idle False [{"pid": 369, "page_size_bytes": 4096, "statm_resident_pages": 2157, "status": {"VmRSS": "8628 kB", "RssAnon": "5008 kB", "RssFile": "3620 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "8628 kB", "Pss_Anon": "5008 kB", "Pss_File": "2280 kB", "Pss_Shmem": "0 kB", "Anonymous": "5008 kB", "AnonHugePages": "0 kB"}, "contexts": 232, "cpu_ticks": 2, "minor_faults": 1601, "major_faults": 0, "thp_enabled": "always [madvise] never"}, {"pid": 369, "page_size_bytes": 4096, "statm_resident_pages": 2157, "status": {"VmRSS": "8628 kB", "RssAnon": "5008 kB", "RssFile": "3620 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "8628 kB", "Pss_Anon": "5008 kB", "Pss_File": "2280 kB", "Pss_Shmem": "0 kB", "Anonymous": "5008 kB", "AnonHugePages": "0 kB"}, "contexts": 232, "cpu_ticks": 2, "minor_faults": 1601, "major_faults": 0, "thp_enabled": "always [madvise] never"}]
+prompt-cost True median_ms 0.406661 p99_ms 0.577726
+prompt-idle True [{"pid": 371, "page_size_bytes": 4096, "statm_resident_pages": 2320, "status": {"VmRSS": "9280 kB", "RssAnon": "5244 kB", "RssFile": "4036 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "9280 kB", "Pss_Anon": "5244 kB", "Pss_File": "2462 kB", "Pss_Shmem": "0 kB", "Anonymous": "5244 kB", "AnonHugePages": "0 kB"}, "contexts": 235, "cpu_ticks": 5, "minor_faults": 2686, "major_faults": 0, "thp_enabled": "always [madvise] never"}, {"pid": 371, "page_size_bytes": 4096, "statm_resident_pages": 2320, "status": {"VmRSS": "9280 kB", "RssAnon": "5244 kB", "RssFile": "4036 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "9280 kB", "Pss_Anon": "5244 kB", "Pss_File": "2462 kB", "Pss_Shmem": "0 kB", "Anonymous": "5244 kB", "AnonHugePages": "0 kB"}, "contexts": 235, "cpu_ticks": 5, "minor_faults": 2686, "major_faults": 0, "thp_enabled": "always [madvise] never"}]
+prompt-cost-delta median_ms 0.08801199999999998 p99_ms 0.07591499999999995
+colour idle before {"contexts": 13, "cpu_ticks": 2, "major_faults": 0, "minor_faults": 2426, "page_size_bytes": 4096, "pid": 374, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4208 kB", "Pss_Anon": "4208 kB", "Pss_File": "2394 kB", "Pss_Shmem": "0 kB", "Rss": "8044 kB"}, "statm_resident_pages": 2011, "status": {"RssAnon": "4208 kB", "RssFile": "3836 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "8044 kB"}, "thp_enabled": "always [madvise] never"}
+colour idle after {"contexts": 13, "cpu_ticks": 2, "major_faults": 0, "minor_faults": 2426, "page_size_bytes": 4096, "pid": 374, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4208 kB", "Pss_Anon": "4208 kB", "Pss_File": "2394 kB", "Pss_Shmem": "0 kB", "Rss": "8044 kB"}, "statm_resident_pages": 2011, "status": {"RssAnon": "4208 kB", "RssFile": "3836 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "8044 kB"}, "thp_enabled": "always [madvise] never"}
+ok colour idle-10s: zero wakeups, unchanged RSS, child THP disabled
+colour 80-column line: median 0.055718ms p99 0.267165ms; 100 keys after warmup

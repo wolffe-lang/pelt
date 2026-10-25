@@ -1,0 +1,85 @@
+32 cases
+PIN sh32_home_24
+PIN sh32_right_24
+PIN sh32_wrap_24
+PIN sh32_home_39
+PIN sh32_right_39
+PIN sh32_wrap_39
+PIN sh32_home_40
+PIN sh32_right_40
+PIN sh32_wrap_40
+PIN sh32_home_80
+PIN sh32_right_80
+PIN sh32_wrap_80
+PIN sh32_home_200
+PIN sh32_right_200
+PIN sh32_wrap_200
+PIN sh32_status
+PIN sh32_unicode
+PIN sh32_custom_PS1
+PIN sh32_empty_PS1
+PIN sh32_default_PS1
+PIN sh32_unset_PS1
+PIN sh32_right_resize
+PIN sh32_right_undo
+PIN sh32_right_kill
+PIN sh32_right_control
+PIN sh32_right_long
+PIN sh32_right_vi
+PIN sh32_prompt_off
+PIN sh32_umbrella_off
+PIN sh32_colour_off
+PIN sh32_right_status
+PIN sh32_right_isolation
+PIN FAILURES 0
+session: pelt = /home/mfwolffe/lanes/sh32/pelt/target/release/pelt
+ok   sh32_colour_off
+ok   sh32_custom_PS1
+ok   sh32_default_PS1
+ok   sh32_empty_PS1
+ok   sh32_home_200
+ok   sh32_home_24
+ok   sh32_home_39
+ok   sh32_home_40
+ok   sh32_home_80
+ok   sh32_prompt_off
+ok   sh32_right_200
+ok   sh32_right_24
+ok   sh32_right_39
+ok   sh32_right_40
+ok   sh32_right_80
+ok   sh32_right_control
+ok   sh32_right_isolation
+ok   sh32_right_kill
+ok   sh32_right_long
+ok   sh32_right_resize
+ok   sh32_right_status
+ok   sh32_right_undo
+ok   sh32_right_vi
+ok   sh32_status
+ok   sh32_umbrella_off
+ok   sh32_unicode
+ok   sh32_unset_PS1
+ok   sh32_wrap_200
+ok   sh32_wrap_24
+ok   sh32_wrap_39
+ok   sh32_wrap_40
+ok   sh32_wrap_80
+session: pass 32  fail 0  pending 0 (0)
+ok prompt-home/path/status/right-storage/one-call 24
+ok prompt-home/path/status/right-storage/one-call 39
+ok prompt-home/path/status/right-storage/one-call 40
+ok prompt-home/path/status/right-storage/one-call 80
+ok prompt-home/path/status/right-storage/one-call 200
+ok prompt-resize/pagers/kill/control-escaping/PS1-assignment
+ok prompt-PS1-precedence/environment/empty/gates/history
+ok prompt-vcs-real-probe/deadline/invalid/clean/directory/zero-key-probes
+prompt-cost False median_ms 0.313941 p99_ms 0.412969
+prompt-idle False [{"pid": 294, "page_size_bytes": 4096, "statm_resident_pages": 2234, "status": {"VmRSS": "8936 kB", "RssAnon": "5004 kB", "RssFile": "3932 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "8936 kB", "Pss_Anon": "5004 kB", "Pss_File": "2752 kB", "Pss_Shmem": "0 kB", "Anonymous": "5004 kB", "AnonHugePages": "0 kB"}, "contexts": 232, "cpu_ticks": 3, "minor_faults": 1591, "major_faults": 0, "thp_enabled": "always [madvise] never"}, {"pid": 294, "page_size_bytes": 4096, "statm_resident_pages": 2234, "status": {"VmRSS": "8936 kB", "RssAnon": "5004 kB", "RssFile": "3932 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "8936 kB", "Pss_Anon": "5004 kB", "Pss_File": "2752 kB", "Pss_Shmem": "0 kB", "Anonymous": "5004 kB", "AnonHugePages": "0 kB"}, "contexts": 232, "cpu_ticks": 3, "minor_faults": 1591, "major_faults": 0, "thp_enabled": "always [madvise] never"}]
+prompt-cost True median_ms 0.39484600000000003 p99_ms 0.553149
+prompt-idle True [{"pid": 296, "page_size_bytes": 4096, "statm_resident_pages": 2341, "status": {"VmRSS": "9364 kB", "RssAnon": "5240 kB", "RssFile": "4124 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "9364 kB", "Pss_Anon": "5240 kB", "Pss_File": "2920 kB", "Pss_Shmem": "0 kB", "Anonymous": "5240 kB", "AnonHugePages": "0 kB"}, "contexts": 235, "cpu_ticks": 4, "minor_faults": 2683, "major_faults": 0, "thp_enabled": "always [madvise] never"}, {"pid": 296, "page_size_bytes": 4096, "statm_resident_pages": 2341, "status": {"VmRSS": "9364 kB", "RssAnon": "5240 kB", "RssFile": "4124 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2"}, "smaps_rollup": {"Rss": "9364 kB", "Pss_Anon": "5240 kB", "Pss_File": "2920 kB", "Pss_Shmem": "0 kB", "Anonymous": "5240 kB", "AnonHugePages": "0 kB"}, "contexts": 235, "cpu_ticks": 4, "minor_faults": 2683, "major_faults": 0, "thp_enabled": "always [madvise] never"}]
+prompt-cost-delta median_ms 0.080905 p99_ms 0.14018000000000003
+colour idle before {"contexts": 14, "cpu_ticks": 1, "major_faults": 0, "minor_faults": 2418, "page_size_bytes": 4096, "pid": 299, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4200 kB", "Pss_Anon": "4200 kB", "Pss_File": "2828 kB", "Pss_Shmem": "0 kB", "Rss": "8240 kB"}, "statm_resident_pages": 2060, "status": {"RssAnon": "4200 kB", "RssFile": "4040 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "8240 kB"}, "thp_enabled": "always [madvise] never"}
+colour idle after {"contexts": 14, "cpu_ticks": 1, "major_faults": 0, "minor_faults": 2418, "page_size_bytes": 4096, "pid": 299, "smaps_rollup": {"AnonHugePages": "0 kB", "Anonymous": "4200 kB", "Pss_Anon": "4200 kB", "Pss_File": "2828 kB", "Pss_Shmem": "0 kB", "Rss": "8240 kB"}, "statm_resident_pages": 2060, "status": {"RssAnon": "4200 kB", "RssFile": "4040 kB", "RssShmem": "0 kB", "THP_enabled": "0", "Threads": "2", "VmRSS": "8240 kB"}, "thp_enabled": "always [madvise] never"}
+ok colour idle-10s: zero wakeups, unchanged RSS, child THP disabled
+colour 80-column line: median 0.155107ms p99 0.416240ms; 100 keys after warmup

@@ -1,0 +1,132 @@
+build: target/native/pelt
+build: target/release/pelt
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+tiers-test: PASS T1 the workflow's jobs: plan gauntlet tier nightly-red
+tiers-test: PASS T1 a push to trunk: full, every job (1), the merge's legs
+tiers-test: PASS T1 the nightly: all, every job (1), every leg
+tiers-test: PASS T1 a dispatch, no tier: full, every job (1), the merge's legs
+tiers-test: PASS T1 a dispatch, tier full: full, every job (1), the merge's legs
+tiers-test: PASS T1 a dispatch, tier all: all, every job (1), every leg
+tiers-test: PASS T1 a dispatch's tier is full, all or pr, nothing else
+tiers-test: PASS T1 a pull request labelled full-matrix, prose only: full, every job (1), the merge's legs
+tiers-test: PASS T1 the full-matrix label added: full, every job (1), the merge's legs
+tiers-test: PASS T1 another label added: noop, no job
+tiers-test: PASS T1 another label added to a labelled pull request: noop, no job
+tiers-test: PASS T1 the tier input means nothing to a pull request: pr, gauntlet
+tiers-test: PASS T2 src/main.lu: pr, gauntlet
+tiers-test: PASS T2 src/exec/exec.lu: pr, gauntlet
+tiers-test: PASS T2 tests/diff/param/c_length_bytes_in_c.sh: pr, gauntlet
+tiers-test: PASS T2 tests/session/PENDING.md: pr, gauntlet
+tiers-test: PASS T2 tests/diff/PENDING.md: pr, gauntlet
+tiers-test: PASS T2 tests/census/clauses.tsv: pr, gauntlet
+tiers-test: PASS T2 tests/diff/ORACLE: pr, gauntlet
+tiers-test: PASS T2 tools/difftest: pr, gauntlet
+tiers-test: PASS T2 tools/lib_session.py: pr, gauntlet
+tiers-test: PASS T2 tools/bench/run: pr, gauntlet
+tiers-test: PASS T2 wolf-toolchain.toml: pr, gauntlet
+tiers-test: PASS T2 .github/workflows/ci.yml: pr, gauntlet
+tiers-test: PASS T2 ci/tiers.py: pr, gauntlet
+tiers-test: PASS T2 ci/tiers-test.py: pr, gauntlet
+tiers-test: PASS T2 ci/nightly-red.sh: pr, gauntlet
+tiers-test: PASS T2 LICENSE: pr, gauntlet
+tiers-test: PASS T2 LICENSE-TRAINING-DATA: pr, gauntlet
+tiers-test: PASS T2 .gitignore: pr, gauntlet
+tiers-test: PASS T2 prose: notes/sh18-result.md: noop, no job
+tiers-test: PASS T2 prose: docs/CENSUS.md: noop, no job
+tiers-test: PASS T2 prose: README.md: noop, no job
+tiers-test: PASS T2 prose: CLAUDE.md: noop, no job
+tiers-test: PASS T2 prose: docs/PLAN.md: noop, no job
+tiers-test: PASS T2 prose: notes/sh19-evidence/logs/digests.txt: noop, no job
+tiers-test: PASS T2 prose alone, several: noop, no job
+tiers-test: PASS T2 prose beside code: pr, gauntlet
+tiers-test: PASS T3 a path no rule names: full, every job (1), the merge's legs
+tiers-test: PASS T3 a new file at the root: full, every job (1), the merge's legs
+tiers-test: PASS T3 a markdown file at the root no rule names: full, every job (1), the merge's legs
+tiers-test: PASS T3 an unknown path beside prose: full, every job (1), the merge's legs
+tiers-test: PASS T3 an unknown path beside code: full, every job (1), the merge's legs
+tiers-test: PASS T3 no changed paths to read: full, every job (1), the merge's legs
+tiers-test: PASS T3 a change that names no path: full, every job (1), the merge's legs
+tiers-test: PASS T3 a merge that cannot be read (no repository there): full, every job (1), the merge's legs
+tiers-test: PASS T3 a dispatch, tier pr, an unknown path: full, every job (1), the merge's legs
+tiers-test: PASS T3 a dispatch, tier pr, a branch that cannot be read: full, every job (1), the merge's legs
+tiers-test: PASS T2 a dispatch, tier pr, code: pr, gauntlet
+tiers-test: PASS T6 a green full run: exit 0
+tiers-test: PASS T6 a green all run: exit 0
+tiers-test: PASS T6 a full run on every leg (the merge before tl30): exit 1
+tiers-test: PASS T6 an all run on the merge's legs: exit 1
+tiers-test: PASS T6 an all run that chose less than every job: exit 1
+tiers-test: PASS T6 a green pr run: exit 0
+tiers-test: PASS T6 a noop run: exit 0
+tiers-test: PASS T6 a noop run whose jobs output is absent: exit 0
+tiers-test: PASS T6 a chosen job failed: exit 1
+tiers-test: PASS T6 a chosen job failed in a pr run: exit 1
+tiers-test: PASS T6 a chosen job was skipped: exit 1
+tiers-test: PASS T6 a chosen job was cancelled: exit 1
+tiers-test: PASS T6 a job ran in a noop run: exit 1
+tiers-test: PASS T6 a full run whose jobs output is absent: exit 1
+tiers-test: PASS T6 a full run on the pull request's hosts: exit 1
+tiers-test: PASS T6 a pr run on every host: exit 1
+tiers-test: PASS T6 a full run whose matrix_gauntlet is absent: exit 1
+tiers-test: PASS T6 a pr run that chose nothing: exit 1
+tiers-test: PASS T6 the plan failed: exit 1
+tiers-test: PASS T6 the plan named no tier: exit 1
+tiers-test: PASS T6 the plan named a tier that is none: exit 1
+tiers-test: PASS T6 the plan's jobs are no list: exit 1
+tiers-test: PASS T6 a chosen job the tier job does not need: exit 1
+tiers-test: PASS T4 the plan is the first job, the tier the last but the nightly's issue
+tiers-test: PASS T4 gauntlet needs the plan and runs only when the plan names it
+tiers-test: PASS T4 gauntlet takes its hosts from the plan
+tiers-test: PASS T4 every plan output is read with a default (3 reads: jobs matrix_gauntlet tier)
+tiers-test: PASS T4 the plan job declares tier, jobs and each matrix
+tiers-test: PASS T4 the plan reads the merge commit (depth 2) or a dispatch's branch (the history), and the tier input
+tiers-test: PASS T4 the plan job runs this file before it plans
+tiers-test: PASS T4 the tier job needs every job (2 of 2)
+tiers-test: PASS T4 the tier job runs on !cancelled(), never always() (${{ !cancelled() }})
+tiers-test: PASS T4 the tier job is named for the tier
+tiers-test: PASS T4 the tier job's check is ci/tiers.py verdict over toJSON(needs)
+tiers-test: PASS T4 a red nightly, and only a red nightly, runs ci/nightly-red.sh with issues: write
+tiers-test: PASS T4 cancel-in-progress for pull requests only
+tiers-test: PASS T4 a run that is no pull request's has a concurrency group of its own run id
+tiers-test: PASS T4 a pull request's full and pr runs are separate groups, and another label's noop cancels nothing
+tiers-test: PASS T4 a push runs on trunk alone (a lane's push runs once, as its pull request)
+tiers-test: PASS T4 the nightly runs
+tiers-test: PASS T4 adding a label starts a run
+tiers-test: PASS T4 a dispatch takes the tier input, full, all or pr
+tiers-test: PASS T4 the all tier's (the nightly's) legs are the ones before tl28: {"matrix_gauntlet": [{"os": "ubuntu-latest", "builds": true, "tier": "native"}, {"os": "ubuntu-latest", "builds": true, "tier": "release"}, {"os": "macos-latest", "builds": true, "tier": "native"}, {"os": "macos-latest", "builds": true, "tier": "release"}, {"os": "ubuntu-24.04-arm", "builds": false, "tier": "native"}, {"os": "ubuntu-24.04-arm", "builds": false, "tier": "release"}]}
+tiers-test: PASS T4 no host left the all tier (the nightly's)
+tiers-test: PASS T4 the full tier (the merge, a trunk push) runs the merge's legs: {"matrix_gauntlet": [{"os": "ubuntu-latest", "builds": true, "tier": "native"}, {"os": "ubuntu-latest", "builds": true, "tier": "release"}, {"os": "macos-latest", "builds": true, "tier": "native"}, {"os": "ubuntu-24.04-arm", "builds": false, "tier": "native"}, {"os": "ubuntu-24.04-arm", "builds": false, "tier": "release"}]}
+tiers-test: PASS T4 what the merge leaves is exactly tl30's move, and every leg of it runs in the nightly: {"matrix_gauntlet": [{"os": "macos-latest", "builds": true, "tier": "release"}]}
+tiers-test: PASS T4 the merge keeps a macOS smoke (tl30)
+tiers-test: PASS T7 a prose-only merge, the base moved on (its src/main.lu.moved is not the pull request's): noop, no job
+tiers-test: PASS T7 the same merge, the head not given: noop, no job
+tiers-test: PASS T7 the merge's second parent is not the pull request's head: full, every job (1), the merge's legs
+tiers-test: PASS T7 HEAD is the branch, not a merge commit: full, every job (1), the merge's legs
+tiers-test: PASS T7 a merge that changes code and prose: pr, gauntlet
+tiers-test: PASS T7 a merge that adds a path no rule names: full, every job (1), the merge's legs
+tiers-test: PASS T7 a dispatched prose-only branch, trunk moved on (its src/main.lu.moved is not the branch's): noop, no job
+tiers-test: PASS T7 a dispatched branch that changes code: pr, gauntlet
+tiers-test: PASS T7 a dispatched branch that adds a path no rule names (the plant): full, every job (1), the merge's legs
+tiers-test: PASS T7 a dispatch at trunk itself, tier pr (no change to read): full, every job (1), the merge's legs
+tiers-test: PASS T7 a dispatch with no origin/trunk to read: full, every job (1), the merge's legs
+tiers-test: PASS T8 no open issue: one is opened, labelled nightly-red, titled 'nightly red: ci on trunk'
+tiers-test: PASS T8 the dedupe asks for an open nightly-red issue under the title
+tiers-test: PASS T8 an open issue: a comment on it, no new issue
+tiers-test: PASS T8 a label that already exists is no failure
+tiers-test: PASS T8 the script refuses to run without REPO, WORKFLOW and RUN_URL
+tiers-test: PASS T8 the workflow's name is ci, the title's
+tiers-test: FAIL T5 not a git checkout: the tracked paths cannot be listed
+tiers-test: PASS T4 the all tier (the nightly) runs the three hosts before tl28, each on both compiler tiers (pelt#40)
+tiers-test: PASS T4 the merge keeps macOS's native leg, whose session corpus caught sh18's notice race (tl30)
+tiers-test: PASS T4 no step names a compiler tier: each takes its leg's (`matrix.tier`)
+tiers-test: PASS T4 the build and the aarch64 refusal are the leg's tier
+tiers-test: PASS T4 the two planted-red selftests run on the release leg, as before on the release build
+tiers-test: PASS T4 fmt, the clause table, the width table and wolf test run once a host, on the native leg
+tiers-test: PASS T4 the job's 45-minute ceiling is unchanged
+tiers-test: PASS T4 session budget: macOS 45 minutes, Linux 25; the complete corpus still runs
+tiers-test: PASS T4 session budget does not filter or shard away cases
+tiers-test: PASS T4 colour raw bytes, storage boundaries and idle witness run on each built tier
+tiers-test: PASS T4 words loader regression runs on every built host/tier
+tiers-test: PASS T4 words raw bytes, script isolation, pager and explicit-help budget run on each built tier
+tiers-test: PASS T4 prompt precedence, storage, VCS deadline and idle gate runs on each built tier
+tiers-test: FAIL (1)

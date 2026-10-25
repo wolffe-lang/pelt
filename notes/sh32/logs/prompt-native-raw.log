@@ -1,0 +1,7 @@
+ok prompt-home/path/status/right-storage/one-call 24
+ok prompt-home/path/status/right-storage/one-call 39
+ok prompt-home/path/status/right-storage/one-call 40
+ok prompt-home/path/status/right-storage/one-call 80
+ok prompt-home/path/status/right-storage/one-call 200
+ok prompt-resize/pagers/kill/control-escaping/PS1-assignment
+ok prompt-PS1-precedence/environment/empty/gates/history

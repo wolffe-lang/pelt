@@ -1,0 +1,16 @@
+build: target/native/pelt
+ok prompt-home/path/status/right-storage/one-call 24
+ok prompt-home/path/status/right-storage/one-call 39
+ok prompt-home/path/status/right-storage/one-call 40
+ok prompt-home/path/status/right-storage/one-call 80
+ok prompt-home/path/status/right-storage/one-call 200
+ok prompt-resize/pagers/kill/control-escaping/PS1-assignment
+ok prompt-PS1-precedence/environment/empty/gates/history
+Traceback (most recent call last):
+  File "/home/mfwolffe/lanes/sh32/pelt/tools/prompt-witness", line 140, in <module>
+    with tempfile.TemporaryDirectory(prefix='sh32-vcs-') as temp:vcs(binary,Path(temp))
+                                                                 ~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/mfwolffe/lanes/sh32/pelt/tools/prompt-witness", line 97, in vcs
+    assert b'[vcs:1]' in sh.data['tty'],('prompt-vcs-real-probe',sh.data['tty'])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('prompt-vcs-real-probe', b'\x1b[6nPROBE /home/mfwolffe/lanes/sh32/tmp/sh32-vcs-44_rio3p/bin/den ended=false status=-9 len=0 late=false\r\n\x1b[0mtester@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0mtester@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[0m')
