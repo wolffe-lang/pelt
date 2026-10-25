@@ -148,6 +148,8 @@ def extra_checks(say, plan, expect, blocks, wf):
     say("run: tools/colour-witness target/${{ matrix.tier }}/pelt" in g,
         "T4 colour raw bytes, storage boundaries and idle witness run on each built tier")
 
+    say("run: python3 tools/words-loader-test" in g,
+        "T4 words loader regression runs on every built host/tier")
     say("run: tools/words-witness target/${{ matrix.tier }}/pelt" in g,
         "T4 words raw bytes, script isolation, pager and explicit-help budget run on each built tier")
 

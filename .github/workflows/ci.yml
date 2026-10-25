@@ -327,6 +327,10 @@ jobs:
         timeout-minutes: 5
         run: tools/colour-witness target/${{ matrix.tier }}/pelt
 
+      - name: words witness imports without the removed Python loader API
+        if: ${{ matrix.builds && !cancelled() }}
+        run: python3 tools/words-loader-test
+
       - name: words bytes, abbreviation isolation and bounded pager, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 5

@@ -12,3 +12,9 @@ hasu image localhost/sh31-oracle, only after both regression jobs exit.
 Keep source, raw oracle JSON, per-step logs, pid/log/exit markers and
 pin identity evidence until orchestration has inspected the final results.
 Never remove a repo-wide worktree list or another lane's path.
+
+Added by the Mac compatibility follow-up, after tests ended:
+Mac /Users/mfwolffe/lanes/sh31/pelt/.wolf-bin
+Mac /Users/mfwolffe/lanes/sh31/pelt/.lu-cache
+Mac /Users/mfwolffe/lanes/sh31/pelt/target
+Mac /Users/mfwolffe/lanes/sh31/tmp

@@ -1,0 +1,42 @@
+sh31 follow-up, 2026-10-25: macOS CI harness compatibility
+
+Failed run40187287608, job121150715227: words-witness failed on line8,
+before starting any pty. Python's SourceFileLoader.load_module was removed;
+the failure was not the terminal line discipline or a /proc/strace row.
+Reproduced on nomad's installed Python3.15.0. The new words-loader-test
+also hides the removed API on older interpreters and reproduced the same
+AttributeError on Python3.11.15 before the fix. Both red logs are retained.
+
+Use spec_from_loader/module_from_spec/exec_module for the extensionless
+colour helper. A separate CI step runs the compatibility regression on
+every built host/tier; the existing words gate and its planner assertion
+remain intact. No application source, option, deadline or expectation changed.
+
+The now-running Mac witness uncovered a fixture assumption: first direct
+execution of its freshly written shell script took142.5ms; later direct
+launches took3.2-3.6ms. Pelt correctly rejected its cold help result at the
+50ms budget. Warm ONLY the two owned fixture programs before opening pelt,
+then remove their marker files. The no-highlight execution, single-probe
+cache and late-output assertions all start at zero and remain unchanged.
+Warm pelt probe responses measured5.1-12.6ms. No application bound relaxed.
+
+Nomad under RULES4: existing pinned archive pair fetched/verified, native
+build and tests under an executable8GiB free+inactive+speculative guard
+(18.8GB at build,18.2GB at final run). No package installed or config changed.
+Python3.15 full native words witness green; response median0.045417ms,
+p990.061375ms. Linux /proc accounting printed its explicit Mac SKIP.
+CI planner green under3.15; compatibility regression green on3.11 and3.15.
+README read: current;552 sessions and unchanged runtime/toolchain claims.
+
+Hasu B rerun of the changed harness: compatibility regression plus native
+and release whole words witnesses green. Strict release median0.142180ms,
+p990.339032ms; both idle10s samples unchanged, zero context-switch delta.
+These use the1148708 application binaries: no .lu file changed in this fix.
+The completed original final-head whole regression was also read directly:
+FINAL: 0 failed; exit0; inputs-stable0 at2026-10-25T12:13:44Z.
+The orchestrator confirmed all three plants closed red by their named rows.
+
+Evidence: logs/macos-loader-{red,green,planner}.log,
+logs/macos-python315-red.log, logs/macos-words-loader-only.log (the cold
+fixture red), logs/macos-help-fixture.log, logs/macos-words-fixed.log,
+logs/loader-fix-linux.log and logs/macos-fetch.log.

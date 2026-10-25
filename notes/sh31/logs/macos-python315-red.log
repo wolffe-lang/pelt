@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+  File "/Users/mfwolffe/lanes/sh31/pelt/tools/words-witness", line 8, in <module>
+    loader=importlib.machinery.SourceFileLoader('colour',str(ROOT/'tools/colour-witness'))
+AttributeError: 'SourceFileLoader' object has no attribute 'load_module'. Did you mean '.exec_module' instead of '.load_module'?

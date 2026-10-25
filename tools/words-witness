@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Words raw-byte and cross-process persistence laws, owned fresh-HOME ptys."""
 from pathlib import Path
-import importlib.machinery, os, subprocess, sys, tempfile
+import importlib.machinery, importlib.util, os, subprocess, sys, tempfile
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
 from lib_shadow import Shell
-colour=importlib.machinery.SourceFileLoader('colour',str(ROOT/'tools/colour-witness')).load_module()
+loader=importlib.machinery.SourceFileLoader('colour',str(ROOT/'tools/colour-witness'))
+spec=importlib.util.spec_from_loader(loader.name,loader)
+colour=importlib.util.module_from_spec(spec)
+sys.modules[loader.name]=colour
+loader.exec_module(colour)
 step=colour.step
 
 def shell(binary,home,args=(),**kw):
@@ -138,6 +142,17 @@ def help_probe(binary,home):
     fast.write_text('#!/bin/sh\nprintf x >> probes\nprintf "  --alpha  First choice\\n  --beta  Second choice\\n"\n')
     slow.write_text('#!/usr/bin/python3\nimport time\nopen("slow-probes","a").write("x")\ntime.sleep(.2)\nprint("  --slow  Too late")\n')
     fast.chmod(0o755);slow.chmod(0o755)
+    # A newly created executable's first launch can exceed 50ms on macOS
+    # before its code runs (measured 142.5ms vs 3.2-3.6ms thereafter).
+    # Warm only these owned fixtures, then remove their markers so the
+    # no-execution and once-per-prompt assertions still start from zero.
+    # The application's 50ms deadline is unchanged: a cold program may
+    # correctly produce no completions and is not our positive fixture.
+    for fixture,marker in [(fast,'probes'),(slow,'slow-probes')]:
+        warm=subprocess.run([str(fixture),'--help'],cwd=home,capture_output=True,timeout=10)
+        assert warm.returncode==0,(fixture,warm)
+        assert (home/marker).read_text()=='x',(fixture,'fixture did not run')
+        (home/marker).unlink()
     sh=shell(binary,home)
     try:
         step(sh,b'./probe --')

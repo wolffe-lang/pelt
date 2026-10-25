@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+"""Load the extensionless words witness without the removed load_module API.
+
+The macOS CI interpreter has removed that API. Hide it on older Python too,
+so every host reproduces the same compatibility boundary without a binary.
+"""
+import importlib.machinery
+from pathlib import Path
+import runpy
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+BaseLoader = importlib.machinery.SourceFileLoader
+
+
+class ModernSourceFileLoader(BaseLoader):
+    def __getattribute__(self, name):
+        if name == 'load_module':
+            raise AttributeError('load_module is unavailable on modern Python')
+        return super().__getattribute__(name)
+
+
+with patch.object(importlib.machinery, 'SourceFileLoader', ModernSourceFileLoader):
+    witness = runpy.run_path(str(ROOT / 'tools' / 'words-witness'),
+                            run_name='words_loader_regression')
+
+colour = witness['colour']
+assert isinstance(colour.__loader__, ModernSourceFileLoader), 'loader boundary not exercised'
+for name in ('step', 'ready', 'assert_resets', 'cost'):
+    assert callable(getattr(colour, name)), ('colour helper missing', name)
+for name in ('abbreviations', 'events', 'completion', 'help_probe'):
+    assert callable(witness[name]), ('words witness missing', name)
+print('ok words-loader: extensionless helpers load without load_module')

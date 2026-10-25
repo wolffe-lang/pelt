@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/Users/mfwolffe/lanes/sh31/pelt/tools/words-loader-test", line 24, in <module>
+    witness = runpy.run_path(str(ROOT / 'tools' / 'words-witness'),
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/mfwolffe/lanes/sh31/pelt/tools/words-witness", line 8, in <module>
+    colour=importlib.machinery.SourceFileLoader('colour',str(ROOT/'tools/colour-witness')).load_module()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mfwolffe/lanes/sh31/pelt/tools/words-loader-test", line 19, in __getattribute__
+    raise AttributeError('load_module is unavailable on modern Python')
+AttributeError: load_module is unavailable on modern Python. Did you mean: 'exec_module'?

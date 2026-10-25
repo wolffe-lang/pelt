@@ -1,0 +1,16 @@
+free+inactive+speculative bytes 18215829504
+ok words-loader: extensionless helpers load without load_module
+ok abbr space/Enter/quoted/empty/undo/cancel/command-position
+ok abbr persistence/atomic/malformed/erase/exclusive-temp
+ok abbr-script-gate
+ok events echo/last-word/quotes/comments/literals/cancel/abbr-order/toggle
+ok events expanded-history-no-style-bytes
+ok event-script-gate
+ok completion columns/navigation/accept-not-execute/escape 24
+ok completion columns/navigation/accept-not-execute/escape 40
+ok completion columns/navigation/accept-not-execute/escape 80
+ok completion columns/navigation/accept-not-execute/escape 120
+ok completion resize/restored-line
+ok explicit-help-only/description/cache/timeout
+SKIP colour idle counters: Linux /proc only
+colour 80-column line: median 0.045417ms p99 0.061375ms; 100 keys after warmup

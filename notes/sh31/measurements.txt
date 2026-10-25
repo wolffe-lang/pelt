@@ -73,3 +73,10 @@ No final full-green or current-head cost claim before that job finishes.
 PAX unchanged pending rows remain in tests/session/PENDING.md. Basis:
 pax#162 at09471da4, notes/px70/final-validation.txt and the retained sh28
 key/palette evidence. No PAX built or run. No Mac build or config change.
+
+Follow-up: both full jobs subsequently exited0; final-head1148708 printed
+FINAL: 0 failed and inputs-stable0 at12:13:44Z. The orchestrator confirmed
+all three plants closed red by name. The full Mac native CI words step
+then exposed Python3.15's removed load_module API before any pty row;
+macos-loader-fix.txt records the reproduced failure, unchanged runtime
+budget, fixture cold-start distinction, and fresh Mac/Linux passing checks.

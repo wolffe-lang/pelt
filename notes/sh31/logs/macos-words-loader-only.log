@@ -1,0 +1,22 @@
+free+inactive+speculative bytes 18829524992
+build: target/native/pelt
+ok words-loader: extensionless helpers load without load_module
+ok abbr space/Enter/quoted/empty/undo/cancel/command-position
+ok abbr persistence/atomic/malformed/erase/exclusive-temp
+ok abbr-script-gate
+ok events echo/last-word/quotes/comments/literals/cancel/abbr-order/toggle
+ok events expanded-history-no-style-bytes
+ok event-script-gate
+ok completion columns/navigation/accept-not-execute/escape 24
+ok completion columns/navigation/accept-not-execute/escape 40
+ok completion columns/navigation/accept-not-execute/escape 80
+ok completion columns/navigation/accept-not-execute/escape 120
+ok completion resize/restored-line
+Traceback (most recent call last):
+  File "/Users/mfwolffe/lanes/sh31/pelt/tools/words-witness", line 167, in <module>
+    help_probe(binary,Path(temp))
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/mfwolffe/lanes/sh31/pelt/tools/words-witness", line 149, in help_probe
+    raw=step(sh,b'\t');assert b'First choice' in raw and b'Second choice' in raw,raw
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: b'\x07\x1b[0m'
