@@ -1,0 +1,7 @@
+dash 0.5.13.4-1
+bash 5.3.20-1
+fish 4.9.3-1
+954b8837f636e6956a6c377d80829b72dd2e94a015fbe198bb1272973742447d  /usr/bin/dash
+c14c8f498f3be96f076ceb07d65dba584a86dca3c86b5dce65ed0f6cae73358d  /usr/bin/bash
+a7f62f606704b055039e229d5a46e589b2b9c4a8699c95eedbcd656ccb876adc  /usr/bin/fish
+fish, version 4.9.3
