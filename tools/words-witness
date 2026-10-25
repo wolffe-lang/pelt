@@ -122,9 +122,9 @@ def completion(binary,home):
     try:
         step(sh,b'echo ');step(sh,b'\t');step(sh,b'\t')
         import fcntl, struct, termios
-        for cols in [16,80]:
-            sh.screen.resize(cols,24)
-            fcntl.ioctl(sh.master,termios.TIOCSWINSZ,struct.pack('HHHH',24,cols,0,0))
+        for cols,rows in [(80,6),(80,24),(16,24),(80,24)]:
+            sh.screen.resize(cols,rows)
+            fcntl.ioctl(sh.master,termios.TIOCSWINSZ,struct.pack('HHHH',rows,cols,0,0))
             colour.settled(sh,.2)
             assert any('completions' in r for r in sh.screen.snapshot(0)),sh.screen.snapshot(0)
         raw=step(sh,b'\x07');colour.assert_resets(raw)

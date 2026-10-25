@@ -34,6 +34,9 @@ fn want_words(mut bad: List[str]) {
     set_line(mut e, cps_of("zz"), 2)
     abbr_expand(mut e, e.cur)
     if cps_text(e.buf) != "echo latest" { (mut bad).push("abbr Enter trigger") }
+    set_line(mut e, cps_of("zzsuffix"), 2)
+    abbr_expand(mut e, e.cur)
+    if cps_text(e.buf) != "zzsuffix" { (mut bad).push("abbr Enter inside a word") }
     e.abbreviate = false
     set_line(mut e, cps_of("zz "), 3)
     abbr_space(mut e)

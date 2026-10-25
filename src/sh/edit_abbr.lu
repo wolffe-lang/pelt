@@ -110,6 +110,7 @@ fn bi_abbr(mut sh: Sh, args: List[str]) -> int {
 /// Space enters first; expansion is its own undo group, preserving `zz `.
 fn abbr_expand(mut e: Ed, end: int) {
     if !e.abbreviate || end <= 0 { return }
+    if end < e.buf.len && !hl_meta(e.buf[end]) { return }
     var start = end
     while start > 0 && !hl_meta(e.buf[start - 1]) { start -= 1 }
     let name = cps_text(slice_of(e.buf, start, end))

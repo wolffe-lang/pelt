@@ -1336,6 +1336,7 @@ fn resized(mut e: Ed) {
     let (w, h) = term_width(e.fixed)
     e.rows = h
     if w == e.cols {
+        if e.cp_active { completion_draw(mut e) }
         return
     }
     put_s(mut e, "\r")
