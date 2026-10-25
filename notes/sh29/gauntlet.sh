@@ -17,7 +17,7 @@ run() {
     if [ "$rc" -ne 0 ]; then bad=$((bad+1)); fi
 }
 git rev-parse HEAD > "$logs/final.head"
-find src tools tests .github -type f -print0 | sort -z | xargs -0 sha256sum > "$logs/final.inputs-before"
+git ls-files -z src tools tests .github | sort -z | xargs -0 sha256sum > "$logs/final.inputs-before"
 run build tools/build --all
 run fmt tools/check-fmt
 run checked-tests tools/check-test
@@ -30,7 +30,7 @@ for tier in native release; do
     run "$tier-terminal" tools/edit-witness "target/$tier/pelt"
     run "$tier-history" tools/hist-witness "target/$tier/pelt"
 done
-find src tools tests .github -type f -print0 | sort -z | xargs -0 sha256sum > "$logs/final.inputs-after"
+git ls-files -z src tools tests .github | sort -z | xargs -0 sha256sum > "$logs/final.inputs-after"
 run inputs-stable cmp "$logs/final.inputs-before" "$logs/final.inputs-after"
 printf 'GAUNTLET: %s failed\n' "$bad"
 if [ "$bad" -ne 0 ]; then exit 1; fi
