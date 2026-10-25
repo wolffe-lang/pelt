@@ -17,7 +17,7 @@ for name,(commands,check) in CASES.items():
     keys=base.with_suffix('.keys')
     keys.write_text('\n'.join(['exec 2>&0']+commands+['exit'])+'\n')
     meta={'env':r'PS1=$\s','pelt_args':'-i -o friendly','compare':'stdout','tr_by':'hand','screen':'2','screen_by':'hand',
-        'why':'pelt-owned read-only bindings / bounded 10-entry kill-ring extension; independent assertions in notes/sh28-evidence/extensions.py and witness.py; key inputs bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785'}
+        'why':'pelt-owned read-only bindings / bounded 10-entry kill-ring extension; independent assertions in notes/sh28-evidence/extensions.py and witness.py; key inputs bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image id 3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f digest sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785'}
     pelt=str(ROOT/'target/native/pelt')
     a=ls.run(ls.argv_for(pelt,meta,True),str(keys),meta)
     screen=ls.last_screens

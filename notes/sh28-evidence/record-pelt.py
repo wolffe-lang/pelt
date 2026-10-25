@@ -8,6 +8,9 @@ oracle = ROOT/'notes/sh28-evidence/oracle-transcripts'
 oracle.mkdir(exist_ok=True)
 pelt = str(ROOT/'target/native/pelt')
 for name, keys in ls.cases(sys.argv[1:] or [p.stem for p in (ROOT/'tests/session').glob('sh28_*.keys')]):
+    if name.startswith(('sh28_arg_', 'sh28_bindings_')) or name == 'sh28_kill_ring_cap':
+        print('use numeric-regressions.py / extensions.py for', name, flush=True)
+        continue
     meta = ls.read_meta(keys[:-5] + '.meta')
     tr = Path(keys[:-5]+'.tr')
     saved = oracle/(name+'.tr')

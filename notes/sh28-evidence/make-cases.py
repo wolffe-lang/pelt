@@ -81,4 +81,4 @@ for name, steps in CASES.items():
     base.with_suffix('.meta').write_text(
         'oracle=bash\ncompare=stdout\n' + ('args=-o vi\n' if vi else '') +
         'env=PS1=$\\s' + (' HISTSIZE=1' if name == 'last_oldest' else '') + '\npelt_args=-i -o friendly' + (' -o vi' if vi else '') + '\n' +
-        'why=sh28 black-box bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785; measured twice by notes/sh28-evidence/record.py, see logs/record-terminal.log\n')
+        'why=sh28 black-box bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image id 3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f digest sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785; measured twice by notes/sh28-evidence/record.py, see logs/record-terminal.log\n')

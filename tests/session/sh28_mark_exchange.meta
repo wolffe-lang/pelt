@@ -3,6 +3,6 @@ env=PS1=$\s
 oracle=bash
 compare=stdout
 tr_by=hand
-why=sh28 black-box bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785; measured twice by notes/sh28-evidence/record.py, see logs/record-terminal.log; R-sh28-4: C-@ sets mark per documented intent; bash NUL non-effect retained in oracle-transcripts; pelt-owned screen and transcript pinned by record-pelt.py, checked against separately retained bash stdout/status
+why=Arch image id 3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f; sh28 black-box bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785; measured twice by notes/sh28-evidence/record.py, see logs/record-terminal.log; R-sh28-4: C-@ sets mark per documented intent; bash NUL non-effect retained in oracle-transcripts; pelt-owned screen and transcript pinned by record-pelt.py, checked against separately retained bash stdout/status
 screen=2
 screen_by=hand
