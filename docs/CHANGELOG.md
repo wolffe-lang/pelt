@@ -6,6 +6,27 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Script corners.** `set -n` stops later commands within the same list
+  or compound command, before expansions, redirections or background jobs,
+  while the remaining input is still checked for syntax errors. Option
+  listings include `monitor` and `nolog`, and `set +o` restores both.
+  A PATH search meeting only a directory reports `Permission denied`:
+  status 127 for a command or `command`, 126 for `exec`, as recorded from
+  dash 0.5.13.4. A later executable still wins over a directory candidate.
+
+- **Floating printf.** `%e`, `%f`, `%g` and their uppercase forms support
+  signs, alternate form, field width, zero/left padding and precision.
+  Decimal and hexadecimal operands round to binary64; decimal output rounds
+  the exact value once, half-even. General notation is chosen after rounding.
+  Signed zero, infinity, NaN, numeric prefixes and range errors have recorded
+  differential cases. The original `printf/c_floats` expectation now passes.
+
+- **Oracle image preparation.** `tools/oracle-image` and
+  `tools/oracle-container` stage a digest-pinned, network-isolated recording
+  path. It deliberately refuses to build: the required bash 5.3.20-2 archive
+  is unavailable. No replacement version or working-image claim is made;
+  the ordinary PR workflow is unchanged. See `tools/oracle/README.txt`.
+
 - **Friendly prompt.** `prompt_friendly`, enabled by the opt-in `friendly`
   umbrella, shows user/host, an abbreviated HOME-relative path, nonzero
   status and the root/user marker. Explicit PS1 remains unchanged. A
