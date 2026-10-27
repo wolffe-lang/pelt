@@ -1,0 +1,11 @@
+dash 0.5.13.4-1.1
+bash 5.3.20-2
+fish 4.9.3-1
+recorded sh33/float_bad: exit 0
+recorded sh33/floats: exit 0
+recorded sh33/noexec: exit 0
+recorded sh33/noexec_compound: exit 0
+recorded sh33/noexec_parse: exit 2
+recorded sh33/options: exit 0
+recorded sh33/path_directory: exit 0 (bash differs)
+build: target/native/pelt

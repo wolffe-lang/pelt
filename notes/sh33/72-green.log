@@ -1,0 +1,7 @@
+build: target/native/pelt
+difftest: pelt = /home/mfwolffe/lanes/sh33/pelt/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   sh33/path_directory
+difftest: area        pass  fail  pending (of which pass)
+difftest: sh33           1     0     0 (0)
+difftest: total          1     0     0 (0)

@@ -1,0 +1,21 @@
+shell=dash
+probe: 1: dir: Permission denied
+probe: 1: dir: Permission denied
+status:127
+command:127
+probe: 1: exec: dir: Permission denied
+exec status:126
+shell=bash --posix
+probe: line 1: dir: command not found
+status:127
+probe: line 1: dir: command not found
+command:127
+probe: line 1: exec: dir: not found
+exec status:127
+shell=target/native/pelt
+pelt: probe: line 1: dir: not found
+status:127
+pelt: probe: line 1: dir: not found
+command:127
+pelt: probe: line 1: exec: dir: not found
+exec status:127

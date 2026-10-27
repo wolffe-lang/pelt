@@ -1,0 +1,35 @@
+difftest: pelt = /home/mfwolffe/lanes/sh33/pelt/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+PEND-fail printf/c_floats (waits on printf-float)
+PEND-fail quote/c_ds_hex_high (waits on non-utf8-bytes)
+PEND-fail quote/c_ds_octal_high (waits on non-utf8-bytes)
+FAIL sh33/float_bad: stdout
+     pelt stdout: b'status:1\n'
+     want stdout: b'12.500000 0 0.000000e+00\nstatus:1\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: printf: %f: conversion not supported\n'
+FAIL sh33/floats: stdout, exit 1 (oracle 0), stderr present
+     pelt stdout: b'[['
+     want stdout: b'1.250000e+00 -1.250000E+00 1.250000 -1.250000 1.23457e+06 1E-05\n[+00000001.25][  1.2e+00][12.5      ][2.][1.500]\n0 2 2 -2 1e+03 999 0.0001 9.99e-05\n1.250000 1 1e+00\n-0.000000 -0.000000e+00 -0\n[0][0.00][0.000000e+00]\n1.25\n2.5\n3.75\n65.000000 66\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: printf: %e: conversion not supported\npelt: ../s.sh: line 2: printf: %f: conversion not supported\npelt: ../s.sh: line 3: printf: %f: conversion not supported\npelt: ../s.sh: line 4: printf: %f: conversion not supported\npelt: ../s.sh: line 5: printf: %f: conversion not supported\n'
+FAIL sh33/noexec: stdout
+     pelt stdout: b'before\nnot-run\n'
+     want stdout: b'before\n'
+FAIL sh33/noexec_compound: stdout
+     pelt stdout: b'before\none\nnot-run\ntwo\nnot-run\n'
+     want stdout: b'before\none\n'
+FAIL sh33/noexec_parse: stdout
+     pelt stdout: b'not-run\n'
+     want stdout: b''
+     pelt stderr: b"pelt: ../s.sh: line 2: syntax error: unexpected 'then'\n"
+FAIL sh33/options: stdout
+     pelt stdout: b'monitor-lost\n'
+     want stdout: b'set -o monitor\nset -o nolog\nmonitor-restored\nmonitor on\nnolog on\nnolog off\nnolog on\n'
+FAIL sh33/path_directory: stdout
+     pelt stdout: b'direct:127\ncommand:127\nexec:127\nlater\nlookup:127\n'
+     want stdout: b'direct:127\ncommand:127\nexec:126\nlater\nlookup:127\n'
+     pelt stderr: b'pelt: ../s.sh: line 2: wolf-sh33-dir: not found\npelt: ../s.sh: line 4: wolf-sh33-dir: not found\npelt: ../s.sh: line 6: exec: wolf-sh33-dir: not found\n'
+difftest: area        pass  fail  pending (of which pass)
+difftest: printf         0     0     1 (0)
+difftest: quote          0     0     2 (0)
+difftest: sh33           0     7     0 (0)
+difftest: total          0     7     3 (0)

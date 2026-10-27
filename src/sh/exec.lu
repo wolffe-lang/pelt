@@ -2326,6 +2326,20 @@ fn find_in(mut sh: Sh, path: str, name: str) -> str {
     ""
 }
 
+/// A failed executable search can still have met a directory. It is
+/// not a command (`command -v` must not report it), but dash reports
+/// its permission denial rather than a missing name (pelt#72).
+fn directory_in(path: str, name: str) -> bool {
+    for dir in path.split(":") {
+        let d = if dir.len == 0 then "." else dir
+        let st = stat_of("{d}/{name}", false)
+        if st.len > 0 && st[0] == K_DIR {
+            return true
+        }
+    }
+    false
+}
+
 /// `.`'s search (XCU 2.15 dot): the first `PATH` directory holding a
 /// file of that name that is not a directory; it need not be
 /// executable.
@@ -2625,7 +2639,7 @@ fn run_external(
         return st
     }
     if path.len == 0 {
-        let st = unfound(mut sh, fields, names, values, hook)
+        let st = unfound(mut sh, fields, names, values, hook, via)
         sh.status = st
         return st
     }
@@ -2692,7 +2706,7 @@ fn run_external(
     if missing {
         // found nowhere now, as a name never found: once the job is
         // given back and the environment put back
-        st = unfound(mut sh, fields, names, values, hook)
+        st = unfound(mut sh, fields, names, values, hook, via)
     }
     sh.status = st
     st
@@ -2707,7 +2721,20 @@ fn run_external(
 /// the shell is leaving (an `exit`, an interrupt). Otherwise the
 /// not-found: said, 127. Inside the call every name not found is the
 /// plain not-found, so the function is never re-entered.
-fn unfound(mut sh: Sh, fields: List[str], names: List[str], values: List[str], hook: bool) -> int {
+fn unfound(
+    mut sh: Sh,
+    fields: List[str],
+    names: List[str],
+    values: List[str],
+    hook: bool,
+    via: str,
+) -> int {
+    let path = if via.len > 0 then via else search_path(sh, names, values)
+    if directory_in(path, fields[0]) {
+        // dash 0.5.13.4: plain/command 127, exec 126 (R-sh33-1).
+        diag(mut sh, "{fields[0]}: Permission denied")
+        return 127
+    }
     if hook && (sh.interactive || sh.sub_of_i) && !sh.in_cnf {
         // bash's name for it, which fortsh shares (pelt#42)
         let fnode = sh.funcs["command_not_found_handle"] else -1
@@ -2894,6 +2921,10 @@ fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
     if (cmd.find("/") else -1) < 0 {
         path = find_in_path(mut sh, cmd)
         if path.len == 0 {
+            if directory_in(value_of(sh, "PATH"), cmd) {
+                diag(mut sh, "exec: {cmd}: Permission denied")
+                return 126
+            }
             diag(mut sh, "exec: {cmd}: not found")
             return 127
         }
