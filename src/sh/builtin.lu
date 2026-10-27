@@ -366,7 +366,11 @@ fn option_name(mut sh: Sh, name: str, on: bool) -> bool {
         sh.opt_ignoreeof = on
         return true
     }
-    name == "nolog"
+    if name == "nolog" {
+        sh.opt_nolog = on
+        return true
+    }
+    false
 }
 
 fn print_options(mut sh: Sh, reinput: bool) {
@@ -378,9 +382,11 @@ fn print_options(mut sh: Sh, reinput: bool) {
         "emacs",
         "errexit",
         "ignoreeof",
+        "monitor",
         "noclobber",
         "noexec",
         "noglob",
+        "nolog",
         "notify",
         "nounset",
         "pipefail",
@@ -389,7 +395,7 @@ fn print_options(mut sh: Sh, reinput: bool) {
         "xtrace",
     ]
     // a letter for the options `$-` shows; '-' for the editing modes
-    let letters = ['a', '-', '-', 'e', 'I', 'C', 'n', 'f', 'b', 'u', '-', 'v', '-', 'x']
+    let letters = ['a', '-', '-', 'e', 'I', 'm', 'C', 'n', 'f', '-', 'b', 'u', '-', 'v', '-', 'x']
     print_friendly_options(mut sh, reinput)
     let flags = dash_flags(sh)
     var i = 0
@@ -403,6 +409,8 @@ fn print_options(mut sh: Sh, reinput: bool) {
             on = sh.opt_pipefail
         } else if names[i] == "autocd" {
             on = sh.opt_autocd
+        } else if names[i] == "nolog" {
+            on = sh.opt_nolog
         }
         if reinput {
             emit(mut sh, "set {if on then "-o" else "+o"} {names[i]}\n")

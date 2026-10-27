@@ -1,0 +1,7 @@
+set -o monitor
+set -o nolog
+monitor-restored
+monitor on
+nolog on
+nolog off
+nolog on

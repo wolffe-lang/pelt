@@ -1,0 +1,52 @@
+build: target/native/pelt
+difftest: pelt = /home/mfwolffe/lanes/sh33/pelt/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+ok   option/allexport
+ok   option/bad_option
+ok   option/c_allexport_forms
+ok   option/c_edit_modes
+ok   option/c_errexit_assign_cmdsub
+ok   option/c_errexit_basic
+ok   option/c_errexit_compound_status
+ok   option/c_errexit_exempt
+ok   option/c_errexit_ignored_inside
+ok   option/c_errexit_pipeline
+ok   option/c_errexit_subshell_forms
+ok   option/c_errexit_trap
+ok   option/c_h_b
+ok   option/c_long_names
+ok   option/c_noexec
+ok   option/c_nounset_arith
+ok   option/c_nounset_forms
+ok   option/c_pipefail_option
+ok   option/c_plus_o
+ok   option/c_ps4
+ok   option/c_up_options
+ok   option/c_verbose
+ok   option/c_verbose_stderr
+ok   option/c_xtrace_forms
+ok   option/dollar_dash
+ok   option/dollar_dash_in_region
+ok   option/errexit
+ok   option/errexit_andor
+ok   option/errexit_function
+ok   option/errexit_if
+ok   option/errexit_not
+ok   option/errexit_subshell
+ok   option/errexit_while
+ok   option/noglob
+ok   option/notify_ignoreeof_flags
+ok   option/nounset
+ok   option/nounset_positional
+ok   option/pipefail_cluster
+ok   option/ps4_forms
+ok   option/set_o
+ok   option/verbose_forms
+ok   option/verbose_inputs
+ok   option/xtrace
+ok   option/xtrace_assign
+ok   sh33/options
+difftest: area        pass  fail  pending (of which pass)
+difftest: option        44     0     0 (0)
+difftest: sh33           1     0     0 (0)
+difftest: total         45     0     0 (0)
