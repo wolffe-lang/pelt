@@ -93,7 +93,9 @@ fn builtin_names() -> List[str] {
 /// Run node `n`; answers the status, which is also left in `sh.status`.
 /// A compound command's redirections are applied around it.
 fn run(mut sh: Sh, n: int) -> int {
-    if n < 0 || sh.flow != F_NONE {
+    // `set -n` takes effect within this tree too, before expansion,
+    // redirection, function definition or process creation (pelt#71).
+    if n < 0 || sh.flow != F_NONE || sh.opt_n {
         return sh.status
     }
     let k = sh.ast.nodes[n].kind
@@ -196,7 +198,7 @@ fn check_e(mut sh: Sh, st: int) {
 fn run_list(mut sh: Sh, n: int) -> int {
     var st = sh.status
     var i = 0
-    while i < sh.ast.nodes[n].kids.len {
+    while i < sh.ast.nodes[n].kids.len && !sh.opt_n {
         let kid = sh.ast.nodes[n].kids[i]
         if sh.ast.nodes[n].ints[i] == 1 {
             st = run_async(mut sh, kid)
@@ -331,10 +333,13 @@ fn run_loop(mut sh: Sh, n: int, until: bool) -> int {
             }
             continue
         }
-        if (c == 0) == until {
+        if sh.opt_n || (c == 0) == until {
             break
         }
         st = run(mut sh, body)
+        if sh.opt_n {
+            break
+        }
         if sh.flow != F_NONE {
             if loop_flow(mut sh) {
                 break
@@ -388,7 +393,7 @@ fn run_for(mut sh: Sh, n: int) -> int {
     var st = 0
     sh.loops += 1
     var k = base
-    while k < top {
+    while k < top && !sh.opt_n {
         let item = sh.sstk[k]
         if !set_var(mut sh, name, item) {
             fatal(mut sh, "{name}: is read-only", 2)

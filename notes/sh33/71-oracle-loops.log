@@ -1,0 +1,4 @@
+dash noexec_while TIMEOUT b'1\n'
+dash noexec_condition TIMEOUT b''
+bash noexec_while TIMEOUT b'1\n'
+bash noexec_condition TIMEOUT b''
