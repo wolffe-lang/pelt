@@ -194,6 +194,7 @@ fn printf_general(x: f64, precision: int, alt: bool) -> str {
 
 fn printf_float(x: f64, conv: char, prec: int, alt: bool, plus: bool, space: bool) -> str {
     let p = if prec < 0 then 6 else prec
+    if conv == 'g' { return "%g" }
     let finite = float.is_finite(x)
     var out = if !finite {
         decimal.to_str_fixed(x, 0)
