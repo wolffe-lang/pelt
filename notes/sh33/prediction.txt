@@ -1,0 +1,10 @@
+sh33 prediction, before changes or measurements
+Plan: contract items 1–8 in wolf/sprints/pelt/33-the-small-fixes/sh33-the-small-fixes.md.
+#72: directory candidates disappear in PATH lookup; retain denial without hiding a later executable.
+#71: noexec is checked at complete-command boundaries, not nested list boundaries; gate execution while continuing to parse, including errors.
+#70: monitor and nolog are missing only from listing; retain nolog state so +o can restore it.
+#65: expect existing expansion refusal, not '?'; List[str] argv remains W06-blocked. Measure, stop on that item.
+#73: expect c_floats red. Use pinned std.decimal for exact rounding; test flags, widths, precision, signed zero, notation boundaries and invalid input.
+#69: tools-only reproducible oracle runner, no cheap PR-tier cost or behavior changes. Do not install packages or publish an image.
+#83/#57: read only, no perf changes. Two deliberate draft plants: set-n keeps running and printf-g breaks.
+All builds/tests on kasumi CPUs8–11 under the lane flock/container. No Mac builds/tests, pin changes, old expected-byte edits, shell source, package installation, attribution, labels, merges, issue changes or wolf/~/.claude edits.
