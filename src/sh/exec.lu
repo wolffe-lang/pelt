@@ -95,7 +95,7 @@ fn builtin_names() -> List[str] {
 fn run(mut sh: Sh, n: int) -> int {
     // `set -n` takes effect within this tree too, before expansion,
     // redirection, function definition or process creation (pelt#71).
-    if n < 0 || sh.flow != F_NONE || sh.opt_n {
+    if n < 0 || sh.flow != F_NONE {
         return sh.status
     }
     let k = sh.ast.nodes[n].kind
@@ -198,7 +198,7 @@ fn check_e(mut sh: Sh, st: int) {
 fn run_list(mut sh: Sh, n: int) -> int {
     var st = sh.status
     var i = 0
-    while i < sh.ast.nodes[n].kids.len && !sh.opt_n {
+    while i < sh.ast.nodes[n].kids.len {
         let kid = sh.ast.nodes[n].kids[i]
         if sh.ast.nodes[n].ints[i] == 1 {
             st = run_async(mut sh, kid)
