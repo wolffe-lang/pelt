@@ -1,0 +1,9 @@
+difftest: pelt = /home/mfwolffe/lanes/sh33/pelt/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+FAIL sh33/float_inputs: stdout
+     pelt stdout: b'[status:1\nstatus:1\nstatus:1\n'
+     want stdout: b'6 0.125 1 inf -nan\n[    +INF][     NAN][-inf    ]\n0.1 2.67 1.2345678901234566904\ninf 0\nstatus:1\n4.94066e-324 0 9.88131e-324\nstatus:1\n1.200000 1.200000 1 nan\nstatus:1\n'
+     pelt stderr: b'pelt: ../s.sh: line 1: printf: %g: conversion not supported\npelt: ../s.sh: line 2: printf: %G: conversion not supported\npelt: ../s.sh: line 3: printf: %f: conversion not supported\npelt: ../s.sh: line 4: printf: %g: conversion not supported\npelt: ../s.sh: line 6: printf: %g: conversion not supported\n'
+difftest: area        pass  fail  pending (of which pass)
+difftest: sh33           0     1     0 (0)
+difftest: total          0     1     0 (0)

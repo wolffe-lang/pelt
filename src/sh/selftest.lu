@@ -730,6 +730,7 @@ fn want_job_slots(mut bad: List[str]) {
 /// Table-check failures; empty when all pass.
 pub fn self_test() -> List[str] {
     var bad = List[str]()
+    want_small_fixes(mut bad)
     want_job_slots(mut bad)
     want_colour(mut bad)
     want_words(mut bad)

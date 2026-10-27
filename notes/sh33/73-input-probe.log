@@ -1,0 +1,25 @@
+inf
+status:1
+x: 1: printf: 1e9999: Numerical result out of range
+x: 1: printf: 1e-9999: Numerical result out of range
+0
+status:1
+x: 1: printf: 1e-308: Numerical result out of range
+1e-308
+status:1
+x: 1: printf: 5e-324: Numerical result out of range
+4.94066e-324
+status:1
+4.94066e-324
+status:0
+1
+status:0
+x: 1: printf: 1.2 : not completely converted
+1.2
+status:1
+1.2
+status:0
+nan
+status:0
+-nan
+status:0

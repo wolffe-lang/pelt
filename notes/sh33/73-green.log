@@ -1,0 +1,24 @@
+build: target/native/pelt
+selfcheck: every table check passed; a fork with a task live is busy and runs in process
+test ./sh_test.lu::main ... ok
+wolf test: 1 passed; 0 failed; 0 rejected; 0 unsupported; 0 filtered out
+difftest: pelt = /home/mfwolffe/lanes/sh33/pelt/target/native/pelt
+difftest: oracle = dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
+PEND-ok   printf/c_floats (waits on printf-float)
+ok   sh33/float_bad
+ok   sh33/float_inputs
+ok   sh33/floats
+ok   sh33/noexec
+ok   sh33/noexec_async
+ok   sh33/noexec_compound
+ok   sh33/noexec_parse
+ok   sh33/options
+ok   sh33/path_directory
+difftest: area        pass  fail  pending (of which pass)
+difftest: printf         0     0     1 (1)
+difftest: sh33           9     0     0 (0)
+difftest: total          9     0     1 (1)
+float-black-box: 339 pass, 0 fail
+ok directory-wording only-directory 127
+ok directory-wording command only-directory 127
+ok directory-wording exec only-directory 126

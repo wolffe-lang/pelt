@@ -1,0 +1,216 @@
+//! Floating printf conversions, measured against dash 0.5.13.4.
+//! Decimal parsing and exact half-even formatting use the pinned std;
+//! hexadecimal operands round their significand once, including subnormals.
+//! No shell or C library implementation source was consulted.
+
+use std.fmt.decimal
+use std.math.float
+
+fn printf_exp(s: str, from: int) -> (int, int) {
+    var i = from
+    var negative = false
+    if ch(s, i) == '+' || ch(s, i) == '-' {
+        negative = ch(s, i) == '-'
+        i += 1
+    }
+    let start = i
+    var n: int = 0
+    while is_digit(ch(s, i)) {
+        if n < 100000 {
+            n = n * 10 + (ch(s, i) as int - 48)
+        }
+        i += 1
+    }
+    if i == start { return (0, from) }
+    (if negative then -n else n, i)
+}
+
+/// Hexadecimal input to an IEEE binary64, guard/sticky and ties-to-even.
+/// `from` is after 0x, and the returned index ends the numeric prefix.
+fn printf_hex(s: str, from: int) -> (f64, int, bool) {
+    var bits = List[int]()
+    var i = from
+    var point = false
+    var before = 0
+    var digits = 0
+    loop {
+        let d = hex_digit_of(ch(s, i))
+        if d >= 0 {
+            if !point { before += 1 }
+            for shift in [3, 2, 1, 0] {
+                (mut bits).push(d >> shift & 1)
+            }
+            digits += 1
+            i += 1
+        } else if ch(s, i) == '.' && !point {
+            point = true
+            i += 1
+        } else {
+            break
+        }
+    }
+    if digits == 0 { return (0.0, from - 1, false) }
+    var power = 0
+    if ch(s, i) == 'p' || ch(s, i) == 'P' {
+        let (e, end) = printf_exp(s, i + 1)
+        if end > i + 1 { power = e; i = end }
+    }
+    var first = 0
+    while first < bits.len && bits[first] == 0 { first += 1 }
+    if first == bits.len { return (0.0, i, false) }
+    var exponent = before * 4 - first - 1 + power
+    if exponent > 1023 { return (float.inf(), i, true) }
+    if exponent < -1075 { return (0.0, i, true) }
+    let keep = if exponent >= -1022 then 53 else exponent + 1075
+    var mantissa: int = 0
+    for k in 0..keep {
+        let bit = if first + k < bits.len then bits[first + k] else 0
+        mantissa = mantissa * 2 + bit
+    }
+    let guard = if first + keep < bits.len then bits[first + keep] else 0
+    var sticky = false
+    var k = first + keep + 1
+    while k < bits.len {
+        if bits[k] != 0 { sticky = true }
+        k += 1
+    }
+    let inexact = guard != 0 || sticky
+    if guard != 0 && (sticky || mantissa % 2 != 0) { mantissa += 1 }
+    if exponent < -1022 {
+        return (float.from_bits(mantissa), i, inexact)
+    }
+    if mantissa == 9007199254740992 {
+        mantissa = mantissa / 2
+        exponent += 1
+    }
+    if exponent > 1023 { return (float.inf(), i, true) }
+    let raw = (exponent + 1023) * 4503599627370496 + mantissa - 4503599627370496
+    (float.from_bits(raw), i, false)
+}
+
+fn printf_float_arg(mut sh: Sh, a: str, mut bad: bool) -> f64 {
+    if a.len == 0 { return 0.0 }
+    if ch(a, 0) == '\'' || ch(a, 0) == '"' {
+        return if a.len > 1 then byte_at(a, 1) as f64 else 0.0
+    }
+    let s = a.trim_start()
+    var i = 0
+    var negative = false
+    if ch(s, i) == '+' || ch(s, i) == '-' {
+        negative = ch(s, i) == '-'
+        i += 1
+    }
+    let start = i
+    let lower = s[i..].lower()
+    var x = 0.0
+    var range_bad = false
+    if lower.starts_with("inf") {
+        x = float.inf()
+        i += if lower.starts_with("infinity") then 8 else 3
+    } else if lower.starts_with("nan") {
+        x = float.nan()
+        i += 3
+        if ch(s, i) == '(' {
+            var end = i + 1
+            while is_digit(ch(s, end)) ||
+                ch(s, end) >= 'a' && ch(s, end) <= 'z' ||
+                ch(s, end) >= 'A' && ch(s, end) <= 'Z' ||
+                ch(s, end) == '_' { end += 1 }
+            if ch(s, end) == ')' { i = end + 1 }
+        }
+    } else if lower.starts_with("0x") {
+        let (v, end, err) = printf_hex(s, i + 2)
+        x = v
+        i = end
+        range_bad = err
+    } else {
+        var seen = 0
+        var nonzero = false
+        while is_digit(ch(s, i)) {
+            if ch(s, i) != '0' { nonzero = true }
+            seen += 1
+            i += 1
+        }
+        if ch(s, i) == '.' {
+            i += 1
+            while is_digit(ch(s, i)) {
+                if ch(s, i) != '0' { nonzero = true }
+                seen += 1
+                i += 1
+            }
+        }
+        if seen == 0 {
+            i = start
+        } else {
+            if ch(s, i) == 'e' || ch(s, i) == 'E' {
+                let (_e, end) = printf_exp(s, i + 1)
+                if end > i + 1 { i = end }
+            }
+            x = decimal.parse_float(s[start..i]) else |e| match e {
+                overflow => { range_bad = true; float.inf() },
+                parse => { 0.0 },
+            }
+            // strtod's underflow, including a rounded-to-zero result.
+            if nonzero && x < float.from_bits(4503599627370496) {
+                range_bad = true
+            }
+        }
+    }
+    if negative { x = float.copysign(x, -1.0) }
+    if i == start || i != s.len || range_bad {
+        diag(
+            mut sh,
+            "printf: {a}: {if range_bad then "number out of range" else "not completely numeric"}",
+        )
+        bad = true
+    }
+    x
+}
+
+/// %g chooses notation AFTER rounding to the requested significant digits.
+fn printf_general(x: f64, precision: int, alt: bool) -> str {
+    let p = if precision == 0 then 1 else precision
+    let exp = decimal.to_str_exp(x, p - 1)
+    let at = exp.find("e") else exp.len
+    let exponent = exp[at + 1..].to_int() else 0
+    var out = if exponent < -4 || exponent >= p {
+        exp
+    } else {
+        decimal.to_str_fixed(x, p - exponent - 1)
+    }
+    if !alt {
+        let end = out.find("e") else out.len
+        var mantissa = out[0..end]
+        if mantissa.contains(".") {
+            var cut = mantissa.len
+            while cut > 0 && ch(mantissa, cut - 1) == '0' { cut -= 1 }
+            if cut > 0 && ch(mantissa, cut - 1) == '.' { cut -= 1 }
+            mantissa = mantissa[0..cut]
+        }
+        out = mantissa + out[end..]
+    }
+    out
+}
+
+fn printf_float(x: f64, conv: char, prec: int, alt: bool, plus: bool, space: bool) -> str {
+    let p = if prec < 0 then 6 else prec
+    let finite = float.is_finite(x)
+    var out = if !finite {
+        decimal.to_str_fixed(x, 0)
+    } else if conv == 'f' || conv == 'F' {
+        decimal.to_str_fixed(x, p)
+    } else if conv == 'e' || conv == 'E' {
+        decimal.to_str_exp(x, p)
+    } else {
+        printf_general(x, p, alt)
+    }
+    if finite && alt && !out.contains(".") {
+        let at = out.find("e") else out.len
+        out = out[0..at] + "." + out[at..]
+    }
+    if !float.is_sign_negative(x) {
+        if plus { out = "+" + out } else if space { out = " " + out }
+    }
+    if conv == 'E' || conv == 'F' || conv == 'G' { out = out.upper() }
+    out
+}

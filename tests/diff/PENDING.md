@@ -22,7 +22,6 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
 | waits on | what is missing | whose work | cases |
 |---|---|---|---|
 | **host-dir-size** | nothing pelt lacks: the case's `-s` row asks whether an empty directory has a size, and the oracle was recorded on kasumi's btrfs, where it has none; on ext4 (the linux runners) and APFS (macOS) an empty directory has a size, so dash there answers `-s` true for it as pelt does (sh07). PEND-ok on btrfs | the oracle's host | `test/c_files` |
-| **printf-float** | `printf` `%e %f %g` (optional in POSIX; dash has them and configure scripts use `%f`) | pelt (P09); wolf has float formatting | `printf/c_floats` |
 | **printf-numbered** | `printf '%2$s'` (new in POSIX.1-2024; neither oracle has it) | not counted in the census | `printf/c_numbered` |
 | **arith-increment** | `$((++x))`: dash reads two unary pluses, pelt refuses it (`++` is optional in POSIX) | pelt, a ruling (R4); not counted in the census | `arith/c_incr_optional` |
 | **special-name-function** | a function named after a special built-in is accepted (dash refuses; unspecified by POSIX) | not counted in the census | `simple/c_special_not_shadowed` |
@@ -49,6 +48,10 @@ the issue texts in the sh06 report (`notes/sh06-the-census.md`).
   `%name` and `%?text` match the job's command text, which with job
   control off is empty, as dash's (black-box: s02), so they name no job
   in a script.
+
+**Cleared by sh33 (wolf 0.2.35):** `printf/c_floats`: `%e`, `%f`, `%g`
+and their uppercase forms, with binary64 parsing, half-even rounding,
+flags, precision and field width. The original expected bytes are unchanged.
 
 **Cleared by sh26 (the corners, wolf 0.2.35):** `builtin/c_special_error_command`
 (a special built-in's error through `command` is the command's failure),

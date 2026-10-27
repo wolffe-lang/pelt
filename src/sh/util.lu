@@ -375,6 +375,23 @@ fn bi_printf(mut sh: Sh, args: List[str]) -> int {
                     sign = " "
                 }
                 emit(mut sh, pad(sign + digits, width, left, zero && prec < 0))
+            } else if conv == 'e' ||
+                conv == 'E' ||
+                conv == 'f' ||
+                conv == 'F' ||
+                conv == 'g' ||
+                conv == 'G' {
+                ai += 1
+                let x = printf_float_arg(mut sh, a, mut bad)
+                var s = printf_float(x, conv, prec, alt, plus, space)
+                // The pinned std canonicalizes NaN's sign. Keep the
+                // operand's explicit sign at this textual boundary.
+                if s.lower().contains("nan") && a.trim_start().starts_with("-") {
+                    s = if conv == 'E' || conv == 'F' || conv == 'G' then "-NAN" else "-nan"
+                }
+                // A non-finite value is space padded even with `0`.
+                let finite = !s.lower().contains("inf") && !s.lower().contains("nan")
+                emit(mut sh, pad(s, width, left, zero && finite))
             } else if conv == 'u' || conv == 'o' || conv == 'x' || conv == 'X' {
                 ai += 1
                 let n = num_arg(mut sh, a, mut bad)
