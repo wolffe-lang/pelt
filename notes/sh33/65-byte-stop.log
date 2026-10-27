@@ -1,0 +1,6 @@
+['bash', '--posix'] 'printf "%s" $\'\\377\'' exit 0 stdout_hex ff stderr b''
+['target/native/pelt'] 'printf "%s" $\'\\377\'' exit 2 stdout_hex  stderr b"pelt: pelt: line 1: $'\\377': a byte that is not UTF-8 cannot be carried yet (pelt#65)\n"
+['bash', '--posix'] 'printf "%s" $\'\\xff\'' exit 0 stdout_hex ff stderr b''
+['target/native/pelt'] 'printf "%s" $\'\\xff\'' exit 2 stdout_hex  stderr b"pelt: pelt: line 1: $'\\xff': a byte that is not UTF-8 cannot be carried yet (pelt#65)\n"
+['bash', '--posix'] 'printf "%s" $\'\\303\\251\'' exit 0 stdout_hex c3a9 stderr b''
+['target/native/pelt'] 'printf "%s" $\'\\303\\251\'' exit 0 stdout_hex c3a9 stderr b''
