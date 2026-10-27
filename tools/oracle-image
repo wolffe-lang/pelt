@@ -1,0 +1,29 @@
+#!/bin/sh
+# Build a local, exact-version oracle image; never publish it.
+# Usage: tools/oracle-image [TAG] (default localhost/pelt-oracle:sh33)
+set -eu
+root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+manifest=$root/tools/oracle/packages.sha256
+# Validate ALL inputs before downloading anything or invoking podman.
+while read -r digest url; do
+    case "$digest" in ''|'#'*) continue ;; esac
+    if [ "$digest" = UNAVAILABLE ]; then
+        echo "oracle-image: BLOCKED: exact archive unavailable: $url" >&2
+        exit 2
+    fi
+    [ "${#digest}" -eq 64 ] || { echo 'oracle-image: invalid digest' >&2; exit 2; }
+    case "$digest" in *[!0-9a-f]*) echo 'oracle-image: invalid digest' >&2; exit 2 ;; esac
+    case "$url" in https://archive.archlinux.org/packages/*.pkg.tar.zst) ;; *) exit 2 ;; esac
+done < "$manifest"
+mkdir -p "$root/.cache/oracle"
+context=$(mktemp -d "$root/.cache/oracle/build.XXXXXXXX")
+# Retain inputs on failure for diagnosis, rather than an unverified cleanup.
+while read -r digest url; do
+    case "$digest" in ''|'#'*) continue ;; esac
+    file=${url##*/}
+    curl --fail --location --silent --show-error "$url" -o "$context/$file"
+    printf '%s  %s\n' "$digest" "$context/$file" | sha256sum -c -
+done < "$manifest"
+podman build --pull=never --network=none -f "$root/tools/oracle/Containerfile" \
+    -t "${1:-localhost/pelt-oracle:sh33}" "$context"
+podman image inspect "${1:-localhost/pelt-oracle:sh33}" --format '{{.Id}}'

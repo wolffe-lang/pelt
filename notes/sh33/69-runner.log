@@ -1,0 +1,11 @@
+oracle-image: BLOCKED: exact archive unavailable: https://archive.archlinux.org/packages/b/bash/bash-5.3.20-2-x86_64.pkg.tar.zst
+missing-exact-package exit=2
+oracle-container: require an immutable sha256 image id
+mutable-tag exit=2
+short-id exit=2
+time="2026-10-26T22:18:04-04:00" level=error msg="Refreshing container 44ed2b1e39088ccbc0e57c061764b113005b7eaf0122162425dc70a6dc2acc43: retrieving temporary directory for container 44ed2b1e39088ccbc0e57c061764b113005b7eaf0122162425dc70a6dc2acc43: no such container"
+warning: database file for 'core' does not exist (use '-Sy' to download)
+warning: database file for 'extra' does not exist (use '-Sy' to download)
+error: package 'dash' was not found
+oracle-container: REFUSED: missing package dash
+wrong-image exit=2

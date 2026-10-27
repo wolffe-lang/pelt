@@ -1,0 +1,12 @@
+# Reference recording only. No registry push and no rolling upgrade.
+FROM docker.io/library/archlinux@sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785
+# The builder checks every archive against packages.sha256 before building.
+# bash-5.3.20-2 is not in archive.archlinux.org at sh33: the builder
+# deliberately refuses until that EXACT package and its digest exist.
+COPY *.pkg.tar.zst /oracle-packages/
+RUN pacman -U --noconfirm /oracle-packages/*.pkg.tar.zst \
+    && test "$(pacman -Q dash)" = 'dash 0.5.13.4-1' \
+    && test "$(pacman -Q bash)" = 'bash 5.3.20-2' \
+    && test "$(pacman -Q fish)" = 'fish 4.9.3-1' \
+    && rm -rf /oracle-packages
+WORKDIR /pelt

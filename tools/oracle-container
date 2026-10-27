@@ -1,0 +1,37 @@
+#!/bin/sh
+# Run the immutable oracle without host /usr overlays or network access.
+# Usage: tools/oracle-container sha256:IMAGE_ID [--write] [area/name ...]
+# Default is read-only --check. --write explicitly opts into new recordings.
+set -eu
+root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+image=${1:-}
+case "$image" in sha256:*) ;; *) echo 'oracle-container: require an immutable sha256 image id' >&2; exit 2 ;; esac
+digest=${image#sha256:}
+[ "${#digest}" -eq 64 ] || exit 2
+case "$digest" in *[!0-9a-f]*) exit 2 ;; esac
+shift
+mode=check
+if [ "${1:-}" = --write ]; then mode=write; shift; fi
+exec podman run --rm --pull=never --network=none --init --pids-limit 4096 \
+    --userns=keep-id -u "$(id -u):$(id -g)" \
+    -v "$root:/pelt$(if [ "$mode" = check ]; then printf ':ro'; fi)" \
+    --tmpfs /tmp:rw,nosuid,nodev -e HOME=/tmp -e TMPDIR=/tmp -w /pelt \
+    "$image" /bin/sh -eu -c '
+        for expected in "dash 0.5.13.4-1" "bash 5.3.20-2" "fish 4.9.3-1"; do
+            package=${expected%% *}
+            have=$(pacman -Q "$package") || {
+                echo "oracle-container: REFUSED: missing package $package" >&2
+                exit 2
+            }
+            [ "$have" = "$expected" ] || {
+                echo "oracle-container: REFUSED: $have, expected $expected" >&2
+                exit 2
+            }
+            printf "%s\n" "$have"
+        done
+        mode=$1; shift
+        if [ "$mode" = check ]; then
+            exec python3 -B tools/oracle-record --check "$@"
+        fi
+        exec python3 -B tools/oracle-record "$@"
+    ' oracle "$mode" "$@"
