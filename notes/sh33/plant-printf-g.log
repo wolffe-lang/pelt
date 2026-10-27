@@ -1,0 +1,4 @@
+build: target/native/pelt
+printf-g-prints-literal
+printf-rounding-and-alternate
+selfcheck: 2 table checks failed
