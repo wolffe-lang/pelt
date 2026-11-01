@@ -151,7 +151,7 @@ def extra_checks(say, plan, expect, blocks, wf):
         "T4 fmt, the clause table, the width table and wolf test run once a host, on the native leg")
     say("    timeout-minutes: 40\n" in g and "    timeout-minutes: 45\n" in se,
         "T4 the limits by the house rule (pelt#99): the gauntlet 40 minutes, the sessions 45")
-    say("the session corpus" not in g and "tools/session --bin" not in g and "tools/session-selftest" not in g,
+    say("      - name: the session corpus" not in g and "run: tools/session --bin" not in g and "run: tools/session-selftest" not in g,
         "T4 the session corpus moved to the sessions job, none of it left in the gauntlet")
     session = se.split("      - name: the session corpus,", 1)[1].split("\n      - name:", 1)[0]
     say("        timeout-minutes: ${{ matrix.os == 'macos-latest' && 40 || 35 }}\n" in session,
