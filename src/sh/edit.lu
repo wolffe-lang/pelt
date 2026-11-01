@@ -3416,7 +3416,9 @@ fn common_prefix(xs: List[str]) -> str {
 /// `env_args_bytes`). Either is a hard off: `set -o friendly` records the
 /// option and nothing turns on, so a `/bin/sh` session is dash's.
 fn friendly_invocation_allowed(sh: Sh) -> bool {
-    !sh.posix_mode && !sh.invoked_sh
+    // PLANT (sh34-plant-sh, never to merge): argv[0] `sh` is ignored, so
+    // friendly is on under it
+    !sh.posix_mode
 }
 
 /// The friendly default (ruling #126 R-F-1, sh34): an interactive shell
