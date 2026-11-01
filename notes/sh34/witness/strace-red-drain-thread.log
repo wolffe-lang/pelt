@@ -1,0 +1,101 @@
+# drain_after_fork under strace -f -tt, hasu, rootless podman (sh32-oracle), taskset -c 0-3, wolf 0.2.36 (5adf3d9).
+# Red at try 1: 'round 1: threads 1 after 8 forks'. tid 7 is main (the forks), tid 8 the hub's drain thread (wolf-signal).
+# The drain thread's whole life, then main's last 30 calls.
+8     21:22:28.711927 rseq({cpu_id_start=0, cpu_id=RSEQ_CPU_ID_UNINITIALIZED, rseq_cs=NULL, flags=0, node_id=0, mm_cid=0, slice_ctrl={request=0, granted=0, __reserved=0}, __reserved=0}, 33, 0, 0x53053053 <unfinished ...>
+8     21:22:28.711945 <... rseq resumed>) = 0
+8     21:22:28.711952 set_robust_list(0x7606669849a0, 24 <unfinished ...>
+8     21:22:28.711966 <... set_robust_list resumed>) = 0
+8     21:22:28.711972 rt_sigprocmask(SIG_SETMASK, [] <unfinished ...>
+8     21:22:28.711979 <... rt_sigprocmask resumed>, NULL, 8) = 0
+8     21:22:28.711985 prctl(PR_SET_NAME, "wolf-signal" <unfinished ...>
+8     21:22:28.711999 <... prctl resumed>) = 0
+8     21:22:28.712006 mmap(NULL, 134217728, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x76065e600000
+8     21:22:28.712020 munmap(0x76065e600000, 27262976) = 0
+8     21:22:28.712034 munmap(0x760664000000, 39845888) = 0
+8     21:22:28.712045 mprotect(0x760660000000, 135168, PROT_READ|PROT_WRITE) = 0
+8     21:22:28.712062 sched_getaffinity(8, 32, [0 1 2 3]) = 8
+8     21:22:28.712076 sigaltstack(NULL, {ss_sp=NULL, ss_flags=SS_DISABLE, ss_size=0}) = 0
+8     21:22:28.712087 mmap(NULL, 32768, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x76066677c000
+8     21:22:28.712099 sigaltstack({ss_sp=0x76066677c000, ss_flags=0, ss_size=32768}, NULL) = 0
+8     21:22:28.712110 poll([{fd=3, events=POLLIN}, {fd=5, events=POLLIN}], 2, -1) = 1 ([{fd=5, revents=POLLIN}])
+8     21:22:28.712126 read(5, "\10", 64) = 1
+8     21:22:28.712138 rt_sigprocmask(SIG_UNBLOCK, [CHLD], NULL, 8) = 0
+8     21:22:28.712149 futex(0x64cecd18aa08, FUTEX_WAKE_PRIVATE, 2147483647 <unfinished ...>
+8     21:22:28.712159 <... futex resumed>) = 1
+8     21:22:28.712169 poll([{fd=3, events=POLLIN}, {fd=5, events=POLLIN}], 2, -1 <unfinished ...>
+8     21:22:28.712915 <... poll resumed>) = ? ERESTART_RESTARTBLOCK (Interrupted by signal)
+8     21:22:28.712931 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=9, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+8     21:22:28.712969 write(4, "\10", 1 <unfinished ...>
+8     21:22:28.712993 <... write resumed>) = 1
+8     21:22:28.713014 rt_sigreturn({mask=[]} <unfinished ...>
+8     21:22:28.713039 <... rt_sigreturn resumed>) = -1 EINTR (Interrupted system call)
+8     21:22:28.713062 futex(0x64cf0678e058, FUTEX_WAIT_BITSET_PRIVATE, 4294967295, NULL, FUTEX_BITSET_MATCH_ANY <unfinished ...>
+8     21:22:28.713253 <... futex resumed>) = 0
+8     21:22:28.713275 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+8     21:22:28.713294 write(4, "\10", 1 <unfinished ...>
+8     21:22:28.713307 <... write resumed>) = 1
+8     21:22:28.713316 rt_sigreturn({mask=[]} <unfinished ...>
+8     21:22:28.713358 <... rt_sigreturn resumed>) = 0
+8     21:22:28.713384 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=10, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+8     21:22:28.713415 write(4, "\10", 1 <unfinished ...>
+8     21:22:28.713434 <... write resumed>) = 1
+8     21:22:28.713446 rt_sigreturn({mask=[]} <unfinished ...>
+8     21:22:28.713465 <... rt_sigreturn resumed>) = 0
+8     21:22:28.713483 futex(0x64cf0678e058, FUTEX_WAIT_BITSET_PRIVATE, 4294967295, NULL, FUTEX_BITSET_MATCH_ANY <unfinished ...>
+8     21:22:28.713627 <... futex resumed>) = 0
+8     21:22:28.713641 futex(0x64cf0678e058, FUTEX_WAIT_BITSET_PRIVATE, 4294967295, NULL, FUTEX_BITSET_MATCH_ANY <unfinished ...>
+8     21:22:28.713688 <... futex resumed>) = ? ERESTARTSYS (To be restarted if SA_RESTART is set)
+8     21:22:28.713731 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=12, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+8     21:22:28.713772 write(4, "\10", 1 <unfinished ...>
+8     21:22:28.713784 <... write resumed>) = 1
+8     21:22:28.713791 rt_sigreturn({mask=[]} <unfinished ...>
+8     21:22:28.713804 <... rt_sigreturn resumed>) = 202
+8     21:22:28.713814 futex(0x64cf0678e058, FUTEX_WAIT_BITSET_PRIVATE, 4294967295, NULL, FUTEX_BITSET_MATCH_ANY <unfinished ...>
+8     21:22:28.713820 <... futex resumed>) = -1 EAGAIN (Resource temporarily unavailable)
+8     21:22:28.713831 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=14, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+8     21:22:28.713843 write(4, "\10", 1 <unfinished ...>
+8     21:22:28.713858 <... write resumed>) = 1
+8     21:22:28.713871 rt_sigreturn({mask=[]} <unfinished ...>
+8     21:22:28.713880 <... rt_sigreturn resumed>) = -1 EAGAIN (Resource temporarily unavailable)
+8     21:22:28.713893 sigaltstack({ss_sp=NULL, ss_flags=SS_DISABLE, ss_size=0} <unfinished ...>
+8     21:22:28.713906 <... sigaltstack resumed>, NULL) = 0
+8     21:22:28.713918 munmap(0x76066677c000, 32768 <unfinished ...>
+8     21:22:28.713936 <... munmap resumed>) = 0
+8     21:22:28.713969 rt_sigprocmask(SIG_BLOCK, ~[RT_1] <unfinished ...>
+8     21:22:28.713988 <... rt_sigprocmask resumed>, NULL, 8) = 0
+8     21:22:28.714005 madvise(0x760666784000, 2076672, MADV_DONTNEED <unfinished ...>
+8     21:22:28.714021 <... madvise resumed>) = 0
+8     21:22:28.714041 exit(0 <unfinished ...>
+8     21:22:28.714058 <... exit resumed>) = ?
+8     21:22:28.714075 +++ exited with 0 +++
+# --- main (tid 7), last 30 ---
+7     21:22:28.715696 openat(AT_FDCWD, "/proc/self/status", O_RDONLY|O_CLOEXEC <unfinished ...>
+7     21:22:28.715707 <... openat resumed>) = 7
+7     21:22:28.715713 statx(7, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_ALL <unfinished ...>
+7     21:22:28.715719 <... statx resumed>, {stx_mask=STATX_BASIC_STATS|STATX_MNT_ID, stx_attributes=0, stx_mode=S_IFREG|0444, stx_size=0, ...}) = 0
+7     21:22:28.715726 read(7 <unfinished ...>
+7     21:22:28.715738 <... read resumed>, "Name:\tdrain_after_for\nUmask:\t002", 32) = 32
+7     21:22:28.715748 read(7 <unfinished ...>
+7     21:22:28.715754 <... read resumed>, "2\nState:\tR (running)\nTgid:\t7\nNgi", 32) = 32
+7     21:22:28.715763 read(7 <unfinished ...>
+7     21:22:28.715772 <... read resumed>, "d:\t0\nPid:\t7\nPPid:\t5\nTracerPid:\t5"..., 64) = 64
+7     21:22:28.715779 read(7 <unfinished ...>
+7     21:22:28.715786 <... read resumed>, "00\t100\t100\t100\nFDSize:\t64\nGroups"..., 128) = 128
+7     21:22:28.715794 read(7 <unfinished ...>
+7     21:22:28.715800 <... read resumed>, "VmLck:\t       0 kB\nVmPin:\t      "..., 256) = 256
+7     21:22:28.715808 read(7 <unfinished ...>
+7     21:22:28.715815 <... read resumed>, "HugetlbPages:\t       0 kB\nCoreDu"..., 512) = 512
+7     21:22:28.715824 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=23, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+7     21:22:28.715829 write(4, "\10", 1 <unfinished ...>
+7     21:22:28.715834 <... write resumed>) = 1
+7     21:22:28.715839 rt_sigreturn({mask=[]} <unfinished ...>
+7     21:22:28.715844 <... rt_sigreturn resumed>) = 512
+7     21:22:28.715849 read(7 <unfinished ...>
+7     21:22:28.715853 <... read resumed>, "0000f\nCpus_allowed_list:\t0-3\nMem"..., 1024) = 192
+7     21:22:28.715859 read(7, "", 832)  = 0
+7     21:22:28.715868 close(7 <unfinished ...>
+7     21:22:28.715873 <... close resumed>) = 0
+7     21:22:28.715883 write(1, "round 1: threads 1 after 8 forks"..., 102) = 102
+7     21:22:28.715903 exit_group(1 <unfinished ...>
+7     21:22:28.715907 <... exit_group resumed>) = ?
+7     21:22:28.715992 +++ exited with 1 +++

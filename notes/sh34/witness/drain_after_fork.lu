@@ -1,0 +1,75 @@
+//! wolf-lang witness (pelt#98, sh34): the signal hub's drain thread
+//! leaves after a fork during which a SIGCHLD lands on it, and every
+//! later `os_signal_wait` then parks for ever.
+//!
+//! The program listens for CHILD, then, round after round, forks eight
+//! children back to back that end at once (no wait between the forks, so
+//! the earlier children's SIGCHLD comes while a later fork holds the
+//! drain thread), and reads `Threads:` from `/proc/self/status` (linux)
+//! before it parks to reap them. At rest the count is 2: `main` and
+//! `wolf-signal`. Exit 1 the round it reads 1 (the drain thread is gone);
+//! exit 0 after every round with it alive. Run under four CPUs
+//! (`taskset -c 0-3`), the shape of pelt's CI runners.
+
+use std.signal
+
+const ROUNDS: int = 3000
+
+const KIDS: int = 8
+
+fn threads() -> int {
+    let s = fs_read_text("/proc/self/status") else ""
+    for line in s.lines() {
+        if line.starts_with("Threads:") {
+            var n = 0
+            for c in line.chars() {
+                if c >= '0' && c <= '9' {
+                    n = n * 10 + (c as int - 48)
+                }
+            }
+            return n
+        }
+    }
+    -1
+}
+
+fn main() -> int {
+    os_signal_listen(signal.child()) else |_| {
+        print("listen: refused")
+        return 2
+    }
+    let at_rest = threads()
+    print("threads at rest: {at_rest}")
+    var round = 0
+    while round < ROUNDS {
+        var k = 0
+        while k < KIDS {
+            let (pid, _h) = os_fork() else (-1, -1)
+            if pid == 0 {
+                os_exit(0)
+            }
+            if pid < 0 {
+                print("round {round}: os_fork refused")
+                return 2
+            }
+            k += 1
+        }
+        let now = threads()
+        if now < at_rest {
+            print("round {round}: threads {now} after {KIDS} forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever")
+            return 1
+        }
+        var reaped = 0
+        while reaped < KIDS {
+            let (h, _st) = os_wait_poll() else (-1, 0)
+            if h >= 0 {
+                reaped += 1
+                continue
+            }
+            let _m = os_signal_wait(signal.child()) else -1
+        }
+        round += 1
+    }
+    print("{ROUNDS} rounds of {KIDS} forks: the drain thread is alive (threads {threads()})")
+    0
+}

@@ -1,0 +1,38 @@
+BEGIN witness-runs 2026-11-01T16:20:28-05:00
+threads at rest: 2
+witness run 1 exit=124
+threads at rest: 2
+round 5: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 2 exit=1
+threads at rest: 2
+round 13: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 3 exit=1
+threads at rest: 2
+round 4: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 4 exit=1
+threads at rest: 2
+round 3: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 5 exit=1
+threads at rest: 2
+round 4: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 6 exit=1
+threads at rest: 2
+round 5: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 7 exit=1
+threads at rest: 2
+round 2: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 8 exit=1
+threads at rest: 2
+round 9: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 9 exit=1
+threads at rest: 2
+round 4: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+witness run 10 exit=1
+witness: 9 of 10 red
+END witness-runs exit=0 2026-11-01T16:22:28-05:00
+BEGIN witness-strace 2026-11-01T16:22:28-05:00
+threads at rest: 2
+round 1: threads 1 after 8 forks: the drain thread is gone; os_signal_wait(CHILD) would park for ever
+strace try 1 exit=1
+red under strace at try 1: strace-1.log
+END witness-strace exit=0 2026-11-01T16:22:28-05:00

@@ -1,0 +1,48 @@
+TITLE: signal hub: the drain thread leaves after an EINTR'd poll during os_fork's hold, and every later os_signal_wait parks for ever
+
+At wolf 0.2.36 (pin 5adf3d9), crates/wolf_rt/src/signal.rs, `reader_loop`:
+
+    let n = unsafe { libc::poll(fds.as_mut_ptr(), 2, -1) };
+    back_from_poll();
+    if n < 0 {
+        if std::io::Error::last_os_error().raw_os_error() == Some(libc::EINTR) {
+            continue;
+        }
+        return; // fatal to delivery — only reachable on teardown
+    }
+
+errno is read after `back_from_poll()`, which parks the thread (`std::thread::park`, a futex) while `os_fork` holds it
+(`fork_hold`, READER_HELD). During the fork the calling thread blocks every catchable signal (`block_signals`), so a
+SIGCHLD from an earlier child can only be delivered to the drain thread: its `poll` answers -1/EINTR, it finds the hold
+and parks, and when `fork_release`'s unpark lands between std's parker state change and its FUTEX_WAIT the futex answers
+EAGAIN, overwriting errno. The thread takes the interrupted poll for a fatal error and returns; READER_UP stays true, so
+`try_hub` never makes another. From then on `os_signal_wait` (no timer since s242) parks on the hub's condvar and is
+woken only by a drain: the signal's trampoline runs on the waiting thread, writes its byte to the self-pipe and
+interrupts the futex, which std retries. The process sleeps in futex_do_wait with the child a zombie.
+
+Seen as pelt#98 (pax#196's F0 replay): pelt's `wait` after eight `true &` never returns; /proc shows one task (the drain
+thread gone), the main task in futex_do_wait, one zombie child, and every hub descriptor still open.
+
+Witness (pelt sh34): `notes/sh34/witness/drain_after_fork.lu` in pelt: listens CHILD, forks eight
+children back to back that exit at once, and reads `Threads:` from /proc/self/status before parking to reap them, round
+after round; exit 1 the round the count falls (the drain thread gone), exit 0 after 3,000 rounds with it alive.
+
+  WOLF_STD=… wolf build --deny-warnings drain_after_fork.lu -o drain_after_fork
+  taskset -c 0-3 ./drain_after_fork
+
+Measured on hasu (linux x86-64, rootless podman `sh32-oracle`, `taskset -c 0-3`, 2026-11-01): 9 of 10 runs red, the
+drain thread gone at round 2 to 13 of 3,000 (the tenth hung in the reap's `os_signal_wait` and was ended by its 120 s
+timeout, exit 124: the stall itself); under `strace -f` red at the first try. The drain thread's last calls (tid 8):
+
+  futex(…, FUTEX_WAIT_BITSET_PRIVATE, 4294967295, …)   = ? ERESTARTSYS        (parked in back_from_poll, a fork's hold)
+  --- SIGCHLD (si_pid=12) --- write(4, "\10", 1) = 1    (the trampoline, on the drain thread: main blocks all in the fork)
+  futex(…, FUTEX_WAIT_BITSET_PRIVATE, 4294967295, …)   = -1 EAGAIN            (fork_release's unpark won the race)
+  --- SIGCHLD (si_pid=14) --- write(4, "\10", 1) = 1
+  sigaltstack(SS_DISABLE) … munmap … exit(0)           +++ exited with 0 +++
+
+Before it: `poll` answered -1 EINTR (a SIGCHLD's trampoline on this thread), the thread parked, was unparked, parked
+again for the next fork's hold, and the EAGAIN of the last futex is the errno the loop then read. Whole trace excerpt:
+pelt `notes/sh34/witness/strace-red-drain-thread.log`.
+
+Suggested fix: read errno right after `poll` returns, before `back_from_poll()`; and if the drain thread ever ends, clear
+READER_UP so the next `try_hub` makes it again (a gone drain thread should never be silent).
