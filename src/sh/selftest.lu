@@ -1345,7 +1345,19 @@ fn want_friendly(mut bad: List[str]) {
             (mut bad).push("argv[0] {name} is not taken for sh")
         }
     }
-    for name in ["pelt", "-pelt", "/bin/pelt", "shx", "bash", "", "/", "-", "s", "/bin/sh/", "--sh"] {
+    for name in [
+        "pelt",
+        "-pelt",
+        "/bin/pelt",
+        "shx",
+        "bash",
+        "",
+        "/",
+        "-",
+        "s",
+        "/bin/sh/",
+        "--sh",
+    ] {
         if named_sh(name.bytes()) {
             (mut bad).push("argv[0] {name} is taken for sh")
         }
@@ -1354,15 +1366,24 @@ fn want_friendly(mut bad: List[str]) {
     as_sh.interactive = true
     as_sh.invoked_sh = true
     friendly_default(mut as_sh)
-    if as_sh.opt_friendly || as_sh.opt_suggest || as_sh.opt_histsearch || friendly_invocation_allowed(as_sh) {
+    if as_sh.opt_friendly ||
+        as_sh.opt_suggest ||
+        as_sh.opt_histsearch ||
+        friendly_invocation_allowed(as_sh) {
         (mut bad).push("invoked as sh, friendly is on by default or allowed")
     }
     var as_pelt = new_sh("friendly-as-pelt")
     as_pelt.interactive = true
     friendly_default(mut as_pelt)
-    if !as_pelt.opt_friendly || !as_pelt.opt_suggest || !as_pelt.opt_histsearch ||
-        !as_pelt.opt_highlight || !as_pelt.opt_abbr || !as_pelt.opt_complete ||
-        !as_pelt.opt_histexpand || !as_pelt.opt_prompt_friendly || !as_pelt.opt_friendly_keys {
+    if !as_pelt.opt_friendly ||
+        !as_pelt.opt_suggest ||
+        !as_pelt.opt_histsearch ||
+        !as_pelt.opt_highlight ||
+        !as_pelt.opt_abbr ||
+        !as_pelt.opt_complete ||
+        !as_pelt.opt_histexpand ||
+        !as_pelt.opt_prompt_friendly ||
+        !as_pelt.opt_friendly_keys {
         (mut bad).push("the friendly default leaves a feature off")
     }
     for vi in [false, true] {
