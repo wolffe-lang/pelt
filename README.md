@@ -111,9 +111,9 @@ input without sending a signal or changing status.
 
 Friendly requires an interactive terminal on stdin and stderr, is off for
 scripts, `-c`, pipes and `--posix`, and can be disabled with `set +o friendly`
-or, for these keys alone, `set +o friendly_keys`. It remains opt-in until
-the pinned compiler can report argv[0], so a future default can exclude an
-invocation named `sh`.
+or, for these keys alone, `set +o friendly_keys`. It remains opt-in for now.
+The pinned compiler (wolf 0.2.36) can report argv[0], so a future default
+can exclude an invocation named `sh`.
 
 **Suggestions and filtered history (opt-in).** Add
 `set -o friendly -o suggest -o histsearch` to enable bright-black history,
