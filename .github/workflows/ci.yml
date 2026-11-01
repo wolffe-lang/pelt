@@ -113,6 +113,7 @@ jobs:
       tier: ${{ steps.plan.outputs.tier }}
       jobs: ${{ steps.plan.outputs.jobs }}
       matrix_gauntlet: ${{ steps.plan.outputs.matrix_gauntlet }}
+      matrix_sessions: ${{ steps.plan.outputs.matrix_sessions }}
     steps:
       # Depth 2: a pull request's run checks out its merge commit, and the
       # plan reads that commit against its first parent. A dispatch reads
@@ -149,7 +150,13 @@ jobs:
         # a pull request's.
         include: ${{ fromJSON(needs.plan.outputs.matrix_gauntlet || '[]') }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    # pelt#99 (sh34): the session corpus is the `sessions` job's since the
+    # friendly campaign doubled it (290 cases, 590 s on macOS, to 584 and
+    # 1,500 s): the whole leg's peak steps summed to 47-50 minutes on macOS,
+    # past this job's old 45. Without them this job's peak is 24.6 minutes
+    # (macOS release, the ten nightlies to 2026-11-01); the limit is the
+    # house rule's: (peak + 180 s) x 1.4, 38.7, so 40.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -299,24 +306,6 @@ jobs:
         if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}
         run: tools/difftest-selftest target/release
 
-      # The prompt: sessions typed into pelt through a pseudo-terminal
-      # and compared with transcripts tools/session-record wrote from
-      # `dash -i +m` (tests/session/, tools/lib_session.py).
-      # pelt#35, sh19: they run after a red corpus too (the job is red
-      # all the same), so a break the sessions see is seen here and not
-      # only on a lane's host: before, a plain `if: matrix.builds` meant
-      # "only if every step so far passed", and a plant whose corpus was
-      # red never showed its sessions (sh18's run 39160267977).
-      # sh29: run 40160785846 reached about 408 sessions without a failure
-      # before macOS native exhausted the old 15-minute step cap. New typed
-      # sessions cost about 4 seconds each there; 443 at that rate need
-      # roughly 30 minutes. Give macOS 45 minutes of step budget, keeping
-      # Linux at 15 and the whole-job ceiling at 45. No cases are skipped.
-      - name: the session corpus, ${{ matrix.tier }} tier
-        if: ${{ matrix.builds && !cancelled() }}
-        timeout-minutes: ${{ matrix.os == 'macos-latest' && 45 || 25 }}
-        run: tools/session --bin target/${{ matrix.tier }}
-
       - name: shadow bytes, bounded lookup and idle, ${{ matrix.tier }} tier
         if: ${{ matrix.builds && !cancelled() }}
         timeout-minutes: 5
@@ -387,9 +376,57 @@ jobs:
         timeout-minutes: 5
         run: tools/reap-witness target/${{ matrix.tier }}
 
+
+  # The prompt: sessions typed into pelt through a pseudo-terminal and
+  # compared with transcripts tools/session-record wrote from `dash -i +m`
+  # (tests/session/, tools/lib_session.py), on every leg that builds, each
+  # host on each compiler tier as the gauntlet's. pelt#99 (sh34): its own
+  # job since the friendly campaign doubled the corpus (584 cases; 1,500 s
+  # on macOS, 1,245 s on linux), so the two run side by side and each fits
+  # its limit with room. Limits by the house rule, (peak + 180 s) x 1.4,
+  # over the ten nightlies to 2026-11-01 plus sh34's eight cases: the job's
+  # peak 27.5 minutes (macOS release), 42.7, so 45; the corpus's own step
+  # 25.1 minutes on macOS, 39.8, so 40, and 20.7 on linux, 33.6, so 35.
+  # No case is skipped, filtered or sharded.
+  sessions:
+    needs: plan
+    if: contains(fromJSON(needs.plan.outputs.jobs || '[]'), 'sessions')
+    strategy:
+      fail-fast: false
+      matrix:
+        # The plan's legs (ci/tiers.py MATRIX): the gauntlet's that build,
+        # linux x86-64 and macOS arm64 on each compiler tier, in the all
+        # tier; all but macOS's release leg in the full tier; linux x86-64
+        # alone in a pull request's.
+        include: ${{ fromJSON(needs.plan.outputs.matrix_sessions || '[]') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: the pinned toolchain, by digest
+        run: tools/fetch-toolchain
+
+      - name: build, the ${{ matrix.tier }} tier
+        run: tools/build --${{ matrix.tier }}
+
+      # The prompt: sessions typed into pelt through a pseudo-terminal
+      # and compared with transcripts tools/session-record wrote from
+      # `dash -i +m` (tests/session/, tools/lib_session.py).
+      # pelt#35, sh19: a break the sessions see is seen whatever the
+      # corpus said (a plant whose corpus was red once never showed its
+      # sessions, sh18's run 39160267977); in a job of their own since
+      # sh34 they wait on nothing but this leg's build.
+      # sh29: run 40160785846 reached about 408 sessions without a failure
+      # before macOS native exhausted the old 15-minute step cap; sh34
+      # (pelt#99) sizes the step by the house rule, above the job.
+      - name: the session corpus, ${{ matrix.tier }} tier
+        timeout-minutes: ${{ matrix.os == 'macos-latest' && 40 || 35 }}
+        run: tools/session --bin target/${{ matrix.tier }}
+
       - name: the session harness sees a difference (the planted red)
         # The release leg's: the selftest runs the release build.
-        if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}
+        if: ${{ matrix.tier == 'release' && !cancelled() }}
         run: tools/session-selftest target/release
 
   # The run's verdict, and its name: `tier full`, `tier pr` or `tier noop`.
@@ -403,6 +440,7 @@ jobs:
     needs:
       - plan
       - gauntlet
+      - sessions
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
