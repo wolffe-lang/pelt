@@ -983,7 +983,7 @@ Not counted: 43 statements recorded for what dash does where POSIX leaves the be
 
 | id | statement | verdict | cases | note |
 |---|---|---|---|---|
-| wait/1 | wait with no operands waits for every child and returns zero | met | `jobs/wait_all`, `wait/c_all` |  |
+| wait/1 | wait with no operands waits for every child and returns zero | met | `jobs/wait_all`, `wait/c_all`, `wait/c_last_child`, `wait/c_last_child_trapped` |  |
 | wait/7 | wait does not wait for a stopped job; wait for a stopped job answers its stop status | not counted | `session:c_jc_wait_stopped` | dash, black-box p12 |
 | wait/2 | wait pid returns that child's status; several operands: the status of the last | met | `jobs/wait_program_status`, `jobs/wait_subshell_status`, `signal/wait_two_jobs`, `wait/c_pid` |  |
 | wait/3 | wait for a pid that is not a child of this shell returns 127 | met | `jobs/wait_unknown`, `wait/c_unknown` |  |
