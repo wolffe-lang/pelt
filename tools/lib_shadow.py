@@ -17,6 +17,12 @@ def ctty_without_thp():
     if prctl(42, 0, 0, 0, 0) != 1:
         raise RuntimeError('PR_GET_THP_DISABLE did not confirm complete disable')
 
+# What an interactive pelt started with before ruling #126 made friendly
+# its default at a terminal prompt (sh34): every friendly option off. A
+# witness starts there and turns on what its row names, so its bytes are
+# the row's own; the default itself is the sessions' (sh34_default_*).
+START = ('+o', 'friendly', '+o', 'suggest', '+o', 'histsearch')
+
 class Shell:
     def __init__(self, binary, home, args=(), tty_err=True, history=None, fullargv=None, tty_out=False, disable_thp=False, env_overrides=None, cols=1000, ready_marker=b'$ '):
         self.master, slave = pty.openpty()
@@ -30,7 +36,7 @@ class Shell:
         for key, value in (env_overrides or {}).items():
             if value is None: env.pop(key, None)
             else: env[key] = value
-        self.p = subprocess.Popen(fullargv or [str(binary), '-i', '+m', *args], stdin=slave,
+        self.p = subprocess.Popen(fullargv or [str(binary), '-i', '+m', *START, *args], stdin=slave,
             stderr=slave if tty_err else subprocess.PIPE, stdout=slave if tty_out else subprocess.PIPE,
             env=env, cwd=home, start_new_session=True, preexec_fn=ctty_without_thp if disable_thp else ls._ctty)
         os.close(slave)
