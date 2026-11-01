@@ -14,8 +14,8 @@ shell's source is ever read: pelt is clean-room, black-box only.
 | measure | where it stands |
 |---|---|
 | POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 533 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
-| differential corpus against dash, both tiers | 1,047 cases: 1,033 passing, 0 failing, 14 pending on a named primitive (`tests/diff/`) |
-| typed sessions through a pseudo-terminal | 584 recorded expectations, none pending; POSIX sessions compare against dash, editor keys against recorded references and pelt-owned screens (`tests/session/`) |
+| differential corpus against dash, both tiers | 1,049 cases: 1,035 passing, 0 failing, 14 pending on a named primitive (`tests/diff/`) |
+| typed sessions through a pseudo-terminal | 591 recorded expectations, none pending; POSIX sessions compare against dash (pelt invoked as `sh` there, so friendly is off), editor keys against recorded references and pelt-owned screens (`tests/session/`) |
 | real `sh` scripts that run as under dash | 78 of 80, the other two not pelt's to change (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts): `configure-sed` prints a timestamp resolution it measures from the shell's own speed, a coin that flips for dash itself and is counted apart, and `pfetch`'s memory line differs between dash's own runs |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
 | toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
@@ -100,7 +100,15 @@ the window. History: `fc`, a shared `HISTFILE` kept to `HISTSIZE`,
 Ctrl-R, vi's `v`, and `!` in `PS1`. An idle prompt costs nothing: it
 waits for a key or a signal without waking.
 
-**Friendly keys (opt-in).** `set -o friendly` adds Alt-. (Alt-_ too) to
+**Friendly, on by default.** At an interactive terminal prompt (standard
+input and standard error terminals) pelt starts with `friendly` on, and with
+it the keys, suggestions, filtered history, colours, words and prompt below;
+`set +o friendly` or invoke as `sh` turns it all off. Invoked as `sh`
+(`sh`, `-sh`, `/bin/sh`: argv[0]'s basename, as PAX starts it) or with
+`--posix`, friendly stays off even when asked for, and a script, `-c` or a
+pipe never uses it. Each feature has its own `set +o` too.
+
+**Friendly keys.** `friendly` adds Alt-. (Alt-_ too) to
 insert a previous history word, cycling backward on repeats; a ten-entry
 kill ring and yank-pop; transpose, case, grouped undo, history-end, numeric
 argument and mark keys. `bindings` prints the live key table for emacs or
@@ -109,23 +117,18 @@ complete bytes, stty precedence, reference comparisons and named omissions
 are in [`docs/KEYS.md`](docs/KEYS.md). The quit character clears pending
 input without sending a signal or changing status.
 
-Friendly requires an interactive terminal on stdin and stderr, is off for
-scripts, `-c`, pipes and `--posix`, and can be disabled with `set +o friendly`
-or, for these keys alone, `set +o friendly_keys`. It remains opt-in for now.
-The pinned compiler (wolf 0.2.36) can report argv[0], so a future default
-can exclude an invocation named `sh`.
+For these keys alone, `set +o friendly_keys`.
 
-**Suggestions and filtered history (opt-in).** Add
-`set -o friendly -o suggest -o histsearch` to enable bright-black history,
-file and command suggestions plus prefix-filtered Up/Down and a Ctrl-R
-history pager. Suggestions are drawn, not typed: Enter runs only the input
+**Suggestions and filtered history.** `suggest` and `histsearch` are on
+with friendly's default: bright-black history, file and command suggestions
+plus prefix-filtered Up/Down and a Ctrl-R history pager. Suggestions are drawn, not typed: Enter runs only the input
 you entered. Right/End/Ctrl-E/Ctrl-F accept a suffix; Alt-F accepts a word,
 Ctrl-Right a token. Enter in the pager copies a selection into the editor
-without running it. The options default off at this pin. See
-[`docs/FRIENDLY.md`](docs/FRIENDLY.md) for controls and the planned default.
+without running it. `set +o suggest` and `set +o histsearch` turn each off.
+See [`docs/FRIENDLY.md`](docs/FRIENDLY.md) for controls.
 
-**Syntax colours (opt-in).** `set -o highlight` colours the edit line;
-`set -o friendly` enables it too. Commands use the default foreground until
+**Syntax colours.** `highlight` (on with `friendly`; `set -o highlight`
+works alone) colours the edit line. Commands use the default foreground until
 unresolved, when they are bright red. Quotes, variables, arguments,
 redirections and comments have separate styles. `PELT_COLORS` customizes
 them with 16-colour, indexed or RGB values. Colour never enters the input,
@@ -134,7 +137,7 @@ colours. All three standard descriptors must be terminals; scripts, `-c`,
 pipes, `--posix` and `TERM=dumb` are unchanged. Details and fish-variable
 equivalents are in [`docs/FRIENDLY.md`](docs/FRIENDLY.md).
 
-**Words at the prompt (opt-in).** `friendly` also enables `abbr`,
+**Words at the prompt.** `friendly` also enables `abbr`,
 `complete` and `histexpand`. `abbr add/erase/list` persists abbreviations
 under `$HOME/.pelt/abbr`; a whole unquoted command word expands on Space
 or Enter. Tab offers descriptions in a bounded pager; selecting a row
@@ -146,7 +149,7 @@ and stored in history. All three options are separately switchable and
 never change scripts, `-c` or piped input. Quoting, limits and controls are
 in [`docs/FRIENDLY.md`](docs/FRIENDLY.md).
 
-**Friendly prompt (opt-in).** `friendly` enables `prompt_friendly`: a
+**Friendly prompt.** `friendly` enables `prompt_friendly`: a
 fish-shaped user/host/path/status prompt, unless PS1 was explicitly set.
 A `prompt_right` function supplies display-only text, bounded to a third
 of the terminal width and hidden below 40 columns or when input overlaps.
@@ -202,6 +205,11 @@ pending case still runs on every pass and is reported, never skipped.
   Linux's `IO`, `PWR` or the real-time ones).
 - A byte that is not UTF-8 cannot reach a program: a `$'…'` that would
   make one is refused, and a command substitution's becomes `?`.
+- A `wait`, or a foreground command, can wait for ever once wolf
+  0.2.36's signal drain thread has ended, which it can do during the forks
+  of several `cmd &` while earlier children end (pelt#98: one replay in
+  sixty of pax's fork shapes under four CPUs, `tools/wait-replay`). The
+  fix is the runtime's; pelt waits on a pin that has it.
 - `test -r`, `-w` and `-x` read the mode bits for the shell's own ids
   rather than asking `access(2)`, so a read-only or `noexec` mount and
   ACLs are not seen.
@@ -219,6 +227,7 @@ the tree so the measurement can be taken again.
 | `tools/exec-witness`, `tools/signal-witness`, `tools/hist-witness`, `tools/edit-witness` | one behaviour each, measured on the live process (the same pid after `exec`, a signal's disposition, the history file, the editor) |
 | `tools/shadow-witness`, `tools/colour-witness`, `tools/words-witness`, `tools/prompt-witness` | display-only suggestions, syntax colours, abbreviations, history events, described completion, prompt precedence and VCS deadlines, raw resets, resize, idle memory and per-key latency |
 | `tools/reap-witness` | a test case that times out leaves nothing running |
+| `tools/wait-replay` | pax's F0 replay of fork shapes typed into pelt many times, the stalled `wait` of pelt#98 counted |
 | `tools/script-census` | the 80 real scripts, run as under dash |
 | `tools/clause-census` | the POSIX statement table, counted |
 | `tools/syscall-census`, `tools/loop-rss`, `tools/shape-rss`, `tools/session-rss`, `tools/glob-rss` | what a command costs in calls and memory |
@@ -226,7 +235,8 @@ the tree so the measurement can be taken again.
 
 CI runs the same tools in tiers: a pull request runs what its paths can
 affect (`ci/tiers.py` decides), the merge runs everything, and a nightly
-re-runs the lot and opens an issue when red. Each lane of work leaves a
+re-runs the lot and opens an issue when red. The typed sessions are a job
+of their own beside the gauntlet's, on each host and compiler tier. Each lane of work leaves a
 record under `notes/` with its prediction, its measurements and what it
 left undone.
 
