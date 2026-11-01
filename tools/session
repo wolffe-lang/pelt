@@ -75,7 +75,7 @@ def main(argv):
     all_cases = ls.cases(argv or None)
     if not all_cases:
         die("no cases found")
-    print(f"session: pelt = {pelt}")
+    print(f"session: pelt = {pelt} (invoked as {ls.INVOKE!r} unless a case says argv0=)")
     passed = failed = pend = pend_ok = 0
     full_wait = ls.PROMPT_WAIT
     unlisted = []
@@ -92,7 +92,7 @@ def main(argv):
         # own line, so the prompt the transcript shows mid-line is not
         # one pelt writes) is paced by quiet, as it was recorded
         pace = None if meta.get("compare") == "stdout" else ls.parse_tr(want)
-        got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, pace)
+        got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, pace, ls.invocation(meta))
         if meta.get("compare") == "stdout":
             ok = ls.stdout_and_exit(got) == ls.stdout_and_exit(want)
         else:

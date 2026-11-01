@@ -59,6 +59,19 @@ A session case is a set of files in tests/session/:
                                 pty's window size, which bash reads,
                                 and the screen's, whose cursor report
                                 pelt reads
+                  argv0=NAME    the name pelt is invoked by (its
+                                argv[0]; the program run is still the
+                                one under test). Without it pelt is
+                                invoked as `INVOKE`, `sh`: every case
+                                compared with `dash -i` runs with
+                                `friendly` off by its invocation
+                                (ruling #126, sh34), as dash has none.
+                                The friendly cases say `argv0=pelt`
+                                and run with its default, on.
+                  self=VAR      the environment variable VAR names the
+                                pelt under test (its absolute path), for
+                                a case that starts pelt itself (`-c`, a
+                                script, a pipe)
   <name>.screen the oracle's screen at the end of each step from
                 `screen=` on, written by tools/session-record (or by
                 hand, said so in `why=`): the rows the step drew, from
@@ -476,6 +489,18 @@ def _raw_keys(text):
     return bytes(out)
 
 
+# The name every pelt session is invoked by unless its meta says
+# `argv0=` (sh34, ruling #126 R-F-1): `sh`, so `friendly`, on by default
+# at an interactive terminal prompt, is off by the invocation in every
+# case compared with `dash -i`, and in every case that is not about it.
+INVOKE = "sh"
+
+
+def invocation(meta):
+    """The argv[0] a pelt session runs with (`INVOKE` unless `argv0=`)."""
+    return meta.get("argv0", INVOKE)
+
+
 def argv_for(shell, meta, is_pelt):
     if is_pelt:
         # pelt is given the oracle's job-control flag: `+m` unless the
@@ -566,10 +591,11 @@ def split_err(err):
     return err[:i + 1], err[i + 1:]
 
 
-def run(argv, keys_path, meta, expect=None):
+def run(argv, keys_path, meta, expect=None, argv0=None):
     """Run one session. `expect` (a parsed oracle transcript) switches
-    from quiet-based to prompt-based pacing. Answers the transcript as
-    a list of lines."""
+    from quiet-based to prompt-based pacing. `argv0`, when given, is the
+    name the program `argv[0]` is invoked by (pelt's `invocation`).
+    Answers the transcript as a list of lines."""
     holder = tempfile.mkdtemp(prefix="pelt-sess.")
     try:
         home = os.path.join(holder, "home")
@@ -583,12 +609,14 @@ def run(argv, keys_path, meta, expect=None):
         for kv in meta.get("env", "").split():
             k, _, v = kv.partition("=")
             env[k] = v.replace("\\s", " ")
-        return _session(argv, keystrokes(keys_path), env, work, expect, meta)
+        if meta.get("self") and argv0 is not None:
+            env[meta["self"]] = os.path.abspath(argv[0])
+        return _session(argv, keystrokes(keys_path), env, work, expect, meta, argv0)
     finally:
         shutil.rmtree(holder, ignore_errors=True)
 
 
-def _session(argv, keys, env, cwd, expect, meta=None):
+def _session(argv, keys, env, cwd, expect, meta=None, argv0=None):
     meta = meta or {}
     lr.subreaper()
     before = lr.children()
@@ -603,8 +631,9 @@ def _session(argv, keys, env, cwd, expect, meta=None):
     scr = Screen(cols, nrows)
     rout, wout = os.pipe()
     rerr, werr = os.pipe()
-    p = subprocess.Popen(argv, stdin=slave, stdout=wout, stderr=werr,
-                         env=env, cwd=cwd, start_new_session=True,
+    named = [argv0] + list(argv[1:]) if argv0 is not None else list(argv)
+    p = subprocess.Popen(named, executable=argv[0], stdin=slave, stdout=wout,
+                         stderr=werr, env=env, cwd=cwd, start_new_session=True,
                          preexec_fn=_ctty, close_fds=True)
     os.close(slave)
     os.close(wout)
