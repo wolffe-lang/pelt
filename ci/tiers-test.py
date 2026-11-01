@@ -73,24 +73,27 @@ def say(ok, what):
 NIGHTLY = None            # (its tier, its jobs); None: the all tier
 FULL_LEG_TIERS = ("all",)  # the tiers that run every leg
 WORKFLOW_NAME = "ci"
-WORKFLOW_JOBS = ["plan", "gauntlet", "tier", "nightly-red"]
-FULL_JOBS = ["gauntlet"]
+WORKFLOW_JOBS = ["plan", "gauntlet", "sessions", "tier", "nightly-red"]
+FULL_JOBS = ["gauntlet", "sessions"]
 PUSH_BRANCHES = "trunk"
 OTHER_HOST_JOBS = ()
 # The gauntlet's three hosts before tl28 (.github/workflows/ci.yml at trunk
 # cc2fdc9), each now on both compiler tiers (pelt#40).
 _HOSTS = [{"os": "ubuntu-latest", "builds": True}, {"os": "macos-latest", "builds": True},
           {"os": "ubuntu-24.04-arm", "builds": False}]
-BEFORE_HOSTS = {"matrix_gauntlet": [dict(h, tier=t) for h in _HOSTS for t in ("native", "release")]}
+# pelt#99 (sh34): the session corpus is the `sessions` job's, on the legs
+# that build (linux aarch64 builds no tier).
+BEFORE_HOSTS = {"matrix_gauntlet": [dict(h, tier=t) for h in _HOSTS for t in ("native", "release")],
+                "matrix_sessions": [dict(h, tier=t) for h in _HOSTS if h["builds"] for t in ("native", "release")]}
 ALL_HOSTS = BEFORE_HOSTS
-PR_HOSTS = {"matrix_gauntlet": [dict(_HOSTS[0], tier=t) for t in ("native", "release")]}
+PR_HOSTS = {k: [dict(_HOSTS[0], tier=t) for t in ("native", "release")] for k in BEFORE_HOSTS}
 # The merge's legs (tl30, the macOS cap): every leg but macOS's release one,
 # which caught nothing a linux leg did not; macOS's native leg (sh18's notice
 # race, in its session corpus) stays.
-MOVED = {"matrix_gauntlet": [dict(_HOSTS[1], tier="release")]}
-MERGE_HOSTS = {"matrix_gauntlet": [l for l in BEFORE_HOSTS["matrix_gauntlet"] if l not in MOVED["matrix_gauntlet"]]}
-CODE_PATH = ("src/main.lu", ["gauntlet"])
-PR_PATHS = [(p, ["gauntlet"]) for p in [
+MOVED = {k: [dict(_HOSTS[1], tier="release")] for k in BEFORE_HOSTS}
+MERGE_HOSTS = {k: [l for l in v if l not in MOVED[k]] for k, v in BEFORE_HOSTS.items()}
+CODE_PATH = ("src/main.lu", ["gauntlet", "sessions"])
+PR_PATHS = [(p, ["gauntlet", "sessions"]) for p in [
     "src/main.lu", "src/exec/exec.lu", "tests/diff/param/c_length_bytes_in_c.sh", "tests/session/PENDING.md",
     "tests/diff/PENDING.md", "tests/census/clauses.tsv", "tests/diff/ORACLE", "tools/difftest", "tools/lib_session.py",
     "tools/bench/run", "wolf-toolchain.toml", ".github/workflows/ci.yml", "ci/tiers.py", "ci/tiers-test.py",
@@ -115,8 +118,8 @@ RULED = {}  # {prose root: {regex of a line that names something else: why}}
 
 def extra_t5(files, cls, say):
     shell = [p for p in files if p.startswith(("src/", "tests/", "tools/"))]
-    say(len(shell) >= 1000 and all(cls.get(p) == "gauntlet" for p in shell),
-        "T5 every tracked path under src/, tests/ and tools/ is the gauntlet's (%d paths)" % len(shell))
+    say(len(shell) >= 1000 and all(cls.get(p) == "gauntlet sessions" for p in shell),
+        "T5 every tracked path under src/, tests/ and tools/ is the gauntlet's and the sessions' (%d paths)" % len(shell))
 WORKFLOW_FILE = "ci.yml"
 
 
@@ -132,17 +135,27 @@ def extra_checks(say, plan, expect, blocks, wf):
     say(dict(_HOSTS[1], tier="native") in plan(event="push")["matrix"]["matrix_gauntlet"],
         "T4 the merge keeps macOS's native leg, whose session corpus caught sh18's notice race (tl30)")
     g = blocks["gauntlet"]
-    steps = [l for l in g.splitlines() if l.startswith(("      - name:", "        run:"))]
+    se = blocks["sessions"]
+    steps = [l for l in (g + se).splitlines() if l.startswith(("      - name:", "        run:"))]
     say(not [l for l in steps if "native" in l or "--all" in l], "T4 no step names a compiler tier: each takes its leg's (`matrix.tier`)")
     say("        run: tools/build --${{ matrix.tier }}\n" in g and "tools/build --\"$TIER\"" in g, "T4 the build and the aarch64 refusal are the leg's tier")
-    say(g.count("        if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}\n") == 2,
-        "T4 the two planted-red selftests run on the release leg, as before on the release build")
+    say("        run: tools/build --${{ matrix.tier }}\n" in se, "T4 the sessions build their leg's tier")
+    sl = plan(event="schedule")["matrix"]
+    say(sl.get("matrix_sessions") == [l for l in sl.get("matrix_gauntlet", []) if l["builds"]],
+        "T4 the sessions run on every gauntlet leg that builds (pelt#99)")
+    say(g.count("        if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}\n") == 1
+        and "        run: tools/difftest-selftest target/release\n" in g
+        and "        if: ${{ matrix.tier == 'release' && !cancelled() }}\n        run: tools/session-selftest target/release\n" in se,
+        "T4 the two planted-red selftests run on the release leg, the session harness's in the sessions job")
     say(g.count("        if: matrix.tier == 'native'\n") == 3 and "        if: matrix.builds && matrix.tier == 'native'\n" in g,
         "T4 fmt, the clause table, the width table and wolf test run once a host, on the native leg")
-    say("    timeout-minutes: 45\n" in g, "T4 the job's 45-minute ceiling is unchanged")
-    session = g.split("      - name: the session corpus,", 1)[1].split("\n      - name:", 1)[0]
-    say("        timeout-minutes: ${{ matrix.os == 'macos-latest' && 45 || 25 }}\n" in session,
-        "T4 session budget: macOS 45 minutes, Linux 25; the complete corpus still runs")
+    say("    timeout-minutes: 40\n" in g and "    timeout-minutes: 45\n" in se,
+        "T4 the limits by the house rule (pelt#99): the gauntlet 40 minutes, the sessions 45")
+    say("the session corpus" not in g and "tools/session --bin" not in g and "tools/session-selftest" not in g,
+        "T4 the session corpus moved to the sessions job, none of it left in the gauntlet")
+    session = se.split("      - name: the session corpus,", 1)[1].split("\n      - name:", 1)[0]
+    say("        timeout-minutes: ${{ matrix.os == 'macos-latest' && 40 || 35 }}\n" in session,
+        "T4 session budget by the house rule: macOS 40 minutes, Linux 35; the complete corpus still runs")
     say("        run: tools/session --bin target/${{ matrix.tier }}\n" in session,
         "T4 session budget does not filter or shard away cases")
     say("run: tools/colour-witness target/${{ matrix.tier }}/pelt" in g,
