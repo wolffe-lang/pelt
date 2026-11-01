@@ -1,0 +1,58 @@
+BEGIN job4b 2026-11-01T16:54:08-05:00 host hasu
+BEGIN build-static 2026-11-01T16:54:09-05:00
+END build-static exit=0 2026-11-01T16:54:55-05:00
+BEGIN head-static-100 2026-11-01T16:54:55-05:00
+wait-replay: /home/mfwolffe/lanes/sh34/r-b1be241/target/static/pelt, 100 runs, 26 steps, cpus 6,7,8,9, load 0, out /home/mfwolffe/lanes/sh34/out4/head
+run 1: stalled 46.8s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+run 60: stalled 46.9s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+run 62: stalled 46.9s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+run 80: stalled 47.1s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+wait-replay: runs 100 green 96 stalled 4 failed 0
+END head-static-100 exit=1 2026-11-01T17:45:54-05:00
+BEGIN trunk-static-100 2026-11-01T17:45:54-05:00
+wait-replay: /home/mfwolffe/lanes/sh34/pelt/target/static/pelt, 100 runs, 26 steps, cpus 6,7,8,9, load 0, out /home/mfwolffe/lanes/sh34/out4/trunk
+run 60: stalled 47.0s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+run 75: stalled 47.0s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+run 76: stalled 47.0s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+wait-replay: runs 100 green 97 stalled 3 failed 0
+END trunk-static-100 exit=1 2026-11-01T18:36:39-05:00
+END job4b 2026-11-01T18:36:39-05:00
+/home/mfwolffe/lanes/sh34/job1.log:BEGIN job1 2026-11-01T15:25:28-05:00 host hasu head 78f2b7fa8106a83c65044f39fac262d9b30ed9ee
+/home/mfwolffe/lanes/sh34/job1.log:BEGIN build 2026-11-01T15:25:28-05:00
+/home/mfwolffe/lanes/sh34/job1.log:END build exit=0 2026-11-01T15:26:34-05:00
+/home/mfwolffe/lanes/sh34/job1.log:BEGIN build-static 2026-11-01T15:26:34-05:00
+/home/mfwolffe/lanes/sh34/job1.log:END build-static exit=0 2026-11-01T15:27:30-05:00
+/home/mfwolffe/lanes/sh34/job1.log:BEGIN replay-native 2026-11-01T15:27:30-05:00
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: /home/mfwolffe/lanes/sh34/pelt/target/native/pelt, 20 runs, 26 steps, cpus 6,7,8,9, out /home/mfwolffe/lanes/sh34/out1/native
+/home/mfwolffe/lanes/sh34/job1.log:run 2: stalled 47.0s prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i watch: tasks 2 at every prompt
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: runs 20 green 19 stalled 1 failed 0
+/home/mfwolffe/lanes/sh34/job1.log:END replay-native exit=1 2026-11-01T15:37:51-05:00
+/home/mfwolffe/lanes/sh34/job1.log:BEGIN replay-release 2026-11-01T15:37:51-05:00
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: /home/mfwolffe/lanes/sh34/pelt/target/release/pelt, 20 runs, 26 steps, cpus 6,7,8,9, out /home/mfwolffe/lanes/sh34/out1/release
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: runs 20 green 20 stalled 0 failed 0
+/home/mfwolffe/lanes/sh34/job1.log:END replay-release exit=0 2026-11-01T15:48:01-05:00
+/home/mfwolffe/lanes/sh34/job1.log:BEGIN replay-static 2026-11-01T15:48:01-05:00
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: /home/mfwolffe/lanes/sh34/pelt/target/static/pelt, 20 runs, 26 steps, cpus 6,7,8,9, out /home/mfwolffe/lanes/sh34/out1/static
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: runs 20 green 20 stalled 0 failed 0
+/home/mfwolffe/lanes/sh34/job1.log:END replay-static exit=0 2026-11-01T15:58:04-05:00
+/home/mfwolffe/lanes/sh34/job1.log:BEGIN replay-strace 2026-11-01T15:58:04-05:00
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: /home/mfwolffe/lanes/sh34/pelt/target/release/pelt, 10 runs, 26 steps, cpus 6,7,8,9, out /home/mfwolffe/lanes/sh34/out1/strace
+/home/mfwolffe/lanes/sh34/job1.log:wait-replay: runs 10 green 10 stalled 0 failed 0
+/home/mfwolffe/lanes/sh34/job1.log:END replay-strace exit=0 2026-11-01T16:03:16-05:00
+/home/mfwolffe/lanes/sh34/job1.log:END job1 2026-11-01T16:03:16-05:00
+/home/mfwolffe/lanes/sh34/job5.log:BEGIN job5 2026-11-01T16:20:27-05:00 block A cpus 0-5 rows 0-3
+/home/mfwolffe/lanes/sh34/job5.log:BEGIN witness-build 2026-11-01T16:20:27-05:00
+/home/mfwolffe/lanes/sh34/job5.log:END witness-build exit=0 2026-11-01T16:20:28-05:00
+/home/mfwolffe/lanes/sh34/job5.log:BEGIN witness-runs 2026-11-01T16:20:28-05:00
+/home/mfwolffe/lanes/sh34/job5.log:END witness-runs exit=0 2026-11-01T16:22:28-05:00
+/home/mfwolffe/lanes/sh34/job5.log:BEGIN witness-strace 2026-11-01T16:22:28-05:00
+/home/mfwolffe/lanes/sh34/job5.log:END witness-strace exit=0 2026-11-01T16:22:28-05:00
+/home/mfwolffe/lanes/sh34/job5.log:BEGIN trunk-static-load3 2026-11-01T16:22:28-05:00
+/home/mfwolffe/lanes/sh34/job5.log:wait-replay: /home/mfwolffe/lanes/sh34/pelt/target/static/pelt, 20 runs, 26 steps, cpus 0,1,2,3, load 3, out /home/mfwolffe/lanes/sh34/out3/static
+/home/mfwolffe/lanes/sh34/job5.log:wait-replay: runs 20 green 20 stalled 0 failed 0
+/home/mfwolffe/lanes/sh34/job5.log:END trunk-static-load3 exit=0 2026-11-01T16:32:25-05:00
+/home/mfwolffe/lanes/sh34/job5.log:BEGIN trunk-release-load3 2026-11-01T16:32:25-05:00
+/home/mfwolffe/lanes/sh34/job5.log:wait-replay: /home/mfwolffe/lanes/sh34/pelt/target/release/pelt, 20 runs, 26 steps, cpus 0,1,2,3, load 3, out /home/mfwolffe/lanes/sh34/out3/release
+/home/mfwolffe/lanes/sh34/job5.log:wait-replay: runs 20 green 20 stalled 0 failed 0
+/home/mfwolffe/lanes/sh34/job5.log:END trunk-release-load3 exit=0 2026-11-01T16:42:23-05:00
+/home/mfwolffe/lanes/sh34/job5.log:END job5 2026-11-01T16:42:23-05:00

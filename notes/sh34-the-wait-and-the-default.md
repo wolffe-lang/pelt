@@ -97,8 +97,10 @@ timeout snapshots on hasu (`~/lanes/px83/runs/diagnostic-f0-{12,15,16}/driver.lo
   and an exit marker; from the 2026-11-01 21:10Z rule on, each new job went to the emptier block. Containers keep bash as
   pid 1 (`; exit $?`). Processes ended only by recorded pid, and only ones the lane started (a stalled replay's shell
   and its zombie's parent, the replay's own busy loops).
-- The Mac: every build and run behind the Mac build lock, the 8 GiB gate a conditional in the runner, 60 s between this
-  lane's turns, each in a worktree pinned to a commit. No fork storm on the host's table: the witness ran on hasu only.
+- The Mac: every build and run behind the Mac build lock, the 8 GiB gate a conditional in the runner, each in a
+  worktree pinned to a commit. **One slip:** at 16:36 the gauntlet's runner took the lock about 20 s after this lane's
+  run 5 released it, because the runner checked the 60 s turn only when it started, not when it took the lock; s272's
+  waiter (pid 75810) was starved for that turn. The runner is fixed (`mac-run3.sh` checks at the taking). No fork storm on the host's table: the witness ran on hasu only.
 - Nothing under `/var/folders`, `~/.claude`, the planning repo, another lane's directory, or the maintainer's data.
 
 ## Inputs verified
@@ -175,15 +177,20 @@ Rows, red then green:
 
 Plants (off the line, draft PRs, red by name):
 - pelt#101 `sh34-plant-wait` (`5937ae9`; the same break on `c20c6ec` run on nomad): `FAIL wait/c_last_child`,
-  `FAIL wait/c_last_child_trapped`, `difftest: wait 13 2 0` (`~/lanes/sh34/mac/run4.log`). Its PR run 41350852471.
+  `FAIL wait/c_last_child_trapped`, `difftest: wait 13 2 0` (`~/lanes/sh34/mac/run4.log`); red again at the pushed `5937ae9`
+  (`~/lanes/sh34/mac/run5.log`). Its PR run 41350852471.
 - pelt#102 `sh34-plant-sh` (`edec268`; the same break on `98bb980` on nomad): `FAIL sh34_off_login_sh`,
   `FAIL sh34_off_path_sh`, `FAIL sh34_off_sh`, and the table check `invoked as sh, friendly is on by default or
-  allowed` (`~/lanes/sh34/mac/run4.log`). Its PR run 41350855334.
+  allowed` (`~/lanes/sh34/mac/run4.log`); red again at the pushed `edec268` (`~/lanes/sh34/mac/run5.log`). Its PR
+  run 41350855334.
 
 The replays (pelt#98), one rig: hasu, `sh32-oracle`, four CPUs, the F0 sequence into `sh` at 20 ms a byte:
 - trunk's code: native 1 of 20, release 0 of 20, static 0 of 20, release under strace 0 of 10 (job 1); under three busy
-  loops (`--load 3`): pending (hasu job 5, block A). nomad: 0 of 40.
-- the proof's 100 at the head and 100 at trunk, static: pending (hasu job 4b, block B).
+  loops (`--load 3`, CPUs 0-3, block A): static 0 of 20, release 0 of 20 (hasu job 5). So 1 stall in 100 trunk
+  replays on hasu: the replay is a weak row for this race, the witness (9 of 10 red) the strong one. nomad: 0 of 40.
+- the proof's 100 at the head (`b1be241`) and 100 at trunk (`78f2b7f`'s build), static, CPUs 6-9 (job 4b):
+  **head 4 of 100, trunk 3 of 100**. All seven at step 23, each `Threads: 1`, `futex_do_wait`, one zombie child: the
+  rate is the runtime's and unchanged, as R-sh34-2 A says it must be (`notes/sh34/logs/replays-hasu.txt`).
 
 ## Done-when
 
@@ -195,8 +202,11 @@ The replays (pelt#98), one rig: hasu, `sh32-oracle`, four CPUs, the F0 sequence 
 - [x] Friendly on by default (R-F-1, R-sh34-3 A, R-sh34-4 A); one row per off-condition, red first at trunk where trunk
   differs; the corpus, the scripts and the dash sessions unchanged; README, FRIENDLY, KEYS and CHANGELOG refreshed.
 - [x] Two plants, draft PRs, red by name (pelt#101, pelt#102).
-- [ ] The gauntlet at `b1be241` on nomad and on hasu (every `END` line in the PR); `tier pr` green at the head; the
-  orchestrator's label for the full tier (Footprint: cross-cutting).
+- [x] The gauntlet at `b1be241`, the code-final head (what follows it is notes only), on both hosts, both tiers:
+  hasu (container, rows on CPUs 0-3) 44 `END` lines, every one `exit=0`, `GAUNTLET PASS`, no SKIP; nomad 41 `END`
+  lines, every one `exit=0`, `GAUNTLET PASS`, 15 loud SKIPs, all host rows (the Linux `/proc` idle counters, the
+  strace census, gen-width on Python's Unicode 14). `notes/sh34/logs/gauntlet-{hasu,nomad}-b1be241.txt`.
+- [ ] `tier pr` green at the head; the orchestrator's label for the full tier (Footprint: cross-cutting).
 - The PR fixes **pelt#99**. **pelt#98** stays open on wolf-lang#1006. Close nothing else.
 - Not this lane's: pelt#65 (byte paths, wolf-lang#687, #912). `tools/interactive-census` and `tools/edit-bench`, which CI
   does not run, now measure an interactive pelt with friendly on by default; a follow-on may give them `+o friendly`.
