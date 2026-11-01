@@ -15,9 +15,10 @@ stderr must be terminals. Scripts, `-c`, pipes and `--posix` do not use
 friendly editing. `TERM=dumb` uses the terminal's ordinary line discipline,
 with no suggestions or pager. Vi mode retains its existing keys.
 
-When the compiler pin can report the invocation name, the planned default
-is to enable `friendly`, `suggest` and `histsearch` at interactive terminal
-prompts, except when invoked as `sh`. That default is not enabled yet.
+The compiler pin can now report the invocation name (wolf 0.2.36's
+`env_arg0`, wolf-lang#904). The planned default is to enable `friendly`,
+`suggest` and `histsearch` at interactive terminal prompts, except when
+invoked as `sh`. That default is not enabled yet.
 
 ## Options
 

@@ -2,9 +2,10 @@
 
 pelt's POSIX editor is emacs by default, or vi with `set -o vi`.
 The friendly campaign adds interactive keys under `set -o friendly`.
-Friendly remains **opt-in at this pin**: wolf 0.2.35 cannot report the
-invocation's argv[0] (wolf-lang#904, fixed after the pin). Once re-pinned,
-the default-on recommendation can exclude an invocation named `sh`.
+Friendly remains **opt-in at this pin**. wolf 0.2.36 reports the
+invocation's argv[0] (`env_arg0`, wolf-lang#904), so the default-on
+recommendation can now exclude an invocation named `sh`; that change is
+still to come.
 `--posix` is a hard disable; scripts, `-c` and pipes get no friendly keys.
 Both stdin and stderr must be terminals. `set +o friendly` restores the
 POSIX editor; `set +o friendly_keys` disables the extra keys alone.
@@ -412,9 +413,10 @@ measured Alt+Shift+a emits nothing.
 
 ## Follow-on boundaries
 
-- After wolf-lang#904 is in the pin, read argv[0], reject basename `sh`,
-  and reconsider the recommended default-on policy. Until then opt-in is
-  deliberate; `--posix` is a hard disable today.
+- wolf-lang#904 is in the pin since 0.2.36: read argv[0] (`env_arg0`),
+  reject basename `sh`, and reconsider the recommended default-on policy.
+  Until that change lands opt-in is deliberate; `--posix` is a hard
+  disable today.
 - Autosuggestions must keep all shadow text out of the edit buffer. Keep
   readline Up/Down when friendly is off; fish-style filtered Up/Down and
   the history UI belong to that phase. PageUp/PageDown stay history ends.
