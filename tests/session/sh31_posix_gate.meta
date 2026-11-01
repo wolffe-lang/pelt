@@ -1,4 +1,4 @@
-args=--posix -o friendly -o histexpand
+args=--posix -o friendly -o histexpand +o suggest +o histsearch
 argv0=pelt
 env=PS1=$\s TERM=xterm-256color
 tr_by=hand

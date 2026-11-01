@@ -1,6 +1,6 @@
 args=-o vi
 argv0=pelt
-pelt_args=-i -o friendly -o vi
+pelt_args=-i -o friendly -o vi +o suggest +o histsearch
 env=PS1=$\s
 oracle=bash
 compare=stdout

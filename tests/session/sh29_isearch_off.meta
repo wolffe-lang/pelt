@@ -1,4 +1,4 @@
-args=-o friendly +o histsearch
+args=-o friendly +o histsearch +o suggest
 argv0=pelt
 env=PS1=$\s TERM=xterm-256color
 tr_by=hand

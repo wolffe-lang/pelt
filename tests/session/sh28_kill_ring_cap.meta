@@ -1,4 +1,4 @@
-pelt_args=-i -o friendly
+pelt_args=-i -o friendly +o suggest +o histsearch
 argv0=pelt
 env=PS1=$\s
 compare=stdout
