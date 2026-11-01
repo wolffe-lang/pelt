@@ -1,0 +1,26 @@
+step 0
+err no
+prompt "$ "
+step 1 "bindings >/dev/null 2>&1; echo \"stderr_pipe=$?\""
+out "stderr_pipe=127\n"
+err no
+prompt "$ "
+step 2 "exec 2>&0"
+err no
+prompt ""
+step 3 "bindings >/dev/null; echo \"on=$?\""
+out "on=0\n"
+err no
+prompt ""
+step 4 "set +o >o.txt; grep -E \"^set [-+]o (friendly|suggest|histsearch)$\" o.txt"
+out "set -o friendly\nset -o suggest\nset -o histsearch\n"
+err no
+prompt ""
+step 5 "set +o friendly; bindings >/dev/null; echo \"off=$?\""
+out "off=127\n"
+err no
+prompt ""
+step 6 "exit 0"
+err no
+prompt ""
+exit 0 at step 6

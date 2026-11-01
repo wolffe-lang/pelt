@@ -1,0 +1,6 @@
+exec 2>&0
+"$PELT" -c 'bindings >/dev/null; echo c=$?'
+printf 'bindings >/dev/null; echo script=$?\n' >s.sh; "$PELT" s.sh
+echo 'bindings >/dev/null; echo pipe=$?' | "$PELT" -i +m
+bindings >/dev/null; echo "here=$?"
+exit 0

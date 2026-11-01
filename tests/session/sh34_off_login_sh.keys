@@ -1,0 +1,4 @@
+exec 2>&0
+bindings >/dev/null; echo "default=$?"
+set -o friendly; bindings >/dev/null; echo "asked=$?"
+exit 0

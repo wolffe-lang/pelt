@@ -1,0 +1,6 @@
+bindings >/dev/null 2>&1; echo "stderr_pipe=$?"
+exec 2>&0
+bindings >/dev/null; echo "on=$?"
+set +o >o.txt; grep -E "^set [-+]o (friendly|suggest|histsearch)$" o.txt
+set +o friendly; bindings >/dev/null; echo "off=$?"
+exit 0

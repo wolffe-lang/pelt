@@ -1,0 +1,18 @@
+step 0
+err no
+prompt "$ "
+step 1 "exec 2>&0"
+err no
+prompt ""
+step 2 "bindings >/dev/null; echo \"default=$?\""
+out "default=127\n"
+err no
+prompt ""
+step 3 "set -o friendly; bindings >/dev/null; echo \"asked=$?\""
+out "asked=127\n"
+err no
+prompt ""
+step 4 "exit 0"
+err no
+prompt ""
+exit 0 at step 4

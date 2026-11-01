@@ -1,0 +1,5 @@
+args=
+argv0=sh
+env=PS1=$\s
+tr_by=hand
+why=sh34, ruling #126 R-F-1: friendly is on by default at an interactive terminal prompt and off when invoked as sh, -sh or /bin/sh, with --posix, for -c, a script and a pipe; `set +o friendly` still turns it off. The `bindings` built-in exists only while friendly is active (127 otherwise). Written by hand
