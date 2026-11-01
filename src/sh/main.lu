@@ -5,9 +5,39 @@
 //! option letters in one argument (`-ec`, `-eo pipefail`), a lone `-`,
 //! and the `$0` it reports.
 
+/// The whole shell invoked by the name `argv0` (argv[0]'s bytes, as
+/// `env_args_bytes` answers them: never decoded, so a name that is not
+/// UTF-8 is a name, not a trap): `run_main` with `friendly` off when
+/// that name is `sh` (`named_sh`; ruling #126 R-F-1).
+pub fn run_main_named(argv0: List[byte], args: List[str]) -> int {
+    run_main_as(named_sh(argv0), args)
+}
+
+/// Whether argv[0] names `sh`: its basename (after the last `/`), with a
+/// login shell's leading `-` dropped, is exactly `sh` (`/bin/sh`, `-sh`,
+/// `sh`; not `pelt`, `-pelt`, `shx` or `bash`).
+pub fn named_sh(argv0: List[byte]) -> bool {
+    var start = 0
+    var i = 0
+    while i < argv0.len {
+        if argv0[i] as int == 47 {
+            start = i + 1
+        }
+        i += 1
+    }
+    if start < argv0.len && argv0[start] as int == 45 {
+        start += 1
+    }
+    argv0.len - start == 2 && argv0[start] as int == 115 && argv0[start + 1] as int == 104
+}
+
 /// The whole shell: parse the command line `args` (argv without argv[0]),
 /// run what it names, and answer the exit status.
 pub fn run_main(args: List[str]) -> int {
+    run_main_as(false, args)
+}
+
+fn run_main_as(invoked_sh: bool, args: List[str]) -> int {
     var i = 0
     var posix_mode = false
     var parse_only = false
@@ -115,7 +145,7 @@ pub fn run_main(args: List[str]) -> int {
             (mut rest).push(args[i])
             i += 1
         }
-        return run_input(name, rest, opts, force_i, posix_mode)
+        return run_input(name, rest, opts, force_i, posix_mode, invoked_sh)
     } else {
         var o = buf()
         loop {
@@ -142,7 +172,7 @@ pub fn run_main(args: List[str]) -> int {
     // `-c` with `-s`: the string, then standard input (unspecified by
     // POSIX; dash, black-box: `echo 'echo b' | sh -cs 'echo a'` prints
     // both)
-    run_source(src, name, rest, opts, cmd_string && read_stdin, posix_mode, !cmd_string)
+    run_source(src, name, rest, opts, cmd_string && read_stdin, posix_mode, invoked_sh, !cmd_string)
 }
 
 fn report(name: str, line: int, msg: str) {
@@ -194,11 +224,13 @@ fn run_source(
     opts: List[str],
     then_stdin: bool,
     posix_mode: bool,
+    invoked_sh: bool,
     echo: bool,
 ) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
     sh.posix_mode = posix_mode
+    sh.invoked_sh = invoked_sh
     sh.pos = copy rest
     if opts.len > 0 {
         let _st = bi_set(mut sh, opts)
@@ -229,10 +261,18 @@ fn run_source(
 /// The shell reading its standard input (no operand and no `-c`, or
 /// `-s`): interactive when forced by `-i` or when standard input and
 /// standard error are terminals (`sh.interact`).
-fn run_input(name: str, rest: List[str], opts: List[str], force_i: bool, posix_mode: bool) -> int {
+fn run_input(
+    name: str,
+    rest: List[str],
+    opts: List[str],
+    force_i: bool,
+    posix_mode: bool,
+    invoked_sh: bool,
+) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
     sh.posix_mode = posix_mode
+    sh.invoked_sh = invoked_sh
     sh.pos = copy rest
     sh.from_stdin = true
     sh.interactive = force_i || on_terminal()

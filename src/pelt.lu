@@ -12,5 +12,9 @@
 use sh
 
 fn main() -> int {
-    sh.run_main(env_args())
+    // argv[0] as bytes, never decoded: the name decides `friendly`
+    // (ruling #126), and `env_arg0` would trap on one that is not UTF-8
+    let all = env_args_bytes()
+    let argv0 = if all.len > 0 then all[0] else List[byte]()
+    sh.run_main_named(argv0, env_args())
 }

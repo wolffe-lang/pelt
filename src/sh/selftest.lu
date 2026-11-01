@@ -1339,6 +1339,17 @@ fn want_friendly(mut bad: List[str]) {
     if sh.opt_friendly || friendly_invocation_allowed(sh) {
         (mut bad).push("--posix allowed friendly")
     }
+    // ruling #126 R-F-1 (sh34): argv[0]'s basename, a login `-` dropped
+    for name in ["sh", "-sh", "/bin/sh", "/usr/local/bin/sh", "-/bin/sh", "./sh"] {
+        if !named_sh(name.bytes()) {
+            (mut bad).push("argv[0] {name} is not taken for sh")
+        }
+    }
+    for name in ["pelt", "-pelt", "/bin/pelt", "shx", "bash", "", "/", "-", "s", "/bin/sh/", "--sh"] {
+        if named_sh(name.bytes()) {
+            (mut bad).push("argv[0] {name} is taken for sh")
+        }
+    }
     for vi in [false, true] {
         for extra in [false, true] {
             for row in binding_rows(vi, extra) {
@@ -1361,7 +1372,7 @@ fn want_shadow(mut bad: List[str]) {
     }
     var sh = new_sh("shadow-test")
     if sh.opt_suggest || sh.opt_histsearch {
-        (mut bad).push("shadow options default on before argv0 pin")
+        (mut bad).push("shadow options on in a new shell (only an interactive start turns them on)")
     }
     let _s = option_name(mut sh, "suggest", true)
     let _h = option_name(mut sh, "histsearch", true)

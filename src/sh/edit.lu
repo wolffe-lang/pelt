@@ -3410,10 +3410,13 @@ fn common_prefix(xs: List[str]) -> str {
     p
 }
 
-/// Named seam for wolf-lang#904: at the next pin also reject an argv[0]
-/// whose basename is `sh`. Until then friendly is deliberately opt-in.
+/// Whether this invocation may edit friendly at all (ruling #126 R-F-1):
+/// not with `--posix`, and not when invoked as `sh` (argv[0]'s basename,
+/// a login shell's `-` dropped: `sh.main`'s `named_sh`, wolf 0.2.36's
+/// `env_args_bytes`). Either is a hard off: `set -o friendly` records the
+/// option and nothing turns on, so a `/bin/sh` session is dash's.
 fn friendly_invocation_allowed(sh: Sh) -> bool {
-    !sh.posix_mode
+    !sh.posix_mode && !sh.invoked_sh
 }
 
 fn friendly_active(sh: Sh) -> bool {

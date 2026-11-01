@@ -421,8 +421,9 @@ fn print_options(mut sh: Sh, reinput: bool) {
     }
 }
 
-/// Friendly options appear only after opting in, so POSIX option listings
-/// and existing dash sessions stay unchanged at this pin.
+/// Friendly options appear only while friendly editing (or highlighting)
+/// is active, so a shell invoked as `sh`, every session compared with
+/// dash's, lists POSIX's options alone (ruling #126).
 fn print_friendly_options(mut sh: Sh, reinput: bool) {
     if !friendly_active(sh) && !highlight_active(sh) {
         return

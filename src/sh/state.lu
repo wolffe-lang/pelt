@@ -134,6 +134,11 @@ struct Sh {
     prompt_host: str,
     prompt_vcs: PromptVcs,
     posix_mode: bool,
+    /// Invoked by a name whose basename is `sh` (argv[0], a login shell's
+    /// leading `-` dropped; `sh.main`'s `named_sh`): `friendly` is off by
+    /// its invocation (ruling #126 R-F-1, `sh.edit`'s
+    /// `friendly_invocation_allowed`).
+    invoked_sh: bool,
     /// `set -o ignoreeof`: an interactive shell's end of file is not its
     /// end (`sh.interact`'s `run_lines`)
     opt_ignoreeof: bool,
@@ -440,6 +445,7 @@ fn new_sh(name: str) -> Sh {
         prompt_host: "",
         prompt_vcs: empty_prompt_vcs(),
         posix_mode: false,
+        invoked_sh: false,
         opt_ignoreeof: false,
         eof_count: 0,
         mail_last: -1,
