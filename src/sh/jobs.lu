@@ -810,14 +810,22 @@ fn still_running(sh: Sh, j: int) -> bool {
     if j >= 0 {
         return jb_state_of(sh, j) == JB_RUN
     }
+    // PLANT (sh34-plant-wait, never to merge): one running job left is
+    // taken for none, so `wait` returns before the last child is reaped
+    plant_running(sh) > 1
+}
+
+/// PLANT (sh34-plant-wait): how many jobs are running.
+fn plant_running(sh: Sh) -> int {
+    var n = 0
     var i = 0
     while i < slot_count(sh) {
         if jb_state_of(sh, i) == JB_RUN {
-            return true
+            n += 1
         }
         i += 1
     }
-    false
+    n
 }
 
 /// The fallback of `jc_wait` with no signal wait: one blocking wait for

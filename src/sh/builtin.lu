@@ -2050,7 +2050,9 @@ fn wait_ops(mut sh: Sh, args: List[str]) -> int {
         } else {
             var j = 0
             while j < slot_count(sh) {
-                if slot_state(sh, j) != JB_FREE {
+                // PLANT (sh34-plant-wait, never to merge): `wait` returns
+                // while one child is still running, before it is reaped
+                if slot_state(sh, j) != JB_FREE && plant_running(sh) > 1 {
                     let _st = wait_job(mut sh, j, true)
                 }
                 j += 1
