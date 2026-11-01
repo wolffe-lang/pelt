@@ -521,7 +521,7 @@ getopts/4	T	A missing option-argument: ? with a diagnostic, or : with OPTARG the
 getopts/5	T	getopts parses explicit operands in place of the positional parameters	getopts/c_explicit_args	
 getopts/6	T	OPTIND starts at 1; setting OPTIND=1 restarts parsing; a first non-option operand ends it	getopts/c_optind	
 getopts/7	T	getopts in a function uses the function's parameters; OPTIND is a shell-wide variable	getopts/c_in_function	
-wait/1	T	wait with no operands waits for every child and returns zero	jobs/wait_all wait/c_all	
+wait/1	T	wait with no operands waits for every child and returns zero	jobs/wait_all wait/c_all wait/c_last_child wait/c_last_child_trapped	
 wait/7	X	wait does not wait for a stopped job; wait for a stopped job answers its stop status	session:c_jc_wait_stopped	dash, black-box p12
 wait/2	T	wait pid returns that child's status; several operands: the status of the last	jobs/wait_program_status jobs/wait_subshell_status signal/wait_two_jobs wait/c_pid	
 wait/3	T	wait for a pid that is not a child of this shell returns 127	jobs/wait_unknown wait/c_unknown	
