@@ -6,6 +6,18 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Friendly by default.** An interactive shell at a terminal prompt starts
+  with `friendly` on, with `suggest` and `histsearch`; `set +o friendly`
+  turns it all off and each feature has its own `set +o`. Invoked as `sh`
+  (`sh`, `-sh`, `/bin/sh`, read from argv[0]'s bytes) or with `--posix`,
+  friendly is off and cannot be turned on; scripts, `-c` and pipes are
+  unchanged. Every session compared with dash runs pelt as `sh`.
+
+- **The sessions' own CI job.** The typed-session corpus runs in a job of
+  its own on each host and compiler tier, so neither it nor the gauntlet
+  nears its limit (pelt#99: the macOS gauntlet was cancelled at 45 minutes
+  on most nights since the friendly sessions doubled the corpus).
+
 - **Script corners.** `set -n` stops later commands within the same list
   or compound command, before expansions, redirections or background jobs,
   while the remaining input is still checked for syntax errors. Option

@@ -1,14 +1,13 @@
 # Keys at the prompt
 
 pelt's POSIX editor is emacs by default, or vi with `set -o vi`.
-The friendly campaign adds interactive keys under `set -o friendly`.
-Friendly remains **opt-in at this pin**. wolf 0.2.36 reports the
-invocation's argv[0] (`env_arg0`, wolf-lang#904), so the default-on
-recommendation can now exclude an invocation named `sh`; that change is
-still to come.
-`--posix` is a hard disable; scripts, `-c` and pipes get no friendly keys.
-Both stdin and stderr must be terminals. `set +o friendly` restores the
-POSIX editor; `set +o friendly_keys` disables the extra keys alone.
+The friendly campaign adds interactive keys under `friendly`, which is
+**on by default** at an interactive terminal prompt. Invoked as `sh`
+(argv[0]'s basename, a login shell's `-` dropped: `sh`, `-sh`, `/bin/sh`)
+or with `--posix`, friendly is off and `set -o friendly` does not turn it
+on; scripts, `-c` and pipes get no friendly keys. Both stdin and stderr
+must be terminals. `set +o friendly` restores the POSIX editor;
+`set +o friendly_keys` disables the extra keys alone.
 
 ## How this table was obtained
 
@@ -413,10 +412,9 @@ measured Alt+Shift+a emits nothing.
 
 ## Follow-on boundaries
 
-- wolf-lang#904 is in the pin since 0.2.36: read argv[0] (`env_arg0`),
-  reject basename `sh`, and reconsider the recommended default-on policy.
-  Until that change lands opt-in is deliberate; `--posix` is a hard
-  disable today.
+- Since sh34 (wolf 0.2.36, wolf-lang#904) argv[0] is read as bytes
+  (`env_args_bytes`): basename `sh` is a hard disable, as `--posix` is,
+  and friendly is on by default everywhere else at a terminal prompt.
 - Autosuggestions must keep all shadow text out of the edit buffer. Keep
   readline Up/Down when friendly is off; fish-style filtered Up/Down and
   the history UI belong to that phase. PageUp/PageDown stay history ends.

@@ -5,20 +5,25 @@ syntax colours, a left and right prompt, suggestions, filtered history and extra
 without changing the POSIX shell language. Enable it at a terminal prompt:
 
 ```sh
-set -o friendly -o suggest -o histsearch
+set +o friendly
 ```
 
-These options are **off by default at the current compiler pin**.
+These options are **on by default** at an interactive terminal prompt, the
+line above turns them all off, and each has its own `set +o`.
 `friendly` also enables `highlight`, `abbr`, `complete`, `histexpand` and `prompt_friendly`; `set -o highlight` works independently.
 `friendly_keys` is on, but does nothing without `friendly`. Both stdin and
 stderr must be terminals. Scripts, `-c`, pipes and `--posix` do not use
 friendly editing. `TERM=dumb` uses the terminal's ordinary line discipline,
 with no suggestions or pager. Vi mode retains its existing keys.
 
-The compiler pin can now report the invocation name (wolf 0.2.36's
-`env_arg0`, wolf-lang#904). The planned default is to enable `friendly`,
-`suggest` and `histsearch` at interactive terminal prompts, except when
-invoked as `sh`. That default is not enabled yet.
+The default is `friendly`, every feature it gates, `suggest` and
+`histsearch`, at an interactive shell whose invocation allows it; where it
+acts is still a prompt whose stdin and stderr are terminals. Invoked as
+`sh` (argv[0]'s basename with a login shell's leading `-` dropped: `sh`,
+`-sh`, `/bin/sh`, as PAX starts its shell) or with `--posix`, friendly is
+off and `set -o friendly` does not turn it on, so such a session behaves
+as dash's. The command line's own options come after the default:
+`pelt +o friendly` starts with it off.
 
 ## Options
 
@@ -237,7 +242,7 @@ editing. Ctrl-C before Enter never expands anything.
 
 Use `set +o histexpand` to leave both forms literal. These features require
 `friendly` and the interactive editor; scripts, `-c`, pipes, `--posix` and
-`TERM=dumb` remain unchanged. The current pin still defaults to opt-in.
+`TERM=dumb` remain unchanged.
 
 
 ## Friendly prompt
@@ -292,5 +297,4 @@ startup and cleanup can add wall time beyond the collection deadline.
 
 These features require all three standard descriptors to be terminals.
 Scripts, `-c`, pipes, `--posix`, `TERM=dumb`, and an explicitly set `PS1`
-keep their existing prompt behavior. The compiler pin and opt-in default
-are unchanged.
+keep their existing prompt behavior.
