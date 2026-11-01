@@ -19,7 +19,8 @@ tier).
   all    every job on every leg: the gauntlet on linux x86-64, macOS arm64
          and linux aarch64 (where it asserts that no tier builds yet,
          wolf-lang#614), each host on the native and the release compiler
-         tier. The nightly `schedule` and a `workflow_dispatch` with `tier`
+         tier, and the session corpus (`sessions`, pelt#99) on the two
+         hosts that build, on both tiers. The nightly `schedule` and a `workflow_dispatch` with `tier`
          all (tl30): what the merge leaves runs here every night, and a red
          night opens the `nightly-red` issue.
   full   the merge gate: every leg but macOS's release one (`full_leg`).
@@ -35,8 +36,9 @@ tier).
          of the org's five macOS slots for about 20 minutes: the nightly's.
          ci/tl30-prediction.md.)
   pr     any other pull-request run, and a dispatch with `tier` pr: the
-         gauntlet on linux x86-64 alone, on both compiler tiers. Every
-         step builds or runs the same shell, so no path picks among them;
+         gauntlet and the sessions on linux x86-64 alone, on both compiler
+         tiers. Every step builds or runs the same shell, so no path picks
+         among them;
          the macOS and aarch64 legs wait for the full tier.
 
 `lane-audit.sh` takes a green `tier full` at the labelled head as the merge
@@ -122,8 +124,14 @@ HOSTS = [
     # and the matrix is widened rather than left quietly narrow.
     {"os": "ubuntu-24.04-arm", "builds": False},
 ]
+# pelt#99 (sh34): the session corpus is a job of its own, `sessions`, on
+# every leg that builds (linux aarch64 builds no tier: the gauntlet's leg
+# there asserts the refusal, and a session needs a shell to type at). The
+# friendly campaign doubled the corpus, and with it inside the gauntlet the
+# macOS leg's peak steps summed past its 45-minute limit.
 MATRIX = {
     "gauntlet": [dict(h, tier=t) for h in HOSTS for t in ("native", "release")],
+    "sessions": [dict(h, tier=t) for h in HOSTS if h["builds"] for t in ("native", "release")],
 }
 
 
@@ -139,7 +147,7 @@ def full_leg(job, leg):
     return not (leg.get("os") == "macos-latest" and leg.get("tier") == "release")
 
 
-SHELL = ("gauntlet",)
+SHELL = ("gauntlet", "sessions")
 PROSE = ()
 FULL = "FULL"
 # A changed path's targets: the first rule that matches decides. `*` stays
