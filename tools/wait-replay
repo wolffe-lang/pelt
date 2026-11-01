@@ -1,0 +1,353 @@
+#!/usr/bin/env python3
+"""wait-replay — eight background jobs and a `wait`, typed into an
+interactive pelt through a pseudo-terminal, many times over (pelt#98).
+
+pax's F0 Linux replay (pax#196) types a sequence of fork shapes into
+pelt on a pseudo-terminal; under four CPUs the step
+
+    i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo …
+
+never answered in 9 of 20 replays (px83, hasu). This is that replay on
+pelt's side: the same steps (`F0`, px83's `shapes-root.keys`, its one
+script operand written into the run's own directory), typed as pax's
+`tools/linux-tty` types them (before step k, wait until the prompt has
+been shown k times; 20 ms a byte; Enter), into a fresh shell each run.
+The shell is started through a link named `sh`, as PAX names it, so
+argv[0] is `sh` (and `friendly` is off by its invocation, ruling #126).
+
+A run is green when every prompt comes and the shell ends with status 0.
+A prompt that does not come within the timeout is a STALL: the shell's
+state is written (each task's `wchan`, its children, its descriptors on
+linux; its threads from `ps -M` on macOS), the shell and the processes it
+started are ended by their recorded pids, and the next run starts.
+`--watch` also records, after every prompt, how many tasks the shell has
+(two at rest: the main thread and the runtime's signal drain thread), so
+a stall says when the count fell.
+
+usage: tools/wait-replay [--runs N] [--timeout S] [--pace MS]
+                         [--keys FILE] [--watch] [--strace]
+                         [--out DIR] BIN
+  --runs N     replays (default 20)
+  --timeout S  seconds a prompt may take (default 20)
+  --pace MS    milliseconds between typed bytes (default 20, linux-tty's)
+  --keys FILE  steps, one a line, instead of F0
+  --watch      the per-prompt task count (linux /proc, macOS ps -M)
+  --strace     linux: the shell under `strace -f` (its log in --out)
+  --out DIR    where each run's transcript and state go (default: a
+               temporary directory, removed when every run is green)
+
+Exit 0 when every run is green, 1 when one stalled or failed, 2 when the
+replay cannot run. The last line is the count:
+`wait-replay: runs N green G stalled S failed F`.
+"""
+
+import os
+import pty
+import select
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import termios
+import time
+
+PROMPT = b"$ "
+
+SCRIPT = "x=$(true; true)\n" * 8 + "echo SHAPE:script-fork-substitution:8\n"
+
+# px83's shapes-root.keys (pax tools/linux-tty's input), the script
+# operand moved into the run's directory (`{dir}`).
+F0 = [
+    ":",
+    "mkdir -p {dir}/shapes",
+    "cd {dir}/shapes",
+    "cd {dir}/shapes",
+    "echo px61-shapes-begin",
+    "i=0; while [ $i -lt 8 ]; do x=$(true; true); i=$((i+1)); done; wait; echo SHAPE:fork-substitution:$i",
+    "i=0; while [ $i -lt 8 ]; do ( true; true ); i=$((i+1)); done; wait; echo SHAPE:fork-subshell:$i",
+    "i=0; while [ $i -lt 8 ]; do { true; } & wait; i=$((i+1)); done; wait; echo SHAPE:fork-background-group:$i",
+    "i=0; while [ $i -lt 8 ]; do ( true ) & wait; i=$((i+1)); done; wait; echo SHAPE:fork-background-subshell:$i",
+    "i=0; while [ $i -lt 8 ]; do { true; } | true; i=$((i+1)); done; wait; echo SHAPE:fork-stage:$i",
+    "sh {dir}/script-fork-substitution.sh",
+] + ["( true; true )"] * 8 + [
+    "echo SHAPE:typed-fork-subshell:8",
+    "i=0; while [ $i -lt 8 ]; do ( true ) >/dev/null; i=$((i+1)); done; wait; echo SHAPE:fork-redirected-subshell:$i",
+    "i=0; while [ $i -lt 8 ]; do true & wait; i=$((i+1)); done; wait; echo SHAPE:true-background-wait:$i",
+    "i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i",
+    "i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i",
+    "echo px61-shapes-end",
+    "exit 0",
+]
+
+LINUX = sys.platform.startswith("linux")
+
+
+def die(msg):
+    sys.stderr.write("wait-replay: %s\n" % msg)
+    sys.exit(2)
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return "?"
+
+
+def tasks_of(pid):
+    """The shell's task (thread) ids; [] when it cannot be read."""
+    if LINUX:
+        try:
+            return sorted(int(t) for t in os.listdir("/proc/%d/task" % pid))
+        except OSError:
+            return []
+    r = subprocess.run(["ps", "-M", "-p", str(pid)], capture_output=True, text=True)
+    lines = [ln for ln in r.stdout.splitlines()[1:] if ln.strip()]
+    return list(range(len(lines)))
+
+
+def children_of(pid):
+    """The pids whose parent is `pid`, read once."""
+    if LINUX:
+        out = []
+        for t in tasks_of(pid):
+            out += [int(c) for c in read("/proc/%d/task/%d/children" % (pid, t)).split() if c.isdigit()]
+        return out
+    r = subprocess.run(["ps", "-A", "-o", "pid=,ppid="], capture_output=True, text=True)
+    out = []
+    for ln in r.stdout.splitlines():
+        f = ln.split()
+        if len(f) == 2 and f[1] == str(pid):
+            out.append(int(f[0]))
+    return out
+
+
+def snapshot(pid):
+    """The stalled shell's state, as text."""
+    out = []
+    if LINUX:
+        st = read("/proc/%d/status" % pid)
+        keep = ("Name:", "State:", "Pid:", "PPid:", "Threads:", "SigBlk:", "SigIgn:", "SigCgt:", "SigPnd:", "ShdPnd:")
+        out.append("status " + " | ".join(ln for ln in st.splitlines() if ln.startswith(keep)))
+        for t in tasks_of(pid):
+            base = "/proc/%d/task/%d" % (pid, t)
+            tst = read(base + "/status")
+            blk = [ln for ln in tst.splitlines() if ln.startswith(("SigBlk:", "SigPnd:"))]
+            out.append("task %d comm=%s wchan=%s syscall=%s %s children=%s" % (
+                t, read(base + "/comm"), read(base + "/wchan"), read(base + "/syscall").split(" ")[0],
+                " ".join(blk), read(base + "/children")))
+        try:
+            fds = sorted(os.listdir("/proc/%d/fd" % pid), key=int)
+        except OSError:
+            fds = []
+        links = []
+        for fd in fds:
+            try:
+                links.append("%s->%s" % (fd, os.readlink("/proc/%d/fd/%s" % (pid, fd))))
+            except OSError:
+                pass
+        out.append("fds " + " ".join(links))
+        for c in children_of(pid):
+            cs = read("/proc/%d/status" % c)
+            out.append("child %d " % c + " | ".join(ln for ln in cs.splitlines() if ln.startswith(("Name:", "State:"))))
+    else:
+        r = subprocess.run(["ps", "-M", "-p", str(pid)], capture_output=True, text=True)
+        out.append("threads\n" + r.stdout.rstrip())
+        r = subprocess.run(["ps", "-A", "-o", "pid=,ppid=,stat=,comm="], capture_output=True, text=True)
+        kids = [ln for ln in r.stdout.splitlines() if len(ln.split()) >= 2 and ln.split()[1] == str(pid)]
+        out.append("children\n" + "\n".join(kids))
+    return "\n".join(out)
+
+
+def end_tree(pid):
+    """End the shell and every live process it started, by recorded pid
+    (the replay started them all); reap the shell."""
+    kids = children_of(pid)
+    for p in [pid] + kids:
+        try:
+            os.kill(p, signal.SIGKILL)
+        except OSError:
+            pass
+    try:
+        os.waitpid(pid, 0)
+    except OSError:
+        pass
+    return kids
+
+
+def run_one(n, binp, steps, args, outdir):
+    rundir = tempfile.mkdtemp(prefix="run%d-" % n, dir=outdir)
+    with open(os.path.join(rundir, "script-fork-substitution.sh"), "w") as f:
+        f.write(SCRIPT)
+    bindir = os.path.join(rundir, "bin")
+    os.mkdir(bindir)
+    sh = os.path.join(bindir, "sh")
+    os.symlink(binp, sh)
+    home = os.path.join(rundir, "home")
+    os.mkdir(home)
+    env = {"HOME": home, "TERM": "linux", "PATH": "/usr/bin:/bin", "LC_ALL": "C"}
+    prog = [sh]
+    if args["strace"]:
+        prog = ["strace", "-f", "-tt", "-o", os.path.join(rundir, "strace.log"), sh]
+    pid, fd = pty.fork()
+    if pid == 0:
+        try:
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+            signal.signal(signal.SIGXFSZ, signal.SIG_DFL)
+            a = termios.tcgetattr(0)
+            a[0] &= ~termios.IXON
+            termios.tcsetattr(0, termios.TCSANOW, a)
+            os.chdir(rundir)
+            os.execve(shutil.which(prog[0]) or prog[0], prog, env)
+        except Exception as e:  # noqa: BLE001
+            os.write(2, ("wait-replay: exec %s: %s\n" % (prog[0], e)).encode())
+        os._exit(127)
+
+    shell = pid
+    if args["strace"]:
+        # the traced shell is strace's child; wait until it has exec'd
+        end = time.time() + 5
+        while time.time() < end:
+            kids = children_of(pid)
+            if kids:
+                shell = kids[0]
+                break
+            time.sleep(0.01)
+
+    buf = bytearray()
+    alive = [True]
+
+    def pump(t):
+        end = time.time() + t
+        while alive[0] and time.time() < end:
+            r, _, _ = select.select([fd], [], [], 0.01)
+            if r:
+                try:
+                    d = os.read(fd, 4096)
+                except OSError:
+                    alive[0] = False
+                    return
+                if not d:
+                    alive[0] = False
+                    return
+                buf.extend(d)
+
+    watch = []
+    verdict = "green"
+    where = ""
+    for k, raw in enumerate(steps, 1):
+        line = raw.replace("{dir}", rundir)
+        end = time.time() + args["timeout"]
+        while buf.count(PROMPT) < k:
+            if not alive[0] or time.time() > end:
+                verdict = "stalled" if alive[0] else "failed"
+                where = "prompt %d for step %d: %s" % (k, k, raw)
+                break
+            pump(0.02)
+        if verdict != "green":
+            break
+        if args["watch"]:
+            watch.append("step %d tasks %d" % (k, len(tasks_of(shell))))
+        pump(0.05)
+        for b in line.encode() + b"\r":
+            os.write(fd, bytes([b]))
+            pump(args["pace"])
+    state = ""
+    status = None
+    if verdict == "green":
+        end = time.time() + args["timeout"]
+        while time.time() < end:
+            pump(0.05)
+            p, w = os.waitpid(pid, os.WNOHANG)
+            if p == pid:
+                status = os.waitstatus_to_exitcode(w)
+                break
+        if status is None:
+            verdict, where = "stalled", "the shell did not end after `exit 0`"
+        elif status != 0:
+            verdict, where = "failed", "the shell's status %d" % status
+    if verdict == "stalled":
+        state = snapshot(shell)
+        left = end_tree(pid)
+        if shell != pid:
+            end_tree(shell)
+        state += "\nended %s" % " ".join(str(p) for p in [pid] + left)
+    elif status is None:
+        end_tree(pid)
+    os.close(fd)
+    with open(os.path.join(rundir, "tty"), "wb") as f:
+        f.write(bytes(buf))
+    with open(os.path.join(rundir, "verdict"), "w") as f:
+        f.write("%s %s\n%s\n%s\n" % (verdict, where, "\n".join(watch), state))
+    return verdict, where, watch, state, rundir
+
+
+def main(argv):
+    args = {"runs": 20, "timeout": 20.0, "pace": 0.02, "keys": None,
+            "watch": False, "strace": False, "out": None}
+    rest = argv[1:]
+    binp = None
+    while rest:
+        a = rest.pop(0)
+        if a in ("--runs", "--timeout", "--pace", "--keys", "--out"):
+            if not rest:
+                die("%s needs a value" % a)
+            v = rest.pop(0)
+            if a == "--runs":
+                args["runs"] = int(v)
+            elif a == "--timeout":
+                args["timeout"] = float(v)
+            elif a == "--pace":
+                args["pace"] = float(v) / 1000.0
+            elif a == "--keys":
+                args["keys"] = v
+            else:
+                args["out"] = v
+        elif a in ("--watch", "--strace"):
+            args[a[2:]] = True
+        elif a.startswith("-"):
+            die("unknown option %s" % a)
+        elif binp is None:
+            binp = os.path.abspath(a)
+        else:
+            die("one BIN")
+    if binp is None or not os.access(binp, os.X_OK):
+        die("usage: tools/wait-replay [--runs N] [--timeout S] [--pace MS] [--keys FILE] [--watch] [--strace] [--out DIR] BIN")
+    if args["strace"] and (not LINUX or not shutil.which("strace")):
+        die("--strace needs linux and strace")
+    steps = F0
+    if args["keys"]:
+        with open(args["keys"]) as f:
+            steps = [ln.rstrip("\n") for ln in f if ln.strip()]
+    keep = args["out"] is not None
+    outdir = args["out"] or tempfile.mkdtemp(prefix="wait-replay-")
+    os.makedirs(outdir, exist_ok=True)
+    cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else []
+    print("wait-replay: %s, %d runs, %d steps, cpus %s, out %s" % (
+        binp, args["runs"], len(steps), ",".join(map(str, cpus)) or "all", outdir), flush=True)
+    counts = {"green": 0, "stalled": 0, "failed": 0}
+    for n in range(1, args["runs"] + 1):
+        t0 = time.time()
+        verdict, where, watch, state, rundir = run_one(n, binp, steps, args, outdir)
+        counts[verdict] += 1
+        tail = ""
+        if args["watch"] and watch:
+            fell = [w for w in watch if not w.endswith("tasks 2")]
+            tail = " watch: %s" % (fell[0] if fell else "tasks 2 at every prompt")
+        print("run %d: %s %.1fs %s%s" % (n, verdict, time.time() - t0, where, tail), flush=True)
+        if verdict != "green":
+            print("  " + state.replace("\n", "\n  "), flush=True)
+            print("  run dir %s" % rundir, flush=True)
+        elif not keep:
+            shutil.rmtree(rundir, ignore_errors=True)
+    print("wait-replay: runs %d green %d stalled %d failed %d" % (
+        args["runs"], counts["green"], counts["stalled"], counts["failed"]), flush=True)
+    if counts["stalled"] == 0 and counts["failed"] == 0 and not keep:
+        shutil.rmtree(outdir, ignore_errors=True)
+    return 0 if counts["green"] == args["runs"] else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
