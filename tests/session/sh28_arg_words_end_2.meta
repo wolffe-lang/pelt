@@ -1,4 +1,5 @@
 pelt_args=-i -o friendly
+argv0=pelt
 env=PS1=$\s
 oracle=bash
 compare=stdout

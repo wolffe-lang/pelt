@@ -1,4 +1,5 @@
 args=-o friendly +o friendly_keys -o suggest -o histsearch
+argv0=pelt
 env=PS1=$\s TERM=xterm-256color
 tr_by=hand
 why=sh29 fish black-box behavior; independently specified stdout; pelt-owned display bytes, never inferred buffer contents
