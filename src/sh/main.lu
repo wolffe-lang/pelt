@@ -260,7 +260,10 @@ fn run_source(
 
 /// The shell reading its standard input (no operand and no `-c`, or
 /// `-s`): interactive when forced by `-i` or when standard input and
-/// standard error are terminals (`sh.interact`).
+/// standard error are terminals (`sh.interact`). An interactive shell
+/// starts with `friendly` on unless its invocation says otherwise
+/// (`sh.edit`'s `friendly_default`, before the command line's own
+/// options, so `pelt +o friendly` starts with it off).
 fn run_input(
     name: str,
     rest: List[str],
@@ -280,6 +283,9 @@ fn run_input(
     // and has job control on (XCU `set -m`, `sh.jobs`)
     sh.opt_emacs = sh.interactive
     sh.opt_m = sh.interactive
+    if sh.interactive {
+        friendly_default(mut sh)
+    }
     sig_apply(mut sh)
     if opts.len > 0 {
         let _st = bi_set(mut sh, opts)

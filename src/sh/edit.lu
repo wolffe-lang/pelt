@@ -3419,6 +3419,23 @@ fn friendly_invocation_allowed(sh: Sh) -> bool {
     !sh.posix_mode && !sh.invoked_sh
 }
 
+/// The friendly default (ruling #126 R-F-1, sh34): an interactive shell
+/// whose invocation allows it starts with `friendly` and every feature it
+/// gates on — `set -o friendly`'s set and `suggest` and `histsearch` —
+/// so a user turns one off by its own `set +o`, or the whole by `set +o
+/// friendly`. Where it acts is still `friendly_active`'s: at a prompt
+/// whose standard input and standard error are terminals, so a pipe, a
+/// redirected standard error and a subshell edit as before. A script,
+/// `-c` and a shell that is not interactive never start it.
+fn friendly_default(mut sh: Sh) {
+    if !friendly_invocation_allowed(sh) {
+        return
+    }
+    let _on = option_name(mut sh, "friendly", true)
+    sh.opt_suggest = true
+    sh.opt_histsearch = true
+}
+
 fn friendly_active(sh: Sh) -> bool {
     sh.opt_friendly &&
         sh.interactive &&
