@@ -26,13 +26,17 @@ a stall says when the count fell.
 
 usage: tools/wait-replay [--runs N] [--timeout S] [--pace MS]
                          [--keys FILE] [--watch] [--strace]
-                         [--out DIR] BIN
+                         [--load N] [--out DIR] BIN
   --runs N     replays (default 20)
   --timeout S  seconds a prompt may take (default 20)
   --pace MS    milliseconds between typed bytes (default 20, linux-tty's)
   --keys FILE  steps, one a line, instead of F0
   --watch      the per-prompt task count (linux /proc, macOS ps -M)
   --strace     linux: the shell under `strace -f` (its log in --out)
+  --load N     N busy loops on the replay's own CPUs while it runs (a
+               runner shared with other work: pax's F0 replay types into
+               pelt beside the rest of its job); each started here and
+               ended by its pid at the end
   --out DIR    where each run's transcript and state go (default: a
                temporary directory, removed when every run is green)
 
@@ -286,12 +290,12 @@ def run_one(n, binp, steps, args, outdir):
 
 def main(argv):
     args = {"runs": 20, "timeout": 20.0, "pace": 0.02, "keys": None,
-            "watch": False, "strace": False, "out": None}
+            "watch": False, "strace": False, "out": None, "load": 0}
     rest = argv[1:]
     binp = None
     while rest:
         a = rest.pop(0)
-        if a in ("--runs", "--timeout", "--pace", "--keys", "--out"):
+        if a in ("--runs", "--timeout", "--pace", "--keys", "--out", "--load"):
             if not rest:
                 die("%s needs a value" % a)
             v = rest.pop(0)
@@ -303,6 +307,8 @@ def main(argv):
                 args["pace"] = float(v) / 1000.0
             elif a == "--keys":
                 args["keys"] = v
+            elif a == "--load":
+                args["load"] = int(v)
             else:
                 args["out"] = v
         elif a in ("--watch", "--strace"):
@@ -325,9 +331,24 @@ def main(argv):
     outdir = args["out"] or tempfile.mkdtemp(prefix="wait-replay-")
     os.makedirs(outdir, exist_ok=True)
     cpus = sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else []
-    print("wait-replay: %s, %d runs, %d steps, cpus %s, out %s" % (
-        binp, args["runs"], len(steps), ",".join(map(str, cpus)) or "all", outdir), flush=True)
+    print("wait-replay: %s, %d runs, %d steps, cpus %s, load %d, out %s" % (
+        binp, args["runs"], len(steps), ",".join(map(str, cpus)) or "all", args["load"], outdir), flush=True)
     counts = {"green": 0, "stalled": 0, "failed": 0}
+    loads = [subprocess.Popen([sys.executable, "-c", "while True: pass"]) for _ in range(args["load"])]
+    try:
+        replay_all(binp, steps, args, outdir, keep, counts)
+    finally:
+        for p in loads:
+            p.kill()
+            p.wait()
+    print("wait-replay: runs %d green %d stalled %d failed %d" % (
+        args["runs"], counts["green"], counts["stalled"], counts["failed"]), flush=True)
+    if counts["stalled"] == 0 and counts["failed"] == 0 and not keep:
+        shutil.rmtree(outdir, ignore_errors=True)
+    return 0 if counts["green"] == args["runs"] else 1
+
+
+def replay_all(binp, steps, args, outdir, keep, counts):
     for n in range(1, args["runs"] + 1):
         t0 = time.time()
         verdict, where, watch, state, rundir = run_one(n, binp, steps, args, outdir)
@@ -342,11 +363,6 @@ def main(argv):
             print("  run dir %s" % rundir, flush=True)
         elif not keep:
             shutil.rmtree(rundir, ignore_errors=True)
-    print("wait-replay: runs %d green %d stalled %d failed %d" % (
-        args["runs"], counts["green"], counts["stalled"], counts["failed"]), flush=True)
-    if counts["stalled"] == 0 and counts["failed"] == 0 and not keep:
-        shutil.rmtree(outdir, ignore_errors=True)
-    return 0 if counts["green"] == args["runs"] else 1
 
 
 if __name__ == "__main__":
