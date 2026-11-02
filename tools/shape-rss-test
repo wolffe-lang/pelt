@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""Contract tests for shape-rss's one-process instrument (no shell source)."""
+import importlib.machinery
+import importlib.util
+import os
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+TOOLS = Path(__file__).resolve().parent
+sys.path.insert(0, str(TOOLS))
+loader = importlib.machinery.SourceFileLoader('shape_rss', str(TOOLS / 'shape-rss'))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+shape = importlib.util.module_from_spec(spec)
+loader.exec_module(shape)
+
+
+class Samples(unittest.TestCase):
+    def test_anonymous_plus_swap(self):
+        rows, out, ok = shape.parse_samples('__shape_memory=100,4\n__shape_memory=108,8\n20\n')
+        self.assertEqual((rows, out, ok), ([104, 116], '20', True))
+
+    def test_readings_fail_closed(self):
+        for raw in ('', '__shape_memory=missing,0\n', '__shape_memory=-1,0\n',
+                    '__shape_memory=1,2\n' * 3, '__shape_memory=1,2,3\n',
+                    '__shape_memory=1,2\n', '__shape_memory=1,kB\n' * 2):
+            with self.subTest(raw=raw):
+                self.assertFalse(shape.parse_samples(raw)[2])
+
+    def test_fixed_input_and_in_loop_checkpoint(self):
+        for kind in ('loop', 'script', 'jobs', 'monitor'):
+            with self.subTest(kind=kind):
+                script = shape.file_script(kind, ':', 7)
+                self.assertIn('__shape_sample', script)
+                self.assertNotIn('/usr/bin/time', script)
+                if kind in ('loop', 'monitor'):
+                    self.assertIn('-lt 14', script)
+                    self.assertLess(script.index('if [ $i -eq 7 ]'), script.rindex('done'))
+                else:
+                    self.assertEqual(script.count('\n:\n'), 14)
+
+    def test_monitor_samples_before_exec(self):
+        script = shape.file_script('monitor', ':', 2)
+        self.assertLess(script.rindex('__shape_sample'), script.index('exec true'))
+
+    def test_bounds_unchanged(self):
+        overrides = {row[0]: row[3:] for row in shape.SHAPES if len(row) > 4}
+        self.assertEqual(overrides, {'jobs-set-m': (3000, 160, 64),
+                                    'jobs-loop': (100000, 16),
+                                    'fork-background-subshell': (10000, 100, 1280)})
+
+
+class Processes(unittest.TestCase):
+    def test_file_shapes_in_one_process(self):
+        for kind in ('loop', 'script', 'jobs', 'monitor'):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as cwd:
+                rows, ok, why = shape.run_file('/bin/sh', kind, ':', 8, cwd)
+                self.assertTrue(ok, why)
+                self.assertEqual(len(rows), 2)
+                self.assertTrue(all(kb > 0 for kb in rows))
+
+    def test_bad_exit_stdout_stderr(self):
+        for body in ('exit 3', 'echo unexpected', 'echo unexpected >&2'):
+            with self.subTest(body=body), tempfile.TemporaryDirectory() as cwd:
+                self.assertFalse(shape.run_file('/bin/sh', 'loop', body, 2, cwd)[1])
+
+    def test_sampler_failure(self):
+        with tempfile.TemporaryDirectory() as cwd, patch.object(shape, 'linux_sampler', return_value='__shape_sample() { :; }\n'):
+            self.assertFalse(shape.run_file('/bin/sh', 'loop', ':', 2, cwd)[1])
+
+    def test_macos_handshake(self):
+        with tempfile.TemporaryDirectory() as cwd, patch.object(shape.sys, 'platform', 'darwin'), patch.object(shape, 'rss_of', side_effect=[111, 222]):
+            rows, ok, why = shape.run_file('/bin/sh', 'loop', ':', 2, cwd)
+            self.assertTrue(ok, why)
+            self.assertEqual(rows, [111, 222])
+
+    @unittest.skipUnless(sys.platform.startswith('linux'), 'smaps_rollup is Linux-only')
+    def test_real_retained_buffer_crosses_unchanged_bound(self):
+        # Real shell variables, not synthetic sampler output. Unique names
+        # retain independent 4 KiB buffers across both checkpoints.
+        body = 'eval "SH35_$i=\\\"' + 'x' * 4096 + '\\\""'
+        with tempfile.TemporaryDirectory() as cwd:
+            rows, ok, why = shape.run_file('/bin/sh', 'loop', body, 1000, cwd)
+            self.assertTrue(ok, why)
+            self.assertGreater(rows[1] - rows[0], 1000 * 100 // 1024 + 1024)
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
