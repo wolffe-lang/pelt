@@ -1,0 +1,30 @@
+sh35 — pelt#104, prediction before changes (2026-11-02)
+
+Base 7908f94d. Clean room: pelt/wolf only; shell implementations are black boxes.
+
+P1. Fifty trunk runs of every shape on four hasu CPUs will show cross-process
+RSS spread, especially script-background-wait. A nonzero false-red count is
+possible, not guaranteed. Record each raw row and exit, not just summaries.
+P2. One process executing N then 2N turns, reading its own smaps_rollup
+Anonymous + Swap at the two checkpoints on Linux, removes executable/page-cache
+spread. Keep every existing per-turn bound and slack exactly unchanged.
+P3. Script and jobs rows need no cross-process input-size control when both
+checkpoints execute in the same fixed input. Monitor checkpoints must remain
+inside the same complete command, before notices discard retained jobs.
+P4. Every shape with an intentional per-turn retained buffer must exceed its
+existing bound. The plant must be off the merge line and each row fail by name.
+P5. Two hundred whole-tool runs under four-CPU load will have zero reds at the
+fixed head. Any nonzero exit is a failure, and will be preserved, not rerun away.
+P6. Missing, malformed, duplicate or incomplete readings, wrong stdout, stderr,
+and nonzero shell exit must fail closed. Unit and end-to-end rows cover these.
+P7. macOS needs a one-process paused checkpoint read by ps (no procfs), not a
+silent Linux-only skip. The typed rows retain their actual pty arrangement.
+
+Plan: commit prediction; queue pinned trunk noise run; commit red harness tests;
+implement one-process sampler; commit off-line per-turn retained-buffer plant;
+run each planted shape red; queue final-head gauntlet and 200-run loaded proof;
+read README; open five-section PR; read CI IDs once; audit exactly once.
+R-sh35-1 recommendation: self-read Anonymous+Swap on Linux and a paused
+same-process RSS checkpoint on macOS, not medians or relaxed bounds.
+R-sh35-2 recommendation: preserve all shapes and row overrides; replace the
+jobs row's separate-process control with two readings of its fixed input.
