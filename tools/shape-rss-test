@@ -29,17 +29,38 @@ class Samples(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.assertFalse(shape.parse_samples(raw)[2])
 
-    def test_fixed_input_and_in_loop_checkpoint(self):
+    def test_fixed_input_and_checkpoint_without_per_turn_work(self):
         for kind in ('loop', 'script', 'jobs', 'monitor'):
             with self.subTest(kind=kind):
                 script = shape.file_script(kind, ':', 7)
                 self.assertIn('__shape_sample', script)
                 self.assertNotIn('/usr/bin/time', script)
                 if kind in ('loop', 'monitor'):
-                    self.assertIn('-lt 14', script)
-                    self.assertLess(script.index('if [ $i -eq 7 ]'), script.rindex('done'))
+                    self.assertIn('i=0\n{\n', script)
+                    self.assertIn('while [ $i -lt 7 ]', script)
+                    self.assertIn('while [ $i -lt 14 ]', script)
+                    self.assertNotIn('if [ $i -eq', script)
+                    self.assertEqual(script.count('\n__shape_sample\n'), 2)
                 else:
                     self.assertEqual(script.splitlines().count(':'), 14)
+
+    def test_only_observed_job_notices_are_accepted_for_background_wait(self):
+        # Actual pelt bytes captured on macOS: 38 per completed job.
+        notice = b'[1] + Done'.ljust(33, b' ') + b'true\n'
+        self.assertEqual(len(notice), 38)
+        self.assertEqual(shape.typed_stderr(notice, 'true & wait'), (1, b''))
+        self.assertEqual(shape.typed_stderr(notice, ':'), (0, notice))
+        self.assertEqual(shape.typed_stderr(notice + b'pelt: error\n', 'true & wait'),
+                         (1, b'pelt: error\n'))
+
+    def test_notice_lookalikes_remain_errors(self):
+        notice = b'[1] + Done'.ljust(33, b' ') + b'true\n'
+        for bad in (notice[:-1], notice.replace(b'true', b'false'),
+                    notice.replace(b'Done', b'Done(1)'),
+                    notice.replace(b'[1]', b'[0]'), notice.replace(b' + ', b' ? '),
+                    b' ' + notice, b'pelt: failure\n'):
+            with self.subTest(bad=bad):
+                self.assertEqual(shape.typed_stderr(bad, 'true & wait'), (0, bad))
 
     def test_monitor_samples_before_exec(self):
         script = shape.file_script('monitor', ':', 2)
@@ -93,6 +114,7 @@ class Processes(unittest.TestCase):
             with self.subTest(kind=kind), tempfile.TemporaryDirectory() as cwd:
                 if kind == 'typed':
                     rows, ok, why = shape.run_typed(shell, 'true & wait', 8)
+                    self.assertIn('notices=16', why)
                 else:
                     rows, ok, why = shape.run_file(shell, kind, ':', 8, cwd)
                 self.assertTrue(ok, why)
