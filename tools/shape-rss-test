@@ -67,7 +67,7 @@ class Processes(unittest.TestCase):
                 self.assertFalse(shape.run_file('/bin/sh', 'loop', body, 2, cwd)[1])
 
     def test_sampler_failure(self):
-        with tempfile.TemporaryDirectory() as cwd, patch.object(shape, 'linux_sampler', return_value='__shape_sample() { :; }\n'):
+        with tempfile.TemporaryDirectory() as cwd, patch.object(shape, 'sampler', return_value='__shape_sample() { :; }\n'):
             self.assertFalse(shape.run_file('/bin/sh', 'loop', ':', 2, cwd)[1])
 
     def test_macos_handshake(self):
