@@ -6,8 +6,8 @@ other shapes a long script or a long session repeats (pelt#19): a
 pipeline, a command substitution, a subshell, a function call, an
 arithmetic assignment, a long script of one line repeated, and lines
 typed at the prompt. Each shape runs through N then 2N turns in ONE
-process (N is -n, or
-the row's own where a small leak needs more turns to cross the 1 MiB),
+process (N is -n, or the row's own where a small leak needs more turns
+to cross the 1 MiB),
 and memory at 2N may be at most BOUND_B bytes a turn (plus 1 MiB of
 allocator steps) above N, as tools/loop-rss's bound reads.
 
@@ -181,11 +181,17 @@ def file_script(kind, text, n):
     if kind == "monitor":
         script += "exec 2>/dev/null\nset -m\n"
     if kind in ("loop", "monitor"):
-        script += (f"i=0\nwhile [ $i -lt {2 * n} ]; do\n{text}\ni=$((i+1))\n"
-                   f"if [ $i -eq {n} ] || [ $i -eq {2 * n} ]; then __shape_sample; fi\n")
-        # Both samples precede notices. Keep exec in the same complete
-        # command, without clearing the retained table between N and 2N.
-        script += "done; echo $i; exec true\n" if kind == "monitor" else "done\necho $i\n"
+        # Keep the measured body unchanged: a per-turn checkpoint `if`
+        # allocates scratch of its own. Two original loops are one
+        # braced complete command, so monitor notices cannot drain at N.
+        script += "i=0\n{\n"
+        for limit in (n, 2 * n):
+            script += (f"while [ $i -lt {limit} ]; do\n{text}\ni=$((i+1))\n"
+                       "done\n__shape_sample\n")
+        script += "echo $i\n"
+        if kind == "monitor":
+            script += "exec true\n"
+        script += "}\n"
     else:
         # Fixed input, one process: no subtraction of a separate jobs
         # control's peak (which included unrelated file/parser storage).
