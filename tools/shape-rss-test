@@ -121,6 +121,25 @@ class Processes(unittest.TestCase):
                 self.assertTrue(all(kb > 0 for kb in rows))
 
     @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for pelt e2e rows')
+    def test_pelt_monitor_retains_both_halves_until_after_samples(self):
+        shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
+        # Observe the table only AFTER both samples: jobs prints/frees it.
+        # If the middle sample had notified/cleared the first half, this
+        # would print three completed jobs, not all six.
+        script = shape.file_script('monitor', 'env true & wait $!', 3)
+        script = script.replace('exec true\n', 'jobs\nexec true\n')
+        with tempfile.TemporaryDirectory() as cwd:
+            (Path(cwd) / 'shape.sh').write_text(script)
+            rc, raw, nerr = shape.run_paused(shell, cwd)
+        self.assertEqual(rc, 0, raw)
+        self.assertEqual(nerr, 0)
+        rows, out, valid = shape.parse_samples(raw)
+        self.assertTrue(valid, raw)
+        self.assertTrue(all(kb > 0 for kb in rows))
+        jobs = [line for line in out.splitlines() if 'Done' in line and line.endswith('env true')]
+        self.assertEqual(len(jobs), 6, out)
+
+    @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for pelt e2e rows')
     def test_pelt_typed_wrong_output_and_stderr(self):
         shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
         for body in ('echo unexpected', 'echo unexpected >&2'):
