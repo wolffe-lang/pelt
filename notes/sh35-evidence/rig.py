@@ -25,7 +25,8 @@ def run(i):
     with path.open('w') as log:
         result = subprocess.run(['tools/shape-rss', args.shell], stdout=log, stderr=subprocess.STDOUT)
     raw = path.read_text()
-    rows = re.findall(r'^shape-rss: (ok  |FAIL) (\S+)\s', raw, re.M)
+    # Exclude the final 'FAIL 3: ...' summary: it is not a shape row.
+    rows = re.findall(r'^shape-rss: (ok  |FAIL) ([a-z][a-z0-9-]*)\s', raw, re.M)
     complete = len(rows) == len(names) and {name for _, name in rows} == names
     reds = [name for verdict, name in rows if verdict == 'FAIL']
     if args.mode == 'plant':
