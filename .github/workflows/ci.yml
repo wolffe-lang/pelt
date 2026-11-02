@@ -195,6 +195,12 @@ jobs:
         if: matrix.builds
         run: tools/build --${{ matrix.tier }}
 
+      - name: shape memory sampler contracts and pelt end-to-end
+        if: ${{ matrix.builds && !cancelled() }}
+        env:
+          PELT_TEST_SHELL: target/${{ matrix.tier }}/pelt
+        run: python3 tools/shape-rss-test
+
       - name: the ${{ matrix.tier }} tier is refused on this host, by name (wolf-lang#614)
         if: ${{ !matrix.builds }}
         shell: bash
