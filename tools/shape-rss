@@ -5,19 +5,21 @@ tools/loop-rss holds a loop of simple commands flat. This holds the
 other shapes a long script or a long session repeats (pelt#19): a
 pipeline, a command substitution, a subshell, a function call, an
 arithmetic assignment, a long script of one line repeated, and lines
-typed at the prompt. Each shape runs at N and at 2N turns (N is -n, or
+typed at the prompt. Each shape runs through N then 2N turns in ONE
+process (N is -n, or
 the row's own where a small leak needs more turns to cross the 1 MiB),
-and the 2N run may peak at most BOUND_B bytes a turn (plus 1 MiB of
-allocator steps) above the N run, as tools/loop-rss's bound reads.
+and memory at 2N may be at most BOUND_B bytes a turn (plus 1 MiB of
+allocator steps) above N, as tools/loop-rss's bound reads.
 
-  loop    `while [ $i -lt N ]; do BODY; i=$((i+1)); done`, one process
-          per size; peak resident set from `/usr/bin/time` (the child's
-          maximum resident set size)
-  script  a script of N lines, each LINE, then `echo done`; as above
-  typed   LINE typed N times at the prompt through a pseudo-terminal
-          (tools/lib_session.py's arrangement), then `echo $i`: the
-          shell's resident set after N and after 2N lines, in one
-          session (`ps -o rss=`)
+  loop    `while [ $i -lt 2N ]; do BODY; i=$((i+1)); done`
+  script  a fixed script of 2N lines, each LINE, then `echo done`
+  typed   LINE typed 2N times through a pseudo-terminal (lib_session.py)
+
+All shapes checkpoint at N and 2N. Linux: the shell itself reads
+/proc/self/smaps_rollup Anonymous + Swap, using only built-ins (no
+child or file-backed pages). macOS: the same shell pauses at a checkpoint
+while the harness reads `ps -o rss=`; no cross-process subtraction.
+Missing or malformed samples fail, never silently select another metric.
 
 Every run must also answer what the shape counts (`echo $i`, `done`),
 with nothing on standard error, or the shape fails whatever its memory.
@@ -47,9 +49,8 @@ SHAPES = [
     ("baseline", "loop", ":"),
     # A monitored loop retains notices until the complete command ends.
     # Dash is ~0-16 B/job; allow 160 B/job plus 64 KiB arena granularity.
-    # R-sh24-2: Linux reads retained RssAnon before notices/exec. RssFile
-    # moved by 100+ KiB between identical runs (page-cache noise, sh20
-    # section 3.11); macOS keeps the peak, judged by the full CI leg.
+    # Sample before notices/exec, inside the same complete command.
+    # Keep R-sh24-2's stricter bound; never count file-backed pages on Linux.
     ("jobs-set-m", "monitor", "env true & wait $!", 3000, 160, 64),
     ("compound-brace-redir", "loop", "{ true; } >/dev/null"),
     ("compound-if-redir", "loop", "if true; then :; fi >/dev/null"),
@@ -135,69 +136,112 @@ SHAPES = [
 ENV = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
 
 
-def peak_kb(shell, script, cwd):
-    """Peak RSS in KB of `shell script`, as `/usr/bin/time` reports its
-    child; and the run's exit status, standard output and the length of
-    its standard error. Not `getrusage` from Python: a child forked from
-    Python starts with Python's resident pages counted."""
-    if sys.platform == "darwin":
-        r = subprocess.run(["/usr/bin/time", "-l", shell, script], cwd=cwd, env=ENV,
-                           capture_output=True, text=True)
-        kb = -1
-        for line in r.stderr.splitlines():
-            if line.strip().endswith("maximum resident set size"):
-                kb = int(line.split()[0]) // 1024
-        nerr = len([ln for ln in r.stderr.splitlines()
-                    if ln and not ln.startswith(" ") and "real" not in ln])
+def linux_sampler():
+    # One physical line also works when typed at the interactive prompt.
+    # Prefix all scratch names so a shape's i, j, x and functions survive.
+    # A failed open/read leaves 'missing', which the harness rejects.
+    return ('__shape_sample() { __shape_a=missing; __shape_s=missing; '
+            'while read __shape_k __shape_v __shape_u; do '
+            'case "$__shape_k" in '
+            'Anonymous:) __shape_a=$__shape_v ;; '
+            'Swap:) __shape_s=$__shape_v ;; esac; '
+            'done </proc/self/smaps_rollup; '
+            'echo "__shape_memory=$__shape_a,$__shape_s"; }\n')
+
+
+def sampler():
+    if sys.platform.startswith("linux"):
+        return linux_sampler()
+    return '__shape_sample() { echo __shape_pause; read __shape_ack; }\n'
+
+
+def parse_samples(raw):
+    rows, out = [], []
+    valid = True
+    for line in raw.splitlines():
+        if line.startswith("__shape_memory="):
+            fields = line[len("__shape_memory="):].split(",")
+            if len(fields) != 2 or not all(f.isascii() and f.isdigit() for f in fields):
+                valid = False
+            else:
+                rows.append(sum(int(f) for f in fields))
+        else:
+            out.append(line)
+    valid = valid and len(rows) == 2
+    return rows if valid else [-1, -1], "\n".join(out).strip(), valid
+
+
+def file_script(kind, text, n):
+    script = PRELUDE + sampler()
+    if kind == "monitor":
+        script += "exec 2>/dev/null\nset -m\n"
+    if kind in ("loop", "monitor"):
+        script += (f"i=0\nwhile [ $i -lt {2 * n} ]; do\n{text}\ni=$((i+1))\n"
+                   f"if [ $i -eq {n} ] || [ $i -eq {2 * n} ]; then __shape_sample; fi\n")
+        # Both samples precede notices. Keep exec in the same complete
+        # command, without clearing the retained table between N and 2N.
+        script += "done; echo $i; exec true\n" if kind == "monitor" else "done\necho $i\n"
     else:
-        out = os.path.join(cwd, "time.out")
-        r = subprocess.run(["/usr/bin/time", "-f", "%M", "-o", out, shell, script],
-                           cwd=cwd, env=ENV, capture_output=True, text=True)
-        kb = int(open(out).read().strip().splitlines()[-1])
-        nerr = len(r.stderr)
-    return kb, r.returncode, r.stdout.strip(), nerr
+        # Fixed input, one process: no subtraction of a separate jobs
+        # control's peak (which included unrelated file/parser storage).
+        half = (text + "\n") * n + "__shape_sample\n"
+        script += half + half + "echo done\n"
+    return script
+
+
+def run_paused(shell, cwd):
+    """No procfs: the SAME shell blocks in read while ps samples its pid."""
+    with subprocess.Popen([shell, "shape.sh"], cwd=cwd, env=ENV, stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
+        streams = [p.stdout, p.stderr]
+        pending, out, err = b"", b"", b""
+        deadline = time.monotonic() + 600
+        try:
+            while streams:
+                if time.monotonic() >= deadline:
+                    raise subprocess.TimeoutExpired(p.args, 600)
+                ready, _, _ = select.select(streams, [], [], 0.5)
+                for stream in ready:
+                    data = os.read(stream.fileno(), 65536)
+                    if not data:
+                        streams.remove(stream)
+                        continue
+                    if stream == p.stderr:
+                        err += data
+                        continue
+                    pending += data
+                    while b"\n" in pending:
+                        line, pending = pending.split(b"\n", 1)
+                        if line == b"__shape_pause":
+                            kb = rss_of(p.pid)
+                            out += f"__shape_memory={kb},0\n".encode()
+                            p.stdin.write(b"continue\n")
+                            p.stdin.flush()
+                        else:
+                            out += line + b"\n"
+            return p.wait(timeout=10), (out + pending).decode(errors="replace"), len(err)
+        finally:
+            if p.poll() is None:
+                p.kill()
+                p.wait()
 
 
 def run_file(shell, kind, text, n, cwd):
-    if kind == "jobs":
-        # Equal-length script control removes input/parser storage and
-        # file-backed pages. Judge what jobs itself keeps, not its input.
-        control, good0, why0 = run_file(shell, "script", "true", n, cwd)
-        measured, good1, why1 = run_file(shell, "script", text, n, cwd)
-        return measured - control, good0 and good1, why0 + "; " + why1
-    path = os.path.join(cwd, "shape.sh")
-    with open(path, "w") as f:
-        f.write(PRELUDE)
-        if kind == "monitor":
-            f.write("exec 2>/dev/null\nset -m\n")
-        if kind in ("loop", "monitor"):
-            f.write("i=0\n")
-            tail = "done\necho $i\n"
-            if kind == "monitor":
-                tail = "done; echo $i; "
-                if sys.platform.startswith("linux"):
-                    tail += ('while read _k _v _u; do if [ "$_k" = RssAnon: ]; '
-                             'then echo "__shape_anon=$_v"; fi; done </proc/self/status; ')
-                tail += "exec true\n"
-            # Measure the retained jobs before notifying: exec in this
-            # same complete command avoids the old table's cubic notice
-            # walk, without discarding any of the retained memory first.
-            f.write(f"while [ $i -lt {n} ]; do\n{text}\ni=$((i+1))\n" + tail)
+    with open(os.path.join(cwd, "shape.sh"), "w") as f:
+        f.write(file_script(kind, text, n))
+    try:
+        if sys.platform.startswith("linux"):
+            r = subprocess.run([shell, "shape.sh"], cwd=cwd, env=ENV,
+                               capture_output=True, text=True, timeout=600)
+            rc, raw, nerr = r.returncode, r.stdout, len(r.stderr)
         else:
-            f.write((text + "\n") * n)
-            f.write("echo done\n")
-    want = str(n) if kind in ("loop", "monitor") else "done"
-    kb, rc, out, nerr = peak_kb(shell, "shape.sh", cwd)
-    anon_ok = True
-    if kind == "monitor" and sys.platform.startswith("linux"):
-        lines = out.splitlines()
-        marker = "__shape_anon="
-        anon_ok = (len(lines) == 2 and lines[1].startswith(marker)
-                   and lines[1][len(marker):].isdigit())
-        kb = int(lines[1][len(marker):]) if anon_ok else -1
-        out = lines[0] if lines else ""
-    ok = anon_ok and rc == 0 and out == want and nerr == 0
-    return kb, ok, f"exit {rc} out {out!r} stderr_bytes {nerr}"
+            rc, raw, nerr = run_paused(shell, cwd)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return [-1, -1], False, str(e)
+    rows, out, valid = parse_samples(raw)
+    want = str(2 * n) if kind in ("loop", "monitor") else "done"
+    ok = valid and rc == 0 and out == want and nerr == 0
+    return rows, ok, f"exit {rc} out {out!r} stderr_bytes {nerr} samples_valid={valid}"
 
 
 def rss_of(pid):
@@ -207,8 +251,7 @@ def rss_of(pid):
 
 
 def run_typed(shell, text, n):
-    """RSS after n and after 2n typed lines, one session; and whether
-    `echo $i` answered 2n."""
+    """Two checkpoints in one actual interactive session, plus its answer."""
     master, slave = pty.openpty()
     rout, wout = os.pipe()
     rerr, werr = os.pipe()
@@ -217,7 +260,7 @@ def run_typed(shell, text, n):
     os.close(slave)
     os.close(wout)
     os.close(werr)
-    got = {"out": b"", "err": b""}
+    got = {"out": b"", "err": b"", "errors": b""}
 
     def wait_prompt():
         deadline = time.time() + 10
@@ -233,6 +276,7 @@ def run_typed(shell, text, n):
                 elif fd == rout:
                     got["out"] += d
             if got["err"].endswith(b"$ "):
+                got["errors"] += got["err"][:-2]
                 got["err"] = b""
                 return True
         return False
@@ -242,14 +286,24 @@ def run_typed(shell, text, n):
     try:
         if not wait_prompt():
             return [-1, -1], False, "no first prompt"
+        if sys.platform.startswith("linux"):
+            os.write(master, linux_sampler().encode())
+            if not wait_prompt():
+                return [-1, -1], False, "no prompt after sampler definition"
         for k in range(1, 2 * n + 1):
             os.write(master, line)
             if not wait_prompt():
                 return [-1, -1], False, f"no prompt after line {k}"
             if k == n or k == 2 * n:
-                rows.append(rss_of(p.pid))
+                if sys.platform.startswith("linux"):
+                    os.write(master, b"__shape_sample\n")
+                    if not wait_prompt():
+                        return [-1, -1], False, f"no prompt after sample {k}"
+                else:
+                    rows.append(rss_of(p.pid))
         os.write(master, b"echo $i\n")
-        wait_prompt()
+        if not wait_prompt():
+            return [-1, -1], False, "no prompt after answer"
         os.write(master, b"exit\n")
         # keep reading while the shell leaves: it puts the terminal's
         # mode back as it goes, and on macOS that waits for the pty's
@@ -264,16 +318,31 @@ def run_typed(shell, text, n):
                     d = b""
                 if fd == rout:
                     got["out"] += d
+                elif fd == rerr:
+                    got["errors"] += d
+        # Drain output written just before exit, even if poll already saw
+        # the exit. Otherwise a late answer could be lost on a busy host.
+        for fd, key in ((rout, "out"), (rerr, "errors")):
+            while select.select([fd], [], [], 0)[0]:
+                data = os.read(fd, 65536)
+                if not data:
+                    break
+                got[key] += data
         if p.poll() is None:
-            return rows, False, "still running 30 s after `exit`"
+            return [-1, -1], False, "still running 30 s after `exit`"
     finally:
         if p.poll() is None:
             p.kill()
             p.wait()
         for fd in (rout, rerr, master):
             os.close(fd)
-    out = got["out"].decode(errors="replace").strip()
-    return rows, out == str(2 * n), f"exit {p.returncode} out {out!r}"
+    raw = got["out"].decode(errors="replace")
+    if sys.platform.startswith("linux"):
+        rows, out, valid = parse_samples(raw)
+    else:
+        out, valid = raw.strip(), len(rows) == 2 and all(kb >= 0 for kb in rows)
+    ok = valid and p.returncode == 0 and out == str(2 * n) and not got["errors"]
+    return rows if valid else [-1, -1], ok, f"exit {p.returncode} out {out!r} stderr_bytes {len(got['errors'])} samples_valid={valid}"
 
 
 def main(argv):
@@ -310,18 +379,12 @@ def main(argv):
         if kind == "typed":
             rows, ok, why = run_typed(shell, text, n)
         else:
-            rows = []
-            ok = True
-            why = ""
             with tempfile.TemporaryDirectory(prefix="shape-rss.") as cwd:
-                for size in (n, 2 * n):
-                    kb, good, why = run_file(shell, kind, text, size, cwd)
-                    rows.append(kb)
-                    ok = ok and good
+                rows, ok, why = run_file(shell, kind, text, n, cwd)
         grew = rows[1] - rows[0]
         per = grew * 1024 // n
         verdict = "ok" if ok and grew <= limit else "FAIL"
-        metric = "RssAnon" if kind == "monitor" and sys.platform.startswith("linux") else "RSS"
+        metric = "Anonymous+Swap" if sys.platform.startswith("linux") else "RSS"
         detail = f" metric={metric} bound={row_bound}B+{slack_kb}KiB"
         print(f"shape-rss: {verdict:4} {name:24} {kind:6} {n:>6} {rows[0]:>8} KB  "
               f"{2 * n:>6} {rows[1]:>8} KB  grew {grew:>7} KB ({per} B a turn)  [{text}]{detail}", flush=True)

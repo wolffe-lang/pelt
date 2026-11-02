@@ -39,7 +39,7 @@ class Samples(unittest.TestCase):
                     self.assertIn('-lt 14', script)
                     self.assertLess(script.index('if [ $i -eq 7 ]'), script.rindex('done'))
                 else:
-                    self.assertEqual(script.count('\n:\n'), 14)
+                    self.assertEqual(script.splitlines().count(':'), 14)
 
     def test_monitor_samples_before_exec(self):
         script = shape.file_script('monitor', ':', 2)
