@@ -1,0 +1,22 @@
+sh35 permission-rig resumption — prediction before changes
+2026-11-02 20:59Z. Main CI head remains f423b34; no case or expectation changes.
+
+P11. The three reported permission rows fail as uid 0 and pass as uid 1000,
+using the exact same executable and source/case tree. Record uid/gid, CapEff,
+raw differential stdout and each exit. Use keep-id for both containers so the
+bind-mounted lane files are writable without changing their modes/owners.
+Only the --user argument differs. Unexpected setup failures do not count.
+P12. After that comparison is observed, resume the final gauntlet at
+native differential under --user 1000:1000, then the remaining native rows,
+all release rows and the unchanged 200-run loaded proof. The 14 documented
+pending differential cases remain pending, never skipped or edited.
+P13. Record the coordinator's hasu lock-breach report and ~100-minute impact.
+The retained launchers name both locks; command text is not proof of past fd
+ownership. Do not infer or invent a cause, rerun the completed baseline, or
+kill/move a waiter. Future hasu launches must hold both long-flock names and
+verify the live lock paths are locked before starting work.
+
+R-sh35-7: recommend non-root keep-id containers matching CI permission
+semantics, rather than changing/skipping the three cases or their oracles.
+R-sh35-8: recommend explicit paired hasu locks plus a live-path verification
+and inode log, rather than trusting a launcher string as ownership evidence.
