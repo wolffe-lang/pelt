@@ -28,3 +28,22 @@ R-sh35-1 recommendation: self-read Anonymous+Swap on Linux and a paused
 same-process RSS checkpoint on macOS, not medians or relaxed bounds.
 R-sh35-2 recommendation: preserve all shapes and row overrides; replace the
 jobs row's separate-process control with two readings of its fixed input.
+
+Resumption prediction, 2026-11-02 18:42Z, before changing the failing gate:
+P8. Capture the actual typed-background-wait stderr, including raw bytes and
+counts. I expect the padded job-completion notices from pelt's own
+src/sh/jobs.lu:notice/job_line, not shell diagnostics. Admit only a fully
+validated notice for this exact background shape; retain failures for arbitrary
+stderr and all other shapes. Prove both positive and negative rows with a real
+pelt on Linux and macOS (PELT_TEST_SHELL must be set, not skipped).
+P9. The injected per-turn `if` checkpoint changes the loop being measured.
+CI's bare loop now reads 83 B/turn, versus 34-52 in the first trunk readings;
+the monitored shape reads 202 versus 159-166. Compare that instrument against
+two consecutive original loops inside ONE braced complete command, with the
+sampler only between/after the loops. Predict removal of per-turn checkpoint
+work will restore the monitor row without changing pelt or its 160 B + 64 KiB
+bound. If it does not, preserve the named memory red as a real finding.
+P10. Typed 1,864 KiB growth is below that row's unchanged 2,000 KiB total
+allowance; CI marked it FAIL on stderr. Do not call it a memory-bound failure.
+The 200-run loaded proof and each buffer plant must be repeated with the final
+instrument, never inferred from the earlier queued jobs.
