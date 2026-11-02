@@ -76,6 +76,35 @@ class Processes(unittest.TestCase):
             self.assertTrue(ok, why)
             self.assertEqual(rows, [111, 222])
 
+    @unittest.skipUnless(sys.platform.startswith('linux'), 'timeout tree witness runs in the Linux container')
+    def test_timeout_reaps_its_child_by_pid(self):
+        with tempfile.TemporaryDirectory() as cwd, patch.object(shape, 'TIMEOUT_SECONDS', 1):
+            rows, ok, _ = shape.run_file('/bin/sh', 'loop', 'sleep 60 & echo $! > child.pid; wait', 2, cwd)
+            self.assertFalse(ok)
+            self.assertEqual(rows, [-1, -1])
+            pid = int((Path(cwd) / 'child.pid').read_text())
+            with self.assertRaises(ProcessLookupError):
+                os.kill(pid, 0)
+
+    @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for pelt e2e rows')
+    def test_pelt_file_and_typed_shapes(self):
+        shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
+        for kind in ('loop', 'script', 'jobs', 'monitor', 'typed'):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as cwd:
+                if kind == 'typed':
+                    rows, ok, why = shape.run_typed(shell, 'true & wait', 8)
+                else:
+                    rows, ok, why = shape.run_file(shell, kind, ':', 8, cwd)
+                self.assertTrue(ok, why)
+                self.assertTrue(all(kb > 0 for kb in rows))
+
+    @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for pelt e2e rows')
+    def test_pelt_typed_wrong_output_and_stderr(self):
+        shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
+        for body in ('echo unexpected', 'echo unexpected >&2'):
+            with self.subTest(body=body):
+                self.assertFalse(shape.run_typed(shell, body, 2)[1])
+
     @unittest.skipUnless(sys.platform.startswith('linux'), 'smaps_rollup is Linux-only')
     def test_real_retained_buffer_crosses_unchanged_bound(self):
         # Real shell variables, not synthetic sampler output. Unique names

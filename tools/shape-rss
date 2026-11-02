@@ -40,6 +40,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_session as ls  # noqa: E402
+import lib_reap as lr  # noqa: E402
+
+TIMEOUT_SECONDS = 600
 
 PRELUDE = "f() { :; }\ng() { local v; v=$1; return 0; }\n"
 
@@ -191,15 +194,16 @@ def file_script(kind, text, n):
 
 def run_paused(shell, cwd):
     """No procfs: the SAME shell blocks in read while ps samples its pid."""
+    before = lr.children()
     with subprocess.Popen([shell, "shape.sh"], cwd=cwd, env=ENV, stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
         streams = [p.stdout, p.stderr]
         pending, out, err = b"", b"", b""
-        deadline = time.monotonic() + 600
+        deadline = time.monotonic() + TIMEOUT_SECONDS
         try:
             while streams:
                 if time.monotonic() >= deadline:
-                    raise subprocess.TimeoutExpired(p.args, 600)
+                    raise subprocess.TimeoutExpired(p.args, TIMEOUT_SECONDS)
                 ready, _, _ = select.select(streams, [], [], 0.5)
                 for stream in ready:
                     data = os.read(stream.fileno(), 65536)
@@ -222,8 +226,9 @@ def run_paused(shell, cwd):
             return p.wait(timeout=10), (out + pending).decode(errors="replace"), len(err)
         finally:
             if p.poll() is None:
-                p.kill()
+                lr.end_tree(p.pid, before)
                 p.wait()
+            lr.reap_adopted(before)
 
 
 def run_file(shell, kind, text, n, cwd):
@@ -231,9 +236,17 @@ def run_file(shell, kind, text, n, cwd):
         f.write(file_script(kind, text, n))
     try:
         if sys.platform.startswith("linux"):
-            r = subprocess.run([shell, "shape.sh"], cwd=cwd, env=ENV,
-                               capture_output=True, text=True, timeout=600)
-            rc, raw, nerr = r.returncode, r.stdout, len(r.stderr)
+            before = lr.children()
+            with subprocess.Popen([shell, "shape.sh"], cwd=cwd, env=ENV,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as p:
+                try:
+                    raw, err = p.communicate(timeout=TIMEOUT_SECONDS)
+                    rc, nerr = p.returncode, len(err)
+                finally:
+                    if p.poll() is None:
+                        lr.end_tree(p.pid, before)
+                        p.wait()
+                    lr.reap_adopted(before)
         else:
             rc, raw, nerr = run_paused(shell, cwd)
     except (OSError, subprocess.TimeoutExpired) as e:
@@ -255,6 +268,7 @@ def run_typed(shell, text, n):
     master, slave = pty.openpty()
     rout, wout = os.pipe()
     rerr, werr = os.pipe()
+    before = lr.children()
     p = subprocess.Popen([shell, "-i"], stdin=slave, stdout=wout, stderr=werr, env=ENV,
                          start_new_session=True, preexec_fn=ls._ctty)
     os.close(slave)
@@ -332,8 +346,9 @@ def run_typed(shell, text, n):
             return [-1, -1], False, "still running 30 s after `exit`"
     finally:
         if p.poll() is None:
-            p.kill()
+            lr.end_tree(p.pid, before)
             p.wait()
+        lr.reap_adopted(before)
         for fd in (rout, rerr, master):
             os.close(fd)
     raw = got["out"].decode(errors="replace")
