@@ -22,7 +22,8 @@ while the harness reads `ps -o rss=`; no cross-process subtraction.
 Missing or malformed samples fail, never silently select another metric.
 
 Every run must also answer what the shape counts (`echo $i`, `done`),
-with nothing on standard error, or the shape fails whatever its memory.
+with no unexpected standard error. Typed background-wait validates one
+successful `true` completion notice per turn; other stderr still fails.
 Each loop and script prelude defines `f() { :; }` and
 `g() { local v; v=$1; return 0; }`.
 
@@ -32,6 +33,7 @@ Exits 1 when any shape grows past its bound or answers wrongly.
 
 import os
 import pty
+import re
 import select
 import subprocess
 import sys
@@ -263,7 +265,25 @@ def rss_of(pid):
     return int(out) if out else -1
 
 
-def run_typed(shell, text, n):
+def typed_stderr(raw, text):
+    """Only this shape's observed successful job notices are expected.
+
+    pelt's job_line pads the command to column 33: the captured `true`
+    completion is exactly 38 bytes, newline included. Diagnostics,
+    failed/stopped jobs, partial or malformed lines still fail closed.
+    """
+    if text != "true & wait":
+        return 0, raw
+    notices, errors = 0, []
+    for line in raw.splitlines(keepends=True):
+        if len(line) == 38 and re.fullmatch(rb"\[[1-9][0-9]*\] [ +\-] Done +true\n", line):
+            notices += 1
+        else:
+            errors.append(line)
+    return notices, b"".join(errors)
+
+
+def run_typed(shell, text, n, background_wait=False):
     """Two checkpoints in one actual interactive session, plus its answer."""
     master, slave = pty.openpty()
     rout, wout = os.pipe()
@@ -274,7 +294,16 @@ def run_typed(shell, text, n):
     os.close(slave)
     os.close(wout)
     os.close(werr)
-    got = {"out": b"", "err": b"", "errors": b""}
+    got = {"out": b"", "err": b"", "errors": b"", "notices": 0, "stderr_bytes": 0}
+    # Main identifies this by row name so the off-line retained-buffer
+    # plant can add work without changing the expected background job.
+    notice_shape = "true & wait" if background_wait else text
+
+    def record_stderr(raw):
+        notices, errors = typed_stderr(raw, notice_shape)
+        got["notices"] += notices
+        got["stderr_bytes"] += len(raw)
+        got["errors"] += errors
 
     def wait_prompt():
         deadline = time.time() + 10
@@ -290,7 +319,7 @@ def run_typed(shell, text, n):
                 elif fd == rout:
                     got["out"] += d
             if got["err"].endswith(b"$ "):
-                got["errors"] += got["err"][:-2]
+                record_stderr(got["err"][:-2])
                 got["err"] = b""
                 return True
         return False
@@ -333,10 +362,10 @@ def run_typed(shell, text, n):
                 if fd == rout:
                     got["out"] += d
                 elif fd == rerr:
-                    got["errors"] += d
+                    got["err"] += d
         # Drain output written just before exit, even if poll already saw
         # the exit. Otherwise a late answer could be lost on a busy host.
-        for fd, key in ((rout, "out"), (rerr, "errors")):
+        for fd, key in ((rout, "out"), (rerr, "err")):
             while select.select([fd], [], [], 0)[0]:
                 data = os.read(fd, 65536)
                 if not data:
@@ -356,8 +385,14 @@ def run_typed(shell, text, n):
         rows, out, valid = parse_samples(raw)
     else:
         out, valid = raw.strip(), len(rows) == 2 and all(kb >= 0 for kb in rows)
-    ok = valid and p.returncode == 0 and out == str(2 * n) and not got["errors"]
-    return rows if valid else [-1, -1], ok, f"exit {p.returncode} out {out!r} stderr_bytes {len(got['errors'])} samples_valid={valid}"
+    record_stderr(got["err"])
+    expected_notices = 2 * n if notice_shape == "true & wait" else 0
+    ok = (valid and p.returncode == 0 and out == str(2 * n) and not got["errors"]
+          and got["notices"] == expected_notices)
+    why = (f"exit {p.returncode} out {out!r} stderr_bytes {got['stderr_bytes']} "
+           f"unexpected_stderr_bytes {len(got['errors'])} "
+           f"notices={got['notices']}/{expected_notices} samples_valid={valid}")
+    return rows if valid else [-1, -1], ok, why
 
 
 def main(argv):
@@ -392,7 +427,7 @@ def main(argv):
         if only is not None and name not in only:
             continue
         if kind == "typed":
-            rows, ok, why = run_typed(shell, text, n)
+            rows, ok, why = run_typed(shell, text, n, background_wait=name == "typed-background-wait")
         else:
             with tempfile.TemporaryDirectory(prefix="shape-rss.") as cwd:
                 rows, ok, why = run_file(shell, kind, text, n, cwd)
