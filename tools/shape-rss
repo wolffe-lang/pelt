@@ -142,7 +142,7 @@ SHAPES = [
 # a unique shell variable each turn. The sampler and every bound are the
 # merge line's, unchanged. Keep typed lines below the pty's line ceiling.
 _PLANT = ('__shape_turn=$((__shape_turn+1)); '
-          'eval "__shape_hold_$__shape_turn=$__shape_turn' + 'x' * 1024 + '"')
+          'eval "__shape_hold_$__shape_turn=${__shape_turn}' + 'x' * 1024 + '"')
 SHAPES = [row[:2] + (row[2] + (' ' if row[2].endswith('&') else '; ') + _PLANT,) + row[3:]
           for row in SHAPES]
 
