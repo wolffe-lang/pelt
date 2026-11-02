@@ -9,8 +9,10 @@ lane) and in the README's status.
 - **One-process shape memory checks.** `tools/shape-rss` reads each shell
   twice, after N and 2N turns, rather than subtracting separate processes'
   peaks. On Linux the shell reads its own anonymous memory plus swap; on
-  macOS it pauses while its resident set is read. All bounds are unchanged.
-  Sampler contract tests run on each built compiler tier in CI.
+  macOS it pauses while its resident set is read. Checkpoints add no
+  per-turn commands. Typed background jobs' successful completion notices
+  are validated explicitly; other stderr still fails. All bounds are
+  unchanged. Sampler contract tests run on each built compiler tier in CI.
 
 - **Friendly by default.** An interactive shell at a terminal prompt starts
   with `friendly` on, with `suggest` and `histsearch`; `set +o friendly`
