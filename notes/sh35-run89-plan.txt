@@ -1,0 +1,35 @@
+sh35 run-89 diagnostic plan — 2026-11-03
+
+The 200-run proof is failed: 128 completed, 127 green, run 89 red on
+ typed-fork-subshell; four more attempts interrupted by the reboot. No
+remaining full-proof runs are requeued past this red.
+
+Original evidence: line 10962 is a session counter, not a log line. The rig
+sent `( true; true ); i=$((i+1))\n` and its wait_prompt returned false under
+the existing time.time()+10 deadline/select(0.5) loop. It logged no per-line
+PTY bytes/timings or pre-cleanup process state, so alive/blocked/exited and
+pelt-vs-rig scheduling cannot be recovered from that record.
+
+Plan/prediction before instrumentation:
+- Keep main f423b34, binary 7f6b3164..., the exact imported run_typed function,
+  N=10000 (20000 inputs), memory bound, and 10-second prompt deadline unchanged.
+- Record a bounded recent IO/select event ring with wall AND monotonic clocks,
+  exact last send, and a process/thread/child snapshot BEFORE existing cleanup.
+  A blocked pelt with no prompt points toward pelt; a queued prompt, process
+  exit or large rig scheduling/clock gap must be reported distinctly.
+- One loaded diagnostic chunk: at most 64 row-only runs, four helper processes
+  plus the same four CPU-burning children as the original proof. One quiet
+  chunk: at most 64 runs, one helper, no artificial load. Same allowed slot and
+  container identity. Report other-slot occupancy; do not consume others' CPUs
+  to manufacture the original all-slots-busy condition.
+- Stop dispatching a chunk after its first real red; retain in-flight outcomes.
+  If no red, report actual completed counts without restarting the 200 proof.
+- Hard container lifetime 6600 s (<2 h), controller budget 6000 s, per-run
+  safety budget 600 s (a separately reported incomplete, never a green or a
+  substitute 10 s row result). PID-only cleanup of our own descendants.
+- If a real red recurs, minimise it with the unchanged deadline, then fix only
+  if small/in scope; otherwise hand back the minimal witness and snapshots.
+
+R-sh35-10: preserve the failed proof rather than waive/retry/append past run 89.
+R-sh35-11: two independently locked, bounded diagnostic chunks rather than one
+unbounded hold; observations must not alter the row's bytes/deadline/verdict.
