@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Proof chunk accounting and stop-at-first-red controls."""
+import importlib.util
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def rig():
+    spec = importlib.util.spec_from_file_location('proof_rig', ROOT / 'notes/sh35-evidence/rig.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class Chunks(unittest.TestCase):
+    def test_summary_is_not_a_shape_and_missing_rows_fail(self):
+        m = rig()
+        raw = 'shape-rss: FAIL a loop\nshape-rss: ok   b loop\nshape-rss: FAIL 1: a\n'
+        d = m.classify(raw, 1, {'a', 'b'})
+        self.assertTrue(d['complete'])
+        self.assertEqual(d['red'], ['a'])
+        self.assertFalse(d['good'])
+        self.assertFalse(m.classify('shape-rss: ok   a loop\n', 0, {'a', 'b'})['complete'])
+
+    def test_proof_requires_a_bounded_explicit_count(self):
+        r = subprocess.run([sys.executable, str(ROOT / 'notes/sh35-evidence/rig.py'),
+                            'proof', '/bin/true', '/unused', '--runs', '17'],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2)
+        self.assertIn('1..16', r.stderr)
+
+    def test_live_trace_stops_chunk_before_hung_tool_finishes(self):
+        # A synthetic tool, not pelt: first row fails and leaves a trace,
+        # then deliberately hangs. The controller must stop immediately.
+        with tempfile.TemporaryDirectory() as cwd:
+            tool = Path(cwd) / 'tool'
+            tool.write_text('''#!/usr/bin/env python3
+import json, os, pathlib, sys, time
+names = [f'a{i}' for i in range(52)]
+if '--list' in sys.argv:
+    print('\\n'.join(n + ' loop :' for n in names)); sys.exit(0)
+root = pathlib.Path(os.environ['PELT_SHAPE_TRACE_DIR']); root.mkdir(parents=True, exist_ok=True)
+(root/'a0.json').write_text(json.dumps({'reason':'synthetic planted hang trace'}))
+print('shape-rss: FAIL a0 loop', flush=True)
+time.sleep(60)
+''')
+            tool.chmod(0o755)
+            records = Path(cwd) / 'records'
+            r = subprocess.run([sys.executable, str(ROOT / 'notes/sh35-evidence/rig.py'),
+                                'proof', '/bin/true', str(records), '--runs', '4',
+                                '--first-run', '1', '--tool', str(tool)],
+                               capture_output=True, text=True, timeout=20)
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            import json
+            d = json.loads((records/'proof-summary.json').read_text())
+            self.assertEqual(d['stop_reason'], 'red')
+            self.assertTrue(d['first_red']['traces'])
+            self.assertLessEqual(d['started'], 4)
+            self.assertEqual(d['requested'], 4)
+            self.assertTrue(list(records.glob('proof-*-traces/a0.json')))
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)
