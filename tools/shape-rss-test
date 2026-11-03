@@ -2,10 +2,12 @@
 """Contract tests for shape-rss's one-process instrument (no shell source)."""
 import importlib.machinery
 import importlib.util
+import json
 import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -71,6 +73,67 @@ class Samples(unittest.TestCase):
         self.assertEqual(overrides, {'jobs-set-m': (3000, 160, 64),
                                     'jobs-loop': (100000, 16),
                                     'fork-background-subshell': (10000, 100, 1280)})
+
+
+class TraceContracts(unittest.TestCase):
+    def test_io_is_forwarded_and_ring_is_bounded(self):
+        from lib_shape_trace import ShapeTrace
+        r, w = os.pipe()
+        try:
+            with tempfile.TemporaryDirectory() as cwd:
+                path = Path(cwd) / 'trace.json'
+                trace = ShapeTrace(path, 'unit', capacity=3)
+                self.assertEqual(trace.write(w, b'abc\n'), 4)
+                self.assertEqual(trace.select([r], 0), [r])
+                self.assertEqual(trace.read(r, 4), b'abc\n')
+                self.assertEqual(trace.data['last_write']['written'], 4)
+                for i in range(8):
+                    trace.event('bounded', index=i)
+                trace.emit('unit')
+                data = json.loads(path.read_text())
+                self.assertEqual([e['index'] for e in data['events']], [5, 6, 7])
+                self.assertEqual(data['deadline_seconds'], 10)
+        finally:
+            os.close(r)
+            os.close(w)
+
+    @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for live hang trace')
+    def test_planted_hang_fails_and_leaves_pre_cleanup_trace(self):
+        from lib_shape_trace import ShapeTrace
+        shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
+        with tempfile.TemporaryDirectory() as cwd:
+            path = Path(cwd) / 'hang.json'
+            start = time.monotonic()
+            rows, ok, why = shape.run_typed(shell, 'sleep 60', 1, trace=ShapeTrace(path, 'planted-hang'))
+            elapsed = time.monotonic()-start
+            self.assertFalse(ok, why)
+            self.assertEqual(rows, [-1, -1])
+            self.assertGreaterEqual(elapsed, 9.5)
+            self.assertLess(elapsed, 25)
+            data = json.loads(path.read_text())
+            before = data['before_cleanup']
+            self.assertIsNone(before['poll'])
+            self.assertEqual(before['turn'], 1)
+            self.assertGreaterEqual(before['child_count'], 1)
+            self.assertIn('deadline', before['reason'])
+            self.assertIn('sleep 60', data['last_write']['data'])
+            self.assertTrue(any(e['kind'] == 'select' and e['prompt_deadline_wall'] is not None
+                                for e in data['events'] if e['kind'] == 'select'))
+
+    @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for live exit trace')
+    def test_exit_is_distinguished_from_deadline(self):
+        from lib_shape_trace import ShapeTrace
+        shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
+        with tempfile.TemporaryDirectory() as cwd:
+            path = Path(cwd) / 'exit.json'
+            start = time.monotonic()
+            _, ok, why = shape.run_typed(shell, 'exit 7', 1, trace=ShapeTrace(path, 'exit'))
+            self.assertFalse(ok)
+            self.assertLess(time.monotonic()-start, 9)
+            data = json.loads(path.read_text())
+            reason = data['before_cleanup']['reason']
+            self.assertNotIn('deadline', reason)
+            self.assertTrue('exit' in reason or 'EOF' in reason, why)
 
 
 class Processes(unittest.TestCase):
