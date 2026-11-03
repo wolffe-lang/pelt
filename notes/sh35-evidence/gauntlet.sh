@@ -14,6 +14,7 @@ step() {
 }
 step toolchain tools/fetch-toolchain
 step planner python3 ci/tiers-test.py
+step proof-rig-contracts python3 tools/shape-rss-rig-test
 step fmt tools/check-fmt
 step clauses tools/clause-census
 step build tools/build --all
@@ -37,4 +38,6 @@ for tier in native release; do
 done
 step differential-plant tools/difftest-selftest target/release
 step session-plant tools/session-selftest target/release
-step proof-under-load python3 notes/sh35-evidence/rig.py proof target/native/pelt /lane/proof-records
+# The NEW 200-run proof is a separate ledger of <=16-run, <=2 h chunks.
+# A green ordinary gauntlet is not the proof; require every chunk record too.
+echo 'GAUNTLET_COMPLETE proof_chunks_required=200'

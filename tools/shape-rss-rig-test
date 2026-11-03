@@ -34,6 +34,7 @@ class Chunks(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn('1..16', r.stderr)
 
+    @unittest.skipUnless(sys.platform.startswith('linux'), 'proof controller integration runs in the capped Linux rig')
     def test_live_trace_stops_chunk_before_hung_tool_finishes(self):
         # A synthetic tool, not pelt: first row fails and leaves a trace,
         # then deliberately hangs. The controller must stop immediately.
