@@ -43,6 +43,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_session as ls  # noqa: E402
 import lib_reap as lr  # noqa: E402
+from lib_shape_trace import ShapeTrace  # noqa: E402
 
 TIMEOUT_SECONDS = 600
 
@@ -200,11 +201,14 @@ def file_script(kind, text, n):
     return script
 
 
-def run_paused(shell, cwd):
+def run_paused(shell, cwd, trace=None):
     """No procfs: the SAME shell blocks in read while ps samples its pid."""
+    trace = trace or ShapeTrace()
     before = lr.children()
     with subprocess.Popen([shell, "shape.sh"], cwd=cwd, env=ENV, stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE) as p:
+        trace.attach(p)
+        roles = {"stdout": p.stdout.fileno(), "stderr": p.stderr.fileno(), "stdin": p.stdin.fileno()}
         streams = [p.stdout, p.stderr]
         pending, out, err = b"", b"", b""
         deadline = time.monotonic() + TIMEOUT_SECONDS
@@ -212,9 +216,9 @@ def run_paused(shell, cwd):
             while streams:
                 if time.monotonic() >= deadline:
                     raise subprocess.TimeoutExpired(p.args, TIMEOUT_SECONDS)
-                ready, _, _ = select.select(streams, [], [], 0.5)
+                ready = trace.select(streams, 0.5)
                 for stream in ready:
-                    data = os.read(stream.fileno(), 65536)
+                    data = trace.read(stream.fileno(), 65536)
                     if not data:
                         streams.remove(stream)
                         continue
@@ -227,19 +231,24 @@ def run_paused(shell, cwd):
                         if line == b"__shape_pause":
                             kb = rss_of(p.pid)
                             out += f"__shape_memory={kb},0\n".encode()
-                            p.stdin.write(b"continue\n")
-                            p.stdin.flush()
+                            trace.write(p.stdin.fileno(), b"continue\n")
                         else:
                             out += line + b"\n"
             return p.wait(timeout=10), (out + pending).decode(errors="replace"), len(err)
         finally:
+            error = sys.exc_info()[1]
+            trace.failure(str(error) if error else "natural completion", p, roles,
+                          {"out": out + pending, "err": err}, publish=error is not None,
+                          read_pending=error is not None)
             if p.poll() is None:
                 lr.end_tree(p.pid, before)
                 p.wait()
+            trace.finish(p)
             lr.reap_adopted(before)
 
 
-def run_file(shell, kind, text, n, cwd):
+def run_file(shell, kind, text, n, cwd, trace=None):
+    trace = trace or ShapeTrace()
     with open(os.path.join(cwd, "shape.sh"), "w") as f:
         f.write(file_script(kind, text, n))
     try:
@@ -247,16 +256,29 @@ def run_file(shell, kind, text, n, cwd):
             before = lr.children()
             with subprocess.Popen([shell, "shape.sh"], cwd=cwd, env=ENV,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as p:
+                trace.attach(p)
+                roles = {"stdout": p.stdout.fileno(), "stderr": p.stderr.fileno()}
+                raw, err = "", ""
                 try:
+                    trace.event("communicate_start")
                     raw, err = p.communicate(timeout=TIMEOUT_SECONDS)
+                    trace.event("read", stream="stdout", bytes=len(raw), data=repr(raw[:1024]))
+                    trace.event("read", stream="stderr", bytes=len(err), data=repr(err[:1024]))
                     rc, nerr = p.returncode, len(err)
                 finally:
+                    error = sys.exc_info()[1]
+                    partial_out = getattr(error, "output", None) if error else None
+                    partial_err = getattr(error, "stderr", None) if error else None
+                    trace.failure(str(error) if error else "natural completion", p, roles,
+                                  {"out": partial_out or raw.encode(), "err": partial_err or err.encode()},
+                                  publish=error is not None, read_pending=error is not None)
                     if p.poll() is None:
                         lr.end_tree(p.pid, before)
                         p.wait()
+                    trace.finish(p)
                     lr.reap_adopted(before)
         else:
-            rc, raw, nerr = run_paused(shell, cwd)
+            rc, raw, nerr = run_paused(shell, cwd, trace=trace)
     except (OSError, subprocess.TimeoutExpired) as e:
         return [-1, -1], False, str(e)
     rows, out, valid = parse_samples(raw)
@@ -289,21 +311,24 @@ def typed_stderr(raw, text):
     return notices, b"".join(errors)
 
 
-def run_typed(shell, text, n, background_wait=False):
-    """Two checkpoints in one actual interactive session, plus its answer."""
+def run_typed(shell, text, n, background_wait=False, trace=None):
+    """Two checkpoints, the same deadline, and failure-only diagnostics."""
+    trace = trace or ShapeTrace()
     master, slave = pty.openpty()
     rout, wout = os.pipe()
     rerr, werr = os.pipe()
     before = lr.children()
     p = subprocess.Popen([shell, "-i"], stdin=slave, stdout=wout, stderr=werr, env=ENV,
                          start_new_session=True, preexec_fn=ls._ctty)
+    trace.attach(p)
     os.close(slave)
     os.close(wout)
     os.close(werr)
+    roles = {"stdout": rout, "stderr": rerr, "terminal": master}
     got = {"out": b"", "err": b"", "errors": b"", "notices": 0, "stderr_bytes": 0}
-    # Main identifies this by row name so the off-line retained-buffer
-    # plant can add work without changing the expected background job.
     notice_shape = "true & wait" if background_wait else text
+    turn, wait_failure = 0, ""
+    rows = []
 
     def record_stderr(raw):
         notices, errors = typed_stderr(raw, notice_shape)
@@ -311,95 +336,116 @@ def run_typed(shell, text, n, background_wait=False):
         got["stderr_bytes"] += len(raw)
         got["errors"] += errors
 
+    def fail(reason):
+        if wait_failure:
+            reason += ": " + wait_failure
+        trace.failure(reason, p, roles, got, turn, rows)
+        return [-1, -1], False, reason
+
     def wait_prompt():
+        nonlocal wait_failure
+        wait_failure = ""
         deadline = time.time() + 10
         while time.time() < deadline:
-            r, _, _ = select.select([rout, rerr, master], [], [], 0.5)
-            for fd in r:
+            eof = []
+            ready = trace.select([rout, rerr, master], 0.5, deadline)
+            for fd in ready:
                 try:
-                    d = os.read(fd, 65536)
+                    data = trace.read(fd, 65536)
                 except OSError:
-                    d = b""
+                    # Keep the original terminal-error handling; a PTY
+                    # EIO is not treated as pipe EOF. Exit is checked below.
+                    continue
+                if not data and fd in (rout, rerr):
+                    eof.append("stdout" if fd == rout else "stderr")
                 if fd == rerr:
-                    got["err"] += d
+                    got["err"] += data
                 elif fd == rout:
-                    got["out"] += d
+                    got["out"] += data
             if got["err"].endswith(b"$ "):
                 record_stderr(got["err"][:-2])
                 got["err"] = b""
                 return True
+            code = p.poll()
+            if code is not None:
+                wait_failure = f"pelt exited {code} before prompt"
+                return False
+            if eof:
+                wait_failure = f"{'/'.join(eof)} EOF before prompt while pelt is alive"
+                return False
+        code = p.poll()
+        wait_failure = (f"pelt exited {code} before prompt" if code is not None
+                        else "prompt deadline expired after 10 seconds")
         return False
 
     line = (text + "; i=$((i+1))\n").encode()
-    rows = []
     try:
         if not wait_prompt():
-            return [-1, -1], False, "no first prompt"
+            return fail("no first prompt")
         if sys.platform.startswith("linux"):
-            os.write(master, linux_sampler().encode())
+            trace.write(master, linux_sampler().encode())
             if not wait_prompt():
-                return [-1, -1], False, "no prompt after sampler definition"
-        for k in range(1, 2 * n + 1):
-            os.write(master, line)
+                return fail("no prompt after sampler definition")
+        for turn in range(1, 2 * n + 1):
+            trace.write(master, line)
             if not wait_prompt():
-                return [-1, -1], False, f"no prompt after line {k}"
-            if k == n or k == 2 * n:
+                return fail(f"no prompt after line {turn}")
+            if turn == n or turn == 2 * n:
                 if sys.platform.startswith("linux"):
-                    os.write(master, b"__shape_sample\n")
+                    trace.write(master, b"__shape_sample\n")
                     if not wait_prompt():
-                        return [-1, -1], False, f"no prompt after sample {k}"
+                        return fail(f"no prompt after sample {turn}")
                 else:
                     rows.append(rss_of(p.pid))
-        os.write(master, b"echo $i\n")
+        trace.write(master, b"echo $i\n")
         if not wait_prompt():
-            return [-1, -1], False, "no prompt after answer"
-        os.write(master, b"exit\n")
-        # keep reading while the shell leaves: it puts the terminal's
-        # mode back as it goes, and on macOS that waits for the pty's
-        # output to be read (a run that stopped reading here timed out)
+            return fail("no prompt after answer")
+        trace.write(master, b"exit\n")
         deadline = time.time() + 30
         while p.poll() is None and time.time() < deadline:
-            r, _, _ = select.select([rout, rerr, master], [], [], 0.2)
-            for fd in r:
+            for fd in trace.select([rout, rerr, master], 0.2):
                 try:
-                    d = os.read(fd, 65536)
+                    data = trace.read(fd, 65536)
                 except OSError:
-                    d = b""
+                    data = b""
                 if fd == rout:
-                    got["out"] += d
+                    got["out"] += data
                 elif fd == rerr:
-                    got["err"] += d
-        # Drain output written just before exit, even if poll already saw
-        # the exit. Otherwise a late answer could be lost on a busy host.
+                    got["err"] += data
         for fd, key in ((rout, "out"), (rerr, "err")):
-            while select.select([fd], [], [], 0)[0]:
-                data = os.read(fd, 65536)
+            while trace.select([fd], 0):
+                data = trace.read(fd, 65536)
                 if not data:
                     break
                 got[key] += data
         if p.poll() is None:
-            return [-1, -1], False, "still running 30 s after `exit`"
+            return fail("still running 30 s after `exit`")
+        raw = got["out"].decode(errors="replace")
+        if sys.platform.startswith("linux"):
+            rows, out, valid = parse_samples(raw)
+        else:
+            out, valid = raw.strip(), len(rows) == 2 and all(kb >= 0 for kb in rows)
+        record_stderr(got["err"])
+        expected_notices = 2 * n if notice_shape == "true & wait" else 0
+        ok = (valid and p.returncode == 0 and out == str(2 * n) and not got["errors"]
+              and got["notices"] == expected_notices)
+        why = (f"exit {p.returncode} out {out!r} stderr_bytes {got['stderr_bytes']} "
+               f"unexpected_stderr_bytes {len(got['errors'])} "
+               f"notices={got['notices']}/{expected_notices} samples_valid={valid}")
+        trace.failure(why if not ok else "natural completion", p, roles, got, turn, rows,
+                      publish=not ok, read_pending=not ok)
+        return rows if valid else [-1, -1], ok, why
+    except OSError as e:
+        wait_failure = ""
+        return fail(f"session IO error: {e}")
     finally:
         if p.poll() is None:
             lr.end_tree(p.pid, before)
             p.wait()
+        trace.finish(p)
         lr.reap_adopted(before)
         for fd in (rout, rerr, master):
             os.close(fd)
-    raw = got["out"].decode(errors="replace")
-    if sys.platform.startswith("linux"):
-        rows, out, valid = parse_samples(raw)
-    else:
-        out, valid = raw.strip(), len(rows) == 2 and all(kb >= 0 for kb in rows)
-    record_stderr(got["err"])
-    expected_notices = 2 * n if notice_shape == "true & wait" else 0
-    ok = (valid and p.returncode == 0 and out == str(2 * n) and not got["errors"]
-          and got["notices"] == expected_notices)
-    why = (f"exit {p.returncode} out {out!r} stderr_bytes {got['stderr_bytes']} "
-           f"unexpected_stderr_bytes {len(got['errors'])} "
-           f"notices={got['notices']}/{expected_notices} samples_valid={valid}")
-    return rows if valid else [-1, -1], ok, why
-
 
 def main(argv):
     n = 10000
@@ -432,11 +478,13 @@ def main(argv):
         limit = n * row_bound // 1024 + slack_kb
         if only is not None and name not in only:
             continue
+        trace_root = os.environ.get("PELT_SHAPE_TRACE_DIR")
+        trace = ShapeTrace(os.path.join(trace_root, name + ".json") if trace_root else None, name)
         if kind == "typed":
-            rows, ok, why = run_typed(shell, text, n, background_wait=name == "typed-background-wait")
+            rows, ok, why = run_typed(shell, text, n, background_wait=name == "typed-background-wait", trace=trace)
         else:
             with tempfile.TemporaryDirectory(prefix="shape-rss.") as cwd:
-                rows, ok, why = run_file(shell, kind, text, n, cwd)
+                rows, ok, why = run_file(shell, kind, text, n, cwd, trace=trace)
         grew = rows[1] - rows[0]
         per = grew * 1024 // n
         verdict = "ok" if ok and grew <= limit else "FAIL"
@@ -447,6 +495,10 @@ def main(argv):
         if not ok:
             print(f"shape-rss:      {name}: wrong answer ({why})")
         if verdict != "ok":
+            path = trace.emit(why if not ok else "memory bound exceeded", verdict=verdict,
+                              rows_kib=rows, grew_kib=grew, limit_kib=limit)
+            if path:
+                print(f"shape-rss: trace {name}: {path}", flush=True)
             failed.append(name)
     if failed:
         print(f"shape-rss: FAIL {len(failed)}: {', '.join(failed)} "
