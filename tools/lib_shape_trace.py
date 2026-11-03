@@ -112,7 +112,8 @@ class ShapeTrace:
         # forensic only: it never changes the False return or deadline.
         self.data['failed'] = publish
         try:
-            ready = select.select(list(roles.values()), [], [], 0)[0] if read_pending else []
+            readable = [fd for role, fd in roles.items() if role != 'stdin']
+            ready = select.select(readable, [], [], 0)[0] if read_pending else []
             for fd in ready:
                 try:
                     data = os.read(fd, 65536)

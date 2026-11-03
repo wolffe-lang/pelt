@@ -102,7 +102,8 @@ class TraceContracts(unittest.TestCase):
         from lib_shape_trace import ShapeTrace
         shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
         with tempfile.TemporaryDirectory() as cwd:
-            path = Path(cwd) / 'hang.json'
+            path = Path(os.environ.get('PELT_SHAPE_TEST_TRACES', cwd)) / 'hang.json'
+            path.unlink(missing_ok=True)
             start = time.monotonic()
             rows, ok, why = shape.run_typed(shell, 'sleep 60', 1, trace=ShapeTrace(path, 'planted-hang'))
             elapsed = time.monotonic()-start
@@ -125,7 +126,8 @@ class TraceContracts(unittest.TestCase):
         from lib_shape_trace import ShapeTrace
         shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
         with tempfile.TemporaryDirectory() as cwd:
-            path = Path(cwd) / 'exit.json'
+            path = Path(os.environ.get('PELT_SHAPE_TEST_TRACES', cwd)) / 'exit.json'
+            path.unlink(missing_ok=True)
             start = time.monotonic()
             _, ok, why = shape.run_typed(shell, 'exit 7', 1, trace=ShapeTrace(path, 'exit'))
             self.assertFalse(ok)

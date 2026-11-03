@@ -19,9 +19,10 @@ step fmt tools/check-fmt
 step clauses tools/clause-census
 step build tools/build --all
 step wolf-tests tools/check-test
+trace_root=${SH35_TRACE_CONTRACT_ROOT:-target/trace-contracts}
 for tier in native release; do
     shell="target/$tier/pelt"
-    step "sampler-$tier" env PELT_TEST_SHELL="$shell" python3 tools/shape-rss-test
+    step "sampler-$tier" env PELT_TEST_SHELL="$shell" PELT_SHAPE_TEST_TRACES="$trace_root/$tier" python3 tools/shape-rss-test
     step "self-check-$tier" tools/self-check "$tier"
     step "glob-rss-$tier" tools/glob-rss "$shell"
     step "loop-rss-$tier" tools/loop-rss "$shell"
