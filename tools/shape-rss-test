@@ -77,7 +77,12 @@ class Samples(unittest.TestCase):
 
 def assert_hang_time(test, phases, platform):
     """The enclosing test budget is separate from the row's 10 s deadline."""
-    budget = 25
+    # Existing Darwin tree cleanup scans ps up to 200 times: measured here
+    # at 8.165 s (18.651 s total), versus Linux cleanup .020 s/total 10.391 s.
+    # Hosted macOS took 28.065 s total; 40 s leaves ~12 s (42%) margin for
+    # its slower process-table probes. Python import precedes this timer.
+    # This does NOT extend shape-rss's unchanged 10-second prompt deadline.
+    budget = 40 if platform == 'darwin' else 25
     test.assertLess(phases['total'], budget,
                     f'{platform} hang phases (seconds): {json.dumps(phases, sort_keys=True)}')
 
@@ -104,7 +109,8 @@ def timed_hang(shell, path):
             p.wait = lambda *a, **kw: measure('wait', original_wait, *a, **kw)
 
         def failure(self, *args, **kwargs):
-            phases['prompt_wait'] = time.monotonic() - self.data['last_write']['mono']
+            last_write = self.data.get('last_write', {}).get('mono', start + phases['startup'])
+            phases['prompt_wait'] = time.monotonic() - last_write
             return measure('snapshot', super().failure, *args, **kwargs)
 
         def finish(self, p):
@@ -127,6 +133,14 @@ class TraceContracts(unittest.TestCase):
         # This regression fixture must not reinterpret it as a row deadline.
         phases = {'total': 28.064869542}
         assert_hang_time(self, phases, 'darwin')
+
+    def test_total_budgets_remain_bounded_and_platform_specific(self):
+        assert_hang_time(self, {'total': 39.9}, 'darwin')
+        with self.assertRaises(AssertionError):
+            assert_hang_time(self, {'total': 40}, 'darwin')
+        assert_hang_time(self, {'total': 24.9}, 'linux')
+        with self.assertRaises(AssertionError):
+            assert_hang_time(self, {'total': 25}, 'linux')
 
     def test_total_budget_failure_reports_phases(self):
         phases = {'total': 100, 'startup': 1, 'prompt_wait': 10,
@@ -159,26 +173,26 @@ class TraceContracts(unittest.TestCase):
 
     @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for live hang trace')
     def test_planted_hang_fails_and_leaves_pre_cleanup_trace(self):
-        from lib_shape_trace import ShapeTrace
         shell = os.path.abspath(os.environ['PELT_TEST_SHELL'])
         with tempfile.TemporaryDirectory() as cwd:
             path = Path(os.environ.get('PELT_SHAPE_TEST_TRACES', cwd)) / 'hang.json'
             path.unlink(missing_ok=True)
             (rows, ok, why), phases = timed_hang(shell, path)
-            self.assertFalse(ok, why)
-            self.assertEqual(rows, [-1, -1])
-            self.assertGreaterEqual(phases['prompt_wait'], 9.5, phases)
+            message = f'{why}; hang phases (seconds): {json.dumps(phases, sort_keys=True)}'
+            self.assertFalse(ok, message)
+            self.assertEqual(rows, [-1, -1], message)
+            self.assertGreaterEqual(phases['prompt_wait'], 9.5, message)
             assert_hang_time(self, phases, sys.platform)
             data = json.loads(path.read_text())
-            self.assertEqual(data['deadline_seconds'], 10)
+            self.assertEqual(data['deadline_seconds'], 10, message)
             before = data['before_cleanup']
-            self.assertIsNone(before['poll'])
-            self.assertEqual(before['turn'], 1)
-            self.assertGreaterEqual(before['child_count'], 1)
-            self.assertIn('deadline', before['reason'])
-            self.assertIn('sleep 60', data['last_write']['data'])
+            self.assertIsNone(before['poll'], message)
+            self.assertEqual(before['turn'], 1, message)
+            self.assertGreaterEqual(before['child_count'], 1, message)
+            self.assertIn('deadline', before['reason'], message)
+            self.assertIn('sleep 60', data['last_write']['data'], message)
             self.assertTrue(any(e['kind'] == 'select' and e['prompt_deadline_wall'] is not None
-                                for e in data['events'] if e['kind'] == 'select'))
+                                for e in data['events'] if e['kind'] == 'select'), message)
 
     @unittest.skipUnless(os.environ.get('PELT_TEST_SHELL'), 'set PELT_TEST_SHELL for live exit trace')
     def test_exit_is_distinguished_from_deadline(self):
