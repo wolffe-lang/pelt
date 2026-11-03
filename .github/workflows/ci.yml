@@ -1,3 +1,5 @@
+# Local PR evidence is cheap unless ci/full-matrix opts in.
+# Existing nightly commands and publication jobs are preserved.
 # pelt — CI.
 #
 # Three hosts, because a shell is the program every other program
@@ -66,9 +68,24 @@ name: ci
 on:
   push:
     branches: [trunk]
+    paths:
+      - '.github/**'
+      - 'ci/**'
+      - '!ci/*.md'
+      - '!ci/**/*.md'
+      - 'tools/**'
+      - 'spec/**'
+      - '**/wolf-toolchain.toml'
+      - '**/rust-toolchain.toml'
+      - '**/*.pin'
+      - '**/PAIRING'
+      - '**/STD-PIN'
+      - 'vendor/tools.toml'
+      - 'gnu-oracle.toml'
+      - '.gitmodules'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
   pull_request:
-    # `labeled` so adding `full-matrix` starts the full run at once; any
-    # other label's run is a noop (the plan, then nothing).
     types: [opened, synchronize, reopened, labeled]
   schedule:
     # Nightly, the all tier, on trunk: every leg, the macOS and aarch64
@@ -119,16 +136,19 @@ jobs:
       # plan reads that commit against its first parent. A dispatch reads
       # its branch against trunk's merge base, so it takes the history.
       - uses: actions/checkout@v4
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
         with:
           fetch-depth: ${{ github.event_name == 'workflow_dispatch' && '0' || '2' }}
       - name: the planner can say no (ci/tiers-test.py)
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
         run: python3 ci/tiers-test.py
       - name: proof chunk controller contracts
         run: python3 tools/shape-rss-rig-test
       - name: the plan
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
         id: plan
         env:
-          EVENT: ${{ github.event_name }}
+          EVENT: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'release-matrix') && 'push' || github.event_name }}
           ACTION: ${{ github.event.action }}
           LABEL: ${{ github.event.label.name }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
@@ -136,9 +156,15 @@ jobs:
           IN_TIER: ${{ inputs.tier }}
         run: python3 ci/tiers.py plan --merge --github-output "$GITHUB_OUTPUT"
 
+      - name: local gate wiring proof
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
+        run: python3 -I ci/local-gate-test.py
+      - name: local evidence gate
+        if: ${{ !(github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) }}
+        run: echo 'Local gauntlet evidence is the gate; request ci or full-matrix for CI.'
   gauntlet:
     needs: plan
-    if: contains(fromJSON(needs.plan.outputs.jobs || '[]'), 'gauntlet')
+    if: ${{ (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) && (contains(fromJSON(needs.plan.outputs.jobs || '[]'), 'gauntlet')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -398,7 +424,7 @@ jobs:
   # No case is skipped, filtered or sharded.
   sessions:
     needs: plan
-    if: contains(fromJSON(needs.plan.outputs.jobs || '[]'), 'sessions')
+    if: ${{ (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) && (contains(fromJSON(needs.plan.outputs.jobs || '[]'), 'sessions')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -444,7 +470,7 @@ jobs:
   # verdict). lane-audit.sh reads this job's name and conclusion.
   tier:
     name: tier ${{ needs.plan.outputs.tier || 'unplanned' }}
-    if: ${{ !cancelled() }}
+    if: ${{ (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) && (!cancelled()) }}
     needs:
       - plan
       - gauntlet
