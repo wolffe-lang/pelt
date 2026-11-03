@@ -1,0 +1,28 @@
+sh35 — instrumented proof restart plan (2026-11-03)
+
+The failed prior proof is preserved: 128 completed, run 89 red, four cut.
+The coordinator now authorizes a NEW 200-run proof at the instrumented head.
+
+Before implementation:
+- Put a bounded IO event ring and pre-cleanup failure snapshots into the
+  actual typed-row rig, not just an external observer. Preserve input bytes,
+  N, every row, every memory predicate/bound and the 10-second deadline.
+- Check EOF/process exit separately from deadline expiry; these still fail,
+  but report the observed cause rather than calling all failures timeouts.
+- Commit red-first tests for a planted real-pelt hang: unchanged deadline,
+  failure verdict and a persisted trace showing the living process/child
+  before cleanup. Also test EOF and natural exit diagnostics.
+- Rebuild/run the non-root gauntlet at the new head, then restart all 200
+  runs from 1. Each proof chunk requests at most 16 runs, with global run
+  numbers, new paths and an independent summary/exit marker.
+- Each host lock take has a 6600-second container cap (<2 h). The controller
+  stops dispatch at 5400 s and aborts only owned descendants by 6000 s, with
+  separate incomplete/budget records, never a green substitute.
+- Keep the original four own-slot load processes/four workers. Record normal
+  pool conditions; never idle or load other slots to manufacture a result.
+- Stop the proof at its first red: preserve its before-cleanup trace and do
+  not schedule later chunks. A reset loses only the active chunk; completed
+  chunk records stay. No automatic retry of a red or interrupted chunk.
+- Rebuild the five-section PR record and run the audit once only after the
+  complete new-head proof or a blocking red is known. Main changes trigger
+  the coordinator's existing labelled CI watch; never wait on CI here.
