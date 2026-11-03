@@ -240,9 +240,9 @@ IO rings and process snapshots taken before cleanup. EOF, exit and deadline
 expiry are reported separately; the ten-second prompt deadline and memory
 bounds are unchanged.
 
-CI runs the same tools in tiers: a pull request runs what its paths can
-affect (`ci/tiers.py` decides), the merge runs everything, and a nightly
-re-runs the lot and opens an issue when red. The typed sessions are a job
+Unlabelled PRs run one cheap job. The `ci` or `full-matrix` label runs the
+full CI set; trunk pushes run it only on cross-cutting paths. The nightly
+still re-runs every host/compiler leg and opens an issue when red. The typed sessions are a job
 of their own beside the gauntlet's, on each host and compiler tier. Each lane of work leaves a
 record under `notes/` with its prediction, its measurements and what it
 left undone.
