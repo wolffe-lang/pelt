@@ -121,10 +121,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: ${{ github.event_name == 'workflow_dispatch' && '0' || '2' }}
-      - name: the planners and proof chunk controller see their planted breaks
-        run: |
-          python3 ci/tiers-test.py
-          python3 tools/shape-rss-rig-test
+      - name: the planner can say no (ci/tiers-test.py)
+        run: python3 ci/tiers-test.py
+      - name: proof chunk controller contracts
+        run: python3 tools/shape-rss-rig-test
       - name: the plan
         id: plan
         env:
