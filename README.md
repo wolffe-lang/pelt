@@ -231,8 +231,14 @@ the tree so the measurement can be taken again.
 | `tools/script-census` | the 80 real scripts, run as under dash |
 | `tools/clause-census` | the POSIX statement table, counted |
 | `tools/syscall-census`, `tools/loop-rss`, `tools/shape-rss`, `tools/session-rss`, `tools/glob-rss` | what a command costs in calls and memory |
-| `tools/shape-rss-test` | one-process sampler contracts, malformed readings and live pelt checkpoints; `PELT_TEST_SHELL` selects the pelt binary |
+| `tools/shape-rss-test` | one-process sampler contracts, malformed readings, live checkpoints and a planted hang that retains its failure trace; `PELT_TEST_SHELL` selects the pelt binary |
+| `tools/shape-rss-rig-test` | bounded proof-chunk accounting and stop-at-first-red controls |
 | `tools/check-fmt`, `tools/check-test`, `wolf test` | the formatter's fixed point, the unit tests |
+
+`PELT_SHAPE_TRACE_DIR` selects where `tools/shape-rss` retains failure-only
+IO rings and process snapshots taken before cleanup. EOF, exit and deadline
+expiry are reported separately; the ten-second prompt deadline and memory
+bounds are unchanged.
 
 CI runs the same tools in tiers: a pull request runs what its paths can
 affect (`ci/tiers.py` decides), the merge runs everything, and a nightly
