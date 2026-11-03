@@ -12,7 +12,10 @@ lane) and in the README's status.
   macOS it pauses while its resident set is read. Checkpoints add no
   per-turn commands. Typed background jobs' successful completion notices
   are validated explicitly; other stderr still fails. All bounds are
-  unchanged. Sampler contract tests run on each built compiler tier in CI.
+  unchanged. Failure traces retain bounded IO history and pre-cleanup
+  process snapshots, distinguishing EOF, exit and deadline expiry without
+  increasing the prompt deadline. Sampler contracts and bounded proof-chunk
+  controls run in CI.
 
 - **Friendly by default.** An interactive shell at a terminal prompt starts
   with `friendly` on, with `suggest` and `histsearch`; `set +o friendly`
