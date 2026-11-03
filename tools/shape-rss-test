@@ -75,7 +75,67 @@ class Samples(unittest.TestCase):
                                     'fork-background-subshell': (10000, 100, 1280)})
 
 
+def assert_hang_time(test, phases, platform):
+    """The enclosing test budget is separate from the row's 10 s deadline."""
+    budget = 25
+    test.assertLess(phases['total'], budget,
+                    f'{platform} hang phases (seconds): {json.dumps(phases, sort_keys=True)}')
+
+
+def timed_hang(shell, path):
+    """Observe the real tool without replacing IO, probes, cleanup or clocks."""
+    from lib_shape_trace import ShapeTrace
+    phases = {'startup': 0, 'prompt_wait': 0, 'snapshot': 0,
+              'cleanup': 0, 'wait': 0, 'trace_finish': 0}
+    start = time.monotonic()
+
+    def measure(name, function, *args, **kwargs):
+        begin = time.monotonic()
+        try:
+            return function(*args, **kwargs)
+        finally:
+            phases[name] += time.monotonic() - begin
+
+    class TimedTrace(ShapeTrace):
+        def attach(self, p):
+            super().attach(p)
+            phases['startup'] = time.monotonic() - start
+            original_wait = p.wait
+            p.wait = lambda *a, **kw: measure('wait', original_wait, *a, **kw)
+
+        def failure(self, *args, **kwargs):
+            phases['prompt_wait'] = time.monotonic() - self.data['last_write']['mono']
+            return measure('snapshot', super().failure, *args, **kwargs)
+
+        def finish(self, p):
+            return measure('trace_finish', super().finish, p)
+
+    original_end_tree = shape.lr.end_tree
+    with patch.object(shape.lr, 'end_tree',
+                      side_effect=lambda *a, **kw: measure('cleanup', original_end_tree, *a, **kw)):
+        result = shape.run_typed(shell, 'sleep 60', 1, trace=TimedTrace(path, 'planted-hang'))
+    phases['total'] = time.monotonic() - start
+    phases['other'] = phases['total'] - sum(v for k, v in phases.items() if k != 'total')
+    path.with_name('hang-timing.json').write_text(json.dumps(phases, indent=2) + '\n')
+    print(f'planted-hang phases {sys.platform}: {json.dumps(phases, sort_keys=True)}', flush=True)
+    return result, phases
+
+
 class TraceContracts(unittest.TestCase):
+    def test_hosted_macos_cleanup_budget(self):
+        # Hosted macOS reported 28.064869542 s for the enclosing hang test.
+        # This regression fixture must not reinterpret it as a row deadline.
+        phases = {'total': 28.064869542}
+        assert_hang_time(self, phases, 'darwin')
+
+    def test_total_budget_failure_reports_phases(self):
+        phases = {'total': 100, 'startup': 1, 'prompt_wait': 10,
+                  'snapshot': 2, 'cleanup': 85, 'wait': 1, 'trace_finish': 1}
+        with self.assertRaises(AssertionError) as error:
+            assert_hang_time(self, phases, 'darwin')
+        for phase in phases:
+            self.assertIn(phase, str(error.exception))
+
     def test_io_is_forwarded_and_ring_is_bounded(self):
         from lib_shape_trace import ShapeTrace
         r, w = os.pipe()
@@ -104,14 +164,13 @@ class TraceContracts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as cwd:
             path = Path(os.environ.get('PELT_SHAPE_TEST_TRACES', cwd)) / 'hang.json'
             path.unlink(missing_ok=True)
-            start = time.monotonic()
-            rows, ok, why = shape.run_typed(shell, 'sleep 60', 1, trace=ShapeTrace(path, 'planted-hang'))
-            elapsed = time.monotonic()-start
+            (rows, ok, why), phases = timed_hang(shell, path)
             self.assertFalse(ok, why)
             self.assertEqual(rows, [-1, -1])
-            self.assertGreaterEqual(elapsed, 9.5)
-            self.assertLess(elapsed, 25)
+            self.assertGreaterEqual(phases['prompt_wait'], 9.5, phases)
+            assert_hang_time(self, phases, sys.platform)
             data = json.loads(path.read_text())
+            self.assertEqual(data['deadline_seconds'], 10)
             before = data['before_cleanup']
             self.assertIsNone(before['poll'])
             self.assertEqual(before['turn'], 1)
