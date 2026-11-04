@@ -188,6 +188,9 @@ def cost(binary,home):
 
 if __name__=='__main__':
     binary=Path(sys.argv[1]).resolve()
+    from lib_probe import witness
+    witness(binary, ready, step)
+    if '--probe-only' in sys.argv:sys.exit(0)
     with tempfile.TemporaryDirectory(prefix='sh32b-home-') as temp:home_aliases(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-laws-') as temp: laws(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-vcs-') as temp:vcs(binary,Path(temp))
