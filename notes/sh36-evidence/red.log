@@ -1,0 +1,16 @@
+Excerpt from the native pre-fix run at d6c20b4.
+FAIL probe-den-fds {'count': 1, 'first': [{'name': 'den', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}]}
+FAIL probe-hostname-fds {'count': 1, 'first': [{'name': 'hostname', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}]}
+FAIL probe-help-fds {'count': 1, 'first': [{'name': 'probe', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]}
+ok probe-user-close-err [{'name': 'probe', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]
+ok probe-user-close-in [{'name': 'probe', 'in': -1, 'err': 1, 'first': 0, 'char0': 0, 'char2': 0}]
+FAIL probe-identity-direct-fds {'count': 65, 'first': [{'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}, {'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]}
+FAIL probe-identity-null-failure-in [{'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}, {'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]
+FAIL probe-identity-null-failure-err [{'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}, {'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]
+FAIL probe-prompt-direct-fds {'count': 65, 'first': [{'name': 'identity', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}, {'name': 'identity', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}]}
+FAIL probe-prompt-null-failure-in [{'name': 'identity', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}, {'name': 'identity', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}]
+FAIL probe-prompt-null-failure-err [{'name': 'identity', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}, {'name': 'identity', 'in': -1, 'err': -1, 'first': 0, 'char0': 0, 'char2': 0}]
+FAIL probe-help-direct-fds {'count': 65, 'first': [{'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}, {'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]}
+FAIL probe-help-null-failure-in [{'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}, {'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]
+FAIL probe-help-null-failure-err [{'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}, {'name': 'identity', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]
+END red-probe-native exit=1 secs=0

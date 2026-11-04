@@ -1,0 +1,82 @@
+# sh36 — quiet owned probes
+
+Footprint: module
+
+Fixes pelt#111. Prompt and completion probes must be quiet without leaving
+standard descriptors closed. User-written descriptor closes remain literal.
+
+## Prediction
+
+The committed prediction is notes/sh36-predictions.txt, recorded before
+regression or implementation changes. den and hostname should expose closed
+input/error descriptors and first open 0 before the fix. Help and the identity
+fallback should expose closed stderr and first open 2. Null-device failures
+must skip invocation; repeated success, failed spawn and either failed null
+open must leave the parent's descriptor count unchanged.
+
+## Forbidden
+
+No other shell's source was consulted. No changes to user redirections,
+collection deadlines, output caps, VCS rendering, help caching, CI, toolchain
+pins, runtime or specifications. No new dependency is needed by pelt.
+
+## Inputs verified
+
+Base: 301e25e0136bfe705f7f38ad13a1cbca9909fa52.
+The pinned wolf 0.2.36, lupin 0.1.58 and standard library were staged through
+tools/fetch-toolchain, with archive digest checks and repeated binary hashes.
+
+- 10694db: commit the prediction.
+- e286970: add descriptor, explicit-close, direct-helper and failure rows.
+- d6c20b4: document the generated test entry and check the null device itself.
+- f15df15: bound the direct rig's synchronization waits.
+- be4a119: give owned probes null standard input and error.
+- abead48: document the behavior under Unreleased.
+
+The sweep found one additional owned-probe site: program_says in
+src/sh/util.lu, the non-Linux identity fallback's id calls. It now shares
+quiet_probe_spawn with prompt_probe and completion_help. Other spawn/fork
+sites run commands described by the user's program and retain their existing
+redirection semantics. The spawn-local helper opens input read-only and error
+write-only and defers their closes until its own return, immediately after
+spawn on success and on every failure path. The callers retain pipe ownership.
+
+## Evidence
+
+notes/sh36-evidence/red.log preserves the emitted pre-fix descriptor failures
+at d6c20b4. The corrected red run reached all twelve failing assertions, not
+merely a harness error. den/hostname had input/error closed and first open 0;
+help/identity had inherited input, closed error and first open 2. User closes
+were already green. An earlier attempt exposed a documentation lint in the
+generated test entry; that was fixed before collecting these complete reds.
+
+The quick native run at be4a119 passed all descriptor rows, both user closes,
+65 direct calls per helper, failed-spawn rows and both null-open fault modes.
+For each of the three helpers the live descriptor count stayed 9 to 9 over
+64 additional calls, on success, nonexistent executable, failed input open
+and failed error open. The child's first open was at least 3; descriptors 0
+and 2 were the null character device with read-only/write-only access.
+
+The C child observes descriptors before its first open, avoiding interpreter
+startup repairs. The direct rig compiles an exact source-module copy plus a
+test-only entry, so the identity fallback is exercised on Linux as well.
+Linux-only open interposition changes only the owned rig's process. The
+probe rows run from the existing prompt-witness entry in CI. No CI gate was
+removed or bypassed.
+
+Final-head gauntlet END lines and the one-file/one-hunk plant record belong in
+the PR body. The plant restores a closed stderr in the shared probe map and
+must emit FAIL probe-den-fds. Its branch is sh36-plant-stderr, with no PR.
+
+## Done-when
+
+- [x] Complete pre-fix native descriptor and failure rows.
+- [x] Quick native descriptor, user-close and cleanup rows at be4a119.
+- [ ] Final-head formatting, native/release builds, unit and self checks.
+- [ ] Native/release differential corpus, prompt and words witnesses, sessions.
+- [ ] Named local plant failure and independent local-record audit.
+
+README read, current: commands, installation, counts and budget claims are
+unchanged. No R-sh36-N decision is needed. This source note is written before
+the exact-head records; the PR body supplies their final verdicts without a
+self-referential documentation commit.
