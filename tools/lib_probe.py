@@ -21,9 +21,10 @@ CHILD = r'''
 #include <unistd.h>
 int main(int argc, char **argv) {
     int a = fcntl(0, F_GETFL), b = fcntl(2, F_GETFL);
-    struct stat sa, sb;
-    int na = fstat(0, &sa) == 0 && S_ISCHR(sa.st_mode);
-    int nb = fstat(2, &sb) == 0 && S_ISCHR(sb.st_mode);
+    struct stat sa, sb, sn;
+    if (stat("/dev/null", &sn) != 0) return 92;
+    int na = fstat(0, &sa) == 0 && S_ISCHR(sa.st_mode) && sa.st_rdev == sn.st_rdev;
+    int nb = fstat(2, &sb) == 0 && S_ISCHR(sb.st_mode) && sb.st_rdev == sn.st_rdev;
     int fd = open(getenv("PELT_PROBE_LOG"), O_WRONLY|O_CREAT|O_APPEND, 0600);
     if (fd < 0) return 90;
     const char *name = strrchr(argv[0], '/'); name = name ? name+1 : argv[0];
@@ -41,6 +42,7 @@ int main(int argc, char **argv) {
 }
 '''
 RIG = '''
+/// Test-only entry to the unmodified owned-probe callers in this copied module.
 pub fn probe_fixture(exe: str, kind: str) -> str {
     if kind == "identity" { return program_says(exe, []) }
     if kind == "prompt" {
@@ -71,7 +73,7 @@ fn main() {
 }
 '''
 # Linux-only fault injection changes our process's open calls, not /dev/null
-# or the host. Child execs remove LD_PRELOAD, so a false spawn is recorded.
+# or the host. Any child that starts still records its invocation.
 FAULT = r'''
 #define _GNU_SOURCE
 #include <dlfcn.h>
@@ -116,7 +118,8 @@ def witness(binary, ready, step):
     def descriptors(name, reports):
         check(name, bool(reports) and all(
             r['in'] == os.O_RDONLY and r['err'] == os.O_WRONLY and
-            r['first'] >= 3 and r['char0'] and r['char2'] for r in reports), reports)
+            r['first'] >= 3 and r['char0'] and r['char2'] for r in reports),
+              {'count': len(reports), 'first': reports[:2]})
 
     with tempfile.TemporaryDirectory(prefix='sh36-probes-') as temp:
         home = Path(temp)
