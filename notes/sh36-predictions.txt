@@ -1,0 +1,27 @@
+sh36 — quiet probe predictions
+
+Base: 301e25e0136bfe705f7f38ad13a1cbca9909fa52.
+
+Before implementation:
+- Native descriptor-reporting executables on PATH will show den and hostname
+  with stdin/stderr closed and first open at 0. The help child will show
+  stderr closed and first open at 2 (stdin is currently inherited).
+- Replacing closed/inherited probe input and closed error with separately
+  opened read-only/write-only /dev/null leaves stdout capture, VCS rendering,
+  explicit-help caching and the 50 ms budgets unchanged.
+- The sweep found program_says (the non-Linux identity fallback) also closes
+  stderr. It needs the same treatment and a direct-call fixture, since Linux
+  ordinarily learns identity from /proc rather than invoking this helper.
+- User commands with 2>&- or <&- will still see the requested descriptor
+  closed. Probe policy must not alter the user command descriptor table.
+- Failed null opens skip spawning; successful and failed spawns release both
+  null handles and pipe handles. Repeated direct calls should not grow fds.
+- A one-hunk plant restoring prompt stderr to -1 will fail the named den row.
+
+Verification targets: descriptor reports for den/hostname/help/identity;
+user-directed closed descriptors; repeated success/spawn-failure cleanup;
+null-open failure injection; existing prompt and words witnesses; formatting,
+unit/self checks, differential corpus and typed sessions on native/release.
+
+Clean room: only pelt's own source and black-box reference behaviour.
+No changes to CI, pins, runtime, specification or user redirection semantics.
