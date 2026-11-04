@@ -664,7 +664,7 @@ fn quiet_probe_spawn(path: str, args: List[str], out: int) -> int ! {io} {
     defer fs_close(input) else |_| {}
     let error_out = fs_open_mode("/dev/null", 1) else |_| { return io }
     defer fs_close(error_out) else |_| {}
-    os_spawn_fds(path, args, [0, input, 1, out, 2, error_out]) else |_| { return io }
+    os_spawn_fds(path, args, [0, input, 1, out, 2, -1]) else |_| { return io }
 }
 
 /// What a program prints, with input and standard error on the null device,
