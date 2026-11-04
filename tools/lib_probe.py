@@ -7,6 +7,7 @@ of pelt's module, exercising the identity fallback even on Linux.
 from pathlib import Path
 import json
 import os
+import select
 import shutil
 import subprocess
 import tempfile
@@ -181,11 +182,14 @@ def witness(binary, ready, step):
             p = subprocess.Popen([str(rig),str(exe),kind], env=dict(env, **(extra or {})),
                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
-                assert p.stdout.readline() == b'READY\n'
+                def marker(wanted):
+                    assert select.select([p.stdout], [], [], 15)[0], ('rig-timeout', kind, wanted)
+                    assert p.stdout.readline() == wanted, ('rig-marker', kind, wanted)
+                marker(b'READY\n')
                 fdpath = Path('/proc')/str(p.pid)/'fd'
                 baseline = len(list(fdpath.iterdir())) if fdpath.exists() else None
                 p.stdin.write(b'go\n'); p.stdin.flush()
-                assert p.stdout.readline() == b'DONE\n'
+                marker(b'DONE\n')
                 after = len(list(fdpath.iterdir())) if baseline is not None else None
                 p.stdin.write(b'end\n'); p.stdin.flush()
                 _, err = p.communicate(timeout=10)
