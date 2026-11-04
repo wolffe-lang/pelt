@@ -23,7 +23,7 @@ fn completion_help(mut e: Ed, exe: str) -> str {
     e.help_cache[exe] = ""
     let begin = os_clock_ns()
     let (rd, wr) = os_pipe() else |_| { return "" }
-    let child = os_spawn_fds(exe, ["--help"], [1, wr, 2, -1]) else |_| {
+    let child = quiet_probe_spawn(exe, ["--help"], wr) else |_| {
         fs_close(rd) else |_| {}
         fs_close(wr) else |_| {}
         return ""

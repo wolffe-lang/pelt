@@ -655,16 +655,23 @@ fn status_numbers(text: str, key: str) -> List[int] {
     out
 }
 
-/// What a program prints, run with no input and its standard error
-/// closed, or "" when it cannot be run or fails.
+/// Start only a shell-owned probe, never a user's command. The null handles
+/// are local to this spawn, and close even on a partial open or spawn failure.
+/// [os.fs.open], [os.proc.fds]: stdin is read-only, stderr write-only; stdout
+/// keeps the caller's pipe. Failure is io and means the probe must be skipped.
+fn quiet_probe_spawn(path: str, args: List[str], out: int) -> int ! {io} {
+    let input = fs_open("/dev/null") else |_| { return io }
+    defer fs_close(input) else |_| {}
+    let error_out = fs_open_mode("/dev/null", 1) else |_| { return io }
+    defer fs_close(error_out) else |_| {}
+    os_spawn_fds(path, args, [0, input, 1, out, 2, error_out]) else |_| { return io }
+}
+
+/// What a program prints, with input and standard error on the null device,
+/// or "" when it cannot be run or fails.
 fn program_says(path: str, args: List[str]) -> str {
     let (r, w) = os_pipe() else { return "" }
-    var map = List[int]()
-    (mut map).push(1)
-    (mut map).push(w)
-    (mut map).push(2)
-    (mut map).push(-1)
-    let h = os_spawn_fds(path, args, map) else -1
+    let h = quiet_probe_spawn(path, args, w) else -1
     fs_close(w) else |_| {}
     var o = buf()
     if h >= 0 {

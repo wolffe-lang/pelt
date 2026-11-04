@@ -113,7 +113,7 @@ fn prompt_right_bound(s: str, cols: int) -> str {
 /// owns this child, closes both pipe ends, and never waits on any shell job.
 fn prompt_probe(exe: str, args: List[str], deadline: int) -> (bool, str) {
     let (rd, wr) = os_pipe() else |_| { return (false, "") }
-    let child = os_spawn_fds(exe, args, [0, -1, 1, wr, 2, -1]) else |_| {
+    let child = quiet_probe_spawn(exe, args, wr) else |_| {
         fs_close(rd) else |_| {}
         fs_close(wr) else |_| {}
         return (false, "")
