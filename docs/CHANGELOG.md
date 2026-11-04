@@ -6,6 +6,14 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Quiet probes keep their standard descriptors open.** Friendly prompt
+  `den`/`hostname` probes, explicit `--help` completion and the identity
+  fallback use read-only `/dev/null` for input and write-only `/dev/null`
+  for errors. Their captured output and timing budgets are unchanged. A
+  failed null-device open skips the probe, and temporary handles close on
+  every spawn path. User-written `<&-` and `2>&-` still close descriptors
+  (pelt#111).
+
 - **One-process shape memory checks.** `tools/shape-rss` reads each shell
   twice, after N and 2N turns, rather than subtracting separate processes'
   peaks. On Linux the shell reads its own anonymous memory plus swap; on
