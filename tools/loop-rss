@@ -2,14 +2,23 @@
 """loop-rss — does a shell's memory stay flat over a loop of commands?
 
 Runs `i=0; while [ $i -lt N ]; do i=$((i+1)); done; echo $i` (s216's
-loop, two simple commands a turn) under SHELL at N and at 2N, each in a
-child process of its own, and reads each run's peak resident set
-(`/usr/bin/time`'s maximum resident set size). A shell that frees each command's scratch
-grows only by what it keeps — here the superseded values of `i` — so
-the second run peaks at most `BOUND_B` bytes a turn above the first,
-plus a fixed slack for the allocator's steps. A shell that keeps its
-scratch grows by kilobytes a turn (pelt before sh03: 7.4 KB, wolf-lang
-#612).
+loop, two simple commands a turn) under SHELL and measures what the
+loop keeps between N and 2N turns. A shell that frees each command's
+scratch grows only by what it keeps — here the superseded values of `i`
+— so at 2N it holds at most `BOUND_B` bytes a turn more than at N, plus
+a fixed slack for the allocator's steps. A shell that keeps its scratch
+grows by kilobytes a turn (pelt before sh03: 7.4 KB, wolf-lang #612).
+
+Linux: ONE process runs N turns, reads its own anonymous memory plus
+swap from /proc/self/smaps_rollup with built-ins only (tools/shape-rss's
+sampler), runs N more and reads it again. File-backed pages are not
+counted: they are the shell's own program and libraries, mapped as the
+run touches them, and the kernel maps a file's pages in folios whose
+size varies from one run to the next. Until pelt#118 this tool compared
+two processes' peak resident sets, those pages included, and a run of
+2N turns that mapped a few megabytes more of its own program read as
+growth. macOS: two processes at N and 2N, each one's peak resident set
+(`/usr/bin/time -l`), as before.
 
 usage: tools/loop-rss [-n N] [-b BOUND_B] SHELL
 Exits 1 when the 2N run exceeds the N run by more than
@@ -17,10 +26,18 @@ N * BOUND_B bytes + 1 MiB, or when either run answers anything but its
 N.
 """
 
+import importlib.machinery
+import importlib.util
 import os
 import subprocess
 import sys
 import tempfile
+
+_LOADER = importlib.machinery.SourceFileLoader(
+    "shape_rss", os.path.join(os.path.dirname(os.path.abspath(__file__)), "shape-rss"))
+_SPEC = importlib.util.spec_from_loader(_LOADER.name, _LOADER)
+shape = importlib.util.module_from_spec(_SPEC)
+_LOADER.exec_module(shape)
 
 
 def measure(shell, n):
@@ -49,6 +66,22 @@ def measure(shell, n):
     return kb, r.returncode, r.stdout.strip(), nerr
 
 
+def measure_kept(shell, n):
+    """Linux: the loop's kept memory at N and 2N turns, in KB, read by the
+    same shell (anonymous memory plus swap; tools/shape-rss's sampler), in
+    one process: (rows, exit, stdout less the samples, stderr bytes,
+    whether both samples were read)."""
+    loop = "while [ $i -lt {} ]; do i=$((i+1)); done"
+    script = (shape.linux_sampler() + "i=0; " + loop.format(n) + "; __shape_sample; "
+              + loop.format(2 * n) + "; __shape_sample; echo $i")
+    env = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+    with tempfile.TemporaryDirectory(prefix="loop-rss.") as cwd:
+        r = subprocess.run([shell, "-c", script], cwd=cwd, env=env,
+                           capture_output=True, text=True)
+    rows, out, valid = shape.parse_samples(r.stdout)
+    return rows, r.returncode, out, len(r.stderr), valid
+
+
 def main(argv):
     n = 10000
     bound_b = 100
@@ -64,14 +97,25 @@ def main(argv):
     shell = os.path.abspath(argv[0])
     ok = True
     rows = []
-    for size in (n, 2 * n):
-        kb, rc, out, nerr = measure(shell, size)
-        rows.append(kb)
-        print(f"loop-rss: {argv[0]} turns={size:>7}  peak_kb {kb:8}  exit {rc}  "
-              f"out {out!r}  stderr_bytes {nerr}")
-        if rc != 0 or out != str(size):
-            print(f"loop-rss: FAIL the run of {size} turns answered {out!r} (exit {rc})")
-            ok = False
+    if sys.platform.startswith("linux"):
+        rows, rc, out, nerr, valid = measure_kept(shell, n)
+        for size, kb in zip((n, 2 * n), rows):
+            print(f"loop-rss: {argv[0]} turns={size:>7}  anon_kb {kb:8}  (one process; "
+                  f"Anonymous+Swap)")
+        print(f"loop-rss: exit {rc}  out {out!r}  stderr_bytes {nerr}")
+        if rc != 0 or out != str(2 * n) or nerr or not valid:
+            print(f"loop-rss: FAIL the run answered {out!r} (exit {rc}, {nerr} stderr "
+                  f"bytes, samples {'valid' if valid else 'missing or malformed'})")
+            return 1
+    else:
+        for size in (n, 2 * n):
+            kb, rc, out, nerr = measure(shell, size)
+            rows.append(kb)
+            print(f"loop-rss: {argv[0]} turns={size:>7}  peak_kb {kb:8}  exit {rc}  "
+                  f"out {out!r}  stderr_bytes {nerr}")
+            if rc != 0 or out != str(size):
+                print(f"loop-rss: FAIL the run of {size} turns answered {out!r} (exit {rc})")
+                ok = False
     grew = rows[1] - rows[0]
     limit = n * bound_b // 1024 + 1024
     per_turn = grew * 1024 // n
