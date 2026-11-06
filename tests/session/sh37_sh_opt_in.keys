@@ -1,0 +1,8 @@
+exec 2>&0
+bindings >/dev/null; echo "default=$?"
+set -o friendly -o suggest -o histsearch
+echo prefix_suffix
+\k echo prefix
+\k \e[C\r
+bindings >/dev/null; echo "asked=$?"
+exit

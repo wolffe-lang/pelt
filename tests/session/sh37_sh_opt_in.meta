@@ -1,0 +1,6 @@
+argv0=sh
+env=PS1=$\s TERM=xterm-256color
+tr_by=hand
+why=sh37, pelt#113 (R-sh37-1 A): invoked as sh, friendly is off by default and an explicit `set -o friendly -o suggest -o histsearch` turns it on. A typed prefix of a history line then draws that line's suffix as a suggestion, and Right takes it; the `bindings` built-in exists only while friendly is active (127 otherwise). Written by hand
+screen=1
+screen_by=hand
