@@ -6,6 +6,15 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **The loop's memory gate measures kept memory on Linux.** `tools/loop-rss`
+  ran the loop at 10,000 and 20,000 turns in two processes and compared
+  their peak resident sets, file-backed pages included, which can differ by a
+  megabyte between two runs of the same build; one such jump failed
+  trunk's gate with nothing growing. On Linux it now runs the loop in one
+  process and compares the shell's own anonymous and swapped memory after
+  10,000 turns and after 10,000 more, as `tools/shape-rss` does, under the
+  same bound; macOS keeps the two peaks (pelt#118).
+
 - **Friendly when asked, as `sh`.** A shell invoked as `sh` still starts
   with friendly off, and now honours an explicit `set -o friendly` (with
   `suggest` and `histsearch` by their own names), typed at its prompt or set
