@@ -17,13 +17,15 @@ friendly editing. `TERM=dumb` uses the terminal's ordinary line discipline,
 with no suggestions or pager. Vi mode retains its existing keys.
 
 The default is `friendly`, every feature it gates, `suggest` and
-`histsearch`, at an interactive shell whose invocation allows it; where it
+`histsearch`, at an interactive shell invoked by any name but `sh`; where it
 acts is still a prompt whose stdin and stderr are terminals. Invoked as
 `sh` (argv[0]'s basename with a login shell's leading `-` dropped: `sh`,
-`-sh`, `/bin/sh`, as PAX starts its shell) or with `--posix`, friendly is
-off and `set -o friendly` does not turn it on, so such a session behaves
-as dash's. The command line's own options come after the default:
-`pelt +o friendly` starts with it off.
+`-sh`, `/bin/sh`, as PAX starts its shell), friendly is off by default, so
+such a session behaves as dash's until it asks: `set -o friendly -o suggest
+-o histsearch`, typed at the prompt or set in an `ENV` file, turns them on
+there as anywhere. With `--posix`, friendly is off and `set -o friendly`
+does not turn it on. The command line's own options come after the default:
+`pelt +o friendly` starts with it off, and `sh -o friendly` with it on.
 
 ## Options
 
@@ -254,9 +256,14 @@ dot too), with Unicode codepoints kept intact. A failed command adds its
 status in brackets; root uses `#`, determined by effective uid, not `USER`.
 The foreground is the terminal default, with a bold nonzero status.
 A narrow terminal elides the left prefix, keeping the directory tail.
-Display identity uses `USER` or `LOGNAME`, and `HOSTNAME` or one bounded
-`hostname` invocation, falling back to `?`. Host identity is cached for the
-session. These are display strings, not authentication information.
+Display identity uses `USER`, else `LOGNAME`, else the effective user id's
+entry in `/etc/passwd`; and `HOSTNAME`, else the kernel's node name (on
+Linux, `/proc/sys/kernel/hostname`), else `/etc/hostname`, else one bounded
+`hostname` invocation. Each falls back to `?`. bash's `\u` and `\h` and
+fish's default prompt take the passwd name and the node name and ignore the
+environment; pelt asks the environment first, so a console or a login can
+name itself. Host identity is cached for the session. These are display
+strings, not authentication information.
 
 **An explicitly set `PS1` is never decorated or replaced.** Environment,
 startup-file and later assignments count, including an empty string or the
