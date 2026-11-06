@@ -1,0 +1,23 @@
+step 0
+err no
+prompt "$ "
+step 1 "i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i"
+out "SHAPE:true-background:8\n"
+err yes
+prompt "$ "
+step 2 "i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i"
+out "SHAPE:true-background:8\n"
+err yes
+prompt "$ "
+step 3 "i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i"
+out "SHAPE:true-background:8\n"
+err yes
+prompt "$ "
+step 4 "j=0; while [ $j -lt 100 ]; do i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; j=$((j+1)); done; echo SHAPE:true-background-rounds:$j"
+out "SHAPE:true-background-rounds:100\n"
+err yes
+prompt "$ "
+step 5 "exit 0"
+err no
+prompt ""
+exit 0 at step 5

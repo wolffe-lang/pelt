@@ -1,0 +1,4 @@
+pelt_args=-i -m
+prompt_wait=5
+tr_by=hand
+why=sh37, pelt#114: PAX's shapes line, eight `true &` and a `wait` in an interactive job-control shell, prints its SHAPE line and a prompt comes back within 5 s, three times, then a hundred rounds of it in one line. The ended jobs are told of at the next prompt (standard error). Written by hand: dash -i -m agrees on standard output

@@ -1,0 +1,5 @@
+i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+j=0; while [ $j -lt 100 ]; do i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; j=$((j+1)); done; echo SHAPE:true-background-rounds:$j
+exit 0
