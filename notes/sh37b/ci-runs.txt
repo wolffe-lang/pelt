@@ -1,0 +1,51 @@
+# The native gauntlet job on ubuntu-latest, trunk push runs: 42303595329 at f0761dc (red) and 42248806092 at b514e14.
+## f0761dc
+loop-rss: target/native/pelt turns=  10000  peak_kb     6616  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/native/pelt turns=  20000  peak_kb     9656  exit 0  out '20000'  stderr_bytes 0
+loop-rss: FAIL 10000 more turns grew 3040 KB (about 311 B a turn); the bound is 2000 KB (100 B a turn + 1 MiB)
+shape-rss: ok   baseline                 loop    10000      884 KB   20000     1384 KB  grew     500 KB (51 B a turn)  [:] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   jobs-set-m               monitor   3000      960 KB    6000     1460 KB  grew     500 KB (170 B a turn)  [env true & wait $!] metric=Anonymous+Swap bound=160B+64KiB
+shape-rss: ok   compound-while-redir     loop    10000      884 KB   20000     1388 KB  grew     504 KB (51 B a turn)  [while false; do :; done >/dev/null] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   arith-assign             loop    10000      880 KB   20000     1380 KB  grew     500 KB (51 B a turn)  [: $((j=j+1))] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   case                     loop    10000      884 KB   20000     1384 KB  grew     500 KB (51 B a turn)  [case a in a) :;; esac] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   builtin-wait             loop    10000     1040 KB   20000     1700 KB  grew     660 KB (67 B a turn)  [wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   background-wait          loop    10000     1560 KB   20000     2636 KB  grew    1076 KB (110 B a turn)  [env true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   background-builtin-wait  loop    10000     1584 KB   20000     2664 KB  grew    1080 KB (110 B a turn)  [true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   background-wait-pid      loop    10000     1576 KB   20000     2656 KB  grew    1080 KB (110 B a turn)  [true & wait $!] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   script-background-wait   script  10000     1908 KB   20000     2540 KB  grew     632 KB (64 B a turn)  [true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   typed-background-wait    typed   10000     2464 KB   20000     4332 KB  grew    1868 KB (191 B a turn)  [true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+## b514e14
+loop-rss: target/native/pelt turns=  10000  peak_kb     6788  exit 0  out '10000'  stderr_bytes 0
+loop-rss: target/native/pelt turns=  20000  peak_kb     7216  exit 0  out '20000'  stderr_bytes 0
+loop-rss: ok (10000 more turns grew 428 KB, about 43 B a turn; bound 2000 KB)
+shape-rss: ok   baseline                 loop    10000      872 KB   20000     1372 KB  grew     500 KB (51 B a turn)  [:] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   jobs-set-m               monitor   3000      956 KB    6000     1456 KB  grew     500 KB (170 B a turn)  [env true & wait $!] metric=Anonymous+Swap bound=160B+64KiB
+shape-rss: ok   compound-while-redir     loop    10000      884 KB   20000     1388 KB  grew     504 KB (51 B a turn)  [while false; do :; done >/dev/null] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   arith-assign             loop    10000      880 KB   20000     1376 KB  grew     496 KB (50 B a turn)  [: $((j=j+1))] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   case                     loop    10000      880 KB   20000     1380 KB  grew     500 KB (51 B a turn)  [case a in a) :;; esac] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   builtin-wait             loop    10000     1032 KB   20000     1692 KB  grew     660 KB (67 B a turn)  [wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   background-wait          loop    10000     1548 KB   20000     2624 KB  grew    1076 KB (110 B a turn)  [env true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   background-builtin-wait  loop    10000     1584 KB   20000     2660 KB  grew    1076 KB (110 B a turn)  [true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   background-wait-pid      loop    10000     1576 KB   20000     2656 KB  grew    1080 KB (110 B a turn)  [true & wait $!] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   script-background-wait   script  10000     1892 KB   20000     2528 KB  grew     636 KB (65 B a turn)  [true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+shape-rss: ok   typed-background-wait    typed   10000     2460 KB   20000     4328 KB  grew    1868 KB (191 B a turn)  [true & wait] metric=Anonymous+Swap bound=100B+1024KiB
+# summary: all 52 shape-rss rows in both jobs grew within 8 KB of each other over the second 10,000 turns; the start sizes differ by -8..24 KB
+# The same jobs' idle witnesses (one pelt process each): the file-backed resident pages vary between processes of one build.
+## f0761dc
+idle before        RssAnon 7376 kB  RssFile 5740 kB  VmRSS 13116 kB
+idle after         RssAnon 7376 kB  RssFile 5740 kB  VmRSS 13116 kB
+colour idle before RssAnon 7324 kB  RssFile 6696 kB  VmRSS 14020 kB
+colour idle after  RssAnon 7324 kB  RssFile 6696 kB  VmRSS 14020 kB
+colour idle before RssAnon 7324 kB  RssFile 6392 kB  VmRSS 13716 kB
+colour idle after  RssAnon 7324 kB  RssFile 6392 kB  VmRSS 13716 kB
+colour idle before RssAnon 7476 kB  RssFile 6824 kB  VmRSS 14300 kB
+colour idle after  RssAnon 7476 kB  RssFile 6824 kB  VmRSS 14300 kB
+## b514e14
+idle before        RssAnon 7372 kB  RssFile 5888 kB  VmRSS 13260 kB
+idle after         RssAnon 7372 kB  RssFile 5888 kB  VmRSS 13260 kB
+colour idle before RssAnon 7316 kB  RssFile 6496 kB  VmRSS 13812 kB
+colour idle after  RssAnon 7316 kB  RssFile 6496 kB  VmRSS 13812 kB
+colour idle before RssAnon 7320 kB  RssFile 6528 kB  VmRSS 13848 kB
+colour idle after  RssAnon 7320 kB  RssFile 6528 kB  VmRSS 13848 kB
+colour idle before RssAnon 7476 kB  RssFile 7528 kB  VmRSS 15004 kB
+colour idle after  RssAnon 7476 kB  RssFile 7528 kB  VmRSS 15004 kB

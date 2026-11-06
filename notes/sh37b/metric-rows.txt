@@ -1,0 +1,86 @@
+# loop-rss before (old: two processes, peak RSS) and after (new: one process, Anonymous+Swap), and the red-first rows.
+# Ubuntu 24.04 container with the hosted runner's glibc 2.39-0ubuntu8.9 and gcc 13.3.0-6ubuntu2~24.04.1, two CPUs.
+# old = tools/loop-rss at f0761dc, new = tools/loop-rss at f8cfe61, both on f0761dc's builds.
+# trace = strace -f -c counts of the 1000-turn -c loop (openat calls, opens of passwd and hostname, poll calls).
+BEGIN rows118 2026-11-06T23:07:49Z
+START red-metric-rows 23:07:49
+  test_kept_anonymous_memory_is_still_growth (__main__.LoopRssMetric.test_kept_anonymous_memory_is_still_growth) ... ok
+  test_mapped_program_pages_are_not_growth (__main__.LoopRssMetric.test_mapped_program_pages_are_not_growth) ... FAIL
+  
+  ======================================================================
+  FAIL: test_mapped_program_pages_are_not_growth (__main__.LoopRssMetric.test_mapped_program_pages_are_not_growth)
+  ----------------------------------------------------------------------
+  Traceback (most recent call last):
+    File "<tree@15a9956>/tools/shape-rss-test", line 386, in test_mapped_program_pages_are_not_growth
+      self.assertEqual(rc, 0, out)
+  AssertionError: 1 != 0 : loop-rss: <tmp>/shell turns=  10000  peak_kb     5392  exit 0  out '10000'  stderr_bytes 0
+  loop-rss: <tmp>/shell turns=  20000  peak_kb     9276  exit 0  out '20000'  stderr_bytes 0
+  loop-rss: FAIL 10000 more turns grew 3884 KB (about 397 B a turn); the bound is 2000 KB (100 B a turn + 1 MiB)
+  
+  
+  ----------------------------------------------------------------------
+  Ran 2 tests in 0.261s
+  
+  FAILED (failures=1)
+END red-metric-rows exit=1 23:07:50
+START green-metric-rows 23:07:50
+  test_kept_anonymous_memory_is_still_growth (__main__.LoopRssMetric.test_kept_anonymous_memory_is_still_growth) ... ok
+  test_mapped_program_pages_are_not_growth (__main__.LoopRssMetric.test_mapped_program_pages_are_not_growth) ... ok
+  
+  ----------------------------------------------------------------------
+  Ran 2 tests in 0.179s
+  
+  OK
+END green-metric-rows exit=0 23:07:50
+round 1 native old: loop-rss: ok (10000 more turns grew 592 KB, about 60 B a turn; bound 2000 KB)
+round 1 native new: loop-rss: ok (10000 more turns grew 348 KB, about 35 B a turn; bound 2000 KB)
+round 1 release old: loop-rss: ok (10000 more turns grew 512 KB, about 52 B a turn; bound 2000 KB)
+round 1 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 2 native old: loop-rss: ok (10000 more turns grew 0 KB, about 0 B a turn; bound 2000 KB)
+round 2 native new: loop-rss: ok (10000 more turns grew 340 KB, about 34 B a turn; bound 2000 KB)
+round 2 release old: loop-rss: ok (10000 more turns grew 476 KB, about 48 B a turn; bound 2000 KB)
+round 2 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 3 native old: loop-rss: ok (10000 more turns grew 148 KB, about 15 B a turn; bound 2000 KB)
+round 3 native new: loop-rss: ok (10000 more turns grew 340 KB, about 34 B a turn; bound 2000 KB)
+round 3 release old: loop-rss: ok (10000 more turns grew 400 KB, about 40 B a turn; bound 2000 KB)
+round 3 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 4 native old: loop-rss: ok (10000 more turns grew 56 KB, about 5 B a turn; bound 2000 KB)
+round 4 native new: loop-rss: ok (10000 more turns grew 348 KB, about 35 B a turn; bound 2000 KB)
+round 4 release old: loop-rss: ok (10000 more turns grew 52 KB, about 5 B a turn; bound 2000 KB)
+round 4 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 5 native old: loop-rss: ok (10000 more turns grew 176 KB, about 18 B a turn; bound 2000 KB)
+round 5 native new: loop-rss: ok (10000 more turns grew 344 KB, about 35 B a turn; bound 2000 KB)
+round 5 release old: loop-rss: ok (10000 more turns grew 244 KB, about 24 B a turn; bound 2000 KB)
+round 5 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 6 native old: loop-rss: ok (10000 more turns grew 732 KB, about 74 B a turn; bound 2000 KB)
+round 6 native new: loop-rss: ok (10000 more turns grew 340 KB, about 34 B a turn; bound 2000 KB)
+round 6 release old: loop-rss: ok (10000 more turns grew 120 KB, about 12 B a turn; bound 2000 KB)
+round 6 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 7 native old: loop-rss: ok (10000 more turns grew 752 KB, about 77 B a turn; bound 2000 KB)
+round 7 native new: loop-rss: ok (10000 more turns grew 348 KB, about 35 B a turn; bound 2000 KB)
+round 7 release old: loop-rss: ok (10000 more turns grew 392 KB, about 40 B a turn; bound 2000 KB)
+round 7 release new: loop-rss: ok (10000 more turns grew 324 KB, about 33 B a turn; bound 2000 KB)
+round 8 native old: loop-rss: ok (10000 more turns grew 1072 KB, about 109 B a turn; bound 2000 KB)
+round 8 native new: loop-rss: ok (10000 more turns grew 340 KB, about 34 B a turn; bound 2000 KB)
+round 8 release old: loop-rss: ok (10000 more turns grew 468 KB, about 47 B a turn; bound 2000 KB)
+round 8 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 9 native old: loop-rss: ok (10000 more turns grew 388 KB, about 39 B a turn; bound 2000 KB)
+round 9 native new: loop-rss: ok (10000 more turns grew 340 KB, about 34 B a turn; bound 2000 KB)
+round 9 release old: loop-rss: ok (10000 more turns grew 480 KB, about 49 B a turn; bound 2000 KB)
+round 9 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 10 native old: loop-rss: ok (10000 more turns grew 88 KB, about 9 B a turn; bound 2000 KB)
+round 10 native new: loop-rss: ok (10000 more turns grew 348 KB, about 35 B a turn; bound 2000 KB)
+round 10 release old: loop-rss: ok (10000 more turns grew 696 KB, about 71 B a turn; bound 2000 KB)
+round 10 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+round 11 native old: loop-rss: ok (10000 more turns grew 828 KB, about 84 B a turn; bound 2000 KB)
+round 11 native new: loop-rss: ok (10000 more turns grew 348 KB, about 35 B a turn; bound 2000 KB)
+round 11 release old: loop-rss: ok (10000 more turns grew 140 KB, about 14 B a turn; bound 2000 KB)
+round 11 release new: loop-rss: ok (10000 more turns grew 324 KB, about 33 B a turn; bound 2000 KB)
+round 12 native old: loop-rss: ok (10000 more turns grew 20 KB, about 2 B a turn; bound 2000 KB)
+round 12 native new: loop-rss: ok (10000 more turns grew 340 KB, about 34 B a turn; bound 2000 KB)
+round 12 release old: loop-rss: ok (10000 more turns grew 308 KB, about 31 B a turn; bound 2000 KB)
+round 12 release new: loop-rss: ok (10000 more turns grew 328 KB, about 33 B a turn; bound 2000 KB)
+trace f0761dc: openat 3 passwd 0 hostname 0 poll 1
+trace b514e14: openat 3 passwd 0 hostname 0 poll 1
+DONE
+END rows118 exit=0 2026-11-06T23:09:36Z

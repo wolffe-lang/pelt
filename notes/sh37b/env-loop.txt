@@ -1,0 +1,25 @@
+# The loop's kept memory and its opens under three environments: loop-rss's fixed one (PATH, HOME, LC_ALL),
+# the same with USER, LOGNAME and HOSTNAME set, and none. f0761dc's native build in the runner-matched container,
+# tools/loop-rss's loop measured in one process (Anonymous+Swap after 10,000 and after 20,000 turns).
+# The traces run under env -i, so env's own two loader opens count in each; the shell's are the last three listed.
+BEGIN env118 2026-11-06T23:15:16Z
+round 1 env fixed    anon_kb [720, 1068] exit 0 out '20000' stderr_bytes 0 valid True grew 348 KB
+round 1 env identity anon_kb [724, 1072] exit 0 out '20000' stderr_bytes 0 valid True grew 348 KB
+round 1 env empty    anon_kb [724, 1064] exit 0 out '20000' stderr_bytes 0 valid True grew 340 KB
+round 2 env fixed    anon_kb [720, 1060] exit 0 out '20000' stderr_bytes 0 valid True grew 340 KB
+round 2 env identity anon_kb [732, 1072] exit 0 out '20000' stderr_bytes 0 valid True grew 340 KB
+round 2 env empty    anon_kb [720, 1064] exit 0 out '20000' stderr_bytes 0 valid True grew 344 KB
+round 3 env fixed    anon_kb [728, 1072] exit 0 out '20000' stderr_bytes 0 valid True grew 344 KB
+round 3 env identity anon_kb [724, 1072] exit 0 out '20000' stderr_bytes 0 valid True grew 348 KB
+round 3 env empty    anon_kb [724, 1064] exit 0 out '20000' stderr_bytes 0 valid True grew 340 KB
+trace env fixed: openat 5 passwd 0 hostname 0 poll 1
+trace env identity: openat 5 passwd 0 hostname 0 poll 1
+trace env empty: openat 5 passwd 0 hostname 0 poll 1
+opens at f0761dc under env fixed:
+openat(AT_FDCWD, "/etc/ld.so.cache"
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6"
+openat(AT_FDCWD, "/etc/ld.so.cache"
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libgcc_s.so.1"
+openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6"
+DONE
+END env118 exit=0 2026-11-06T23:15:21Z
