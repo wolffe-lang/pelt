@@ -128,4 +128,40 @@ fn want_prompt(mut bad: List[str]) {
     for change in e.changes {
         if !stored_plain(change.line) { (mut bad).push("prompt-right-undo-style") }
     }
+    want_prompt_identity(mut bad)
+}
+
+/// pelt#115 (R-sh37-2): each fallback of the prompt's user and host, in order.
+fn want_prompt_identity(mut bad: List[str]) {
+    let passwd = "root:x:0:0:root:/root:/bin/sh\n" +
+        "# a comment line has no third field\n" +
+        ":x:7:7::/:/bin/sh\n" +
+        "daemon:x:1:1::/:/bin/false\n" +
+        "first:x:1000:1000::/home/first:/bin/sh\n" +
+        "second:x:1000:1000::/home/second:/bin/sh\n" +
+        "long:x:10000:10000::/:/bin/sh"
+    if passwd_name(passwd, 0) != "root" ||
+        passwd_name(passwd, 1000) != "first" ||
+        passwd_name(passwd, 10000) != "long" ||
+        passwd_name(passwd, 100) != "" ||
+        passwd_name(passwd, 7) != "" ||
+        passwd_name("", 0) != "" {
+        (mut bad).push("prompt-user-passwd-entry")
+    }
+    if prompt_user_pick("u", "l", "p") != "u" { (mut bad).push("prompt-user-USER-first") }
+    if prompt_user_pick("", "l", "p") != "l" { (mut bad).push("prompt-user-LOGNAME-second") }
+    if prompt_user_pick("", "", "p") != "p" { (mut bad).push("prompt-user-passwd-third") }
+    if prompt_user_pick("", "", "") != "?" { (mut bad).push("prompt-user-unknown-last") }
+    if first_name_line("node\n") != "node" ||
+        first_name_line("# hostname(5)\n\n  box.example  \nother\n") != "box.example" ||
+        first_name_line("\n# only a comment\n") != "" ||
+        first_name_line("") != "" {
+        (mut bad).push("prompt-host-name-file")
+    }
+    if prompt_host_pick("env", "node", "etc") != "env" {
+        (mut bad).push("prompt-host-HOSTNAME-first")
+    }
+    if prompt_host_pick("", "node", "etc") != "node" { (mut bad).push("prompt-host-node-second") }
+    if prompt_host_pick("", "", "etc") != "etc" { (mut bad).push("prompt-host-etc-hostname-third") }
+    if prompt_host_pick("", "", "") != "" { (mut bad).push("prompt-host-probe-then-unknown") }
 }
