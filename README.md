@@ -15,7 +15,7 @@ shell's source is ever read: pelt is clean-room, black-box only.
 |---|---|
 | POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 533 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
 | differential corpus against dash, both tiers | 1,049 cases: 1,035 passing, 0 failing, 14 pending on a named primitive (`tests/diff/`) |
-| typed sessions through a pseudo-terminal | 591 recorded expectations, none pending; POSIX sessions compare against dash (pelt invoked as `sh` there, so friendly is off), editor keys against recorded references and pelt-owned screens (`tests/session/`) |
+| typed sessions through a pseudo-terminal | 593 recorded expectations, none pending; POSIX sessions compare against dash (pelt invoked as `sh` there, so friendly is off), editor keys against recorded references and pelt-owned screens (`tests/session/`) |
 | real `sh` scripts that run as under dash | 78 of 80, the other two not pelt's to change (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts): `configure-sed` prints a timestamp resolution it measures from the shell's own speed, a coin that flips for dash itself and is counted apart, and `pfetch`'s memory line differs between dash's own runs |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
 | toolchain | the wolf and lupin pinned by digest in `wolf-toolchain.toml` |
@@ -103,10 +103,11 @@ waits for a key or a signal without waking.
 **Friendly, on by default.** At an interactive terminal prompt (standard
 input and standard error terminals) pelt starts with `friendly` on, and with
 it the keys, suggestions, filtered history, colours, words and prompt below;
-`set +o friendly` or invoke as `sh` turns it all off. Invoked as `sh`
-(`sh`, `-sh`, `/bin/sh`: argv[0]'s basename, as PAX starts it) or with
-`--posix`, friendly stays off even when asked for, and a script, `-c` or a
-pipe never uses it. Each feature has its own `set +o` too.
+`set +o friendly` turns it all off. Invoked as `sh` (`sh`, `-sh`,
+`/bin/sh`: argv[0]'s basename, as PAX starts it) friendly is off by default
+and on when asked (`set -o friendly -o suggest -o histsearch`); with
+`--posix` it stays off even when asked for, and a script, `-c` or a pipe
+never uses it. Each feature has its own `set +o` too.
 
 **Friendly keys.** `friendly` adds Alt-. (Alt-_ too) to
 insert a previous history word, cycling backward on repeats; a ten-entry
@@ -151,6 +152,8 @@ in [`docs/FRIENDLY.md`](docs/FRIENDLY.md).
 
 **Friendly prompt.** `friendly` enables `prompt_friendly`: a
 fish-shaped user/host/path/status prompt, unless PS1 was explicitly set.
+The user and host come from `USER`, `LOGNAME` and `HOSTNAME`, else from the
+system (the passwd entry, the kernel's node name, `/etc/hostname`).
 A `prompt_right` function supplies display-only text, bounded to a third
 of the terminal width and hidden below 40 columns or when input overlaps.
 When den is available, one bounded `status --porcelain` probe supplies a
@@ -205,11 +208,12 @@ pending case still runs on every pass and is reported, never skipped.
   Linux's `IO`, `PWR` or the real-time ones).
 - A byte that is not UTF-8 cannot reach a program: a `$'…'` that would
   make one is refused, and a command substitution's becomes `?`.
-- A `wait`, or a foreground command, can wait for ever once wolf
-  0.2.36's signal drain thread has ended, which it can do during the forks
-  of several `cmd &` while earlier children end (pelt#98: one replay in
-  sixty of pax's fork shapes under four CPUs, `tools/wait-replay`). The
-  fix is the runtime's; pelt waits on a pin that has it.
+- wolf 0.2.36's signal drain thread can end during the forks of several
+  `cmd &` while earlier children end (pelt#98, pelt#114; the runtime's fix
+  is in wolf 0.2.37, not yet pinned). pelt's waits for a job no longer
+  depend on that thread: they park in their own `poll(2)` and look again
+  once a second, so the forks' `wait` and a foreground command answer
+  where they once waited for ever (`tools/wait-replay`).
 - `test -r`, `-w` and `-x` read the mode bits for the shell's own ids
   rather than asking `access(2)`, so a read-only or `noexec` mount and
   ACLs are not seen.
