@@ -3417,7 +3417,7 @@ fn common_prefix(xs: List[str]) -> str {
 /// R-sh37-1 A), so `set -o friendly` typed at a `/bin/sh` console, or
 /// set in its ENV file, turns friendly on there.
 fn friendly_invocation_allowed(sh: Sh) -> bool {
-    !sh.posix_mode
+    !sh.posix_mode && !sh.invoked_sh
 }
 
 /// Whether this invocation starts friendly by default (ruling #126
