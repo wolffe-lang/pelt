@@ -142,8 +142,17 @@ def witness(binary, ready, step):
                                      'HOSTNAME':None, 'PELT_PROBE_LOG':str(log)})
         try:
             report = rows(log)
-            for name in ('den', 'hostname'):
-                descriptors('probe-' + name + '-fds', [r for r in report if r['name'] == name])
+            descriptors('probe-den-fds', [r for r in report if r['name'] == 'den'])
+            hostname = [r for r in report if r['name'] == 'hostname']
+            if os.uname().sysname == 'Linux':
+                # pelt#115: the kernel's node name answers before the probe
+                # (`/proc/sys/kernel/hostname`), so no program is started for it;
+                # the probe's own descriptors stay checked by the direct rig below.
+                node = os.uname().nodename.split('.')[0].encode()
+                check('probe-hostname-not-started', not hostname and
+                      b'tester@' + node + b' ' in sh.data['tty'], {'count': len(hostname), 'node': node})
+            else:
+                descriptors('probe-hostname-fds', hostname)
             check('probe-vcs-output', b'[vcs:1]' in sh.data['tty'], 'stdout pipe retained')
             step(sh, b'probe --')
             before = len(rows(log))
