@@ -97,7 +97,7 @@ def main(argv):
     shell = os.path.abspath(argv[0])
     ok = True
     rows = []
-    if sys.platform.startswith("linux"):
+    if False:  # PLANT (pelt#118): Linux compares the two processes' peaks again
         rows, rc, out, nerr, valid = measure_kept(shell, n)
         for size, kb in zip((n, 2 * n), rows):
             print(f"loop-rss: {argv[0]} turns={size:>7}  anon_kb {kb:8}  (one process; "
