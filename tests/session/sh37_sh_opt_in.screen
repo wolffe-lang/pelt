@@ -4,8 +4,9 @@ step 1
 cursor 1 2
 step 2
 | $ bindings >/dev/null; echo "default=$?"
+| pelt: line 2: bindings: not found
 | $
-cursor 1 2
+cursor 2 2
 step 3
 | $ set -o friendly -o suggest -o histsearch
 | $
