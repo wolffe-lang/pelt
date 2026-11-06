@@ -3410,25 +3410,36 @@ fn common_prefix(xs: List[str]) -> str {
     p
 }
 
-/// Whether this invocation may edit friendly at all (ruling #126 R-F-1):
-/// not with `--posix`, and not when invoked as `sh` (argv[0]'s basename,
-/// a login shell's `-` dropped: `sh.main`'s `named_sh`, wolf 0.2.36's
-/// `env_args_bytes`). Either is a hard off: `set -o friendly` records the
-/// option and nothing turns on, so a `/bin/sh` session is dash's.
+/// Whether this invocation may edit friendly at all: not with `--posix`,
+/// which is a hard off (`set -o friendly` records nothing there,
+/// `sh.builtin`'s `option_name`). Invoked as `sh` it may, when asked:
+/// argv[0] only withholds the default (`friendly_by_default`; pelt#113,
+/// R-sh37-1 A), so `set -o friendly` typed at a `/bin/sh` console, or
+/// set in its ENV file, turns friendly on there.
 fn friendly_invocation_allowed(sh: Sh) -> bool {
-    !sh.posix_mode && !sh.invoked_sh
+    !sh.posix_mode
+}
+
+/// Whether this invocation starts friendly by default (ruling #126
+/// R-F-1): it may edit friendly, and it was not invoked as `sh`
+/// (argv[0]'s basename, a login shell's `-` dropped: `sh.main`'s
+/// `named_sh`, wolf 0.2.36's `env_args_bytes`), so a `/bin/sh` session
+/// starts as dash's.
+fn friendly_by_default(sh: Sh) -> bool {
+    friendly_invocation_allowed(sh) && !sh.invoked_sh
 }
 
 /// The friendly default (ruling #126 R-F-1, sh34): an interactive shell
-/// whose invocation allows it starts with `friendly` and every feature it
-/// gates on — `set -o friendly`'s set and `suggest` and `histsearch` —
-/// so a user turns one off by its own `set +o`, or the whole by `set +o
-/// friendly`. Where it acts is still `friendly_active`'s: at a prompt
-/// whose standard input and standard error are terminals, so a pipe, a
-/// redirected standard error and a subshell edit as before. A script,
-/// `-c` and a shell that is not interactive never start it.
+/// whose invocation starts it (`friendly_by_default`) starts with
+/// `friendly` and every feature it gates on — `set -o friendly`'s set and
+/// `suggest` and `histsearch` — so a user turns one off by its own `set
+/// +o`, or the whole by `set +o friendly`. Where it acts is still
+/// `friendly_active`'s: at a prompt whose standard input and standard
+/// error are terminals, so a pipe, a redirected standard error and a
+/// subshell edit as before. A script, `-c` and a shell that is not
+/// interactive never start it.
 fn friendly_default(mut sh: Sh) {
-    if !friendly_invocation_allowed(sh) {
+    if !friendly_by_default(sh) {
         return
     }
     let _on = option_name(mut sh, "friendly", true)

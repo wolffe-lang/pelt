@@ -136,8 +136,8 @@ struct Sh {
     posix_mode: bool,
     /// Invoked by a name whose basename is `sh` (argv[0], a login shell's
     /// leading `-` dropped; `sh.main`'s `named_sh`): `friendly` is off by
-    /// its invocation (ruling #126 R-F-1, `sh.edit`'s
-    /// `friendly_invocation_allowed`).
+    /// default, and on when asked (ruling #126 R-F-1, pelt#113; `sh.edit`'s
+    /// `friendly_by_default`).
     invoked_sh: bool,
     /// `set -o ignoreeof`: an interactive shell's end of file is not its
     /// end (`sh.interact`'s `run_lines`)

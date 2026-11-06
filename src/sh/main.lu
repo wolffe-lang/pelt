@@ -7,8 +7,9 @@
 
 /// The whole shell invoked by the name `argv0` (argv[0]'s bytes, as
 /// `env_args_bytes` answers them: never decoded, so a name that is not
-/// UTF-8 is a name, not a trap): `run_main` with `friendly` off when
-/// that name is `sh` (`named_sh`; ruling #126 R-F-1).
+/// UTF-8 is a name, not a trap): `run_main` with `friendly` off by
+/// default when that name is `sh` (`named_sh`; ruling #126 R-F-1), and
+/// on when `set -o friendly` asks (pelt#113).
 pub fn run_main_named(argv0: List[byte], args: List[str]) -> int {
     run_main_as(named_sh(argv0), args)
 }

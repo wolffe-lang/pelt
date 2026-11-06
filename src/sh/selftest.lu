@@ -1369,8 +1369,13 @@ fn want_friendly(mut bad: List[str]) {
     if as_sh.opt_friendly ||
         as_sh.opt_suggest ||
         as_sh.opt_histsearch ||
-        friendly_invocation_allowed(as_sh) {
-        (mut bad).push("invoked as sh, friendly is on by default or allowed")
+        friendly_by_default(as_sh) {
+        (mut bad).push("invoked as sh, friendly is on by default")
+    }
+    // pelt#113 (R-sh37-1 A): as `sh` an explicit `set -o friendly` is honoured
+    let _asked = option_name(mut as_sh, "friendly", true)
+    if !friendly_invocation_allowed(as_sh) || !as_sh.opt_friendly || !as_sh.opt_highlight {
+        (mut bad).push("invoked as sh, an explicit set -o friendly is refused")
     }
     var as_pelt = new_sh("friendly-as-pelt")
     as_pelt.interactive = true
