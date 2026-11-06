@@ -25,10 +25,12 @@
 //! **The wait.** wolf answers a child's change by `os_wait_poll`: an
 //! exit code, `-N` for an end by signal N, `256 + N` for a stop, or
 //! `(-1, n)` for nothing new. pelt listens for `CHILD` before it first
-//! needs to wait, polls until nothing is new, and then parks in
-//! `os_signal_wait` on `CHILD` (and, for the `wait` built-in, the
-//! trapped signals), so a stop, an end, or a trapped signal wakes it and
-//! an idle wait costs nothing (`[os.proc.poll]`). Every answer the poll
+//! needs to wait, polls until nothing is new, and then parks on `CHILD`
+//! (and, for the `wait` built-in, the trapped signals), so a stop, an
+//! end, or a trapped signal wakes it (`[os.proc.poll]`). It parks in
+//! `sh.signal`'s `signal_park`, which looks again once a second, and
+//! not in `os_signal_wait`, which wolf 0.2.36's runtime can leave parked
+//! for ever (pelt#114, wolf-lang#1006). Every answer the poll
 //! gives is written into the table, whichever job it is about; one for
 //! a child no job holds (a pipeline stage some blocking wait is still
 //! owed) is kept aside for that wait (`stash_take`).
@@ -786,7 +788,7 @@ fn jc_wait(mut sh: Sh, j: int, also: int) -> int {
         if !still_running(sh, j) {
             return 0
         }
-        let got = os_signal_wait(signal.child() | also) else -1
+        let got = signal_park(sh.park_fds, signal.child() | also)
         if got < 0 {
             // no wait on signals here: block on the first live child
             // of the job; a stop is then seen only when it ends
@@ -910,7 +912,7 @@ fn jc_heard_int(sh: Sh, sig: int) {
 /// The fast path's foreground wait (`sh.exec`'s `run_fast`): the poll's
 /// answer for child `h`, waiting on `CHILD` between looks; no other job
 /// has a process, so any other answer is no one's.
-fn fg_poll(h: int) -> int {
+fn fg_poll(h: int, none: List[int]) -> int {
     loop {
         let (h2, st) = os_wait_poll() else (-1, 0)
         if h2 == h {
@@ -919,7 +921,7 @@ fn fg_poll(h: int) -> int {
         if h2 >= 0 {
             continue
         }
-        let got = os_signal_wait(m_child()) else -1
+        let got = signal_park(none, m_child())
         if got < 0 {
             return os_wait_status(h) else 1
         }

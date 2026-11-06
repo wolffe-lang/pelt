@@ -255,6 +255,10 @@ struct Sh {
     /// What a poll answered for a child no job holds (a pipeline stage
     /// a blocking wait is still owed): its handle and status.
     stash_h: List[int],
+    /// No descriptors: the list a job's wait parks on with its signals
+    /// (`sh.signal`'s `signal_park`), made once, so a park allocates
+    /// nothing (a loop of `cmd & wait` parks once a turn or more).
+    park_fds: List[int],
     stash_st: List[int],
     /// The poll taken as a line was read (`sh.jobs`'s `jc_take`).
     def_h: List[int],
@@ -512,6 +516,7 @@ fn new_sh(name: str) -> Sh {
         pr_st: List[int](),
         pr_text: List[str](),
         stash_h: List[int](),
+        park_fds: List[int](),
         stash_st: List[int](),
         def_h: List[int](),
         def_st: List[int](),

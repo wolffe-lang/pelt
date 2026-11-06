@@ -234,6 +234,31 @@ fn m_child() -> int {
     signal.child()
 }
 
+/// How long a wait for a child or a trapped signal parks before it looks
+/// again (`signal_park`), in milliseconds.
+const PARK_LOOK_MS: int = 1000
+
+/// Park until a meaning in `set` is delivered and answer it; 0 when
+/// `PARK_LOOK_MS` passed with none, so the caller polls its children and
+/// parks again; -1 when this host cannot wait on signals. The wait for a
+/// job (`sh.jobs`'s `jc_wait`, `fg_poll`) parks here (pelt#114, R-sh37-4
+/// A). At wolf 0.2.36 the runtime's drain thread can exit when a SIGCHLD
+/// lands on it while `os_fork` holds it (wolf-lang#1006, fixed in 0.2.37),
+/// and an `os_signal_wait` then parks for ever, since only that thread
+/// woke it: eight `true &` and a `wait` at an interactive job-control
+/// prompt hung so. `os_signal_wait_fds` waits in the calling thread's own
+/// `poll(2)`, which a signal delivered there interrupts, and then reads
+/// the delivery itself (`[os.signal.wait.fds]`); the bound covers a
+/// signal that lands between that look and the `poll`. With the drain
+/// thread alive the answers are `os_signal_wait`'s, and the cost is one
+/// wake a second while a job runs. Remove at the pin that carries
+/// wolf-lang#1006's fix. `none` is an empty list the caller keeps
+/// (`sh.park_fds`), so the park allocates nothing.
+fn signal_park(none: List[int], set: int) -> int {
+    let (_ready, got) = os_signal_wait_fds(none, set, PARK_LOOK_MS) else (-1, -1)
+    got
+}
+
 /// A window resized (`SIGWINCH`): the line editor draws its line again.
 fn m_resize() -> int {
     signal.resize()

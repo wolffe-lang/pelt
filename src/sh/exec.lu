@@ -1488,7 +1488,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
     var sig = 0
     var stop = 0
     if hd >= 0 && fgjob {
-        let raw = fg_poll(hd)
+        let raw = fg_poll(hd, sh.park_fds)
         if jtty >= 0 {
             os_term_set_foreground(jtty, sh.jc_pgid) else |_| {}
         }
