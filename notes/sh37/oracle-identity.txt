@@ -1,0 +1,29 @@
+# R-sh37-2's oracles, black-box through a pseudo-terminal in a container (dash 0.5.13.4-1, bash 5.3.20-1, fish 4.9.3-1).
+# Each row starts the shell with the environment named (bare: USER, LOGNAME and HOSTNAME unset; 'all': USER=envuser
+# LOGNAME=envlog HOSTNAME=envhost) and records its first prompt. bash runs with PS1='U=\u H=\h $ '; fish with --no-config
+# (its default prompt), the harness answering its device-attributes query. The user's name is written <user>.
+
+euid 1000 passwd name '<user>' uname nodename 'a3f475251f60'
+/proc/sys/kernel/hostname 'a3f475251f60\n'
+/etc/hostname 'a3f475251f60\n'
+== bash: GNU bash, version 5.3.20(1)-release (x86_64-pc-linux-gnu)
+bash bare          b'U=<user> H=a3f475251f60 $ '
+bash USER          b'U=<user> H=a3f475251f60 $ '
+bash LOGNAME       b'U=<user> H=a3f475251f60 $ '
+bash USER+LOGNAME  b'U=<user> H=a3f475251f60 $ '
+bash HOSTNAME      b'U=<user> H=a3f475251f60 $ '
+bash all           b'U=<user> H=a3f475251f60 $ '
+== fish: fish, version 4.9.3
+dash 0.5.13.4-1
+bash 5.3.20-1
+fish 4.9.3-1
+euid 1000 passwd name '<user>' uname nodename 'c14b76200c0e'
+/proc/sys/kernel/hostname 'c14b76200c0e\n'
+/etc/hostname 'c14b76200c0e\n'
+== fish: fish, version 4.9.3
+fish bare          b'\x1b]0;/\x1b\\\x1b]11;?\x1b\\\x1b[>4;1m\x1b]133;A;click_events=1\x1b\\<user>@c14b76200c0e /> \x1b]133;B\x1b\\'
+fish USER          b'\x1b]0;/\x1b\\\x1b]11;?\x1b\\\x1b[>4;1m\x1b]133;A;click_events=1\x1b\\<user>@c14b76200c0e /> \x1b]133;B\x1b\\'
+fish LOGNAME       b'\x1b]0;/\x1b\\\x1b]11;?\x1b\\\x1b[>4;1m\x1b]133;A;click_events=1\x1b\\<user>@c14b76200c0e /> \x1b]133;B\x1b\\'
+fish USER+LOGNAME  b'\x1b]0;/\x1b\\\x1b]11;?\x1b\\\x1b[>4;1m\x1b]133;A;click_events=1\x1b\\<user>@c14b76200c0e /> \x1b]133;B\x1b\\'
+fish HOSTNAME      b'\x1b]0;/\x1b\\\x1b]11;?\x1b\\\x1b[>4;1m\x1b]133;A;click_events=1\x1b\\<user>@c14b76200c0e /> \x1b]133;B\x1b\\'
+fish all           b'\x1b]0;/\x1b\\\x1b]11;?\x1b\\\x1b[>4;1m\x1b]133;A;click_events=1\x1b\\<user>@c14b76200c0e /> \x1b]133;B\x1b\\'

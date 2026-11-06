@@ -1,0 +1,44 @@
+# macOS (aarch64, native tier), tools/shape-rss --only the wait shapes. First the bridge parking on a list literal made at
+# every park (rejected: two rows over their bounds); then the committed form (a kept empty list) and trunk b514e14,
+# one take each.
+
+## the first form
+shape-rss: FAIL jobs-set-m               monitor   3000     5392 KB    6000     6000 KB  grew     608 KB (207 B a turn)  [env true & wait $!] metric=RSS bound=160B+64KiB
+shape-rss: ok   pipeline-program         loop    10000     5584 KB   20000     6528 KB  grew     944 KB (96 B a turn)  [echo x | cat >/dev/null] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-program            typed   10000     6288 KB   20000     7616 KB  grew    1328 KB (135 B a turn)  [env true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-wait             loop    10000     4416 KB   20000     5072 KB  grew     656 KB (67 B a turn)  [wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait          loop    10000     5760 KB   20000     6848 KB  grew    1088 KB (111 B a turn)  [env true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-builtin-wait  loop    10000     5424 KB   20000     6512 KB  grew    1088 KB (111 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait-pid      loop    10000     5408 KB   20000     6496 KB  grew    1088 KB (111 B a turn)  [true & wait $!] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-background-wait   script  10000     5360 KB   20000     6192 KB  grew     832 KB (85 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: FAIL typed-background-wait    typed   10000     7440 KB   20000     9728 KB  grew    2288 KB (234 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-background-group    loop    10000     5184 KB   20000     6160 KB  grew     976 KB (99 B a turn)  [{ true; } & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-background-subshell loop    10000     5184 KB   20000     6160 KB  grew     976 KB (99 B a turn)  [( true ) & wait] metric=RSS bound=100B+1280KiB
+shape-rss: ok   typed-fork-subshell      typed   10000     6384 KB   20000     8032 KB  grew    1648 KB (168 B a turn)  [( true; true )] metric=RSS bound=100B+1024KiB
+shape-rss: FAIL 2: jobs-set-m, typed-background-wait (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)
+
+## the committed form, then trunk
+START shapes-head 20:24:26
+shape-rss: ok   jobs-set-m               monitor   3000     5312 KB    6000     5744 KB  grew     432 KB (147 B a turn)  [env true & wait $!] metric=RSS bound=160B+64KiB
+shape-rss: ok   typed-program            typed   10000     6240 KB   20000     7568 KB  grew    1328 KB (135 B a turn)  [env true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-wait             loop    10000     4336 KB   20000     4992 KB  grew     656 KB (67 B a turn)  [wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait          loop    10000     5776 KB   20000     6848 KB  grew    1072 KB (109 B a turn)  [env true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-builtin-wait  loop    10000     5424 KB   20000     6496 KB  grew    1072 KB (109 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait-pid      loop    10000     5408 KB   20000     6480 KB  grew    1072 KB (109 B a turn)  [true & wait $!] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-background-wait   script  10000     5376 KB   20000     6208 KB  grew     832 KB (85 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-background-wait    typed   10000     6976 KB   20000     8912 KB  grew    1936 KB (198 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-background-group    loop    10000     5152 KB   20000     6128 KB  grew     976 KB (99 B a turn)  [{ true; } & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-fork-subshell      typed   10000     5904 KB   20000     7104 KB  grew    1200 KB (122 B a turn)  [( true; true )] metric=RSS bound=100B+1024KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)
+START shapes-trunk 20:28:38
+shape-rss: ok   jobs-set-m               monitor   3000     5264 KB    6000     5712 KB  grew     448 KB (152 B a turn)  [env true & wait $!] metric=RSS bound=160B+64KiB
+shape-rss: ok   typed-program            typed   10000     6192 KB   20000     7520 KB  grew    1328 KB (135 B a turn)  [env true] metric=RSS bound=100B+1024KiB
+shape-rss: ok   builtin-wait             loop    10000     4400 KB   20000     5056 KB  grew     656 KB (67 B a turn)  [wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait          loop    10000     5760 KB   20000     6848 KB  grew    1088 KB (111 B a turn)  [env true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-builtin-wait  loop    10000     5424 KB   20000     6512 KB  grew    1088 KB (111 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   background-wait-pid      loop    10000     5408 KB   20000     6496 KB  grew    1088 KB (111 B a turn)  [true & wait $!] metric=RSS bound=100B+1024KiB
+shape-rss: ok   script-background-wait   script  10000     5360 KB   20000     6208 KB  grew     848 KB (86 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-background-wait    typed   10000     6912 KB   20000     8768 KB  grew    1856 KB (190 B a turn)  [true & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   fork-background-group    loop    10000     5168 KB   20000     6144 KB  grew     976 KB (99 B a turn)  [{ true; } & wait] metric=RSS bound=100B+1024KiB
+shape-rss: ok   typed-fork-subshell      typed   10000     5920 KB   20000     7120 KB  grew    1200 KB (122 B a turn)  [( true; true )] metric=RSS bound=100B+1024KiB
+shape-rss: ok (default bound 100 B a turn + 1 MiB over N turns; row overrides shown above)

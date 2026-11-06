@@ -1,0 +1,164 @@
+# The rows on Linux, four CPUs in the container: 'red1' runs the rows (at 71f556b) against trunk b514e14's binaries,
+# 'head1' runs them with the bridge's first form (the committed fix differs only in the list it parks on).
+# red2-opt-in-trunk is the opt-in row with its corrected screen (57d8390) against trunk's binary. Paths removed.
+
+#### red1
+START red-sessions-native 2026-11-06T20:24:11Z
+ok   sh34_default_on
+FAIL sh34_off_login_sh
+FAIL sh34_off_path_sh
+ok   sh34_off_posix
+FAIL sh34_off_sh
+ok   sh37_jc_true_background
+FAIL sh37_sh_opt_in
+session: pass 3  fail 4  pending 0 (0)
+END red-sessions-native exit=1 2026-11-06T20:24:26Z
+START red-identity-native 2026-11-06T20:24:26Z
+FAIL prompt-user-passwd want 'ubuntu@box ' got b'\x1b[6n\x1b[0m?@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0m?@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[0m'
+ok prompt-user-USER want 'envuser@box '
+ok prompt-user-LOGNAME want 'envlog@box '
+FAIL prompt-host-node want 'tester@80c70337acd9 ' got b'\x1b[6n\x1b[0mtester@? ~\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0mtester@? ~\x1b[0m> \x1b[0m\x1b[0m\x1b[0m'
+ok prompt-host-HOSTNAME want 'tester@envhost '
+FAIL prompt-identity-bare want 'ubuntu@80c70337acd9 ' got b'\x1b[6n\x1b[0m?@? ~/h/m/l/s/t/t/sh37-identity-tpw8yxvy\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0m?@? ~/h/m/l/s/t/t/sh37-identity-tpw8yxvy\x1b[0m> \x1b[0m\x1b[0m\x1b[0m'
+END red-identity-native exit=1 2026-11-06T20:24:27Z
+START red-sessions-release 2026-11-06T20:24:27Z
+ok   sh34_default_on
+FAIL sh34_off_login_sh
+FAIL sh34_off_path_sh
+ok   sh34_off_posix
+FAIL sh34_off_sh
+ok   sh37_jc_true_background
+FAIL sh37_sh_opt_in
+session: pass 3  fail 4  pending 0 (0)
+END red-sessions-release exit=1 2026-11-06T20:24:42Z
+START red-identity-release 2026-11-06T20:24:42Z
+FAIL prompt-user-passwd want 'ubuntu@box ' got b'\x1b[6n\x1b[0m?@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0m?@box ~\x1b[0m> \x1b[0m\x1b[0m\x1b[0m'
+ok prompt-user-USER want 'envuser@box '
+ok prompt-user-LOGNAME want 'envlog@box '
+FAIL prompt-host-node want 'tester@80c70337acd9 ' got b'\x1b[6n\x1b[0mtester@? ~\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0mtester@? ~\x1b[0m> \x1b[0m\x1b[0m\x1b[0m'
+ok prompt-host-HOSTNAME want 'tester@envhost '
+FAIL prompt-identity-bare want 'ubuntu@80c70337acd9 ' got b'\x1b[6n\x1b[0m?@? ~/h/m/l/s/t/t/sh37-identity-5rac_aaz\x1b[0m> \x1b[0m\x1b[0m\x1b[H\x1b[2J\x1b[0m?@? ~/h/m/l/s/t/t/sh37-identity-5rac_aaz\x1b[0m> \x1b[0m\x1b[0m\x1b[0m'
+END red-identity-release exit=1 2026-11-06T20:24:43Z
+START red-probe-release 2026-11-06T20:24:43Z
+ok probe-den-fds {'count': 1, 'first': [{'name': 'den', 'in': 0, 'err': 1, 'first': 3, 'char0': 1, 'char2': 1}]}
+FAIL probe-hostname-not-started {'count': 1, 'node': b'80c70337acd9'}
+ok probe-vcs-output stdout pipe retained
+ok probe-help-fds {'count': 1, 'first': [{'name': 'probe', 'in': 0, 'err': 1, 'first': 3, 'char0': 1, 'char2': 1}]}
+ok probe-user-close-err [{'name': 'probe', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]
+ok probe-user-close-in [{'name': 'probe', 'in': -1, 'err': 1, 'first': 0, 'char0': 0, 'char2': 0}]
+END red-probe-release exit=1 2026-11-06T20:25:24Z
+START dash-oracle 2026-11-06T20:25:24Z
+END dash-oracle exit=0 2026-11-06T20:25:27Z
+START red-jc-1 2026-11-06T20:25:27Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END red-jc-1 exit=0 2026-11-06T20:25:28Z
+START red-jc-2 2026-11-06T20:25:28Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END red-jc-2 exit=0 2026-11-06T20:25:28Z
+START red-jc-3 2026-11-06T20:25:28Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END red-jc-3 exit=0 2026-11-06T20:25:29Z
+START red-jc-4 2026-11-06T20:25:29Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END red-jc-4 exit=0 2026-11-06T20:25:29Z
+START red-jc-5 2026-11-06T20:25:29Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END red-jc-5 exit=0 2026-11-06T20:25:30Z
+END job red1 exit=0 2026-11-06T20:25:30Z
+#### head1
+START fmt 2026-11-06T20:25:30Z
+END fmt exit=0 2026-11-06T20:25:30Z
+START build-native 2026-11-06T20:25:30Z
+END build-native exit=0 2026-11-06T20:25:36Z
+START build-release 2026-11-06T20:25:36Z
+END build-release exit=0 2026-11-06T20:26:21Z
+START build-static 2026-11-06T20:26:21Z
+END build-static exit=0 2026-11-06T20:27:13Z
+START self-native 2026-11-06T20:27:13Z
+END self-native exit=0 2026-11-06T20:27:20Z
+START sessions-native 2026-11-06T20:27:20Z
+ok   sh34_default_on
+ok   sh34_default_on_login
+ok   sh34_off_c_script_pipe
+ok   sh34_off_login_sh
+ok   sh34_off_path_sh
+ok   sh34_off_posix
+ok   sh34_off_sh
+ok   sh37_jc_true_background
+ok   sh37_sh_opt_in
+session: pass 9  fail 0  pending 0 (0)
+END sessions-native exit=0 2026-11-06T20:27:39Z
+START identity-native 2026-11-06T20:27:39Z
+ok prompt-user-passwd want 'ubuntu@box '
+ok prompt-user-USER want 'envuser@box '
+ok prompt-user-LOGNAME want 'envlog@box '
+ok prompt-host-node want 'tester@243915f5434e '
+ok prompt-host-HOSTNAME want 'tester@envhost '
+ok prompt-identity-bare want 'ubuntu@243915f5434e '
+ok prompt-identity user 'ubuntu' host '243915f5434e'
+END identity-native exit=0 2026-11-06T20:27:40Z
+START self-release 2026-11-06T20:27:40Z
+END self-release exit=0 2026-11-06T20:28:48Z
+START sessions-release 2026-11-06T20:28:48Z
+ok   sh34_default_on
+ok   sh34_default_on_login
+ok   sh34_off_c_script_pipe
+ok   sh34_off_login_sh
+ok   sh34_off_path_sh
+ok   sh34_off_posix
+ok   sh34_off_sh
+ok   sh37_jc_true_background
+ok   sh37_sh_opt_in
+session: pass 9  fail 0  pending 0 (0)
+END sessions-release exit=0 2026-11-06T20:29:07Z
+START identity-release 2026-11-06T20:29:07Z
+ok prompt-user-passwd want 'ubuntu@box '
+ok prompt-user-USER want 'envuser@box '
+ok prompt-user-LOGNAME want 'envlog@box '
+ok prompt-host-node want 'tester@243915f5434e '
+ok prompt-host-HOSTNAME want 'tester@envhost '
+ok prompt-identity-bare want 'ubuntu@243915f5434e '
+ok prompt-identity user 'ubuntu' host '243915f5434e'
+END identity-release exit=0 2026-11-06T20:29:08Z
+START probe-release 2026-11-06T20:29:08Z
+ok probe-den-fds {'count': 1, 'first': [{'name': 'den', 'in': 0, 'err': 1, 'first': 3, 'char0': 1, 'char2': 1}]}
+ok probe-hostname-not-started {'count': 0, 'node': b'243915f5434e'}
+ok probe-vcs-output stdout pipe retained
+ok probe-help-fds {'count': 1, 'first': [{'name': 'probe', 'in': 0, 'err': 1, 'first': 3, 'char0': 1, 'char2': 1}]}
+ok probe-user-close-err [{'name': 'probe', 'in': 2, 'err': -1, 'first': 2, 'char0': 1, 'char2': 0}]
+ok probe-user-close-in [{'name': 'probe', 'in': -1, 'err': 1, 'first': 0, 'char0': 0, 'char2': 0}]
+END probe-release exit=0 2026-11-06T20:29:53Z
+START red2-opt-in-trunk 2026-11-06T20:29:53Z
+FAIL sh37_sh_opt_in
+session: pass 0  fail 1  pending 0 (0)
+END red2-opt-in-trunk exit=1 2026-11-06T20:29:57Z
+START replay-bg30-head 2026-11-06T20:29:57Z
+END replay-bg30-head exit=0 2026-11-06T20:48:49Z
+START replay-f0-head 2026-11-06T20:48:49Z
+END replay-f0-head exit=0 2026-11-06T20:53:50Z
+START jc-row-head-1 2026-11-06T20:53:50Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END jc-row-head-1 exit=0 2026-11-06T20:53:50Z
+START jc-row-head-2 2026-11-06T20:53:50Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END jc-row-head-2 exit=0 2026-11-06T20:53:51Z
+START jc-row-head-3 2026-11-06T20:53:51Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END jc-row-head-3 exit=0 2026-11-06T20:53:51Z
+START jc-row-head-4 2026-11-06T20:53:51Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END jc-row-head-4 exit=0 2026-11-06T20:53:52Z
+START jc-row-head-5 2026-11-06T20:53:52Z
+ok   sh37_jc_true_background
+session: pass 1  fail 0  pending 0 (0)
+END jc-row-head-5 exit=0 2026-11-06T20:53:52Z
+END job head1 exit=0 2026-11-06T20:53:52Z

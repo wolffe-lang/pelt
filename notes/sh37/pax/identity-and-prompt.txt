@@ -1,0 +1,18 @@
+== #115: init /bin/pelt by its own name, kmain_console's environment, root's passwd entry, no hostname program
+root@? ~# echo echo echo echo echo echo Secho SHecho SH3echo SH37echo SH37-echo SH37-Iecho SH37-IDecho SH37-IDEecho SH37-IDENecho SH37-IDENTecho SH37-IDENTIech
+SH37-IDENTITY-SHOWN
+root@? ~# echo SH37-IDENTITY-SHOWNexec exit exit exit exit 0
+PAX: init /bin/pelt ended with status 0; nothing left to run
+
+== F5 (serial): /bin/sh -i +m, then export USER=pax HOSTNAME=pax-test and set -o friendly -o prompt_friendly
+pax@pax-test ~# pprproprompromppromptprompt_prompt_rprompt_riprompt_rigprompt_righprompt_rightprompt_right(prompt_right()prompt_right() prompt_right() {prompt_
+pax@pax-test ~# rightmarkfrightmarkfarightmarkfalrightmarkfalsrightmarkfalserightmark
+pax@pax-test ~ [1]# rightmarkprightmarkprrightmarkprirightmarkprinrightmarkprintrightmarkprintfrightmarkprintf rightmarkprintf 'rightmarkprintf 'Prightmarkprin
+PX82-FLOAT=1.12
+pax@pax-test ~# rightmarksrightmarkshrightmarksh rightmarksh -rightmarksh -crightmarksh -c rightmarksh -c 'rightmarksh -c 'srightmarksh -c 'serightmarksh -c 's
+PX82-NOEXEC=0
+pax@pax-test ~# rightmarksrightmarkserightmarksetrightmarkset rightmarkset +rightmarkset +orightmarkset +o rightmarkset +o frightmarkset +o frrightmarkset +o f
+$ echo PX82-PROMPT-END
+PX82-PROMPT-END
+PAX: init /bin/env ended with status 0; nothing left to run
+

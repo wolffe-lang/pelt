@@ -1,0 +1,171 @@
+# pelt#114's replays (tools/wait-replay), four CPUs in a Linux container, pelt built static as PAX builds it.
+# 'prompt K for step K' names the prompt that never came: the line typed before it is the one that hung.
+# 'tasks fell' is the first prompt at which the shell had one task, not two (the runtime's drain thread gone).
+# Paths are removed; pids are the container's.
+
+== trunk b514e14, wolf 0.2.36, static: the shapes line typed 30 times a run
+run 1: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	640 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 640 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=649
+    child 649 Name:	sh | State:	Z (zombie)
+run 2: stalled prompt 9 for step 9: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	650 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 650 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=707
+    child 707 Name:	sh | State:	Z (zombie)
+run 3: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	708 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 708 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=717
+    child 717 Name:	sh | State:	Z (zombie)
+run 4: stalled prompt 6 for step 6: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	718 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 718 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=751
+    child 751 Name:	sh | State:	Z (zombie)
+run 5: stalled prompt 5 for step 5: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	752 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 752 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=777
+    child 777 Name:	sh | State:	Z (zombie)
+run 6: stalled prompt 9 for step 9: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	778 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 778 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=835
+    child 835 Name:	sh | State:	Z (zombie)
+run 7: stalled prompt 10 for step 10: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	836 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 836 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=901
+    child 901 Name:	sh | State:	Z (zombie)
+run 8: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	902 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 902 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=911
+    child 911 Name:	sh | State:	Z (zombie)
+run 9: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	912 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 912 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=921
+    child 921 Name:	sh | State:	Z (zombie)
+run 10: stalled prompt 4 for step 4: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	922 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 922 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=939
+    child 939 Name:	sh | State:	Z (zombie)
+run 11: stalled prompt 5 for step 5: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	940 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 940 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=965
+    child 965 Name:	sh | State:	Z (zombie)
+run 12: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	966 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 966 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=975
+    child 975 Name:	sh | State:	Z (zombie)
+run 13: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	976 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 976 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=985
+    child 985 Name:	sh | State:	Z (zombie)
+run 14: stalled prompt 7 for step 7: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	986 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 986 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1027
+    child 1027 Name:	sh | State:	Z (zombie)
+run 15: stalled prompt 7 for step 7: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i  (tasks fell: step 4 tasks 1)
+    status Name:	sh | State:	S (sleeping) | Pid:	1028 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1028 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1069
+    child 1069 Name:	sh | State:	Z (zombie)
+run 16: stalled prompt 4 for step 4: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1070 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1070 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1087
+    child 1087 Name:	sh | State:	Z (zombie)
+run 17: stalled prompt 4 for step 4: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1088 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1088 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1105
+    child 1105 Name:	sh | State:	Z (zombie)
+run 18: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1106 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1106 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1115
+    child 1115 Name:	sh | State:	Z (zombie)
+run 19: stalled prompt 6 for step 6: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1116 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1116 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1149
+    child 1149 Name:	sh | State:	Z (zombie)
+run 20: stalled prompt 3 for step 3: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1150 | PPid:	639 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1150 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1159
+    child 1159 Name:	sh | State:	Z (zombie)
+   total: stalled 20
+
+== trunk b514e14, wolf 0.2.36, static: PAX's whole fork sequence (F0)
+run 1: green 
+run 2: stalled prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1263 | PPid:	1162 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1263 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1346
+    child 1346 Name:	sh | State:	Z (zombie)
+run 3: green 
+run 4: stalled prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1447 | PPid:	1162 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1447 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1530
+    child 1530 Name:	sh | State:	Z (zombie)
+run 5: stalled prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1531 | PPid:	1162 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1531 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1614
+    child 1614 Name:	sh | State:	Z (zombie)
+run 6: green 
+run 7: green 
+run 8: green 
+run 9: stalled prompt 24 for step 24: i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SHAPE:substitution-pipeline:$i
+    status Name:	sh | State:	S (sleeping) | Pid:	1915 | PPid:	1162 | Threads:	1 | SigPnd:	0000000000000000 | ShdPnd:	0000000000000000 | SigBlk:	0000000000380000 | SigIgn:	0000000000280000 | SigCgt:	0000000100014446
+    task 1915 comm=sh wchan=futex_wait syscall=202 SigPnd:	0000000000000000 SigBlk:	0000000000380000 children=1998
+    child 1998 Name:	sh | State:	Z (zombie)
+run 10: green 
+   total: green 6, stalled 4
+
+== trunk b514e14's source, wolf 0.2.37, static: the shapes line typed 30 times a run
+run 1: green 
+run 2: green 
+run 3: green 
+run 4: green 
+run 5: green 
+run 6: green 
+run 7: green 
+run 8: green 
+run 9: green 
+run 10: green 
+run 11: green 
+run 12: green 
+run 13: green 
+run 14: green 
+run 15: green 
+run 16: green 
+run 17: green 
+run 18: green 
+run 19: green 
+run 20: green 
+   total: green 20
+
+== the bridge's first form, wolf 0.2.36, static: the shapes line typed 30 times a run
+run 1: green   (tasks fell: step 8 tasks 1)
+run 2: green   (tasks fell: step 21 tasks 1)
+run 3: green   (tasks fell: step 3 tasks 1)
+run 4: green   (tasks fell: step 8 tasks 1)
+run 5: green   (tasks fell: step 7 tasks 1)
+run 6: green   (tasks fell: step 5 tasks 1)
+run 7: green   (tasks fell: step 5 tasks 1)
+run 8: green   (tasks fell: step 3 tasks 1)
+run 9: green   (tasks fell: step 13 tasks 1)
+run 10: green   (tasks fell: step 4 tasks 1)
+run 11: green   (tasks fell: step 8 tasks 1)
+run 12: green   (tasks fell: step 15 tasks 1)
+run 13: green 
+run 14: green   (tasks fell: step 3 tasks 1)
+run 15: green   (tasks fell: step 7 tasks 1)
+run 16: green   (tasks fell: step 8 tasks 1)
+run 17: green   (tasks fell: step 11 tasks 1)
+run 18: green   (tasks fell: step 14 tasks 1)
+run 19: green   (tasks fell: step 3 tasks 1)
+run 20: green   (tasks fell: step 3 tasks 1)
+   total: green 20
+
+== the bridge's first form, wolf 0.2.36, static: PAX's whole fork sequence (F0)
+run 1: green 
+run 2: green 
+run 3: green 
+run 4: green 
+run 5: green 
+run 6: green 
+run 7: green 
+run 8: green 
+run 9: green   (tasks fell: step 24 tasks 1)
+run 10: green 
+   total: green 10

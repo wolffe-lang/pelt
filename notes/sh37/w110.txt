@@ -1,0 +1,5 @@
+# #110's shape, '( true; true )' typed 3,000 times a run into trunk b514e14's static binary, 1 ms a byte, four CPUs,
+# tools/wait-replay --watch (the shell's task count at every prompt). Stopped by the lane after run 1 to free the host.
+
+wait-replay: <lane>/build-b514e14/target/static/pelt, 5 runs, 3002 steps, cpus 0,1,2,3, load 0, out <lane>/out/w110-trunk
+run 1: green 610.7s  watch: tasks 2 at every prompt

@@ -1,0 +1,43 @@
+# The background-wait row against trunk b514e14's static binary, Linux container, two CPUs.
+# First: the row's first form (71f556b: the line three times, a hundred rounds) beside a variant with the shell's
+# output on the terminal, three times; and the shapes line typed thirty times a run (tools/wait-replay), three runs.
+
+session: pelt = <lane>/x/trunk/pelt (invoked as 'sh' unless a case says argv0=)
+ok   sh37_jc_true_background
+ok   sh37_jc_tty
+session: pass 2  fail 0  pending 0 (0)
+session: pelt = <lane>/x/trunk/pelt (invoked as 'sh' unless a case says argv0=)
+FAIL sh37_jc_true_background
+ok   sh37_jc_tty
+session: pass 1  fail 1  pending 0 (0)
+session: pelt = <lane>/x/trunk/pelt (invoked as 'sh' unless a case says argv0=)
+ok   sh37_jc_true_background
+ok   sh37_jc_tty
+session: pass 2  fail 0  pending 0 (0)
+run 1: stalled 72.3s prompt 30 for step 30: i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-background:$i watch: step 5 tasks 1
+run 2: green 56.2s  watch: step 17 tasks 1
+run 3: green 56.4s  watch: step 9 tasks 1
+wait-replay: runs 3 green 2 stalled 1 failed 0
+
+# Then the row's second form (074eab1: two lines of a hundred rounds, then 'sleep 1 & wait'; run here under the
+# name sh37_jc_park with the same keys and transcript), six runs: each FAIL is the shell alive and silent, hung at
+# the parking wait or at an earlier wait that had to park.
+
+FAIL sh37_jc_park
+     ! pelt alive at step 7
+--- run 1
+FAIL sh37_jc_park
+     ! pelt alive at step 7
+--- run 2
+FAIL sh37_jc_park
+     ! pelt alive at step 7
+--- run 3
+FAIL sh37_jc_park
+     ! pelt alive at step 7
+--- run 4
+FAIL sh37_jc_park
+     ! pelt alive at step 7
+--- run 5
+FAIL sh37_jc_park
+     ! pelt alive at step 7
+--- run 6

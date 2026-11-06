@@ -1,0 +1,346 @@
+SeaBIOS (version 1.16.3-debian-1.16.3-2)
+Booting from DVD/CD...
+PAX: the console
+kernel: 84a1fde3dbb36412d46d72ca0fabc42ef3f578fc-dirty sha256 de026a5514cdcde6badd97719251fb869ccbeee2f6c98a11d24071d447ccfdd9, 3410288 bytes
+paging: limine cr3 0x0000000033beb000, pax cr3 0x000000000010d000, 105 table frames
+screen: 1280x800 32 bpp pitch 5120 rgb 8:16 8:8 8:0 at 0xffff8000fd000000, wc (pat 0x0000010500070406), 1000 pages 3 tables; font spleen 8x16, 160x50 cells; 246 bytes replayed, 0 lost
+initramfs: module 0xffff800033c00000, 194620276 bytes, 84 entries
+initramfs: dir 0 bin
+initramfs: file 785416 bin/as
+initramfs: file 15191560 bin/cat
+initramfs: file 15248416 bin/env
+initramfs: file 15125048 bin/false
+initramfs: file 15188360 bin/head
+initramfs: file 15160864 bin/mkdir
+initramfs: file 2124608 bin/mkfifo
+initramfs: file 820600 bin/ps
+initramfs: file 15201400 bin/rm
+initramfs: file 2124608 bin/sed
+initramfs: file 16770928 bin/sh
+initramfs: file 15511752 bin/sleep
+initramfs: file 2124608 bin/sort
+initramfs: file 15562456 bin/tail
+initramfs: file 15180280 bin/tr
+initramfs: file 15125048 bin/true
+initramfs: file 15208880 bin/wc
+initramfs: file 2124608 bin/yes
+initramfs: dir 0 etc
+initramfs: file 30 etc/pax-run
+initramfs: dir 0 home
+initramfs: dir 0 home/pax
+initramfs: dir 0 tmp
+initramfs: dir 0 usr
+initramfs: dir 0 usr/share
+initramfs: dir 0 usr/share/pelt
+initramfs: dir 0 usr/share/pelt/fork
+initramfs: file 548 usr/share/pelt/fork/autocd_subshell.keys
+initramfs: file 67 usr/share/pelt/fork/c_jc_mixed_pipeline.keys
+initramfs: file 217 usr/share/pelt/fork/cnf_cd.keys
+initramfs: file 232 usr/share/pelt/fork/cnf_contexts.keys
+initramfs: file 145 usr/share/pelt/fork/cnf_redirect.keys
+initramfs: file 3215 usr/share/pelt/fork/corpus.keys
+initramfs: dir 0 usr/share/pelt/fork/diff
+initramfs: dir 0 usr/share/pelt/fork/diff/builtin
+initramfs: file 244 usr/share/pelt/fork/diff/builtin/c_s_dot_special_file.sh
+initramfs: dir 0 usr/share/pelt/fork/diff/env
+initramfs: file 119 usr/share/pelt/fork/diff/env/c_subshell_concurrent.sh
+initramfs: file 996 usr/share/pelt/fork/diff/env/subshell_is_process.sh
+initramfs: dir 0 usr/share/pelt/fork/diff/exec
+initramfs: file 330 usr/share/pelt/fork/diff/exec/exec_replaces_subshell.sh
+initramfs: dir 0 usr/share/pelt/fork/diff/jobs
+initramfs: file 622 usr/share/pelt/fork/diff/jobs/subshell_jobs.sh
+initramfs: dir 0 usr/share/pelt/fork/diff/pipe
+initramfs: file 97 usr/share/pelt/fork/diff/pipe/c_concurrent_stages.sh
+initramfs: file 215 usr/share/pelt/fork/diff/pipe/c_shell_producer_ends.sh
+initramfs: file 382 usr/share/pelt/fork/diff/pipe/endless_producer.sh
+initramfs: dir 0 usr/share/pelt/fork/diff/redir
+initramfs: file 589 usr/share/pelt/fork/diff/redir/c_s_cmdsub_fd_pipeline.sh
+initramfs: file 291 usr/share/pelt/fork/diff/redir/subshell_redir_fails_set_e.sh
+initramfs: dir 0 usr/share/pelt/fork/diff/signal
+initramfs: file 179 usr/share/pelt/fork/diff/signal/c_subshell_trap_reset.sh
+initramfs: file 78 usr/share/pelt/fork/diff/signal/c_trap_cmdsub_shows_parent.sh
+initramfs: file 76 usr/share/pelt/fork/diff/signal/c_trap_ignore_pipe.sh
+initramfs: file 131 usr/share/pelt/fork/diff/signal/c_wait_interrupted_term.sh
+initramfs: file 216 usr/share/pelt/fork/diff/signal/subshell_end_devnull.sh
+initramfs: file 1120 usr/share/pelt/fork/diff/signal/subshell_end_said_outside.sh
+initramfs: file 77 usr/share/pelt/fork/diff/signal/subshell_signal.sh
+initramfs: file 558 usr/share/pelt/fork/diff/signal/trap_after_redirected_subshell.sh
+initramfs: file 298 usr/share/pelt/fork/diff/signal/trap_cmdsub_lone_exit.sh
+initramfs: dir 0 usr/share/pelt/fork/diff/wait
+initramfs: file 78 usr/share/pelt/fork/diff/wait/c_subshell.sh
+initramfs: file 368 usr/share/pelt/fork/diff/wait/reaped_signal_quiet.sh
+initramfs: file 244 usr/share/pelt/fork/diff/wait/waited_signal_said.sh
+initramfs: file 72 usr/share/pelt/fork/jc_background_subshell.keys
+initramfs: file 70 usr/share/pelt/fork/jc_subshell_redir_stop.keys
+initramfs: file 58 usr/share/pelt/fork/jc_subshell_stop.keys
+initramfs: file 1168 usr/share/pelt/fork/manifest.txt
+initramfs: dir 0 usr/share/pelt/fork/probe
+initramfs: file 1737 usr/share/pelt/fork/probe/childstate.sh
+initramfs: file 1832 usr/share/pelt/fork/probe/corners.sh
+initramfs: file 1275 usr/share/pelt/fork/probe/notice.sh
+initramfs: file 1119 usr/share/pelt/fork/probe/notice2.sh
+initramfs: file 1032 usr/share/pelt/fork/probe/notice3.sh
+initramfs: file 977 usr/share/pelt/fork/probe/notice4.sh
+initramfs: file 1463 usr/share/pelt/fork/probe/notice5.sh
+initramfs: file 2438 usr/share/pelt/fork/probe/shapes.sh
+initramfs: file 1143 usr/share/pelt/fork/probe/trapwait.sh
+initramfs: file 882 usr/share/pelt/fork/probes.keys
+initramfs: file 148 usr/share/pelt/fork/process.expect
+initramfs: file 166 usr/share/pelt/fork/script-fork-substitution.sh
+initramfs: file 1178 usr/share/pelt/fork/shapes.keys
+initramfs: file 101 usr/share/pelt/fork/subshell_jobs.keys
+firmware: bios
+memory: 20 entries, total 1346233344 bytes, usable 867164160, largest unmapped hole 1879048192
+acpi: RSDT OEM BOCHS  length 56
+acpi: FACP OEM BOCHS  length 244
+acpi: SCI 9 PM timer 0x0000000000000608 mask 0x0000000000ffffff PM1a 0x0000000000000604 PM1b 0x0000000000000000
+acpi: APIC OEM BOCHS  length 120
+acpi: LAPIC id 0 flags 0x0000000000000001
+acpi: IOAPIC id 0 address 0x00000000fec00000 GSI 0
+acpi: ISO bus 0 IRQ 0 GSI 2 flags 0x0000000000000000
+acpi: ISO bus 0 IRQ 5 GSI 5 flags 0x000000000000000d
+acpi: ISO bus 0 IRQ 9 GSI 9 flags 0x000000000000000d
+acpi: ISO bus 0 IRQ 10 GSI 10 flags 0x000000000000000d
+acpi: ISO bus 0 IRQ 11 GSI 11 flags 0x000000000000000d
+acpi: NMI UID 255 LINT 1 flags 0x0000000000000000
+acpi: HPET OEM BOCHS  length 56
+acpi: HPET address 0x00000000fed00000
+acpi: MCFG OEM BOCHS  length 60
+acpi: MCFG base 0x00000000b0000000 segment 0 buses 0..255
+acpi: WAET OEM BOCHS  length 40
+acpi: DSDT OEM BOCHS  length 8321
+clock: HPET 10000000 fs/tick, checked against the PM timer
+timer: LAPIC calibrated by HPET divide16 62485600 Hz, tick 100 Hz vector 32; PIT IRQ masked
+fpu: xsave 1, xcr0 0x0000000000000007, area 832 bytes, cr0.em 0, cr0.ts 0, cr4.osfxsr 1, cr4.osxsave 1
+sched: main 0, idle 1, 64 slots, stacks 16 KiB above a 48 KiB guard from 0xffffd00000000000, quantum 2 ticks
+user: syscall star 0x0010000800000000 lstar 0xffffffff800017ac fmask 0x0000000000044700, efer.sce 1, smep 1, smap 1
+console: com1 irq 4 vector 36, i8042 0x61 -> 0x61 irq 1 vector 33, 8259 master mask 0xed; iflag 0x100 oflag 0x05 cflag 0xbf lflag 0x8a3b
+ahci0: 8086:2922 at 00:1f.2, CAP.NP=5 CAP.NCS=31 S64A=1 PI=0x000000000000003f BOH=0; ports idled; one slot, polled
+ahci0: 8086:2922 at 00:1f.2 port 0: ATAPI skipped (0x00000000eb140101)
+ahci0: 8086:2922 at 00:1f.2 port 2: ATAPI skipped (0x00000000eb140101)
+kernel: 84a1fde3dbb36412d46d72ca0fabc42ef3f578fc-dirty sha256 de026a5514cdcde6badd97719251fb869ccbeee2f6c98a11d24071d447ccfdd9, 3410288 bytes
+boot: 238 ms from the kernel's entry to its first program; the console drew for 16 ms of it (71 scrolls by copy (read 284, write 280 cycles; copy when read <= 4 x write), 7290 bytes)
+run 1: /bin/env HOME=/ /bin/sh -i -m
+user: exec pid 1 cr3 0x00000000001fe000 entry 0x0000000000241740 rsp 0x00007fffffffee30 argc 5 envc 4, 4 PT_LOAD: 0x0000000000200000-0x0000000000240738 r-- 0x0000000000241740-0x00000000003215f0 r-x 0x00000000003225f0-0x000000000032a000 rw- 0x000000000032ae20-0x0000000000332d98 rw-, stack 256 pages below 0x00007ffffffff000
+user: env pid 1 syscall 273: -ENOSYS
+user: env pid 1 syscall 334: -ENOSYS
+user: exec pid 1 cr3 0x0000000000469000 entry 0x0000000000256280 rsp 0x00007fffffffee60 argc 3 envc 4, 4 PT_LOAD: 0x0000000000200000-0x0000000000255270 r-- 0x0000000000256280-0x000000000046e490 r-x 0x000000000046f490-0x0000000000479000 rw- 0x0000000000479ac0-0x0000000000482bd8 rw-, stack 256 pages below 0x00007ffffffff000
+user: sh pid 1 syscall 273: -ENOSYS
+user: sh pid 1 syscall 334: -ENOSYS
+user: sh pid 1 thread 2 started: stack below 0x00007effffff70c0, tls 0x00007effffff76c0
+$ :
+$ mkdir -p /tmp/px61-shapes-root
+user: exec pid 3 cr3 0x000000000106c000 entry 0x000000000023f180 rsp 0x00007fffffffee30 argc 3 envc 5, 4 PT_LOAD: 0x0000000000200000-0x000000000023e15c r-- 0x000000000023f180-0x0000000000310e30 r-x 0x0000000000311e30-0x0000000000319000 rw- 0x0000000000319ee0-0x0000000000321cd8 rw-, stack 256 pages below 0x00007ffffffff000
+user: mkdir pid 3 syscall 273: -ENOSYS
+user: mkdir pid 3 syscall 334: -ENOSYS
+user: mkdir pid 3 exit_group 0 after 1 runs
+$ cd /tmp/px61-shapes-root
+$ cd /tmp/px61-shapes-root
+$ echo px61-shapes-begin
+px61-shapes-begin
+$ i=0; while [ $i -lt 8 ]; do x=$(true; true); i=$((i+1)); done; wait; echo SHAP
+E:fork-substitution:$i
+user: sh pid 4 exit_group 0 after 1 runs
+user: sh pid 5 exit_group 0 after 1 runs
+user: sh pid 6 exit_group 0 after 1 runs
+user: sh pid 7 exit_group 0 after 1 runs
+user: sh pid 8 exit_group 0 after 1 runs
+user: sh pid 9 exit_group 0 after 1 runs
+user: sh pid 10 exit_group 0 after 1 runs
+user: sh pid 11 exit_group 0 after 1 runs
+SHAPE:fork-substitution:8
+$ i=0; while [ $i -lt 8 ]; do ( true; true ); i=$((i+1)); done; wait; echo SHAPE
+:fork-subshell:$i
+user: sh pid 12 exit_group 0 after 1 runs
+user: sh pid 13 exit_group 0 after 1 runs
+user: sh pid 14 exit_group 0 after 1 runs
+user: sh pid 15 exit_group 0 after 1 runs
+user: sh pid 16 exit_group 0 after 1 runs
+user: sh pid 17 exit_group 0 after 1 runs
+user: sh pid 18 exit_group 0 after 1 runs
+user: sh pid 19 exit_group 0 after 1 runs
+SHAPE:fork-subshell:8
+$ i=0; while [ $i -lt 8 ]; do { true; } & wait; i=$((i+1)); done; wait; echo SHA
+PE:fork-background-group:$i
+user: sh pid 20 exit_group 0 after 1 runs
+user: sh pid 21 exit_group 0 after 1 runs
+user: sh pid 22 exit_group 0 after 1 runs
+user: sh pid 23 exit_group 0 after 1 runs
+user: sh pid 24 exit_group 0 after 1 runs
+user: sh pid 25 exit_group 0 after 1 runs
+user: sh pid 26 exit_group 0 after 1 runs
+user: sh pid 27 exit_group 0 after 1 runs
+SHAPE:fork-background-group:8
+[8] + Done                       true
+[7] + Done                       true
+[6] + Done                       true
+[5] + Done                       true
+[4] + Done                       true
+[3] + Done                       true
+[2] + Done                       true
+[1] + Done                       true
+$ i=0; while [ $i -lt 8 ]; do ( true ) & wait; i=$((i+1)); done; wait; echo SHAP
+E:fork-background-subshell:$i
+user: sh pid 28 exit_group 0 after 1 runs
+user: sh pid 29 exit_group 0 after 1 runs
+user: sh pid 30 exit_group 0 after 1 runs
+user: sh pid 31 exit_group 0 after 1 runs
+user: sh pid 32 exit_group 0 after 1 runs
+user: sh pid 33 exit_group 0 after 1 runs
+user: sh pid 34 exit_group 0 after 1 runs
+user: sh pid 35 exit_group 0 after 1 runs
+SHAPE:fork-background-subshell:8
+[8] + Done                       (true)
+[7] + Done                       (true)
+[6] + Done                       (true)
+[5] + Done                       (true)
+[4] + Done                       (true)
+[3] + Done                       (true)
+[2] + Done                       (true)
+[1] + Done                       (true)
+$ i=0; while [ $i -lt 8 ]; do { true; } | true; i=$((i+1)); done; wait; echo SHA
+PE:fork-stage:$i
+user: sh pid 36 exit_group 0 after 1 runs
+user: sh pid 37 exit_group 0 after 1 runs
+user: sh pid 38 exit_group 0 after 1 runs
+user: sh pid 39 exit_group 0 after 1 runs
+user: sh pid 40 exit_group 0 after 1 runs
+user: sh pid 41 exit_group 0 after 1 runs
+user: sh pid 42 exit_group 0 after 1 runs
+user: sh pid 43 exit_group 0 after 1 runs
+SHAPE:fork-stage:8
+$ sh /usr/share/pelt/fork/script-fork-substitution.sh
+user: exec pid 44 cr3 0x0000000011534000 entry 0x0000000000256280 rsp 0x00007fffffffede0 argc 2 envc 6, 4 PT_LOAD: 0x0000000000200000-0x0000000000255270 r-- 0x0000000000256280-0x000000000046e490 r-x 0x000000000046f490-0x0000000000479000 rw- 0x0000000000479ac0-0x0000000000482bd8 rw-, stack 256 pages below 0x00007ffffffff000
+user: sh pid 44 syscall 273: -ENOSYS
+user: sh pid 44 syscall 334: -ENOSYS
+user: sh pid 44 thread 45 started: stack below 0x00007effffff70c0, tls 0x00007effffff76c0
+user: sh pid 46 exit_group 0 after 1 runs
+user: sh pid 47 exit_group 0 after 1 runs
+user: sh pid 48 exit_group 0 after 1 runs
+user: sh pid 49 exit_group 0 after 1 runs
+user: sh pid 50 exit_group 0 after 1 runs
+user: sh pid 51 exit_group 0 after 1 runs
+user: sh pid 52 exit_group 0 after 1 runs
+user: sh pid 53 exit_group 0 after 1 runs
+SHAPE:script-fork-substitution:8
+user: sh pid 44 exit_group 0 after 10 runs
+$ ( true; true )
+user: sh pid 54 exit_group 0 after 1 runs
+$ ( true; true )
+user: sh pid 55 exit_group 0 after 1 runs
+$ ( true; true )
+user: sh pid 56 exit_group 0 after 1 runs
+$ ( true; true )
+user: sh pid 57 exit_group 0 after 1 runs
+$ ( true; true )
+user: sh pid 58 exit_group 0 after 1 runs
+$ ( true; true )
+user: sh pid 59 exit_group 0 after 1 runs
+$ ( true; true )
+user: sh pid 60 exit_group 0 after 1 runs
+$ ( true; true )
+user: sh pid 61 exit_group 0 after 1 runs
+$ echo SHAPE:typed-fork-subshell:8
+SHAPE:typed-fork-subshell:8
+$ i=0; while [ $i -lt 8 ]; do ( true ) >/dev/null; i=$((i+1)); done; wait; echo 
+SHAPE:fork-redirected-subshell:$i
+user: sh pid 62 exit_group 0 after 1 runs
+user: sh pid 63 exit_group 0 after 1 runs
+user: sh pid 64 exit_group 0 after 1 runs
+user: sh pid 65 exit_group 0 after 1 runs
+user: sh pid 66 exit_group 0 after 1 runs
+user: sh pid 67 exit_group 0 after 1 runs
+user: sh pid 68 exit_group 0 after 1 runs
+user: sh pid 69 exit_group 0 after 1 runs
+SHAPE:fork-redirected-subshell:8
+$ i=0; while [ $i -lt 8 ]; do true & wait; i=$((i+1)); done; wait; echo SHAPE:tr
+ue-background-wait:$i
+user: sh pid 70 exit_group 0 after 1 runs
+user: sh pid 71 exit_group 0 after 1 runs
+user: sh pid 72 exit_group 0 after 1 runs
+user: sh pid 73 exit_group 0 after 1 runs
+user: sh pid 74 exit_group 0 after 1 runs
+user: sh pid 75 exit_group 0 after 1 runs
+user: sh pid 76 exit_group 0 after 1 runs
+user: sh pid 77 exit_group 0 after 1 runs
+SHAPE:true-background-wait:8
+[8] + Done                       true
+[7] + Done                       true
+[6] + Done                       true
+[5] + Done                       true
+[4] + Done                       true
+[3] + Done                       true
+[2] + Done                       true
+[1] + Done                       true
+$ i=0; while [ $i -lt 8 ]; do true & i=$((i+1)); done; wait; echo SHAPE:true-bac
+kground:$i
+user: sh pid 78 exit_group 0 after 1 runs
+user: sh pid 79 exit_group 0 after 1 runs
+user: sh pid 80 exit_group 0 after 1 runs
+user: sh pid 81 exit_group 0 after 1 runs
+user: sh pid 82 exit_group 0 after 1 runs
+user: sh pid 83 exit_group 0 after 1 runs
+user: sh pid 84 exit_group 0 after 1 runs
+user: sh pid 85 exit_group 0 after 1 runs
+SHAPE:true-background:8
+[8] + Done                       true
+[7] + Done                       true
+[6] + Done                       true
+[5] + Done                       true
+[4] + Done                       true
+[3] + Done                       true
+[2] + Done                       true
+[1] + Done                       true
+$ i=0; while [ $i -lt 8 ]; do x=$(echo a | cat); i=$((i+1)); done; wait; echo SH
+APE:substitution-pipeline:$i
+user: exec pid 87 cr3 0x0000000022204000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 87 syscall 273: -ENOSYS
+user: cat pid 87 syscall 334: -ENOSYS
+user: cat pid 87 exit_group 0 after 1 runs
+user: sh pid 86 exit_group 0 after 2 runs
+user: exec pid 89 cr3 0x0000000023144000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 89 syscall 273: -ENOSYS
+user: cat pid 89 syscall 334: -ENOSYS
+user: cat pid 89 exit_group 0 after 1 runs
+user: sh pid 88 exit_group 0 after 2 runs
+user: exec pid 91 cr3 0x0000000024084000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 91 syscall 273: -ENOSYS
+user: cat pid 91 syscall 334: -ENOSYS
+user: cat pid 91 exit_group 0 after 1 runs
+user: sh pid 90 exit_group 0 after 2 runs
+user: exec pid 93 cr3 0x0000000024fc4000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 93 syscall 273: -ENOSYS
+user: cat pid 93 syscall 334: -ENOSYS
+user: cat pid 93 exit_group 0 after 1 runs
+user: sh pid 92 exit_group 0 after 2 runs
+user: exec pid 95 cr3 0x0000000025f04000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 95 syscall 273: -ENOSYS
+user: cat pid 95 syscall 334: -ENOSYS
+user: cat pid 95 exit_group 0 after 1 runs
+user: sh pid 94 exit_group 0 after 2 runs
+user: exec pid 97 cr3 0x0000000026e44000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 97 syscall 273: -ENOSYS
+user: cat pid 97 syscall 334: -ENOSYS
+user: cat pid 97 exit_group 0 after 1 runs
+user: sh pid 96 exit_group 0 after 2 runs
+user: exec pid 99 cr3 0x0000000027d84000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 99 syscall 273: -ENOSYS
+user: cat pid 99 syscall 334: -ENOSYS
+user: cat pid 99 exit_group 0 after 2 runs
+user: sh pid 98 exit_group 0 after 3 runs
+user: exec pid 101 cr3 0x0000000028cc4000 entry 0x0000000000240540 rsp 0x00007fffffffee20 argc 1 envc 6, 4 PT_LOAD: 0x0000000000200000-0x000000000023f528 r-- 0x0000000000240540-0x0000000000315d50 r-x 0x0000000000316d50-0x000000000031f000 rw- 0x000000000031f080-0x0000000000326eb8 rw-, stack 256 pages below 0x00007ffffffff000
+user: cat pid 101 syscall 273: -ENOSYS
+user: cat pid 101 syscall 334: -ENOSYS
+user: cat pid 101 exit_group 0 after 1 runs
+user: sh pid 100 exit_group 0 after 2 runs
+SHAPE:substitution-pipeline:8
+$ echo px61-shapes-end
+px61-shapes-end
+$ exit 0
+user: sh pid 1 exit_group 0 after 1376 runs
+user: frames free 211412 before, 210838 with 1 processes, 211410 after
+tree: frames 25 (23 when made), 3 (3) of them the inode table's, inodes 87 (85), cap 105734, refusals 0
+run: 1 commands
+console: 1253 bytes from com1, 0 keys (0 scancodes) from the keyboard, 1256 reads, 0 waited, 0 dropped
+PAX: init /bin/env ended with status 0; nothing left to run
+halt
