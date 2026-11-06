@@ -6,6 +6,26 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Friendly when asked, as `sh`.** A shell invoked as `sh` still starts
+  with friendly off, and now honours an explicit `set -o friendly` (with
+  `suggest` and `histsearch` by their own names), typed at its prompt or set
+  in its `ENV` file, so a `/bin/sh` console can opt in. `--posix` stays a
+  hard off (pelt#113).
+
+- **The prompt names the system's user and host.** Where `USER`, `LOGNAME`
+  and `HOSTNAME` are unset, the friendly prompt takes the effective user id's
+  `/etc/passwd` name and the kernel's node name (Linux's
+  `/proc/sys/kernel/hostname`), then `/etc/hostname`, before the bounded
+  `hostname` probe and `?`. A minimal console environment no longer draws
+  `?@?` (pelt#115).
+
+- **No `wait` hangs on a lost signal thread.** With wolf 0.2.36, eight
+  `true &` and a `wait` at an interactive job-control prompt could leave the
+  runtime's signal drain thread gone and the `wait` parked for ever (the
+  runtime's bug, fixed in wolf 0.2.37). A job's wait now parks in its own
+  `poll(2)` and looks again each second, so it answers either way
+  (pelt#114).
+
 - **Quiet probes keep their standard descriptors open.** Friendly prompt
   `den`/`hostname` probes, explicit `--help` completion and the identity
   fallback use read-only `/dev/null` for input and write-only `/dev/null`
