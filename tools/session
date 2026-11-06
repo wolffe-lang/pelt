@@ -87,7 +87,7 @@ def main(argv):
         want = open(trp, encoding="utf-8").read().split("\n")[:-1]
         # a pending case is expected to miss its prompts: do not spend
         # the full wait on each step of it
-        ls.PROMPT_WAIT = 2.0 if "pending" in meta else full_wait
+        ls.PROMPT_WAIT = 2.0 if "pending" in meta else float(meta.get("prompt_wait") or full_wait)
         # a case judged on standard output alone (its oracle draws its
         # own line, so the prompt the transcript shows mid-line is not
         # one pelt writes) is paced by quiet, as it was recorded

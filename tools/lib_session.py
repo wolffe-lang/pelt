@@ -68,6 +68,9 @@ A session case is a set of files in tests/session/:
                                 (ruling #126, sh34), as dash has none.
                                 The friendly cases say `argv0=pelt`
                                 and run with its default, on.
+                  prompt_wait=S how long pelt may take to show each
+                                expected prompt, in seconds (PROMPT_WAIT,
+                                8, unless a case is bounded tighter)
                   self=VAR      the environment variable VAR names the
                                 pelt under test (its absolute path), for
                                 a case that starts pelt itself (`-c`, a
