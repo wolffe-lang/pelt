@@ -132,6 +132,14 @@ struct Sh {
     ps1_explicit: bool,
     right_prompt: str,
     prompt_host: str,
+    /// The friendly prompt's user, taken at each primary prompt
+    /// (`sh.edit_prompt`'s `prompt_prepare`).
+    prompt_user: str,
+    /// The effective uid's name in /etc/passwd, read once, at the first
+    /// friendly prompt that needs it (`sh.edit_prompt`'s `prompt_user`):
+    /// "" for none or not yet read (`prompt_passwd_read`).
+    prompt_passwd: str,
+    prompt_passwd_read: bool,
     prompt_vcs: PromptVcs,
     posix_mode: bool,
     /// Invoked by a name whose basename is `sh` (argv[0], a login shell's
@@ -443,6 +451,9 @@ fn new_sh(name: str) -> Sh {
         ps1_explicit: false,
         right_prompt: "",
         prompt_host: "",
+        prompt_user: "",
+        prompt_passwd: "",
+        prompt_passwd_read: false,
         prompt_vcs: empty_prompt_vcs(),
         posix_mode: false,
         invoked_sh: false,

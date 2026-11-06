@@ -173,16 +173,93 @@ fn prompt_vcs_result(
     }
 }
 
+/// Where the kernel keeps uname(2)'s node name as a file on linux. wolf
+/// 0.2.36 has no call that answers the node name (`os_name` answers the
+/// system's), so pelt reads the same field here (pelt#115, R-sh37-3);
+/// macOS has no `/proc` and PAX does not serve this file, and both fall
+/// through to `/etc/hostname` and the probe.
+const NODE_NAME_FILE: str = "/proc/sys/kernel/hostname"
+
+/// The name the passwd text `passwd` (the contents of /etc/passwd: one
+/// `name:password:uid:gid:gecos:home:shell` entry a line) gives `uid`:
+/// the first entry whose third field is `uid` in decimal and whose name
+/// is not empty; "" when none is.
+fn passwd_name(passwd: str, uid: int) -> str {
+    let want = "{uid}"
+    for line in passwd.lines() {
+        let f = line.split(":")
+        if f.len >= 3 && f[0].len > 0 && f[2] == want {
+            return f[0]
+        }
+    }
+    ""
+}
+
+/// The first line of `text` (a node-name file: `/proc/sys/kernel/hostname`
+/// or `/etc/hostname`, hostname(5)) that is neither blank nor a `#`
+/// comment, without its surrounding blanks; "" when there is none.
+fn first_name_line(text: str) -> str {
+    for line in text.lines() {
+        let t = line.trim()
+        if t.len > 0 && !t.starts_with("#") {
+            return t
+        }
+    }
+    ""
+}
+
+/// The prompt's user (pelt#115, R-sh37-2): `$USER`, else `$LOGNAME`, else
+/// the effective uid's passwd name, else `?`. An empty value names no one.
+fn prompt_user_pick(user: str, logname: str, passwd: str) -> str {
+    if user.len > 0 { return user }
+    if logname.len > 0 { return logname }
+    if passwd.len > 0 { return passwd }
+    "?"
+}
+
+/// The prompt's host before any program is asked (pelt#115, R-sh37-2):
+/// `$HOSTNAME`, else the kernel's node name, else `/etc/hostname`'s name;
+/// "" when none names it (then the `hostname` probe, then `?`).
+fn prompt_host_pick(env: str, node: str, etc: str) -> str {
+    if env.len > 0 { return env }
+    if node.len > 0 { return node }
+    etc
+}
+
+/// The prompt's user, from the environment or, once, from /etc/passwd.
+fn prompt_user(mut sh: Sh) -> str {
+    let user = sh.vals["USER"] else ""
+    let logname = sh.vals["LOGNAME"] else ""
+    if user.len == 0 && logname.len == 0 && !sh.prompt_passwd_read {
+        sh.prompt_passwd_read = true
+        let uid = os_euid() else -1
+        if uid >= 0 {
+            sh.prompt_passwd = passwd_name(fs_read_text("/etc/passwd") else "", uid)
+        }
+    }
+    prompt_user_pick(user, logname, sh.prompt_passwd)
+}
+
 fn prompt_prepare(mut sh: Sh, first: bool) {
     sh.right_prompt = ""
     if !first || !prompt_enabled(sh) { return }
+    sh.prompt_user = prompt_safe(prompt_user(mut sh))
     if sh.prompt_host.len == 0 {
-        sh.prompt_host = prompt_safe(sh.vals["HOSTNAME"] else "")
+        let env = sh.vals["HOSTNAME"] else ""
+        var host = env
+        if host.len == 0 {
+            host = prompt_host_pick(
+                env,
+                first_name_line(fs_read_text(NODE_NAME_FILE) else ""),
+                first_name_line(fs_read_text("/etc/hostname") else ""),
+            )
+        }
+        sh.prompt_host = prompt_safe(host)
         if sh.prompt_host.len == 0 {
             let exe = completion_exe("hostname", sh.vals["PATH"] else "")
             if exe.len > 0 {
-                let (ok, host) = prompt_probe(exe, [], os_clock_ns() + 50000000)
-                if ok { sh.prompt_host = prompt_safe(host.trim()) }
+                let (ok, probed) = prompt_probe(exe, [], os_clock_ns() + 50000000)
+                if ok { sh.prompt_host = prompt_safe(probed.trim()) }
             }
         }
         if sh.prompt_host.len == 0 { sh.prompt_host = "?" }
@@ -210,7 +287,7 @@ fn prompt_prepare(mut sh: Sh, first: bool) {
 }
 
 fn prompt_left(sh: Sh, cols: int) -> str {
-    let user = prompt_safe(sh.vals["USER"] else (sh.vals["LOGNAME"] else "?"))
+    let user = sh.prompt_user
     let home = sh.vals["HOME"] else ""
     // Once per primary prompt, never per key; failure leaves logical folding
     // available and does not change HOME, PWD, cd or pwd -L semantics.
