@@ -9,7 +9,7 @@ out "default=127\n"
 err no
 prompt ""
 step 3 "set -o friendly; bindings >/dev/null; echo \"asked=$?\""
-out "asked=127\n"
+out "asked=0\n"
 err no
 prompt ""
 step 4 "exit 0"
