@@ -123,6 +123,53 @@ def laws(binary,home):
         assert p.returncode==0 and p.stdout==b'gate\n' and p.stderr==b'',('prompt-noninteractive',p)
     print('ok prompt-PS1-precedence/environment/empty/gates/history',flush=True)
 
+def passwd_name(uid):
+    """The name /etc/passwd gives `uid` (its first entry with that third field), or None."""
+    try:
+        with open('/etc/passwd',encoding='utf-8',errors='replace') as fh:
+            for line in fh:
+                f=line.rstrip('\n').split(':')
+                if len(f)>=3 and f[2]==str(uid) and f[0]:return f[0]
+    except OSError:pass
+    return None
+
+def identity(binary,home):
+    """pelt#115: the prompt's user and host when the environment does not name them. The user is
+    $USER, else $LOGNAME, else the effective uid's passwd entry, else ?; the host is $HOSTNAME,
+    else the kernel's node name, else /etc/hostname, else the `hostname` probe, else ?. PATH names
+    an empty directory, so no `hostname` program answers."""
+    empty=home/'nobin';empty.mkdir()
+    linux=sys.platform.startswith('linux')
+    name=passwd_name(os.geteuid())
+    node=os.uname().nodename.split('.')[0]
+    if linux:
+        import pwd
+        assert name and name==pwd.getpwuid(os.geteuid()).pw_name,('prompt-identity-passwd-entry',name)
+        assert node,'prompt-identity-node-name'
+    # macOS has no /proc and keeps accounts outside /etc/passwd: there the fallbacks end at `?`
+    user=name or '?'
+    host=node if linux else '?'
+    bare={'USER':None,'LOGNAME':None,'HOSTNAME':None,'PATH':str(empty),'TERM':'linux'}
+    rows=[
+        ('prompt-user-passwd',{**bare,'HOSTNAME':'box'},user+'@box '),
+        ('prompt-user-USER',{**bare,'USER':'envuser','LOGNAME':'envlog','HOSTNAME':'box'},'envuser@box '),
+        ('prompt-user-LOGNAME',{**bare,'LOGNAME':'envlog','HOSTNAME':'box'},'envlog@box '),
+        ('prompt-host-node',{**bare,'USER':'tester'},'tester@'+host+' '),
+        ('prompt-host-HOSTNAME',{**bare,'USER':'tester','HOSTNAME':'envhost.example'},'tester@envhost '),
+        ('prompt-identity-bare',{**bare,'HOME':'/'},user+'@'+host+' '),
+    ]
+    bad=[]
+    for row,env,want in rows:
+        sh=ready(binary,home,env=env)
+        try:
+            raw=sh.data['tty']
+            ok=b'\x1b[0m'+want.encode() in raw
+            print(('ok ' if ok else 'FAIL ')+row+' want '+repr(want)+('' if ok else ' got '+repr(raw[-200:])),flush=True)
+            if not ok:bad.append(row)
+        finally:assert sh.close()
+    assert not bad,bad
+    print('ok prompt-identity user',repr(user),'host',repr(host),flush=True)
+
 def vcs(binary,home):
     bindir=home/'bin';bindir.mkdir()
     den=bindir/'den'
@@ -188,11 +235,15 @@ def cost(binary,home):
 
 if __name__=='__main__':
     binary=Path(sys.argv[1]).resolve()
+    if '--identity-only' in sys.argv:
+        with tempfile.TemporaryDirectory(prefix='sh37-identity-') as temp:identity(binary,Path(temp))
+        sys.exit(0)
     from lib_probe import witness
     witness(binary, ready, step)
     if '--probe-only' in sys.argv:sys.exit(0)
     with tempfile.TemporaryDirectory(prefix='sh32b-home-') as temp:home_aliases(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-laws-') as temp: laws(binary,Path(temp))
+    with tempfile.TemporaryDirectory(prefix='sh37-identity-') as temp:identity(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-vcs-') as temp:vcs(binary,Path(temp))
     if '--raw-only' not in sys.argv:
         with tempfile.TemporaryDirectory(prefix='sh32-cost-') as temp:cost(binary,Path(temp))
