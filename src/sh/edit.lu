@@ -31,9 +31,9 @@
 //! **The wait.** No read is torn by a signal (`[os.term.note]`), so the
 //! editor never waits in a read: it waits in `os_signal_wait_fd` on the
 //! terminal and the meanings it handles while a line is edited — a
-//! SIGINT ends the line as Ctrl-C does, a SIGHUP (heard only while
-//! editing, and only when no trap names it) puts the mode back and lets
-//! the default end the shell, and a resize (`RESIZE`) draws the line
+//! SIGINT ends the line as Ctrl-C does, a SIGHUP no trap names puts the
+//! mode back and hangs the shell up (`sh.jobs`'s `hangup`: the jobs hear
+//! it, then the shell dies of it), and a resize (`RESIZE`) draws the line
 //! again at the new width — and reads only once the terminal has a byte
 //! (or has hung up). An idle prompt wakes for nothing. `VTIME 1` times
 //! only the reads that follow (vi's lone ESC). Three empty reads in a
@@ -706,7 +706,7 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
         inj: List[int](),
         ii: 0,
         fast: 0,
-        poll_hup: (sh.sig_listen | sh.sig_ignore) & m_hup() == 0,
+        poll_hup: hup_now(sh),
         poll_int: sh.sig_listen & m_int() != 0,
         int_ignored: sh.sig_ignore & m_int() != 0,
         chars: copy chars,
@@ -821,11 +821,6 @@ fn ed_line(sh: Sh, shown: str, q: Query, previous: str) -> EdOut {
     if e.cols < 2 {
         e.cols = 2
     }
-    if e.poll_hup {
-        os_signal_listen(m_hup()) else |_| {
-            e.poll_hup = false
-        }
-    }
     if e.rs_listen {
         os_signal_listen(m_resize()) else |_| {
             e.rs_listen = false
@@ -862,13 +857,11 @@ fn ed_line(sh: Sh, shown: str, q: Query, previous: str) -> EdOut {
         ed_unlisten(e)
     }
     if hup {
-        // the default ends the shell, with the terminal as it was:
-        // the raise is delivered before it returns (`[os.signal.raise]`
-        // since wolf 0.2.29; pelt used to sleep up to half a second
-        // for the death), so what follows is for a host that refused it
+        // the shell hangs up, with the terminal as it was: its jobs hear
+        // it and the shell dies of it (`sh.jobs`'s `hangup`, which does
+        // not return); what follows is for a host that would not end it
         ed_unlisten(e)
-        os_signal_default(m_hup()) else |_| {}
-        os_signal_raise(m_hup()) else |_| {}
+        hangup(sh, -1)
         return EdOut { line: "", how: ED_EOF, mem: "", mem_set: false, num: 0 }
     }
     var line = ""
@@ -896,15 +889,13 @@ fn ed_line(sh: Sh, shown: str, q: Query, previous: str) -> EdOut {
     }
 }
 
-/// What the line listened for goes back as it was: `HUP` and `RESIZE`
-/// to their defaults when the editor listened itself (a resize still
-/// waiting is dropped: the next prompt reads the size anyway), and a
-/// resize a trap listens for, taken off the queue by the wait, goes
-/// back on it so the trap runs after the line (`poll_traps`).
+/// What the line listened for goes back as it was: `RESIZE` to its
+/// default when the editor listened itself (a resize still waiting is
+/// dropped: the next prompt reads the size anyway), and a resize a trap
+/// listens for, taken off the queue by the wait, goes back on it so the
+/// trap runs after the line (`poll_traps`). `HUP` is the shell's own
+/// (`sh.signal`'s `interactive_set`): the editor only waits on it.
 fn ed_unlisten(e: Ed) {
-    if e.poll_hup {
-        os_signal_default(m_hup()) else |_| {}
-    }
     if e.rs_listen {
         os_signal_default(m_resize()) else |_| {}
         loop {
