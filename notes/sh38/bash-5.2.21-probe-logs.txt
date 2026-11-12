@@ -1,0 +1,295 @@
+# bash 5.2.21: each row's probe log (start, the signals each probe received with si_code and the
+# sender's pid, its death), the shell's pid being the probes' sid and ppid. Written by
+# tools/hangup-witness --measure bash.
+== fg
+start fg pid 18 pgid 18 sid 17 ppid 17
+sig fg HUP code 0 from 17
+die fg HUP
+== bg
+start bg1 pid 20 pgid 20 sid 19 ppid 19
+start bg2 pid 21 pgid 21 sid 19 ppid 19
+sig bg1 HUP code 0 from 19
+sig bg2 HUP code 0 from 19
+die bg1 HUP
+die bg2 HUP
+== stopped
+start st1 pid 23 pgid 23 sid 22 ppid 22
+start st2 pid 24 pgid 24 sid 22 ppid 22
+sig st1 HUP code 0 from 22
+sig st2 HUP code 0 from 22
+sig st1 TERM code 0 from 22
+sig st1 CONT code 0 from 22
+sig st2 TERM code 0 from 22
+sig st2 CONT code 0 from 22
+die st1 HUP
+die st2 HUP
+== mixed
+start mb pid 26 pgid 26 sid 25 ppid 25
+start ms pid 27 pgid 27 sid 25 ppid 25
+start mf pid 28 pgid 28 sid 25 ppid 25
+sig mb HUP code 0 from 25
+sig ms HUP code 0 from 25
+sig mf HUP code 0 from 25
+sig ms TERM code 0 from 25
+sig ms CONT code 0 from 25
+die mb HUP
+die mf HUP
+die ms HUP
+== pipe
+start pb1 pid 30 pgid 30 sid 29 ppid 29
+start pb2 pid 31 pgid 30 sid 29 ppid 29
+start pf1 pid 32 pgid 32 sid 29 ppid 29
+start pf2 pid 33 pgid 32 sid 29 ppid 29
+sig pb2 HUP code 0 from 29
+sig pb1 HUP code 0 from 29
+sig pf1 HUP code 0 from 29
+sig pf2 HUP code 0 from 29
+die pb2 HUP
+die pf2 HUP
+die pb1 HUP
+die pf1 HUP
+== subshell
+start sb1 pid 36 pgid 35 sid 34 ppid 35
+start sf1 pid 38 pgid 37 sid 34 ppid 37
+sig sb1 HUP code 0 from 34
+sig sf1 HUP code 0 from 34
+die sb1 HUP
+die sf1 HUP
+== fg-close
+start fg pid 40 pgid 40 sid 39 ppid 39
+sig fg HUP code 0 from 39
+sig fg HUP code 128 from 0
+sig fg CONT code 128 from 0
+die fg HUP
+== bg-close
+start bg1 pid 42 pgid 42 sid 41 ppid 41
+start bg2 pid 43 pgid 43 sid 41 ppid 41
+sig bg2 HUP code 0 from 41
+sig bg1 HUP code 0 from 41
+die bg2 HUP
+die bg1 HUP
+== stopped-close
+start st1 pid 45 pgid 45 sid 44 ppid 44
+start st2 pid 46 pgid 46 sid 44 ppid 44
+sig st1 HUP code 0 from 44
+sig st2 HUP code 0 from 44
+sig st2 TERM code 0 from 44
+sig st2 CONT code 0 from 44
+sig st1 TERM code 0 from 44
+sig st1 CONT code 0 from 44
+die st1 HUP
+die st2 HUP
+== mixed-close
+start mb pid 48 pgid 48 sid 47 ppid 47
+start ms pid 49 pgid 49 sid 47 ppid 47
+start mf pid 50 pgid 50 sid 47 ppid 47
+sig mf HUP code 0 from 47
+sig mb HUP code 0 from 47
+sig mf HUP code 128 from 0
+sig mf CONT code 128 from 0
+sig ms HUP code 0 from 47
+sig ms TERM code 0 from 47
+sig ms CONT code 0 from 47
+die ms HUP
+die mf HUP
+die mb HUP
+== pipe-close
+start pb1 pid 52 pgid 52 sid 51 ppid 51
+start pb2 pid 53 pgid 52 sid 51 ppid 51
+start pf1 pid 54 pgid 54 sid 51 ppid 51
+start pf2 pid 55 pgid 54 sid 51 ppid 51
+sig pf1 HUP code 0 from 51
+sig pb2 HUP code 0 from 51
+sig pb1 HUP code 0 from 51
+sig pf2 HUP code 0 from 51
+sig pf2 HUP code 128 from 0
+sig pf1 HUP code 128 from 0
+sig pf2 CONT code 128 from 0
+sig pf1 CONT code 128 from 0
+die pf1 HUP
+die pb2 HUP
+die pf2 HUP
+die pb1 HUP
+== subshell-close
+start sb1 pid 58 pgid 57 sid 56 ppid 57
+start sf1 pid 60 pgid 59 sid 56 ppid 59
+sig sb1 HUP code 0 from 56
+sig sf1 HUP code 0 from 56
+sig sf1 HUP code 128 from 0
+sig sf1 CONT code 128 from 0
+die sf1 HUP
+die sb1 HUP
+== disown
+start d1 pid 62 pgid 62 sid 61 ppid 61
+start d2 pid 63 pgid 63 sid 61 ppid 61
+sig d2 HUP code 0 from 61
+die d2 HUP
+== disown-h
+start dh1 pid 65 pgid 65 sid 64 ppid 64
+start dh2 pid 66 pgid 66 sid 64 ppid 64
+sig dh2 HUP code 0 from 64
+die dh2 HUP
+== disown-stopped
+start ds pid 68 pgid 68 sid 67 ppid 67
+sig ds HUP code 128 from 0
+sig ds CONT code 128 from 0
+die ds HUP
+== disown-all
+start da1 pid 70 pgid 70 sid 69 ppid 69
+start da2 pid 71 pgid 71 sid 69 ppid 69
+sig da2 HUP code 128 from 0
+sig da2 CONT code 128 from 0
+die da2 HUP
+== nohup
+ign nh HUP
+start nh pid 73 pgid 73 sid 72 ppid 72
+start nc pid 74 pgid 74 sid 72 ppid 72
+sig nc HUP code 0 from 72
+die nc HUP
+== disown-h-stopped
+start dhs pid 76 pgid 76 sid 75 ppid 75
+sig dhs TERM code 0 from 75
+sig dhs CONT code 0 from 75
+die dhs TERM
+== trap
+start tr pid 78 pgid 78 sid 77 ppid 77
+== trap-fg
+start tf pid 80 pgid 80 sid 79 ppid 79
+sig tf HUP code 128 from 0
+== ignored
+ign ig HUP
+start ig pid 82 pgid 82 sid 81 ppid 81
+== exit-running
+start xr pid 84 pgid 84 sid 83 ppid 83
+== exit-stopped
+start xs pid 86 pgid 86 sid 85 ppid 85
+sig xs TERM code 0 from 85
+sig xs CONT code 0 from 85
+die xs TERM
+== exit-stopped-bg
+start xb pid 88 pgid 88 sid 87 ppid 87
+start xt pid 89 pgid 89 sid 87 ppid 87
+sig xt TERM code 0 from 87
+sig xt CONT code 0 from 87
+die xt TERM
+== eof-stopped
+start es pid 91 pgid 91 sid 90 ppid 90
+sig es TERM code 0 from 90
+sig es CONT code 0 from 90
+die es TERM
+== friendly-bg
+start fb pid 93 pgid 93 sid 92 ppid 92
+start ff pid 94 pgid 94 sid 92 ppid 92
+sig ff HUP code 0 from 92
+sig fb HUP code 0 from 92
+die fb HUP
+die ff HUP
+== dumb-bg
+start db pid 96 pgid 96 sid 95 ppid 95
+sig db HUP code 0 from 95
+die db HUP
+== editing
+start ed pid 98 pgid 98 sid 97 ppid 97
+sig ed HUP code 0 from 97
+die ed HUP
+== script
+ign cb INT
+ign cb QUIT
+start cb pid 100 pgid 99 sid 99 ppid 99
+start cf pid 101 pgid 99 sid 99 ppid 99
+sig cf HUP code 128 from 0
+sig cb HUP code 128 from 0
+die cf HUP
+die cb HUP
+== script-close
+ign cb INT
+start cf pid 104 pgid 102 sid 102 ppid 102
+ign cb QUIT
+start cb pid 103 pgid 102 sid 102 ppid 102
+sig cf HUP code 128 from 0
+sig cf CONT code 128 from 0
+sig cb HUP code 128 from 0
+sig cb CONT code 128 from 0
+die cf HUP
+die cb HUP
+== kill-stopped
+start k pid 106 pgid 106 sid 105 ppid 105
+sig k TERM code 0 from 105
+sig k CONT code 0 from 105
+die k TERM
+== kill-stopped-hup
+start k pid 108 pgid 108 sid 107 ppid 107
+sig k HUP code 0 from 107
+sig k CONT code 0 from 107
+die k HUP
+== kill-stopped-term
+start k pid 110 pgid 110 sid 109 ppid 109
+sig k TERM code 0 from 109
+sig k CONT code 0 from 109
+die k TERM
+== kill-stopped-int
+start k pid 112 pgid 112 sid 111 ppid 111
+sig k HUP code 128 from 0
+sig k INT code 0 from 111
+sig k CONT code 128 from 0
+== kill-stopped-quit
+start k pid 114 pgid 114 sid 113 ppid 113
+sig k HUP code 128 from 0
+sig k QUIT code 0 from 113
+sig k CONT code 128 from 0
+== kill-stopped-usr1
+start k pid 116 pgid 116 sid 115 ppid 115
+sig k HUP code 128 from 0
+sig k USR1 code 0 from 115
+sig k CONT code 128 from 0
+== kill-stopped-cont
+start k pid 118 pgid 118 sid 117 ppid 117
+sig k CONT code 0 from 117
+== kill-stopped-stop
+start k pid 120 pgid 120 sid 119 ppid 119
+sig k HUP code 128 from 0
+sig k CONT code 128 from 0
+== kill-stopped-kill
+start k pid 122 pgid 122 sid 121 ppid 121
+== kill-stopped-s-term
+start k pid 124 pgid 124 sid 123 ppid 123
+sig k TERM code 0 from 123
+sig k CONT code 0 from 123
+die k TERM
+== kill-running
+start kr pid 126 pgid 126 sid 125 ppid 125
+sig kr TERM code 0 from 125
+die kr TERM
+== kill-bg-stopped
+start kb pid 128 pgid 128 sid 127 ppid 127
+sig kb TERM code 0 from 127
+sig kb CONT code 0 from 127
+die kb TERM
+== kill-stopped-pid
+start kp pid 130 pgid 130 sid 129 ppid 129
+sig kp HUP code 128 from 0
+sig kp TERM code 0 from 129
+sig kp CONT code 128 from 0
+== kill-stopped-group
+start kg pid 133 pgid 133 sid 132 ppid 132
+sig kg TERM code 0 from 132
+sig kg CONT code 0 from 132
+die kg TERM
+== kill-stopped-pipe
+start kq1 pid 136 pgid 136 sid 135 ppid 135
+start kq2 pid 137 pgid 136 sid 135 ppid 135
+sig kq1 TERM code 0 from 135
+sig kq1 CONT code 0 from 135
+sig kq2 TERM code 0 from 135
+sig kq2 CONT code 0 from 135
+die kq2 TERM
+die kq1 TERM
+== kill-stopped-two
+start kt1 pid 139 pgid 139 sid 138 ppid 138
+start kt2 pid 140 pgid 140 sid 138 ppid 138
+sig kt1 TERM code 0 from 138
+sig kt2 TERM code 0 from 138
+sig kt1 CONT code 0 from 138
+sig kt2 CONT code 0 from 138
+die kt1 TERM
+die kt2 TERM

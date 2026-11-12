@@ -1,0 +1,46 @@
+fg | shell signal:HUP | fg HUP:kernel dead:HUP
+bg | shell signal:HUP | bg1 - alive | bg2 - alive
+stopped | shell signal:HUP | st1 CONT:kernel+HUP:kernel dead:HUP | st2 CONT:kernel+HUP:kernel dead:HUP
+mixed | shell signal:HUP | mb - alive | ms CONT:kernel+HUP:kernel dead:HUP | mf HUP:kernel dead:HUP
+pipe | shell signal:HUP | pb1 - alive | pb2 - alive | pf1 HUP:kernel dead:HUP | pf2 HUP:kernel dead:HUP
+subshell | shell signal:HUP | sb1 - alive | sb2 - never | sf1 HUP:kernel dead:HUP | sf2 - never
+fg-close | shell signal:HUP | fg CONT:kernel+HUP:kernel dead:HUP
+bg-close | shell signal:HUP | bg1 - alive | bg2 - alive
+stopped-close | shell signal:HUP | st1 CONT:kernel+HUP:kernel dead:HUP | st2 CONT:kernel+HUP:kernel dead:HUP
+mixed-close | shell signal:HUP | mb - alive | ms CONT:kernel+HUP:kernel dead:HUP | mf CONT:kernel+HUP:kernel dead:HUP
+pipe-close | shell signal:HUP | pb1 - alive | pb2 - alive | pf1 CONT:kernel+HUP:kernel dead:HUP | pf2 CONT:kernel+HUP:kernel dead:HUP
+subshell-close | shell signal:HUP | sb1 - alive | sb2 - never | sf1 CONT:kernel+HUP:kernel dead:HUP | sf2 - never
+disown | shell signal:HUP | d1 - alive | d2 - alive
+disown-h | shell signal:HUP | dh1 - alive | dh2 - alive
+disown-stopped | shell signal:HUP | ds CONT:kernel+HUP:kernel dead:HUP
+disown-all | shell signal:HUP | da1 - alive | da2 CONT:kernel+HUP:kernel dead:HUP
+nohup | shell signal:HUP | nh - alive | nc - alive
+disown-h-stopped | shell signal:HUP | dhs CONT:kernel+HUP:kernel dead:HUP
+trap | shell alive | tr - alive
+trap-fg | shell alive | tf - alive
+ignored | shell alive | ig - alive
+exit-running | shell exit:0 | xr - alive
+exit-stopped | shell exit:148 | xs CONT:kernel+HUP:kernel dead:HUP
+exit-stopped-bg | shell exit:148 | xb - alive | xt CONT:kernel+HUP:kernel dead:HUP
+eof-stopped | shell exit:148 | es CONT:kernel+HUP:kernel dead:HUP
+friendly-bg | shell signal:HUP | fb - alive | ff HUP:kernel dead:HUP
+dumb-bg | shell signal:HUP | db - alive
+editing | shell signal:HUP | ed - alive
+script | shell signal:HUP | cb HUP:kernel dead:HUP | cf HUP:kernel dead:HUP
+script-close | shell signal:HUP | cb CONT:kernel+HUP:kernel dead:HUP | cf CONT:kernel+HUP:kernel dead:HUP
+kill-stopped | shell alive | k - stopped
+kill-stopped-hup | shell alive | k - stopped
+kill-stopped-term | shell alive | k - stopped
+kill-stopped-int | shell alive | k - stopped
+kill-stopped-quit | shell alive | k - stopped
+kill-stopped-usr1 | shell alive | k - stopped
+kill-stopped-cont | shell alive | k CONT:shell alive
+kill-stopped-stop | shell alive | k - stopped
+kill-stopped-kill | shell alive | k - gone
+kill-stopped-s-term | shell alive | k - stopped
+kill-running | shell alive | kr TERM:shell dead:TERM
+kill-bg-stopped | shell alive | kb - stopped
+kill-stopped-pid | shell alive | kp - stopped
+kill-stopped-group | shell alive | kg - stopped
+kill-stopped-pipe | shell alive | kq1 - stopped | kq2 - stopped
+kill-stopped-two | shell alive | kt1 - stopped | kt2 - stopped
