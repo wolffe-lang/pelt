@@ -526,7 +526,11 @@ fn run_lines(mut sh: Sh) -> int {
                 // leave the terminal's cursor off the prompt line
                 write_fd(mut sh, 2, "\n")
             }
-            if sh.jc_on && sh.interactive && sh.sub == 0 && !sh.exit_warned_prev && jobs_stopped(sh) {
+            if sh.jc_on &&
+                sh.interactive &&
+                sh.sub == 0 &&
+                !sh.exit_warned_prev &&
+                jobs_stopped(sh) {
                 // the end of input with a job stopped keeps the shell
                 // for one more, as `exit` does (`sh.builtin`; dash and
                 // bash, black-box: `notes/sh38-hangup.md`'s eof-stopped)
