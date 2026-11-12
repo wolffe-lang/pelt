@@ -299,18 +299,34 @@ fn sig_boot(mut sh: Sh) {
 
 /// What an interactive shell does with no trap set (XCU 2.12; dash -i,
 /// black-box): `SIGINT` abandons the command and prompts again, and
-/// `SIGQUIT` and `SIGTERM` do nothing. pelt LISTENS for the three rather
-/// than ignoring them, so its children start with the default, as
-/// dash's do. One it was started ignoring stays ignored.
+/// `SIGQUIT` and `SIGTERM` do nothing. `SIGHUP` hangs the shell up
+/// (`sh.jobs`'s `hangup`): it is passed on to the jobs before the shell
+/// dies of it, as bash does (black-box, `notes/sh38-hangup.md`). pelt
+/// LISTENS for the four rather than ignoring them, so its children
+/// start with the default, as dash's and bash's do. One it was started
+/// ignoring stays ignored (R-sh38-2). A subshell pelt runs in process
+/// polls for `SIGHUP` only when the top level answers it itself
+/// (`hup_own`): one the top level traps waits on the queue until that
+/// shell runs again.
 fn interactive_set(sh: Sh) -> int {
     if !sh.interactive {
         return 0
     }
-    let three = m_int() | m_quit() | signal.terminate()
-    if sh.sig_ign0 > 0 {
-        return less(three, sh.sig_ign0)
+    var four = m_int() | m_quit() | signal.terminate()
+    if sh.sub == 0 || sh.hup_own {
+        four = four | m_hup()
     }
-    three
+    if sh.sig_ign0 > 0 {
+        return less(four, sh.sig_ign0)
+    }
+    four
+}
+
+/// Whether a `SIGHUP` delivered now is the shell's to answer by hanging
+/// up (`sh.jobs`'s `hangup`): an interactive shell that listens for it,
+/// no trap at the top level naming it (`hup_own`), and none here.
+fn hup_now(sh: Sh) -> bool {
+    sh.interactive && sh.hup_own && !has_trap(sh, "HUP")
 }
 
 /// Make the process's dispositions what the trap table says, changing
@@ -397,6 +413,9 @@ fn sig_apply(mut sh: Sh) {
     sh.sig_listen = listen
     sh.sig_ignore = ignore
     sh.sig_mine = mine
+    if sh.sub == 0 {
+        sh.hup_own = sh.interactive && listen & m_hup() != 0 && !has_trap(sh, "HUP")
+    }
 }
 
 fn has_trap(sh: Sh, cond: str) -> bool {
@@ -453,6 +472,11 @@ fn poll_traps(mut sh: Sh) {
             taken = less(taken, m)
             let action = sh.traps[sig_name(k)] else ""
             if action.len == 0 {
+                // a hangup no trap names: the jobs hear it, and the
+                // shell dies of it (`sh.jobs`'s `hangup`; never returns)
+                if m == m_hup() && hup_now(sh) {
+                    hangup(sh, -1)
+                }
                 // at the prompt there is no command to abandon
                 if m == m_int() && sh.interactive && !sh.at_prompt {
                     interrupt(mut sh)
