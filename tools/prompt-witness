@@ -173,14 +173,18 @@ def identity(binary,home):
 def vcs(binary,home):
     bindir=home/'bin';bindir.mkdir()
     den=bindir/'den'
-    den.write_text('#!'+sys.executable+'\nimport pathlib,sys,time\n'
-                   'p=pathlib.Path.cwd()\n'
-                   'assert sys.argv[1:]==["status","--porcelain"]\n'
-                   'with (p/"calls").open("a") as f:f.write("x")\n'
-                   'mode=(p/"mode").read_text()\n'
-                   'if mode=="slow":time.sleep(.2)\n'
-                   'if mode=="dirty":print("?? file")\n'
-                   'if mode=="bad":sys.stdout.buffer.write(b"\\xff")\n')
+    # A POSIX sh script, not Python: the first prompt's probe has 50 ms,
+    # and a Python start alone outran it on macOS runners (pelt#93: nightly
+    # runs 42066187159 and 42678757228, `prompt-vcs-real-probe`).
+    den.write_text('#!/bin/sh\n'
+                   '[ $# -eq 2 ] && [ "$1" = status ] && [ "$2" = --porcelain ] || exit 2\n'
+                   'printf x >> calls\n'
+                   'read -r mode < mode\n'
+                   'case $mode in\n'
+                   'slow) sleep 0.2 ;;\n'
+                   'dirty) printf \'?? file\\n\' ;;\n'
+                   'bad) printf \'\\377\' ;;\n'
+                   'esac\n')
     den.chmod(0o755);(home/'mode').write_text('dirty')
     warm=subprocess.run([str(den),'status','--porcelain'],cwd=home,capture_output=True,timeout=10)
     assert warm.returncode==0 and warm.stdout==b'?? file\n';(home/'calls').write_text('')
