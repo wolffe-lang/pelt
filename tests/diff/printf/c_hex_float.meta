@@ -1,2 +1,5 @@
+exit=0
+stderr=no
+bash=agree
 pending=printf-hex-float
 why=printf/8 names %a; dash and bash --posix write a binary64 conversion (0x1p+0 for 1); plain bash, outside POSIX mode, converts with a long double (0x8p-3 on x86-64)
