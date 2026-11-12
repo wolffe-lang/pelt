@@ -31,6 +31,10 @@ lane) and in the README's status.
   Ctrl-D, and a hangup, send each stopped job SIGTERM and SIGCONT, as bash's
   do. A refused `exit` answers status 0, as dash's.
 
+- **`%a` is counted as missing.** The census counted printf/8 (`%e %f %g %a`)
+  as met on a case without `%a`; `printf/c_hex_float` (dash and `bash --posix`
+  agree on it) now holds it pending, 532 of 548 statements (pelt#97).
+
 - **The prompt witness's den starts in time.** Its stand-in `den` is a
   POSIX sh script, not Python, whose start alone outran the first prompt's
   50 ms on macOS runners (two nightly runs, pelt#93).
