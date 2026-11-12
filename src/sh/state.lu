@@ -275,6 +275,11 @@ struct Sh {
     /// The meanings ignored when the shell started (`sig_boot`): never
     /// trapped, never reset. -1 until read.
     sig_ign0: int,
+    /// Whether a SIGHUP is the shell's own to answer by hanging up
+    /// (`sh.signal`'s `sig_apply`: an interactive shell listening for it
+    /// with no trap), as decided at the top level; a subshell pelt runs in
+    /// process keeps the top level's answer (`sh.jobs`'s `hangup`).
+    hup_own: bool,
     in_trap: bool,
     trap_status: int,
     intr: bool,
@@ -525,6 +530,7 @@ fn new_sh(name: str) -> Sh {
         sig_ignore: 0,
         sig_mine: 0,
         sig_ign0: -1,
+        hup_own: false,
         in_trap: false,
         trap_status: 0,
         intr: false,
