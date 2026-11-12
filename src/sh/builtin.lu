@@ -110,6 +110,8 @@ fn builtin_args(mut sh: Sh, name: str, args: List[str]) -> int {
         st = bi_fg(mut sh, args)
     } else if name == "bg" {
         st = bi_bg(mut sh, args)
+    } else if name == "disown" {
+        st = bi_disown(mut sh, args)
     }
     if sh.out.len > 0 && fd_get(sh, 1) == FD_CLOSED {
         // output to a closed descriptor is a write error (dash: status 1)
@@ -156,10 +158,11 @@ fn bi_exit(mut sh: Sh, args: List[str]) -> int {
         // XCU 2.11: a stopped job keeps an interactive shell for one
         // more `exit`; the next line's `exit` leaves (dash, black-box:
         // p07, p08). The table is read as it stands, not polled first,
-        // as dash reads it (c_jc_ctrl_z)
+        // as dash reads it (c_jc_ctrl_z). The refused `exit` answers 0,
+        // as dash's (R-sh38-4; bash answers 1)
         write_fd(mut sh, 2, "pelt: there are stopped jobs\n")
         sh.exit_warned = true
-        return sh.status
+        return 0
     }
     sh.status = code & 255
     sh.flow = F_EXIT
