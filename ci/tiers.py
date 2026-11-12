@@ -53,9 +53,9 @@ the pull-request tier without opening one; a path no rule names runs full.
 
 PROSE IS NARROW (RULES, below): notes/ (the lanes' notes and evidence),
 docs/ (the plan, and the census `tools/clause-census --markdown` writes and
-nothing reads), README.md and CLAUDE.md. No step of the gauntlet reads
-them, and ci/tiers-test.py trips when a line of tools/ or tests/ that reads
-a file starts naming one.
+nothing reads), README.md, CONTRIBUTING.md and CLAUDE.md. No step of the
+gauntlet reads them, and ci/tiers-test.py trips when a line of tools/ or
+tests/ that reads a file starts naming one.
 
 `verdict` checks a finished run: exit 0 when the plan succeeded, the jobs it
 chose are the tier's, each matrix the plan handed out is the tier's, every
@@ -158,6 +158,7 @@ RULES = [
     ("notes/**", PROSE),
     ("docs/**", PROSE),
     ("README.md", PROSE),
+    ("CONTRIBUTING.md", PROSE),
     ("CLAUDE.md", PROSE),
     # The shell, its corpus and harness, its pins, and CI itself.
     ("src/**", SHELL),
