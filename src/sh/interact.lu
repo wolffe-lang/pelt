@@ -57,6 +57,15 @@ fn read_raw_line(mut sh: Sh) -> (str, int) {
     if fd < 0 || fd == 0 && sh.eof0 {
         return ("", 2)
     }
+    if fd == 0 && hup_now(sh) {
+        // no read is torn by a signal (`[os.signal.wait.fd]`): wait on
+        // the terminal and a hangup together, so a SIGHUP while the
+        // shell waits for a line hangs it up (`sh.jobs`'s `hangup`)
+        let got = os_signal_wait_fd(0, m_hup()) else 0
+        if got & m_hup() != 0 {
+            hangup(sh, -1)
+        }
+    }
     let (line, how) = copy region rl {
         line_of(fd)
     }
@@ -516,6 +525,15 @@ fn run_lines(mut sh: Sh) -> int {
             if sh.interactive {
                 // leave the terminal's cursor off the prompt line
                 write_fd(mut sh, 2, "\n")
+            }
+            if sh.jc_on && sh.interactive && sh.sub == 0 && !sh.exit_warned_prev && jobs_stopped(sh) {
+                // the end of input with a job stopped keeps the shell
+                // for one more, as `exit` does (`sh.builtin`; dash and
+                // bash, black-box: `notes/sh38-hangup.md`'s eof-stopped)
+                write_fd(mut sh, 2, "pelt: there are stopped jobs\n")
+                sh.exit_warned = true
+                sh.eof0 = false
+                continue
             }
             break
         }
