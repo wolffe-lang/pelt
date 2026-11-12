@@ -304,6 +304,9 @@ fn run_input(
     sh.line = 0
     st = run_exit_trap(mut sh, st)
     flush(mut sh)
+    // an interactive shell's stopped jobs end with it (`sh.jobs`'s
+    // `jc_end_stopped`, as bash's: black-box)
+    jc_end_stopped(sh)
     jc_leave(mut sh)
     st
 }
