@@ -526,13 +526,43 @@ fn want_conditions(mut bad: List[str]) {
         (mut bad).push("a script listens for nothing by itself")
     }
     sh.interactive = true
-    if interactive_set(sh) != m_int() | m_quit() | sig_meaning(sig_index("TERM")) {
+    let term = sig_meaning(sig_index("TERM"))
+    // the four an interactive shell answers itself: HUP since sh38 (it
+    // hangs up, `sh.jobs`'s `hangup`)
+    if interactive_set(sh) != m_int() | m_quit() | term | m_hup() {
         (mut bad).push("interactive_set = {interactive_set(sh)}")
     }
-    // one of the three ignored when the shell started is not listened for
+    // one of the four ignored when the shell started is not listened for
     sh.sig_ign0 = m_quit()
-    if interactive_set(sh) != m_int() | sig_meaning(sig_index("TERM")) {
+    if interactive_set(sh) != m_int() | term | m_hup() {
         (mut bad).push("interactive_set with QUIT ignored at start = {interactive_set(sh)}")
+    }
+    sh.sig_ign0 = m_hup()
+    if interactive_set(sh) != m_int() | m_quit() | term {
+        (mut bad).push("interactive_set with HUP ignored at start = {interactive_set(sh)}")
+    }
+    // a subshell pelt runs in process polls for HUP only when the top
+    // level answers it itself (`hup_own`): one the top level traps waits
+    sh.sig_ign0 = 0
+    sh.sub = 1
+    if interactive_set(sh) != m_int() | m_quit() | term {
+        (mut bad).push("interactive_set in a subshell, HUP trapped above = {interactive_set(sh)}")
+    }
+    sh.hup_own = true
+    if interactive_set(sh) != m_int() | m_quit() | term | m_hup() {
+        (mut bad).push("interactive_set in a subshell, HUP the shell's own = {interactive_set(sh)}")
+    }
+    if !hup_now(sh) {
+        (mut bad).push("hup_now: an interactive shell's own HUP, no trap")
+    }
+    sh.traps["HUP"] = "echo here"
+    if hup_now(sh) {
+        (mut bad).push("hup_now: a trap of the subshell's own names HUP")
+    }
+    sh.interactive = false
+    sh.traps = Map[str, str]()
+    if hup_now(sh) {
+        (mut bad).push("hup_now: a shell that is not interactive")
     }
 }
 
