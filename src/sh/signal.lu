@@ -304,7 +304,8 @@ fn sig_boot(mut sh: Sh) {
 /// dies of it, as bash does (black-box, `notes/sh38-hangup.md`). pelt
 /// LISTENS for the four rather than ignoring them, so its children
 /// start with the default, as dash's and bash's do. One it was started
-/// ignoring stays ignored (R-sh38-2). A subshell pelt runs in process
+/// ignoring stays ignored, as dash keeps it (bash takes it anyway;
+/// `notes/sh38-hangup.md`). A subshell pelt runs in process
 /// polls for `SIGHUP` only when the top level answers it itself
 /// (`hup_own`): one the top level traps waits on the queue until that
 /// shell runs again.

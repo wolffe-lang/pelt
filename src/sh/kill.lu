@@ -30,6 +30,13 @@
 //! every process the shell may signal (`os_signal_send_all`). An
 //! asynchronous list pelt ran itself (a compound command after `&`: no
 //! fork) has ended by the time `kill` can name it.
+//!
+//! **A stopped job.** `SIGTERM` or `SIGHUP` sent to a stopped job's group
+//! (by job id, or `-N` naming its group) is followed by `SIGCONT`, so the
+//! job receives it (bash, black-box: `notes/sh38-hangup.md`; dash leaves
+//! the job stopped with the signal pending, and so did pelt before sh38).
+//! A process id, and every other signal, are left as they are, as bash
+//! leaves them (`sh.jobs`'s `kill_continue`).
 
 /// What a `kill` operand names: a process (`T_PID`), a process group
 /// (`T_GROUP`), the processes of a job that has no group of its own

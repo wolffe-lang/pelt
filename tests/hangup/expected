@@ -1,6 +1,7 @@
 # tests/hangup/expected — what tools/hangup-witness holds pelt to.
 # bash 5.2.21's table (notes/sh38/bash-5.2.21.table, measured with tools/hangup-witness --measure bash
-# in an Ubuntu 24.04 container), line for line, except the rows a `# ROW: why` comment names.
+# in an Ubuntu 24.04 container), line for line, except the rows a `# ROW: why` comment names (each a decision in
+# notes/sh38-hangup.md, "Recommended decisions").
 # Format: ROW | shell END | PROBE SIGNALS END | ... (tools/hangup-witness's docstring).
 fg | shell signal:HUP | fg HUP:shell dead:HUP
 bg | shell signal:HUP | bg1 HUP:shell dead:HUP | bg2 HUP:shell dead:HUP
@@ -20,15 +21,15 @@ disown-stopped | shell signal:HUP | ds CONT:kernel+HUP:kernel dead:HUP
 disown-all | shell signal:HUP | da1 - alive | da2 CONT:kernel+HUP:kernel dead:HUP
 nohup | shell signal:HUP | nh - alive | nc HUP:shell dead:HUP
 disown-h-stopped | shell signal:HUP | dhs CONT:shell+TERM:shell dead:TERM
-# trap: R-sh38-3: a trapped hangup runs its action and the shell goes on (bash leaves at the prompt)
+# trap: a trapped hangup runs its action and the shell goes on (bash leaves at the prompt)
 trap | shell alive | tr - alive
 trap-fg | shell alive | tf - alive
-# ignored: R-sh38-2: a hangup ignored at entry stays ignored (bash dies of it)
+# ignored: a hangup ignored at entry stays ignored (bash dies of it)
 ignored | shell alive | ig - alive
 exit-running | shell exit:0 | xr - alive
-# exit-stopped: R-sh38-4: a refused exit answers 0, as dash (bash 1)
+# exit-stopped: a refused exit answers 0, as dash (bash 1)
 exit-stopped | shell exit:0 | xs CONT:shell+TERM:shell dead:TERM
-# exit-stopped-bg: R-sh38-4: a refused exit answers 0, as dash (bash 1)
+# exit-stopped-bg: a refused exit answers 0, as dash (bash 1)
 exit-stopped-bg | shell exit:0 | xb - alive | xt CONT:shell+TERM:shell dead:TERM
 eof-stopped | shell exit:148 | es CONT:shell+TERM:shell dead:TERM
 friendly-bg | shell signal:HUP | fb HUP:shell dead:HUP | ff HUP:shell dead:HUP

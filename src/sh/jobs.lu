@@ -35,6 +35,13 @@
 //! a child no job holds (a pipeline stage some blocking wait is still
 //! owed) is kept aside for that wait (`stash_take`).
 //!
+//! **A hangup** (sh38): an interactive shell answers a `SIGHUP` no trap
+//! names as bash does (black-box, `notes/sh38-hangup.md`): `SIGHUP` to
+//! every job, `SIGCONT` after it to a stopped one, the stopped jobs ended
+//! as the shell's end ends them, and the shell dies of `SIGHUP`
+//! (`hangup`). `disown` takes a job out of the table, or with `-h` keeps
+//! it from a hangup (`bi_disown`).
+//!
 //! **The table.** A job's number is the lowest one free (dash,
 //! black-box: p02); the slots are kept and reused, so the table holds
 //! no more than the jobs alive at most at once (nothing is popped: a
@@ -1725,7 +1732,7 @@ fn bi_bg(mut sh: Sh, args: List[str]) -> int {
 /// only kept from a hangup. No operand: the current job; `-a` every job,
 /// `-r` every running one. A process id names the job that holds it. A
 /// stopped job taken out is warned of (nothing will continue it). 1 when
-/// an operand names no job, 2 for an option pelt has not (R-sh38-5: a
+/// an operand names no job, 2 for an option pelt has not (a
 /// regular built-in in every shell, as `jobs`).
 fn bi_disown(mut sh: Sh, args: List[str]) -> int {
     var mark = false
@@ -1891,7 +1898,7 @@ fn jb_send(sh: Sh, j: int, m: int) {
 
 /// `kill`'s SIGTERM or SIGHUP sent to group `g` (`sh.kill`): when `g` is a
 /// stopped job's group, `CONTINUE` after it, so the signal is delivered
-/// (R-sh38-1: bash, black-box, `notes/sh38-hangup.md`; dash leaves the
+/// (bash, black-box, `notes/sh38-hangup.md`; dash leaves the
 /// job stopped with the signal pending). Another signal, a process id
 /// (not a group), or a job that runs is left as it is, as bash leaves it.
 fn kill_continue(sh: Sh, g: int, m: int) {

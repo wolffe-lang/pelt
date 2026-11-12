@@ -159,7 +159,7 @@ fn bi_exit(mut sh: Sh, args: List[str]) -> int {
         // more `exit`; the next line's `exit` leaves (dash, black-box:
         // p07, p08). The table is read as it stands, not polled first,
         // as dash reads it (c_jc_ctrl_z). The refused `exit` answers 0,
-        // as dash's (R-sh38-4; bash answers 1)
+        // as dash's (bash answers 1; `notes/sh38-hangup.md`)
         write_fd(mut sh, 2, "pelt: there are stopped jobs\n")
         sh.exit_warned = true
         return 0
