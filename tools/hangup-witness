@@ -1,0 +1,659 @@
+#!/usr/bin/env python3
+"""hangup-witness — what a hangup does to an interactive shell's jobs,
+and what `kill %N` does to a stopped one, asked from outside.
+
+Each row starts a shell on a fresh pseudo-terminal, as a terminal or an
+ssh server would: a new session, the pty its controlling terminal, every
+signal at its default and nothing blocked. It types commands that start
+a PROBE (`hw-probe NAME`, a small C program this tool compiles) as
+jobs: in the foreground, after `&`, stopped by the suspend character
+(the byte 0x1a written into the pty), in a pipeline, in a subshell,
+`disown`ed, under `nohup`. Then it hangs the shell up, one of two ways:
+
+  kill    SIGHUP sent to the shell's pid (the shell is this tool's child)
+  close   the pty's master closed: the terminal goes away, as when an
+          ssh connection drops (linux only; the kernel's part of a
+          hangup is the host's, and these rows hold linux's)
+
+Each probe records, in a log, every signal it receives and who sent it
+(`siginfo`: `shell` is the shell's pid, `kernel` a signal the kernel
+made, `harness` this tool), and then dies of the first one whose
+default ends it, a moment later, so that signals sent together are all
+seen. It holds a signal ignored at its start ignored (`nohup`). A row's
+observation is one line:
+
+  ROW | shell END | PROBE SIGNALS END | ...
+
+where the shell's END is `signal:HUP`, `exit:N` or `alive` (still
+running when the row looked), a probe's SIGNALS is the signals it
+received as `NAME:SOURCE` joined by `+` in name order (`-` for none),
+and its END is `dead:SIG` (it died of SIG), `alive`, `stopped`, `never`
+(it never started) or `gone` (it ended without a word, as SIGKILL ends
+a process). The `kill-*` rows send no hangup: they type `kill` at a
+stopped job and look a second later.
+
+The table this holds pelt to is bash's, measured with this tool
+(`tests/hangup/expected`, `--measure`); a line there may differ from
+bash's only with a comment saying why. Whatever a row leaves running is
+ended by its pid (this tool started it: the probe's own log names it,
+and its command line is checked first).
+
+usage: tools/hangup-witness PELT                 check pelt against the table
+       tools/hangup-witness --measure NAME [--only ROW,...]
+                            print the rows for NAME: bash, dash, or a
+                            path to pelt (`--pelt PATH`)
+Exit 0 when every row holds, 1 when one does not, 2 when the witness
+cannot run (no C compiler, no pseudo-terminal).
+"""
+
+import fcntl
+import os
+import pty
+import re
+import select
+import shutil
+import signal
+import struct
+import subprocess
+import sys
+import tempfile
+import termios
+import time
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TABLE = os.path.join(ROOT, "tests", "hangup", "expected")
+LINUX = sys.platform.startswith("linux")
+
+PROBE_C = r'''
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+static int logfd = -1;
+static const char *me = "?";
+static volatile sig_atomic_t fatal = 0;
+
+static char *put_s(char *p, const char *s) { while (*s) *p++ = *s++; return p; }
+static char *put_n(char *p, long v) {
+    char t[24]; int n = 0;
+    if (v < 0) { *p++ = '-'; v = -v; }
+    do { t[n++] = (char)('0' + v % 10); v /= 10; } while (v);
+    while (n) *p++ = t[--n];
+    return p;
+}
+static const char *sname(int s) {
+    switch (s) {
+    case SIGHUP: return "HUP"; case SIGINT: return "INT"; case SIGQUIT: return "QUIT";
+    case SIGTERM: return "TERM"; case SIGCONT: return "CONT"; case SIGUSR1: return "USR1";
+    case SIGUSR2: return "USR2"; case SIGALRM: return "ALRM"; default: return "OTHER";
+    }
+}
+static void on(int s, siginfo_t *si, void *uc) {
+    char b[256]; char *p = b;
+    (void)uc;
+    p = put_s(p, "sig "); p = put_s(p, me); p = put_s(p, " "); p = put_s(p, sname(s));
+    p = put_s(p, " code "); p = put_n(p, si ? si->si_code : -999);
+    p = put_s(p, " from "); p = put_n(p, si ? (long)si->si_pid : -1);
+    p = put_s(p, "\n");
+    (void)!write(logfd, b, (size_t)(p - b));
+    if (s != SIGCONT && !fatal) fatal = s;
+}
+int main(int argc, char **argv) {
+    static const int sigs[] = {SIGHUP, SIGINT, SIGQUIT, SIGTERM, SIGCONT, SIGUSR1, SIGUSR2, SIGALRM};
+    const char *log = getenv("HW_LOG"), *dir = getenv("HW_DIR");
+    char b[512]; char *p = b; sigset_t hold, none; struct sigaction sa, old; unsigned i;
+    if (argc < 2 || !log || !dir) return 64;
+    me = argv[1];
+    logfd = open(log, O_WRONLY | O_APPEND | O_CREAT, 0644);
+    if (logfd < 0) return 65;
+    sigemptyset(&hold);
+    for (i = 0; i < sizeof sigs / sizeof sigs[0]; i++) sigaddset(&hold, sigs[i]);
+    sigprocmask(SIG_BLOCK, &hold, 0);
+    memset(&sa, 0, sizeof sa);
+    sa.sa_sigaction = on; sa.sa_flags = SA_SIGINFO; sigfillset(&sa.sa_mask);
+    for (i = 0; i < sizeof sigs / sizeof sigs[0]; i++) {
+        sigaction(sigs[i], 0, &old);
+        if (old.sa_handler == SIG_IGN) {
+            p = b; p = put_s(p, "ign "); p = put_s(p, me); p = put_s(p, " ");
+            p = put_s(p, sname(sigs[i])); p = put_s(p, "\n");
+            (void)!write(logfd, b, (size_t)(p - b));
+            continue;
+        }
+        sigaction(sigs[i], &sa, 0);
+    }
+    p = b; p = put_s(p, dir); p = put_s(p, "/"); p = put_s(p, me); p = put_s(p, ".pid"); *p = 0;
+    {
+        int f = open(b, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (f >= 0) { char n[32]; char *q = put_n(n, (long)getpid()); *q++ = '\n';
+            (void)!write(f, n, (size_t)(q - n)); close(f); }
+    }
+    p = b; p = put_s(p, "start "); p = put_s(p, me);
+    p = put_s(p, " pid "); p = put_n(p, (long)getpid());
+    p = put_s(p, " pgid "); p = put_n(p, (long)getpgrp());
+    p = put_s(p, " sid "); p = put_n(p, (long)getsid(0));
+    p = put_s(p, " ppid "); p = put_n(p, (long)getppid());
+    p = put_s(p, "\n");
+    (void)!write(logfd, b, (size_t)(p - b));
+    alarm(120);
+    sigemptyset(&none);
+    while (!fatal) sigsuspend(&none);
+    /* signals sent together arrive together: take them all first */
+    {
+        struct timespec t0, t; clock_gettime(CLOCK_MONOTONIC, &t0);
+        for (;;) {
+            sigprocmask(SIG_UNBLOCK, &hold, 0);
+            sigprocmask(SIG_BLOCK, &hold, 0);
+            clock_gettime(CLOCK_MONOTONIC, &t);
+            if ((t.tv_sec - t0.tv_sec) * 1000 + (t.tv_nsec - t0.tv_nsec) / 1000000 > 150) break;
+            usleep(10000);
+        }
+    }
+    p = b; p = put_s(p, "die "); p = put_s(p, me); p = put_s(p, " "); p = put_s(p, sname(fatal));
+    p = put_s(p, "\n");
+    (void)!write(logfd, b, (size_t)(p - b));
+    signal(fatal, SIG_DFL);
+    sigprocmask(SIG_UNBLOCK, &hold, 0);
+    raise(fatal);
+    _exit(128 + fatal);
+}
+'''
+
+PROMPT = b"hw$ "
+
+# A row: (name, actions, hangup, probes). An action is
+#   ("line", TEXT)        typed with a carriage return, then the prompt
+#   ("fg", TEXT, NAMES)   typed; waits for each named probe to start
+#   ("key", BYTES)        written into the pty (0x1a, the suspend
+#                         character), then the prompt
+#   ("bg", TEXT, NAMES)   typed; waits for the probes and the prompt
+# hangup is "kill", "close", "none" (the `kill-*` rows) or "exit" (the
+# row's own `exit` lines end the shell). Options per row: `argv0`
+# (pelt's name for this row: `pelt` starts it friendly), `term`.
+P = "hw-probe"
+
+
+def rows():
+    r = []
+
+    def add(name, acts, hang, probes, **opt):
+        r.append((name, acts, hang, probes, opt))
+
+    for mode in ("kill", "close"):
+        sfx = "" if mode == "kill" else "-close"
+        add("fg" + sfx, [("fg", f"{P} fg", ["fg"])], mode, ["fg"])
+        add("bg" + sfx, [("bg", f"{P} bg1 &", ["bg1"]), ("bg", f"{P} bg2 &", ["bg2"])], mode, ["bg1", "bg2"])
+        add("stopped" + sfx, [("fg", f"{P} st1", ["st1"]), ("key", b"\x1a"),
+                               ("fg", f"{P} st2", ["st2"]), ("key", b"\x1a")], mode, ["st1", "st2"])
+        add("mixed" + sfx, [("bg", f"{P} mb &", ["mb"]), ("fg", f"{P} ms", ["ms"]), ("key", b"\x1a"),
+                             ("fg", f"{P} mf", ["mf"])], mode, ["mb", "ms", "mf"])
+        add("pipe" + sfx, [("bg", f"{P} pb1 | {P} pb2 &", ["pb1", "pb2"]),
+                            ("fg", f"{P} pf1 | {P} pf2", ["pf1", "pf2"])], mode, ["pb1", "pb2", "pf1", "pf2"])
+        add("subshell" + sfx, [("bg", f"({P} sb1; {P} sb2) &", ["sb1"]),
+                                ("fg", f"({P} sf1; {P} sf2)", ["sf1"])], mode, ["sb1", "sb2", "sf1", "sf2"])
+    add("disown", [("bg", f"{P} d1 &", ["d1"]), ("line", "disown"), ("bg", f"{P} d2 &", ["d2"])],
+        "kill", ["d1", "d2"])
+    add("disown-h", [("bg", f"{P} dh1 &", ["dh1"]), ("line", "disown -h"), ("bg", f"{P} dh2 &", ["dh2"]),
+                     ("line", "jobs")], "kill", ["dh1", "dh2"])
+    add("disown-stopped", [("fg", f"{P} ds", ["ds"]), ("key", b"\x1a"), ("line", "disown")], "kill", ["ds"])
+    add("disown-all", [("bg", f"{P} da1 &", ["da1"]), ("fg", f"{P} da2", ["da2"]), ("key", b"\x1a"),
+                       ("line", "disown -a")], "kill", ["da1", "da2"])
+    add("nohup", [("bg", f"nohup {P} nh >/dev/null 2>&1 &", ["nh"]), ("bg", f"{P} nc &", ["nc"])],
+        "kill", ["nh", "nc"])
+    add("disown-h-stopped", [("fg", f"{P} dhs", ["dhs"]), ("key", b"\x1a"), ("line", "disown -h")], "kill",
+        ["dhs"])
+    add("trap", [("line", "trap 'echo trapped' HUP"), ("bg", f"{P} tr &", ["tr"])], "kill", ["tr"])
+    add("trap-fg", [("line", "trap 'echo trapped' HUP"), ("fg", f"{P} tf", ["tf"])], "kill", ["tf"])
+    add("ignored", [("bg", f"{P} ig &", ["ig"])], "kill", ["ig"], ignore_hup=True)
+    add("exit-running", [("bg", f"{P} xr &", ["xr"]), ("line", "exit")], "exit", ["xr"])
+    add("exit-stopped", [("fg", f"{P} xs", ["xs"]), ("key", b"\x1a"), ("line", "exit"), ("line", "exit")],
+        "exit", ["xs"])
+    add("exit-stopped-bg", [("bg", f"{P} xb &", ["xb"]), ("fg", f"{P} xt", ["xt"]), ("key", b"\x1a"),
+                            ("line", "exit"), ("line", "exit")], "exit", ["xb", "xt"])
+    add("eof-stopped", [("fg", f"{P} es", ["es"]), ("key", b"\x1a"), ("eof",), ("eof",)], "exit", ["es"])
+    add("friendly-bg", [("bg", f"{P} fb &", ["fb"]), ("fg", f"{P} ff", ["ff"])], "kill", ["fb", "ff"],
+        argv0="pelt")
+    add("dumb-bg", [("bg", f"{P} db &", ["db"])], "kill", ["db"], term="dumb")
+    add("editing", [("bg", f"{P} ed &", ["ed"]), ("part", "echo half")], "kill", ["ed"])
+    add("script", [("script", f"{P} cb &\n{P} cf\n", ["cb", "cf"])], "kill", ["cb", "cf"])
+    add("script-close", [("script", f"{P} cb &\n{P} cf\n", ["cb", "cf"])], "close", ["cb", "cf"])
+    for sig in ("", "-HUP", "-TERM", "-INT", "-QUIT", "-USR1", "-CONT", "-STOP", "-KILL"):
+        nm = "kill-stopped" + sig.lower()
+        add(nm, [("fg", f"{P} k", ["k"]), ("key", b"\x1a"), ("line", f"kill {sig} %1".replace("  ", " "))],
+            "none", ["k"])
+    add("kill-stopped-s-term", [("fg", f"{P} k", ["k"]), ("key", b"\x1a"), ("line", "kill -s TERM %1")],
+        "none", ["k"])
+    add("kill-running", [("bg", f"{P} kr &", ["kr"]), ("line", "kill %1")], "none", ["kr"])
+    add("kill-bg-stopped", [("bg", f"{P} kb &", ["kb"]), ("line", "kill -STOP %1"), ("line", "kill %1")],
+        "none", ["kb"])
+    add("kill-stopped-pid", [("fg", f"{P} kp", ["kp"]), ("key", b"\x1a"),
+                             ("line", "kill $(cat \"$HW_DIR/kp.pid\")")], "none", ["kp"])
+    add("kill-stopped-group", [("fg", f"{P} kg", ["kg"]), ("key", b"\x1a"),
+                               ("line", "kill -- -$(cat \"$HW_DIR/kg.pid\")")], "none", ["kg"])
+    add("kill-stopped-pipe", [("fg", f"{P} kq1 | {P} kq2", ["kq1", "kq2"]), ("key", b"\x1a"),
+                              ("line", "kill %1")], "none", ["kq1", "kq2"])
+    add("kill-stopped-two", [("fg", f"{P} kt1", ["kt1"]), ("key", b"\x1a"), ("fg", f"{P} kt2", ["kt2"]),
+                             ("key", b"\x1a"), ("line", "kill %1 %2")], "none", ["kt1", "kt2"])
+    return r
+
+
+def compile_probe(work):
+    cc = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
+    if not cc:
+        return None, "no C compiler"
+    src = os.path.join(work, "hw-probe.c")
+    with open(src, "w") as fh:
+        fh.write(PROBE_C)
+    os.makedirs(os.path.join(work, "bin"), exist_ok=True)
+    out = os.path.join(work, "bin", "hw-probe")
+    r = subprocess.run([cc, "-O1", "-o", out, src], capture_output=True, text=True)
+    if r.returncode != 0:
+        return None, "the probe did not compile: " + r.stderr.strip()[:400]
+    return out, ""
+
+
+def ctty_defaults(ignore_hup):
+    def pre():
+        fcntl.ioctl(0, termios.TIOCSCTTY, 0)
+        for n in range(1, signal.NSIG):
+            if n in (signal.SIGKILL, signal.SIGSTOP):
+                continue
+            try:
+                signal.signal(n, signal.SIG_DFL)
+            except (OSError, ValueError):
+                pass
+        if ignore_hup:
+            signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        signal.pthread_sigmask(signal.SIG_SETMASK, [])
+    return pre
+
+
+def alive_state(pid):
+    """'alive', 'stopped' or None (no such process, or a zombie)."""
+    if os.path.isdir("/proc/self"):
+        try:
+            with open(f"/proc/{pid}/stat") as fh:
+                st = fh.read()
+        except OSError:
+            return None
+        s = st[st.rfind(")") + 2:].split()[0]
+        if s == "Z" or s == "X":
+            return None
+        return "stopped" if s in ("T", "t") else "alive"
+    out = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True,
+                         text=True).stdout.strip()
+    if out == "" or out.startswith("Z"):
+        return None
+    return "stopped" if out.startswith("T") else "alive"
+
+
+def is_probe(pid):
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as fh:
+            return b"hw-probe" in fh.read()
+    except OSError:
+        out = subprocess.run(["ps", "-o", "command=", "-p", str(pid)], capture_output=True,
+                             text=True).stdout
+        return "hw-probe" in out
+
+
+class Session:
+    """A shell on a fresh pty: a new session, the pty its controlling
+    terminal, its standard input, output and error."""
+
+    def __init__(self, argv, exe, rdir, probe_dir, term, ignore_hup):
+        self.master, slave = pty.openpty()
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 100, 0, 0))
+        self.log = os.path.join(rdir, "probe.log")
+        open(self.log, "w").close()
+        env = {
+            "PATH": probe_dir + ":/usr/bin:/bin",
+            "HOME": rdir,
+            "LC_ALL": "C",
+            "PS1": PROMPT.decode(),
+            "PS2": "> ",
+            "TERM": term,
+            "HW_LOG": self.log,
+            "HW_DIR": rdir,
+        }
+        self.p = subprocess.Popen(argv, executable=exe, stdin=slave, stdout=slave, stderr=slave,
+                                  env=env, cwd=rdir, start_new_session=True,
+                                  preexec_fn=ctty_defaults(ignore_hup), close_fds=True)
+        os.close(slave)
+        self.tty = b""
+        self.open = True
+        self.status = None
+
+    def pump(self, secs):
+        end = time.time() + secs
+        while True:
+            left = end - time.time()
+            if left <= 0:
+                break
+            if not self.open:
+                time.sleep(min(0.05, left))
+                self.reap()
+                continue
+            r, _, _ = select.select([self.master], [], [], min(0.05, left))
+            if r:
+                try:
+                    d = os.read(self.master, 65536)
+                except OSError:
+                    d = b""
+                if not d:
+                    self.open = False
+                    continue
+                self.tty += d
+            self.reap()
+
+    def reap(self):
+        if self.status is None:
+            pid, st = os.waitpid(self.p.pid, os.WNOHANG)
+            if pid == self.p.pid:
+                self.status = st
+
+    def prompts(self):
+        return self.tty.count(PROMPT)
+
+    def wait_prompts(self, n, secs=10):
+        end = time.time() + secs
+        while time.time() < end:
+            if self.prompts() >= n:
+                self.pump(0.15)
+                return True
+            if self.status is not None:
+                return False
+            self.pump(0.05)
+        return False
+
+    def type(self, b):
+        os.write(self.master, b)
+
+    def lines(self):
+        with open(self.log, errors="replace") as fh:
+            return fh.read().splitlines()
+
+    def started(self, name):
+        return any(ln.startswith(f"start {name} ") for ln in self.lines())
+
+    def wait_started(self, names, secs=10):
+        end = time.time() + secs
+        while time.time() < end:
+            if all(self.started(n) for n in names):
+                return True
+            self.pump(0.05)
+        return False
+
+    def end_text(self):
+        if self.status is None:
+            return "alive"
+        if os.WIFSIGNALED(self.status):
+            n = os.WTERMSIG(self.status)
+            try:
+                return "signal:" + signal.Signals(n).name[3:]
+            except ValueError:
+                return f"signal:{n}"
+        return f"exit:{os.WEXITSTATUS(self.status)}"
+
+
+def source(code, sender, shell_pid, me_pid, harness_pid):
+    if sender == shell_pid:
+        return "shell"
+    if sender == harness_pid:
+        return "harness"
+    if sender == me_pid:
+        return "self"
+    if sender == 0 and code == 128:  # SI_KERNEL
+        return "kernel"
+    if sender == 0:
+        return f"kernel{code}"
+    return "other"
+
+
+def observe(sess, probes):
+    """The row's line, and the probes still running (pid, name)."""
+    shell_pid = sess.p.pid
+    harness = os.getpid()
+    starts, sigs, dies, igns = {}, {}, {}, {}
+    for ln in sess.lines():
+        f = ln.split()
+        if not f:
+            continue
+        if f[0] == "start" and len(f) >= 4:
+            starts[f[1]] = int(f[3])
+        elif f[0] == "sig" and len(f) >= 7:
+            sigs.setdefault(f[1], []).append((f[2], int(f[4]), int(f[6])))
+        elif f[0] == "die" and len(f) >= 3:
+            dies[f[1]] = f[2]
+        elif f[0] == "ign" and len(f) >= 3:
+            igns.setdefault(f[1], []).append(f[2])
+    parts = [f"shell {sess.end_text()}"]
+    left = []
+    for name in probes:
+        if name not in starts:
+            parts.append(f"{name} - never")
+            continue
+        pid = starts[name]
+        got = sorted({f"{s}:{source(c, frm, shell_pid, pid, harness)}" for s, c, frm in sigs.get(name, [])})
+        st = alive_state(pid)
+        if st is not None:
+            left.append((pid, name))
+            end = st
+        elif name in dies:
+            end = "dead:" + dies[name]
+        else:
+            end = "gone"
+        parts.append(f"{name} {'+'.join(got) if got else '-'} {end}")
+    return " | ".join(parts), left
+
+
+def run_row(row, argv_i, argv_s, argv0_name, work, probe_dir, is_pelt):
+    name, acts, hang, probes, opt = row
+    rdir = os.path.join(work, name)
+    os.makedirs(rdir)
+    script = [a for a in acts if a[0] == "script"]
+    if script:
+        path = os.path.join(rdir, "row.sh")
+        with open(path, "w") as fh:
+            fh.write(script[0][1])
+        argv = argv_s + [path]
+    else:
+        argv = list(argv_i)
+    exe = shutil.which(argv[0]) or argv[0]
+    if is_pelt:
+        # pelt's name decides whether it starts friendly (`argv0`)
+        argv = [opt.get("argv0", argv0_name)] + argv[1:]
+    sess = Session(argv, exe, rdir, probe_dir, opt.get("term", "xterm"), opt.get("ignore_hup", False))
+    note = ""
+    try:
+        if not script:
+            if not sess.wait_prompts(1, 15):
+                note = "no first prompt"
+        n = 1
+        for a in acts:
+            if note:
+                break
+            kind = a[0]
+            if kind == "line":
+                sess.type(a[1].encode() + b"\r")
+                n += 1
+                if a[1] == "exit":
+                    # an exit may end the shell, or warn and prompt again
+                    end = time.time() + 5
+                    while time.time() < end and sess.status is None and sess.prompts() < n:
+                        sess.pump(0.05)
+                    if sess.status is None and sess.prompts() < n:
+                        note = f"no prompt after {a[1]!r}"
+                    sess.pump(0.3)
+                    if sess.status is not None:
+                        break
+                    continue
+                if not sess.wait_prompts(n):
+                    note = f"no prompt after {a[1]!r}"
+            elif kind == "eof":
+                # Ctrl-D at an empty line: may end the shell, or warn
+                sess.type(b"\x04")
+                n += 1
+                end = time.time() + 5
+                while time.time() < end and sess.status is None and sess.prompts() < n:
+                    sess.pump(0.05)
+                sess.pump(0.3)
+                if sess.status is not None:
+                    break
+                if sess.prompts() < n:
+                    note = "no prompt after Ctrl-D"
+            elif kind == "part":
+                sess.type(a[1].encode())
+                sess.pump(0.3)
+            elif kind == "fg":
+                sess.type(a[1].encode() + b"\r")
+                if not sess.wait_started(a[2]):
+                    note = f"{a[2]} did not start"
+                sess.pump(0.3)
+            elif kind == "bg":
+                sess.type(a[1].encode() + b"\r")
+                n += 1
+                if not sess.wait_started(a[2]) or not sess.wait_prompts(n):
+                    note = f"{a[2]} did not start, or no prompt"
+            elif kind == "key":
+                sess.type(a[1])
+                n += 1
+                if not sess.wait_prompts(n):
+                    note = f"no prompt after the key {a[1]!r}"
+            elif kind == "script":
+                if not sess.wait_started(a[2]):
+                    note = f"{a[2]} did not start"
+                sess.pump(0.3)
+        sess.pump(0.4)
+        if hang == "kill":
+            os.kill(sess.p.pid, signal.SIGHUP)
+        elif hang == "close":
+            os.close(sess.master)
+            sess.open = False
+        # the shell's end, then the probes' (each waits 150 ms to die)
+        end = time.time() + (4 if hang in ("kill", "close") else 0)
+        while time.time() < end and sess.status is None:
+            sess.pump(0.05)
+        sess.pump(1.0)
+        line, left = observe(sess, probes)
+    finally:
+        if sess.status is None:
+            os.kill(sess.p.pid, signal.SIGKILL)
+            os.waitpid(sess.p.pid, 0)
+        if sess.open:
+            os.close(sess.master)
+    # what the row left running: its probes, by pid
+    _, left2 = observe(sess, probes)
+    for pid, _n in left2:
+        if is_probe(pid):
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                pass
+    with open(os.path.join(rdir, "tty.raw"), "wb") as fh:
+        fh.write(sess.tty)
+    return f"{name} | {line}", note
+
+
+def shell_argvs(which, pelt):
+    if which == "bash":
+        return ["bash", "--norc", "--noprofile", "-i"], ["bash"], None, False
+    if which == "dash":
+        return ["dash", "-i", "-m"], ["dash"], None, False
+    if which == "pelt":
+        return [pelt, "-i"], [pelt], "sh", True
+    raise SystemExit(f"hangup-witness: no shell {which!r}")
+
+
+def read_table(path):
+    want, why = {}, {}
+    for ln in open(path).read().splitlines():
+        if ln.startswith("#") or not ln.strip():
+            m = re.match(r"#\s*([a-z0-9-]+): (.*)", ln)
+            if m:
+                why[m.group(1)] = m.group(2)
+            continue
+        name = ln.split(" | ", 1)[0]
+        want[name] = ln
+    return want, why
+
+
+def main():
+    args = sys.argv[1:]
+    measure = None
+    only = None
+    pelt = None
+    while args and args[0].startswith("--"):
+        if args[0] == "--measure" and len(args) > 1:
+            measure = args[1]
+            args = args[2:]
+        elif args[0] == "--only" and len(args) > 1:
+            only = set(args[1].split(","))
+            args = args[2:]
+        elif args[0] == "--pelt" and len(args) > 1:
+            pelt = os.path.abspath(args[1])
+            args = args[2:]
+        else:
+            print(__doc__)
+            return 2
+    if measure is None:
+        if len(args) != 1:
+            print(__doc__)
+            return 2
+        pelt = os.path.abspath(args[0])
+        which = "pelt"
+    else:
+        which = measure
+    base = os.environ.get("TMPDIR") or None
+    work = tempfile.mkdtemp(prefix="hangup-", dir=base)
+    keep = os.environ.get("HW_KEEP")
+    try:
+        probe, why = compile_probe(work)
+        if probe is None:
+            print(f"hangup-witness: cannot run: {why}")
+            return 2
+        argv_i, argv_s, argv0, is_pelt = shell_argvs(which, pelt)
+        want, whys = ({}, {}) if measure else read_table(TABLE)
+        fails = 0
+        skips = 0
+        ran = 0
+        for row in rows():
+            name = row[0]
+            if only and name not in only:
+                continue
+            if row[2] == "close" and not LINUX:
+                print(f"SKIP-ROW {name} reason=linux-only (the kernel's part of a hangup)")
+                skips += 1
+                continue
+            got, note = run_row(row, argv_i, argv_s, argv0, work, os.path.dirname(probe), is_pelt)
+            ran += 1
+            if measure:
+                print(got + (f"   # NOTE {note}" if note else ""))
+                continue
+            exp = want.get(name)
+            if exp is None:
+                print(f"FAIL {name}: no expected line in tests/hangup/expected")
+                fails += 1
+            elif note:
+                print(f"FAIL {name}: {note}\n  got:      {got}")
+                fails += 1
+            elif got != exp:
+                print(f"FAIL {name}\n  expected: {exp}\n  got:      {got}")
+                fails += 1
+            else:
+                print(f"ok {name}" + (f"  ({whys[name]})" if name in whys else ""))
+        if not measure:
+            print(f"hangup-witness: {ran - fails} of {ran} rows hold, {fails} fail, {skips} skipped")
+        return 1 if fails else 0
+    finally:
+        if keep:
+            print(f"hangup-witness: kept {work}")
+        else:
+            shutil.rmtree(work, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
