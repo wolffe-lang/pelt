@@ -19,6 +19,7 @@ fn command_description(name: str) -> str {
         "fc" => "list or edit command history",
         "jobs" => "list shell jobs",
         "fg" | "bg" => "resume a job",
+        "disown" => "release a job from the shell",
         "wait" => "wait for children",
         "kill" => "send a signal",
         "trap" => "set signal actions",
