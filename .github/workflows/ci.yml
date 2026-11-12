@@ -40,8 +40,9 @@
 #   tier pr     any other pull-request run (and a dispatch with tier pr):
 #               the gauntlet on linux x86-64 alone, both compiler tiers.
 #   tier noop   the plan and the verdict: a pull request whose changed
-#               paths are ALL prose (notes/, docs/, README.md, CLAUDE.md),
-#               or a label other than `full-matrix`.
+#               paths are ALL prose (notes/, docs/, README.md,
+#               CONTRIBUTING.md, CLAUDE.md), or a label other than
+#               `full-matrix`.
 #
 # Nothing a step checks changed: a pull request's push runs linux x86-64
 # alone, the merge (the label, and again the trunk push) every leg but

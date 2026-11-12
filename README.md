@@ -271,6 +271,8 @@ wolf-toolchain.toml  the pinned compiler and interpreter, by digest
 
 ## Contributing
 
+[`CONTRIBUTING.md`](CONTRIBUTING.md) is the full guide. In brief:
+
 - dash is the oracle and bash the second opinion, both as black boxes.
   Never read any shell's source; pelt's licence depends on it.
 - A behaviour change comes with its case, recorded from the oracle and

@@ -96,8 +96,8 @@ oracle showed no prompt).
 **The transcript.** One step per line typed, plus step 0 (what happens
 before anything is typed): the bytes on standard output; whether
 anything that is not white space reached standard error other than the
-prompt (presence only: pelt's messages are its own, CLAUDE.md); and the
-prompt the step ended on — the part of standard error after its last
+prompt (presence only: pelt's messages are its own, CONTRIBUTING.md); and
+the prompt the step ended on — the part of standard error after its last
 newline. The last line is `exit N` (`signal N` for a death by signal)
 with the step it happened at, or `alive` if the shell outlived what was
 typed. Lines are typed until the shell exits; any left over are not.
