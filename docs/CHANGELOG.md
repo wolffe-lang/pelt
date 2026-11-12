@@ -6,6 +6,35 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **A hangup reaches the jobs, as bash's does.** An interactive shell that
+  receives SIGHUP (the terminal hung up, or the signal was sent) with no trap
+  naming it now sends SIGHUP to every job, and SIGCONT after it to a stopped
+  one so that it is delivered, ends its stopped jobs as an exit does, and then
+  dies of SIGHUP itself. Before, pelt died as dash does and left its background
+  jobs running; on a system whose kernel does not hang up the terminal's
+  foreground group, a dropped ssh session left even its foreground job
+  running. `tools/hangup-witness` holds pelt to bash's table, measured from
+  outside (`tests/hangup/expected`). A shell started with SIGHUP ignored keeps
+  it ignored, and a trapped SIGHUP runs its action and the shell goes on.
+
+- **`disown`.** `disown [-h] [-ar] [job ...]` takes a job out of the table (no
+  longer listed, waited for, named or sent a hangup; its processes run on and
+  are still reaped), or with `-h` keeps it from a hangup only.
+
+- **`kill` continues a stopped job.** SIGTERM or SIGHUP sent to a stopped
+  job, by job id or by its process group, is followed by SIGCONT, so `kill %1`
+  ends a job stopped by Ctrl-Z, as bash's does; other signals and process ids
+  are left as they were.
+
+- **The end of a shell with stopped jobs.** Ctrl-D with a job stopped warns
+  once, as `exit` does (pelt used to leave at once). The second `exit` or
+  Ctrl-D, and a hangup, send each stopped job SIGTERM and SIGCONT, as bash's
+  do. A refused `exit` answers status 0, as dash's.
+
+- **The prompt witness's den starts in time.** Its stand-in `den` is a
+  POSIX sh script, not Python, whose start alone outran the first prompt's
+  50 ms on macOS runners (two nightly runs, pelt#93).
+
 - **The loop's memory gate measures kept memory on Linux.** `tools/loop-rss`
   ran the loop at 10,000 and 20,000 turns in two processes and compared
   their peak resident sets, file-backed pages included, which can differ by a
