@@ -1,0 +1,35 @@
+# notes/sh38/den-cost.py rows (Ubuntu 24.04 container, two CPUs, Linux; den a749692d release, pelt native at 5fc06ab4).
+# First take, sizes 10 to 2,000 (one commit of all files):
+status   N=10     rows=10  median_ms=     0.9 max_ms=     1.1
+prompt   N=10     median_ms=     2.8 max_ms=     3.0 fresh=15 stale=0 none=0 noprompt=0
+baseline N=10     median_ms=     4.3 max_ms=     4.8 (no den on PATH)
+status   N=100    rows=60  median_ms=     2.2 max_ms=     2.9
+prompt   N=100    median_ms=     4.1 max_ms=     4.3 fresh=15 stale=0 none=0 noprompt=0
+baseline N=100    median_ms=     4.3 max_ms=     4.6 (no den on PATH)
+status   N=400    rows=60  median_ms=     6.7 max_ms=     6.9
+prompt   N=400    median_ms=    11.2 max_ms=    11.7 fresh=15 stale=0 none=0 noprompt=0
+baseline N=400    median_ms=     4.3 max_ms=     5.2 (no den on PATH)
+status   N=2000   rows=60  median_ms=    30.7 max_ms=    32.0
+prompt   N=2000   median_ms=    31.5 max_ms=    36.7 fresh=15 stale=0 none=0 noprompt=0
+baseline N=2000   median_ms=     4.4 max_ms=     4.5 (no den on PATH)
+den-cost: ['den', 'add', '.'] failed at N=10000 with nothing on standard error (the first take stopped there)
+# Second take, sizes 3,000 to 20,000 (a commit per directory of 200 files; den refuses one commit of 3,000 new files):
+add      N=3000   `den add .` exit 0 stderr b''
+commit   N=3000   one commit of all: exit 2 stderr b'den: not yet implemented: commit rename summary budget\n'
+status   N=3000   rows=60  median_ms=    43.4 max_ms=    47.8
+prompt   N=3000   median_ms=    46.0 max_ms=    52.2 fresh=15 stale=0 none=0 noprompt=0
+baseline N=3000   median_ms=     4.2 max_ms=     4.6 (no den on PATH)
+add      N=5000   `den add .` exit -9 stderr b''
+status   N=5000   rows=60  median_ms=    79.1 max_ms=    85.5
+prompt   N=5000   median_ms=    57.4 max_ms=    58.1 fresh=0 stale=0 none=15 noprompt=0
+baseline N=5000   median_ms=     4.6 max_ms=     4.7 (no den on PATH)
+add      N=10000  `den add .` exit -9 stderr b''
+status   N=10000  rows=60  median_ms=   161.7 max_ms=   165.6
+prompt   N=10000  median_ms=    54.8 max_ms=    63.2 fresh=0 stale=0 none=15 noprompt=0
+baseline N=10000  median_ms=     4.5 max_ms=     5.0 (no den on PATH)
+add      N=20000  `den add .` exit -9 stderr b''
+status   N=20000  rows=60  median_ms=   330.6 max_ms=   352.1
+prompt   N=20000  median_ms=    57.3 max_ms=    67.2 fresh=0 stale=0 none=15 noprompt=0
+baseline N=20000  median_ms=     4.0 max_ms=    11.5 (no den on PATH)
+# den sha256 94adc96497fc13a91e21a97636c0c26f88efad8a1f3ce35cab07ca3b506daf08 (target/release/den)
+# pelt sha256 c28496ea8aa35fe597bd1a79ef230c8b4c64c09a93ce02571dbe34b6f93ec356 (target/native/pelt at 5fc06ab4)
