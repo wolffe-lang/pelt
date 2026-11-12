@@ -1,0 +1,46 @@
+fg | shell signal:HUP | fg HUP:kernel+HUP:shell dead:HUP
+bg | shell signal:HUP | bg1 HUP:shell dead:HUP | bg2 HUP:shell dead:HUP
+stopped | shell signal:HUP | st1 CONT:shell+HUP:shell+TERM:shell dead:HUP | st2 CONT:shell+HUP:shell+TERM:shell dead:HUP
+mixed | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP:kernel+HUP:shell dead:HUP
+pipe | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 HUP:kernel+HUP:shell dead:HUP | pf2 HUP:kernel+HUP:shell dead:HUP
+subshell | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 HUP:kernel+HUP:shell dead:HUP | sf2 - never
+fg-close | shell signal:HUP | fg CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+bg-close | shell signal:HUP | bg1 HUP:shell dead:HUP | bg2 HUP:shell dead:HUP
+stopped-close | shell signal:HUP | st1 CONT:shell+HUP:shell+TERM:shell dead:HUP | st2 CONT:shell+HUP:shell+TERM:shell dead:HUP
+mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | sf2 - never
+disown | shell signal:HUP | d1 - alive | d2 HUP:shell dead:HUP
+disown-h | shell signal:HUP | dh1 - alive | dh2 HUP:shell dead:HUP
+disown-stopped | shell signal:HUP | ds CONT:kernel+HUP:kernel dead:HUP
+disown-all | shell signal:HUP | da1 - alive | da2 CONT:kernel+HUP:kernel dead:HUP
+nohup | shell signal:HUP | nh - alive | nc HUP:shell dead:HUP
+disown-h-stopped | shell signal:HUP | dhs CONT:shell+TERM:shell dead:TERM
+trap | shell exit:0 | tr - alive
+trap-fg | shell alive | tf - alive
+ignored | shell signal:HUP | ig - alive
+exit-running | shell exit:0 | xr - alive
+exit-stopped | shell exit:1 | xs CONT:shell+TERM:shell dead:TERM
+exit-stopped-bg | shell exit:1 | xb - alive | xt CONT:shell+TERM:shell dead:TERM
+eof-stopped | shell exit:148 | es CONT:shell+TERM:shell dead:TERM
+friendly-bg | shell signal:HUP | fb HUP:shell dead:HUP | ff HUP:kernel+HUP:shell dead:HUP
+dumb-bg | shell signal:HUP | db HUP:shell dead:HUP
+editing | shell signal:HUP | ed HUP:shell dead:HUP
+script | shell signal:HUP | cb HUP:kernel dead:HUP | cf HUP:kernel dead:HUP
+script-close | shell signal:HUP | cb CONT:kernel+HUP:kernel dead:HUP | cf CONT:kernel+HUP:kernel dead:HUP
+kill-stopped | shell alive | k CONT:shell+TERM:shell dead:TERM
+kill-stopped-hup | shell alive | k CONT:shell+HUP:shell dead:HUP
+kill-stopped-term | shell alive | k CONT:shell+TERM:shell dead:TERM
+kill-stopped-int | shell alive | k - stopped
+kill-stopped-quit | shell alive | k - stopped
+kill-stopped-usr1 | shell alive | k - stopped
+kill-stopped-cont | shell alive | k CONT:shell alive
+kill-stopped-stop | shell alive | k - stopped
+kill-stopped-kill | shell alive | k - gone
+kill-stopped-s-term | shell alive | k CONT:shell+TERM:shell dead:TERM
+kill-running | shell alive | kr TERM:shell dead:TERM
+kill-bg-stopped | shell alive | kb CONT:shell+TERM:shell dead:TERM
+kill-stopped-pid | shell alive | kp - stopped
+kill-stopped-group | shell alive | kg CONT:shell+TERM:shell dead:TERM
+kill-stopped-pipe | shell alive | kq1 CONT:shell+TERM:shell dead:TERM | kq2 CONT:shell+TERM:shell dead:TERM
+kill-stopped-two | shell alive | kt1 CONT:shell+TERM:shell dead:TERM | kt2 CONT:shell+TERM:shell dead:TERM
