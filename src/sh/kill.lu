@@ -216,6 +216,9 @@ fn bi_kill(mut sh: Sh, args: List[str]) -> int {
         var st = 0
         if kind == T_GROUP {
             st = kill_group(mut sh, word, what, meaning)
+            if st == 0 {
+                kill_continue(sh, what, meaning)
+            }
         } else if kind == T_ALL {
             st = kill_all(mut sh, word, meaning)
         } else if kind == T_JOB {
