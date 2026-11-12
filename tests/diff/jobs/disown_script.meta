@@ -1,2 +1,5 @@
+exit=0
+stderr=yes
 oracle=bash
 why=disown (bash's; dash has none): a disowned job is not waited for; no current job, a bad job id and a bad option fail
+dash=differs
