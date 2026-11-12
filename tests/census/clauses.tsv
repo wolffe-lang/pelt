@@ -502,7 +502,7 @@ printf/4	T	Integer conversions %d %i %o %u %x %X with flags, width and precision
 printf/5	T	String conversions with width and precision; %c takes the first character; %% is a percent sign	printf/c_strings	
 printf/6	T	A numeric operand starting with a quote is the character's code	builtin/printf_char_value printf/c_quote_value	
 printf/7	T	A bad numeric operand gives a diagnostic and a non-zero status, and output still happens	builtin/printf_bad_number printf/c_bad_operand	
-printf/8	T	Floating conversions %e %f %g %a (required when the system has them: recorded from dash)	printf/c_floats printf/c_hex_float	%a pending: printf/c_hex_float, recorded from bash (dash has no %a)
+printf/8	T	Floating conversions %e %f %g %a (required when the system has them: recorded from dash)	printf/c_floats printf/c_hex_float	%a pending: printf/c_hex_float (dash and bash --posix agree)
 printf/9	T	printf with no format operand fails; -- ends options	printf/c_usage	
 printf/10	X	Numbered argument conversions %n$ (new in 2024)	printf/c_numbered	POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 implements it; recorded, not counted
 read/1	T	read assigns fields split by IFS to the variables; the last gets the rest, trimmed of IFS white space	builtin/read builtin/read_ifs read/c_fields read/trailing_delimiter	

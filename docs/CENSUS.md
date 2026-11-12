@@ -272,7 +272,7 @@ Current at sh38: **532 of 548** recorded statement samples pass; sections
 1–4 above retain the original sh06 measurements. The floating `printf`
 statement (printf/8) is pending since sh38: `%e`, `%f` and `%g` pass
 (`printf/c_floats`), and `%a`, which pelt does not have yet, has its own
-case, `printf/c_hex_float`, recorded from bash (dash has no `%a`), so the
+case, `printf/c_hex_float` (dash and `bash --posix` agree on it), so the
 census no longer counts the statement as met (pelt#97).
 
 | part | statements | met | pending | gap | untestable | met, of the testable | had a case before the census |
@@ -950,7 +950,7 @@ Not counted: 43 statements recorded for what dash does where POSIX leaves the be
 | printf/5 | String conversions with width and precision; %c takes the first character; %% is a percent sign | met | `printf/c_strings` |  |
 | printf/6 | A numeric operand starting with a quote is the character's code | met | `builtin/printf_char_value`, `printf/c_quote_value` |  |
 | printf/7 | A bad numeric operand gives a diagnostic and a non-zero status, and output still happens | met | `builtin/printf_bad_number`, `printf/c_bad_operand` |  |
-| printf/8 | Floating conversions %e %f %g %a (required when the system has them: recorded from dash) | pending (printf-hex-float) | `printf/c_floats`, `printf/c_hex_float` | %a pending: printf/c_hex_float, recorded from bash (dash has no %a) |
+| printf/8 | Floating conversions %e %f %g %a (required when the system has them: recorded from dash) | pending (printf-hex-float) | `printf/c_floats`, `printf/c_hex_float` | %a pending: printf/c_hex_float (dash and bash --posix agree) |
 | printf/9 | printf with no format operand fails; -- ends options | met | `printf/c_usage` |  |
 | printf/10 | Numbered argument conversions %n$ (new in 2024) | not counted | `printf/c_numbered` | POSIX.1-2024 addition; neither dash 0.5.13.4 nor bash 5.3 implements it; recorded, not counted |
 

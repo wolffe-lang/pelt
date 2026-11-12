@@ -1,3 +1,2 @@
-oracle=bash
 pending=printf-hex-float
-why=printf/8 names %a; dash 0.5.13.4 has no %a, so bash --posix is the oracle (x86-64: long double, as bash converts it)
+why=printf/8 names %a; dash and bash --posix write a binary64 conversion (0x1p+0 for 1); plain bash, outside POSIX mode, converts with a long double (0x8p-3 on x86-64)
