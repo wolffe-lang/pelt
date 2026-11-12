@@ -58,6 +58,12 @@ const JB_DONE: int = 3
 /// A process that has not changed since it started (or was continued).
 const PR_RUN: int = 100000
 
+/// The job column of a process `disown` took out of the table: still
+/// the shell's child, reaped as it ends (`jc_record`), and never listed,
+/// waited for, named by a job id or sent a hangup. A free entry's
+/// column is -1.
+const PR_DISOWNED: int = -2
+
 /// Where the command column of a `jobs` line starts (dash, black-box).
 const JOB_COL: int = 33
 
@@ -84,6 +90,10 @@ const SL_HELD: int = 32
 /// nothing of a signal, as dash, which reaped it as it went on
 /// (black-box: `wait/reaped_signal_quiet`, pelt#47).
 const SL_REAPED: int = 64
+
+/// `disown -h`: the job stays in the table and a hangup does not reach
+/// it (`hangup`).
+const SL_NOHUP: int = 128
 
 const SL_STATUS: int = 256
 
@@ -394,7 +404,7 @@ fn jb_mark(sh: Sh, j: int) -> char {
 fn jb_add_proc(mut sh: Sh, j: int, h: int, pid: int) {
     var k = 0
     while k < sh.pr_job.len {
-        if sh.pr_job[k] < 0 {
+        if sh.pr_job[k] == -1 {
             sh.pr_job[k] = j
             sh.pr_h[k] = h
             sh.pr_pid[k] = pid
@@ -518,7 +528,7 @@ fn job_of(sh: Sh, id: int) -> int {
     }
     var k = 0
     while k < sh.pr_job.len {
-        if sh.pr_pid[k] == id {
+        if sh.pr_pid[k] == id && sh.pr_job[k] >= 0 {
             return sh.pr_job[k]
         }
         k += 1
@@ -728,6 +738,19 @@ fn jc_record(mut sh: Sh, h: int, st: int) {
     var k = 0
     while k < sh.pr_h.len {
         if sh.pr_h[k] == h && (sh.pr_st[k] == PR_RUN || sh.pr_st[k] >= 256) {
+            if sh.pr_job[k] == PR_DISOWNED {
+                // a disowned job's process: its end is nobody's to hear,
+                // and its entry is free again
+                sh.pr_st[k] = st
+                if st < 256 {
+                    sh.pr_job[k] = -1
+                    sh.pr_h[k] = -1
+                    sh.pr_pid[k] = 0
+                    sh.pr_st[k] = 0
+                    sh.pr_text[k] = ""
+                }
+                return
+            }
             sh.pr_st[k] = st
             let j = sh.pr_job[k]
             set_slot_told(mut sh, j, false)
@@ -788,7 +811,12 @@ fn jc_wait(mut sh: Sh, j: int, also: int) -> int {
         if !still_running(sh, j) {
             return 0
         }
-        let got = signal_park(sh.park_fds, signal.child() | also)
+        // a hangup the shell answers itself ends the wait, and the shell
+        let hup = if hup_now(sh) then m_hup() else 0
+        let got = signal_park(sh.park_fds, signal.child() | also | hup)
+        if got > 0 && got & hup != 0 {
+            hangup(sh, -1)
+        }
         if got < 0 {
             // no wait on signals here: block on the first live child
             // of the job; a stop is then seen only when it ends
@@ -827,7 +855,7 @@ fn still_running(sh: Sh, j: int) -> bool {
 fn block_on_one(mut sh: Sh, j: int) -> bool {
     var k = 0
     while k < sh.pr_h.len {
-        if (j < 0 || sh.pr_job[k] == j) && sh.pr_st[k] == PR_RUN {
+        if (j < 0 && sh.pr_job[k] >= 0 || sh.pr_job[k] == j) && sh.pr_st[k] == PR_RUN {
             let raw = os_wait_status(sh.pr_h[k]) else 1
             sh.pr_st[k] = raw
             set_slot_told(mut sh, sh.pr_job[k], false)
@@ -911,8 +939,11 @@ fn jc_heard_int(sh: Sh, sig: int) {
 
 /// The fast path's foreground wait (`sh.exec`'s `run_fast`): the poll's
 /// answer for child `h`, waiting on `CHILD` between looks; no other job
-/// has a process, so any other answer is no one's.
-fn fg_poll(h: int, none: List[int]) -> int {
+/// has a process, so any other answer is no one's. A hangup the shell
+/// answers itself reaches `h`'s group (it leads its own: a job) with
+/// the jobs' (`hangup`).
+fn fg_poll(sh: Sh, h: int) -> int {
+    let hup = if hup_now(sh) then m_hup() else 0
     loop {
         let (h2, st) = os_wait_poll() else (-1, 0)
         if h2 == h {
@@ -921,9 +952,12 @@ fn fg_poll(h: int, none: List[int]) -> int {
         if h2 >= 0 {
             continue
         }
-        let got = signal_park(none, m_child())
+        let got = signal_park(sh.park_fds, m_child() | hup)
         if got < 0 {
             return os_wait_status(h) else 1
+        }
+        if got & hup != 0 {
+            hangup(sh, os_proc_pid(h) else 0)
         }
     }
     0
@@ -1680,6 +1714,257 @@ fn bi_bg(mut sh: Sh, args: List[str]) -> int {
         jb_continue(mut sh, j)
     }
     st
+}
+
+// ------------------------------------------------- disown and a hangup
+
+/// `disown [-h] [-ar] [job…]` (bash's, not POSIX; black-box,
+/// `notes/sh38-hangup.md`): each job leaves the table, so it is no longer
+/// listed, waited for, named by a job id or sent a hangup, and its
+/// processes run on and are reaped as they end; with `-h` it stays and is
+/// only kept from a hangup. No operand: the current job; `-a` every job,
+/// `-r` every running one. A process id names the job that holds it. A
+/// stopped job taken out is warned of (nothing will continue it). 1 when
+/// an operand names no job, 2 for an option pelt has not (R-sh38-5: a
+/// regular built-in in every shell, as `jobs`).
+fn bi_disown(mut sh: Sh, args: List[str]) -> int {
+    var mark = false
+    var all = false
+    var running = false
+    var i = 0
+    while i < args.len {
+        let a = args[i]
+        if a == "--" {
+            i += 1
+            break
+        }
+        if a.len < 2 || ch(a, 0) != '-' {
+            break
+        }
+        var k = 1
+        while k < a.len {
+            let c = ch(a, k)
+            if c == 'h' {
+                mark = true
+            } else if c == 'a' {
+                all = true
+            } else if c == 'r' {
+                running = true
+            } else {
+                diag(mut sh, "disown: -{c}: no such option")
+                return 2
+            }
+            k += 1
+        }
+        i += 1
+    }
+    if jobs_live(sh) {
+        let _p = jc_poll(mut sh)
+    }
+    if i >= args.len {
+        if all || running {
+            var j = 0
+            while j < slot_count(sh) {
+                let s = jb_state_of(sh, j)
+                if s != JB_FREE && j != sh.jc_build && (!running || s == JB_RUN) {
+                    disown_one(mut sh, j, mark)
+                }
+                j += 1
+            }
+            return 0
+        }
+        let cur = nth_recent(sh, 0)
+        if cur < 0 {
+            diag(mut sh, "disown: no current job")
+            return 1
+        }
+        disown_one(mut sh, cur, mark)
+        return 0
+    }
+    var st = 0
+    while i < args.len {
+        let w = args[i]
+        i += 1
+        var j = -1
+        if w.len > 0 && ch(w, 0) == '%' {
+            j = job_index(sh, w)
+        } else if is_digits(w) {
+            j = job_of(sh, to_int(w) else -1)
+        }
+        if j < 0 || slot_state(sh, j) == JB_FREE {
+            diag(mut sh, "disown: {job_word(w, j)}")
+            st = 1
+            continue
+        }
+        disown_one(mut sh, j, mark)
+    }
+    st
+}
+
+/// Job `j` out of the table, its live processes kept to be reaped
+/// (`PR_DISOWNED`); or, with `mark`, kept in it and from a hangup.
+fn disown_one(mut sh: Sh, j: int, mark: bool) {
+    if mark {
+        set_slot_flag(mut sh, j, SL_NOHUP, true)
+        return
+    }
+    if jb_state_of(sh, j) == JB_STOP {
+        diag(mut sh, "disown: job {j + 1} is stopped, and nothing will continue it")
+    }
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j && (sh.pr_st[k] == PR_RUN || sh.pr_st[k] >= 256) {
+            sh.pr_job[k] = PR_DISOWNED
+        }
+        k += 1
+    }
+    jb_free(mut sh, j)
+}
+
+/// Process entry `k`'s status with what `jc_take` holds for it counted:
+/// the table as the next look will see it.
+fn pr_now(sh: Sh, k: int) -> int {
+    var st = sh.pr_st[k]
+    var i = 0
+    while i < sh.def_h.len {
+        if sh.def_h[i] == sh.pr_h[k] {
+            st = sh.def_st[i]
+        }
+        i += 1
+    }
+    st
+}
+
+/// Job `j`'s state as `jb_state_of` tells it, from `pr_now`: a hangup and
+/// the shell's end act on the jobs as they are, not as the table last
+/// said (a job stopped by `kill -STOP` while a line was typed).
+fn jb_state_now(sh: Sh, j: int) -> int {
+    if slot_state(sh, j) == JB_FREE {
+        return JB_FREE
+    }
+    var any = false
+    var live = false
+    var stopped = false
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            any = true
+            let s = pr_now(sh, k)
+            if s == PR_RUN {
+                live = true
+            } else if s >= 256 {
+                stopped = true
+            }
+        }
+        k += 1
+    }
+    if !any {
+        return slot_state(sh, j)
+    }
+    if live {
+        return JB_RUN
+    }
+    if stopped {
+        return JB_STOP
+    }
+    JB_DONE
+}
+
+/// `m` to job `j`: to its group, or to each of its live processes when
+/// it has none (job control off).
+fn jb_send(sh: Sh, j: int, m: int) {
+    if slot_pgid(sh, j) > 1 {
+        os_signal_send_group(slot_pgid(sh, j), m) else |_| {}
+        return
+    }
+    var k = 0
+    while k < sh.pr_job.len {
+        if sh.pr_job[k] == j {
+            let s = pr_now(sh, k)
+            if s == PR_RUN || s >= 256 {
+                os_signal_send(sh.pr_pid[k], m) else |_| {}
+            }
+        }
+        k += 1
+    }
+}
+
+/// `kill`'s SIGTERM or SIGHUP sent to group `g` (`sh.kill`): when `g` is a
+/// stopped job's group, `CONTINUE` after it, so the signal is delivered
+/// (R-sh38-1: bash, black-box, `notes/sh38-hangup.md`; dash leaves the
+/// job stopped with the signal pending). Another signal, a process id
+/// (not a group), or a job that runs is left as it is, as bash leaves it.
+fn kill_continue(sh: Sh, g: int, m: int) {
+    if m != signal.terminate() && m != m_hup() {
+        return
+    }
+    var j = 0
+    while j < slot_count(sh) {
+        if slot_pgid(sh, j) == g && jb_state_now(sh, j) == JB_STOP {
+            os_signal_send_group(g, signal.continued()) else |_| {}
+            return
+        }
+        j += 1
+    }
+}
+
+/// The stopped jobs ended as an interactive shell with job control ends
+/// with them (the second `exit`, the second end of input, a hangup):
+/// `TERMINATE` and then `CONTINUE` to each, so that it is delivered, a
+/// job `disown -h` marked too (bash, black-box: `notes/sh38-hangup.md`).
+/// dash leaves them to the host's rule for an orphaned group, which
+/// sends `HANGUP` and `CONTINUE` on Linux and which PAX's kernel does not
+/// keep.
+fn jc_end_stopped(sh: Sh) {
+    if !sh.jc_on || !sh.interactive || sh.sub > 0 {
+        return
+    }
+    var j = 0
+    while j < slot_count(sh) {
+        if jb_state_now(sh, j) == JB_STOP {
+            jb_send(sh, j, signal.terminate())
+            jb_send(sh, j, signal.continued())
+        }
+        j += 1
+    }
+}
+
+/// The shell hangs up: a `SIGHUP` no trap names reached an interactive
+/// shell (`sh.signal`'s `poll_traps`, the waits, the line editor and the
+/// read without one). As bash does (black-box, `notes/sh38-hangup.md`):
+/// every job not disowned and not marked by `disown -h` gets `HANGUP`,
+/// and a stopped one `CONTINUE` after it so that it is delivered; `fg`,
+/// the group of a foreground program the shell waits for that is no job
+/// (`sh.exec`'s fast path), gets `HANGUP` too; the stopped jobs are then
+/// ended as the shell's end ends them (`jc_end_stopped`); the terminal
+/// goes back to the shell's group (or the one it was started in), so the
+/// host's hangup of the terminal's foreground group as the shell dies
+/// reaches no job a second time; and the shell dies of `SIGHUP`, so its
+/// parent reads the signal (`os_exit_signal`). Never returns.
+fn hangup(sh: Sh, fg: int) {
+    var j = 0
+    while j < slot_count(sh) {
+        let s = jb_state_now(sh, j)
+        if (s == JB_RUN || s == JB_STOP) && !slot_flag(sh, j, SL_NOHUP) {
+            jb_send(sh, j, m_hup())
+            if s == JB_STOP {
+                jb_send(sh, j, signal.continued())
+            }
+        }
+        j += 1
+    }
+    if fg > 1 {
+        os_signal_send_group(fg, m_hup()) else |_| {}
+    }
+    jc_end_stopped(sh)
+    if sh.jc_on && sh.jc_tty >= 0 {
+        let to = if sh.jc_orig > 0 then sh.jc_orig else sh.jc_pgid
+        if to > 0 {
+            os_term_set_foreground(sh.jc_tty, to) else |_| {}
+        }
+    }
+    os_exit_signal(m_hup()) else |_| {}
+    os_exit(128 + (signal.number(m_hup()) else 1))
 }
 
 // ------------------------------------------------------- command text
