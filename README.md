@@ -13,7 +13,7 @@ shell's source is ever read: pelt is clean-room, black-box only.
 
 | measure | where it stands |
 |---|---|
-| POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 533 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
+| POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 532 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
 | differential corpus against dash, both tiers | 1,049 cases: 1,035 passing, 0 failing, 14 pending on a named primitive (`tests/diff/`) |
 | typed sessions through a pseudo-terminal | 593 recorded expectations, none pending; POSIX sessions compare against dash (pelt invoked as `sh` there, so friendly is off), editor keys against recorded references and pelt-owned screens (`tests/session/`) |
 | real `sh` scripts that run as under dash | 78 of 80, the other two not pelt's to change (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts): `configure-sed` prints a timestamp resolution it measures from the shell's own speed, a coin that flips for dash itself and is counted apart, and `pfetch`'s memory line differs between dash's own runs |
@@ -65,7 +65,8 @@ continuing syntax checks; `set +o` restores `monitor` and `nolog` as well.
 `getopts`, `umask` (octal and symbolic, `-S`), `trap`, `kill` (`-s`,
 `-signal`, `-0`, `-l`, job ids, a process group), `type`, `command`
 (`-v`, `-V`, `-p`), `hash` (a utility once found is remembered until
-`PATH` changes), `alias`/`unalias`, `fc`, `jobs`, `fg`, `bg`, `exec`
+`PATH` changes), `alias`/`unalias`, `fc`, `jobs`, `fg`, `bg`, `disown`
+(`-h`, `-a`, `-r`, as bash's), `exec`
 (which replaces the shell in the same process), and the rest of the
 special built-ins.
 
@@ -166,10 +167,16 @@ in a script): each pipeline of programs runs in its own process group
 and is handed the terminal, Ctrl-Z stops it, `jobs` (`-l`, `-p`), `fg`
 and `bg` take every job id (`%n`, `%+`, `%-`, `%string`, `%?string`), a
 job's ending or stopping is told before the next prompt (at once with
-`set -b`), `wait` is cut short by a trapped signal, and `exit` with
-stopped jobs warns once. A pipeline with a stage pelt runs itself, and
+`set -b`), `wait` is cut short by a trapped signal, and `exit` or Ctrl-D
+with stopped jobs warns once; the next one ends them (SIGTERM, then
+SIGCONT) and leaves. A pipeline with a stage pelt runs itself, and
 a foreground `( … )`, are jobs like any other: Ctrl-Z stops the whole of
-it and `fg` continues it.
+it and `fg` continues it. A hangup is passed on as bash passes it: an
+interactive shell that receives SIGHUP sends it to every job (SIGCONT
+after it to a stopped one) and then dies of it, so a dropped ssh session
+does not leave its jobs running; `disown` takes a job out of that, and
+`nohup` still works. `kill %1` (SIGTERM or SIGHUP) continues a stopped job so
+it receives the signal (`tools/hangup-witness`, bash's table).
 
 **Two hooks for a modern prompt.** An interactive pelt calls a function
 named `command_not_found_handle` (bash's name) when a command's name is
@@ -206,6 +213,9 @@ pending case still runs on every pass and is reported, never skipped.
   to its end before the next starts.
 - `trap` and `kill` know the signals POSIX names and no other (not
   Linux's `IO`, `PWR` or the real-time ones).
+- A SIGHUP that comes while the `read` built-in, or a command
+  substitution, waits on its input is answered when that read ends: no
+  read is torn by a signal in wolf, and those reads do not wait on one.
 - A byte that is not UTF-8 cannot reach a program: a `$'…'` that would
   make one is refused, and a command substitution's becomes `?`.
 - wolf 0.2.36's signal drain thread can end during the forks of several
