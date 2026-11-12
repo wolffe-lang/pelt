@@ -625,7 +625,7 @@ def main():
             if only and name not in only:
                 continue
             if row[2] == "close" and not LINUX:
-                print(f"SKIP-ROW {name} reason=linux-only (the kernel's part of a hangup)")
+                print(f"hangup-witness: SKIP {name}: linux only (the kernel's part of a hangup is the host's)")
                 skips += 1
                 continue
             got, note = run_row(row, argv_i, argv_s, argv0, work, os.path.dirname(probe), is_pelt)
