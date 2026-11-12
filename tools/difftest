@@ -5,7 +5,7 @@ Every case under tests/diff/ (see tools/lib_cases.py) runs through
 pelt and is compared with the expectation `tools/oracle-record` wrote
 from dash: standard output byte for byte, the exit status, and whether
 anything reached standard error (presence only — pelt's messages are
-its own, CLAUDE.md). A parse row (`mode=parse`) compares the exit
+its own, CONTRIBUTING.md). A parse row (`mode=parse`) compares the exit
 status of `-n` and the line it refused at.
 
 A case marked `pending=` needs a primitive pelt does not have yet. It
