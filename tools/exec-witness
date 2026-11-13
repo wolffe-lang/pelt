@@ -111,6 +111,8 @@ def main(argv):
         print(f"exec-witness: status  {'ok  ' if good else 'FAIL'} returncode {r.returncode}"
               f" (want {-signal.SIGTERM}), stderr {r.stderr!r}")
         ok = ok and good
+    refused = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), 'refusal-witness'), shell])
+    ok = refused.returncode == 0 and ok
     return 0 if ok else 1
 
 
