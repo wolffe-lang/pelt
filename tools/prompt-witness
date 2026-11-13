@@ -225,8 +225,9 @@ def cost(binary,home):
             if sys.platform.startswith('linux'):
                 a=idle_snapshot(sh.p.pid);time.sleep(10);b=idle_snapshot(sh.p.pid)
                 print('prompt-idle',right,json.dumps([a,b]),flush=True)
-                for key in ('contexts','cpu_ticks','minor_faults','major_faults'):assert a[key]==b[key],(key,a,b)
-                for key in ('Rss','Anonymous','AnonHugePages'):assert a['smaps_rollup'][key]==b['smaps_rollup'][key],(key,a,b)
+                for key in ('contexts','cpu_ticks','minor_faults','major_faults','anon_resident_pages'):assert a[key]==b[key],(key,a,b)
+                # the shell's own memory, not `Rss`: file pages are the host's to reclaim (lib_shadow)
+                for key in ('Anonymous','AnonHugePages'):assert a['smaps_rollup'][key]==b['smaps_rollup'][key],(key,a,b)
             else:print('SKIP prompt-idle Linux proc counters unavailable',flush=True)
         finally:assert sh.close()
     print('prompt-cost-delta median_ms',metrics[1][0]-metrics[0][0],'p99_ms',metrics[1][1]-metrics[0][1],flush=True)

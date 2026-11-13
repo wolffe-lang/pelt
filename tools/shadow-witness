@@ -51,7 +51,7 @@ def cost(binary,home):
             print('idle before',json.dumps(a,sort_keys=True),flush=True)
             print('idle after',json.dumps(b,sort_keys=True),flush=True)
             assert a['contexts']==b['contexts'],(a,b)
-            for k in ['cpu_ticks','minor_faults','major_faults','statm_resident_pages']:
+            for k in ['cpu_ticks','minor_faults','major_faults','anon_resident_pages']:
                 assert a[k]==b[k],(k,a[k],b[k])
             assert a['status']['THP_enabled']==b['status']['THP_enabled']=='0'
             assert a['smaps_rollup']['Anonymous']==b['smaps_rollup']['Anonymous']

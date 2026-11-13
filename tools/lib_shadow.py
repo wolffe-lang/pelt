@@ -110,10 +110,17 @@ def idle_snapshot(pid):
         if name in ('Rss', 'Anonymous', 'AnonHugePages', 'Pss_Anon', 'Pss_File', 'Pss_Shmem'):
             rollup[name] = value.strip()
     stat = Path(f'/proc/{pid}/stat').read_text().split(') ', 1)[1].split()
+    statm = [int(x) for x in Path(f'/proc/{pid}/statm').read_text().split()]
     return {
         'pid': pid,
         'page_size_bytes': os.sysconf('SC_PAGE_SIZE'),
-        'statm_resident_pages': int(Path(f'/proc/{pid}/statm').read_text().split()[1]),
+        'statm_resident_pages': statm[1],
+        # resident pages less the file-backed and shared ones: the shell's
+        # own. An idle check compares these, never the whole resident
+        # set, whose file pages the host may reclaim from an idle process
+        # (sh38: a loaded host took 2 to 112 such pages in 10 s from a shell
+        # that made no context switch, fault or tick)
+        'anon_resident_pages': statm[1] - statm[2],
         'status': status,
         'smaps_rollup': rollup,
         'contexts': contexts(pid),
