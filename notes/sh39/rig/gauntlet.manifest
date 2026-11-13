@@ -1,0 +1,51 @@
+# Both compiler tiers, matching the ordinary gauntlet and typed-session jobs.
+engine podman
+floor 35
+rig gauntlet.manifest committed=../../..:HEAD:notes/sh39/rig/gauntlet.manifest
+rig container.sh committed=../../..:HEAD:notes/sh39/rig/container.sh
+rig preflight.sh committed=../../..:HEAD:notes/sh39/rig/preflight.sh
+step planner-test image=localhost/r41-toolchain:1 tools=python3,bash script=container.sh -- localhost/r41-toolchain:1 python3 ci/tiers-test.py
+step proof-rig-test image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 python3 tools/shape-rss-rig-test
+step local-gate-test image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 python3 -I ci/local-gate-test.py
+step check-fmt image=localhost/r41-toolchain:1 tools=sh script=container.sh -- localhost/r41-toolchain:1 tools/check-fmt
+step clause-census image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/clause-census
+step gen-width image=localhost/sh38-oracle:1 tools=python3 script=container.sh -- localhost/sh38-oracle:1 tools/gen-width --check
+step build-native image=localhost/r41-toolchain:1 tools=cc,sh script=container.sh -- localhost/r41-toolchain:1 tools/build --native
+step shape-rss-test-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 env PELT_TEST_SHELL=target/native/pelt python3 tools/shape-rss-test
+step check-test image=localhost/r41-toolchain:1 tools=cc,sh script=container.sh -- localhost/r41-toolchain:1 tools/check-test
+step self-check-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/self-check native
+step glob-rss-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/glob-rss target/native/pelt
+step loop-rss-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/loop-rss target/native/pelt
+step shape-rss-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/shape-rss target/native/pelt
+step exec-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3,dash script=container.sh -- localhost/r41-toolchain:1 tools/exec-witness target/native/pelt
+step signal-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3,cc script=container.sh -- localhost/r41-toolchain:1 tools/signal-witness target/native/pelt
+step difftest-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/difftest --bin target/native
+step shadow-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/shadow-witness target/native/pelt
+step colour-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/colour-witness target/native/pelt
+step words-loader-test-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 python3 tools/words-loader-test
+step words-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/words-witness target/native/pelt
+step prompt-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3,cc script=container.sh -- localhost/r41-toolchain:1 tools/prompt-witness target/native/pelt
+step edit-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/edit-witness target/native/pelt
+step hist-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/hist-witness target/native/pelt
+step reap-witness-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/reap-witness target/native
+step sessions-native needs=build-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/session --bin target/native
+step build-release image=localhost/r41-toolchain:1 tools=cc,sh script=container.sh -- localhost/r41-toolchain:1 tools/build --release
+step shape-rss-test-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 env PELT_TEST_SHELL=target/release/pelt python3 tools/shape-rss-test
+step self-check-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/self-check release
+step glob-rss-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/glob-rss target/release/pelt
+step loop-rss-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/loop-rss target/release/pelt
+step shape-rss-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/shape-rss target/release/pelt
+step exec-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3,dash script=container.sh -- localhost/r41-toolchain:1 tools/exec-witness target/release/pelt
+step signal-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3,cc script=container.sh -- localhost/r41-toolchain:1 tools/signal-witness target/release/pelt
+step difftest-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/difftest --bin target/release
+step difftest-selftest needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/difftest-selftest target/release
+step shadow-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/shadow-witness target/release/pelt
+step colour-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/colour-witness target/release/pelt
+step words-loader-test-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 python3 tools/words-loader-test
+step words-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/words-witness target/release/pelt
+step prompt-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3,cc script=container.sh -- localhost/r41-toolchain:1 tools/prompt-witness target/release/pelt
+step edit-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/edit-witness target/release/pelt
+step hist-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/hist-witness target/release/pelt
+step reap-witness-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/reap-witness target/release
+step sessions-release needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/session --bin target/release
+step session-selftest needs=build-release image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/session-selftest target/release
