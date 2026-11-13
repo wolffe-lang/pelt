@@ -6,10 +6,11 @@ struct PromptVcs {
     value: str,
     stale: bool,
     deadline: int,
+    misses: int,
 }
 
 fn empty_prompt_vcs() -> PromptVcs {
-    PromptVcs { cwd: "", value: "", stale: false, deadline: 0 }
+    PromptVcs { cwd: "", value: "", stale: false, deadline: 0, misses: 0 }
 }
 
 fn prompt_enabled(sh: Sh) -> bool {
@@ -161,6 +162,7 @@ fn prompt_vcs_result(
             value: if old.cwd == cwd then old.value else "",
             stale: true,
             deadline: deadline,
+            misses: if now > deadline then (if old.cwd == cwd then old.misses + 1 else 1) else 0,
         }
     }
     var count = 0
@@ -170,6 +172,7 @@ fn prompt_vcs_result(
         value: if count == 0 then "[vcs:clean]" else "[vcs:{count}]",
         stale: false,
         deadline: deadline,
+        misses: 0,
     }
 }
 
@@ -267,13 +270,18 @@ fn prompt_prepare(mut sh: Sh, first: bool) {
         if dot >= 0 { sh.prompt_host = sh.prompt_host[0..dot] }
     }
     let cwd = os_cwd() else ""
-    let den = completion_exe("den", sh.vals["PATH"] else "")
-    if den.len > 0 {
-        let deadline = os_clock_ns() + 50000000
-        let (ok, raw) = prompt_probe(den, ["status", "--porcelain"], deadline)
-        sh.prompt_vcs = prompt_vcs_result(sh.prompt_vcs, cwd, raw, ok, os_clock_ns(), deadline)
-    } else {
-        sh.prompt_vcs = empty_prompt_vcs()
+    if sh.prompt_vcs.cwd != cwd { sh.prompt_vcs = empty_prompt_vcs() }
+    // Two consecutive deadline misses buy no answer. Only a directory
+    // change re-arms the probe; keys, time and idle redraws never do.
+    if sh.prompt_vcs.misses < 2 {
+        let den = completion_exe("den", sh.vals["PATH"] else "")
+        if den.len > 0 {
+            let deadline = os_clock_ns() + 50000000
+            let (ok, raw) = prompt_probe(den, ["status", "--porcelain"], deadline)
+            sh.prompt_vcs = prompt_vcs_result(sh.prompt_vcs, cwd, raw, ok, os_clock_ns(), deadline)
+        } else {
+            sh.prompt_vcs = empty_prompt_vcs()
+        }
     }
     if sh.funcs.has("prompt_right") {
         let status = sh.status
