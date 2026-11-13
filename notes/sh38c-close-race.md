@@ -22,8 +22,7 @@ terminal's foreground process group). A standard signal generated while one is p
 leaves it to the implementation; linux keeps one, and the first one's siginfo). So when the shell exits before the
 job has taken the shell's SIGHUP, the two are one, which names the shell, and the kernel's goes unrecorded. If so:
 the kernel's SIGHUP is the only one ever missing, the shell's is always first and always recorded, the kernel's
-SIGCONT is recorded either way, bash's rows show the same, and the rate rises with contention for the CPUs. Every
-`-close` row with a foreground job (`fg-close`, `mixed-close`, `pipe-close`, `subshell-close`) has it.
+SIGCONT is recorded either way, and bash's rows show the same. Every `-close` row with a foreground job (`fg-close`, `mixed-close`, `pipe-close`, `subshell-close`) has it.
 
 ## 1. The race, measured
 
@@ -74,8 +73,8 @@ system's, not pelt's.
 
 Every other row and every probe that is not a close's foreground job is held as before; macOS skips the close
 rows, as it did. The eight lines are bash 5.2.21's, measured through the changed witness (in that take bash's
-`stopped` rows lacked the exit path's SIGTERM, bash's own race that sh38's note records for 5.3.20; the table
-keeps pelt's, as before).
+`stopped` rows lacked the exit path's SIGTERM, which #120 saw vary between two takes of bash 5.3.20 too; the table
+keeps pelt's line there, as before).
 
 ## 3. After
 
