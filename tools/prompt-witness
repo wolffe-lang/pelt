@@ -205,6 +205,49 @@ def vcs(binary,home):
         print('ok prompt-vcs-real-probe/deadline/invalid/clean/directory/zero-key-probes',flush=True)
     finally:assert sh.close()
 
+def backoff(binary,home):
+    """Count owned probe starts, not elapsed time, at each primary prompt."""
+    bindir=home/'bin';bindir.mkdir()
+    den=bindir/'den'
+    den.write_text('#!/bin/sh\n'
+                   'printf x >> calls\n'
+                   'read -r mode < mode\n'
+                   'case $mode in slow) exec sleep 0.2;; dirty) printf "?? file\\n";; esac\n')
+    den.chmod(0o755)
+    for name,mode in [('slow','slow'),('fast','dirty'),('reset','dirty'),('stale','dirty')]:
+        d=home/name;d.mkdir();(d/'mode').write_text(mode)
+    (home/'mode').write_text('dirty')
+    def calls(d):return len((d/'calls').read_bytes()) if (d/'calls').exists() else 0
+    def row(name,ok,detail):
+        print(('ok ' if ok else 'FAIL ')+name+' '+str(detail),flush=True)
+        assert ok,(name,detail)
+    sh=ready(binary,home,env={'PATH':str(bindir)+':/usr/bin:/bin'})
+    try:
+        slow=home/'slow';fast=home/'fast';reset=home/'reset';stale=home/'stale'
+        step(sh,b'cd slow\r');row('prompt-vcs-backoff-first',calls(slow)==1,calls(slow))
+        step(sh,b'true\r');row('prompt-vcs-backoff-second',calls(slow)==2,calls(slow))
+        raw=step(sh,b'true\r')
+        row('prompt-vcs-backoff-third',calls(slow)==2 and b'[vcs:' not in raw,(calls(slow),raw))
+        for _ in range(4):step(sh,b'true\r')
+        row('prompt-vcs-backoff-stays',calls(slow)==2,calls(slow))
+        step(sh,b'cd ../fast\r')
+        for _ in range(4):
+            raw=step(sh,b'true\r');assert b'[vcs:1]' in raw,raw
+        row('prompt-vcs-backoff-fast',calls(fast)==5,calls(fast))
+        step(sh,b'cd ../slow\r')
+        row('prompt-vcs-backoff-cd',calls(slow)==3,calls(slow))
+        step(sh,b'cd ../reset\r')
+        (reset/'mode').write_text('slow');step(sh,b'true\r')
+        (reset/'mode').write_text('dirty');raw=step(sh,b'true\r')
+        assert b'[vcs:1]' in raw,raw
+        (reset/'mode').write_text('slow');step(sh,b'true\r');step(sh,b'true\r');step(sh,b'true\r')
+        row('prompt-vcs-backoff-reset',calls(reset)==5,calls(reset))
+        step(sh,b'cd ../stale\r')
+        (stale/'mode').write_text('slow');step(sh,b'true\r');step(sh,b'true\r')
+        raw=step(sh,b'true\r')
+        row('prompt-vcs-backoff-stale',calls(stale)==3 and b'\x1b[0;2m [vcs:1]' in raw,(calls(stale),raw))
+    finally:assert sh.close()
+
 def cost(binary,home):
     metrics=[]
     for right in (False,True):
@@ -240,6 +283,9 @@ def cost(binary,home):
 
 if __name__=='__main__':
     binary=Path(sys.argv[1]).resolve()
+    if '--backoff-only' in sys.argv:
+        with tempfile.TemporaryDirectory(prefix='vcs-backoff-') as temp:backoff(binary,Path(temp))
+        sys.exit(0)
     if '--identity-only' in sys.argv:
         with tempfile.TemporaryDirectory(prefix='sh37-identity-') as temp:identity(binary,Path(temp))
         sys.exit(0)
@@ -249,6 +295,7 @@ if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='sh32b-home-') as temp:home_aliases(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-laws-') as temp: laws(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh37-identity-') as temp:identity(binary,Path(temp))
+    with tempfile.TemporaryDirectory(prefix='vcs-backoff-') as temp:backoff(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix='sh32-vcs-') as temp:vcs(binary,Path(temp))
     if '--raw-only' not in sys.argv:
         with tempfile.TemporaryDirectory(prefix='sh32-cost-') as temp:cost(binary,Path(temp))
