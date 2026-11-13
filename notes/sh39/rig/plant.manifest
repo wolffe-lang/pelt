@@ -1,0 +1,7 @@
+engine podman
+floor 35
+rig plant.manifest committed=../../..:HEAD:notes/sh39/rig/plant.manifest
+rig container.sh committed=../../..:HEAD:notes/sh39/rig/container.sh
+rig preflight.sh committed=../../..:HEAD:notes/sh39/rig/preflight.sh
+step build-plant-native image=localhost/r41-toolchain:1 tools=cc,sh script=container.sh -- localhost/r41-toolchain:1 tools/build --native
+step prompt-backoff-plant needs=build-plant-native image=localhost/r41-toolchain:1 tools=python3 script=container.sh -- localhost/r41-toolchain:1 tools/prompt-witness target/native/pelt --backoff-only
