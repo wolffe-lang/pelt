@@ -1,0 +1,8 @@
+# Focused macOS gates for the prompt and refused-execution change.
+rig mac.manifest committed=../..:HEAD:notes/sh39b/mac.manifest
+step build-native tools=sh,cc -- tools/build --native
+step prompt-native needs=build-native tools=python3,cc -- tools/prompt-witness target/native/pelt
+step refusal-native needs=build-native tools=python3,dash -- python3 tools/refusal-witness target/native/pelt
+step build-release tools=sh,cc -- tools/build --release
+step prompt-release needs=build-release tools=python3,cc -- tools/prompt-witness target/release/pelt
+step refusal-release needs=build-release tools=python3,dash -- python3 tools/refusal-witness target/release/pelt
