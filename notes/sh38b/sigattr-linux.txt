@@ -1,0 +1,43 @@
+# linux 7.2.4 x86_64, Ubuntu 24.04 image, 2026-11-13T04:14:30Z
+-- take 1 (parent sends every signal)
+run  HUP,CONT,TERM gap0      CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+run  HUP,CONT,TERM gap50     HUP:parent/code=0x0 CONT:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+run  CONT                    CONT:parent/code=0x0 CONT:parent/code=0x0
+run  HUP,TERM gap0           TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM,CONT gap0 CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM gap0      CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM gap50     CONT:parent/code=0x0 HUP:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+stop CONT                    CONT:parent/code=0x0 CONT:parent/code=0x0
+stop TERM,CONT gap50         CONT:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+stop HUP (then CONT)         CONT:parent/code=0x0 HUP:parent/code=0x0
+stop USR1 (then CONT)        CONT:parent/code=0x0 USR1:parent/code=0x0
+stop HUP,USR1 (then CONT)    CONT:parent/code=0x0 USR1:parent/code=0x0 HUP:parent/code=0x0
+pstop HUP,CONT,TERM gap50    CONT:parent/code=0x0 HUP:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+-- take 2 (parent sends every signal)
+run  HUP,CONT,TERM gap0      CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+run  HUP,CONT,TERM gap50     HUP:parent/code=0x0 CONT:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+run  CONT                    CONT:parent/code=0x0 CONT:parent/code=0x0
+run  HUP,TERM gap0           TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM,CONT gap0 CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM gap0      CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM gap50     CONT:parent/code=0x0 HUP:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+stop CONT                    CONT:parent/code=0x0 CONT:parent/code=0x0
+stop TERM,CONT gap50         CONT:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+stop HUP (then CONT)         CONT:parent/code=0x0 HUP:parent/code=0x0
+stop USR1 (then CONT)        CONT:parent/code=0x0 USR1:parent/code=0x0
+stop HUP,USR1 (then CONT)    CONT:parent/code=0x0 USR1:parent/code=0x0 HUP:parent/code=0x0
+pstop HUP,CONT,TERM gap50    CONT:parent/code=0x0 HUP:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+-- take 3 (parent sends every signal)
+run  HUP,CONT,TERM gap0      CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+run  HUP,CONT,TERM gap50     HUP:parent/code=0x0 CONT:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+run  CONT                    CONT:parent/code=0x0 CONT:parent/code=0x0
+run  HUP,TERM gap0           TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM,CONT gap0 CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM gap0      CONT:parent/code=0x0 TERM:parent/code=0x0 HUP:parent/code=0x0 CONT:parent/code=0x0
+stop HUP,CONT,TERM gap50     CONT:parent/code=0x0 HUP:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+stop CONT                    CONT:parent/code=0x0 CONT:parent/code=0x0
+stop TERM,CONT gap50         CONT:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0
+stop HUP (then CONT)         CONT:parent/code=0x0 HUP:parent/code=0x0
+stop USR1 (then CONT)        CONT:parent/code=0x0 USR1:parent/code=0x0
+stop HUP,USR1 (then CONT)    CONT:parent/code=0x0 USR1:parent/code=0x0 HUP:parent/code=0x0
+pstop HUP,CONT,TERM gap50    CONT:parent/code=0x0 HUP:parent/code=0x0 TERM:parent/code=0x0 CONT:parent/code=0x0

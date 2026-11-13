@@ -1,0 +1,7 @@
+# linux 7.2.4 x86_64, Ubuntu 24.04 image, 2026-11-13T04:15:12Z
+P _exit(0)             HUP:0/code=0x80 CONT:0/code=0x80
+P killed (SIGKILL)     HUP:0/code=0x80 CONT:0/code=0x80
+P _exit(0)             HUP:0/code=0x80 CONT:0/code=0x80
+P killed (SIGKILL)     HUP:0/code=0x80 CONT:0/code=0x80
+P _exit(0)             HUP:0/code=0x80 CONT:0/code=0x80
+P killed (SIGKILL)     HUP:0/code=0x80 CONT:0/code=0x80

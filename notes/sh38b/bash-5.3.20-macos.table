@@ -1,0 +1,42 @@
+# bash: GNU bash, version 5.3.20(1)-release (aarch64-apple-darwin25.6.0); host: macOS 26.4.1 (25E253) arm64; pelt 273f09f6's tools/hangup-witness --measure bash; 2026-11-13T04:22:03Z
+# hangup-witness: senders: not each named (HUP from parent (si_code 0), TERM from 0 (si_code 0), CONT from 0 (si_code 0)); rows hold the signals and ends, not the senders
+fg | shell signal:HUP | fg HUP:kernel0+HUP:shell dead:HUP
+bg | shell signal:HUP | bg1 HUP:shell dead:HUP | bg2 HUP:shell dead:HUP
+stopped | shell signal:HUP | st1 CONT:kernel0+HUP:shell+TERM:kernel0 dead:HUP | st2 CONT:kernel0+HUP:shell+TERM:kernel0 dead:HUP
+mixed | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:kernel0+HUP:shell+TERM:kernel0 dead:HUP | mf HUP:kernel0+HUP:shell dead:HUP
+pipe | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 HUP:kernel0+HUP:shell dead:HUP | pf2 HUP:kernel0+HUP:shell dead:HUP
+subshell | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 HUP:kernel0+HUP:shell dead:HUP | sf2 - never
+disown | shell signal:HUP | d1 - alive | d2 HUP:shell dead:HUP
+disown-h | shell signal:HUP | dh1 - alive | dh2 HUP:shell dead:HUP
+disown-stopped | shell signal:HUP | ds CONT:kernel0+HUP:shell dead:HUP
+disown-all | shell signal:HUP | da1 - alive | da2 CONT:kernel0+HUP:shell dead:HUP
+nohup | shell signal:HUP | nh - alive | nc HUP:shell dead:HUP
+disown-h-stopped | shell signal:HUP | dhs CONT:kernel0+TERM:shell dead:TERM
+trap | shell exit:0 | tr - alive
+trap-fg | shell alive | tf - alive
+ignored | shell signal:HUP | ig - alive
+exit-running | shell exit:0 | xr - alive
+exit-stopped | shell exit:1 | xs CONT:kernel0+TERM:shell dead:TERM
+exit-stopped-bg | shell exit:1 | xb - alive | xt CONT:kernel0+TERM:shell dead:TERM
+eof-stopped | shell exit:128+TSTP | es CONT:kernel0+TERM:shell dead:TERM
+friendly-bg | shell signal:HUP | fb HUP:shell dead:HUP | ff HUP:kernel0+HUP:shell dead:HUP
+dumb-bg | shell signal:HUP | db HUP:shell dead:HUP
+editing | shell signal:HUP | ed HUP:shell dead:HUP
+script | shell signal:HUP | cb HUP:shell dead:HUP | cf HUP:shell dead:HUP
+kill-stopped | shell alive | k CONT:kernel0+TERM:shell dead:TERM
+kill-stopped-hup | shell alive | k CONT:kernel0+HUP:shell dead:HUP
+kill-stopped-term | shell alive | k CONT:kernel0+TERM:shell dead:TERM
+kill-stopped-int | shell alive | k - stopped
+kill-stopped-quit | shell alive | k - stopped
+kill-stopped-usr1 | shell alive | k - stopped
+kill-stopped-cont | shell alive | k CONT:shell alive
+kill-stopped-stop | shell alive | k - stopped
+kill-stopped-kill | shell alive | k - gone
+kill-stopped-s-term | shell alive | k CONT:kernel0+TERM:shell dead:TERM
+kill-running | shell alive | kr TERM:shell dead:TERM
+kill-bg-stopped | shell alive | kb CONT:kernel0+TERM:shell dead:TERM
+kill-stopped-pid | shell alive | kp - stopped
+kill-stopped-group | shell alive | kg CONT:kernel0+TERM:shell dead:TERM
+kill-stopped-pipe | shell alive | kq1 CONT:kernel0+TERM:shell dead:TERM | kq2 CONT:kernel0+TERM:shell dead:TERM
+kill-stopped-two | shell alive | kt1 CONT:kernel0+TERM:shell dead:TERM | kt2 CONT:kernel0+TERM:shell dead:TERM
+# exit=0

@@ -1,0 +1,83 @@
+# pelt 45c4de11 (target/native/pelt, built on this Mac), tools/hangup-witness at 45c4de11; macOS 26.4.1 (25E253) arm64; taken 2026-11-13T04:08Z
+ok fg
+ok bg
+FAIL stopped
+  expected: stopped | shell signal:HUP | st1 CONT:shell+HUP:shell+TERM:shell dead:HUP | st2 CONT:shell+HUP:shell+TERM:shell dead:HUP
+  got:      stopped | shell signal:HUP | st1 CONT:kernel0+HUP:shell+TERM:kernel0 dead:HUP | st2 CONT:kernel0+HUP:shell+TERM:kernel0 dead:HUP
+FAIL mixed
+  expected: mixed | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP:shell dead:HUP
+  got:      mixed | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:kernel0+HUP:shell+TERM:kernel0 dead:HUP | mf HUP:shell dead:HUP
+ok pipe
+ok subshell
+hangup-witness: SKIP fg-close: linux only (the kernel's part of a hangup is the host's)
+hangup-witness: SKIP bg-close: linux only (the kernel's part of a hangup is the host's)
+hangup-witness: SKIP stopped-close: linux only (the kernel's part of a hangup is the host's)
+hangup-witness: SKIP mixed-close: linux only (the kernel's part of a hangup is the host's)
+hangup-witness: SKIP pipe-close: linux only (the kernel's part of a hangup is the host's)
+hangup-witness: SKIP subshell-close: linux only (the kernel's part of a hangup is the host's)
+ok disown
+ok disown-h
+FAIL disown-stopped
+  expected: disown-stopped | shell signal:HUP | ds CONT:kernel+HUP:kernel dead:HUP
+  got:      disown-stopped | shell signal:HUP | ds CONT:kernel0+HUP:shell dead:HUP
+FAIL disown-all
+  expected: disown-all | shell signal:HUP | da1 - alive | da2 CONT:kernel+HUP:kernel dead:HUP
+  got:      disown-all | shell signal:HUP | da1 - alive | da2 CONT:kernel0+HUP:shell dead:HUP
+ok nohup
+FAIL disown-h-stopped
+  expected: disown-h-stopped | shell signal:HUP | dhs CONT:shell+TERM:shell dead:TERM
+  got:      disown-h-stopped | shell signal:HUP | dhs CONT:kernel0+TERM:shell dead:TERM
+ok trap  (a trapped hangup runs its action and the shell goes on (bash leaves at the prompt))
+ok trap-fg
+ok ignored  (a hangup ignored at entry stays ignored (bash dies of it))
+ok exit-running
+FAIL exit-stopped
+  expected: exit-stopped | shell exit:0 | xs CONT:shell+TERM:shell dead:TERM
+  got:      exit-stopped | shell exit:0 | xs CONT:kernel0+TERM:shell dead:TERM
+FAIL exit-stopped-bg
+  expected: exit-stopped-bg | shell exit:0 | xb - alive | xt CONT:shell+TERM:shell dead:TERM
+  got:      exit-stopped-bg | shell exit:0 | xb - alive | xt CONT:kernel0+TERM:shell dead:TERM
+FAIL eof-stopped
+  expected: eof-stopped | shell exit:148 | es CONT:shell+TERM:shell dead:TERM
+  got:      eof-stopped | shell exit:146 | es CONT:kernel0+TERM:shell dead:TERM
+ok friendly-bg
+ok dumb-bg
+ok editing
+FAIL script
+  expected: script | shell signal:HUP | cb HUP:kernel dead:HUP | cf HUP:kernel dead:HUP
+  got:      script | shell signal:HUP | cb HUP:shell dead:HUP | cf HUP:shell dead:HUP
+hangup-witness: SKIP script-close: linux only (the kernel's part of a hangup is the host's)
+FAIL kill-stopped
+  expected: kill-stopped | shell alive | k CONT:shell+TERM:shell dead:TERM
+  got:      kill-stopped | shell alive | k CONT:kernel0+TERM:shell dead:TERM
+FAIL kill-stopped-hup
+  expected: kill-stopped-hup | shell alive | k CONT:shell+HUP:shell dead:HUP
+  got:      kill-stopped-hup | shell alive | k CONT:kernel0+HUP:shell dead:HUP
+FAIL kill-stopped-term
+  expected: kill-stopped-term | shell alive | k CONT:shell+TERM:shell dead:TERM
+  got:      kill-stopped-term | shell alive | k CONT:kernel0+TERM:shell dead:TERM
+ok kill-stopped-int
+ok kill-stopped-quit
+ok kill-stopped-usr1
+ok kill-stopped-cont
+ok kill-stopped-stop
+ok kill-stopped-kill
+FAIL kill-stopped-s-term
+  expected: kill-stopped-s-term | shell alive | k CONT:shell+TERM:shell dead:TERM
+  got:      kill-stopped-s-term | shell alive | k CONT:kernel0+TERM:shell dead:TERM
+ok kill-running
+FAIL kill-bg-stopped
+  expected: kill-bg-stopped | shell alive | kb CONT:shell+TERM:shell dead:TERM
+  got:      kill-bg-stopped | shell alive | kb CONT:kernel0+TERM:shell dead:TERM
+ok kill-stopped-pid
+FAIL kill-stopped-group
+  expected: kill-stopped-group | shell alive | kg CONT:shell+TERM:shell dead:TERM
+  got:      kill-stopped-group | shell alive | kg CONT:kernel0+TERM:shell dead:TERM
+FAIL kill-stopped-pipe
+  expected: kill-stopped-pipe | shell alive | kq1 CONT:shell+TERM:shell dead:TERM | kq2 CONT:shell+TERM:shell dead:TERM
+  got:      kill-stopped-pipe | shell alive | kq1 CONT:kernel0+TERM:shell dead:TERM | kq2 CONT:kernel0+TERM:shell dead:TERM
+FAIL kill-stopped-two
+  expected: kill-stopped-two | shell alive | kt1 CONT:shell+TERM:shell dead:TERM | kt2 CONT:shell+TERM:shell dead:TERM
+  got:      kill-stopped-two | shell alive | kt1 CONT:kernel0+TERM:shell dead:TERM | kt2 CONT:kernel0+TERM:shell dead:TERM
+hangup-witness: 22 of 39 rows hold, 17 fail, 7 skipped
+exit=1
