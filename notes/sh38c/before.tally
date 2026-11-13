@@ -1,0 +1,21 @@
+# race.py on a 2-CPU light slot in the Ubuntu 24.04 image: trunk 3e6d90b (its witness, table and pelt). The jobs' BEGIN, tally and END lines.
+BEGIN job before-mixed 2026-11-13T10:37:42Z head 3e6d90b38d1d78dde914b9ed4b645ee01890ab7c N 600 rows mixed-close
+race: tools/hangup-witness target/native/pelt tests/hangup/expected N=600 rows=mixed-close
+race: mixed-close: 553 of 600 hold the table's line
+    553  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+     47  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:shell dead:HUP
+END job before-mixed exit=0 2026-11-13T11:08:17Z
+BEGIN job before-other 2026-11-13T10:37:42Z head 3e6d90b38d1d78dde914b9ed4b645ee01890ab7c N 200 rows fg-close,pipe-close,subshell-close
+race: tools/hangup-witness target/native/pelt tests/hangup/expected N=200 rows=fg-close,pipe-close,subshell-close
+race: fg-close: 194 of 200 hold the table's line
+    194  fg-close | shell signal:HUP | fg CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+      6  fg-close | shell signal:HUP | fg CONT:kernel+HUP:shell dead:HUP
+race: pipe-close: 174 of 200 hold the table's line
+    174  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+     16  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:shell dead:HUP
+      6  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:shell dead:HUP
+      4  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+race: subshell-close: 158 of 200 hold the table's line
+    158  subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | sf2 - never
+     42  subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:shell dead:HUP | sf2 - never
+END job before-other exit=0 2026-11-13T11:02:06Z

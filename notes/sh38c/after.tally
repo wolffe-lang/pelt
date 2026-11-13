@@ -1,0 +1,59 @@
+# race.py on 2-CPU light slots in the Ubuntu 24.04 image: the witness and table of 1ff4c43e, pelt built there (its source is trunk 3e6d90b's). The jobs' BEGIN, tally and END lines; under raw, the lines as seen with every sender.
+BEGIN job after-mixed-b 2026-11-13T11:02:13Z head 1ff4c43e00e682d4e25d65b3959a57c93c806f7e N 300 rows mixed-close,mixed-close-caught
+race: mixed-close: 300 of 300 hold the table's line
+    300  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP dead:HUP
+  raw:
+    276  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+     24  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:shell dead:HUP
+race: mixed-close-caught: 300 of 300 hold the table's line
+    300  mixed-close-caught | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP:shell ended
+  raw:
+    277  mixed-close-caught | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:kernel+HUP:shell ended
+     23  mixed-close-caught | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:shell ended
+END job after-mixed-b exit=0 2026-11-13T11:33:24Z
+BEGIN job after-mixed-c 2026-11-13T11:08:22Z head 1ff4c43e00e682d4e25d65b3959a57c93c806f7e N 300 rows mixed-close,mixed-close-caught
+race: mixed-close: 300 of 300 hold the table's line
+    300  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP dead:HUP
+  raw:
+    288  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+     12  mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:shell dead:HUP
+race: mixed-close-caught: 300 of 300 hold the table's line
+    300  mixed-close-caught | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP:shell ended
+  raw:
+    280  mixed-close-caught | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:kernel+HUP:shell ended
+     20  mixed-close-caught | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:shell ended
+END job after-mixed-c exit=0 2026-11-13T11:38:56Z
+BEGIN job after-other 2026-11-13T10:59:45Z head 1ff4c43e00e682d4e25d65b3959a57c93c806f7e N 200 rows fg-close,pipe-close,subshell-close,fg-close-caught,pipe-close-caught,subshell-close-caught
+race: fg-close: 200 of 200 hold the table's line
+    200  fg-close | shell signal:HUP | fg HUP dead:HUP
+  raw:
+    187  fg-close | shell signal:HUP | fg CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+     13  fg-close | shell signal:HUP | fg CONT:kernel+HUP:shell dead:HUP
+race: pipe-close: 200 of 200 hold the table's line
+    200  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 HUP dead:HUP | pf2 HUP dead:HUP
+  raw:
+    181  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+     16  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:shell dead:HUP
+      2  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:shell dead:HUP
+      1  pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+race: subshell-close: 200 of 200 hold the table's line
+    200  subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 HUP dead:HUP | sf2 - never
+  raw:
+    175  subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | sf2 - never
+     25  subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:shell dead:HUP | sf2 - never
+race: fg-close-caught: 200 of 200 hold the table's line
+    200  fg-close-caught | shell signal:HUP | fg HUP:shell ended
+  raw:
+    185  fg-close-caught | shell signal:HUP | fg CONT:kernel+HUP:kernel+HUP:shell ended
+     15  fg-close-caught | shell signal:HUP | fg CONT:kernel+HUP:shell ended
+race: pipe-close-caught: 200 of 200 hold the table's line
+    200  pipe-close-caught | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 HUP:shell ended | pf2 HUP:shell ended
+  raw:
+    180  pipe-close-caught | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:kernel+HUP:shell ended | pf2 CONT:kernel+HUP:kernel+HUP:shell ended
+     20  pipe-close-caught | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:shell ended | pf2 CONT:kernel+HUP:shell ended
+race: subshell-close-caught: 200 of 200 hold the table's line
+    200  subshell-close-caught | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 HUP:shell ended | sf2 - never
+  raw:
+    174  subshell-close-caught | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:kernel+HUP:shell ended | sf2 - never
+     26  subshell-close-caught | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:shell ended | sf2 - never
+END job after-other exit=0 2026-11-13T11:48:29Z

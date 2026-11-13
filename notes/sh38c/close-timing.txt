@@ -1,0 +1,343 @@
+# close-timing.py over 30 boots of the four close rows and their -caught twins (pelt 3e6d90b, the witness of 1ff4c43e (its code, before its docstring was reworded), a 2-CPU light slot, the Ubuntu 24.04 image); per boot: each foreground probe's signals in the order its handlers ran, with ms from the shell's SIGHUP
+0 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+0 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+0 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+0 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+152ms
+0 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+0 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+0 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+0 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+0 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+0 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+1 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+1 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+1 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+1 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+1 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+161ms
+1 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+1 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+291ms
+1 pipe-close-caught pf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+1 pipe-close-caught pf2 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+1 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+2 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+2 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+2 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+2 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+2 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+151ms
+2 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+2 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+291ms
+2 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+2 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+2 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+3 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+151ms
+3 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+3 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+3 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+3 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+161ms
+3 fg-close-caught fg HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+3 mixed-close-caught mf HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+3 pipe-close-caught pf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+3 pipe-close-caught pf2 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+3 subshell-close-caught sf1 HUP:shell@+0ms/reparented HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+282ms
+4 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+4 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+4 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+151ms
+4 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+152ms
+4 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+4 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+4 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+4 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+4 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+4 subshell-close-caught sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+5 fg-close fg HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+5 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+5 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+5 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+5 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+5 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+5 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+5 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+5 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+5 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+6 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+6 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+6 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+6 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+6 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+6 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+6 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+6 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+6 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+6 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+7 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+7 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+7 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+152ms
+7 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+152ms
+7 subshell-close sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+151ms
+7 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+7 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+7 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+303ms
+7 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+303ms
+7 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+293ms
+8 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+152ms
+8 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+8 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+8 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+8 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+8 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+8 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+8 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+8 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+8 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+9 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+9 mixed-close mf HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented DIE:HUP:-@+161ms
+9 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+9 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+9 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+9 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+9 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+9 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+291ms
+9 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+291ms
+9 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+10 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+10 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+162ms
+10 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+162ms
+10 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+161ms
+10 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+10 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+10 mixed-close-caught mf HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+10 pipe-close-caught pf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+10 pipe-close-caught pf2 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+10 subshell-close-caught sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+11 fg-close fg HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+11 mixed-close mf HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+11 pipe-close pf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+11 pipe-close pf2 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+11 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+11 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+11 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+11 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+11 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+11 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+12 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+161ms
+12 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+12 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+12 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+12 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+12 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+12 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+12 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+12 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+12 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+13 fg-close fg HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented DIE:HUP:-@+161ms
+13 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+13 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+13 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+13 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+13 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+13 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+13 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+13 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+13 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+14 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+14 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+14 pipe-close pf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+14 pipe-close pf2 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+14 subshell-close sf1 HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented DIE:HUP:-@+151ms
+14 fg-close-caught fg HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+14 mixed-close-caught mf HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+14 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+14 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+14 subshell-close-caught sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+15 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+15 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+15 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+15 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+15 subshell-close sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+15 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+15 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+15 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+15 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+15 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+16 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+162ms
+16 mixed-close mf HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+16 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+16 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+16 subshell-close sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+16 fg-close-caught fg HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+16 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+16 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+16 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+16 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+17 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+17 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+17 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+17 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+17 subshell-close sf1 HUP:shell@+0ms/reparented HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+17 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+17 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+17 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+17 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+17 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+18 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+18 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+18 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+18 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+18 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+18 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+18 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+18 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+18 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+18 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+19 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+19 mixed-close mf HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented DIE:HUP:-@+152ms
+19 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+19 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+19 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+19 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+19 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+19 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+19 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+19 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+20 fg-close fg HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+20 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+20 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+20 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+20 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+20 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+20 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+20 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+20 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+20 subshell-close-caught sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+21 fg-close fg HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+151ms
+21 mixed-close mf HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+150ms
+21 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+21 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+21 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+21 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+21 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+21 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+21 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+21 subshell-close-caught sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+22 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+22 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+22 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+22 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+22 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+22 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+22 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+22 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+22 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+22 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+23 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+23 mixed-close mf HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+23 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+23 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+23 subshell-close sf1 HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented DIE:HUP:-@+151ms
+23 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+23 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+23 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+23 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+303ms
+23 subshell-close-caught sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+24 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+24 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+24 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+24 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+24 subshell-close sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+24 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+24 mixed-close-caught mf HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+24 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+24 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+24 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+25 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+25 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+25 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+25 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+25 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+25 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+25 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+25 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+25 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+25 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/parent CONT:kernel@+1ms/parent END:-@+302ms
+26 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+26 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+26 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+26 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+26 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+162ms
+26 fg-close-caught fg HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+26 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+26 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+26 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+26 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+27 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+27 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+27 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+27 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+27 subshell-close sf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+160ms
+27 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+291ms
+27 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+27 pipe-close-caught pf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+27 pipe-close-caught pf2 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+27 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+28 fg-close fg HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+28 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+28 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+28 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+151ms
+28 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+28 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+28 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/parent CONT:kernel@+0ms/parent END:-@+301ms
+28 pipe-close-caught pf1 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+28 pipe-close-caught pf2 HUP:shell@+0ms/parent CONT:kernel@+0ms/parent END:-@+302ms
+28 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+29 fg-close fg HUP:shell@+0ms/parent CONT:kernel@+0ms/parent DIE:HUP:-@+161ms
+29 mixed-close mf HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+29 pipe-close pf1 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+152ms
+29 pipe-close pf2 HUP:shell@+0ms/parent HUP:kernel@+11ms/reparented CONT:kernel@+11ms/reparented DIE:HUP:-@+152ms
+29 subshell-close sf1 HUP:shell@+0ms/parent HUP:kernel@+10ms/reparented CONT:kernel@+10ms/reparented DIE:HUP:-@+161ms
+29 fg-close-caught fg HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+29 mixed-close-caught mf HUP:shell@+0ms/parent HUP:kernel@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+29 pipe-close-caught pf1 HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+29 pipe-close-caught pf2 HUP:shell@+0ms/reparented CONT:kernel@+0ms/reparented END:-@+292ms
+29 subshell-close-caught sf1 HUP:shell@+0ms/parent HUP:kernel@+1ms/reparented CONT:kernel@+1ms/reparented END:-@+292ms
+orders (signals as they came; END:x / DIE:x the probe's end):
+      6  fg-close fg: HUP:shell CONT:kernel DIE:HUP:-
+     24  fg-close fg: HUP:shell HUP:kernel CONT:kernel DIE:HUP:-
+      4  fg-close-caught fg: HUP:shell CONT:kernel END:-
+     26  fg-close-caught fg: HUP:shell HUP:kernel CONT:kernel END:-
+      6  mixed-close mf: HUP:shell CONT:kernel DIE:HUP:-
+     24  mixed-close mf: HUP:shell HUP:kernel CONT:kernel DIE:HUP:-
+      4  mixed-close-caught mf: HUP:shell CONT:kernel END:-
+     26  mixed-close-caught mf: HUP:shell HUP:kernel CONT:kernel END:-
+      2  pipe-close pf1: HUP:shell CONT:kernel DIE:HUP:-
+     28  pipe-close pf1: HUP:shell HUP:kernel CONT:kernel DIE:HUP:-
+      2  pipe-close pf2: HUP:shell CONT:kernel DIE:HUP:-
+     28  pipe-close pf2: HUP:shell HUP:kernel CONT:kernel DIE:HUP:-
+      5  pipe-close-caught pf1: HUP:shell CONT:kernel END:-
+     25  pipe-close-caught pf1: HUP:shell HUP:kernel CONT:kernel END:-
+      5  pipe-close-caught pf2: HUP:shell CONT:kernel END:-
+     25  pipe-close-caught pf2: HUP:shell HUP:kernel CONT:kernel END:-
+      7  subshell-close sf1: HUP:shell CONT:kernel DIE:HUP:-
+     23  subshell-close sf1: HUP:shell HUP:kernel CONT:kernel DIE:HUP:-
+      6  subshell-close-caught sf1: HUP:shell CONT:kernel END:-
+     24  subshell-close-caught sf1: HUP:shell HUP:kernel CONT:kernel END:-
+the kernel's SIGHUP:
+      6  fg-close fg: kernel HUP not recorded
+     24  fg-close fg: kernel HUP recorded
+      4  fg-close-caught fg: kernel HUP not recorded
+     26  fg-close-caught fg: kernel HUP recorded
+      6  mixed-close mf: kernel HUP not recorded
+     24  mixed-close mf: kernel HUP recorded
+      4  mixed-close-caught mf: kernel HUP not recorded
+     26  mixed-close-caught mf: kernel HUP recorded
+      2  pipe-close pf1: kernel HUP not recorded
+     28  pipe-close pf1: kernel HUP recorded
+      2  pipe-close pf2: kernel HUP not recorded
+     28  pipe-close pf2: kernel HUP recorded
+      5  pipe-close-caught pf1: kernel HUP not recorded
+     25  pipe-close-caught pf1: kernel HUP recorded
+      5  pipe-close-caught pf2: kernel HUP not recorded
+     25  pipe-close-caught pf2: kernel HUP recorded
+      7  subshell-close sf1: kernel HUP not recorded
+     23  subshell-close sf1: kernel HUP recorded
+      6  subshell-close-caught sf1: kernel HUP not recorded
+     24  subshell-close-caught sf1: kernel HUP recorded
