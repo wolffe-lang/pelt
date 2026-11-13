@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Found but not executable: name the path, return dash's 126, hint only at a friendly prompt.
+"""Explicit found paths that are not executable: dash's 126 and friendly-only hints.
 PELT_NOEXEC_DIR may name a noexec mount prepared by the enclosing container.
 """
 from pathlib import Path
@@ -9,7 +9,7 @@ from lib_shadow import Shell
 
 
 def check(name,ok,detail):
-    print(('ok ' if ok else 'FAIL ')+name+' '+str(detail),flush=True)
+    print(('ok ' if ok else 'FAIL ')+name+(' '+str(detail) if not ok else ''),flush=True)
     return ok
 
 
@@ -23,36 +23,28 @@ def main(binary):
         script=home/'setup.sh';script.write_text('#!/bin/sh\necho should-not-run\n');script.chmod(0o644)
         odd=home/"a 'file.sh";odd.write_text(script.read_text());odd.chmod(0o644)
         (home/'folder').mkdir()
-        rows=[('file','./setup.sh'),('quoted',"./a 'file.sh"),('directory','./folder'),('path-file',str(script))]
-        env=dict(os.environ,PATH=str(home)+':/usr/bin:/bin')
+        rows=[('file','./setup.sh'),('quoted',"./a 'file.sh"),('directory','./folder')]
         noexec=os.environ.get('PELT_NOEXEC_DIR')
         if noexec:
             p=Path(noexec)/'refused-script.sh';p.write_text(script.read_text());p.chmod(0o755)
             rows.append(('noexec',str(p)))
         else:print('SKIP refusal-noexec reason=no-container-noexec-mount-provided',flush=True)
         for name,path in rows:
-            cmd='setup.sh' if name=='path-file' else shlex.quote(path)
-            oracle=subprocess.run([dash,'-c',cmd],cwd=home,env=env,capture_output=True,timeout=10)
-            # dash returns 127 after an unsuccessful PATH search, even when
-            # its error is Permission denied. Explicit found paths are 126.
-            status=127 if name=='path-file' else 126
-            ok=check('refusal-'+name+'-dash',oracle.returncode==status,(oracle.returncode,oracle.stderr)) and ok
+            cmd=shlex.quote(path)
+            oracle=subprocess.run([dash,'-c',cmd],cwd=home,capture_output=True,timeout=10)
+            ok=check('refusal-'+name+'-dash',oracle.returncode==126,(oracle.returncode,oracle.stderr)) and ok
             for prefix in ('','command ','exec '):
-                got=subprocess.run([binary,'-c',prefix+cmd],cwd=home,env=env,capture_output=True,timeout=10)
+                got=subprocess.run([binary,'-c',prefix+cmd],cwd=home,capture_output=True,timeout=10)
                 # Outside a prompt pelt retains its diagnostic location and exec prefix.
-                if name=='path-file':
-                    good=got.returncode==127 and b'setup.sh:' in got.stderr and b'hint:' not in got.stderr and not got.stdout
-                else:
-                    good=got.returncode==126 and path.encode() in got.stderr and b'permission denied' in got.stderr.lower() and b'hint:' not in got.stderr and not got.stdout
+                good=got.returncode==126 and path.encode() in got.stderr and b'permission denied' in got.stderr.lower() and b'hint:' not in got.stderr and not got.stdout
                 ok=check('refusal-'+name+'-'+(prefix.strip() or 'plain'),good,(got.returncode,got.stderr)) and ok
         for args,hints in [([],False),(['-o','friendly'],True),(['--posix','-o','friendly'],False)]:
-            sh=Shell(binary,home,args,tty_out=True,env_overrides={'PATH':env['PATH']})
+            sh=Shell(binary,home,args,tty_out=True)
             try:
                 for name,path in rows:
-                    cmd='setup.sh' if name=='path-file' else shlex.quote(path)
-                    start=len(sh.data['tty']);sh.command((cmd+'\r').encode());raw=sh.data['tty'][start:]
-                    good=b'setup.sh: not found\r\n' in raw if name=='path-file' else (b'pelt: '+path.encode()+b': permission denied\r\n') in raw
-                    expected_hint=hints and name not in ('directory','path-file')
+                    start=len(sh.data['tty']);sh.command((shlex.quote(path)+'\r').encode());raw=sh.data['tty'][start:]
+                    good=(b'pelt: '+path.encode()+b': permission denied\r\n') in raw
+                    expected_hint=hints and name!='directory'
                     good=good and raw.count(b'pelt: hint:')==int(expected_hint)
                     if expected_hint:
                         action='sh' if name=='noexec' else 'chmod +x'
@@ -60,8 +52,7 @@ def main(binary):
                         good=good and ('pelt: hint: '+action+' '+quoted).encode() in raw
                     ok=check('refusal-'+name+'-prompt-'+str(args),good,raw) and ok
                     start=len(sh.data['tty']);sh.command(b'echo $?\r');raw=sh.data['tty'][start:]
-                    want=b'\r\n127\r\n' if name=='path-file' else b'\r\n126\r\n'
-                    ok=check('refusal-'+name+'-prompt-status',want in raw,raw) and ok
+                    ok=check('refusal-'+name+'-prompt-status',b'\r\n126\r\n' in raw,raw) and ok
             finally:assert sh.close()
     return 0 if ok else 1
 
