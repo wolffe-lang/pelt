@@ -249,7 +249,7 @@ Use `set +o histexpand` to leave both forms literal. These features require
 
 ## Refused execution
 
-A found path that cannot be executed answers status 126. At a prompt the
+An explicit path that cannot be executed answers status 126. At a prompt the
 message is `pelt: PATH: permission denied`, including for a directory. Friendly
 mode adds one hint for a regular file: `chmod +x 'FILE'` when its executable
 mode bits do not permit execution, otherwise `sh 'FILE'` (useful for a shell
