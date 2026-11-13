@@ -158,7 +158,9 @@ system (the passwd entry, the kernel's node name, `/etc/hostname`).
 A `prompt_right` function supplies display-only text, bounded to a third
 of the terminal width and hidden below 40 columns or when input overlaps.
 When den is available, one bounded `status --porcelain` probe supplies a
-cached VCS segment. No hook or probe runs per key or while idle; explicit
+cached VCS segment. After two consecutive 50 ms deadline misses in a directory,
+the probe stops there until a different working directory is seen at a primary
+prompt; there is no timed retry. No hook or probe runs per key or while idle; explicit
 PS1, scripts and POSIX mode keep their existing behavior. See
 [`docs/FRIENDLY.md`](docs/FRIENDLY.md) for limits and custom-function costs.
 
@@ -175,7 +177,11 @@ it and `fg` continues it. A hangup is passed on as bash passes it: an
 interactive shell that receives SIGHUP sends it to every job (SIGCONT
 after it to a stopped one) and then dies of it, so a dropped ssh session
 does not leave its jobs running; `disown` takes a job out of that, and
-`nohup` still works. `kill %1` (SIGTERM or SIGHUP) continues a stopped job so
+`nohup` still works. pelt keeps three explicit rules where bash differs:
+an inherited ignored SIGHUP stays ignored (bash overrides it); a trapped
+SIGHUP at the prompt runs its action and continues (bash leaves afterward);
+and a refused `exit` with stopped jobs sets `$?` to 0 (bash sets 1).
+`kill %1` (SIGTERM or SIGHUP) continues a stopped job so
 it receives the signal (`tools/hangup-witness`, bash's table).
 
 **Two hooks for a modern prompt.** An interactive pelt calls a function
@@ -190,6 +196,11 @@ do; a function, built-in or program of that name still wins, and a
 script ignores the option, as do a subshell, a command substitution and
 a pipeline stage (bash's line). Where pelt parts from bash on the details,
 `docs/CHANGELOG.md` says so.
+
+**Refused execution.** A path found but not executable answers 126. At a
+prompt it says `pelt: PATH: permission denied`; friendly mode adds one quoted
+`chmod +x FILE` or `sh FILE` hint for a regular file, never a directory.
+Scripts and friendly-off or POSIX prompts get no hint.
 
 **Startup.** pelt is POSIX here too: an interactive shell runs the file
 named by `ENV` before its first prompt (there is no `~/.peltrc`), so
