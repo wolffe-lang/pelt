@@ -15,12 +15,14 @@ jobs: in the foreground, after `&`, stopped by the suspend character
           ssh connection drops (linux only; the kernel's part of a
           hangup is the host's, and these rows hold linux's)
 
-Each probe records, in a log, every signal it receives and who sent it
+Each probe records, in a log, every signal it receives, who sent it
 (`siginfo`: `shell` is the shell's pid, `kernel` a signal the kernel
-made, `harness` this tool), and then dies of the first one whose
-default ends it, a moment later, so that signals sent together are all
-seen. It holds a signal ignored at its start ignored (`nohup`). A row's
-observation is one line:
+made, `harness` this tool), when, and its parent then, and dies of the
+first one whose default ends it, 150 ms later, so that signals sent
+together are all seen. It holds a signal ignored at its start ignored
+(`nohup`). A `stay` probe (`hw-probe NAME stay`) dies of none: it
+records every signal and ends itself 300 ms after its parent is gone.
+A row's observation is one line:
 
   ROW | shell END | PROBE SIGNALS END | ...
 
@@ -92,6 +94,7 @@ PROBE_C = r'''
 static int logfd = -1;
 static const char *me = "?";
 static volatile sig_atomic_t fatal = 0;
+static int stay = 0;
 
 static char *put_s(char *p, const char *s) { while (*s) *p++ = *s++; return p; }
 static char *put_n(char *p, long v) {
@@ -108,15 +111,23 @@ static const char *sname(int s) {
     case SIGUSR2: return "USR2"; case SIGALRM: return "ALRM"; default: return "OTHER";
     }
 }
+/* " at MS ppid PP": CLOCK_MONOTONIC in ms, and the parent now */
+static char *put_when(char *p) {
+    struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t);
+    p = put_s(p, " at "); p = put_n(p, (long)t.tv_sec * 1000 + t.tv_nsec / 1000000);
+    p = put_s(p, " ppid "); p = put_n(p, (long)getppid());
+    return p;
+}
 static void on(int s, siginfo_t *si, void *uc) {
     char b[256]; char *p = b;
     (void)uc;
     p = put_s(p, "sig "); p = put_s(p, me); p = put_s(p, " "); p = put_s(p, sname(s));
     p = put_s(p, " code "); p = put_n(p, si ? si->si_code : -999);
     p = put_s(p, " from "); p = put_n(p, si ? (long)si->si_pid : -1);
+    p = put_when(p);
     p = put_s(p, "\n");
     (void)!write(logfd, b, (size_t)(p - b));
-    if (s != SIGCONT && !fatal) fatal = s;
+    if (s != SIGCONT && !fatal && (!stay || s == SIGALRM)) fatal = s;
 }
 int main(int argc, char **argv) {
     static const int sigs[] = {SIGHUP, SIGINT, SIGQUIT, SIGTERM, SIGCONT, SIGUSR1, SIGUSR2, SIGALRM};
@@ -124,6 +135,7 @@ int main(int argc, char **argv) {
     char b[512]; char *p = b; sigset_t hold, none; struct sigaction sa, old; unsigned i;
     if (argc < 2 || !log || !dir) return 64;
     me = argv[1];
+    stay = argc > 2 && strcmp(argv[2], "stay") == 0;
     logfd = open(log, O_WRONLY | O_APPEND | O_CREAT, 0644);
     if (logfd < 0) return 65;
     sigemptyset(&hold);
@@ -152,9 +164,28 @@ int main(int argc, char **argv) {
     p = put_s(p, " pgid "); p = put_n(p, (long)getpgrp());
     p = put_s(p, " sid "); p = put_n(p, (long)getsid(0));
     p = put_s(p, " ppid "); p = put_n(p, (long)getppid());
+    if (stay) p = put_s(p, " stay");
     p = put_s(p, "\n");
     (void)!write(logfd, b, (size_t)(p - b));
     alarm(120);
+    if (stay) {
+        /* `stay`: every signal is recorded and none ends it; it ends
+           itself 300 ms after its parent is gone (or at the alarm) */
+        pid_t pp = getppid(); int n = 0, gone = -1;
+        struct timespec t = {0, 10000000};
+        sigprocmask(SIG_UNBLOCK, &hold, 0);
+        while (fatal != SIGALRM && (gone < 0 || n - gone < 30)) {
+            nanosleep(&t, 0);
+            if (gone < 0 && getppid() != pp) gone = n;
+            n++;
+        }
+        sigprocmask(SIG_BLOCK, &hold, 0);
+        if (fatal != SIGALRM) {
+            p = b; p = put_s(p, "end "); p = put_s(p, me); p = put_when(p); p = put_s(p, "\n");
+            (void)!write(logfd, b, (size_t)(p - b));
+            _exit(0);
+        }
+    }
     sigemptyset(&none);
     while (!fatal) sigsuspend(&none);
     /* signals sent together arrive together: take them all first */
@@ -169,6 +200,7 @@ int main(int argc, char **argv) {
         }
     }
     p = b; p = put_s(p, "die "); p = put_s(p, me); p = put_s(p, " "); p = put_s(p, sname(fatal));
+    p = put_when(p);
     p = put_s(p, "\n");
     (void)!write(logfd, b, (size_t)(p - b));
     signal(fatal, SIG_DFL);
