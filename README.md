@@ -14,7 +14,7 @@ shell's source is ever read: pelt is clean-room, black-box only.
 | measure | where it stands |
 |---|---|
 | POSIX.1-2024 XCU chapter 2 and the built-ins' pages, testable statements met | 532 of 548 (`tools/clause-census`; the table and the misses in [`docs/CENSUS.md`](docs/CENSUS.md)) |
-| differential corpus against dash, both tiers | 1,049 cases: 1,035 passing, 0 failing, 14 pending on a named primitive (`tests/diff/`) |
+| differential corpus against dash, both tiers | 1,051 cases: 1,036 passing, 0 failing, 15 pending on a named primitive (`tests/diff/`) |
 | typed sessions through a pseudo-terminal | 593 recorded expectations, none pending; POSIX sessions compare against dash (pelt invoked as `sh` there, so friendly is off), editor keys against recorded references and pelt-owned screens (`tests/session/`) |
 | real `sh` scripts that run as under dash | 78 of 80, the other two not pelt's to change (`tools/script-census`: configure, automake and libtool helpers, git's test library, Debian and Alpine package and init scripts): `configure-sed` prints a timestamp resolution it measures from the shell's own speed, a coin that flips for dash itself and is counted apart, and `pfetch`'s memory line differs between dash's own runs |
 | memory per command at a prompt or in a loop | almost nothing (`tools/loop-rss`, `tools/shape-rss`) |
