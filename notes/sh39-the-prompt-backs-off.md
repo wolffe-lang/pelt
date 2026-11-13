@@ -136,11 +136,12 @@ than using an installed binary with older command support.
 - `17554f1`: refusal rows before the fix; `3f78b3c`: named prompt diagnostics
   and hints; `c59a0ab`: leave permission decisions to the kernel.
 - `69fe6b2`: friendly limits and explicit bash differences; `6e637ac`: README
-  only, read and refreshed. The corpus/session headline counts did not change.
+  only, read and refreshed. `e0be158` corrects its inherited corpus count to
+  the measured 1,051 cases. This pass adds no differential or typed-session cases.
 - The corrected Linux preparatory run at `73a58f8`: build, full raw prompt
   witness, refusal witness (including the real noexec mount), format check,
   self-check, differential corpus and both kept job-control sessions, all
-  green. The differential corpus reports 1,035 passing and 14 pending; no
+  green. The differential corpus reports 1,036 passing and 15 pending; no
   pending case is represented as a pass.
 - macOS native smoke at `73a58f8`: build, refusal witness, counted back-off,
   format and self-check, all green. The noexec row was explicitly skipped
