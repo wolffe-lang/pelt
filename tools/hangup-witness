@@ -24,13 +24,14 @@ observation is one line:
 
   ROW | shell END | PROBE SIGNALS END | ...
 
-where the shell's END is `signal:HUP`, `exit:N` or `alive` (still
-running when the row looked), a probe's SIGNALS is the signals it
-received as `NAME:SOURCE` joined by `+` in name order (`-` for none),
-and its END is `dead:SIG` (it died of SIG), `alive`, `stopped`, `never`
-(it never started) or `gone` (it ended without a word, as SIGKILL ends
-a process). The `kill-*` rows send no hangup: they type `kill` at a
-stopped job and look a second later.
+where the shell's END is `signal:HUP`, `exit:N` (`exit:128+SIG` for a
+status past 128 that names a signal, whose number is the host's) or
+`alive` (still running when the row looked), a probe's SIGNALS is the
+signals it received as `NAME:SOURCE` joined by `+` in name order (`-`
+for none), and its END is `dead:SIG` (it died of SIG), `alive`,
+`stopped`, `never` (it never started) or `gone` (it ended without a
+word, as SIGKILL ends a process). The `kill-*` rows send no hangup: they
+type `kill` at a stopped job and look a second later.
 
 The table this holds pelt to is bash's, measured with this tool
 (`tests/hangup/expected`, `--measure`); a line there may differ from
@@ -396,7 +397,15 @@ class Session:
                 return "signal:" + signal.Signals(n).name[3:]
             except ValueError:
                 return f"signal:{n}"
-        return f"exit:{os.WEXITSTATUS(self.status)}"
+        code = os.WEXITSTATUS(self.status)
+        if code > 128:
+            # 128 + a stopped job's signal: the number is the host's (TSTP
+            # is 20 on linux, 18 on macOS)
+            try:
+                return f"exit:128+{signal.Signals(code - 128).name[3:]}"
+            except ValueError:
+                pass
+        return f"exit:{code}"
 
 
 def source(code, sender, shell_pid, me_pid, harness_pid):
