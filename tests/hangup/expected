@@ -6,18 +6,25 @@
 # A status past 128 is spelled 128+SIG (bash's 148 at eof-stopped is 128+TSTP on linux, 146 on macOS).
 # Where the host's siginfo does not name each sender (macOS), the witness holds these lines without
 # their senders (notes/sh38b-macos-senders.md); on linux it holds them as written.
+# A -close row's foreground probe is held to what the system promises (HUP from anyone, and its death
+# of it), and the -caught twins to the signals the shell sent (notes/sh38c-close-race.md); these eight
+# lines are bash 5.2.21's through the witness as it is since then.
 fg | shell signal:HUP | fg HUP:shell dead:HUP
 bg | shell signal:HUP | bg1 HUP:shell dead:HUP | bg2 HUP:shell dead:HUP
 stopped | shell signal:HUP | st1 CONT:shell+HUP:shell+TERM:shell dead:HUP | st2 CONT:shell+HUP:shell+TERM:shell dead:HUP
 mixed | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP:shell dead:HUP
 pipe | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 HUP:shell dead:HUP | pf2 HUP:shell dead:HUP
 subshell | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 HUP:shell dead:HUP | sf2 - never
-fg-close | shell signal:HUP | fg CONT:kernel+HUP:kernel+HUP:shell dead:HUP
+fg-close | shell signal:HUP | fg HUP dead:HUP
 bg-close | shell signal:HUP | bg1 HUP:shell dead:HUP | bg2 HUP:shell dead:HUP
 stopped-close | shell signal:HUP | st1 CONT:shell+HUP:shell+TERM:shell dead:HUP | st2 CONT:shell+HUP:shell+TERM:shell dead:HUP
-mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf CONT:kernel+HUP:kernel+HUP:shell dead:HUP
-pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | pf2 CONT:kernel+HUP:kernel+HUP:shell dead:HUP
-subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 CONT:kernel+HUP:kernel+HUP:shell dead:HUP | sf2 - never
+mixed-close | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP dead:HUP
+pipe-close | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 HUP dead:HUP | pf2 HUP dead:HUP
+subshell-close | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 HUP dead:HUP | sf2 - never
+fg-close-caught | shell signal:HUP | fg HUP:shell ended
+mixed-close-caught | shell signal:HUP | mb HUP:shell dead:HUP | ms CONT:shell+HUP:shell+TERM:shell dead:HUP | mf HUP:shell ended
+pipe-close-caught | shell signal:HUP | pb1 HUP:shell dead:HUP | pb2 HUP:shell dead:HUP | pf1 HUP:shell ended | pf2 HUP:shell ended
+subshell-close-caught | shell signal:HUP | sb1 HUP:shell dead:HUP | sb2 - never | sf1 HUP:shell ended | sf2 - never
 disown | shell signal:HUP | d1 - alive | d2 HUP:shell dead:HUP
 disown-h | shell signal:HUP | dh1 - alive | dh2 HUP:shell dead:HUP
 disown-stopped | shell signal:HUP | ds CONT:kernel+HUP:kernel dead:HUP

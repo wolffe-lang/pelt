@@ -30,10 +30,22 @@ where the shell's END is `signal:HUP`, `exit:N` (`exit:128+SIG` for a
 status past 128 that names a signal, whose number is the host's) or
 `alive` (still running when the row looked), a probe's SIGNALS is the
 signals it received as `NAME:SOURCE` joined by `+` in name order (`-`
-for none), and its END is `dead:SIG` (it died of SIG), `alive`,
-`stopped`, `never` (it never started) or `gone` (it ended without a
-word, as SIGKILL ends a process). The `kill-*` rows send no hangup: they
-type `kill` at a stopped job and look a second later.
+for none), and its END is `dead:SIG` (it died of SIG), `ended` (a
+`stay` probe ended itself), `alive`, `stopped`, `never` (it never
+started) or `gone` (it ended without a word, as SIGKILL ends a
+process). The `kill-*` rows send no hangup: they type `kill` at a
+stopped job and look a second later.
+
+A close sends the job in the foreground two SIGHUPs: the shell's, and
+then the kernel's (with a SIGCONT) as the shell, its terminal gone,
+exits. When the kernel's comes while the shell's is still pending they
+are one, which names the shell: whether the job records the kernel's is
+a race (notes/sh38c-close-race.md). So in the `-close` rows a
+foreground probe is held to what the system promises: SIGHUP reached it
+(`HUP`, from anyone) and it died of it, and any other signal but
+SIGCONT as it came. Each such row has a `-caught` twin whose foreground
+probes `stay`: there they are held to every signal the shell, not the
+kernel, sent them, which proves the shell's own SIGHUP.
 
 Who sent a signal is the host's to say. Linux gives each pending signal
 its own siginfo: si_code SI_USER and the sender's pid for kill(2),
@@ -281,18 +293,39 @@ def rows():
     def add(name, acts, hang, probes, **opt):
         r.append((name, acts, hang, probes, opt))
 
+    # On a close, the job in the foreground gets the shell's SIGHUP and then
+    # the kernel's, and whether it records the kernel's is a race (two
+    # SIGHUPs pending at once are one): the row option `hung` names those
+    # probes, held to what the system promises. Each close row with a
+    # foreground job has a `-caught` twin that runs them as `stay` probes
+    # (they record every signal and outlive all), held to the signals the
+    # shell sent them, exactly.
     for mode in ("kill", "close"):
         sfx = "" if mode == "kill" else "-close"
-        add("fg" + sfx, [("fg", f"{P} fg", ["fg"])], mode, ["fg"])
+
+        def hung(names):
+            return {"hung": names} if mode == "close" else {}
+        add("fg" + sfx, [("fg", f"{P} fg", ["fg"])], mode, ["fg"], **hung(["fg"]))
         add("bg" + sfx, [("bg", f"{P} bg1 &", ["bg1"]), ("bg", f"{P} bg2 &", ["bg2"])], mode, ["bg1", "bg2"])
         add("stopped" + sfx, [("fg", f"{P} st1", ["st1"]), ("key", b"\x1a"),
                                ("fg", f"{P} st2", ["st2"]), ("key", b"\x1a")], mode, ["st1", "st2"])
         add("mixed" + sfx, [("bg", f"{P} mb &", ["mb"]), ("fg", f"{P} ms", ["ms"]), ("key", b"\x1a"),
-                             ("fg", f"{P} mf", ["mf"])], mode, ["mb", "ms", "mf"])
+                             ("fg", f"{P} mf", ["mf"])], mode, ["mb", "ms", "mf"], **hung(["mf"]))
         add("pipe" + sfx, [("bg", f"{P} pb1 | {P} pb2 &", ["pb1", "pb2"]),
-                            ("fg", f"{P} pf1 | {P} pf2", ["pf1", "pf2"])], mode, ["pb1", "pb2", "pf1", "pf2"])
+                            ("fg", f"{P} pf1 | {P} pf2", ["pf1", "pf2"])], mode, ["pb1", "pb2", "pf1", "pf2"],
+            **hung(["pf1", "pf2"]))
         add("subshell" + sfx, [("bg", f"({P} sb1; {P} sb2) &", ["sb1"]),
-                                ("fg", f"({P} sf1; {P} sf2)", ["sf1"])], mode, ["sb1", "sb2", "sf1", "sf2"])
+                                ("fg", f"({P} sf1; {P} sf2)", ["sf1"])], mode, ["sb1", "sb2", "sf1", "sf2"],
+            **hung(["sf1"]))
+    add("fg-close-caught", [("fg", f"{P} fg stay", ["fg"])], "close", ["fg"])
+    add("mixed-close-caught", [("bg", f"{P} mb &", ["mb"]), ("fg", f"{P} ms", ["ms"]), ("key", b"\x1a"),
+                               ("fg", f"{P} mf stay", ["mf"])], "close", ["mb", "ms", "mf"])
+    add("pipe-close-caught", [("bg", f"{P} pb1 | {P} pb2 &", ["pb1", "pb2"]),
+                              ("fg", f"{P} pf1 stay | {P} pf2 stay", ["pf1", "pf2"])], "close",
+        ["pb1", "pb2", "pf1", "pf2"])
+    add("subshell-close-caught", [("bg", f"({P} sb1; {P} sb2) &", ["sb1"]),
+                                  ("fg", f"({P} sf1 stay; {P} sf2 stay)", ["sf1"])], "close",
+        ["sb1", "sb2", "sf1", "sf2"])
     add("disown", [("bg", f"{P} d1 &", ["d1"]), ("line", "disown"), ("bg", f"{P} d2 &", ["d2"])],
         "kill", ["d1", "d2"])
     add("disown-h", [("bg", f"{P} dh1 &", ["dh1"]), ("line", "disown -h"), ("bg", f"{P} dh2 &", ["dh2"]),
@@ -545,28 +578,49 @@ def source(code, sender, shell_pid, me_pid, harness_pid):
     return "other"
 
 
-def observe(sess, probes):
-    """The row's line, and the probes still running (pid, name)."""
+def held_signals(got, hung, stay):
+    """What a row holds of a probe's signals (`NAME:SOURCE` each): all of
+    them; for a `hung` probe, `HUP` for any SIGHUP from anyone and every
+    other signal but SIGCONT as it came; for a `stay` probe, those every
+    sender but the kernel sent."""
+    if hung:
+        return sorted({"HUP" for g in got if g.startswith("HUP:")}
+                      | {g for g in got if not g.startswith(("HUP:", "CONT:"))})
+    if stay:
+        return sorted(g for g in got if not g.split(":", 1)[1].startswith("kernel"))
+    return got
+
+
+def observe(sess, probes, hung=()):
+    """The row's line, the line with every sender as seen (the same but
+    for the `hung` and `stay` probes), and the probes still running (pid,
+    name)."""
     shell_pid = sess.p.pid
     harness = os.getpid()
-    starts, sigs, dies, igns = {}, {}, {}, {}
+    starts, stays, sigs, dies, ends, igns = {}, set(), {}, {}, set(), {}
     for ln in sess.lines():
         f = ln.split()
         if not f:
             continue
         if f[0] == "start" and len(f) >= 4:
             starts[f[1]] = int(f[3])
+            if f[-1] == "stay":
+                stays.add(f[1])
         elif f[0] == "sig" and len(f) >= 7:
             sigs.setdefault(f[1], []).append((f[2], int(f[4]), int(f[6])))
         elif f[0] == "die" and len(f) >= 3:
             dies[f[1]] = f[2]
+        elif f[0] == "end" and len(f) >= 2:
+            ends.add(f[1])
         elif f[0] == "ign" and len(f) >= 3:
             igns.setdefault(f[1], []).append(f[2])
     parts = [f"shell {sess.end_text()}"]
+    raw = list(parts)
     left = []
     for name in probes:
         if name not in starts:
             parts.append(f"{name} - never")
+            raw.append(f"{name} - never")
             continue
         pid = starts[name]
         got = sorted({f"{s}:{source(c, frm, shell_pid, pid, harness)}" for s, c, frm in sigs.get(name, [])})
@@ -576,10 +630,14 @@ def observe(sess, probes):
             end = st
         elif name in dies:
             end = "dead:" + dies[name]
+        elif name in ends:
+            end = "ended"
         else:
             end = "gone"
-        parts.append(f"{name} {'+'.join(got) if got else '-'} {end}")
-    return " | ".join(parts), left
+        held = held_signals(got, name in hung, name in stays)
+        parts.append(f"{name} {'+'.join(held) if held else '-'} {end}")
+        raw.append(f"{name} {'+'.join(got) if got else '-'} {end}")
+    return " | ".join(parts), " | ".join(raw), left
 
 
 def without_senders(line):
@@ -683,7 +741,7 @@ def run_row(row, argv_i, argv_s, argv0_name, work, probe_dir, is_pelt):
         while time.time() < end and sess.status is None:
             sess.pump(0.05)
         sess.pump(1.0)
-        line, left = observe(sess, probes)
+        line, raw, left = observe(sess, probes, opt.get("hung", ()))
     finally:
         if sess.status is None:
             os.kill(sess.p.pid, signal.SIGKILL)
@@ -691,7 +749,7 @@ def run_row(row, argv_i, argv_s, argv0_name, work, probe_dir, is_pelt):
         if sess.open:
             os.close(sess.master)
     # what the row left running: its probes, by pid
-    _, left2 = observe(sess, probes)
+    _, _, left2 = observe(sess, probes)
     for pid, _n in left2:
         if is_probe(pid):
             try:
@@ -700,7 +758,7 @@ def run_row(row, argv_i, argv_s, argv0_name, work, probe_dir, is_pelt):
                 pass
     with open(os.path.join(rdir, "tty.raw"), "wb") as fh:
         fh.write(sess.tty)
-    return f"{name} | {line}", note
+    return f"{name} | {line}", note, f"{name} | {raw}"
 
 
 def shell_argvs(which, pelt):
@@ -782,10 +840,10 @@ def main():
                 print(f"hangup-witness: SKIP {name}: linux only (the kernel's part of a hangup is the host's)")
                 skips += 1
                 continue
-            got, note = run_row(row, argv_i, argv_s, argv0, work, os.path.dirname(probe), is_pelt)
+            got, note, raw = run_row(row, argv_i, argv_s, argv0, work, os.path.dirname(probe), is_pelt)
             ran += 1
             if measure:
-                print(got + (f"   # NOTE {note}" if note else ""))
+                print(got + (f"   # NOTE {note}" if note else "") + (f"\n#   as seen: {raw}" if raw != got else ""))
                 continue
             exp = want.get(name)
             held, seen = (exp, got) if each or exp is None else (without_senders(exp), without_senders(got))
@@ -797,7 +855,7 @@ def main():
                 fails += 1
             elif seen != held:
                 print(f"FAIL {name}\n  expected: {held}\n  got:      {seen}"
-                      + ("" if each else f"\n  (as seen: {got})"))
+                      + ("" if raw == seen else f"\n  (as seen: {raw})"))
                 fails += 1
             else:
                 print(f"ok {name}" + ("" if each else "  [no senders]")
