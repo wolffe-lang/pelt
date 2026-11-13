@@ -11,6 +11,7 @@ for image in localhost/r41-toolchain:1 localhost/sh38-oracle:1; do
   "$PELT_ENGINE" run --rm --entrypoint sh "$image" -c 'command -v python3; command -v cc; command -v dash; command -v bash; command -v taskset'
 done
 [ -x "$root/.wolf-bin/wolf" ] && [ -x "$root/.wolf-bin/lupin" ]
+mkdir -p "$(dirname "$root")/container-temp"
 bash notes/sh39/rig/container.sh localhost/r41-toolchain:1 sh -c '[ "$(id -u)" -ne 0 ] && test -w "$PELT_NOEXEC_DIR"'
 bash notes/sh39/rig/container.sh localhost/sh38-oracle:1 python3 -c 'import unicodedata; assert unicodedata.unidata_version == "16.0.0"'
 printf 'preflight ready\n'
