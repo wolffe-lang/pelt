@@ -5,7 +5,7 @@ image=$1; shift
 root=$(git rev-parse --show-toplevel)
 work=$(dirname "$root")
 : "${PELT_ENGINE:?set the approved container engine}"
-exec "$PELT_ENGINE" run --rm --init --memory 12g --pids-limit 16384 \
+exec "$PELT_ENGINE" run --rm --init --userns keep-id --user "$(id -u):$(id -g)" --memory 12g --pids-limit 16384 \
   --ulimit nproc=32768:32768 -v "$work:$work" -w "$root" \
   --tmpfs "$work/noexec:rw,noexec,size=1m" \
   -e HOME="$work/home" -e TMPDIR="$work/temp" -e CARGO_BUILD_JOBS=2 \
