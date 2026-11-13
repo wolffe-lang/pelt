@@ -315,6 +315,8 @@ Commits (base `b80d6570`):
 - Mended after the first build: `7975235` (`check-fmt`), `10e91da` (`self-check`'s `interactive_set` rows, and new
   ones for HUP's subshell rule and `hup_now`), `5fc06ab` (comments point at this note), `788d74e` (the witness never
   writes a bare `SKIP` at column 0).
+- Mended after the first gauntlet take: `d44406b` (the idle rows of `shadow-witness`, `colour-witness` and
+  `prompt-witness` compare the shell's own resident pages, not its file pages; see below).
 - The sweep: `ae55dd6` (pelt#93: the prompt witness's `den`); `6695b69`, `c46a70e`, `b405e85`, `e1fcc03` (pelt#97:
   `printf/c_hex_float`, recorded from dash 0.5.13.4 with `bash --posix` agreeing; printf/8 pending, 532 of 548).
 - `disown` in a script: `1258408`, `49e8720` (`jobs/disown_script`, from bash 5.3.20; dash has no `disown`).
@@ -332,8 +334,21 @@ Rows, red then green (Linux, in the container):
 - `tools/prompt-witness`'s `prompt-vcs-real-probe`: red on macOS in nightly runs 42066187159 and 42678757228 (the
   Python stand-in); green on Linux at `5fc06ab` with the sh one. A macOS green is the next nightly's to show.
 - `printf/c_hex_float` is `PEND-fail` at trunk's pelt (`printf: %a: conversion not supported`), by design.
+- The idle rows (`shadow-witness`, `colour-witness`, `prompt-witness`): the first gauntlet take at `a7f4fdb` (record
+  sha256 `4a6b5f06…`) went red at `shadow-witness-native` (resident pages 3266 → 3154 over the 10 s) and
+  `prompt-witness-release` (`Rss` 6004 → 5876 kB), and its resume at `shadow-witness-native` again (3031 → 3029). In
+  each the shell made no context switch, no fault and no tick, its anonymous memory was unchanged, and the pages
+  that went were file-backed (`RssFile` 5668 → 5220, 3012 → 2884, 4728 → 4720 kB): the host, with about 1 GB free
+  and its page cache under reclaim, took them from an idle process. The rows now compare the anonymous resident
+  pages with the activity counters (`d44406b`), as `loop-rss` and `shape-rss` measure kept memory since pelt#118;
+  a shell that woke or kept memory still fails them. The take and its resume are kept beside the green one.
 
 The gauntlet record at the head and the plant record are in the PR's body, taken after this note.
+
+Also seen, not this lane's to change: bash 5.3.20's table taken a second time (another host, the same package)
+differed from its first in two fields that race in bash itself (whether a stopped job also gets the exit path's
+SIGTERM after the hangup's SIGCONT has woken it, and whether a foreground job also gets the kernel's SIGHUP as bash
+dies); bash 5.2.21's two takes were identical, and that table, stable, is the one pelt is held to.
 
 ## Done-when
 
