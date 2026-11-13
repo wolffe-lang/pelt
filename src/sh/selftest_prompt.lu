@@ -88,6 +88,15 @@ fn want_prompt(mut bad: List[str]) {
     if prompt_vcs_result(fresh, "/one", "", true, 50, 50).value != "[vcs:clean]" {
         (mut bad).push("prompt-vcs-timely-clean")
     }
+    let twice = prompt_vcs_result(late, "/one", "", false, 51, 50)
+    if late.misses != 1 || twice.misses != 2 || twice.value != "[vcs:1]" {
+        (mut bad).push("prompt-vcs-consecutive-deadlines")
+    }
+    if prompt_vcs_result(twice, "/one", "", true, 50, 50).misses != 0 ||
+        prompt_vcs_result(twice, "/one", "", false, 49, 50).misses != 0 ||
+        prompt_vcs_result(twice, "/two", "", false, 51, 50).misses != 1 {
+        (mut bad).push("prompt-vcs-deadline-reset")
+    }
     let q = Query { cols: 80, rows: 24, fixed: 80, col0: 0, cpr: 0, pend: "" }
     var e = editor_state(sh, "$ ", q, default_chars())
     e.right_prompt = "RIGHT"
