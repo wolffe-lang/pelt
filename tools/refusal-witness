@@ -23,26 +23,28 @@ def main(binary):
         script=home/'setup.sh';script.write_text('#!/bin/sh\necho should-not-run\n');script.chmod(0o644)
         odd=home/"a 'file.sh";odd.write_text(script.read_text());odd.chmod(0o644)
         (home/'folder').mkdir()
-        rows=[('file','./setup.sh'),('quoted',"./a 'file.sh"),('directory','./folder')]
+        rows=[('file','./setup.sh'),('quoted',"./a 'file.sh"),('directory','./folder'),('path-file',str(script))]
+        env=dict(os.environ,PATH=str(home)+':/usr/bin:/bin')
         noexec=os.environ.get('PELT_NOEXEC_DIR')
         if noexec:
             p=Path(noexec)/'refused-script.sh';p.write_text(script.read_text());p.chmod(0o755)
             rows.append(('noexec',str(p)))
         else:print('SKIP refusal-noexec reason=no-container-noexec-mount-provided',flush=True)
         for name,path in rows:
-            cmd=shlex.quote(path)
-            oracle=subprocess.run([dash,'-c',cmd],cwd=home,capture_output=True,timeout=10)
+            cmd='setup.sh' if name=='path-file' else shlex.quote(path)
+            oracle=subprocess.run([dash,'-c',cmd],cwd=home,env=env,capture_output=True,timeout=10)
             ok=check('refusal-'+name+'-dash',oracle.returncode==126,(oracle.returncode,oracle.stderr)) and ok
             for prefix in ('','command ','exec '):
-                got=subprocess.run([binary,'-c',prefix+cmd],cwd=home,capture_output=True,timeout=10)
+                got=subprocess.run([binary,'-c',prefix+cmd],cwd=home,env=env,capture_output=True,timeout=10)
                 # Outside a prompt pelt retains its diagnostic location and exec prefix.
                 good=got.returncode==126 and path.encode() in got.stderr and b'permission denied' in got.stderr.lower() and b'hint:' not in got.stderr and not got.stdout
                 ok=check('refusal-'+name+'-'+(prefix.strip() or 'plain'),good,(got.returncode,got.stderr)) and ok
         for args,hints in [([],False),(['-o','friendly'],True),(['--posix','-o','friendly'],False)]:
-            sh=Shell(binary,home,args,tty_out=True)
+            sh=Shell(binary,home,args,tty_out=True,env_overrides={'PATH':env['PATH']})
             try:
                 for name,path in rows:
-                    start=len(sh.data['tty']);sh.command((shlex.quote(path)+'\r').encode());raw=sh.data['tty'][start:]
+                    cmd='setup.sh' if name=='path-file' else shlex.quote(path)
+                    start=len(sh.data['tty']);sh.command((cmd+'\r').encode());raw=sh.data['tty'][start:]
                     good=(b'pelt: '+path.encode()+b': permission denied\r\n') in raw
                     expected_hint=hints and name!='directory'
                     good=good and raw.count(b'pelt: hint:')==int(expected_hint)
