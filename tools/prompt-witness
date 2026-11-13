@@ -218,6 +218,11 @@ def backoff(binary,home):
         d=home/name;d.mkdir();(d/'mode').write_text(mode)
     (home/'mode').write_text('dirty')
     def calls(d):return len((d/'calls').read_bytes()) if (d/'calls').exists() else 0
+    def step(sh,keys):
+        old=len(sh.data['tty']);sh.type(keys)
+        sh.until(lambda: MARK in sh.data['tty'][old:])
+        colour.settled(sh,.02)
+        return sh.data['tty'][old:]
     def row(name,ok,detail):
         print(('ok ' if ok else 'FAIL ')+name+' '+str(detail),flush=True)
         assert ok,(name,detail)
