@@ -247,6 +247,16 @@ Use `set +o histexpand` to leave both forms literal. These features require
 `TERM=dumb` remain unchanged.
 
 
+## Refused execution
+
+A found path that cannot be executed answers status 126. At a prompt the
+message is `pelt: PATH: permission denied`, including for a directory. Friendly
+mode adds one hint for a regular file: `chmod +x 'FILE'` when its executable
+mode bits do not permit execution, otherwise `sh 'FILE'` (useful for a shell
+script on a noexec mount). The path is shell-quoted; the hint is never run.
+A directory gets no script hint. Scripts, `-c`, POSIX mode and friendly-off
+prompts get no hint. Script diagnostics retain their line location.
+
 ## Friendly prompt
 
 With `friendly` and `prompt_friendly`, an unset-at-start `PS1` gets a
@@ -293,7 +303,12 @@ enters the input, history, undo or kill ring. `set +o highlight` also removes
 prompt styles. An explicit PS1 suppresses the right hook entirely.
 
 If an executable `den` is on PATH, the friendly prompt runs it directly as
-`den status --porcelain` once per primary prompt. It shows `[vcs:clean]` or
+`den status --porcelain` once per primary prompt until it misses two deadlines
+in a row in the same directory. It then stops starting the probe there until
+a primary prompt observes a different working directory, including when you
+leave and return. No prompt-count or elapsed-time retry is made. A completion
+within the deadline resets the consecutive-miss count, even if its answer is
+rejected. It shows `[vcs:clean]` or
 `[vcs:N]`, the number of nonempty porcelain rows, not a branch name or a
 count of individual file operations. Collection has a 50 ms deadline and
 32 KiB cap. A late, failed, oversized or invalid-UTF-8 answer is rejected;

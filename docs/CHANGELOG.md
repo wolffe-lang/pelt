@@ -6,6 +6,19 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Slow prompt probes back off.** Two consecutive 50 ms deadline misses
+  stop `den status --porcelain` probes in that directory until a different
+  working directory is seen at a primary prompt. A timely completion resets
+  the count; the last same-directory answer stays dimmed, or no segment is
+  drawn. No timed retry, background child or idle refresh is added.
+
+- **Refused execution names the path.** At a prompt, a non-executable file
+  or directory reports `pelt: PATH: permission denied`, status 126. Friendly
+  mode adds one safely quoted action for a regular file only; other modes
+  add no hint. `tools/refusal-witness`, inside `tools/exec-witness`, holds the
+  file and directory rows to dash's status and checks noexec when provided
+  by the container.
+
 - **A hangup reaches the jobs, as bash's does.** An interactive shell that
   receives SIGHUP (the terminal hung up, or the signal was sent) with no trap
   naming it now sends SIGHUP to every job, and SIGCONT after it to a stopped
@@ -15,7 +28,11 @@ lane) and in the README's status.
   foreground group, a dropped ssh session left even its foreground job
   running. `tools/hangup-witness` holds pelt to bash's table, measured from
   outside (`tests/hangup/expected`). A shell started with SIGHUP ignored keeps
-  it ignored, and a trapped SIGHUP runs its action and the shell goes on.
+  it ignored, unlike bash, which dies of SIGHUP even then. A trapped SIGHUP
+  at the prompt runs its action and the shell goes on; bash instead leaves
+  after the action there (but continues when the action follows a foreground
+  job). These are pelt's rules, held by `ignored`, `trap` and `trap-fg` in
+  `tests/hangup/expected`.
 
 - **`disown`.** `disown [-h] [-ar] [job ...]` takes a job out of the table (no
   longer listed, waited for, named or sent a hangup; its processes run on and
@@ -29,7 +46,9 @@ lane) and in the README's status.
 - **The end of a shell with stopped jobs.** Ctrl-D with a job stopped warns
   once, as `exit` does (pelt used to leave at once). The second `exit` or
   Ctrl-D, and a hangup, send each stopped job SIGTERM and SIGCONT, as bash's
-  do. A refused `exit` answers status 0, as dash's.
+  do. A refused `exit` answers status 0, as dash's, not bash's 1. This is
+  pelt's rule (`exit-stopped`, `exit-stopped-bg` in the hangup witness and
+  `c_jc_ctrl_z`, `c_jc_exit_stopped` in the typed session corpus).
 
 - **`%a` is counted as missing.** The census counted printf/8 (`%e %f %g %a`)
   as met on a case without `%a`; `printf/c_hex_float` (dash and `bash --posix`
