@@ -1433,6 +1433,11 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
             }
         }
     }
+    let mode = stat_of(path, false)
+    if mode.len > 0 && (mode[0] == K_DIR || mode[0] == K_FILE && !may(mut t, mode, 1)) {
+        close_opened(t)
+        return slow()
+    }
     var capped = false
     for h in t.fds {
         if is_cap(h) {
@@ -2523,6 +2528,11 @@ fn start_child(
     nowait: bool,
     quiet_missing: bool,
 ) -> (int, int) {
+    let mode = stat_of(path, false)
+    if mode.len > 0 && (mode[0] == K_DIR || mode[0] == K_FILE && !may(mut sh, mode, 1)) {
+        report_denied(mut sh, path)
+        return (-1, 126)
+    }
     flush(mut sh)
     var map = List[int]()
     var cap_r = -1
@@ -2595,7 +2605,9 @@ fn start_child(
             fs_close(cap_r) else |_| {}
         }
         let (why, st) = cannot_run(path, -hd)
-        if st != 127 || !quiet_missing {
+        if why == "Permission denied" {
+            report_denied(mut sh, path)
+        } else if st != 127 || !quiet_missing {
             diag(mut sh, "{cmd}: {why}")
         }
         return (-1, st)
@@ -2817,6 +2829,21 @@ fn no_magic(path: str) -> bool {
     !(head.len >= 2 && head[0] as int == 35 && head[1] as int == 33)
 }
 
+/// Name a refused path before offering one friendly, safely quoted action.
+/// Scripts keep their diagnostic location; prompt errors name the file first.
+fn report_denied(mut sh: Sh, path: str) {
+    if sh.interactive {
+        write_fd(mut sh, 2, "pelt: {path}: permission denied\n")
+    } else {
+        diag(mut sh, "{path}: Permission denied")
+    }
+    if !friendly_active(sh) { return }
+    let st = stat_of(path, false)
+    if st.len == 0 || st[0] != K_FILE { return }
+    let action = if may(mut sh, st, 1) then "sh" else "chmod +x"
+    write_fd(mut sh, 2, "pelt: hint: {action} {squote(path)}\n")
+}
+
 /// Why the program at `path` could not be run, as dash words it, and the
 /// status (XCU 2.8.2: 127 when it was not found, 126 when it was and
 /// could not be run). `row` is the spawn's: 127 `not_found`, 126
@@ -2955,7 +2982,11 @@ fn replace_shell(mut sh: Sh, args: List[str], names: List[str]) -> int {
         let _st = try_exec(sh_path(), argv, env, map)
     }
     let (why, st) = cannot_run(path, first)
-    diag(mut sh, "exec: {cmd}: {why}")
+    if why == "Permission denied" && sh.interactive {
+        report_denied(mut sh, path)
+    } else {
+        diag(mut sh, "exec: {cmd}: {why}")
+    }
     st
 }
 
