@@ -1433,11 +1433,6 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
             }
         }
     }
-    let mode = stat_of(path, false)
-    if mode.len > 0 && (mode[0] == K_DIR || mode[0] == K_FILE && !may(mut t, mode, 1)) {
-        close_opened(t)
-        return slow()
-    }
     var capped = false
     for h in t.fds {
         if is_cap(h) {
@@ -2528,11 +2523,6 @@ fn start_child(
     nowait: bool,
     quiet_missing: bool,
 ) -> (int, int) {
-    let mode = stat_of(path, false)
-    if mode.len > 0 && (mode[0] == K_DIR || mode[0] == K_FILE && !may(mut sh, mode, 1)) {
-        report_denied(mut sh, path)
-        return (-1, 126)
-    }
     flush(mut sh)
     var map = List[int]()
     var cap_r = -1
