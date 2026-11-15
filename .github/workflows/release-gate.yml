@@ -1,3 +1,4 @@
+# Generated from ci.yml by the pinned release-adapter; checked for drift.
 name: release gate
 on:
   workflow_call:
@@ -7,7 +8,6 @@ on:
         value: ${{ jobs.complete.outputs.tested-sha }}
 permissions:
   contents: read
-  issues: write
 jobs:
   verify:
     runs-on: ubuntu-24.04
@@ -30,15 +30,381 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-parse "refs/tags/$GITHUB_REF_NAME^{commit}")" = "$GITHUB_SHA"
           echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
-  ci:
+  plan:
     needs: verify
-    uses: ./.github/workflows/ci.yml
+    name: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tier: ${{ steps.plan.outputs.tier }}
+      jobs: ${{ steps.plan.outputs.jobs }}
+      matrix_gauntlet: ${{ steps.plan.outputs.matrix_gauntlet }}
+      matrix_sessions: ${{ steps.plan.outputs.matrix_sessions }}
+    steps:
+      # Depth 2: a pull request's run checks out its merge commit, and the
+      # plan reads that commit against its first parent. A dispatch reads
+      # its branch against trunk's merge base, so it takes the history.
+      - uses: actions/checkout@v4
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
+        with:
+          fetch-depth: ${{ github.event_name == 'workflow_dispatch' && '0' || '2' }}
+      - name: the planner can say no (ci/tiers-test.py)
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
+        run: python3 ci/tiers-test.py
+      - name: proof chunk controller contracts
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
+        run: python3 tools/shape-rss-rig-test
+      - name: the plan
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
+        id: plan
+        env:
+          EVENT: workflow_dispatch
+          ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IN_TIER: all
+        run: python3 ci/tiers.py plan --merge --github-output "$GITHUB_OUTPUT"
+
+      - name: local gate wiring proof
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
+        run: python3 -I ci/local-gate-test.py
+      - name: local evidence gate
+        if: ${{ !(github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) }}
+        run: echo 'Local gauntlet evidence is the gate; request ci or full-matrix for CI.'
+  gauntlet:
+    needs: plan
+    if: ${{ (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) && (contains(fromJSON(needs.plan.outputs.jobs || '[]'), 'gauntlet')) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The legs are the plan's (ci/tiers.py MATRIX): each host on each
+        # compiler tier, `tier: native` and `tier: release` (pelt#40: one job
+        # ran both tiers' corpus and sessions, 38-41 of macOS's 45 minutes).
+        # Linux x86-64, macOS arm64 and linux aarch64 (`builds: false`, where
+        # the job asserts the tier is refused by name, wolf-lang#614) in the
+        # all tier (the nightly); the same but macOS's release leg in the
+        # full tier (the merge; tl30, the macOS cap); linux x86-64 alone in
+        # a pull request's.
+        include: ${{ fromJSON(needs.plan.outputs.matrix_gauntlet || '[]') }}
+    runs-on: ${{ matrix.os }}
+    # pelt#99 (sh34): the session corpus is the `sessions` job's since the
+    # friendly campaign doubled it (290 cases, 590 s on macOS, to 584 and
+    # 1,500 s): the whole leg's peak steps summed to 47-50 minutes on macOS,
+    # past this job's old 45. Without them this job's peak is 24.6 minutes
+    # (macOS release, the ten nightlies to 2026-11-01); the limit is the
+    # house rule's: (peak + 180 s) x 1.4, 38.7, so 40.
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: the pinned toolchain, by digest
+        run: tools/fetch-toolchain
+
+      - name: wolf fmt --check
+        # Once a host, on the native leg: it needs no build and no tier.
+        if: matrix.tier == 'native'
+        run: tools/check-fmt
+
+      # sh06: tests/census/clauses.tsv lists POSIX.1-2024's testable
+      # statements and the cases that show each. The table must agree
+      # with the tree (every case it names exists, every census case is
+      # named); it needs no built pelt, so every host checks it.
+      - name: the clause table agrees with the corpus
+        # Once a host, on the native leg: it needs no build and no tier.
+        if: matrix.tier == 'native'
+        run: tools/clause-census
+
+      # sh11: the line editor's width table is what tools/gen-width
+      # makes from Unicode 16.0.0. A runner whose Python carries another
+      # Unicode version says so here rather than in a session.
+      - name: the width table is the generated one
+        # Once a host, on the native leg: it needs no build and no tier.
+        if: matrix.tier == 'native'
+        run: |
+          python3 -c "import unicodedata; print('runner Unicode', unicodedata.unidata_version)"
+          if python3 -c "import unicodedata, sys; sys.exit(unicodedata.unidata_version != '16.0.0')"; then
+            tools/gen-width --check
+          else
+            echo "::notice::runner Python is not Unicode 16.0.0; the table is checked on kasumi (notes/sh11-the-line-editor.md)"
+          fi
+
+      - name: build, the ${{ matrix.tier }} tier
+        if: matrix.builds
+        run: tools/build --${{ matrix.tier }}
+
+      - name: shape memory sampler contracts and pelt end-to-end
+        if: ${{ matrix.builds && !cancelled() }}
+        env:
+          PELT_TEST_SHELL: target/${{ matrix.tier }}/pelt
+        run: python3 tools/shape-rss-test
+
+      - name: the ${{ matrix.tier }} tier is refused on this host, by name (wolf-lang#614)
+        if: ${{ !matrix.builds }}
+        shell: bash
+        env:
+          TIER: ${{ matrix.tier }}
+        run: |
+          set +e
+          tools/build --"$TIER" >"$TIER.log" 2>&1
+          code=$?
+          set -e
+          cat "$TIER.log"
+          if [ "$code" = 0 ]; then
+            echo "::error::the $TIER tier now builds on linux aarch64; widen the matrix"
+            exit 1
+          fi
+          grep -q "this host cannot run the $TIER tier" "$TIER.log"
+
+      - name: wolf test (the table checks)
+        # tools/check-test runs the unit tests, once a host on the native
+        # leg; `wolf test` runs them on the checked machine (its rows are
+        # `unsupported` where that machine refuses a construct), so the
+        # compiled tiers run the same checks below (`tools/self-check`, sh20).
+        if: matrix.builds && matrix.tier == 'native'
+        run: tools/check-test
+
+      # sh20: the table checks again, on the tier just built (`wolf test`
+      # above runs them on the checked machine), with the one row only a
+      # compiled tier can answer: a fork asked while a task is live is
+      # answered `busy`, and pelt runs the shape in process, as it does on
+      # a host that does not fork (pelt starts no task; src/sh/fork.lu;
+      # the task is src/selfcheck.lu's, a program of its own).
+      - name: the table checks on the ${{ matrix.tier }} tier, busy's row with them
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/self-check ${{ matrix.tier }}
+
+      # pelt#3: a word that is not a pattern (`[`, `a]`, `[a`) reads no
+      # directory. End to end: a `[ … ]` loop's peak RSS in a directory
+      # of 64 files must match an empty directory's (tools/glob-rss).
+      # It runs even when `wolf test` is red, so the table check's count
+      # and this measurement each report on their own.
+      - name: no directory read for a non-pattern word, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/glob-rss target/${{ matrix.tier }}/pelt
+
+      # wolf-lang#612, sh03: each command's scratch dies with it
+      # (`copy region`), so a loop of commands keeps only what it
+      # assigns. s216's loop at 10,000 and 20,000 turns; the larger may
+      # peak at most 100 bytes a turn (plus 1 MiB) above the smaller
+      # (tools/loop-rss; pelt before sh03 grew 7.4 KB a turn).
+      - name: memory flat over a loop of commands, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/loop-rss target/${{ matrix.tier }}/pelt
+
+      # pelt#19, sh08: and over every other shape a long script or session
+      # repeats — a pipeline, a command substitution, a subshell, a
+      # function call (with `local` and `return`), an arithmetic
+      # assignment, `case` and `for`, a script of 10,000 and 20,000
+      # lines, and lines typed at the prompt — each at 10,000 and 20,000
+      # turns under loop-rss's bound (100 B a turn + 1 MiB). Before sh08
+      # 21 of the 22 rows failed, growing 0.35 to 13.5 KB a turn; the
+      # 22nd is the bare loop, for scale (tools/shape-rss). sh19 (pelt#33)
+      # added `wait`, `export`, `kill`, and `cmd & wait` in a loop, a
+      # script and at the prompt, which kept 600 to 2,300 B a turn before.
+      # sh22 (pelt#39) added `read` with a redirection, `eval`, `cd .`,
+      # `command`, `umask` and a job nobody waits for, which kept 131 to
+      # 1,700 B a turn. sh20 (pelt#34) added the shapes that fork, a
+      # process a turn: a substitution and a subshell of two commands, a
+      # brace group and a subshell after `&`, a stage pelt runs itself, in
+      # a loop, a script and at the prompt.
+      - name: memory flat over every shape, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 20
+        run: tools/shape-rss target/${{ matrix.tier }}/pelt
+
+      # sh05: `exec cmd` replaces the shell (`os_exec`). The corpus sees
+      # only what a script prints, and a shell that ran the program as
+      # a child and then left would print the same; this asks the host:
+      # the same pid becomes the program, with no child under it, the
+      # environment handed over is exactly the exported variables, a
+      # descriptor the shell opened is the program's, and a death by
+      # signal reaches the shell's parent as one (tools/exec-witness).
+      - name: exec replaces the shell (same pid), ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/exec-witness target/${{ matrix.tier }}/pelt
+
+      # sh14: a trap's action runs when the command the signal came
+      # during ends, asked 5,000 times with a child as the sender and
+      # 5,000 with the shell's own `kill` (before wolf 0.2.29 a poll
+      # could trail a delivery, wolf-lang#691, and pelt carried a
+      # barrier; trunk without it missed 3 to 12 of 5,000,
+      # notes/sh14-evidence/logs/red-barrier.log). And a shell started
+      # with signals ignored neither traps nor resets them, asked from
+      # outside (the corpus harness starts every case with the
+      # defaults) (tools/signal-witness).
+      - name: traps run on time; ignored at start stays ignored, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
+        run: tools/signal-witness target/${{ matrix.tier }}/pelt
+
+      # The corpus steps run whatever came before, so that a break seen
+      # only from outside (above) and one seen only by a script each
+      # report on their own; so does every step after them.
+      - name: the differential corpus, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        run: tools/difftest --bin target/${{ matrix.tier }}
+
+      - name: the harness sees a difference (the planted red)
+        # The release leg's: the selftest runs the release build.
+        if: ${{ matrix.builds && matrix.tier == 'release' && !cancelled() }}
+        run: tools/difftest-selftest target/release
+
+      - name: shadow bytes, bounded lookup and idle, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/shadow-witness target/${{ matrix.tier }}/pelt
+
+      - name: colour bytes, reset boundaries and idle, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/colour-witness target/${{ matrix.tier }}/pelt
+
+      - name: words witness loader and fixture contracts
+        if: ${{ matrix.builds && !cancelled() }}
+        run: python3 tools/words-loader-test
+
+      - name: words bytes, abbreviation isolation and bounded pager, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/words-witness target/${{ matrix.tier }}/pelt
+
+      - name: prompt bytes, precedence, VCS deadline and idle, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/prompt-witness target/${{ matrix.tier }}/pelt
+
+      # sh11: the editor gives the terminal back, asked from outside: the
+      # modes after SIGHUP (pelt dies of it, as dash), SIGTERM (ignored),
+      # SIGINT (the line abandoned, $? 130) and a hangup (tools/edit-witness).
+      # sh15 (wolf 0.2.30): IXON and IEXTEN off while a line is edited,
+      # no context switch at an idle prompt (the editor waits in
+      # os_signal_wait_fd; a VTIME read made about ten a second), a
+      # `kill -INT` answered at once, a resize redrawn mid-line.
+      # sh16: Tab at an empty command name (every PATH directory read)
+      # rings within half a second, and the next Tab asks before a list.
+      # Every session above also fails if pelt exits with the terminal's
+      # ICANON, ECHO, ISIG, IEXTEN or IXON changed.
+      - name: the editor restores the terminal, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
+        run: tools/edit-witness target/${{ matrix.tier }}/pelt
+
+      # sh12: the history file, asked from outside (one session is one
+      # shell): written as typed and read by the next shell, two shells
+      # sharing one file, the file kept to HISTSIZE, a path that cannot
+      # be made and a file that is not text left alone, $HOME/.sh_history
+      # made 0600 (tools/hist-witness).
+      - name: the history file across shells, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 8
+        run: tools/hist-witness target/${{ matrix.tier }}/pelt
+
+      # pelt#27, sh22: a harness whose case times out ends everything the
+      # case started (tools/lib_reap.py), asked from outside: tests/reap's
+      # one case times out on purpose with a child, a job in a group of
+      # its own and the job's child, through tools/difftest and, on linux,
+      # under tools/syscall-census, whose timeout used to end `strace` and
+      # leave the shell it followed running (sh14 found three on kasumi).
+      # strace is the census row's; the linux runners do not carry it.
+      - name: strace, for the census row (linux)
+        if: ${{ matrix.builds && runner.os == 'Linux' && !cancelled() }}
+        run: |
+          if ! command -v strace; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq strace
+          fi
+
+      - name: a case that times out leaves nothing running, ${{ matrix.tier }} tier
+        if: ${{ matrix.builds && !cancelled() }}
+        timeout-minutes: 5
+        run: tools/reap-witness target/${{ matrix.tier }}
+
+
+  # The prompt: sessions typed into pelt through a pseudo-terminal and
+  # compared with transcripts tools/session-record wrote from `dash -i +m`
+  # (tests/session/, tools/lib_session.py), on every leg that builds, each
+  # host on each compiler tier as the gauntlet's. pelt#99 (sh34): its own
+  # job since the friendly campaign doubled the corpus (584 cases; 1,500 s
+  # on macOS, 1,245 s on linux), so the two run side by side and each fits
+  # its limit with room. Limits by the house rule, (peak + 180 s) x 1.4,
+  # over the ten nightlies to 2026-11-01 plus sh34's eight cases: the job's
+  # peak 27.5 minutes (macOS release), 42.7, so 45; the corpus's own step
+  # 25.1 minutes on macOS, 39.8, so 40, and 20.7 on linux, 33.6, so 35.
+  # No case is skipped, filtered or sharded.
+  sessions:
+    needs: plan
+    if: ${{ (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) && (contains(fromJSON(needs.plan.outputs.jobs || '[]'), 'sessions')) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The plan's legs (ci/tiers.py MATRIX): the gauntlet's that build,
+        # linux x86-64 and macOS arm64 on each compiler tier, in the all
+        # tier; all but macOS's release leg in the full tier; linux x86-64
+        # alone in a pull request's.
+        include: ${{ fromJSON(needs.plan.outputs.matrix_sessions || '[]') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: the pinned toolchain, by digest
+        run: tools/fetch-toolchain
+
+      - name: build, the ${{ matrix.tier }} tier
+        run: tools/build --${{ matrix.tier }}
+
+      # The prompt: sessions typed into pelt through a pseudo-terminal
+      # and compared with transcripts tools/session-record wrote from
+      # `dash -i +m` (tests/session/, tools/lib_session.py).
+      # pelt#35, sh19: a break the sessions see is seen whatever the
+      # corpus said (a plant whose corpus was red once never showed its
+      # sessions, sh18's run 39160267977); in a job of their own since
+      # sh34 they wait on nothing but this leg's build.
+      # sh29: run 40160785846 reached about 408 sessions without a failure
+      # before macOS native exhausted the old 15-minute step cap; sh34
+      # (pelt#99) sizes the step by the house rule, above the job.
+      - name: the session corpus, ${{ matrix.tier }} tier
+        timeout-minutes: ${{ matrix.os == 'macos-latest' && 40 || 35 }}
+        run: tools/session --bin target/${{ matrix.tier }}
+
+      - name: the session harness sees a difference (the planted red)
+        # The release leg's: the selftest runs the release build.
+        if: ${{ matrix.tier == 'release' && !cancelled() }}
+        run: tools/session-selftest target/release
+
+  # The run's verdict, and its name: `tier full`, `tier pr` or `tier noop`.
+  # It needs every job, runs unless the run was cancelled, and fails unless
+  # the plan succeeded, the hosts it chose are the tier's, every
+  # chosen job succeeded and every other job was skipped (ci/tiers.py
+  # verdict). lane-audit.sh reads this job's name and conclusion.
+  tier:
+    name: tier ${{ needs.plan.outputs.tier || 'unplanned' }}
+    if: ${{ (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix')) && (!cancelled()) }}
+    needs:
+      - plan
+      - gauntlet
+      - sessions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: every chosen job succeeded, every other was skipped
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: python3 ci/tiers.py verdict
+
+  # A red nightly opens an issue (ruling #92): a scheduled run has no lane
+  # watching it, so the red has to come and find one. One open issue per
+  # workflow, its title the dedupe key; a further red night comments on it
+  # (ci/nightly-red.sh, tested by ci/tiers-test.py T8). Never on a pull
+  # request, a push or a dispatch: those reds have a lane attached already.
   complete:
-    needs: [verify, ci]
+    needs: [verify, tier]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       tested-sha: ${{ needs.verify.outputs.sha }}
     steps:
       - name: complete release profile
-        run: echo 'PROFILE complete: all'
+        run: echo 'PROFILE-complete all'
