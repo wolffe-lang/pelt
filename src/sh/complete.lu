@@ -208,6 +208,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
                 return no_ctx()
             }
             let d = cps[i + 1]
+            if d == 10 { i += 2; continue }
             if q == 34 && !(d == 36 || d == 96 || d == 34 || d == 92 || d == 10) {
                 (mut lit).push(c)
                 dol = -1

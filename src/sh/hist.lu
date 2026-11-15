@@ -447,6 +447,7 @@ fn hist_sync(mut sh: Sh, read: bool) {
         let wrote = copy region hw {
             hist_append(path, sh.ed.h.unsaved, sh.ed.h.need_nl)
         }
+        if wrote < 0 { return }
         if wrote >= 0 {
             let after = file_size(path)
             if after == before + wrote {
@@ -496,6 +497,45 @@ fn hist_flush(fd: int, path: str) {
     let slash = path.rfind("/") else -1
     let dir = if slash < 0 then "." else if slash == 0 then "/" else path[0..slash]
     fs_sync_dir(dir) else |_| {}
+}
+
+/// Remove the saved editing invocation, not a ring snapshot: another
+/// shell may have appended entries since this shell's last prompt.
+/// Like compaction this is an atomic file replacement, not a lock
+/// against a writer appending concurrently with the replacement.
+fn hist_retract(mut sh: Sh, line: str) {
+    if sh.ed.h.state != H_FILE { return }
+    let path = sh.ed.h.path
+    let bytes = fs_read_bytes(path) else |_| { return }
+    let raw = str_from_utf8(bytes) else |_| { return }
+    var encoded = buf()
+    encode_entry(mut encoded, line)
+    let needle = text(encoded)
+    var offset = 0
+    var at = -1
+    for row in raw.split("\n") {
+        if row + "\n" == needle && offset + needle.len <= raw.len { at = offset }
+        offset += row.len + 1
+    }
+    if at < 0 { return }
+    let tmp = "{path}.pelt{os_pid()}"
+    let fd = fs_open_perm(tmp, 4, 0o600) else |_| { return }
+    var out = buf()
+    put(mut out, raw[0..at])
+    put(mut out, raw[at + needle.len..raw.len])
+    fs_write_chunk(fd, out.b) else |_| {
+        fs_close(fd) else |_| {}
+        fs_remove(tmp) else |_| {}
+        return
+    }
+    hist_flush(fd, tmp)
+    fs_close(fd) else |_| {}
+    fs_rename(tmp, path) else |_| { fs_remove(tmp) else |_| {}; return }
+    let slash = path.rfind("/") else -1
+    let dir = if slash < 0 then "." else if slash == 0 then "/" else path[0..slash]
+    fs_sync_dir(dir) else |_| {}
+    if at + needle.len <= sh.ed.h.size { sh.ed.h.size -= needle.len }
+    if sh.ed.h.fcount > 0 { sh.ed.h.fcount -= 1 }
 }
 
 /// Write the entries kept to a new file beside the history file and
@@ -861,8 +901,10 @@ fn bi_fc(mut sh: Sh, args: List[str]) -> int {
     }
     // the `fc` that edits is never entered (XCU `fc`)
     if sh.ed.h.cur {
+        let current = hist_at(sh.ed.h, sh.ed.h.n - 1)
+        let pending = sh.ed.h.unsaved.len > 0
         ring_drop_newest(mut sh.ed.h)
-        hist_rewrite(mut sh)
+        if !pending { hist_retract(mut sh, current) }
         sh.ed.h.cur = false
     }
     if redo {
