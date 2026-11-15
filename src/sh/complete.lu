@@ -51,6 +51,14 @@ const CK_FILE: int = 2
 
 const CK_VAR: int = 3
 
+/// A simple parameter as recognized in the raw, quote-aware token.
+/// Offsets refer to the quote-removed code points, never reparsed text.
+struct CRef {
+    at: int,
+    end: int,
+    name: str,
+}
+
 /// What `comp_ctx` decided about the word at the cursor.
 struct Ctx {
     kind: int,
@@ -67,8 +75,8 @@ struct Ctx {
     /// Nothing of the word typed yet, unquoted: a `~` or `#` inserted
     /// first is quoted.
     lead: bool,
-    /// Code-point offsets of unescaped dollars outside single quotes.
-    refs: List[int],
+    /// Raw-token parameter names and extents outside single quotes.
+    refs: List[CRef],
 }
 
 /// The names a word can become, sorted by byte; `base` is the part of
@@ -87,7 +95,7 @@ fn no_ctx() -> Ctx {
         brace: false,
         exec_only: false,
         lead: false,
-        refs: List[int](),
+        refs: List[CRef](),
     }
 }
 
@@ -134,7 +142,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
     var in_word = false
     var word_cmd = true
     var lit = List[int]()
-    var refs = List[int]()
+    var refs = List[CRef]()
     var quoted = false
     var eq = -1
     var dol = -1
@@ -196,7 +204,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
             in_word = true
             word_cmd = cmdpos && !redir
             lit = List[int]()
-            refs = List[int]()
+            refs = List[CRef]()
             quoted = false
             eq = -1
             dol = -1
@@ -236,7 +244,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
         }
         // a character of the word: track a `$name` it may end in
         if c == 36 {
-            (mut refs).push(lit.len)
+            (mut refs).push(CRef { at: lit.len, end: -1, name: "" })
             dol = i
             dbrace = false
             dname = List[int]()
@@ -245,7 +253,15 @@ fn comp_ctx(cps: List[int]) -> Ctx {
                 dbrace = true
             } else if is_name_cp(c, dname.len == 0) {
                 (mut dname).push(c)
+                if !dbrace {
+                    refs[refs.len - 1].end = lit.len + 1
+                    refs[refs.len - 1].name = cps_text(dname)
+                }
             } else {
+                if dbrace && c == 125 && dname.len > 0 {
+                    refs[refs.len - 1].end = lit.len + 1
+                    refs[refs.len - 1].name = cps_text(dname)
+                }
                 dol = -1
             }
         }
@@ -267,20 +283,26 @@ fn comp_ctx(cps: List[int]) -> Ctx {
             brace: dbrace,
             exec_only: false,
             lead: false,
-            refs: List[int](),
+            refs: List[CRef](),
         }
     }
     if !in_word {
         word_cmd = cmdpos && !redir
         lit = List[int]()
-        refs = List[int]()
+        refs = List[CRef]()
     }
     let lead = !in_word
     if word_cmd && eq >= 0 {
         let value = cps_text(slice_of(lit, eq, lit.len))
-        var value_refs = List[int]()
-        for at in refs {
-            if at >= eq { (mut value_refs).push(at - eq) }
+        var value_refs = List[CRef]()
+        for param in refs {
+            if param.at >= eq {
+                (mut value_refs).push(CRef {
+                    at: param.at - eq,
+                    end: if param.end < 0 then -1 else param.end - eq,
+                    name: param.name,
+                })
+            }
         }
         return Ctx {
             kind: CK_FILE,
@@ -317,34 +339,29 @@ fn comp_expand(c: Ctx, vals: Map[str, str]) -> Ctx {
     var i = 0
     var ref = 0
     while i < cps.len {
-        if ref >= c.refs.len || c.refs[ref] != i {
+        if ref >= c.refs.len || c.refs[ref].at != i {
             (mut out).push(cps[i])
             i += 1
             continue
         }
+        let param = c.refs[ref]
         ref += 1
-        var j = i + 1
-        let brace = j < cps.len && cps[j] == 123
-        if brace { j += 1 }
-        let begin = j
-        while j < cps.len && is_name_cp(cps[j], j == begin) { j += 1 }
-        if j == begin || brace && (j >= cps.len || cps[j] != 125) { return no_ctx() }
-        let name = cps_text(slice_of(cps, begin, j))
-        if !vals.has(name) { return no_ctx() }
-        let value = vals[name] else ""
+        if param.end <= i || param.name.len == 0 { return no_ctx() }
+        if !vals.has(param.name) { return no_ctx() }
+        let value = vals[param.name] else ""
         // An empty path parameter is no better a lookup root than an
         // unset one; never offer the host root by accident.
         if value.len == 0 { return no_ctx() }
         for cp in cps_of(value) { (mut out).push(cp) }
-        i = if brace then j + 1 else j
+        i = param.end
     }
     var expanded = copy c
     expanded.lit = cps_text(out)
-    if c.refs[0] == 0 && expanded.lit.starts_with("~") {
+    if c.refs[0].at == 0 && expanded.lit.starts_with("~") {
         // A tilde supplied by a parameter is data, not tilde syntax.
         expanded.lit = "./" + expanded.lit
     }
-    expanded.refs = List[int]()
+    expanded.refs = List[CRef]()
     if expanded.kind == CK_CMD && expanded.lit.contains("/") {
         expanded.kind = CK_FILE
         expanded.exec_only = true

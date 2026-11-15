@@ -1351,7 +1351,7 @@ fn want_complete(mut bad: List[str]) {
         brace: true,
         exec_only: false,
         lead: false,
-        refs: List[int](),
+        refs: List[CRef](),
     }
     if comp_unique(v, "ZQV_O", "ZQV_ONE", false, true) != "NE}}\" " {
         (mut bad).push("comp_unique(var) = {comp_unique(v, "ZQV_O", "ZQV_ONE", false, true)}")
@@ -1363,7 +1363,7 @@ fn want_complete(mut bad: List[str]) {
         brace: false,
         exec_only: false,
         lead: false,
-        refs: List[int](),
+        refs: List[CRef](),
     }
     if comp_unique(f, "su", "sub", true, true) != "b/" ||
         comp_unique(f, "su", "sum", false, false) != "m" {
