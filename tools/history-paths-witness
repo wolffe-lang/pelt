@@ -106,7 +106,7 @@ def path_case(binary, home, typed, want, extra=None, continuation=None):
         sh.type(typed + b'\t')
         settle(sh)
         lines = sh.screen.snapshot(0)
-        assert any(want in row for row in lines), (typed, want, lines)
+        assert any(row.endswith(want) for row in lines if row.startswith('| ')), (typed, want, lines)
         # Cancel rather than executing a redirection or an incomplete word.
         sh.type(b'\x03')
         settle(sh)
