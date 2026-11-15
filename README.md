@@ -9,6 +9,38 @@ its own comes after that is complete. Every behaviour is recorded from
 `dash` (the oracle of record) and checked against `bash --posix`, and no
 shell's source is ever read: pelt is clean-room, black-box only.
 
+## Install 0.1.0
+
+Release preparation targets macOS arm64 (`aarch64-apple-darwin`) and Linux
+x86-64 (`x86_64-unknown-linux-gnu`). A release workflow creates a **draft**;
+these instructions apply only once `v0.1.0` has been published on the
+[release page](https://github.com/wolffe-lang/pelt/releases).
+Other platforms have no prebuilt archive in this release.
+
+Download `pelt-0.1.0-TARGET.tar.gz` and its `.sha256` sidecar into an empty
+directory, replacing `TARGET` with your platform above. Before unpacking, run:
+
+```sh
+# Linux:
+sha256sum -c pelt-0.1.0-TARGET.tar.gz.sha256
+# macOS:
+shasum -a 256 -c pelt-0.1.0-TARGET.tar.gz.sha256
+tar -xzf pelt-0.1.0-TARGET.tar.gz
+cd pelt-0.1.0-TARGET
+./pelt --version
+```
+
+The archive contains the executables, license, documentation, toolchain pins
+and `BUILD.json` provenance. Keep it outside system directories and add its
+absolute directory to your PATH if desired. Checksums detect altered bytes;
+they do not replace a trusted download channel or constitute signed releases.
+Homebrew and AUR recipes are prepared separately after published hashes are
+known; preparation does not imply that either package is already available.
+
+Do not replace your system shell to try this preview. `pelt --version` prints
+`pelt 0.1.0`; invoke the archived executable directly for shell commands.
+
+
 ## Status at a glance
 
 | measure | where it stands |
@@ -30,7 +62,7 @@ and what each piece needs from wolf or PAX. Trunk's changes are in
 
 On PAX, pelt is already the shell: boot the image and you are at its
 prompt. Elsewhere, build it from source with the pinned compiler
-(there are no binary releases yet):
+(binary release preparation is described below):
 
 ```sh
 tools/fetch-toolchain      # the pinned wolf and lupin, fetched by digest
