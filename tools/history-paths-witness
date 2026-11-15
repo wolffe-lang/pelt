@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""History while a command runs and variable-path lookup on owned ptys.
+
+No reference implementation source; fresh HOME/SHELL and explicit executable.
+Usage: tools/history-paths-witness PELT [history|paths|ROW]
+"""
+from pathlib import Path
+import os
+import sys
+import tempfile
+import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lib_shadow import Shell
+
+
+def settle(sh, duration=.12):
+    end = time.monotonic() + duration
+    while time.monotonic() < end:
+        sh.pump(.002)
+
+
+def start(binary, home, history=None, extra=None):
+    env = dict(SHELL='/bin/sh', HISTFILE=str(history or home/'history'))
+    env.update(extra or {})
+    sh = Shell(binary, home, ['-o', 'friendly', '+o', 'suggest', '+o', 'highlight'],
+               tty_out=True, cols=200, env_overrides=env)
+    settle(sh)
+    sh.type(b'\x0c')
+    settle(sh)
+    return sh
+
+
+def command(sh, text):
+    before = len(sh.data['tty'])
+    sh.type(text + b'\r')
+    sh.until(lambda: b'$ ' in sh.data['tty'][before:] or sh.p.poll() is not None)
+    settle(sh)
+    return sh.data['tty'][before:].replace(b'\r\r\n', b'\r\n')
+
+
+def history_running(binary, home):
+    history = home/'history'
+    sh = start(binary, home, history)
+    try:
+        sh.type(b'read sh40_pending\r')
+        settle(sh)
+        got = history.read_bytes()
+        assert b'read sh40_pending\n' in got, ('history-running', got)
+        sh.type(b'done\r')
+        settle(sh)
+    finally:
+        # Let a blocked read finish even when the assertion failed.
+        sh.type(b'done\r')
+        settle(sh)
+        sh.close()
+    sh = start(binary, home, history)
+    try:
+        raw = command(sh, b'fc -ln')
+        assert b'read sh40_pending' in raw, raw
+        command(sh, b'set -o histsearch')
+        sh.type(b'\x12sh40_pending')
+        settle(sh)
+        assert any('read sh40_pending' in row for row in sh.screen.snapshot(0)), sh.screen.snapshot(0)
+        sh.type(b'\x07\x15')
+    finally:
+        sh.close()
+
+
+def history_exec(binary, home):
+    history = home/'history'
+    sh = start(binary, home, history)
+    try:
+        sh.type(b'exec /usr/bin/true\r')
+        sh.until(lambda: sh.p.poll() is not None)
+        assert sh.p.returncode == 0, sh.p.returncode
+        assert b'exec /usr/bin/true\n' in history.read_bytes(), history.read_bytes()
+    finally:
+        sh.close()
+
+
+def history_fc(binary, home):
+    history = home/'history'
+    sh = start(binary, home, history)
+    try:
+        command(sh, b'echo fc-before')
+        command(sh, b'fc -s')
+        got = history.read_bytes()
+        assert b'fc -s\n' not in got and got.count(b'echo fc-before\n') == 2, got
+    finally:
+        sh.close()
+
+
+def path_case(binary, home, typed, want, extra=None, continuation=None):
+    (home/'unique-path').mkdir(exist_ok=True)
+    for d in ('absolute path', 'relative path'):
+        (home/d).mkdir(exist_ok=True)
+        (home/d/'leaf').mkdir(exist_ok=True)
+    env = dict(ABS=str(home/'absolute path'), REL='relative path')
+    env.update(extra or {})
+    sh = start(binary, home, extra=env)
+    try:
+        if continuation:
+            sh.type(continuation + b'\r')
+            settle(sh)
+        sh.type(typed + b'\t')
+        settle(sh)
+        lines = sh.screen.snapshot(0)
+        assert any(want in row for row in lines), (typed, want, lines)
+        # Cancel rather than executing a redirection or an incomplete word.
+        sh.type(b'\x03')
+        settle(sh)
+        assert not (home/'side-effect').exists(), 'completion evaluated a substitution'
+    finally:
+        sh.close()
+
+
+PATHS = [
+    ('path-home', b'echo $HOME/uni', 'echo $HOME/unique-path/'),
+    ('path-brace', b'echo ${HOME}/uni', 'echo ${HOME}/unique-path/'),
+    ('path-double', b'echo "$HOME/uni', 'echo "$HOME/unique-path/'),
+    ('path-absolute-space', b'echo $ABS/le', 'echo $ABS/leaf/'),
+    ('path-relative-space', b'echo $REL/le', 'echo $REL/leaf/'),
+    ('path-assignment', b'DEST=$HOME/uni', 'DEST=$HOME/unique-path/'),
+    ('path-redirection', b': > $HOME/uni', ': > $HOME/unique-path/'),
+    ('path-command', b'$HOME/uni', '$HOME/unique-path/'),
+    ('path-mixed', b'echo "$HOME"/"${REL}"/le', 'echo "$HOME"/"${REL}"/leaf/'),
+    ('path-single-literal', b"echo '$HOME/uni", "echo '$HOME/uni"),
+    ('path-escaped-literal', b'echo \\$HOME/uni', 'echo \\$HOME/uni'),
+    ('path-unset', b'echo $SH40_UNSET/uni', 'echo $SH40_UNSET/uni'),
+    ('path-no-eval', b'echo $(echo side-effect > side-effect)/uni', 'echo $(echo side-effect > side-effect)/uni'),
+]
+
+
+def main():
+    binary = Path(sys.argv[1]).resolve()
+    only = sys.argv[2] if len(sys.argv) > 2 else 'all'
+    rows = [('history-running', history_running), ('history-exec', history_exec), ('history-fc', history_fc)]
+    for name, typed, want in PATHS:
+        rows.append((name, lambda b, h, t=typed, w=want: path_case(b, h, t, w)))
+    rows.append(('path-heredoc-quoted', lambda b, h: path_case(
+        b, h, b'$HOME/uni', '$HOME/uni', continuation=b"cat <<'EOF'")))
+    rows.append(('path-continued-double', lambda b, h: path_case(
+        b, h, b'$HOME/uni', '$HOME/unique-path/', continuation=b'echo "')))
+    failed = 0
+    for name, row in rows:
+        if only not in ('all', name, 'history' if name.startswith('history') else 'paths'):
+            continue
+        with tempfile.TemporaryDirectory(prefix='pelt-history-paths-') as d:
+            try:
+                row(binary, Path(d))
+                print('PASS ' + name, flush=True)
+            except Exception as e:
+                print('FAIL ' + name + ' ' + repr(e), flush=True)
+                failed += 1
+    return 1 if failed else 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
