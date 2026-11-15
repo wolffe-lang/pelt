@@ -1250,6 +1250,43 @@ fn want_layout(mut bad: List[str], n: int, widest: int, cols: int, want: str) {
 /// shape a black-box session of bash or mksh decided
 /// (`notes/sh16-evidence/probe/`) or pelt chose (`notes/sh16-…` §3.1).
 fn want_complete(mut bad: List[str]) {
+    var vals = Map[str, str]()
+    vals["HOME"] = "/a home"
+    vals["REL"] = "relative path"
+    vals["TILDE"] = "~"
+    vals["DATA"] = "$HOME"
+    for row in [
+        "echo $HOME/x\t/a home/x",
+        "echo ${{HOME}}/x\t/a home/x",
+        "echo \"$HOME\"/${{REL}}/x\t/a home/relative path/x",
+        "echo '$HOME'/x\t$HOME/x",
+        "echo \\$HOME/x\t$HOME/x",
+        "echo $TILDE/x\t./~/x",
+        "echo $DATA/x\t$HOME/x",
+        "DEST=${{REL}}/x\trelative path/x",
+        "echo '$HOME'/$REL/x\t$HOME/relative path/x",
+        "echo été$REL/x\tétérelative path/x",
+    ] {
+        let fields = row.split("\t")
+        let got = comp_expand(comp_ctx(cps_of(fields[0])), vals)
+        if got.lit != fields[1] { (mut bad).push("path lookup {fields[0]}: {got.lit}") }
+    }
+    for line in [
+        "echo $UNSET/x",
+        "echo ${{HOME:-bad}}/x",
+        "echo ${{HOME%bad}}/x",
+        "echo # $HOME/x",
+    ] {
+        if comp_expand(comp_ctx(cps_of(line)), vals).kind != CK_NONE {
+            (mut bad).push("unsafe path lookup {line}")
+        }
+    }
+    if !comp_heredoc_body(cps_of("cat <<'END'\n")) ||
+        !comp_heredoc_body(cps_of("cat <<-END\nbody\n")) ||
+        comp_heredoc_body(cps_of("echo '<<END'\n")) ||
+        comp_heredoc_body(cps_of("cat <<END\nbody\nEND\n")) {
+        (mut bad).push("completion here-document context")
+    }
     // command position: the line's start, after operators, `$(`, a
     // backquote, an assignment and the reserved words a command follows
     want_ctx(mut bad, "unam", "1 [unam] 0 false false false")

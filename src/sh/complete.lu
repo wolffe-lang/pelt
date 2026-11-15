@@ -143,6 +143,11 @@ fn comp_ctx(cps: List[int]) -> Ctx {
     var i = 0
     while i < n {
         let c = cps[i]
+        if q == 0 && !in_word && c == 35 {
+            while i < n && cps[i] != 10 { i += 1 }
+            if i >= n { return no_ctx() }
+            continue
+        }
         if q == 39 {
             if c == 39 {
                 q = 0
@@ -305,7 +310,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
 /// Values are opaque paths: no splitting, globbing, recursion, command
 /// substitution or parameter operators. An absent value is not `/`.
 fn comp_expand(c: Ctx, vals: Map[str, str]) -> Ctx {
-    if c.kind == CK_VAR || c.kind == CK_NONE || c.refs.len == 0 { return c }
+    if c.kind == CK_VAR || c.kind == CK_NONE || c.refs.len == 0 { return copy c }
     let cps = cps_of(c.lit)
     var out = List[int]()
     var i = 0
@@ -334,6 +339,10 @@ fn comp_expand(c: Ctx, vals: Map[str, str]) -> Ctx {
     }
     var expanded = copy c
     expanded.lit = cps_text(out)
+    if c.refs[0] == 0 && expanded.lit.starts_with("~") {
+        // A tilde supplied by a parameter is data, not tilde syntax.
+        expanded.lit = "./" + expanded.lit
+    }
     expanded.refs = List[int]()
     if expanded.kind == CK_CMD && expanded.lit.contains("/") {
         expanded.kind = CK_FILE
