@@ -91,6 +91,26 @@ def history_fc(binary, home):
         sh.close()
 
 
+def history_fc_peer(binary, home):
+    history = home/'history'
+    sh = start(binary, home, history)
+    try:
+        command(sh, b'echo fc-before')
+        sh.type(b'read sh40_pending; fc -s\r')
+        settle(sh)
+        with history.open('ab') as out:
+            out.write(b'echo peer-appended\n')
+        sh.type(b'done\r')
+        settle(sh)
+        got = history.read_bytes()
+        assert b'echo peer-appended\n' in got, got
+        assert b'read sh40_pending; fc -s\n' not in got, got
+    finally:
+        sh.type(b'done\r')
+        settle(sh)
+        sh.close()
+
+
 def path_case(binary, home, typed, want, extra=None, continuation=None):
     (home/'unique-path').mkdir(exist_ok=True)
     for d in ('absolute path', 'relative path'):
@@ -135,13 +155,13 @@ PATHS = [
 def main():
     binary = Path(sys.argv[1]).resolve()
     only = sys.argv[2] if len(sys.argv) > 2 else 'all'
-    rows = [('history-running', history_running), ('history-exec', history_exec), ('history-fc', history_fc)]
+    rows = [('history-running', history_running), ('history-exec', history_exec), ('history-fc', history_fc), ('history-fc-peer', history_fc_peer)]
     for name, typed, want in PATHS:
         rows.append((name, lambda b, h, t=typed, w=want: path_case(b, h, t, w)))
     rows.append(('path-heredoc-quoted', lambda b, h: path_case(
         b, h, b'$HOME/uni', '$HOME/uni', continuation=b"cat <<'EOF'")))
     rows.append(('path-continued-double', lambda b, h: path_case(
-        b, h, b'$HOME/uni', '$HOME/unique-path/', continuation=b'echo "')))
+        b, h, b'"$HOME/uni', '"$HOME/unique-path/', continuation=b'echo \\')))
     failed = 0
     for name, row in rows:
         if only not in ('all', name, 'history' if name.startswith('history') else 'paths'):
