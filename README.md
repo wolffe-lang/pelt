@@ -96,9 +96,17 @@ literal-next characters `stty` set, and lets Ctrl-S, Ctrl-Q, Ctrl-V and
 Ctrl-O through. Tab completes a command name (built-ins, reserved words,
 functions, programs on `PATH`), a file name (relative, absolute or under
 `~`, quoted so the shell reads it back as itself) or a variable's name
-after `$` or `${`; a second Tab lists the candidates in columns sized to
+after `$` or `${`. A path such as `$HOME/` or `${PROJECT}/` uses the
+variable's current value for lookup, including relative paths and paths
+with spaces, without replacing the variable text you typed. Single-quoted
+and escaped dollars stay literal; unset variables offer no paths.
+A second Tab lists the candidates in columns sized to
 the window. History: `fc`, a shared `HISTFILE` kept to `HISTSIZE`,
-Ctrl-R, vi's `v`, and `!` in `PS1`. An idle prompt costs nothing: it
+Ctrl-R, vi's `v`, and `!` in `PS1`. History defaults to `$HOME/.sh_history`
+when `HISTFILE` is unset. Each entered command is appended and a disk sync
+requested before it runs, including `exec`, `reboot` and `poweroff`.
+Persistence still needs a writable home on a persistent filesystem: a live
+system's memory-only home cannot survive a reboot. An idle prompt costs nothing: it
 waits for a key or a signal without waking.
 
 **Friendly, on by default.** At an interactive terminal prompt (standard
