@@ -178,6 +178,7 @@ def help_probe(binary,home):
 
 if __name__=='__main__':
     binary=Path(sys.argv[1]).resolve()
+    subprocess.run([sys.executable, str(ROOT/'tools/history-paths-witness'), str(binary), 'paths'], check=True)
     with tempfile.TemporaryDirectory(prefix='sh31-words-') as temp:
         abbreviations(binary,Path(temp))
     with tempfile.TemporaryDirectory(prefix="sh31-events-") as temp:

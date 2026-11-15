@@ -316,7 +316,10 @@ def main(argv):
     finally:
         shutil.rmtree(d, ignore_errors=True)
     print(f"hist-witness: {6 - bad} of 6 hold")
-    return 1 if bad else 0
+    if bad:
+        return 1
+    return subprocess.call([sys.executable, os.path.join(os.path.dirname(__file__),
+                            'history-paths-witness'), pelt, 'history'])
 
 
 if __name__ == "__main__":
