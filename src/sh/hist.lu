@@ -24,9 +24,11 @@
 //! cannot be read or created, is left alone and the history is kept in
 //! memory only (POSIX's "unspecified mechanism"), with nothing said.
 //! An entry is appended (one write, so shells sharing the file do not
-//! interleave) before the next prompt or when the shell ends: by then a
-//! `fc` that edits has taken its own line back out, which POSIX says is
-//! never entered. Before each prompt the bytes another shell appended
+//! interleave) before it runs, then fsynced along with its directory.
+//! This includes reboot, poweroff, exec and a command that never returns
+//! to another prompt. `fc` that edits retracts its own entry by the same
+//! atomic replacement used for compaction; its edited commands are saved
+//! before they run. Before each prompt the bytes another shell appended
 //! are read and entered too, so a command typed in one shell is in the
 //! other's list at its next prompt; when the file holds twice `HISTSIZE`
 //! entries (or more than `HISTSIZE` when it is first read) the newest
@@ -184,6 +186,7 @@ fn hist_add(mut sh: Sh, src: str) {
     }
     hist_enter(mut sh, line)
     sh.ed.h.cur = true
+    hist_sync(mut sh, false)
 }
 
 fn hist_enter(mut sh: Sh, line: str) {
@@ -480,13 +483,25 @@ fn hist_append(path: str, xs: List[str], nl: bool) -> int {
         fs_close(fd) else |_| {}
         return -1
     }
+    hist_flush(fd, path)
     fs_close(fd) else |_| {}
     o.b.len
+}
+
+/// Request stable storage before executing the command. Syncing the
+/// parent also covers a newly created history file. An unwritable or
+/// non-durable filesystem retains the existing silent memory fallback.
+fn hist_flush(fd: int, path: str) {
+    fs_sync(fd) else |_| {}
+    let slash = path.rfind("/") else -1
+    let dir = if slash < 0 then "." else if slash == 0 then "/" else path[0..slash]
+    fs_sync_dir(dir) else |_| {}
 }
 
 /// Write the entries kept to a new file beside the history file and
 /// rename it over it (oldest first are the ones gone).
 fn hist_rewrite(mut sh: Sh) {
+    if sh.ed.h.state != H_FILE { return }
     let path = sh.ed.h.path
     let tmp = "{path}.pelt{os_pid()}"
     let wrote = copy region hrw {
@@ -499,6 +514,10 @@ fn hist_rewrite(mut sh: Sh) {
         fs_remove(tmp) else |_| {}
         return
     }
+    // Persist the rename as well as the replacement's contents.
+    let slash = path.rfind("/") else -1
+    let dir = if slash < 0 then "." else if slash == 0 then "/" else path[0..slash]
+    fs_sync_dir(dir) else |_| {}
     sh.ed.h.size = wrote
     sh.ed.h.fcount = sh.ed.h.n
     sh.ed.h.need_nl = false
@@ -523,6 +542,7 @@ fn hist_write_all(tmp: str, h: Hist) -> int {
         fs_remove(tmp) else |_| {}
         return -1
     }
+    hist_flush(fd, tmp)
     fs_close(fd) else |_| {}
     o.b.len
 }
@@ -842,6 +862,7 @@ fn bi_fc(mut sh: Sh, args: List[str]) -> int {
     // the `fc` that edits is never entered (XCU `fc`)
     if sh.ed.h.cur {
         ring_drop_newest(mut sh.ed.h)
+        hist_rewrite(mut sh)
         sh.ed.h.cur = false
     }
     if redo {
@@ -932,6 +953,7 @@ fn fc_rerun(mut sh: Sh, edited: str) -> int {
     write_fd(mut sh, 2, shown)
     hist_enter_text(mut sh, chomp(shown))
     sh.ed.h.cur = true
+    hist_sync(mut sh, false)
     sh.ed.h.depth += 1
     let st = eval_string(mut sh, shown, "fc")
     sh.ed.h.depth -= 1
