@@ -152,12 +152,25 @@ PATHS = [
 ]
 
 
+def boundary_case(binary, home, typed, want):
+    for name in ('shortME', 'longsuffix'):
+        (home/name/'xylophone').mkdir(parents=True)
+    path_case(binary, home, typed, want,
+              extra={'HO': str(home/'short'), 'HOME': str(home/'long')})
+
+
 def main():
     binary = Path(sys.argv[1]).resolve()
     only = sys.argv[2] if len(sys.argv) > 2 else 'all'
     rows = [('history-running', history_running), ('history-exec', history_exec), ('history-fc', history_fc), ('history-fc-peer', history_fc_peer)]
     for name, typed, want in PATHS:
         rows.append((name, lambda b, h, t=typed, w=want: path_case(b, h, t, w)))
+    for name, typed, want in [
+        ('path-boundary-double', b'echo "$HO"ME/xy', 'echo "$HO"ME/xylophone/'),
+        ('path-boundary-suffix', b'echo $HOME"suffix"/xy', 'echo $HOME"suffix"/xylophone/'),
+        ('path-boundary-braced', b'echo ${HO}ME', 'echo ${HO}ME/'),
+    ]:
+        rows.append((name, lambda b, h, t=typed, w=want: boundary_case(b, h, t, w)))
     rows.append(('path-heredoc-quoted', lambda b, h: path_case(
         b, h, b'$HOME/uni', '$HOME/uni', continuation=b"cat <<'EOF'")))
     rows.append(('path-continued-double', lambda b, h: path_case(

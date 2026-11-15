@@ -1252,11 +1252,15 @@ fn want_layout(mut bad: List[str], n: int, widest: int, cols: int, want: str) {
 fn want_complete(mut bad: List[str]) {
     var vals = Map[str, str]()
     vals["HOME"] = "/a home"
+    vals["HO"] = "/short"
     vals["REL"] = "relative path"
     vals["TILDE"] = "~"
     vals["DATA"] = "$HOME"
     for row in [
         "echo $HOME/x\t/a home/x",
+        "echo \"$HO\"ME/x\t/shortME/x",
+        "echo $HOME\"suffix\"/x\t/a homesuffix/x",
+        "echo ${{HO}}ME\t/shortME",
         "echo ${{HOME}}/x\t/a home/x",
         "echo \"$HOME\"/${{REL}}/x\t/a home/relative path/x",
         "echo '$HOME'/x\t$HOME/x",
