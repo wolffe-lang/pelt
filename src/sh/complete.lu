@@ -344,7 +344,7 @@ fn comp_expand(c: Ctx, vals: Map[str, str]) -> Ctx {
             i += 1
             continue
         }
-        let param = c.refs[ref]
+        let param = copy c.refs[ref]
         ref += 1
         if param.end <= i || param.name.len == 0 { return no_ctx() }
         if !vals.has(param.name) { return no_ctx() }
