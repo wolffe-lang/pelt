@@ -371,7 +371,7 @@ fn editor_comp_ctx(e: Ed, end: int) -> Ctx {
     var cps = copy e.prefix
     for cp in slice_of(e.buf, 0, end) { (mut cps).push(cp) }
     if e.prefix.len > 0 && comp_heredoc_body(e.prefix) { return no_ctx() }
-    comp_expand(comp_ctx(cps), e.vvals)
+    comp_ctx(cps)
 }
 
 /// A byte that must be quoted outside quotes to read back as itself
