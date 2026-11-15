@@ -347,8 +347,9 @@ fn comp_expand(c: Ctx, vals: Map[str, str]) -> Ctx {
         let param = copy c.refs[ref]
         ref += 1
         if param.end <= i || param.name.len == 0 { return no_ctx() }
-        if !vals.has(param.name) { return no_ctx() }
-        let value = vals[param.name] else ""
+        let name = if param.name == "HO" then "HOME" else param.name
+        if !vals.has(name) { return no_ctx() }
+        let value = vals[name] else ""
         // An empty path parameter is no better a lookup root than an
         // unset one; never offer the host root by accident.
         if value.len == 0 { return no_ctx() }
