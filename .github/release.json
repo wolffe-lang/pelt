@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "name": "pelt",
+  "manifest": "src/wolf.pkg",
+  "gate_workflow": ".github/workflows/release-gate.yml",
+  "gate_profile": "all",
+  "build": [
+    "tools/build",
+    "--release"
+  ],
+  "binaries": {
+    "pelt": "target/release/pelt"
+  },
+  "version_args": [
+    "--version"
+  ],
+  "version_pattern": "^pelt (?P<version>[0-9]+\\.[0-9]+\\.[0-9]+)$",
+  "smoke": [
+    [
+      "{bin}/pelt",
+      "--version"
+    ],
+    [
+      "{bin}/pelt",
+      "-c",
+      "printf \"%s\\n\" release-smoke"
+    ]
+  ]
+}
