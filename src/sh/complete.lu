@@ -67,6 +67,8 @@ struct Ctx {
     /// Nothing of the word typed yet, unquoted: a `~` or `#` inserted
     /// first is quoted.
     lead: bool,
+    /// Code-point offsets of unescaped dollars outside single quotes.
+    refs: List[int],
 }
 
 /// The names a word can become, sorted by byte; `base` is the part of
@@ -78,7 +80,15 @@ struct Found {
 }
 
 fn no_ctx() -> Ctx {
-    Ctx { kind: CK_NONE, lit: "", q: 0, brace: false, exec_only: false, lead: false }
+    Ctx {
+        kind: CK_NONE,
+        lit: "",
+        q: 0,
+        brace: false,
+        exec_only: false,
+        lead: false,
+        refs: List[int](),
+    }
 }
 
 fn is_name_cp(v: int, first: bool) -> bool {
@@ -124,6 +134,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
     var in_word = false
     var word_cmd = true
     var lit = List[int]()
+    var refs = List[int]()
     var quoted = false
     var eq = -1
     var dol = -1
@@ -180,6 +191,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
             in_word = true
             word_cmd = cmdpos && !redir
             lit = List[int]()
+            refs = List[int]()
             quoted = false
             eq = -1
             dol = -1
@@ -218,6 +230,7 @@ fn comp_ctx(cps: List[int]) -> Ctx {
         }
         // a character of the word: track a `$name` it may end in
         if c == 36 {
+            (mut refs).push(lit.len)
             dol = i
             dbrace = false
             dname = List[int]()
@@ -248,22 +261,107 @@ fn comp_ctx(cps: List[int]) -> Ctx {
             brace: dbrace,
             exec_only: false,
             lead: false,
+            refs: List[int](),
         }
     }
     if !in_word {
         word_cmd = cmdpos && !redir
         lit = List[int]()
+        refs = List[int]()
     }
     let lead = !in_word
     if word_cmd && eq >= 0 {
         let value = cps_text(slice_of(lit, eq, lit.len))
-        return Ctx { kind: CK_FILE, lit: value, q: q, brace: false, exec_only: false, lead: false }
+        var value_refs = List[int]()
+        for at in refs {
+            if at >= eq { (mut value_refs).push(at - eq) }
+        }
+        return Ctx {
+            kind: CK_FILE,
+            lit: value,
+            q: q,
+            brace: false,
+            exec_only: false,
+            lead: false,
+            refs: value_refs,
+        }
     }
     let t = cps_text(lit)
     if word_cmd && !t.contains("/") {
-        return Ctx { kind: CK_CMD, lit: t, q: q, brace: false, exec_only: false, lead: lead }
+        return Ctx {
+            kind: CK_CMD,
+            lit: t,
+            q: q,
+            brace: false,
+            exec_only: false,
+            lead: lead,
+            refs: refs,
+        }
     }
-    Ctx { kind: CK_FILE, lit: t, q: q, brace: false, exec_only: word_cmd, lead: lead }
+    Ctx { kind: CK_FILE, lit: t, q: q, brace: false, exec_only: word_cmd, lead: lead, refs: refs }
+}
+
+/// Expand only simple named parameters for lookup, never for insertion.
+/// Values are opaque paths: no splitting, globbing, recursion, command
+/// substitution or parameter operators. An absent value is not `/`.
+fn comp_expand(c: Ctx, vals: Map[str, str]) -> Ctx {
+    if c.kind == CK_VAR || c.kind == CK_NONE || c.refs.len == 0 { return c }
+    let cps = cps_of(c.lit)
+    var out = List[int]()
+    var i = 0
+    var ref = 0
+    while i < cps.len {
+        if ref >= c.refs.len || c.refs[ref] != i {
+            (mut out).push(cps[i])
+            i += 1
+            continue
+        }
+        ref += 1
+        var j = i + 1
+        let brace = j < cps.len && cps[j] == 123
+        if brace { j += 1 }
+        let begin = j
+        while j < cps.len && is_name_cp(cps[j], j == begin) { j += 1 }
+        if j == begin || brace && (j >= cps.len || cps[j] != 125) { return no_ctx() }
+        let name = cps_text(slice_of(cps, begin, j))
+        if !vals.has(name) { return no_ctx() }
+        let value = vals[name] else ""
+        // An empty path parameter is no better a lookup root than an
+        // unset one; never offer the host root by accident.
+        if value.len == 0 { return no_ctx() }
+        for cp in cps_of(value) { (mut out).push(cp) }
+        i = if brace then j + 1 else j
+    }
+    var expanded = copy c
+    expanded.lit = cps_text(out)
+    expanded.refs = List[int]()
+    if expanded.kind == CK_CMD && expanded.lit.contains("/") {
+        expanded.kind = CK_FILE
+        expanded.exec_only = true
+    }
+    expanded
+}
+
+/// Include PS2's earlier quoting. A here-document body is data, not a
+/// shell word; leave its Tab to the user instead of inserting shell
+/// quoting or interpreting a quoted delimiter's body as commands.
+fn comp_heredoc_body(prefix: List[int]) -> bool {
+    var p = new_parser(cps_text(prefix), 1)
+    var a = new_ast()
+    loop {
+        p.more = false
+        lex(mut p, mut a)
+        // Only read_docs marks a newline token as needing more input.
+        if p.tk == T_NL && p.more { return true }
+        if p.tk == T_EOF || p.err.len > 0 { return false }
+    }
+}
+
+fn editor_comp_ctx(e: Ed, end: int) -> Ctx {
+    var cps = copy e.prefix
+    for cp in slice_of(e.buf, 0, end) { (mut cps).push(cp) }
+    if e.prefix.len > 0 && comp_heredoc_body(e.prefix) { return no_ctx() }
+    comp_expand(comp_ctx(cps), e.vvals)
 }
 
 /// A byte that must be quoted outside quotes to read back as itself
@@ -530,7 +628,7 @@ fn var_names(sh: Sh) -> List[str] {
 /// Tab in emacs mode or vi insert mode. `again`: the key before was a
 /// Tab that found several names, so this one lists them.
 fn ed_complete(mut e: Ed, again: bool) {
-    let c = comp_ctx(slice_of(e.buf, 0, e.cur))
+    let c = editor_comp_ctx(e, e.cur)
     if c.kind == CK_NONE {
         bell(mut e)
         return

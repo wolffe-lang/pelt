@@ -1303,11 +1303,27 @@ fn want_complete(mut bad: List[str]) {
     want_quote(mut bad, "it's me", 39, false, "it'\\''s me")
     want_quote(mut bad, "été", 0, false, "été")
     // what a single match adds
-    let v = Ctx { kind: CK_VAR, lit: "ZQV_O", q: 34, brace: true, exec_only: false, lead: false }
+    let v = Ctx {
+        kind: CK_VAR,
+        lit: "ZQV_O",
+        q: 34,
+        brace: true,
+        exec_only: false,
+        lead: false,
+        refs: List[int](),
+    }
     if comp_unique(v, "ZQV_O", "ZQV_ONE", false, true) != "NE}}\" " {
         (mut bad).push("comp_unique(var) = {comp_unique(v, "ZQV_O", "ZQV_ONE", false, true)}")
     }
-    let f = Ctx { kind: CK_FILE, lit: "su", q: 0, brace: false, exec_only: false, lead: false }
+    let f = Ctx {
+        kind: CK_FILE,
+        lit: "su",
+        q: 0,
+        brace: false,
+        exec_only: false,
+        lead: false,
+        refs: List[int](),
+    }
     if comp_unique(f, "su", "sub", true, true) != "b/" ||
         comp_unique(f, "su", "sum", false, false) != "m" {
         (mut bad).push(

@@ -659,6 +659,7 @@ struct Ed {
     wait_child: bool,
     fnames: List[str],
     vnames: List[str],
+    vvals: Map[str, str],
     cpath: str,
     home: str,
 }
@@ -792,6 +793,7 @@ fn editor_state(sh: Sh, shown: str, q: Query, chars: List[int]) -> Ed {
         wait_child: false,
         fnames: editor_function_names(sh),
         vnames: var_names(sh),
+        vvals: copy sh.vals,
         cpath: sh.vals["PATH"] else "",
         home: sh.vals["HOME"] else "",
     }

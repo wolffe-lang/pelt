@@ -22,7 +22,7 @@ fn shadow_source(e: Ed) -> str {
     if history.len > 0 { return history }
     // Exact history may suggest after !, but never complete it as a command.
     if line.trim_start().starts_with("!") { return "" }
-    let c = comp_ctx(e.buf)
+    let c = editor_comp_ctx(e, e.buf.len)
     if c.lit.len == 0 || c.kind != CK_FILE && c.kind != CK_CMD { return "" }
     let found = comp_find(c, e.fnames, e.vnames, e.cpath, e.home)
     if found.names.len == 0 { return "" }
