@@ -6,6 +6,22 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **History is saved before a command runs.** Interactive commands are
+  appended and a file and directory sync requested before execution, not
+  only before the next prompt or at exit. `exec`, `reboot`, `poweroff` and
+  a foreground command still running no longer leave their history entry
+  pending in memory. Editing `fc` invocations are retracted; commands
+  appended by another shell in the meantime are retained. A writable
+  persistent filesystem is still required.
+
+- **Variables can name completion paths.** `$HOME/`, `${HOME}/` and other
+  simple named parameters use their values for path lookup, including
+  relative paths and spaces. The typed variable text stays intact.
+  Single-quoted and escaped dollars remain literal; an unset or empty
+  path parameter offers no candidates. Lookup never executes a
+  substitution or interprets a parameter operator. Here-document bodies
+  are left alone.
+
 - **Slow prompt probes back off.** Two consecutive 50 ms deadline misses
   stop `den status --porcelain` probes in that directory until a different
   working directory is seen at a primary prompt. A timely completion resets

@@ -73,6 +73,17 @@ At the end of the line:
 
 ## History
 
+`HISTFILE` selects the history file; when unset it defaults to
+`$HOME/.sh_history`, read after `ENV`. A command is appended before it
+runs, followed by file and parent-directory sync requests. This saves
+commands that replace the shell or shut the system down without another
+prompt. A filesystem that cannot be written or synced cannot provide that
+durability; a live system's memory-only home is lost at reboot. An empty
+`HISTFILE` disables the file. Editing `fc` invocations are removed, while
+the commands they run are saved. Compaction and `fc` retraction replace the
+file atomically; simultaneous appends racing such a replacement are not
+serialized.
+
 Up and Ctrl-P search backward for the prefix you typed before starting the
 history walk; Down and Ctrl-N search forward. Returning past the newest
 match restores your draft and cursor. With an empty draft this is the usual
@@ -192,6 +203,18 @@ holds at most 256 names, names at most 128 bytes, replacements at most
 The file is data, never a script to execute.
 
 ## Described completion
+
+Paths after simple `$NAME` or `${NAME}` parameters use the current shell
+value for lookup, whether absolute or relative, including spaces. For
+example `echo "$HOME/Do` can complete to `echo "$HOME/Documents/` without
+replacing `$HOME`. This works in arguments, command paths, assignment
+values and redirection targets, with the same executable filtering as
+literal paths. Dollars in single quotes or escaped with a backslash stay
+literal. Unset or empty path variables offer nothing. Values are not
+recursively expanded, and lookup never executes command substitutions or
+parameter operators. Here-document bodies receive no shell-word completion.
+The ordinary common-prefix completion and file suggestions use the same
+lookup rules.
 
 With `complete` enabled, an ambiguous Tab opens a pager if no further
 common prefix can be inserted. Builtins and reserved words have pelt's own
