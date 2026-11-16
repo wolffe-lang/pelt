@@ -37,10 +37,11 @@ def line():
         out+=d
     return out
 try:
-    termios.tcsetattr(0,termios.TCSANOW,raw if kind=='raw' else old)
+    # Start canonical so even a descheduled producer cannot be mistaken
+    # for the next raw editor before the blocking phase is observed.
+    termios.tcsetattr(0,termios.TCSANOW,old)
     os.write(2,b'$ ')
     assert line()==b'one\n'
-    if kind=='raw': os.write(0,b'one\r\n')
     os.write(1,b'one\n')
     termios.tcsetattr(0,termios.TCSANOW,old)
     (root/'busy').write_text('canonical')
@@ -85,7 +86,7 @@ def real_pty_case(kind, aware):
             return value
         options={}
         parameters=inspect.signature(ls.run).parameters
-        if aware and kind=='raw' and 'editor_ready' in parameters: options['editor_ready']='0'
+        if aware and kind=='raw' and 'editor_ready' in parameters: options['editor_ready']='1'
         if aware and kind=='canonical' and 'tty_prompt' in parameters: options['tty_prompt']='$ '
         with patch.object(ls.termios,'tcgetattr',observed_get):
             if actual_prompt is not None:
