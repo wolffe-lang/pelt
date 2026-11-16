@@ -10,6 +10,7 @@
 set -eu
 PELT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 bin=${1:-$PELT_ROOT/target/release}
+python3 "$PELT_ROOT/tools/session-readiness-test"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/pelt-session-selftest.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 
