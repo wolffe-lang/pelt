@@ -111,6 +111,17 @@ for kind in ('raw','canonical'):
     early,checks=real_pty_case(kind,True)
     bad+=check(kind+'-ready-after-blocking-operation',not early and checks>=3,repr((early,checks)))
 
+checker = runpy.run_path(str(ROOT/'tools/session'), run_name='readiness_checker_contract')
+choose = checker.get('checker_readiness')
+for name,meta,want in [
+    ('generic-child', {}, (None,None)),
+    ('editor-screen', {'screen':'1'}, ('0',None)),
+    ('dumb-prompt', {'screen':'1','env':'TERM=dumb','tty_prompt':'$\\s'}, (None,'$ ')),
+    ('disable-editor', {'screen':'2','editor_ready':'0-1','tty_prompt':'$\\s'}, ('0-1','$ ')),
+    ('explicit-off', {'screen':'1','editor_ready':'none'}, (None,None)),
+]:
+    bad += check('protocol-'+name, callable(choose) and choose(meta)==want)
+
 loader=importlib.machinery.SourceFileLoader('readiness_colour',str(ROOT/'tools/colour-witness'))
 spec=importlib.util.spec_from_loader(loader.name,loader)
 colour=importlib.util.module_from_spec(spec); loader.exec_module(colour)

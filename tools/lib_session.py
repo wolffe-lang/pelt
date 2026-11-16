@@ -33,6 +33,13 @@ A session case is a set of files in tests/session/:
                                 (`PS1=$\\s`: bash's first prompt is then
                                 pelt's, so a bash-recorded case paces
                                 pelt from its first step)
+                  editor_ready=N[-M]  checker-only steps that expect the
+                                editor's raw tty before more input (default:
+                                all steps of editor-screen cases, except dumb
+                                terminals; oracle recorders do not enable it)
+                  tty_prompt=TEXT  checker-only canonical fixture prompt;
+                                spaces use the same escape as env. Combine
+                                it with editor_ready ranges when a case disables editing.
                   bash=agree|differs  the second opinion (`bash --posix
                                 -i`), on standard output and exit status
                   oracle=bash   the transcript is `bash --posix -i`'s:
@@ -594,10 +601,21 @@ def split_err(err):
     return err[:i + 1], err[i + 1:]
 
 
-def run(argv, keys_path, meta, expect=None, argv0=None):
+def tty_has_prompt(screen, prompt):
+    """A canonical-input fixture's explicit prompt at the current cursor."""
+    row = screen.grid[screen.r]
+    return ("".join(row[:screen.c]) == prompt
+            and not "".join(row[screen.c:]).strip())
+
+
+def run(argv, keys_path, meta, expect=None, argv0=None, editor_ready=None, tty_prompt=None):
     """Run one session. `expect` (a parsed oracle transcript) switches
     from quiet-based to prompt-based pacing. `argv0`, when given, is the
     name the program `argv[0]` is invoked by (pelt's `invocation`).
+    `editor_ready` and `tty_prompt` are explicit checker protocols, off
+    by default: quiet is not readiness while a command is blocked on I/O.
+    They add predicates, not longer quiet/prompt bounds, and are never
+    inferred here for canonical reads, child programs or oracle runs.
     Answers the transcript as a list of lines."""
     holder = tempfile.mkdtemp(prefix="pelt-sess.")
     try:
@@ -614,13 +632,15 @@ def run(argv, keys_path, meta, expect=None, argv0=None):
             env[k] = v.replace("\\s", " ")
         if meta.get("self") and argv0 is not None:
             env[meta["self"]] = os.path.abspath(argv[0])
-        return _session(argv, keystrokes(keys_path), env, work, expect, meta, argv0)
+        return _session(argv, keystrokes(keys_path), env, work, expect, meta, argv0,
+                        editor_ready, tty_prompt)
     finally:
         shutil.rmtree(holder, ignore_errors=True)
 
 
-def _session(argv, keys, env, cwd, expect, meta=None, argv0=None):
+def _session(argv, keys, env, cwd, expect, meta=None, argv0=None, editor_ready=None, tty_prompt=None):
     meta = meta or {}
+    editor_steps = set(screen_steps(editor_ready, len(keys) + 1)) if editor_ready else set()
     lr.subreaper()
     before = lr.children()
     cols = int(meta.get("cols") or 80)
@@ -681,6 +701,19 @@ def _session(argv, keys, env, cwd, expect, meta=None, argv0=None):
                     scr.reply = b""
         return got
 
+    def input_ready():
+        # Only checker-selected editor fixtures use this protocol. Generic
+        # canonical reads, child programs and oracle recording keep theirs.
+        if len(steps) not in editor_steps and tty_prompt is None:
+            return True
+        if p.poll() is not None:
+            return True
+        if len(steps) in editor_steps and termios.tcgetattr(hold)[3] & termios.ICANON:
+            return False
+        if tty_prompt is not None and not tty_has_prompt(scr, tty_prompt):
+            return False
+        return True
+
     def settle(step, want_prompt):
         """Wait until the shell waits for input, or exits."""
         start = time.time()
@@ -691,7 +724,8 @@ def _session(argv, keys, env, cwd, expect, meta=None, argv0=None):
                     # a last look for output that raced the prompt
                     while pump(step, 0.05):
                         pass
-                    return
+                    if input_ready():
+                        return
                 if p.poll() is not None and not (rout in open_fds or rerr in open_fds):
                     return
             return
@@ -699,7 +733,7 @@ def _session(argv, keys, env, cwd, expect, meta=None, argv0=None):
         while time.time() - start < 30:
             if pump(step, 0.05):
                 quiet_since = time.time()
-            elif time.time() - quiet_since >= SETTLE:
+            elif time.time() - quiet_since >= SETTLE and input_ready():
                 return
             if p.poll() is not None and not (rout in open_fds or rerr in open_fds):
                 return

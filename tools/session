@@ -57,6 +57,17 @@ def show_screens(bad):
         show_diff(have, want)
 
 
+def checker_readiness(meta):
+    """Editor screens opt in; canonical fixtures state their own protocol."""
+    editor = meta.get("editor_ready")
+    if editor is None and "screen" in meta and "TERM=dumb" not in meta.get("env", "").split():
+        editor = "0"
+    if editor in ("", "no", "none"):
+        editor = None
+    prompt = meta.get("tty_prompt")
+    return editor, prompt.replace("\\s", " ") if prompt is not None else None
+
+
 def main(argv):
     sys.stdout.reconfigure(line_buffering=True)
     bindir = os.path.join(ls.ROOT, "target", "release")
@@ -92,7 +103,9 @@ def main(argv):
         # own line, so the prompt the transcript shows mid-line is not
         # one pelt writes) is paced by quiet, as it was recorded
         pace = None if meta.get("compare") == "stdout" else ls.parse_tr(want)
-        got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, pace, ls.invocation(meta))
+        editor, tty_prompt = checker_readiness(meta)
+        got = ls.run(ls.argv_for(pelt, meta, True), keys, meta, pace, ls.invocation(meta),
+                     editor_ready=editor, tty_prompt=tty_prompt)
         if meta.get("compare") == "stdout":
             ok = ls.stdout_and_exit(got) == ls.stdout_and_exit(want)
         else:
