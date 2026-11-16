@@ -633,7 +633,7 @@ def run(argv, keys_path, meta, expect=None, argv0=None, editor_ready=None, tty_p
         if meta.get("self") and argv0 is not None:
             env[meta["self"]] = os.path.abspath(argv[0])
         return _session(argv, keystrokes(keys_path), env, work, expect, meta, argv0,
-                        editor_ready, tty_prompt)
+                        None, tty_prompt)
     finally:
         shutil.rmtree(holder, ignore_errors=True)
 
