@@ -1,6 +1,8 @@
 pelt_args=-i -o friendly +o suggest +o histsearch
 argv0=pelt
 env=PS1=$\s
+editor_ready=0-1
+tty_prompt=$\s
 compare=stdout
 tr_by=hand
 why=Arch image id 3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f; pelt-owned read-only bindings / bounded 10-entry kill-ring extension; independent assertions in notes/sh28-evidence/extensions.py and witness.py; key inputs bash 5.3.20-2, dash 0.5.13.4-1.1, fish 4.9.3-1; Arch image sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785

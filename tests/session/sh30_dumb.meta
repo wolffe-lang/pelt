@@ -1,5 +1,6 @@
 args=-o highlight
 env=PS1=$\s TERM=dumb
+tty_prompt=$\s
 tr_by=hand
 why=sh30 independent typed text and no-execution expectations; pelt-owned screen; raw SGR checked by colour-witness
 screen=1
