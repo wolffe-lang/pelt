@@ -1,4 +1,5 @@
 /.wolf-bin/
+/CLAUDE.md
 /target/
 *.dSYM/
 __pycache__/
