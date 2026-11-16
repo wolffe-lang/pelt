@@ -266,6 +266,7 @@ the tree so the measurement can be taken again.
 | `tools/syscall-census`, `tools/loop-rss`, `tools/shape-rss`, `tools/session-rss`, `tools/glob-rss` | what a command costs in calls and memory |
 | `tools/shape-rss-test` | one-process sampler contracts, malformed readings, live checkpoints and a planted hang that retains its failure trace; `PELT_TEST_SHELL` selects the pelt binary |
 | `tools/shape-rss-rig-test` | bounded proof-chunk accounting and stop-at-first-red controls |
+| `tools/session-selftest`, `tools/session-readiness-test` | positive editor/canonical-prompt readiness after blocking operations, explicit canonical-mode exceptions, and the controller's negative controls |
 | `tools/check-fmt`, `tools/check-test`, `wolf test` | the formatter's fixed point, the unit tests |
 
 `PELT_SHAPE_TRACE_DIR` selects where `tools/shape-rss` retains failure-only

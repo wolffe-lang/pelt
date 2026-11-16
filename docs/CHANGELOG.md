@@ -6,6 +6,13 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Editor test controllers wait for readiness, not just quiet.** A durable
+  history write can leave the terminal in canonical mode while a command
+  runs. Editor-screen fixtures now wait for the owned terminal's raw editor;
+  fixtures that deliberately disable editing name their canonical prompt.
+  Oracle recording and ordinary child-read/signal sessions keep their
+  existing protocols. Quiet intervals and prompt timeouts are unchanged.
+
 - **History is saved before a command runs.** Interactive commands are
   appended and a file and directory sync requested before execution, not
   only before the next prompt or at exit. `exec`, `reboot`, `poweroff` and
