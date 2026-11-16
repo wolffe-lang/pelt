@@ -1,6 +1,6 @@
 pkg {
     name: "pelt",
-    version: "0.1.0",
+    version: "0.9.0",
     edition: "1",
     // std.signal reaches std.net; declare the transitive capability.
     capabilities: [env, exec, fs, net],
