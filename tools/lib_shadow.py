@@ -36,6 +36,10 @@ class Shell:
         for key, value in (env_overrides or {}).items():
             if value is None: env.pop(key, None)
             else: env[key] = value
+        # Fixture protocol, not a change to the shell's environment. Dumb
+        # terminals intentionally stay canonical and need their prompt cue.
+        self.editor_expected = env.get('TERM') != 'dumb'
+        self.ready_marker = ready_marker
         self.p = subprocess.Popen(fullargv or [str(binary), '-i', '+m', *START, *args], stdin=slave,
             stderr=slave if tty_err else subprocess.PIPE, stdout=slave if tty_out else subprocess.PIPE,
             env=env, cwd=home, start_new_session=True, preexec_fn=ctty_without_thp if disable_thp else ls._ctty)

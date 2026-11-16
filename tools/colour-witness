@@ -8,6 +8,7 @@ import fcntl, json, os, re, statistics, struct, subprocess, sys, tempfile, termi
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'tools'))
 from lib_shadow import Shell, idle_snapshot
+from lib_session import tty_has_prompt
 
 RESET = b'\x1b[0m'
 SGR = re.compile(rb'\x1b\[([0-9;]*)m')
@@ -26,10 +27,17 @@ def step(sh, keys, submitted=None):
     if submitted:
         # Quiet/60ms is not completion: durable history may still be syncing
         # with the tty canonical. Require the line acknowledgement and raw
-        # editor, or the owned process's exit. Pure-key timing is unchanged.
-        sh.until(lambda: sh.p.poll() is not None or
-                 (b'\n' in sh.data['tty'][old:] and
-                  not (termios.tcgetattr(sh.master)[3] & termios.ICANON)), timeout=8)
+        # editor (or an explicit canonical prompt), or process exit. Pure-key
+        # timing is unchanged.
+        def ready_for_input():
+            if sh.p.poll() is not None:
+                return True
+            if b'\n' not in sh.data['tty'][old:]:
+                return False
+            if getattr(sh, 'editor_expected', True):
+                return not (termios.tcgetattr(sh.master)[3] & termios.ICANON)
+            return tty_has_prompt(sh.screen, sh.ready_marker.decode())
+        sh.until(ready_for_input, timeout=8)
     return sh.data['tty'][old:]
 
 def ready(binary, home, args=(), env=None, tty_out=True, cols=80, thp=False):

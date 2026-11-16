@@ -153,4 +153,22 @@ for name,keys,want in [('submitted-line',b'echo ok\r',True),('pure-edit',b'echo'
         colour.step(sh,keys)
     bad+=check('words-'+name+'-readiness',sh.waited==want)
 
+class CanonicalFixture(FakeShell):
+    def __init__(self):
+        super().__init__()
+        self.editor_expected=False; self.ready_marker=b'$ '
+        self.screen=type('Frame',(),{'grid':[[' ',' ']],'r':0,'c':0})()
+    def until(self,condition,timeout=8):
+        assert not condition(), 'canonical operation was treated as ready'
+        self.waited=True
+        self.screen.grid=[list('$ ')]; self.screen.c=2
+        assert self.canonical, 'the controller changed the fixture mode'
+        assert condition(), 'canonical prompt was not recognized'
+
+
+sh=CanonicalFixture()
+with patch.object(colour,'settled',lambda *_:None):
+    colour.step(sh,b'echo canonical\r')
+bad+=check('words-canonical-prompt-readiness',sh.waited and sh.canonical)
+
 sys.exit(1 if bad else 0)
