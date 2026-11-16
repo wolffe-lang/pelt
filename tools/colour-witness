@@ -16,8 +16,20 @@ def settled(sh, duration=.06):
     end = time.monotonic()+duration
     while time.monotonic() < end: sh.pump(.001)
 
-def step(sh, keys):
+def step(sh, keys, submitted=None):
     old = len(sh.data['tty']); sh.type(keys); settled(sh)
+    if submitted is None:
+        # Helpers normally send one command or one edit packet. Literal-next
+        # Return and complete paste packets are edits, not submissions.
+        submitted = (keys.endswith((b'\r', b'\n'))
+                     and not keys.endswith((b'\x16\r', b'\x16\n')))
+    if submitted:
+        # Quiet/60ms is not completion: durable history may still be syncing
+        # with the tty canonical. Require the line acknowledgement and raw
+        # editor, or the owned process's exit. Pure-key timing is unchanged.
+        sh.until(lambda: sh.p.poll() is not None or
+                 (b'\n' in sh.data['tty'][old:] and
+                  not (termios.tcgetattr(sh.master)[3] & termios.ICANON)), timeout=8)
     return sh.data['tty'][old:]
 
 def ready(binary, home, args=(), env=None, tty_out=True, cols=80, thp=False):
