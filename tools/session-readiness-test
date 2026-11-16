@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""A quiet pty is not a ready editor. Real-pty, causally released regressions.
+
+No sleep margin makes a row pass: the producer releases only after the
+checker observes its busy state three times, or after premature input.
+"""
+import importlib.machinery
+import importlib.util
+import inspect
+import json
+import os
+from pathlib import Path
+import runpy
+import sys
+import tempfile
+import termios
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT/'tools'))
+import lib_session as ls
+
+PRODUCER = r'''
+from pathlib import Path
+import json,os,select,sys,termios,time
+root=Path(sys.argv[1]); kind=sys.argv[2]
+old=termios.tcgetattr(0)
+raw=old[:]; raw[6]=old[6][:]
+raw[3] &= ~(termios.ICANON|termios.ECHO|termios.ISIG|termios.IEXTEN)
+raw[6][termios.VMIN]=1; raw[6][termios.VTIME]=0
+
+def line():
+    out=b''
+    while not out.endswith(b'\n'):
+        d=os.read(0,1)
+        if not d: raise RuntimeError('unexpected EOF')
+        out+=d
+    return out
+try:
+    termios.tcsetattr(0,termios.TCSANOW,raw if kind=='raw' else old)
+    os.write(2,b'$ ')
+    assert line()==b'one\n'
+    if kind=='raw': os.write(0,b'one\r\n')
+    os.write(1,b'one\n')
+    termios.tcsetattr(0,termios.TCSANOW,old)
+    (root/'busy').write_text('canonical')
+    while True:
+        if select.select([0],[],[],0)[0]:
+            early=True; break
+        if (root/'release').exists():
+            early=False; break
+        time.sleep(.01)
+    (root/'result.json').write_text(json.dumps({'early':early}))
+    (root/'busy').unlink()
+    if kind=='raw': termios.tcsetattr(0,termios.TCSANOW,raw)
+    os.write(2,b'$ ')
+    assert line()==b'two\n'
+    os.write(1,b'two\n'); os.write(2,b'$ ')
+    assert line()==b'exit\n'
+finally:
+    termios.tcsetattr(0,termios.TCSANOW,old)
+'''
+
+
+def real_pty_case(kind, aware):
+    with tempfile.TemporaryDirectory(prefix='session-readiness-') as d:
+        root=Path(d)
+        child=root/'producer.py'; child.write_text(PRODUCER)
+        keys=root/'x.keys'; keys.write_text('one\ntwo\nexit\n')
+        checks=[0]
+        actual_get=ls.termios.tcgetattr
+        actual_prompt=getattr(ls,'tty_has_prompt',None)
+        def observe_busy():
+            checks[0]+=1
+            if checks[0]>=3: (root/'release').write_text('ready may resume')
+        def observed_get(fd):
+            attrs=actual_get(fd)
+            if kind=='raw' and (root/'busy').exists() and attrs[3]&termios.ICANON:
+                observe_busy()
+            return attrs
+        def observed_prompt(screen,prompt):
+            value=actual_prompt(screen,prompt)
+            if kind=='canonical' and (root/'busy').exists() and not value:
+                observe_busy()
+            return value
+        options={}
+        parameters=inspect.signature(ls.run).parameters
+        if aware and kind=='raw' and 'editor_ready' in parameters: options['editor_ready']='0'
+        if aware and kind=='canonical' and 'tty_prompt' in parameters: options['tty_prompt']='$ '
+        with patch.object(ls.termios,'tcgetattr',observed_get):
+            if actual_prompt is not None:
+                with patch.object(ls,'tty_has_prompt',observed_prompt):
+                    transcript=ls.run([sys.executable,str(child),str(root),kind],str(keys),{},**options)
+            else:
+                transcript=ls.run([sys.executable,str(child),str(root),kind],str(keys),{},**options)
+        result=json.loads((root/'result.json').read_text())
+        assert ls.last_mode is True, ('terminal mode',transcript)
+        assert any(l.startswith('exit 0 ') for l in transcript), transcript
+        return result['early'], checks[0]
+
+
+def check(name,condition,detail=''):
+    print(('PASS ' if condition else 'FAIL ')+name+' '+detail,flush=True)
+    return not condition
+
+
+bad=0
+for kind in ('raw','canonical'):
+    early,checks=real_pty_case(kind,False)
+    bad+=check('legacy-'+kind+'-control-detects-early-input',early,repr((early,checks)))
+    early,checks=real_pty_case(kind,True)
+    bad+=check(kind+'-ready-after-blocking-operation',not early and checks>=3,repr((early,checks)))
+
+loader=importlib.machinery.SourceFileLoader('readiness_colour',str(ROOT/'tools/colour-witness'))
+spec=importlib.util.spec_from_loader(loader.name,loader)
+colour=importlib.util.module_from_spec(spec); loader.exec_module(colour)
+
+
+class Process:
+    def poll(self): return None
+
+
+class FakeShell:
+    def __init__(self):
+        self.data={'tty':b''}; self.p=Process(); self.master=123; self.waited=False; self.canonical=False
+    def type(self,keys):
+        if keys.endswith((b'\r',b'\n')) and not keys.endswith((b'\x16\r',b'\x16\n')):
+            self.data['tty']+=b'command\r\n'; self.canonical=True
+        else: self.data['tty']+=b'edit'
+    def until(self,condition,timeout=8):
+        assert not condition(), 'busy command was treated as ready'
+        self.waited=True; self.canonical=False; self.data['tty']+=b'$ '
+        assert condition(), 'new editor was not recognized'
+
+
+for name,keys,want in [('submitted-line',b'echo ok\r',True),('pure-edit',b'echo',False),
+                       ('literal-return',b'\x16\r',False),('paste-packet',b'\x1b[200~a\nb\x1b[201~',False)]:
+    sh=FakeShell()
+    def attrs(_): return [0,0,0,termios.ICANON if sh.canonical else 0]
+    with patch.object(colour,'settled',lambda *_:None),patch.object(colour.termios,'tcgetattr',attrs):
+        colour.step(sh,keys)
+    bad+=check('words-'+name+'-readiness',sh.waited==want)
+
+sys.exit(1 if bad else 0)
