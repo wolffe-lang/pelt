@@ -25,20 +25,28 @@
 //! memory only (POSIX's "unspecified mechanism"), with nothing said.
 //! An entry is appended (one write, so shells sharing the file do not
 //! interleave) before it runs, so reboot, poweroff, exec and a command
-//! that never returns to another prompt keep their line. That write
-//! asks for no sync: the command starts at once, and a job owns the
-//! terminal before Ctrl-Z can be typed at it. Before the next prompt,
-//! and when the shell ends, the file and its directory are synced if
-//! this shell appended to it since the last sync, so a power cut loses
-//! at most the commands still running. `fc` that edits retracts its own
-//! entry by the same atomic replacement used for compaction (the new
-//! file synced before it is renamed over the old); its edited commands
-//! are saved before they run. Before each prompt the bytes another shell
-//! appended are read and entered too, so a command typed in one shell is
-//! in the other's list at its next prompt; when the file holds twice
-//! `HISTSIZE` entries (or more than `HISTSIZE` when it is first read)
-//! the newest `HISTSIZE` are written to a new file that is renamed over
-//! it, before a prompt and never just before a command runs.
+//! that never returns to another prompt keep their line. Nothing on the
+//! interactive path waits for the disk: neither that write, nor the
+//! prompt, nor `fc`'s retraction, nor compaction asks for a sync, so a
+//! command starts at once (a job owns the terminal before Ctrl-Z can be
+//! typed at it) and a prompt comes back at once (keys typed meanwhile
+//! are not taken by the terminal's own line editing). The shell's end,
+//! by `exit`, the end of input or a hangup, syncs the file and its
+//! directory once. So a clean reboot, poweroff, logout or exec loses
+//! nothing, and a power cut or a crash loses what the kernel had not yet
+//! written back (PAX writes back every 5 seconds; Linux's ext4 commits
+//! every 5 seconds and writes data back within about 30). `fc` that
+//! edits retracts its own entry by the same replacement used for
+//! compaction, a new file renamed over the old: atomic across a crash on
+//! a journalled file system that orders data before metadata (PAX's
+//! ext3, ext4 as mounted by default), not on ext2 without a journal,
+//! where a crash can lose the file. Its edited commands are saved before
+//! they run. Before each prompt the bytes another shell appended are
+//! read and entered too, so a command typed in one shell is in the
+//! other's list at its next prompt; when the file holds twice `HISTSIZE`
+//! entries (or more than `HISTSIZE` when it is first read) the newest
+//! `HISTSIZE` are written to a new file that is renamed over it, before
+//! a prompt and never just before a command runs.
 //!
 //! **`fc`** sees the line it was typed on as the newest entry: `-1` is
 //! the command before it, `-0` the `fc` itself, `0` the previous
@@ -69,7 +77,7 @@ struct Hist {
     /// also wrote, to be passed over when the file is read again.
     unsaved: List[str],
     own: List[str],
-    /// Bytes this shell appended that no sync has covered yet.
+    /// Changes this shell made to the file that no sync has covered yet.
     unsynced: bool,
     /// How deep `fc` re-executions are nested.
     depth: int,
@@ -411,10 +419,10 @@ fn hist_init(mut sh: Sh) {
     }
 }
 
-/// Before a prompt: enter what other shells appended, write what this
-/// one entered, keep the file at most twice `HISTSIZE` entries, and
-/// sync what this shell appended since the last sync (module doc).
-/// `read` false (the shell is ending) only writes and syncs.
+/// Before a prompt (`read`): enter what other shells appended, write
+/// what this one entered and keep the file at most twice `HISTSIZE`
+/// entries, all with no sync. `read` false, the shell is ending: write
+/// what is left and sync what this shell changed (module doc).
 fn hist_sync(mut sh: Sh, read: bool) {
     if sh.ed.h.state != H_FILE {
         return
@@ -456,15 +464,30 @@ fn hist_sync(mut sh: Sh, read: bool) {
     if sh.ed.h.fcount >= 2 * cap {
         hist_rewrite(mut sh)
     }
-    if sh.ed.h.unsynced {
+    if !read && sh.ed.h.unsynced {
         hist_durable(path)
         sh.ed.h.unsynced = false
     }
 }
 
+/// The shell is hung up (`sh.jobs`'s `hangup`, which exits by the
+/// signal): write what is left and sync, as an ending shell does.
+fn hist_last(h: Hist) {
+    if h.state != H_FILE {
+        return
+    }
+    var changed = h.unsynced
+    if h.unsaved.len > 0 && hist_append(h.path, h.unsaved, h.need_nl) > 0 {
+        changed = true
+    }
+    if changed {
+        hist_durable(h.path)
+    }
+}
+
 /// Just before a command runs: append what was entered, in one write
 /// and with no sync, so the command starts at once (module doc). The
-/// next prompt, or the shell's end, syncs it.
+/// shell's end syncs it.
 fn hist_save(mut sh: Sh) {
     if sh.ed.h.state != H_FILE {
         return
@@ -521,9 +544,9 @@ fn hist_append(path: str, xs: List[str], nl: bool) -> int {
     o.b.len
 }
 
-/// Sync the history file and its directory: what this shell appended
-/// since the last sync reaches stable storage, as far as the filesystem
-/// keeps that promise. A file that cannot be opened is left as it is.
+/// Sync the history file and its directory: what this shell changed
+/// reaches stable storage, as far as the filesystem keeps that promise.
+/// A file that cannot be opened is left as it is.
 fn hist_durable(path: str) {
     let fd = fs_open(path) else |_| { return }
     hist_flush(fd, path)
@@ -570,12 +593,9 @@ fn hist_retract(mut sh: Sh, line: str) {
         fs_remove(tmp) else |_| {}
         return
     }
-    hist_flush(fd, tmp)
     fs_close(fd) else |_| {}
     fs_rename(tmp, path) else |_| { fs_remove(tmp) else |_| {}; return }
-    let slash = path.rfind("/") else -1
-    let dir = if slash < 0 then "." else if slash == 0 then "/" else path[0..slash]
-    fs_sync_dir(dir) else |_| {}
+    sh.ed.h.unsynced = true
     if at + needle.len <= sh.ed.h.size { sh.ed.h.size -= needle.len }
     if sh.ed.h.fcount > 0 { sh.ed.h.fcount -= 1 }
 }
@@ -596,15 +616,11 @@ fn hist_rewrite(mut sh: Sh) {
         fs_remove(tmp) else |_| {}
         return
     }
-    // Persist the rename as well as the replacement's contents.
-    let slash = path.rfind("/") else -1
-    let dir = if slash < 0 then "." else if slash == 0 then "/" else path[0..slash]
-    fs_sync_dir(dir) else |_| {}
     sh.ed.h.size = wrote
     sh.ed.h.fcount = sh.ed.h.n
     sh.ed.h.need_nl = false
-    // the replacement was synced before its rename, and the rename after
-    sh.ed.h.unsynced = false
+    // the shell's end syncs the replacement and the rename
+    sh.ed.h.unsynced = true
     while sh.ed.h.unsaved.len > 0 {
         let _a = (mut sh.ed.h.unsaved).pop() else ""
     }
@@ -626,7 +642,6 @@ fn hist_write_all(tmp: str, h: Hist) -> int {
         fs_remove(tmp) else |_| {}
         return -1
     }
-    hist_flush(fd, tmp)
     fs_close(fd) else |_| {}
     o.b.len
 }
