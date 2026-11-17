@@ -76,14 +76,28 @@ At the end of the line:
 `HISTFILE` selects the history file; when unset it defaults to
 `$HOME/.sh_history`, read after `ENV`. A command is appended before it
 runs. This saves commands that replace the shell or shut the system down
-without another prompt. The append does not wait for the disk: the file
-and its parent directory are synced before the next prompt and when the
-shell ends, so a power cut can lose only the commands still running. A
-filesystem that cannot be written or synced cannot provide that
-durability; a live system's memory-only home is lost at reboot. An empty
-`HISTFILE` disables the file. Editing `fc` invocations are removed, while
-the commands they run are saved. Compaction and `fc` retraction replace the
-file atomically; simultaneous appends racing such a replacement are not
+without another prompt. Nothing a command or a prompt waits for asks the
+disk to sync: the file and its parent directory are synced once, when the
+shell ends by `exit`, the end of input or a hangup (a closed terminal
+window, an ssh connection that drops, a shutdown that ends the session).
+
+What that keeps and what it gives up:
+
+- A clean reboot, poweroff, logout or `exec` loses nothing: the kernel
+  writes everything back when it unmounts the file system.
+- A power cut or a crash loses what the kernel had not yet written back:
+  on PAX, at most the last 5 seconds; on Linux's ext4 as mounted by
+  default, metadata within 5 seconds and data within about 30.
+- Compaction and `fc` retraction replace the file by renaming a new one
+  over it. On a journalled file system that writes data before the
+  metadata naming it (PAX's ext3, ext4's default `data=ordered`) a crash
+  leaves the old file or the new one. On ext2 without a journal a crash
+  during a replacement can leave the file empty or lost.
+
+A file system that cannot be written cannot keep history at all; a live
+system's memory-only home is lost at reboot. An empty `HISTFILE` disables
+the file. Editing `fc` invocations are removed, while the commands they
+run are saved. Simultaneous appends racing a replacement are not
 serialized.
 
 Up and Ctrl-P search backward for the prefix you typed before starting the
