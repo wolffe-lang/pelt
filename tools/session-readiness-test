@@ -243,4 +243,99 @@ bad+=check('legacy-idle-control-samples-before-editor',seen==[True,True],repr(se
 seen=idle_sample_case(True)
 bad+=check('idle-sample-after-editor-ack',seen==[False,False],repr(seen))
 
+# The same raw window ends a submitted step early. Before a prompt the shell
+# sets raw mode, asks where the cursor is (ESC[6n) and reads the answer;
+# only then does it restore the mode, write its last pending output and the
+# prompt, and install the editor. This producer runs a line that prints
+# part-one, then asks, reads the answer and stays raw until the checker has
+# seen that three times; then it prints part-two and the prompt, and edits.
+PROMPT_QUERY_PRODUCER = r'''
+from pathlib import Path
+import os,sys,termios,time
+root=Path(sys.argv[1])
+old=termios.tcgetattr(0)
+raw=old[:]; raw[6]=old[6][:]
+raw[3] &= ~(termios.ICANON|termios.ECHO|termios.ISIG|termios.IEXTEN)
+raw[6][termios.VMIN]=1; raw[6][termios.VTIME]=0
+def ask():
+    os.write(2,b'\x1b[6n')
+    got=b''
+    while not got.endswith(b'R'):
+        d=os.read(0,1)
+        if not d: raise RuntimeError('unexpected EOF')
+        got+=d
+    termios.tcsetattr(0,termios.TCSANOW,old)
+def edit():
+    termios.tcsetattr(0,termios.TCSANOW,raw)
+    line=b''
+    while True:
+        b=os.read(0,1)
+        if not b: raise RuntimeError('unexpected EOF')
+        if b in (b'\r',b'\n'):
+            os.write(2,b'\r\n'); termios.tcsetattr(0,termios.TCSANOW,old); return line
+        if b==b'\x15': line=b''
+        else: line+=b; os.write(2,b)
+try:
+    termios.tcsetattr(0,termios.TCSANOW,raw); ask(); os.write(2,b'$ ')
+    assert edit()==b'run'
+    os.write(1,b'part-one\r\n')
+    termios.tcsetattr(0,termios.TCSANOW,raw)
+    os.write(2,b'\x1b[6n')
+    got=b''
+    while not got.endswith(b'R'):
+        d=os.read(0,1)
+        if not d: raise RuntimeError('unexpected EOF')
+        got+=d
+    (root/'busy').write_text('raw while the prompt query is answered')
+    while not (root/'release').exists(): time.sleep(.01)
+    (root/'busy').unlink()
+    termios.tcsetattr(0,termios.TCSANOW,old)
+    os.write(1,b'part-two\r\n'); os.write(2,b'$ ')
+    while edit()!=b'exit': os.write(2,b'$ ')
+finally:
+    termios.tcsetattr(0,termios.TCSANOW,old)
+'''
+
+
+def legacy_step(sh,keys):
+    # colour.step's submitted-line rule before it knew about the query
+    old=len(sh.data['tty']); sh.type(keys); colour.settled(sh)
+    def ready():
+        if sh.p.poll() is not None: return True
+        if b'\n' not in sh.data['tty'][old:]: return False
+        return not (termios.tcgetattr(sh.master)[3] & termios.ICANON)
+    sh.until(ready,timeout=8)
+    return sh.data['tty'][old:]
+
+
+def prompt_query_case(stepper):
+    from lib_shadow import Shell
+    with tempfile.TemporaryDirectory(prefix='session-query-') as d:
+        root=Path(d); child=root/'producer.py'; child.write_text(PROMPT_QUERY_PRODUCER)
+        sh=Shell(sys.executable,root,fullargv=[sys.executable,str(child),str(root)],tty_out=True)
+        seen=[0]; actual=termios.tcgetattr
+        def observed(fd):
+            attrs=actual(fd)
+            if (root/'busy').exists() and not attrs[3]&termios.ICANON:
+                seen[0]+=1
+                if seen[0]>=3: (root/'release').write_text('the query may go on')
+            return attrs
+        try:
+            with patch.object(colour.termios,'tcgetattr',observed):
+                raw=stepper(sh,b'run\r')
+            early=(root/'busy').exists()
+            (root/'release').write_text('the query may go on')
+            sh.until(lambda: b'part-two' in sh.data['tty'] and not (root/'busy').exists())
+            colour.settled(sh)
+        finally:
+            restored=sh.close()
+        assert restored, 'terminal mode not restored'
+        return early, b'part-two' in raw, seen[0]
+
+
+got=prompt_query_case(legacy_step)
+bad+=check('legacy-step-returns-inside-prompt-query',got[0] and not got[1],repr(got))
+got=prompt_query_case(colour.step)
+bad+=check('step-ready-after-prompt-query',not got[0] and got[1] and got[2]>=3,repr(got))
+
 sys.exit(1 if bad else 0)
