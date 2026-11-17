@@ -6,8 +6,10 @@ Usage: tools/history-paths-witness PELT [history|paths|ROW]
 """
 from pathlib import Path
 import os
+import subprocess
 import sys
 import tempfile
+import termios
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -111,6 +113,94 @@ def history_fc_peer(binary, home):
         sh.close()
 
 
+# Each file sync the shell requests is made this slow (tools/sync-delay.c).
+SYNC_MS = 500
+
+
+def sync_shim(home):
+    """Compile the sync interposer into this row's own directory."""
+    source = Path(__file__).resolve().parent/'sync-delay.c'
+    if sys.platform == 'darwin':
+        lib, flags = home/'sync-delay.dylib', ['-dynamiclib']
+    else:
+        lib, flags = home/'sync-delay.so', ['-shared', '-fPIC']
+    tail = [] if sys.platform == 'darwin' else ['-ldl']
+    subprocess.run([os.environ.get('CC', 'cc'), *flags, '-O2', '-o', str(lib), str(source), *tail],
+                   check=True)
+    return lib
+
+
+def syncs(log):
+    try:
+        return log.read_text().count('BEGIN ')
+    except FileNotFoundError:
+        return 0
+
+
+def slow_sync_launch(binary, home):
+    """`sleep 5` typed at a shell whose every file sync takes SYNC_MS.
+
+    Answers what was seen: how long the job took to own the terminal
+    after Enter, the syncs requested by then and by the next prompt,
+    whether the line was in the file when the job started, and `jobs`
+    after Ctrl-Z."""
+    history = home/'history'
+    log = home/'sync.log'
+    preload = 'DYLD_INSERT_LIBRARIES' if sys.platform == 'darwin' else 'LD_PRELOAD'
+    env = {'SHELL': '/bin/sh', 'HISTFILE': str(history), preload: str(sync_shim(home)),
+           'PELT_SYNC_DELAY_MS': str(SYNC_MS), 'PELT_SYNC_LOG': str(log)}
+    # Job control on (an interactive shell's default): the job gets a
+    # process group of its own and the terminal with it.
+    argv = [str(binary), '-i', '-m', '+o', 'friendly', '+o', 'suggest', '+o', 'histsearch',
+            '+o', 'highlight']
+    sh = Shell(binary, home, tty_out=True, cols=200, env_overrides=env, fullargv=argv)
+    seen = {}
+    try:
+        old = len(sh.data['tty'])
+        sh.type(b'\x0c')
+        sh.until(lambda: b'\x1b[2J' in sh.data['tty'][old:])
+        settle(sh)
+        before = syncs(log)
+        start = time.monotonic()
+        sh.type(b'sleep 5\r')
+        owner = sh.p.pid
+        while owner == sh.p.pid and time.monotonic() - start < 5:
+            sh.pump(.001)
+            owner = os.tcgetpgrp(sh.master)
+        seen['launch_ms'] = (time.monotonic() - start) * 1000
+        seen['job_owned_terminal'] = owner != sh.p.pid
+        seen['syncs_before_launch'] = syncs(log) - before
+        seen['line_saved_at_launch'] = b'sleep 5\n' in history.read_bytes()
+        mark = len(sh.data['tty'])
+        sh.type(b'\x1a')
+        sh.until(lambda: b'$ ' in sh.data['tty'][mark:] or sh.p.poll() is not None)
+        sh.until(lambda: not termios.tcgetattr(sh.master)[3] & termios.ICANON
+                 or sh.p.poll() is not None)
+        seen['syncs_by_prompt'] = syncs(log) - before
+        seen['jobs'] = command(sh, b'jobs')
+        command(sh, b'kill -9 %1')
+    finally:
+        sh.close()
+    print('  measured slow-sync launch ' + repr(seen), flush=True)
+    return seen
+
+
+def history_launch_unsynced(binary, home):
+    seen = slow_sync_launch(binary, home)
+    assert seen['job_owned_terminal'], seen
+    # Durability is the prompt's: the launch requests no sync and waits for none.
+    assert seen['syncs_before_launch'] == 0, seen
+    assert seen['launch_ms'] < SYNC_MS, seen
+    assert seen['line_saved_at_launch'], seen
+    # So Ctrl-Z reaches the job's group, not the shell's.
+    assert b'Stopped' in seen['jobs'] and b'sleep 5' in seen['jobs'], seen
+
+
+def history_prompt_sync(binary, home):
+    seen = slow_sync_launch(binary, home)
+    assert seen['syncs_by_prompt'] > seen['syncs_before_launch'], seen
+
+
 def path_case(binary, home, typed, want, extra=None, continuation=None):
     (home/'unique-path').mkdir(exist_ok=True)
     for d in ('absolute path', 'relative path'):
@@ -162,7 +252,8 @@ def boundary_case(binary, home, typed, want):
 def main():
     binary = Path(sys.argv[1]).resolve()
     only = sys.argv[2] if len(sys.argv) > 2 else 'all'
-    rows = [('history-running', history_running), ('history-exec', history_exec), ('history-fc', history_fc), ('history-fc-peer', history_fc_peer)]
+    rows = [('history-running', history_running), ('history-exec', history_exec), ('history-fc', history_fc), ('history-fc-peer', history_fc_peer),
+            ('history-launch-unsynced', history_launch_unsynced), ('history-prompt-sync', history_prompt_sync)]
     for name, typed, want in PATHS:
         rows.append((name, lambda b, h, t=typed, w=want: path_case(b, h, t, w)))
     for name, typed, want in [
