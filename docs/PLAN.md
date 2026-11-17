@@ -130,7 +130,8 @@ needs the least from upstream.
   On PAX a history file needs a writable tree (px27). Proved by
   `c_hist_*` and `c_ps1_bang`. **Landed in sh12**: `fc` (POSIX's
   forms; bash --posix the oracle, POSIX where they part), a shared
-  `HISTFILE` (`$HOME/.sh_history` by default) cut to `HISTSIZE`, Ctrl-R,
+  `HISTFILE` (`$HOME/.sh_history` by default) cut to `HISTSIZE` (1000
+  by default since sh40b; 128, POSIX's floor, before), Ctrl-R,
   vi `[number]v`, `!` in `PS1`; the file across shells is
   `tools/hist-witness` (`notes/sh12-the-history.md`).
 - **H3c, the prompt's own:** aliases at the prompt, `ignoreeof`,
