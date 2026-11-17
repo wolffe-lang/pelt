@@ -75,9 +75,11 @@ At the end of the line:
 
 `HISTFILE` selects the history file; when unset it defaults to
 `$HOME/.sh_history`, read after `ENV`. A command is appended before it
-runs, followed by file and parent-directory sync requests. This saves
-commands that replace the shell or shut the system down without another
-prompt. A filesystem that cannot be written or synced cannot provide that
+runs. This saves commands that replace the shell or shut the system down
+without another prompt. The append does not wait for the disk: the file
+and its parent directory are synced before the next prompt and when the
+shell ends, so a power cut can lose only the commands still running. A
+filesystem that cannot be written or synced cannot provide that
 durability; a live system's memory-only home is lost at reboot. An empty
 `HISTFILE` disables the file. Editing `fc` invocations are removed, while
 the commands they run are saved. Compaction and `fc` retraction replace the
