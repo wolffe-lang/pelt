@@ -1970,6 +1970,11 @@ fn hangup(sh: Sh, fg: int) {
             os_term_set_foreground(sh.jc_tty, to) else |_| {}
         }
     }
+    // the history file's end-of-shell sync, as `exit` gives it (`sh.hist`);
+    // a subshell's copy of the list is not the shell's
+    if sh.sub == 0 {
+        hist_last(sh.ed.h)
+    }
     os_exit_signal(m_hup()) else |_| {}
     os_exit(128 + (signal.number(m_hup()) else 1))
 }
