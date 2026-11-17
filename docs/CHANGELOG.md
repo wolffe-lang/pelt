@@ -11,9 +11,10 @@ lane) and in the README's status.
   runs. Editor-screen fixtures now wait for the owned terminal's raw editor;
   fixtures that deliberately disable editing name their canonical prompt.
   Oracle recording and ordinary child-read/signal sessions keep their
-  existing protocols. Idle measurements start only after the editor has
-  answered a key, since the cursor-position query before a prompt also
-  runs in raw mode. Quiet intervals and prompt timeouts are unchanged.
+  existing protocols. The cursor-position query before a prompt also runs
+  in raw mode, so a submitted line's step waits until that query has been
+  answered, and idle measurements start only after the editor has answered
+  a key. Quiet intervals and prompt timeouts are unchanged.
 
 - **History is saved before a command runs.** Interactive commands are
   appended before execution, not only before the next prompt or at exit.
