@@ -141,13 +141,8 @@ def syncs(log):
         return 0
 
 
-def slow_sync_launch(binary, home):
-    """`sleep 5` typed at a shell whose every file sync takes SYNC_MS.
-
-    Answers what was seen: how long the job took to own the terminal
-    after Enter, the syncs requested by then and by the next prompt,
-    whether the line was in the file when the job started, and `jobs`
-    after Ctrl-Z."""
+def slow_shell(binary, home):
+    """A shell whose every file sync takes SYNC_MS, its editor installed."""
     history = home/'history'
     log = home/'sync.log'
     preload = 'DYLD_INSERT_LIBRARIES' if sys.platform == 'darwin' else 'LD_PRELOAD'
@@ -158,12 +153,23 @@ def slow_sync_launch(binary, home):
     argv = [str(binary), '-i', '-m', '+o', 'friendly', '+o', 'suggest', '+o', 'histsearch',
             '+o', 'highlight']
     sh = Shell(binary, home, tty_out=True, cols=200, env_overrides=env, fullargv=argv)
+    old = len(sh.data['tty'])
+    sh.type(b'\x0c')
+    sh.until(lambda: b'\x1b[2J' in sh.data['tty'][old:])
+    settle(sh)
+    return sh, history, log
+
+
+def slow_sync_launch(binary, home):
+    """`sleep 5` typed at a shell whose every file sync takes SYNC_MS.
+
+    Answers what was seen: how long the job took to own the terminal
+    after Enter, the syncs requested by then and by the next prompt,
+    whether the line was in the file when the job started, and `jobs`
+    after Ctrl-Z."""
+    sh, history, log = slow_shell(binary, home)
     seen = {}
     try:
-        old = len(sh.data['tty'])
-        sh.type(b'\x0c')
-        sh.until(lambda: b'\x1b[2J' in sh.data['tty'][old:])
-        settle(sh)
         before = syncs(log)
         start = time.monotonic()
         sh.type(b'sleep 5\r')
@@ -200,9 +206,91 @@ def history_launch_unsynced(binary, home):
     assert b'Stopped' in seen['jobs'] and b'sleep 5' in seen['jobs'], seen
 
 
-def history_prompt_sync(binary, home):
-    seen = slow_sync_launch(binary, home)
-    assert seen['syncs_by_prompt'] > seen['syncs_before_launch'], seen
+def history_prompt_unsynced(binary, home):
+    """Between a command's output and the next prompt no sync is asked
+    for or waited on: the prompt comes back as fast as with no file."""
+    sh, history, log = slow_shell(binary, home)
+    seen = []
+    try:
+        for k in range(3):
+            before = syncs(log)
+            old = len(sh.data['tty'])
+            mark = f'\nprompt-{k}\r\n'.encode()
+            sh.type(f'echo prompt-{k}\r'.encode())
+            t_out = t_next = stop = None
+            end = time.monotonic() + 10
+            while time.monotonic() < end:
+                sh.pump(.0005)
+                now = time.monotonic()
+                at = sh.data['tty'].find(mark, old)
+                if t_out is None and at >= 0:
+                    t_out, stop = now, at + len(mark)
+                if t_out is not None and len(sh.data['tty']) > stop:
+                    t_next = now
+                    break
+            sh.until(lambda: b'$ ' in sh.data['tty'][old:] or sh.p.poll() is not None)
+            sh.until(lambda: not termios.tcgetattr(sh.master)[3] & termios.ICANON
+                     or sh.p.poll() is not None)
+            seen.append({'next_byte_ms': None if t_next is None else round((t_next - t_out) * 1000, 2),
+                         'syncs': syncs(log) - before})
+    finally:
+        sh.close()
+    print('  measured prompt after output ' + repr(seen), flush=True)
+    assert all(x['next_byte_ms'] is not None and x['next_byte_ms'] < SYNC_MS and x['syncs'] == 0
+               for x in seen), seen
+
+
+def history_exit_sync(binary, home):
+    """The shell's end asks for the sync the prompts no longer do."""
+    sh, history, log = slow_shell(binary, home)
+    try:
+        command(sh, b'echo exit-sync')
+        before = syncs(log)
+        sh.type(b'exit\r')
+        sh.until(lambda: sh.p.poll() is not None, timeout=15)
+        seen = {'syncs_at_exit': syncs(log) - before, 'status': sh.p.returncode,
+                'saved': b'echo exit-sync\n' in history.read_bytes()}
+    finally:
+        sh.close()
+    print('  measured exit ' + repr(seen), flush=True)
+    assert seen['syncs_at_exit'] > 0 and seen['saved'], seen
+
+
+def hangup(binary, home, running):
+    """The terminal goes away (its master closed, as when a window
+    closes) while the shell is at a prompt or waiting on a job."""
+    sh, history, log = slow_shell(binary, home)
+    seen = {}
+    try:
+        command(sh, b'echo hangup-before')
+        if running:
+            sh.type(b'sleep 30\r')
+            start = time.monotonic()
+            while os.tcgetpgrp(sh.master) == sh.p.pid and time.monotonic() - start < 5:
+                sh.pump(.001)
+        before = syncs(log)
+        os.close(sh.master)
+        try:
+            sh.p.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            pass
+        seen = {'ended': sh.p.poll() is not None, 'status': sh.p.returncode,
+                'syncs_after_hangup': syncs(log) - before,
+                'saved': history.read_bytes().count(b'\n')}
+    finally:
+        if sh.p.poll() is None:
+            sh.p.kill()
+            sh.p.wait()
+    print('  measured hangup ' + ('running ' if running else '') + repr(seen), flush=True)
+    assert seen['ended'] and seen['syncs_after_hangup'] > 0, seen
+
+
+def history_hangup_sync(binary, home):
+    hangup(binary, home, False)
+
+
+def history_hangup_job_sync(binary, home):
+    hangup(binary, home, True)
 
 
 def path_case(binary, home, typed, want, extra=None, continuation=None):
@@ -257,7 +345,9 @@ def main():
     binary = Path(sys.argv[1]).resolve()
     only = sys.argv[2] if len(sys.argv) > 2 else 'all'
     rows = [('history-running', history_running), ('history-exec', history_exec), ('history-fc', history_fc), ('history-fc-peer', history_fc_peer),
-            ('history-launch-unsynced', history_launch_unsynced), ('history-prompt-sync', history_prompt_sync)]
+            ('history-launch-unsynced', history_launch_unsynced), ('history-prompt-unsynced', history_prompt_unsynced),
+            ('history-exit-sync', history_exit_sync), ('history-hangup-sync', history_hangup_sync),
+            ('history-hangup-job-sync', history_hangup_job_sync)]
     for name, typed, want in PATHS:
         rows.append((name, lambda b, h, t=typed, w=want: path_case(b, h, t, w)))
     for name, typed, want in [
