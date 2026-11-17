@@ -6,6 +6,14 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **History keeps 1000 entries by default.** With `HISTSIZE` unset, the
+  list keeps the newest 1000 commands, not 128 (POSIX's minimum), and the
+  file grows to 2000 before it is cut back to the newest 1000. At 128 the
+  file was cut to its newest 128 each time it reached 256, so a day's
+  commands, or a few shells sharing one file, soon pushed older ones out.
+  bash keeps 500 by default and Ubuntu's stock `.bashrc` sets 1000, with
+  2000 for the file. An explicit `HISTSIZE` behaves as before.
+
 - **Editor test controllers wait for readiness, not just quiet.** A durable
   history write can leave the terminal in canonical mode while a command
   runs. Editor-screen fixtures now wait for the owned terminal's raw editor;
