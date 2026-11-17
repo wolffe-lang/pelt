@@ -24,15 +24,21 @@
 //! cannot be read or created, is left alone and the history is kept in
 //! memory only (POSIX's "unspecified mechanism"), with nothing said.
 //! An entry is appended (one write, so shells sharing the file do not
-//! interleave) before it runs, then fsynced along with its directory.
-//! This includes reboot, poweroff, exec and a command that never returns
-//! to another prompt. `fc` that edits retracts its own entry by the same
-//! atomic replacement used for compaction; its edited commands are saved
-//! before they run. Before each prompt the bytes another shell appended
-//! are read and entered too, so a command typed in one shell is in the
-//! other's list at its next prompt; when the file holds twice `HISTSIZE`
-//! entries (or more than `HISTSIZE` when it is first read) the newest
-//! `HISTSIZE` are written to a new file that is renamed over it.
+//! interleave) before it runs, so reboot, poweroff, exec and a command
+//! that never returns to another prompt keep their line. That write
+//! asks for no sync: the command starts at once, and a job owns the
+//! terminal before Ctrl-Z can be typed at it. Before the next prompt,
+//! and when the shell ends, the file and its directory are synced if
+//! this shell appended to it since the last sync, so a power cut loses
+//! at most the commands still running. `fc` that edits retracts its own
+//! entry by the same atomic replacement used for compaction (the new
+//! file synced before it is renamed over the old); its edited commands
+//! are saved before they run. Before each prompt the bytes another shell
+//! appended are read and entered too, so a command typed in one shell is
+//! in the other's list at its next prompt; when the file holds twice
+//! `HISTSIZE` entries (or more than `HISTSIZE` when it is first read)
+//! the newest `HISTSIZE` are written to a new file that is renamed over
+//! it, before a prompt and never just before a command runs.
 //!
 //! **`fc`** sees the line it was typed on as the newest entry: `-1` is
 //! the command before it, `-0` the `fc` itself, `0` the previous
@@ -63,6 +69,8 @@ struct Hist {
     /// also wrote, to be passed over when the file is read again.
     unsaved: List[str],
     own: List[str],
+    /// Bytes this shell appended that no sync has covered yet.
+    unsynced: bool,
     /// How deep `fc` re-executions are nested.
     depth: int,
 }
@@ -81,6 +89,7 @@ fn new_hist() -> Hist {
         need_nl: false,
         unsaved: List[str](),
         own: List[str](),
+        unsynced: false,
         depth: 0,
     }
 }
@@ -186,7 +195,7 @@ fn hist_add(mut sh: Sh, src: str) {
     }
     hist_enter(mut sh, line)
     sh.ed.h.cur = true
-    hist_sync(mut sh, false)
+    hist_save(mut sh)
 }
 
 fn hist_enter(mut sh: Sh, line: str) {
@@ -403,8 +412,9 @@ fn hist_init(mut sh: Sh) {
 }
 
 /// Before a prompt: enter what other shells appended, write what this
-/// one entered, and keep the file at most twice `HISTSIZE` entries.
-/// `read` false (the shell is ending) only writes.
+/// one entered, keep the file at most twice `HISTSIZE` entries, and
+/// sync what this shell appended since the last sync (module doc).
+/// `read` false (the shell is ending) only writes and syncs.
 fn hist_sync(mut sh: Sh, read: bool) {
     if sh.ed.h.state != H_FILE {
         return
@@ -442,31 +452,54 @@ fn hist_sync(mut sh: Sh, read: bool) {
             }
         }
     }
-    if sh.ed.h.unsaved.len > 0 {
-        let before = sh.ed.h.size
-        let wrote = copy region hw {
-            hist_append(path, sh.ed.h.unsaved, sh.ed.h.need_nl)
-        }
-        if wrote < 0 { return }
-        if wrote >= 0 {
-            let after = file_size(path)
-            if after == before + wrote {
-                sh.ed.h.size = after
-            } else {
-                // another shell wrote too: ours come back on the next read
-                for e in sh.ed.h.unsaved {
-                    (mut sh.ed.h.own).push(e)
-                }
-            }
-            sh.ed.h.fcount += sh.ed.h.unsaved.len
-            sh.ed.h.need_nl = false
-        }
-        while sh.ed.h.unsaved.len > 0 {
-            let _done = (mut sh.ed.h.unsaved).pop() else ""
-        }
-    }
+    hist_write(mut sh)
     if sh.ed.h.fcount >= 2 * cap {
         hist_rewrite(mut sh)
+    }
+    if sh.ed.h.unsynced {
+        hist_durable(path)
+        sh.ed.h.unsynced = false
+    }
+}
+
+/// Just before a command runs: append what was entered, in one write
+/// and with no sync, so the command starts at once (module doc). The
+/// next prompt, or the shell's end, syncs it.
+fn hist_save(mut sh: Sh) {
+    if sh.ed.h.state != H_FILE {
+        return
+    }
+    hist_write(mut sh)
+}
+
+/// Append the entries not written yet, in one write; a failed write
+/// keeps them for the next try.
+fn hist_write(mut sh: Sh) {
+    if sh.ed.h.unsaved.len == 0 {
+        return
+    }
+    let path = sh.ed.h.path
+    let before = sh.ed.h.size
+    let wrote = copy region hw {
+        hist_append(path, sh.ed.h.unsaved, sh.ed.h.need_nl)
+    }
+    if wrote < 0 {
+        return
+    }
+    sh.ed.h.unsynced = true
+    let after = file_size(path)
+    if after == before + wrote {
+        sh.ed.h.size = after
+    } else {
+        // another shell wrote too: ours come back on the next read
+        for e in sh.ed.h.unsaved {
+            (mut sh.ed.h.own).push(e)
+        }
+    }
+    sh.ed.h.fcount += sh.ed.h.unsaved.len
+    sh.ed.h.need_nl = false
+    while sh.ed.h.unsaved.len > 0 {
+        let _done = (mut sh.ed.h.unsaved).pop() else ""
     }
 }
 
@@ -484,14 +517,23 @@ fn hist_append(path: str, xs: List[str], nl: bool) -> int {
         fs_close(fd) else |_| {}
         return -1
     }
-    hist_flush(fd, path)
     fs_close(fd) else |_| {}
     o.b.len
 }
 
-/// Request stable storage before executing the command. Syncing the
-/// parent also covers a newly created history file. An unwritable or
-/// non-durable filesystem retains the existing silent memory fallback.
+/// Sync the history file and its directory: what this shell appended
+/// since the last sync reaches stable storage, as far as the filesystem
+/// keeps that promise. A file that cannot be opened is left as it is.
+fn hist_durable(path: str) {
+    let fd = fs_open(path) else |_| { return }
+    hist_flush(fd, path)
+    fs_close(fd) else |_| {}
+}
+
+/// Request stable storage for `fd`'s file and the directory naming
+/// `path`. Syncing the parent also covers a newly created or renamed
+/// file. An unwritable or non-durable filesystem keeps the existing
+/// silent memory fallback.
 fn hist_flush(fd: int, path: str) {
     fs_sync(fd) else |_| {}
     let slash = path.rfind("/") else -1
@@ -561,6 +603,8 @@ fn hist_rewrite(mut sh: Sh) {
     sh.ed.h.size = wrote
     sh.ed.h.fcount = sh.ed.h.n
     sh.ed.h.need_nl = false
+    // the replacement was synced before its rename, and the rename after
+    sh.ed.h.unsynced = false
     while sh.ed.h.unsaved.len > 0 {
         let _a = (mut sh.ed.h.unsaved).pop() else ""
     }
@@ -995,7 +1039,7 @@ fn fc_rerun(mut sh: Sh, edited: str) -> int {
     write_fd(mut sh, 2, shown)
     hist_enter_text(mut sh, chomp(shown))
     sh.ed.h.cur = true
-    hist_sync(mut sh, false)
+    hist_save(mut sh)
     sh.ed.h.depth += 1
     let st = eval_string(mut sh, shown, "fc")
     sh.ed.h.depth -= 1
