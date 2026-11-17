@@ -11,15 +11,19 @@ lane) and in the README's status.
   runs. Editor-screen fixtures now wait for the owned terminal's raw editor;
   fixtures that deliberately disable editing name their canonical prompt.
   Oracle recording and ordinary child-read/signal sessions keep their
-  existing protocols. Quiet intervals and prompt timeouts are unchanged.
+  existing protocols. Idle measurements start only after the editor has
+  answered a key, since the cursor-position query before a prompt also
+  runs in raw mode. Quiet intervals and prompt timeouts are unchanged.
 
 - **History is saved before a command runs.** Interactive commands are
-  appended and a file and directory sync requested before execution, not
-  only before the next prompt or at exit. `exec`, `reboot`, `poweroff` and
-  a foreground command still running no longer leave their history entry
-  pending in memory. Editing `fc` invocations are retracted; commands
-  appended by another shell in the meantime are retained. A writable
-  persistent filesystem is still required.
+  appended before execution, not only before the next prompt or at exit.
+  `exec`, `reboot`, `poweroff` and a foreground command still running no
+  longer leave their history entry pending in memory. That write does not
+  wait for the disk, so a command starts at once and Ctrl-Z reaches a job
+  that has just started; the file and its directory are synced before the
+  next prompt and when the shell ends. Editing `fc` invocations are
+  retracted; commands appended by another shell in the meantime are
+  retained. A writable persistent filesystem is still required.
 
 - **Variables can name completion paths.** `$HOME/`, `${HOME}/` and other
   simple named parameters use their values for path lookup, including
