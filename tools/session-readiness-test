@@ -171,4 +171,76 @@ with patch.object(colour,'settled',lambda *_:None):
     colour.step(sh,b'echo canonical\r')
 bad+=check('words-canonical-prompt-readiness',sh.waited and sh.canonical)
 
+# Raw is not an editor. Before a prompt the shell asks the terminal where
+# the cursor is (ESC[6n), in raw mode, for up to 300 ms; only then does it
+# draw the prompt and install the editor. An idle sample taken in that
+# window measures the start of the prompt. This producer goes raw after a
+# line and stays busy until any byte arrives, so no timing decides the row.
+QUERY_PRODUCER = r'''
+from pathlib import Path
+import os,select,sys,termios
+root=Path(sys.argv[1])
+old=termios.tcgetattr(0)
+raw=old[:]; raw[6]=old[6][:]
+raw[3] &= ~(termios.ICANON|termios.ECHO|termios.ISIG|termios.IEXTEN)
+raw[6][termios.VMIN]=1; raw[6][termios.VTIME]=0
+try:
+    os.write(2,b'$ ')
+    got=b''
+    while not got.endswith(b'\n'):
+        d=os.read(0,1)
+        if not d: raise RuntimeError('unexpected EOF')
+        got+=d
+    termios.tcsetattr(0,termios.TCSANOW,raw)
+    (root/'busy').write_text('raw before the editor')
+    select.select([0],[],[],30)
+    (root/'busy').unlink()
+    os.write(2,b'$ ')
+    line=b''
+    while True:
+        b=os.read(0,1)
+        if not b: break
+        if b==b'\x0c': os.write(2,b'\x1b[H\x1b[2J$ '+line)
+        elif b==b'\x15': line=b''
+        elif b in (b'\r',b'\n'):
+            os.write(2,b'\r\n')
+            if line==b'exit': break
+            line=b''; os.write(2,b'$ ')
+        else: line+=b
+finally:
+    termios.tcsetattr(0,termios.TCSANOW,old)
+'''
+
+
+def idle_sample_case(acknowledged):
+    from lib_shadow import Shell
+    with tempfile.TemporaryDirectory(prefix='session-idle-') as d:
+        root=Path(d); child=root/'producer.py'; child.write_text(QUERY_PRODUCER)
+        sh=Shell(sys.executable,root,fullargv=[sys.executable,str(child),str(root)],tty_out=True)
+        try:
+            colour.step(sh,b'define\r')
+            seen=[]
+            def sample(_pid):
+                seen.append((root/'busy').exists()); return {}
+            pair=getattr(colour,'idle_pair',None)
+            if acknowledged and callable(pair):
+                with patch.object(colour,'idle_snapshot',sample),patch.object(colour.time,'sleep',lambda _s:None):
+                    pair(sh)
+            else:
+                # the protocol before idle_pair: sample once step returns
+                sample(sh.p.pid); sample(sh.p.pid)
+            # let a producer still in its raw window go on to its editor
+            old=len(sh.data['tty']); sh.type(b'\x0c')
+            sh.until(lambda: b'\x1b[2J' in sh.data['tty'][old:])
+        finally:
+            restored=sh.close()
+        assert restored, 'terminal mode not restored'
+        return seen
+
+
+seen=idle_sample_case(False)
+bad+=check('legacy-idle-control-samples-before-editor',seen==[True,True],repr(seen))
+seen=idle_sample_case(True)
+bad+=check('idle-sample-after-editor-ack',seen==[False,False],repr(seen))
+
 sys.exit(1 if bad else 0)
