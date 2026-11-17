@@ -19,10 +19,16 @@ lane) and in the README's status.
 - **History is saved before a command runs.** Interactive commands are
   appended before execution, not only before the next prompt or at exit.
   `exec`, `reboot`, `poweroff` and a foreground command still running no
-  longer leave their history entry pending in memory. That write does not
-  wait for the disk, so a command starts at once and Ctrl-Z reaches a job
-  that has just started; the file and its directory are synced before the
-  next prompt and when the shell ends. Editing `fc` invocations are
+  longer leave their history entry pending in memory. Nothing on the
+  interactive path waits for the disk: a command starts at once, Ctrl-Z
+  reaches a job that has just started, and a prompt comes back at once on
+  a busy disk. The file and its directory are synced once, when the shell
+  ends by `exit`, the end of input or a hangup. A clean reboot, poweroff or
+  logout loses nothing; a power cut or crash can lose what the kernel had
+  not written back (PAX: the last 5 seconds; ext4 by default: data within
+  about 30). Replacing the file (compaction, `fc` retraction) is atomic
+  across a crash on a journalled file system that orders data first, not
+  on ext2 without a journal. Editing `fc` invocations are
   retracted; commands appended by another shell in the meantime are
   retained. A writable persistent filesystem is still required.
 
