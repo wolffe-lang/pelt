@@ -99,11 +99,15 @@ def history_fc_peer(binary, home):
     try:
         command(sh, b'echo fc-before')
         sh.type(b'read sh40_pending; fc -s\r')
-        settle(sh)
+        # The peer appends after this shell's own line, which is written
+        # before the command runs.
+        sh.until(lambda: b'read sh40_pending; fc -s\n' in history.read_bytes())
         with history.open('ab') as out:
             out.write(b'echo peer-appended\n')
-        sh.type(b'done\r')
-        settle(sh)
+        # The retraction happens before `fc -s` reruns `echo fc-before`,
+        # and the prompt only after that: wait for it, not for a fixed time
+        # that a slow sync of the replacement file can outlast.
+        command(sh, b'done')
         got = history.read_bytes()
         assert b'echo peer-appended\n' in got, got
         assert b'read sh40_pending; fc -s\n' not in got, got
