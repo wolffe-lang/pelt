@@ -40,6 +40,22 @@ def step(sh, keys, submitted=None):
         sh.until(ready_for_input, timeout=8)
     return sh.data['tty'][old:]
 
+def acknowledged(sh):
+    """The editor answered Ctrl-L (ESC[2J): it is installed and idle.
+
+    Raw mode alone is not this. Before each prompt the shell asks the
+    terminal where the cursor is (ESC[6n) in raw mode, for up to 300 ms,
+    and only then draws the prompt (prompt_right included) and installs
+    the editor; a submitted step can return inside that query."""
+    old = len(sh.data['tty']); sh.type(b'\x0c')
+    sh.until(lambda: b'\x1b[2J' in sh.data['tty'][old:]); settled(sh)
+
+def idle_pair(sh):
+    """Linux idle counters ten seconds apart, from an acknowledged editor."""
+    acknowledged(sh)
+    a = idle_snapshot(sh.p.pid); time.sleep(10); b = idle_snapshot(sh.p.pid)
+    return a, b
+
 def ready(binary, home, args=(), env=None, tty_out=True, cols=80, thp=False):
     sh = Shell(binary, home, ['-o', 'highlight', *args], tty_out=tty_out,
                cols=cols, env_overrides=env, disable_thp=thp)
@@ -47,8 +63,7 @@ def ready(binary, home, args=(), env=None, tty_out=True, cols=80, thp=False):
     # acknowledgement, not just the prompt's bytes, before measuring keys.
     settled(sh)
     if (env or {}).get('TERM') != 'dumb':
-        old = len(sh.data['tty']); sh.type(b'\x0c')
-        sh.until(lambda: b'\x1b[2J' in sh.data['tty'][old:]); settled(sh)
+        acknowledged(sh)
     return sh
 
 def assert_resets(raw):
@@ -180,7 +195,9 @@ def cost(binary,home):
     sh=ready(binary,home,env={'TERM':'xterm-256color'},cols=80,thp=sys.platform.startswith('linux'))
     try:
         if sys.platform.startswith('linux'):
-            a=idle_snapshot(sh.p.pid);time.sleep(10);b=idle_snapshot(sh.p.pid)
+            # `ready` may be a caller's, ending in a submitted line (prompt- and
+            # words-witness): sample only an acknowledged editor.
+            a,b=idle_pair(sh)
             print('colour idle before',json.dumps(a,sort_keys=True),flush=True)
             print('colour idle after',json.dumps(b,sort_keys=True),flush=True)
             for k in ['contexts','cpu_ticks','minor_faults','major_faults','anon_resident_pages']:
