@@ -12,10 +12,20 @@ from lib_session import tty_has_prompt
 
 RESET = b'\x1b[0m'
 SGR = re.compile(rb'\x1b\[([0-9;]*)m')
+CPR = b'\x1b[6n'
 
 def settled(sh, duration=.06):
     end = time.monotonic()+duration
     while time.monotonic() < end: sh.pump(.001)
+
+def drained(sh, wait=0):
+    """Read what the shell has written already (and for `wait` seconds)."""
+    pump = getattr(sh, 'pump', None)
+    if pump is None: return
+    pump(wait)
+    seen = -1
+    while seen != len(sh.data['tty']):
+        seen = len(sh.data['tty']); pump(0)
 
 def step(sh, keys, submitted=None):
     old = len(sh.data['tty']); sh.type(keys); settled(sh)
@@ -29,13 +39,27 @@ def step(sh, keys, submitted=None):
         # with the tty canonical. Require the line acknowledgement and raw
         # editor (or an explicit canonical prompt), or process exit. Pure-key
         # timing is unchanged.
+        # Raw is not yet the editor's while the shell asks where the cursor
+        # is: before a prompt it sets raw mode, writes ESC[6n and reads the
+        # answer, and only then restores the mode, writes its last pending
+        # output and the prompt, and installs the editor. So raw counts once
+        # everything written is read and the last of it is not that query;
+        # one short look more lets a query written just after raw arrive.
+        def editor_installed():
+            if termios.tcgetattr(sh.master)[3] & termios.ICANON:
+                return False
+            return not sh.data['tty'][old:].endswith(CPR)
         def ready_for_input():
             if sh.p.poll() is not None:
                 return True
             if b'\n' not in sh.data['tty'][old:]:
                 return False
             if getattr(sh, 'editor_expected', True):
-                return not (termios.tcgetattr(sh.master)[3] & termios.ICANON)
+                drained(sh)
+                if not editor_installed():
+                    return False
+                drained(sh, .005)
+                return editor_installed()
             return tty_has_prompt(sh.screen, sh.ready_marker.decode())
         sh.until(ready_for_input, timeout=8)
     return sh.data['tty'][old:]
