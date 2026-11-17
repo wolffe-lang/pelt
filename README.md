@@ -267,7 +267,7 @@ the tree so the measurement can be taken again.
 | `tools/syscall-census`, `tools/loop-rss`, `tools/shape-rss`, `tools/session-rss`, `tools/glob-rss` | what a command costs in calls and memory |
 | `tools/shape-rss-test` | one-process sampler contracts, malformed readings, live checkpoints and a planted hang that retains its failure trace; `PELT_TEST_SHELL` selects the pelt binary |
 | `tools/shape-rss-rig-test` | bounded proof-chunk accounting and stop-at-first-red controls |
-| `tools/session-selftest`, `tools/session-readiness-test` | positive editor/canonical-prompt readiness after blocking operations, explicit canonical-mode exceptions, idle samples only after an editor acknowledgement, and the controller's negative controls |
+| `tools/session-selftest`, `tools/session-readiness-test` | positive editor/canonical-prompt readiness after blocking operations, explicit canonical-mode exceptions, steps that wait past the prompt's cursor query, idle samples only after an editor acknowledgement, and the controller's negative controls |
 | `tools/history-paths-witness`, `tools/sync-delay.c` | history saved while a command runs and before `exec`, a command launched with no sync in its way (every sync slowed by a test-only interposer) and the sync before the next prompt, and variable-path lookup |
 | `tools/check-fmt`, `tools/check-test`, `wolf test` | the formatter's fixed point, the unit tests |
 
