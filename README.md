@@ -103,10 +103,11 @@ and escaped dollars stay literal; unset variables offer no paths.
 A second Tab lists the candidates in columns sized to
 the window. History: `fc`, a shared `HISTFILE` kept to `HISTSIZE`,
 Ctrl-R, vi's `v`, and `!` in `PS1`. History defaults to `$HOME/.sh_history`
-when `HISTFILE` is unset. Each entered command is appended and a disk sync
-requested before it runs, including `exec`, `reboot` and `poweroff`.
-Persistence still needs a writable home on a persistent filesystem: a live
-system's memory-only home cannot survive a reboot. An idle prompt costs nothing: it
+when `HISTFILE` is unset. Each entered command is appended before it runs,
+including `exec`, `reboot` and `poweroff`, without waiting for the disk; the
+file and its directory are synced before the next prompt and when the shell
+ends. Persistence still needs a writable home on a persistent filesystem: a
+live system's memory-only home cannot survive a reboot. An idle prompt costs nothing: it
 waits for a key or a signal without waking.
 
 **Friendly, on by default.** At an interactive terminal prompt (standard
@@ -266,7 +267,8 @@ the tree so the measurement can be taken again.
 | `tools/syscall-census`, `tools/loop-rss`, `tools/shape-rss`, `tools/session-rss`, `tools/glob-rss` | what a command costs in calls and memory |
 | `tools/shape-rss-test` | one-process sampler contracts, malformed readings, live checkpoints and a planted hang that retains its failure trace; `PELT_TEST_SHELL` selects the pelt binary |
 | `tools/shape-rss-rig-test` | bounded proof-chunk accounting and stop-at-first-red controls |
-| `tools/session-selftest`, `tools/session-readiness-test` | positive editor/canonical-prompt readiness after blocking operations, explicit canonical-mode exceptions, and the controller's negative controls |
+| `tools/session-selftest`, `tools/session-readiness-test` | positive editor/canonical-prompt readiness after blocking operations, explicit canonical-mode exceptions, idle samples only after an editor acknowledgement, and the controller's negative controls |
+| `tools/history-paths-witness`, `tools/sync-delay.c` | history saved while a command runs and before `exec`, a command launched with no sync in its way (every sync slowed by a test-only interposer) and the sync before the next prompt, and variable-path lookup |
 | `tools/check-fmt`, `tools/check-test`, `wolf test` | the formatter's fixed point, the unit tests |
 
 `PELT_SHAPE_TRACE_DIR` selects where `tools/shape-rss` retains failure-only
