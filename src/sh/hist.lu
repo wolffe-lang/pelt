@@ -470,6 +470,7 @@ fn hist_save(mut sh: Sh) {
         return
     }
     hist_write(mut sh)
+    hist_durable(sh.ed.h.path)
 }
 
 /// Append the entries not written yet, in one write; a failed write
