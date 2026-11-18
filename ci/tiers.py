@@ -112,7 +112,7 @@ def full_leg(job, leg):
 # corpus and sessions, 38 to 41 of macOS's 45 minutes; each tier is its own
 # job now, on every host, and the full tier runs all six.
 HOSTS = [
-    {"os": "ubuntu-latest", "builds": True},
+    {"os": "ubuntu-24.04", "builds": True},
     {"os": "macos-latest", "builds": True},
     # wolf 0.2.24 through 0.2.32 build NO tier on linux aarch64: `wolf build`
     # refuses the native tier ("native codegen targets linux/x86-64,
@@ -137,7 +137,7 @@ MATRIX = {
 
 def pr_leg(job, leg):
     """Whether the pull-request tier runs this leg of a matrix job."""
-    return leg.get("os") == "ubuntu-latest"
+    return leg.get("os") == "ubuntu-24.04"
 
 
 def full_leg(job, leg):

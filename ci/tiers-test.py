@@ -79,7 +79,7 @@ PUSH_BRANCHES = "trunk"
 OTHER_HOST_JOBS = ()
 # The gauntlet's three hosts before tl28 (.github/workflows/ci.yml at trunk
 # cc2fdc9), each now on both compiler tiers (pelt#40).
-_HOSTS = [{"os": "ubuntu-latest", "builds": True}, {"os": "macos-latest", "builds": True},
+_HOSTS = [{"os": "ubuntu-24.04", "builds": True}, {"os": "macos-latest", "builds": True},
           {"os": "ubuntu-24.04-arm", "builds": False}]
 # pelt#99 (sh34): the session corpus is the `sessions` job's, on the legs
 # that build (linux aarch64 builds no tier).

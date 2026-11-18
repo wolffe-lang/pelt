@@ -124,7 +124,7 @@ jobs:
   # runs first: a planner that cannot say no plans nothing.
   plan:
     name: plan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       tier: ${{ steps.plan.outputs.tier }}
@@ -476,7 +476,7 @@ jobs:
       - plan
       - gauntlet
       - sessions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -494,7 +494,7 @@ jobs:
     name: nightly red, an issue
     needs: tier
     if: ${{ failure() && github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
