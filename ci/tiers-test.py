@@ -607,5 +607,21 @@ else:
 
 extra_checks(say, plan, expect, blocks, wf)
 
+# T9 (pelt#138): a runner image named `latest` moves under every job at once. On
+# 2026-11-18 ubuntu-latest became Ubuntu 26.04, whose /usr/bin/env is a symbolic
+# link, and a host-dependent expectation went red on trunk's push while the pull
+# request's run of the same commit, still on 24.04, had passed. No workflow line
+# and no planner leg may say ubuntu-latest: the Linux runners are pinned by
+# version, and moving them is a change of its own.
+import glob
+stale = []
+for path in sorted(glob.glob(os.path.join(ROOT, ".github", "workflows", "*"))) + [PLAN]:
+    with open(path, encoding="utf-8") as fh:
+        for n, line in enumerate(fh, 1):
+            if "ubuntu-latest" in line:
+                stale.append("%s:%d" % (os.path.relpath(path, ROOT), n))
+say(not stale, "T9 no workflow or planner leg says ubuntu-latest, the Linux runner image is pinned"
+    + ("" if not stale else ": " + ", ".join(stale)))
+
 print("tiers-test: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 sys.exit(1 if fails else 0)
