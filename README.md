@@ -101,9 +101,9 @@ variable's current value for lookup, including relative paths and paths
 with spaces, without replacing the variable text you typed. Single-quoted
 and escaped dollars stay literal; unset variables offer no paths.
 A second Tab lists the candidates in columns sized to
-the window. History: `fc`, a shared `HISTFILE` kept to `HISTSIZE`,
-Ctrl-R, vi's `v`, and `!` in `PS1`. History defaults to `$HOME/.sh_history`
-when `HISTFILE` is unset. Each entered command is appended before it runs,
+the window. History: `fc`, a shared `HISTFILE` kept to `HISTSIZE`
+(1000 entries when it is unset), Ctrl-R, vi's `v`, and `!` in `PS1`.
+History defaults to `$HOME/.sh_history` when `HISTFILE` is unset. Each entered command is appended before it runs,
 including `exec`, `reboot` and `poweroff`. Nothing at the prompt waits for
 the disk; the file and its directory are synced once, when the shell ends
 (by `exit`, the end of input or a hangup). A clean reboot, poweroff or
