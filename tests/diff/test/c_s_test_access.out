@@ -4,8 +4,9 @@ secret r=n w=n x=n L=n-
 ro r=y w=n x=n L=n-
 dir r=y w=y x=y L=n-
 link r=y w=y x=n L=y
-/usr/bin/env r=y w=n x=y L=n-
+progro r=y w=n x=y L=n-
+proglink r=y w=y x=y L=y
 /nonexistent r=n w=n x=n L=n-
 ef: same file
 ef: different files
-env is a program
+proglink is a program
