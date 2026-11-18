@@ -19,8 +19,8 @@ digest `sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785`
 `notes/sh28-evidence/logs/` retains `bind -p`, fish `bind` and `stty -a`.
 Documentation was read with `info --subnodes '(bash) Bindable Readline Commands'` and `fish --no-config -c 'bind --help'`.
 Those are documentation and black-box outputs, not implementation sources.
-Pelt CI itself has no pinned oracle image: its runners are ubuntu-latest
-and macOS. Reproducing the oracle environment in CI is a track gap.
+Pelt CI itself has no pinned oracle image: its runners are ubuntu-24.04
+(pinned, so a new image is a change of its own) and macOS. Reproducing the oracle environment in CI is a track gap.
 
 `C-` means Ctrl, `M-` means Alt (an ESC byte first), and `ESC` is hex 1b.
 A key listed as an editor key does not bind that byte in a script or pipe.
