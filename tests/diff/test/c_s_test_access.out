@@ -5,7 +5,7 @@ ro r=y w=n x=n L=n-
 dir r=y w=y x=y L=n-
 link r=y w=y x=n L=y
 progro r=y w=n x=y L=n-
-proglink r=y w=y x=y L=y
+proglink r=y w=y x=y L=n-
 /nonexistent r=n w=n x=n L=n-
 ef: same file
 ef: different files
