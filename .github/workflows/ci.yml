@@ -218,7 +218,7 @@ jobs:
           if python3 -c "import unicodedata, sys; sys.exit(unicodedata.unidata_version != '16.0.0')"; then
             tools/gen-width --check
           else
-            echo "::notice::runner Python is not Unicode 16.0.0; the table is checked where Python's Unicode is 16.0.0"
+            echo "::notice::runner Python is not Unicode 16.0.0; the table is checked where Python's Unicode is 16.0.0 (a lane note)"
           fi
 
       - name: build, the ${{ matrix.tier }} tier
