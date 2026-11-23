@@ -6,6 +6,13 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Arithmetic operator selection builds no temporary lists.** The same
+  precedence levels and longest-operator order are selected directly from
+  fixed strings. Assignment lookahead, short-circuit evaluation, errors and
+  wrapping arithmetic are unchanged. Counted-loop result checks use total
+  child CPU and report a longer row separately so coarse user/system clock
+  splits do not decide the result.
+
 - **History keeps 1000 entries by default.** With `HISTSIZE` unset, the
   list keeps the newest 1000 commands, not 128 (POSIX's minimum), and the
   file grows to 2000 before it is cut back to the newest 1000. At 128 the
