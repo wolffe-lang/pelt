@@ -270,39 +270,61 @@ fn cond_expr(mut sh: Sh, mut r: Ar) -> int {
     assign_expr(mut sh, mut r)
 }
 
-/// The binary operators by level, loosest first.
-fn level_ops(level: int) -> List[str] {
-    var o = List[str]()
-    if level == 0 {
-        (mut o).push("||")
-    } else if level == 1 {
-        (mut o).push("&&")
-    } else if level == 2 {
-        (mut o).push("|")
-    } else if level == 3 {
-        (mut o).push("^")
-    } else if level == 4 {
-        (mut o).push("&")
-    } else if level == 5 {
-        (mut o).push("==")
-        (mut o).push("!=")
-    } else if level == 6 {
-        (mut o).push("<=")
-        (mut o).push(">=")
-        (mut o).push("<")
-        (mut o).push(">")
-    } else if level == 7 {
-        (mut o).push("<<")
-        (mut o).push(">>")
-    } else if level == 8 {
-        (mut o).push("+")
-        (mut o).push("-")
-    } else {
-        (mut o).push("*")
-        (mut o).push("/")
-        (mut o).push("%")
+/// The binary operators by level, loosest first, without a temporary list.
+fn level_count(level: int) -> int {
+    if level < 5 {
+        return 1
     }
-    o
+    if level == 6 {
+        return 4
+    }
+    if level == 9 {
+        return 3
+    }
+    2
+}
+
+fn level_op(level: int, index: int) -> str {
+    if level == 0 {
+        return "||"
+    }
+    if level == 1 {
+        return "&&"
+    }
+    if level == 2 {
+        return "|"
+    }
+    if level == 3 {
+        return "^"
+    }
+    if level == 4 {
+        return "&"
+    }
+    if level == 5 {
+        return if index == 0 then "==" else "!="
+    }
+    if level == 6 {
+        if index == 0 {
+            return "<="
+        }
+        if index == 1 {
+            return ">="
+        }
+        return if index == 2 then "<" else ">"
+    }
+    if level == 7 {
+        return if index == 0 then "<<" else ">>"
+    }
+    if level == 8 {
+        return if index == 0 then "+" else "-"
+    }
+    if index == 0 {
+        return "*"
+    }
+    if index == 1 {
+        return "/"
+    }
+    "%"
 }
 
 /// What may not follow an operator for it to be that operator: `|` is
@@ -331,16 +353,19 @@ fn binary(mut sh: Sh, mut r: Ar, level: int) -> int {
         return unary(mut sh, mut r)
     }
     var a = binary(mut sh, mut r, level + 1)
-    let ops = level_ops(level)
+    let count = level_count(level)
     loop {
         if r.err.len > 0 {
             return 0
         }
         var found = ""
-        for op in ops {
+        var index = 0
+        while index < count {
+            let op = level_op(level, index)
             if found.len == 0 && eat(mut r, op, not_after(op)) {
                 found = op
             }
+            index += 1
         }
         if found.len == 0 {
             return a
