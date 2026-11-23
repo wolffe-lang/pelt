@@ -305,6 +305,7 @@ the tree so the measurement can be taken again.
 | `tools/session-selftest`, `tools/session-readiness-test` | positive editor/canonical-prompt readiness after blocking operations, explicit canonical-mode exceptions, steps that wait past the prompt's cursor query, idle samples only after an editor acknowledgement, and the controller's negative controls |
 | `tools/history-paths-witness`, `tools/sync-delay.c` | history saved while a command runs and before `exec`, a command launched and a prompt returned with no sync in their way (every sync slowed by a test-only interposer), the sync at exit and at a hangup, and variable-path lookup |
 | `tools/check-fmt`, `tools/check-test`, `wolf test` | the formatter's fixed point, the unit tests |
+| `python3 tools/bench/check-loop.py --results DIR`, `python3 tools/bench/check-loop-test.py` | recorded 1,000- and 100,000-turn loop results, bounded by total child CPU rather than coarse user/system splits; the checker contracts |
 
 `PELT_SHAPE_TRACE_DIR` selects where `tools/shape-rss` retains failure-only
 IO rings and process snapshots taken before cleanup. EOF, exit and deadline
