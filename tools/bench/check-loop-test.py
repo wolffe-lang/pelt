@@ -22,7 +22,7 @@ class LoopGuard(unittest.TestCase):
         (self.root / "meta.json").write_text(json.dumps({"uname": ["Linux"]}))
         self.rows = []
         for count, reference in ((1000, 861.0), (100000, 70000.0)):
-            for name, ratio in (("reference", 1), ("reference-again", 1.01), ("pelt", 3.40)):
+            for name, ratio in (("reference", 1), ("reference-again", 1.01), ("pelt", 3.40), ("baseline", 4.35)):
                 for rep in range(31):
                     total = reference * ratio
                     self.rows.append({"variant": "counted", "count": count, "participant": name, "repetition": rep,
@@ -54,6 +54,49 @@ class LoopGuard(unittest.TestCase):
         ok, output = self.check()
         self.assertFalse(ok)
         self.assertTrue(any(x.startswith("FAIL loop-counted-cpu ") for x in output))
+
+    def test_long_bound_is_seen_red(self):
+        for row in self.rows:
+            if row["participant"] == "pelt" and row["count"] == 100000:
+                row.update(user_us=70000 * 4.24, system_us=0, cpu_us=70000 * 4.24)
+        ok, output = self.check()
+        self.assertFalse(ok)
+        self.assertTrue(any(x.startswith("FAIL loop-counted-long ") and "reason=cpu-bound" in x for x in output))
+
+    def test_long_requires_five_percent_improvement(self):
+        for row in self.rows:
+            if row["participant"] == "baseline":
+                row.update(user_us=70000 * 3.50, system_us=0, cpu_us=70000 * 3.50)
+        ok, output = self.check()
+        self.assertFalse(ok)
+        self.assertTrue(any("reason=baseline-improvement" in x for x in output))
+
+    def test_long_requires_interleaved_baseline(self):
+        self.rows = [r for r in self.rows if r["participant"] != "baseline"]
+        with self.assertRaisesRegex(ValueError, "baseline"):
+            self.check()
+
+    def test_baseline_repetitions_must_be_unique_and_paired(self):
+        old = [r for r in self.rows if r["participant"] == "baseline" and r["count"] == 100000]
+        old[0]["repetition"] = old[1]["repetition"]
+        with self.assertRaisesRegex(ValueError, "baseline"):
+            self.check()
+
+    def test_paired_reduction_not_ratio_of_medians(self):
+        for row in self.rows:
+            if row["count"] == 100000 and row["participant"] in ("pelt", "baseline"):
+                k = row["repetition"] % 5
+                ratio = (1 if k < 2 else 10) if row["participant"] == "baseline" else (1 if k < 2 else 10 if k == 2 else 0.5)
+                row.update(user_us=70000 * ratio, system_us=0, cpu_us=70000 * ratio)
+        ok, output = self.check()
+        self.assertFalse(ok)
+        self.assertTrue(any("reason=baseline-improvement" in x for x in output))
+
+    def test_long_bound_is_inclusive(self):
+        for row in self.rows:
+            if row["count"] == 100000 and row["participant"] == "pelt":
+                row.update(user_us=70000 * 4.13, system_us=0, cpu_us=70000 * 4.13)
+        self.assertTrue(self.check()[0])
 
     def test_total_not_user_time_decides(self):
         for row in self.rows:
