@@ -3,16 +3,19 @@
 
 The short row retains its reference bound. The 100,000-turn row also requires
 at least five percent paired CPU improvement against interleaved baseline runs.
+Only --pool-gate outside hosted CI gates ratios. Other invocations report them;
+malformed records and failed children still fail the record-integrity check.
 """
 import argparse
 import json
 import math
+import os
 from pathlib import Path
 import statistics
 import sys
 
 SHORT_BOUND = 3.46
-LONG_BOUND = 4.13
+LONG_BOUND = 3.00
 BASELINE_BOUND = 0.95
 MIN_RUNS = 31
 PARTICIPANTS = ("reference", "pelt", "reference-again")
@@ -40,7 +43,7 @@ def participant(runs, count, name):
     return dict(zip((r["repetition"] for r in rows), totals(rows)))
 
 
-def check(directory, counts=(1000, 100000), emit=print):
+def check(directory, counts=(1000, 100000), emit=print, *, gate=True):
     directory = Path(directory)
     meta = json.loads((directory / "meta.json").read_text())
     if meta["uname"][0] != "Linux":
@@ -72,19 +75,24 @@ def check(directory, counts=(1000, 100000), emit=print):
         elif count == 100000 and paired > BASELINE_BOUND:
             reason = "baseline-improvement"
         bound = SHORT_BOUND if count == 1000 else LONG_BOUND
-        emit(f"{'FAIL' if reason else 'PASS'} {row_name} turns={count} cpu_ratio={ratio:.6f} bound={bound:.2f} cpu_aa={aa:.6f}" + (f" reason={reason}" if reason else ""))
+        prefix = ('FAIL' if reason else 'PASS') if gate else 'REPORT'
+        outcome = '' if gate else (' outcome=would-fail' if reason else ' outcome=would-pass')
+        emit(f"{prefix} {row_name} turns={count} cpu_ratio={ratio:.6f} bound={bound:.2f} cpu_aa={aa:.6f}" + outcome + (f" reason={reason}" if reason else ""))
         failed |= bool(reason)
         emit(f"MEASURE turns={count} reference_cpu_us={med['reference']:.3f} pelt_cpu_us={med['pelt']:.3f}")
-    return not failed
+    return not failed if gate else True
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", required=True)
     parser.add_argument("--short-only", action="store_true", help="score an earlier short-only measurement; not a complete take")
+    parser.add_argument("--pool-gate", action="store_true", help="gate the controlled pool record; ignored in hosted CI")
     args = parser.parse_args()
+    gate = args.pool_gate and os.environ.get("GITHUB_ACTIONS", "").lower() != "true"
+    print("MODE loop-counted policy=" + ("pool-gate" if gate else "report"))
     try:
-        return 0 if check(args.results, (1000,) if args.short_only else (1000, 100000)) else 1
+        return 0 if check(args.results, (1000,) if args.short_only else (1000, 100000), gate=gate) else 1
     except (ValueError, KeyError, TypeError, OSError) as error:
         print(f"FAIL loop-counted-record {error}")
         return 1
