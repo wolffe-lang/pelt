@@ -197,7 +197,7 @@ def _capture_outcome(directory, capture):
     """Optional evidence only; legacy callers keep their original return shape."""
     pid, raw, out, err, timed_out, ended, wall, argv = capture
     directory = Path(directory)
-    directory.mkdir(parents=True, exist_ok=False)
+    directory.mkdir(parents=True, exist_ok=False, mode=0o700)
     result = {"pid": pid, "argv": argv, "raw_returncode": raw,
               "exit": raw if raw >= 0 else 128 - raw,
               "termination": "timeout" if timed_out else "signal" if raw < 0 else "exit",
