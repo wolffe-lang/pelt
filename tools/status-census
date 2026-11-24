@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Count observed parent-interpreter simple-command events using the test driver.
+"""Report parent-interpreter event coverage, with independent outcome diagnostics.
 
-Parse/stdin cases and scripts reexecuting ../sh are explicitly outside this
-counter's scope. Forked children and separately executed shells are not added
-to the parent's counters. This is executed-event coverage, not a static census.
+The existing parse/stdin and ../sh exclusions are unchanged. No child aggregation.
+Full collection requires a generated probe manifest; the legacy final-marker smoke
+remains a protocol check only, not a durable or whole-corpus observation.
 """
 import argparse
 import json
 import os
 from pathlib import Path
 import re
+import secrets
 import sys
 import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lib_cases as lc
+import lib_status_probe as lp
 
 
 def main():
@@ -22,52 +24,111 @@ def main():
     p.add_argument("--selfcheck", required=True)
     p.add_argument("--pelt", required=True)
     p.add_argument("--output", required=True)
+    p.add_argument("--probe-manifest")
     p.add_argument("--smoke", action="store_true")
+    p.add_argument("--exec-fixture", action="store_true")
+    p.add_argument("--measure-wall", action="store_true", help="pool-only, normal/probe wall separately; never a performance verdict")
     p.add_argument("areas", nargs="*")
     a = p.parse_args()
+    if a.measure_wall and not (sys.platform.startswith("linux") and os.environ.get("PELT_POOL_RECORD") == "1"):
+        p.error("wall measurement requires an explicit Linux pool record")
+    if a.smoke and a.exec_fixture:
+        p.error("choose one finite fixture")
+    output = Path(a.output).resolve()
+    artifacts = output.with_suffix(".artifacts")
+    if output.exists() or artifacts.exists():
+        p.error("refusing to overwrite census evidence")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    artifacts.mkdir()
+    legacy = a.smoke and not a.probe_manifest
+    manifest = None
+    provenance_error = None
+    if not legacy:
+        try:
+            if not a.probe_manifest:
+                raise ValueError("probe-manifest-required")
+            manifest = lp.verify(a.probe_manifest)
+            if not manifest.get("source_commit") or "probe_sha256" not in manifest:
+                raise ValueError("probe-not-built-from-committed-source")
+            if lp.digest(Path(a.selfcheck).read_bytes()) != manifest["probe_sha256"]:
+                raise ValueError("invoked-probe-binary-drift")
+        except (OSError, ValueError, KeyError) as exc:
+            provenance_error = str(exc)
+    proof = {key: manifest[key] for key in ("diff_sha256", "diff_files", "hunks")} if manifest else {"diff_sha256": None, "diff_files": [], "hunks": {}}
     rows = []
     failed = False
     with tempfile.TemporaryDirectory(prefix="status-census-", dir=os.environ.get("TMPDIR")) as home:
         lc.ENV.update(HOME=home, SHELL="/bin/sh")
-        if a.smoke:
+        if a.smoke or a.exec_fixture:
             source = Path(home) / "probe.sh"
-            source.write_text("test 1 -eq 1; true; false; printf '%s\\n' \"$?\"\n")
-            selected = [("probe", "status-corpus", str(source))]
+            source.write_text("true; exec /bin/sh -c 'printf replaced; exit 7'\n" if a.exec_fixture else "test 1 -eq 1; true; false; printf '%s\\n' \"$?\"\n")
+            selected = [("probe", "exec-prefix" if a.exec_fixture else "status-corpus", str(source))]
         else:
             selected = lc.cases(a.areas or None)
-        for area, name, source in selected:
+        for index, (area, name, source) in enumerate(selected):
             label = area + "/" + name
-            meta = {} if a.smoke else lc.read_meta(source[:-3] + ".meta")
+            meta = {} if a.smoke or a.exec_fixture else lc.read_meta(source[:-3] + ".meta")
+            row = {"case": label, "probe_diff": proof, "script_sha256": lp.digest(Path(source).read_bytes())}
             if meta.get("mode", "script") != "script" or "../sh" in Path(source).read_text():
-                rows.append({"case": label, "observed": False, "reason": "outside-parent-script-counter-scope"})
-                print("SKIP status-corpus case=" + label + " reason=outside-parent-script-counter-scope", flush=True)
+                row.update(observed=False, excluded=True, reason="outside-parent-script-counter-scope")
+                rows.append(row)
+                print("SKIP status-corpus case=" + label + " reason=" + row["reason"], flush=True)
                 continue
-            ordinary = lc.run([str(Path(a.pelt).resolve())], source, meta)
-            observed = lc.run([str(Path(a.selfcheck).resolve()), "--status-corpus"], source, meta)
-            if ordinary is None or observed is None:
-                row = {"case": label, "observed": False, "reason": "timeout"}
-                failed = True
-            else:
-                matches = re.findall(rb"^ROUTE corpus done=(\d+) total=(\d+)\n", observed["err"], re.M)
-                stripped = re.sub(rb"^ROUTE corpus done=\d+ total=\d+\n", b"", observed["err"], flags=re.M)
-                same = (ordinary["exit"], ordinary["stdout"], ordinary["stderr"]) == (observed["exit"], observed["stdout"], bool(stripped))
-                if len(matches) != 1 or not same:
-                    row = {"case": label, "observed": False, "reason": "missing-counter-or-observer-perturbed-behavior"}
-                    failed = True
+            case = artifacts / f"{index:04d}"
+            case.mkdir()
+            row["artifacts"] = str(case.relative_to(output.parent))
+            try:
+                if provenance_error:
+                    raise ValueError(provenance_error)
+                if not legacy:
+                    lp.verify(a.probe_manifest)  # a row cannot use a drifted generated tree/diff
+                nonce = secrets.token_hex(16)
+                sink = case / "counter"
+                sink.write_bytes(b"")
+                Path(str(sink) + ".owner").write_bytes(b"")
+                ordinary = lc.run([str(Path(a.pelt).resolve())], source, meta,
+                                  diagnostics=case / "normal", measure_wall=a.measure_wall)
+                command = [str(Path(a.selfcheck).resolve()), "--status-corpus"]
+                if not legacy:
+                    command += ["--counter-sink", str(sink), nonce]
+                probe = lc.run(command, source, meta, diagnostics=case / "probe", measure_wall=a.measure_wall)
+                if legacy:
+                    matches = re.findall(rb"^ROUTE corpus done=(\d+) total=(\d+)\n", probe["err"] if probe else b"", re.M)
+                    counter = {"state": "missing", "reason": "legacy-marker-missing"}
+                    if len(matches) == 1:
+                        done, total = map(int, matches[0])
+                        counter = {"state": "valid" if 0 < done < total else "invalid", "done": done, "total": total, "protocol": "legacy-smoke-only"}
                 else:
-                    done, total = map(int, matches[0])
-                    valid = 0 <= done <= total and (not a.smoke or 0 < done < total)
-                    row = {"case": label, "observed": valid, "done": done, "total": total}
-                    failed |= not valid
+                    detail = json.loads((case / "probe/outcome.json").read_text())
+                    counter = lp.read_counter(sink, nonce, detail["pid"])
+                row.update(lp.compare(ordinary, probe, counter))
+                row["normal"] = json.loads((case / "normal/outcome.json").read_text())
+                row["probe"] = json.loads((case / "probe/outcome.json").read_text())
+                if a.exec_fixture and counter["state"] == "valid" and (counter["done"], counter["total"]) != (1, 2):
+                    row["failures"].append("exec-prefix-counts")
+                    row["observed"] = False
+                if a.smoke and counter["state"] == "valid" and not 0 < counter["done"] < counter["total"]:
+                    row["failures"].append("smoke-route-mix")
+                    row["observed"] = False
+            except (OSError, ValueError, KeyError) as exc:
+                row.update(observed=False, behavior={"match": None, "different_fields": []},
+                           counter={"state": "invalid", "reason": "collector-error"},
+                           failures=["collector-error"], collector_error=str(exc))
+            failed |= not row["observed"]
             rows.append(row)
             print(("PASS" if row["observed"] else "FAIL") + " status-corpus case=" + label + " " + json.dumps(row, sort_keys=True), flush=True)
     valid = [r for r in rows if r["observed"]]
-    done, total = sum(r["done"] for r in valid), sum(r["total"] for r in valid)
-    result = {"scope": "observed parent-interpreter command events; no forked-child or reexecuted-shell aggregation", "cases": rows,
-              "observed_cases": len(valid), "selected_cases": len(rows), "done": done, "total": total,
-              "fraction": done / total if total else None, "complete_within_scope": not failed}
-    Path(a.output).write_text(json.dumps(result, indent=2) + "\n")
-    print(f"{'FAIL' if failed else 'PASS'} status-corpus done={done} total={total} observed_cases={len(valid)} selected_cases={len(rows)}")
+    done = sum(r["counter"]["done"] for r in valid)
+    total = sum(r["counter"]["total"] for r in valid)
+    result = {"schema": 2, "policy": "report-only", "protocol": "legacy-final-marker-smoke" if legacy else "durable-parent-prefix",
+              "scope": "observed parent-interpreter command events; no forked-child or reexecuted-shell aggregation",
+              "probe_diff": proof, "cases": rows, "observed_cases": len(valid), "selected_cases": len(rows),
+              "excluded_cases": sum(bool(r.get("excluded")) for r in rows),
+              "done": done, "total": total, "fraction": done / total if total else None,
+              "complete_within_scope": not failed, "durable_complete_within_scope": not failed and not legacy,
+              "timing": "normal.wall_ns and probe.wall_ns are separate measurements; probe includes observation writes and is not ordinary pelt performance"}
+    output.write_text(json.dumps(result, indent=2) + "\n")
+    print(f"{'FAIL' if failed else 'PASS'} status-corpus done={done} total={total} observed_cases={len(valid)} selected_cases={len(rows)} policy=report-only")
     return int(failed)
 
 
