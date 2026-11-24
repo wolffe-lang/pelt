@@ -307,13 +307,27 @@ the tree so the measurement can be taken again.
 | `tools/check-fmt`, `tools/check-test`, `wolf test` | the formatter's fixed point, the unit tests |
 | `python3 tools/bench/check-loop.py --results DIR`, `python3 tools/bench/check-loop-test.py` | recorded 1,000- and 100,000-turn loop results using total child CPU and paired improvement; reports by default, with ratio gating only under `--pool-gate` outside hosted CI |
 | `python3 tools/status-witness --selfcheck target/release/selfcheck --pelt target/release/pelt` | readonly status-builtin route counters and paired eligible/general differential probes; `--probe-candidate` runs the same executor through the test driver and reports fallback counters |
-| `python3 tools/status-census --selfcheck target/release/selfcheck --pelt target/release/pelt --output counts.json` | executed parent-interpreter command coverage, with explicit exclusions for parse/stdin cases and reexecuted shells; forked-child events are not aggregated |
+| `python3 tools/status-probe --source "$PWD" --output ../pelt-status-probe --tier release --wolf "$PWD/.wolf-bin/wolf" --std "$PWD/.wolf-bin/std"` | builds only an isolated, instrumented test executor; prints its complete two-file generated diff and records source, diff and binary identities without editing or rebuilding the ordinary interpreter inputs |
+| `python3 tools/status-census --selfcheck ../pelt-status-probe/probe --probe-manifest ../pelt-status-probe/probe.json --pelt target/release/pelt --output counts.json` | report-only parent-interpreter coverage, separate missing-counter and behavior-mismatch classes, and raw ordinary/probe outcomes; existing parse/stdin and reexecuted-shell exclusions remain explicit, with no child aggregation |
+| `python3 tools/status-census-test` | moved-anchor rejection, generated-diff/source tampering, independent missing/mismatch reasons, raw outcomes and legacy runner compatibility |
 
 The controlled pool record gates the short ratio at 3.46, the long ratio at
 3.00, and at least 5% paired CPU improvement over the interleaved baseline.
 Reference A/A and timer-floor checks remain required. Hosted CI reports these
 ratios without gating, even if `--pool-gate` was supplied. Malformed records or
 failed measured children still fail the record-integrity check.
+
+The durable census writes a cumulative prefix after each counted entry or
+readonly-route selection. A valid case reports `1 + total + done` data-write
+requests plus one owner-record write; temporary handles close before script
+commands run. These are write API requests, not a claim about physical disk
+writes. The generated probe's extra work can change signal-bounded loop counts,
+so event weights and exclusions stay visible and the percentage is not offered
+as representative workload coverage. Optional Linux pool wall measurements keep
+`normal.wall_ns` and `probe.wall_ns` apart: probe time includes observation and
+is never reported as ordinary pelt performance. The old `--smoke` final-marker
+check remains available but does not claim durable observation. Failed records
+and raw bytes are kept; output files are not overwritten.
 
 `PELT_SHAPE_TRACE_DIR` selects where `tools/shape-rss` retains failure-only
 IO rings and process snapshots taken before cleanup. EOF, exit and deadline
