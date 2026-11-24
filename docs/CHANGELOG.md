@@ -6,6 +6,15 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Readonly status builtins can avoid full shell setup.** Literal `:`,
+  `true`, `false` and scalar `test` comparisons use a scratch-local route
+  for literal words and whole quoted ordinary scalar parameters. Function
+  overrides, tracing, redirections, prefix assignments, complex expansions
+  and numeric errors keep the general path. Numeric comparison and error
+  handling are unchanged. Differential probes expose accepted/fallback
+  counters; a separate test driver measures parent-interpreter command
+  coverage without adding a shell CLI option.
+
 - **Arithmetic operator selection builds no temporary lists.** The same
   precedence levels and longest-operator order are selected directly from
   fixed strings. Assignment lookahead, short-circuit evaluation, errors and
