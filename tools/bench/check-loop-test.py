@@ -22,7 +22,7 @@ class LoopGuard(unittest.TestCase):
         (self.root / "meta.json").write_text(json.dumps({"uname": ["Linux"]}))
         self.rows = []
         for count, reference in ((1000, 861.0), (100000, 70000.0)):
-            for name, ratio in (("reference", 1), ("reference-again", 1.01), ("pelt", 3.40), ("baseline", 4.35)):
+            for name, ratio in (("reference", 1), ("reference-again", 1.01), ("pelt", 3.40 if count == 1000 else 2.75), ("baseline", 4.35)):
                 for rep in range(31):
                     total = reference * ratio
                     self.rows.append({"variant": "counted", "count": count, "participant": name, "repetition": rep,
@@ -58,7 +58,7 @@ class LoopGuard(unittest.TestCase):
     def test_long_bound_is_seen_red(self):
         for row in self.rows:
             if row["participant"] == "pelt" and row["count"] == 100000:
-                row.update(user_us=70000 * 4.24, system_us=0, cpu_us=70000 * 4.24)
+                row.update(user_us=70000 * 3.20, system_us=0, cpu_us=70000 * 3.20)
         ok, output = self.check()
         self.assertFalse(ok)
         self.assertTrue(any(x.startswith("FAIL loop-counted-long ") and "reason=cpu-bound" in x for x in output))
@@ -66,7 +66,7 @@ class LoopGuard(unittest.TestCase):
     def test_long_requires_five_percent_improvement(self):
         for row in self.rows:
             if row["participant"] == "baseline":
-                row.update(user_us=70000 * 3.50, system_us=0, cpu_us=70000 * 3.50)
+                row.update(user_us=70000 * 2.85, system_us=0, cpu_us=70000 * 2.85)
         ok, output = self.check()
         self.assertFalse(ok)
         self.assertTrue(any("reason=baseline-improvement" in x for x in output))
@@ -95,7 +95,7 @@ class LoopGuard(unittest.TestCase):
     def test_long_bound_is_inclusive(self):
         for row in self.rows:
             if row["count"] == 100000 and row["participant"] == "pelt":
-                row.update(user_us=70000 * 4.13, system_us=0, cpu_us=70000 * 4.13)
+                row.update(user_us=70000 * 3.00, system_us=0, cpu_us=70000 * 3.00)
         self.assertTrue(self.check()[0])
 
     def test_total_not_user_time_decides(self):
@@ -157,14 +157,57 @@ class LoopGuard(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.check()
 
-    def test_cli_propagates_named_failure(self):
+    def cli(self, *flags, hosted=False):
+        self.save()
+        env = dict(os.environ, HOME=str(self.root), SHELL="/bin/sh")
+        env.pop("GITHUB_ACTIONS", None)
+        if hosted:
+            env["GITHUB_ACTIONS"] = "true"
+        return subprocess.run([sys.executable, "-I", str(HERE / "check-loop.py"), "--results", str(self.root), *flags],
+                              env=env, capture_output=True, text=True)
+
+    def make_ratios_fail(self):
         for row in self.rows:
             if row["participant"] == "pelt":
                 row.update(user_us=row["cpu_us"] * 2, system_us=0.0, cpu_us=row["cpu_us"] * 2)
-        self.save()
-        result = subprocess.run([sys.executable, "-I", str(HERE / "check-loop.py"), "--results", str(self.root)], capture_output=True, text=True)
+
+    def test_cli_propagates_named_failure(self):
+        self.make_ratios_fail()
+        result = self.cli("--pool-gate")
         self.assertEqual(result.returncode, 1)
         self.assertIn("FAIL loop-counted-cpu", result.stdout)
+        self.assertIn("FAIL loop-counted-long", result.stdout)
+
+    def test_cli_default_reports_without_ratio_gating(self):
+        self.make_ratios_fail()
+        result = self.cli()
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("REPORT loop-counted-long", result.stdout)
+        self.assertIn("would-fail", result.stdout)
+        self.assertNotIn("FAIL loop-counted-long", result.stdout)
+
+    def test_hosted_ci_never_gates_ratio_even_with_pool_flag(self):
+        self.make_ratios_fail()
+        result = self.cli("--pool-gate", hosted=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("policy=report", result.stdout)
+        self.assertIn("REPORT loop-counted-long", result.stdout)
+
+    def test_report_mode_keeps_noise_and_floor_visible(self):
+        for row in self.rows:
+            if row["participant"] == "reference-again":
+                for key in ("user_us", "system_us", "cpu_us"):
+                    row[key] *= 2
+        result = self.cli(hosted=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("reason=reference-noise", result.stdout)
+        self.assertIn("would-fail", result.stdout)
+
+    def test_report_mode_does_not_hide_broken_record(self):
+        self.rows[0]["exit"] = 2
+        result = self.cli(hosted=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("FAIL loop-counted-record", result.stdout)
 
 
 if __name__ == "__main__":
