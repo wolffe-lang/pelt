@@ -203,6 +203,16 @@ class LoopGuard(unittest.TestCase):
         self.assertIn("reason=reference-noise", result.stdout)
         self.assertIn("would-fail", result.stdout)
 
+    def test_report_mode_keeps_floor_visible(self):
+        for row in self.rows:
+            if row["count"] == 100000:
+                for key in ("user_us", "system_us", "cpu_us"):
+                    row[key] /= 100
+        result = self.cli(hosted=True)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("reason=reference-below-timer-floor", result.stdout)
+        self.assertIn("would-fail", result.stdout)
+
     def test_report_mode_does_not_hide_broken_record(self):
         self.rows[0]["exit"] = 2
         result = self.cli(hosted=True)
