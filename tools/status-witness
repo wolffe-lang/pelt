@@ -99,6 +99,7 @@ def main():
     p.add_argument("--pelt")
     p.add_argument("--reference", default="/bin/dash")
     p.add_argument("--differential-only", action="store_true", help="baseline control only; does not prove route counters")
+    p.add_argument("--probe-candidate", action="store_true", help="the candidate is the selfcheck corpus executor, with readable counters")
     a = p.parse_args()
     if a.differential_only:
         if not a.pelt:
@@ -118,10 +119,30 @@ def main():
     failed = 0
     for name, script in cases():
         results = []
-        for binary in (a.reference, a.pelt):
+        for position, binary in enumerate((a.reference, a.pelt)):
             with tempfile.TemporaryDirectory(prefix="status-witness-", dir=os.environ.get("TMPDIR")) as tmp:
                 env = {"PATH": "/usr/bin:/bin", "HOME": tmp, "SHELL": "/bin/sh", "LC_ALL": "C", "TZ": "UTC"}
-                got = subprocess.run([str(Path(binary).resolve()), "-c", script], env=env, cwd=tmp, capture_output=True, timeout=10)
+                argv = [str(Path(binary).resolve()), "-c", script]
+                if a.probe_candidate and position == 1:
+                    source = Path(tmp) / "probe.sh"
+                    source.write_text(script + "\n")
+                    argv = [str(Path(binary).resolve()), "--status-corpus", str(source)]
+                got = subprocess.run(argv, env=env, cwd=tmp, capture_output=True, timeout=10)
+                if a.probe_candidate and position == 1:
+                    counters = re.findall(rb"^ROUTE corpus done=(\d+) total=(\d+)\n", got.stderr, re.M)
+                    if len(counters) != 1:
+                        print("FAIL status-builtin-" + name + " reason=missing-counter")
+                        failed += 1
+                    else:
+                        done, total = map(int, counters[0])
+                        print(f"COUNTER status-builtin-{name} done={done} fallback={total-done} total={total}")
+                        stem = name.removesuffix("-eligible").removesuffix("-general")
+                        fallback_shapes = {"nounset", "unquoted", "default", "assign-default", "arithmetic", "substitution", "all-positionals", "empty-positionals", "star-positionals", "glob", "quote-concat", "integer-error", "overflow", "bracket-error"}
+                        scalar_shapes = fallback_shapes | {"readonly", "signed", "empty-operand"}
+                        if (stem in fallback_shapes or name.endswith("-general") and stem in scalar_shapes) and done != 0:
+                            print("FAIL status-fallback-" + name + " reason=unexpected-accepted-route")
+                            failed += 1
+                    got.stderr = re.sub(rb"^ROUTE corpus done=\d+ total=\d+\n", b"", got.stderr, flags=re.M)
                 # Like difftest: diagnostic presence, not implementation-specific wording.
                 trace = tuple(line for line in got.stderr.decode(errors="replace").splitlines()
                               if re.match(r"^\+ (?::|true|false|test)(?:\s|$)", line)) if name.startswith("trace-") else ()
