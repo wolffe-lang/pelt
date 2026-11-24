@@ -365,6 +365,10 @@ struct Sh {
     /// table checks read (pelt#3: a word that is not a pattern reads
     /// none).
     dir_reads: int,
+    /// Enabled only by the corpus test driver, never by the shell CLI.
+    count_routes: bool,
+    route_total: int,
+    route_status: int,
     /// Who the shell runs as (`sh.util`'s `load_ident`): whether that is
     /// known yet, the effective user and group ids, the supplementary
     /// groups as decimal numbers between spaces (a `str`, so the copy
@@ -571,6 +575,9 @@ fn new_sh(name: str) -> Sh {
         from_stdin: false,
         abort: false,
         dir_reads: 0,
+        count_routes: false,
+        route_total: 0,
+        route_status: 0,
         id_state: 0,
         euid: -1,
         egid: -1,

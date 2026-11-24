@@ -899,6 +899,9 @@ fn split_assign(a: str) -> (str, str) {
 /// fast path cannot finish without writing the state runs the ordinary
 /// way (`run_slow`), from the start.
 fn run_simple(mut sh: Sh, n: int) -> int {
+    if sh.count_routes {
+        sh.route_total += 1
+    }
     sh.line = sh.ast.nodes[n].line
     if sh.jc_build < 0 {
         sh.jc_node = n
@@ -926,6 +929,9 @@ fn run_simple(mut sh: Sh, n: int) -> int {
             run_fast(sh, sh.ast, n, nowait || last, bg)
         }
         if r.kind != R_SLOW {
+            if sh.count_routes && r.status_route {
+                sh.route_status += 1
+            }
             return commit_fast(mut sh, r)
         }
     }
@@ -967,6 +973,8 @@ const R_STOP: int = 4
 /// `str`, even an empty one, is made there anew: 16 bytes).
 struct Fast {
     kind: int,
+    /// The readonly status route, observed only by the corpus test driver.
+    status_route: bool,
     status: int,
     /// The writes the state must make (`put_op`), in order: an
     /// assignment-only command's assignments, `local`'s, and any an
@@ -999,6 +1007,7 @@ struct Fast {
 fn slow() -> Fast {
     Fast {
         kind: R_SLOW,
+        status_route: false,
         status: 0,
         enc: "",
         reads: 0,
@@ -1194,7 +1203,131 @@ fn put_op(mut enc: Buf, op: char, name: str, value: str) {
 /// started on the stage's pipe, or its output made ready to read. `bg`
 /// is the command after `&`: the in-process subshell it runs in would
 /// take back what the command search finds, so nothing is written.
+/// One field without splitting, globbing, effects or special-parameter rules.
+/// An ordinary quoted scalar is copied into the command's scratch region.
+fn status_word(sh: Sh, w: str) -> (bool, str) {
+    if w.len >= 3 && ch(w, 0) == '"' && ch(w, w.len - 1) == '"' {
+        let inner = w[1..w.len - 1]
+        var name = ""
+        if inner.len >= 4 && inner.starts_with("${{") && inner.ends_with("}}") {
+            name = inner[2..inner.len - 1]
+        } else if inner.len >= 2 && ch(inner, 0) == '$' {
+            name = inner[1..inner.len]
+        } else {
+            return (false, "")
+        }
+        if !is_name(name) || name == "LINENO" {
+            return (false, "")
+        }
+        let value = sh.vals[name] else {
+            return (!sh.opt_u, "")
+        }
+        return (true, copy value)
+    }
+    if w.len > 0 && ch(w, 0) == '~' {
+        return (false, "")
+    }
+    var i = 0
+    while i < w.len {
+        let c = byte_at(w, i)
+        if c < 7 ||
+            c == 36 ||
+            c == 96 ||
+            c == 92 ||
+            c == 39 ||
+            c == 34 ||
+            c == 42 ||
+            c == 63 ||
+            c == 91 {
+            return (false, "")
+        }
+        i += 1
+    }
+    (true, w)
+}
+
+/// Status-only builtins need neither a full shell nor a general argv expansion.
+/// A refusal has no effects; the original full-shadow path then runs unchanged.
+fn readonly_status(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
+    if nowait ||
+        bg ||
+        sh.opt_x ||
+        sh.shadow ||
+        a.nodes[n].ints[0] != 0 ||
+        a.nodes[n].redirs.len != 0 ||
+        a.nodes[n].words.len == 0 {
+        return slow()
+    }
+    let name = a.nodes[n].words[0]
+    let comparison = name == "test" || name == "["
+    if name != ":" && name != "true" && name != "false" && !comparison {
+        return slow()
+    }
+    let fnode = sh.funcs[name] else -1
+    if fnode >= 0 || !(is_special_builtin(name) || is_available_builtin(sh, name)) {
+        return slow()
+    }
+    var end = a.nodes[n].words.len
+    if name == "[" {
+        if end == 1 || a.nodes[n].words[end - 1] != "]" {
+            return slow()
+        }
+        end -= 1
+    }
+    if comparison && end != 4 {
+        return slow()
+    }
+    var left = ""
+    var op = ""
+    var right = ""
+    var i = 1
+    while i < end {
+        let (ok, value) = status_word(sh, a.nodes[n].words[i])
+        if !ok {
+            return slow()
+        }
+        if comparison {
+            if i == 1 {
+                left = value
+            } else if i == 2 {
+                op = value
+            } else {
+                right = value
+            }
+        }
+        i += 1
+    }
+    var status = if name == "false" then 1 else 0
+    if comparison {
+        if op != "=" &&
+            op != "!=" &&
+            op != "-eq" &&
+            op != "-ne" &&
+            op != "-gt" &&
+            op != "-ge" &&
+            op != "-lt" &&
+            op != "-le" {
+            return slow()
+        }
+        var t = Tst { args: List[str](), i: 0, err: "" }
+        let value = binary_test(sh, mut t, left, op, right)
+        if t.err.len > 0 {
+            return slow()
+        }
+        status = if value then 0 else 1
+    }
+    var r = slow()
+    r.kind = R_DONE
+    r.status_route = true
+    r.status = status
+    r
+}
+
 fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
+    let direct = readonly_status(sh, a, n, nowait, bg)
+    if direct.kind != R_SLOW {
+        return direct
+    }
     var t = shadow_of(sh)
     t.line = a.nodes[n].line
     let na = a.nodes[n].ints[0]
