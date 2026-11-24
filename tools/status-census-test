@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -64,6 +65,26 @@ class Contract(unittest.TestCase):
         self.assertIn("stdout", result["behavior"]["different_fields"])
         self.assertIn("behavior-mismatch", result["failures"])
         self.assertIn("counter-missing", result["failures"])
+
+    def test_raw_capture_is_opt_in_and_keeps_bytes(self):
+        spec = importlib.util.spec_from_file_location("case_capture_contract", ROOT / "tools/lib_cases.py")
+        cases = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cases)
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            script = home / "case.sh"
+            script.write_text("# finite runner fixture\n")
+            cases.ENV.update(HOME=str(home), SHELL="/bin/sh")
+            command = [sys.executable, "-c", "import os;os.write(1,b'\\xff');os.write(2,b'diagnostic');raise SystemExit(7)"]
+            legacy = cases.run(command, str(script), {})
+            self.assertEqual(set(legacy), {"stdout", "exit", "stderr", "err", "line"})
+            captured = cases.run(command, str(script), {}, diagnostics=home / "raw")
+            detail = json.loads((home / "raw/outcome.json").read_text())
+            self.assertEqual(detail["raw_returncode"], 7)
+            self.assertEqual((home / "raw/stdout.raw").read_bytes(), b"\xff")
+            self.assertEqual((home / "raw/stderr.raw").read_bytes(), b"diagnostic")
+            self.assertEqual(captured["raw_returncode"], 7)
+            self.assertIsNone(detail["wall_ns"])
 
     def test_signal_exit_timeout_controls_are_distinct(self):
         lib = self.require()
