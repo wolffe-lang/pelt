@@ -6,6 +6,13 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Loop ratio bounds gate controlled pool records only.** The long bound
+  is 3.00 times the reference CPU; short 3.46, paired improvement, reference
+  A/A and timer-floor requirements are unchanged. The checker reports by
+  default and hosted CI never gates ratios; `--pool-gate` enables the
+  controlled record's decisions outside hosted CI. Record-integrity errors
+  remain failures in either mode.
+
 - **Readonly status builtins can avoid full shell setup.** Literal `:`,
   `true`, `false` and scalar `test` comparisons use a scratch-local route
   for literal words and whole quoted ordinary scalar parameters. Function
