@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Count observed parent-interpreter simple-command events using the test driver.
+
+Parse/stdin cases and scripts reexecuting ../sh are explicitly outside this
+counter's scope. Forked children and separately executed shells are not added
+to the parent's counters. This is executed-event coverage, not a static census.
+"""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import tempfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lib_cases as lc
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--selfcheck", required=True)
+    p.add_argument("--pelt", required=True)
+    p.add_argument("--output", required=True)
+    p.add_argument("--smoke", action="store_true")
+    p.add_argument("areas", nargs="*")
+    a = p.parse_args()
+    rows = []
+    failed = False
+    with tempfile.TemporaryDirectory(prefix="status-census-", dir=os.environ.get("TMPDIR")) as home:
+        lc.ENV.update(HOME=home, SHELL="/bin/sh")
+        if a.smoke:
+            source = Path(home) / "probe.sh"
+            source.write_text("test 1 -eq 1; true; false; printf '%s\\n' \"$?\"\n")
+            selected = [("probe", "status-corpus", str(source))]
+        else:
+            selected = lc.cases(a.areas or None)
+        for area, name, source in selected:
+            label = area + "/" + name
+            meta = {} if a.smoke else lc.read_meta(source[:-3] + ".meta")
+            if meta.get("mode", "script") != "script" or "../sh" in Path(source).read_text():
+                rows.append({"case": label, "observed": False, "reason": "outside-parent-script-counter-scope"})
+                print("SKIP status-corpus case=" + label + " reason=outside-parent-script-counter-scope", flush=True)
+                continue
+            ordinary = lc.run([str(Path(a.pelt).resolve())], source, meta)
+            observed = lc.run([str(Path(a.selfcheck).resolve()), "--status-corpus"], source, meta)
+            if ordinary is None or observed is None:
+                row = {"case": label, "observed": False, "reason": "timeout"}
+                failed = True
+            else:
+                matches = re.findall(rb"^ROUTE corpus done=(\d+) total=(\d+)\n", observed["err"], re.M)
+                stripped = re.sub(rb"^ROUTE corpus done=\d+ total=\d+\n", b"", observed["err"], flags=re.M)
+                same = (ordinary["exit"], ordinary["stdout"], ordinary["stderr"]) == (observed["exit"], observed["stdout"], bool(stripped))
+                if len(matches) != 1 or not same:
+                    row = {"case": label, "observed": False, "reason": "missing-counter-or-observer-perturbed-behavior"}
+                    failed = True
+                else:
+                    done, total = map(int, matches[0])
+                    valid = 0 <= done <= total and (not a.smoke or 0 < done < total)
+                    row = {"case": label, "observed": valid, "done": done, "total": total}
+                    failed |= not valid
+            rows.append(row)
+            print(("PASS" if row["observed"] else "FAIL") + " status-corpus case=" + label + " " + json.dumps(row, sort_keys=True), flush=True)
+    valid = [r for r in rows if r["observed"]]
+    done, total = sum(r["done"] for r in valid), sum(r["total"] for r in valid)
+    result = {"scope": "observed parent-interpreter command events; no forked-child or reexecuted-shell aggregation", "cases": rows,
+              "observed_cases": len(valid), "selected_cases": len(rows), "done": done, "total": total,
+              "fraction": done / total if total else None, "complete_within_scope": not failed}
+    Path(a.output).write_text(json.dumps(result, indent=2) + "\n")
+    print(f"{'FAIL' if failed else 'PASS'} status-corpus done={done} total={total} observed_cases={len(valid)} selected_cases={len(rows)}")
+    return int(failed)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

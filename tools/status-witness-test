@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Probe-generation and route-counter contracts; fixtures are not engine evidence."""
+from pathlib import Path
+import runpy
+import subprocess
+import unittest
+
+api = runpy.run_path(str(Path(__file__).with_name("status-witness")), run_name="status_witness")
+
+
+class StatusWitness(unittest.TestCase):
+    def counters(self):
+        return "\n".join(f"ROUTE {path} shape={name} done={int(path == 'status' and done)} fallback={int(path != 'status' or not done)}"
+                         for name, done in api["SHAPES"].items() for path in ("status", "status-general"))
+
+    def test_all_counters_are_required(self):
+        self.assertTrue(api["route_counters"](self.counters()))
+        self.assertFalse(api["route_counters"]("selfcheck: every table check passed"))
+        self.assertFalse(api["route_counters"](self.counters().replace("shape=glob", "shape=missing")))
+
+    def test_wrong_fallback_is_rejected(self):
+        self.assertFalse(api["route_counters"](self.counters().replace("shape=glob done=0 fallback=1", "shape=glob done=1 fallback=0")))
+
+    def test_each_probe_has_both_paths(self):
+        cases = dict(api["cases"]())
+        self.assertEqual(len(cases), 150)
+        for name, _ in api["cases"]():
+            stem = name.removesuffix("-eligible").removesuffix("-general")
+            self.assertIn(stem + "-eligible", cases)
+            self.assertIn(stem + "-general", cases)
+        self.assertIn('test "$@" 0<&0', cases["all-positionals-general"])
+        self.assertIn('test "$@"', cases["all-positionals-eligible"])
+
+    def test_reference_parses_every_probe(self):
+        for name, script in api["cases"]():
+            with self.subTest(name=name):
+                result = subprocess.run(["/bin/dash", "-n", "-c", script], capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

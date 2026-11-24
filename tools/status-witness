@@ -23,7 +23,14 @@ SHAPES = {
 def route_counters(text):
     found = {m[0]: (int(m[1]), int(m[2])) for m in re.findall(
         r"ROUTE status shape=([a-z-]+) done=(\d+) fallback=(\d+)", text)}
-    return all(found.get(name) == ((1, 0) if done else (0, 1)) for name, done in SHAPES.items())
+    general = {m[0]: (int(m[1]), int(m[2])) for m in re.findall(
+        r"ROUTE status-general shape=([a-z-]+) done=(\d+) fallback=(\d+)", text)}
+    return (
+        len(re.findall(r"^ROUTE status shape=", text, re.M)) == len(SHAPES)
+        and len(re.findall(r"^ROUTE status-general shape=", text, re.M)) == len(SHAPES)
+        and all(found.get(name) == ((1, 0) if done else (0, 1)) and general.get(name) == (0, 1)
+                for name, done in SHAPES.items())
+    )
 
 
 def cases():
@@ -91,15 +98,21 @@ def main():
     p.add_argument("--selfcheck", required=True)
     p.add_argument("--pelt")
     p.add_argument("--reference", default="/bin/dash")
+    p.add_argument("--differential-only", action="store_true", help="baseline control only; does not prove route counters")
     a = p.parse_args()
-    checked = subprocess.run([str(Path(a.selfcheck).resolve())], capture_output=True, text=True, timeout=60)
-    if checked.returncode or not route_counters(checked.stdout):
-        print("FAIL readonly-status-routes reason=missing-or-wrong-route-counters")
+    if a.differential_only:
+        if not a.pelt:
+            p.error("--differential-only requires --pelt")
+        print("SKIP readonly-status-routes reason=baseline-differential-only")
+    else:
+        checked = subprocess.run([str(Path(a.selfcheck).resolve())], capture_output=True, text=True, timeout=60)
+        if checked.returncode or not route_counters(checked.stdout):
+            print("FAIL readonly-status-routes reason=missing-or-wrong-route-counters")
+            print(checked.stdout, end="")
+            print(checked.stderr, end="")
+            return 1
         print(checked.stdout, end="")
-        print(checked.stderr, end="")
-        return 1
-    print(checked.stdout, end="")
-    print("PASS readonly-status-routes")
+        print("PASS readonly-status-routes")
     if not a.pelt:
         return 0
     failed = 0
@@ -110,8 +123,10 @@ def main():
                 env = {"PATH": "/usr/bin:/bin", "HOME": tmp, "SHELL": "/bin/sh", "LC_ALL": "C", "TZ": "UTC"}
                 got = subprocess.run([str(Path(binary).resolve()), "-c", script], env=env, cwd=tmp, capture_output=True, timeout=10)
                 # Like difftest: diagnostic presence, not implementation-specific wording.
-                results.append((got.returncode, got.stdout, bool(got.stderr)))
-        ok = results[0] == results[1]
+                trace = tuple(line for line in got.stderr.decode(errors="replace").splitlines()
+                              if re.match(r"^\+ (?::|true|false|test)(?:\s|$)", line)) if name.startswith("trace-") else ()
+                results.append((got.returncode, got.stdout, bool(got.stderr), trace))
+        ok = results[0] == results[1] and (not name.startswith("trace-") or bool(results[0][3]))
         failed += not ok
         print(("PASS" if ok else "FAIL") + " status-builtin-" + name)
         if not ok:
