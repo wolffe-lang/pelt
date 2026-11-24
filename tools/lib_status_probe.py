@@ -31,18 +31,26 @@ fn corpus_counter_append(path: str, value: str) -> bool {
     true
 }
 
+fn corpus_counter_fault(path: str) {
+    let prior = fs_stat(path + ".failed") else |_| List[int]()
+    if prior.len > 0 { return }
+    fs_rename(path, path + ".failed") else |_| {}
+}
+
 fn corpus_counter_emit(done: int, total: int) {
     copy region corpus_prefix {
         let (on, path, nonce) = corpus_counter_config()
         if !on { return }
-        let owner_bytes = fs_read_bytes(path + ".owner") else |_| { return }
-        let owner = str_from_utf8(owner_bytes) else |_| { return }
+        let prior = fs_stat(path + ".failed") else |_| List[int]()
+        if prior.len > 0 { return }
+        let owner_bytes = fs_read_bytes(path + ".owner") else |_| { corpus_counter_fault(path); return }
+        let owner = str_from_utf8(owner_bytes) else |_| { corpus_counter_fault(path); return }
         let pid = os_pid()
         if owner != "{nonce} {pid}\n" { return }
         let writes = 1 + total + done
-        let _ok = corpus_counter_append(
+        if !corpus_counter_append(
             path, "PREFIX 1 {nonce} {pid} {total} {done} {writes}\n",
-        )
+        ) { corpus_counter_fault(path) }
     }
 }
 
@@ -51,7 +59,7 @@ fn corpus_counter_init() {
         let (on, path, nonce) = corpus_counter_config()
         if !on { return }
         let pid = os_pid()
-        if !corpus_counter_append(path + ".owner", "{nonce} {pid}\n") { return }
+        if !corpus_counter_append(path + ".owner", "{nonce} {pid}\n") { corpus_counter_fault(path); return }
         corpus_counter_emit(0, 0)
     }
 }
@@ -197,6 +205,10 @@ def verify(manifest_path):
 
 def read_counter(path, nonce, pid):
     path = Path(path)
+    failed = Path(str(path) + ".failed")
+    if failed.exists():
+        return {"state": "invalid", "reason": "counter-write-failed", "done": None, "total": None,
+                "preserved_prefix": str(failed), "sha256": digest(failed.read_bytes())}
     if not path.exists() or not path.stat().st_size:
         return {"state": "missing", "reason": "counter-missing", "done": None, "total": None}
     data = path.read_bytes()
