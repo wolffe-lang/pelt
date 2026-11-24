@@ -51,6 +51,16 @@ class Contract(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "probe-source-drift"):
                 lib.verify(output / "probe.json")
 
+    def test_manifest_cannot_relabel_the_committed_interpreter(self):
+        lib = self.require()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "generated"
+            manifest = lib.generate(ROOT, output)
+            manifest["source_commit"] = "0" * 40
+            (output / "probe.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "probe-source-commit-drift"):
+                lib.verify(output / "probe.json")
+
     def test_missing_counter_and_stdout_mismatch_are_independent(self):
         lib = self.require()
         normal = {"exit": 7, "stdout": b"replaced", "err": b"", "raw_returncode": 7}
