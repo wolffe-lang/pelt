@@ -101,8 +101,11 @@ on:
         options: [full, all, pr]
         default: full
 
+# The plan job reads its commit's check runs and their workflow runs (ci/covered.py); no job writes.
 permissions:
   contents: read
+  checks: read
+  actions: read
 
 # A pull request's runs: one group per branch and tier, cancel-in-progress,
 # so a new push frees the slots of the run it supersedes. The full run and
@@ -130,6 +133,7 @@ jobs:
     outputs:
       tier: ${{ steps.plan.outputs.tier }}
       jobs: ${{ steps.plan.outputs.jobs }}
+      covered_by: ${{ steps.plan.outputs.covered_by }}
       matrix_gauntlet: ${{ steps.plan.outputs.matrix_gauntlet }}
       matrix_sessions: ${{ steps.plan.outputs.matrix_sessions }}
     steps:
@@ -146,6 +150,19 @@ jobs:
       - name: proof chunk controller contracts
         if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
         run: python3 tools/shape-rss-rig-test
+      # The nightly at a commit already green in full is skipped: ci/covered.py
+      # asks for the commit's latest `tier all` of this workflow, and
+      # answers `none` at once for any event but the nightly's.
+      - name: what this commit already has green (ci/covered.py)
+        id: covered
+        if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          TIER: all
+        run: python3 ci/covered.py --github-output "$GITHUB_OUTPUT"
       - name: the plan
         if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-matrix') || contains(github.event.pull_request.labels.*.name, 'ci') || contains(github.event.pull_request.labels.*.name, 'release-matrix') }}
         id: plan
@@ -156,6 +173,10 @@ jobs:
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           IN_TIER: ${{ inputs.tier }}
+          COVERED: ${{ steps.covered.outputs.covered }}
+          COVERED_BY: ${{ steps.covered.outputs.covered_by }}
+          COVERED_AT: ${{ steps.covered.outputs.covered_at }}
+          COVERED_RUN: ${{ steps.covered.outputs.covered_run }}
         run: python3 ci/tiers.py plan --merge --github-output "$GITHUB_OUTPUT"
 
       - name: local gate wiring proof
