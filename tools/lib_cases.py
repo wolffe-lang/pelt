@@ -38,6 +38,8 @@ only what the case made; `../sh` is a link to the shell under test. The environm
 PATH=/usr/bin:/bin, HOME=/home/pelt, LC_ALL=C.
 """
 
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -45,6 +47,8 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lib_reap as lr  # noqa: E402
@@ -119,11 +123,14 @@ def _default_signals():
 LAST = {"ended": 0}
 
 
-def run(shell, script, meta, timeout=10):
+def run(shell, script, meta, timeout=10, *, diagnostics=None, measure_wall=False):
     """Run one case under `shell` (an argv prefix). Answers a dict with
     stdout, exit, stderr (bool), line (parse rows), or None on a
     timeout, when every process the case had running has been ended
     (`lib_reap.end_tree`) and `LAST["ended"]` says how many."""
+    if measure_wall and diagnostics is None:
+        raise ValueError("wall measurement requires explicit diagnostics")
+    capture = None
     lr.subreaper()
     before = lr.children()
     holder = tempfile.mkdtemp(prefix="pelt-case.")
@@ -147,6 +154,7 @@ def run(shell, script, meta, timeout=10):
             argv += ["../s.sh"] + meta.get("args", "").split()
         if "stdin" in meta and meta.get("mode") != "stdin":
             data = meta["stdin"].replace("\\n", "\n").encode()
+        started = time.monotonic_ns() if measure_wall else None
         p = subprocess.Popen(argv, cwd=w, env=dict(ENV),
                              stdin=subprocess.PIPE if data is not None
                              else subprocess.DEVNULL,
@@ -154,7 +162,7 @@ def run(shell, script, meta, timeout=10):
                              preexec_fn=_default_signals)
         try:
             out, err = p.communicate(input=data, timeout=timeout)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
             # the case's whole tree, ended by pid (pelt#27): the shell, a
             # tracer and what it follows, every job and child below them
             ended = lr.end_tree(p.pid, before)
@@ -165,12 +173,38 @@ def run(shell, script, meta, timeout=10):
                     fh.close()
             LAST["ended"] = len(ended)
             lr.note(os.path.relpath(script, ROOT), ended)
+            if diagnostics is not None:
+                capture = (p.pid, p.returncode, exc.output or b"", exc.stderr or b"", True, len(ended),
+                           time.monotonic_ns() - started if measure_wall else None, argv)
             return None
         code = p.returncode if p.returncode >= 0 else 128 - p.returncode
         res = {"stdout": out, "exit": code, "stderr": bool(err), "err": err}
         m = LINE.search(err)
         res["line"] = int(m.group(1)) if m else 0
+        if diagnostics is not None:
+            wall = time.monotonic_ns() - started if measure_wall else None
+            res.update(raw_returncode=p.returncode, pid=p.pid, wall_ns=wall)
+            capture = (p.pid, p.returncode, out, err, False, 0, wall, argv)
         return res
     finally:
         lr.reap_adopted(before)
         shutil.rmtree(holder, ignore_errors=True)
+        if diagnostics is not None and capture is not None:
+            _capture_outcome(diagnostics, capture)
+
+
+def _capture_outcome(directory, capture):
+    """Optional evidence only; legacy callers keep their original return shape."""
+    pid, raw, out, err, timed_out, ended, wall, argv = capture
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=False)
+    result = {"pid": pid, "argv": argv, "raw_returncode": raw,
+              "exit": raw if raw >= 0 else 128 - raw,
+              "termination": "timeout" if timed_out else "signal" if raw < 0 else "exit",
+              "signal": -raw if raw < 0 else None, "timeout": timed_out,
+              "ended_on_timeout": ended, "cleanup": "lib_reap completed", "wall_ns": wall}
+    for name, data in (("stdout", out), ("stderr", err)):
+        (directory / (name + ".raw")).write_bytes(data)
+        result[name] = {"path": name + ".raw", "bytes": len(data),
+                        "sha256": hashlib.sha256(data).hexdigest()}
+    (directory / "outcome.json").write_text(json.dumps(result, indent=2) + "\n")
