@@ -165,6 +165,17 @@ raise SystemExit(7)
                     self.assertEqual((root / row["artifacts"] / "normal/stdout.raw").read_bytes(), b"replaced")
                     self.assertIn("probe includes observation writes", data["timing"])
 
+    def test_failed_publication_cannot_promote_an_old_valid_prefix(self):
+        lib = self.require()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "counter"
+            path.write_text("PREFIX 1 abc 41 0 0 1\n")
+            Path(str(path) + ".failed").write_text("preserved failed prefix")
+            counter = lib.read_counter(path, "abc", 41)
+            self.assertEqual(counter["state"], "invalid")
+            self.assertEqual(counter["reason"], "counter-write-failed")
+            self.assertEqual(Path(str(path) + ".failed").read_text(), "preserved failed prefix")
+
     def test_no_ordinary_source_or_pin_overlay(self):
         lib = self.require()
         with tempfile.TemporaryDirectory() as directory:
