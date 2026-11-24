@@ -55,6 +55,10 @@ def main():
         except (OSError, ValueError, KeyError) as exc:
             provenance_error = str(exc)
     proof = {key: manifest[key] for key in ("diff_sha256", "diff_files", "hunks")} if manifest else {"diff_sha256": None, "diff_files": [], "hunks": {}}
+    ordinary_path = Path(a.pelt).resolve()
+    ordinary_identity = {"path": str(ordinary_path), "sha256": lp.digest(ordinary_path.read_bytes()),
+                         "file_bytes": ordinary_path.stat().st_size}
+    probe_identity = {key: manifest.get(key) for key in ("source_commit", "source_src_tree", "probe_sha256", "producer_sha256", "tier", "wolf_sha256", "std_rev")} if manifest else None
     rows = []
     failed = False
     with tempfile.TemporaryDirectory(prefix="status-census-", dir=os.environ.get("TMPDIR")) as home:
@@ -68,7 +72,9 @@ def main():
         for index, (area, name, source) in enumerate(selected):
             label = area + "/" + name
             meta = {} if a.smoke or a.exec_fixture else lc.read_meta(source[:-3] + ".meta")
-            row = {"case": label, "probe_diff": proof, "script_sha256": lp.digest(Path(source).read_bytes())}
+            metadata_path = Path(source[:-3] + ".meta")
+            row = {"case": label, "probe_diff": proof, "script_sha256": lp.digest(Path(source).read_bytes()),
+                   "metadata": meta, "metadata_sha256": lp.digest(metadata_path.read_bytes()) if metadata_path.exists() else None}
             if meta.get("mode", "script") != "script" or "../sh" in Path(source).read_text():
                 row.update(observed=False, excluded=True, reason="outside-parent-script-counter-scope")
                 rows.append(row)
@@ -123,6 +129,7 @@ def main():
     total = sum(r["counter"]["total"] for r in valid)
     result = {"schema": 2, "policy": "report-only", "protocol": "legacy-final-marker-smoke" if legacy else "durable-parent-prefix",
               "scope": "observed parent-interpreter command events; no forked-child or reexecuted-shell aggregation",
+              "ordinary_identity": ordinary_identity, "probe_identity": probe_identity,
               "probe_diff": proof, "cases": rows, "observed_cases": len(valid), "selected_cases": len(rows),
               "excluded_cases": sum(bool(r.get("excluded")) for r in rows),
               "done": done, "total": total, "fraction": done / total if total else None,
