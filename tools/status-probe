@@ -37,7 +37,11 @@ def main():
         if args.tier == "release":
             command.append("--release")
         command += ["--no-cache", "--deny-warnings", str(output / "src/selfcheck.lu"), "-o", str(output / "probe")]
-        env = dict(os.environ, WOLF_STD=str(Path(args.std).resolve()))
+        env = dict(os.environ, WOLF_STD=str(Path(args.std).resolve()),
+                   WOLF_BIN=str(Path(args.wolf).resolve()), PELT_ROOT=str(source))
+        env.setdefault("LUPIN_BIN", str(Path(args.wolf).resolve().parent / "lupin"))
+        subprocess.run(["/bin/sh", "-c", '. "$PELT_ROOT/tools/lib-toolchain.sh"'],
+                       cwd=source, env=env, check=True)
         subprocess.run(command, cwd=source, env=env, check=True)
         manifest.update(tier=args.tier, probe_sha256=lp.digest((output / "probe").read_bytes()),
                         wolf_sha256=lp.digest(Path(args.wolf).read_bytes()),

@@ -121,6 +121,27 @@ def revision(root, suffix=""):
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def committed_source(root, original, commit, tree):
+    if commit is None:  # isolated source fixtures; the executable builder rejects these
+        return
+    if revision(root) != commit or revision(root, ":src") != tree:
+        raise ValueError("probe-source-commit-drift")
+    result = subprocess.run(["git", "-C", str(root), "ls-tree", "-r", "-z", commit, "--", "src"], check=True, capture_output=True)
+    blobs = {}
+    for entry in result.stdout.split(b"\0"):
+        if not entry:
+            continue
+        metadata, name = entry.split(b"\t", 1)
+        mode, kind, oid = metadata.decode().split()
+        if kind != "blob" or mode not in ("100644", "100755"):
+            raise ValueError("probe-source-not-regular")
+        blobs[name.decode()] = oid
+    actual = {name: hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+              for name, data in original.items()}
+    if actual != blobs:
+        raise ValueError("probe-source-not-committed")
+
+
 def generate(source, output):
     source, output = Path(source).resolve(), Path(output).resolve()
     if output == source or source in output.parents:
@@ -128,6 +149,8 @@ def generate(source, output):
     if output.exists():
         raise ValueError("generated-output-exists")
     original = files(source)
+    commit, tree = revision(source), revision(source, ":src")
+    committed_source(source, original, commit, tree)
     updated = overlay(original, SINK_ENABLED)  # validate every anchor before creating output
     changed, hunks, diff = differences(original, updated)
     if changed != ["src/sh/exec.lu", "src/sh/main.lu"] or hunks["src/sh/exec.lu"] != 2:
@@ -154,6 +177,7 @@ def verify(manifest_path):
     if manifest.get("schema") != 1 or type(manifest.get("sink_enabled")) is not bool:
         raise ValueError("invalid-probe-manifest")
     original = files(manifest["source_root"])
+    committed_source(manifest["source_root"], original, manifest["source_commit"], manifest["source_src_tree"])
     if {n: digest(b) for n, b in original.items()} != manifest["source_files"]:
         raise ValueError("probe-original-source-drift")
     expected = overlay(original, manifest["sink_enabled"])
