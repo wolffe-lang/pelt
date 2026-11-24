@@ -7,7 +7,7 @@ import re
 import shutil
 import subprocess
 
-SINK_ENABLED = True
+SINK_ENABLED = False
 TOTAL = "    if sh.count_routes {\n        sh.route_total += 1\n    }"
 STATUS = "            if sh.count_routes && r.status_route {\n                sh.route_status += 1\n            }"
 WRITER = r'''
