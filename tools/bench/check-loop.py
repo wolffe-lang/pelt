@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Check recorded counted-loop runs using total child CPU, never user alone.
+"""Check counted-loop records using total child CPU, never user alone.
 
-The short row is bounded against the pinned reference. The long row reports
-100,000 turns separately because removing startup changes the ratio; its
-reference must exceed 10 ms CPU so timer grain cannot dominate the result.
+The short row retains its reference bound. The 100,000-turn row also requires
+at least five percent paired CPU improvement against interleaved baseline runs.
 """
 import argparse
 import json
@@ -13,6 +12,8 @@ import statistics
 import sys
 
 SHORT_BOUND = 3.46
+LONG_BOUND = 4.13
+BASELINE_BOUND = 0.95
 MIN_RUNS = 31
 PARTICIPANTS = ("reference", "pelt", "reference-again")
 
@@ -32,6 +33,13 @@ def totals(rows):
     return result
 
 
+def participant(runs, count, name):
+    rows = [r for r in runs if r["variant"] == "counted" and r["count"] == count and r["participant"] == name]
+    if len(rows) < MIN_RUNS or len({r["repetition"] for r in rows}) != len(rows):
+        raise ValueError(f"{count} turns: insufficient or duplicate {name} runs")
+    return dict(zip((r["repetition"] for r in rows), totals(rows)))
+
+
 def check(directory, counts=(1000, 100000), emit=print):
     directory = Path(directory)
     meta = json.loads((directory / "meta.json").read_text())
@@ -41,33 +49,32 @@ def check(directory, counts=(1000, 100000), emit=print):
     failed = False
     for count in counts:
         row_name = "loop-counted-cpu" if count == 1000 else "loop-counted-long"
-        groups = {}
-        for name in PARTICIPANTS:
-            subset = [r for r in runs if r["variant"] == "counted" and r["count"] == count and r["participant"] == name]
-            if len(subset) < MIN_RUNS or len({r["repetition"] for r in subset}) != len(subset):
-                raise ValueError(f"{count} turns: insufficient or duplicate {name} runs")
-            groups[name] = totals(subset)
-        med = {name: statistics.median(values) for name, values in groups.items()}
+        groups = {name: participant(runs, count, name) for name in PARTICIPANTS}
+        med = {name: statistics.median(values.values()) for name, values in groups.items()}
         ratio = med["pelt"] / med["reference"]
         aa = med["reference-again"] / med["reference"]
-        if not 0.90 <= aa <= 1.10:
-            emit(f"FAIL {row_name} turns={count} reason=reference-noise cpu_aa={aa:.6f}")
-            failed = True
-        elif count == 100000 and med["reference"] < 10000:
-            emit(f"FAIL {row_name} turns={count} reason=reference-below-timer-floor")
-            failed = True
-        elif count == 1000 and ratio > SHORT_BOUND:
-            emit(f"FAIL {row_name} turns={count} cpu_ratio={ratio:.6f} bound={SHORT_BOUND:.2f}")
-            failed = True
-        else:
-            emit(f"PASS {row_name} turns={count} cpu_ratio={ratio:.6f} cpu_aa={aa:.6f}")
-        emit(f"MEASURE turns={count} reference_cpu_us={med['reference']:.3f} pelt_cpu_us={med['pelt']:.3f}")
+        paired = None
         old = [r for r in runs if r["variant"] == "counted" and r["count"] == count and r["participant"] == "baseline"]
-        if old:
-            if len(old) < MIN_RUNS:
-                raise ValueError("insufficient baseline runs")
-            previous = statistics.median(totals(old))
-            emit(f"COMPARE turns={count} baseline_cpu_ratio={previous / med['reference']:.6f} candidate_over_baseline={med['pelt'] / previous:.6f}")
+        if old or count == 100000:
+            previous = participant(runs, count, "baseline")
+            if previous.keys() != groups["pelt"].keys():
+                raise ValueError("baseline repetitions do not match candidate repetitions")
+            paired = statistics.median(groups["pelt"][rep] / cpu for rep, cpu in previous.items())
+            baseline = statistics.median(previous.values())
+            emit(f"COMPARE turns={count} baseline_cpu_ratio={baseline / med['reference']:.6f} candidate_over_baseline={med['pelt'] / baseline:.6f} paired_candidate_over_baseline={paired:.6f}")
+        reason = ""
+        if not 0.90 <= aa <= 1.10:
+            reason = "reference-noise"
+        elif count == 100000 and med["reference"] < 10000:
+            reason = "reference-below-timer-floor"
+        elif ratio > (SHORT_BOUND if count == 1000 else LONG_BOUND):
+            reason = "cpu-bound"
+        elif count == 100000 and paired > BASELINE_BOUND:
+            reason = "baseline-improvement"
+        bound = SHORT_BOUND if count == 1000 else LONG_BOUND
+        emit(f"{'FAIL' if reason else 'PASS'} {row_name} turns={count} cpu_ratio={ratio:.6f} bound={bound:.2f} cpu_aa={aa:.6f}" + (f" reason={reason}" if reason else ""))
+        failed |= bool(reason)
+        emit(f"MEASURE turns={count} reference_cpu_us={med['reference']:.3f} pelt_cpu_us={med['pelt']:.3f}")
     return not failed
 
 
