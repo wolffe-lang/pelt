@@ -27,7 +27,7 @@ class Contract(unittest.TestCase):
         lib = self.require()
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "source"
-            shutil.copytree(ROOT / "src", source / "src")
+            shutil.copytree(ROOT / "src", source / "src", ignore=shutil.ignore_patterns(".lu-cache"))
             path = source / "src/sh/exec.lu"
             old = "    if sh.count_routes {\n        sh.route_total += 1\n    }"
             self.assertEqual(path.read_text().count(old), 1)
@@ -36,6 +36,17 @@ class Contract(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "anchor-drift:counter-total"):
                 lib.generate(source, output)
             self.assertFalse((output / "probe.json").exists())
+            import subprocess
+            for command in (["git", "init", "-q", str(source)],
+                            ["git", "-C", str(source), "add", "src"],
+                            ["git", "-C", str(source), "-c", "user.name=Probe Test", "-c", "user.email=probe@example.invalid",
+                             "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-qm", "Move the counter anchor"]):
+                subprocess.run(command, check=True, capture_output=True)
+            result = subprocess.run([sys.executable, "-I", str(ROOT / "tools/status-probe"), "--source", str(source),
+                                     "--output", str(output), "--generate-only"], capture_output=True)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn(b"anchor-drift:counter-total", result.stderr)
+            self.assertFalse(output.exists())
 
     def test_exact_diff_and_tampering(self):
         lib = self.require()
@@ -95,6 +106,30 @@ class Contract(unittest.TestCase):
             self.assertEqual((home / "raw/stderr.raw").read_bytes(), b"diagnostic")
             self.assertEqual(captured["raw_returncode"], 7)
             self.assertIsNone(detail["wall_ns"])
+
+    def test_timeout_retains_partial_raw_output_without_running_a_signal_fixture(self):
+        from unittest import mock
+        import subprocess
+        spec = importlib.util.spec_from_file_location("timeout_capture_contract", ROOT / "tools/lib_cases.py")
+        cases = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cases)
+        child = mock.Mock(pid=41, returncode=-9)
+        child.communicate.side_effect = subprocess.TimeoutExpired("fixture", 10, output=b"partial-out", stderr=b"partial-err")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            script = root / "case.sh"
+            script.write_text("# mocked timeout control\n")
+            with mock.patch.object(cases.lr, "subreaper"), mock.patch.object(cases.lr, "children", return_value=[]), \
+                 mock.patch.object(cases.lr, "end_tree", return_value=[41]), mock.patch.object(cases.lr, "reap_adopted"), \
+                 mock.patch.object(cases.lr, "note"), mock.patch.object(cases.subprocess, "Popen", return_value=child):
+                self.assertIsNone(cases.run([sys.executable], str(script), {}, diagnostics=root / "raw"))
+            data = json.loads((root / "raw/outcome.json").read_text())
+            self.assertEqual(data["termination"], "timeout")
+            self.assertEqual(data["raw_returncode"], -9)
+            self.assertEqual((root / "raw/stdout.raw").read_bytes(), b"partial-out")
+            self.assertEqual((root / "raw/stderr.raw").read_bytes(), b"partial-err")
+            self.assertEqual(data["ended_on_timeout"], 1)
+            child.kill.assert_called_once()
 
     def test_signal_exit_timeout_controls_are_distinct(self):
         lib = self.require()
