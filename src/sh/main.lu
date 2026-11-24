@@ -230,6 +230,45 @@ fn run_source(
 ) -> int {
     var sh = new_sh(name)
     import_env(mut sh)
+    run_source_state(mut sh, src, rest, opts, then_stdin, posix_mode, invoked_sh, echo)
+}
+
+/// Run the same executor with an observable parent-shell route census.
+/// Only the separate selfcheck driver calls this; pelt has no probe flag.
+pub fn status_probe(args: List[str]) -> int {
+    if args.len == 0 {
+        return 2
+    }
+    let name = args[0]
+    let bytes = fs_read_bytes(name) else |_| { return 127 }
+    let src = str_from_utf8(bytes) else |_| { return 2 }
+    var sh = new_sh(name)
+    import_env(mut sh)
+    sh.count_routes = true
+    let st = run_source_state(
+        mut sh,
+        src,
+        args[1..args.len],
+        List[str](),
+        false,
+        false,
+        false,
+        true,
+    )
+    eprint("ROUTE corpus done={sh.route_status} total={sh.route_total}")
+    st
+}
+
+fn run_source_state(
+    mut sh: Sh,
+    src: str,
+    rest: List[str],
+    opts: List[str],
+    then_stdin: bool,
+    posix_mode: bool,
+    invoked_sh: bool,
+    echo: bool,
+) -> int {
     sh.posix_mode = posix_mode
     sh.invoked_sh = invoked_sh
     sh.pos = copy rest

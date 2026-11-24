@@ -12,6 +12,10 @@
 use sh
 
 fn main() -> int {
+    let args = env_args()
+    if args.len > 0 && args[0] == "--status-corpus" {
+        return sh.status_probe(args[1..args.len])
+    }
     var bad = sh.self_test()
     let ch = channel[int](1)
     var line = ""
