@@ -92,7 +92,7 @@ on:
     # Nightly, the all tier, on trunk: every leg, the macOS and aarch64
     # legs a pull request's run leaves out and macOS's release leg the
     # merge leaves out (tl30).
-    - cron: "29 8 * * *"
+    - cron: "29 22 * * *"
   workflow_dispatch:
     inputs:
       tier:
