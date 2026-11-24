@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""Durable corpus observation contracts; finite fixtures, no performance take."""
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parent.parent
+SPEC = importlib.util.spec_from_file_location("status_probe_contract", ROOT / "tools/lib_status_probe.py")
+try:
+    LIB = importlib.util.module_from_spec(SPEC)
+    SPEC.loader.exec_module(LIB)
+    LOAD_ERROR = None
+except (OSError, ImportError) as exc:
+    LIB, LOAD_ERROR = None, str(exc)
+
+
+class Contract(unittest.TestCase):
+    def require(self):
+        self.assertIsNotNone(LIB, "durable diagnostics unavailable: " + str(LOAD_ERROR))
+        return LIB
+
+    def test_anchor_drift_stops_builder_by_name(self):
+        lib = self.require()
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source"
+            shutil.copytree(ROOT / "src", source / "src")
+            path = source / "src/sh/exec.lu"
+            old = "    if sh.count_routes {\n        sh.route_total += 1\n    }"
+            self.assertEqual(path.read_text().count(old), 1)
+            path.write_text(path.read_text().replace(old, "    if sh.count_routes {\n    }\n    sh.route_total += 1"))
+            output = Path(directory) / "generated"
+            with self.assertRaisesRegex(ValueError, "anchor-drift:counter-total"):
+                lib.generate(source, output)
+            self.assertFalse((output / "probe.json").exists())
+
+    def test_exact_diff_and_tampering(self):
+        lib = self.require()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "generated"
+            manifest = lib.generate(ROOT, output)
+            self.assertEqual(manifest["diff_files"], ["src/sh/exec.lu", "src/sh/main.lu"])
+            self.assertEqual(manifest["hunks"]["src/sh/exec.lu"], 2)
+            self.assertGreater(manifest["hunks"]["src/sh/main.lu"], 0)
+            self.assertTrue(lib.verify(output / "probe.json")["diff_sha256"])
+            path = output / "src/sh/arith.lu"
+            path.write_text(path.read_text() + "\n// undeclared edit\n")
+            with self.assertRaisesRegex(ValueError, "probe-source-drift"):
+                lib.verify(output / "probe.json")
+
+    def test_missing_counter_and_stdout_mismatch_are_independent(self):
+        lib = self.require()
+        normal = {"exit": 7, "stdout": b"replaced", "err": b"", "raw_returncode": 7}
+        probe = dict(normal)
+        result = lib.compare(normal, probe, {"state": "missing", "reason": "counter-missing"})
+        self.assertTrue(result["behavior"]["match"])
+        self.assertEqual(result["counter"]["state"], "missing")
+        self.assertIn("counter-missing", result["failures"])
+        probe["stdout"] = b"wrong"
+        result = lib.compare(normal, probe, {"state": "missing", "reason": "counter-missing"})
+        self.assertFalse(result["behavior"]["match"])
+        self.assertIn("stdout", result["behavior"]["different_fields"])
+        self.assertIn("behavior-mismatch", result["failures"])
+        self.assertIn("counter-missing", result["failures"])
+
+    def test_signal_exit_timeout_controls_are_distinct(self):
+        lib = self.require()
+        normal = {"exit": 143, "stdout": b"", "err": b"", "raw_returncode": -15}
+        probe = dict(normal, raw_returncode=143)
+        result = lib.compare(normal, probe, {"state": "valid", "done": 0, "total": 1})
+        self.assertIn("termination-mismatch", result["failures"])
+        result = lib.compare(None, probe, {"state": "missing", "reason": "counter-missing"})
+        self.assertIn("normal-timeout", result["failures"])
+        self.assertIsNone(result["behavior"]["match"])
+
+    def test_counter_frames_and_four_corruption_controls(self):
+        lib = self.require()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "counter"
+            def frame(total, done, pid=41):
+                return f"PREFIX 1 abc {pid} {total} {done} {1+total+done}\n"
+            good = frame(0, 0) + frame(1, 0) + frame(1, 1) + frame(2, 1)
+            path.write_text(good)
+            got = lib.read_counter(path, "abc", 41)
+            self.assertEqual((got["done"], got["total"], got["data_write_calls"]), (1, 2, 4))
+            for name, text in [("truncated", good[:-1]), ("duplicate", good + frame(2, 1)),
+                               ("child-prefix", good + frame(3, 1, 42)),
+                               ("invalid-counts", good + frame(2, 3))]:
+                with self.subTest(control=name):
+                    path.write_text(text)
+                    self.assertEqual(lib.read_counter(path, "abc", 41)["state"], "invalid")
+
+    def test_no_ordinary_source_or_pin_overlay(self):
+        lib = self.require()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "generated"
+            lib.generate(ROOT, output)
+            self.assertEqual((output / "src/sh/state.lu").read_bytes(), (ROOT / "src/sh/state.lu").read_bytes())
+            self.assertEqual((output / "src/pelt.lu").read_bytes(), (ROOT / "src/pelt.lu").read_bytes())
+            self.assertNotIn("fs_sync", (output / "src/sh/main.lu").read_text().split("fn corpus_counter_config", 1)[1])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
