@@ -322,7 +322,13 @@ bounds are unchanged.
 
 Unlabelled PRs run one cheap job. The `ci` or `full-matrix` label runs the
 full CI set; trunk pushes run it only on cross-cutting paths. The nightly
-still re-runs every host/compiler leg and opens an issue when red. The typed sessions are a job
+still re-runs every host/compiler leg and opens an issue when red, except at a
+commit whose `tier all` is already green from the last 144 hours: that night
+runs nothing, its last job is named `tier skipped`, and the run's page names
+the green run that covers it. A skipped night is green but tested nothing, so
+the last night that tested trunk is the last `tier all` check, not the last
+green scheduled run; a commit that does not move is still tested in full at
+least every seventh night. The typed sessions are a job
 of their own beside the gauntlet's, on each host and compiler tier. Each lane of work leaves a
 record under `notes/` with its prediction, its measurements and what it
 left undone.
