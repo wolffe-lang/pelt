@@ -1324,7 +1324,7 @@ fn readonly_status(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
 }
 
 fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
-    let direct = readonly_status(sh, a, n, nowait, bg)
+    let direct = slow()
     if direct.kind != R_SLOW {
         return direct
     }
