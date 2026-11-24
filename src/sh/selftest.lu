@@ -757,9 +757,131 @@ fn want_job_slots(mut bad: List[str]) {
     }
 }
 
+/// The route's result is the counter: no timing or production instrumentation.
+fn want_status_routes(mut bad: List[str]) {
+    let names = [
+        "colon",
+        "true",
+        "false",
+        "numeric",
+        "string",
+        "quoted",
+        "readonly",
+        "unquoted",
+        "all-positionals",
+        "star-positionals",
+        "default",
+        "assign-default",
+        "arithmetic",
+        "substitution",
+        "tilde",
+        "glob",
+        "escaped",
+        "quote-concat",
+        "special",
+        "lineno",
+        "nounset",
+        "integer-error",
+        "file-test",
+        "prefix",
+        "redirection",
+        "function",
+        "trace",
+        "background",
+        "stage",
+    ]
+    let scripts = [
+        ":",
+        "true literal",
+        "false literal",
+        "test 3 -lt 4",
+        "test a != b",
+        "[ \"$x\" -eq 3 ]",
+        "test \"${{x}}\" -eq 3",
+        "test $x -eq 3",
+        "test \"$@\" = x",
+        "test \"$*\" = x",
+        "test \"${{x-3}}\" -eq 3",
+        "test \"${{y:=3}}\" -eq 3",
+        "test \"$((x=x+1))\" -eq 4",
+        "test \"$(printf x)\" = x",
+        "test ~ = x",
+        "test a* = a",
+        "test a\\ b = a",
+        "test \"$x\"a = 3a",
+        "test \"$?\" = 0",
+        "test \"$LINENO\" = 1",
+        "test \"$missing\" = x",
+        "test bad -eq 1",
+        "test a -nt b",
+        "x=1 :",
+        ": > f",
+        "true",
+        "true",
+        "true",
+        "true",
+    ]
+    var i = 0
+    while i < names.len {
+        var sh = new_sh("selftest")
+        sh.vals["x"] = "3"
+        sh.ronly["x"] = true
+        if names[i] == "nounset" {
+            sh.opt_u = true
+        }
+        if names[i] == "function" {
+            sh.funcs["true"] = 0
+        }
+        if names[i] == "trace" {
+            sh.opt_x = true
+        }
+        var a = new_ast()
+        var p = new_parser(scripts[i], 1)
+        let _root = parse_complete(mut p, mut a)
+        var n = 0
+        while n < a.nodes.len && a.nodes[n].kind != K_SIMPLE {
+            n += 1
+        }
+        if p.err.len > 0 || n >= a.nodes.len {
+            (mut bad).push("status route {names[i]} did not parse")
+            i += 1
+            continue
+        }
+        let stage = names[i] == "stage"
+        let bg = names[i] == "background"
+        let r = copy region turn {
+            readonly_status(sh, a, n, stage, bg)
+        }
+        let done = if r.kind == R_DONE then 1 else 0
+        let fallback = if r.kind == R_SLOW then 1 else 0
+        let want = if i < 7 then 1 else 0
+        if done != want ||
+            done + fallback != 1 ||
+            r.status_route != (done == 1) ||
+            done == 1 && r.status != (if names[i] == "false" then 1 else 0) {
+            (mut bad).push("status route {names[i]} done={done} fallback={fallback}")
+        }
+        print("ROUTE status shape={names[i]} done={done} fallback={fallback}")
+        // A descriptor-preserving redirection forces the ordinary route;
+        // the eligibility probe reads only its presence, not its contents.
+        (mut a.nodes[n].redirs).push(0)
+        let general = copy region turn {
+            readonly_status(sh, a, n, false, false)
+        }
+        let gd = if general.kind == R_DONE then 1 else 0
+        let gf = if general.kind == R_SLOW then 1 else 0
+        if gd != 0 || gf != 1 {
+            (mut bad).push("status general route {names[i]} did not fall back")
+        }
+        print("ROUTE status-general shape={names[i]} done={gd} fallback={gf}")
+        i += 1
+    }
+}
+
 /// Table-check failures; empty when all pass.
 pub fn self_test() -> List[str] {
     var bad = List[str]()
+    want_status_routes(mut bad)
     want_small_fixes(mut bad)
     want_job_slots(mut bad)
     want_colour(mut bad)
