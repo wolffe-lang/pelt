@@ -9,7 +9,8 @@
 # issue with that title gets a comment naming this run; otherwise one is
 # opened with the `nightly-red` label (made here if the repository lacks it).
 # A week of red nights is one issue with seven comments; closing it by hand
-# once a nightly is green again is what resets it.
+# once a nightly is green again is what resets it; a `tier skipped` night,
+# which tested nothing, is not a green one.
 #
 # Everything it writes is public. Its test runs it against a stand-in `gh`
 # (no open issue, one open issue, a label that already exists) and refuses an
@@ -19,7 +20,7 @@ set -euo pipefail
 
 label=nightly-red
 title="nightly red: $WORKFLOW on trunk"
-body=$(printf 'The scheduled run of `%s` on trunk is red: %s\n\nIt is to be looked at before the next merge. A later red night comments here; close this issue once a nightly is green again.\n' "$WORKFLOW" "$RUN_URL")
+body=$(printf 'The scheduled run of `%s` on trunk is red: %s\n\nIt is to be looked at before the next merge. A later red night comments here; close this issue once a nightly is green again (a `tier skipped` night is not one).\n' "$WORKFLOW" "$RUN_URL")
 
 # The label may exist already: --force keeps its description current, and a
 # refusal is no failure.
