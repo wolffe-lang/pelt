@@ -39,7 +39,7 @@ def main():
     if output.exists() or artifacts.exists():
         p.error("refusing to overwrite census evidence")
     output.parent.mkdir(parents=True, exist_ok=True)
-    artifacts.mkdir()
+    artifacts.mkdir(mode=0o700)
     legacy = a.smoke and not a.probe_manifest
     manifest = None
     provenance_error = None
@@ -75,7 +75,7 @@ def main():
                 print("SKIP status-corpus case=" + label + " reason=" + row["reason"], flush=True)
                 continue
             case = artifacts / f"{index:04d}"
-            case.mkdir()
+            case.mkdir(mode=0o700)
             row["artifacts"] = str(case.relative_to(output.parent))
             try:
                 if provenance_error:
@@ -84,8 +84,9 @@ def main():
                     lp.verify(a.probe_manifest)  # a row cannot use a drifted generated tree/diff
                 nonce = secrets.token_hex(16)
                 sink = case / "counter"
-                sink.write_bytes(b"")
-                Path(str(sink) + ".owner").write_bytes(b"")
+                for path in (sink, Path(str(sink) + ".owner")):
+                    fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+                    os.close(fd)
                 ordinary = lc.run([str(Path(a.pelt).resolve())], source, meta,
                                   diagnostics=case / "normal", measure_wall=a.measure_wall)
                 command = [str(Path(a.selfcheck).resolve()), "--status-corpus"]
