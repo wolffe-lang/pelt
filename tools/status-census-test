@@ -113,6 +113,48 @@ class Contract(unittest.TestCase):
                     path.write_text(text)
                     self.assertEqual(lib.read_counter(path, "abc", 41)["state"], "invalid")
 
+    def test_census_cli_keeps_independent_classes_and_diff_digest(self):
+        lib = self.require()
+        import subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            generated = root / "generated"
+            manifest = lib.generate(ROOT, generated)
+            normal = root / "normal"
+            normal.write_text("#!" + sys.executable + "\nimport os\nos.write(1,b'replaced')\nraise SystemExit(7)\n")
+            normal.chmod(0o755)
+            body = '''import os,sys
+from pathlib import Path
+args=sys.argv[1:]
+path=Path(args[args.index('--counter-sink')+1]);nonce=args[args.index('--counter-sink')+2]
+frames=''.join(f'PREFIX 1 {nonce} {os.getpid()} {t} {d} {1+t+d}\\n' for t,d in ((0,0),(1,0),(1,1),(2,1)))
+MODE
+os.write(1,OUTPUT)
+raise SystemExit(7)
+'''
+            for name, action, emitted, expected in (("good", "path.write_text(frames)", "b'replaced'", []),
+                    ("missing", "pass", "b'replaced'", ["counter-missing"]),
+                    ("both", "pass", "b'wrong'", ["counter-missing", "behavior-mismatch"]),
+                    ("malformed", "path.write_text(frames[:-1])", "b'replaced'", ["counter-invalid"])):
+                with self.subTest(control=name):
+                    probe = generated / "probe"
+                    probe.write_text("#!" + sys.executable + "\n" + body.replace("MODE", action).replace("OUTPUT", emitted))
+                    probe.chmod(0o755)
+                    manifest["probe_sha256"] = lib.digest(probe.read_bytes())
+                    (generated / "probe.json").write_text(json.dumps(manifest))
+                    output = root / (name + ".json")
+                    result = subprocess.run([sys.executable, "-I", str(ROOT / "tools/status-census"), "--pelt", str(normal),
+                        "--selfcheck", str(probe), "--probe-manifest", str(generated / "probe.json"),
+                        "--exec-fixture", "--output", str(output)], capture_output=True)
+                    self.assertEqual(result.returncode, int(bool(expected)), result.stderr.decode())
+                    data = json.loads(output.read_text()); row = data["cases"][0]
+                    self.assertEqual(row["probe_diff"]["diff_sha256"], manifest["diff_sha256"])
+                    self.assertEqual(set(row["failures"]), set(expected))
+                    self.assertEqual(row["case"], "probe/exec-prefix")
+                    self.assertIsNone(row["probe"]["wall_ns"])
+                    self.assertEqual((root / row["artifacts"] / "normal/stdout.raw").read_bytes(), b"replaced")
+                    self.assertIn("probe includes observation writes", data["timing"])
+
     def test_no_ordinary_source_or_pin_overlay(self):
         lib = self.require()
         with tempfile.TemporaryDirectory() as directory:
