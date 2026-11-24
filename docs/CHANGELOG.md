@@ -6,6 +6,17 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Corpus diagnostics keep counter loss separate from shell behavior.** An
+  isolated generated probe writes parent-counter prefixes to an externally
+  owned case file, including before successful exec or fatal signal death.
+  Its complete generated diff, file names, hunk counts and digest accompany
+  the record; moved anchors and undeclared edits are refused. Ordinary and
+  probe stdout, stderr and termination outcomes survive fixture cleanup.
+  Counter absence, malformed data, mismatches and timeouts have distinct
+  reasons. Observation remains report-only, with the existing exclusions,
+  no child aggregation and probe wall time never labelled ordinary pelt
+  performance. The ordinary interpreter sources and toolchain are unchanged.
+
 - **Loop ratio bounds gate controlled pool records only.** The long bound
   is 3.00 times the reference CPU; short 3.46, paired improvement, reference
   A/A and timer-floor requirements are unchanged. The checker reports by
