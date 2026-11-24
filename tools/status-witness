@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Differential status-builtin probes and observable table-test route counters."""
+import argparse
+from pathlib import Path
+import os
+import re
+import subprocess
+import tempfile
+
+SHAPES = {
+    "colon": True, "true": True, "false": True, "numeric": True,
+    "string": True, "quoted": True, "readonly": True,
+    "unquoted": False, "all-positionals": False, "star-positionals": False,
+    "default": False, "assign-default": False, "arithmetic": False,
+    "substitution": False, "tilde": False, "glob": False, "escaped": False,
+    "quote-concat": False, "special": False, "lineno": False,
+    "nounset": False, "integer-error": False, "file-test": False,
+    "prefix": False, "redirection": False, "function": False,
+    "trace": False, "background": False, "stage": False,
+}
+
+
+def route_counters(text):
+    found = {m[0]: (int(m[1]), int(m[2])) for m in re.findall(
+        r"ROUTE status shape=([a-z-]+) done=(\d+) fallback=(\d+)", text)}
+    return all(found.get(name) == ((1, 0) if done else (0, 1)) for name, done in SHAPES.items())
+
+
+def cases():
+    for forced in (False, True):
+        suffix = " 0<&0" if forced else ""
+        def cmd(s):
+            return s + suffix
+        def row(name, text):
+            return name + ("-general" if forced else "-eligible"), text
+        for name in (":", "true", "false", "test"):
+            invocation = name + (" 1 -eq 1" if name == "test" else "")
+            call = cmd(invocation)
+            loop = "i=0; while [ \"$i\" -lt 2 ]; do " + call + "; printf 'st:%s\\n' $?; i=$((i+1)); done"
+            yield row("loop-" + name, loop + "; printf 'last:%s\\n' $?")
+            definition = name + "() { printf 'function\\n'; return 7; }"
+            for when in ("before", "after"):
+                if name == ":":
+                    # A special builtin is not a valid POSIX function name.
+                    text = (loop + "; " if when == "after" else "") + "eval '" + definition + "'; printf 'definition:%s\\n' $?"
+                else:
+                    text = "run() { " + loop + "; }; " + (definition + "; run" if when == "before" else "run; " + definition + "; run")
+                yield row("function-" + name + "-" + when, text)
+            for when in ("before", "after"):
+                # eval parses the use after alias definition, rather than testing parser read-ahead.
+                alias = "alias " + name + "='printf alias; true'\n"
+                use = "eval '" + loop + "'; printf 'alias-status:%s\\n' $?"
+                yield row("alias-" + name + "-" + when, (loop + ";\n" if when == "after" else "") + alias + use)
+            yield row("redirect-" + name, cmd(invocation + " > f") + "; printf 'st:%s\\n' $?; test -f f; printf 'file:%s\\n' $?")
+            yield row("dup-" + name, cmd(invocation + " 2>&1") + "; printf 'st:%s\\n' $?")
+            yield row("bad-redirect-" + name, cmd(invocation + " > missing/file") + "; printf 'st:%s\\n' $?")
+            yield row("prefix-" + name, "unset x; " + cmd("x=1 " + invocation) + "; printf 'st:%s x:%s\\n' $? \"${x-unset}\"")
+            yield row("negation-" + name, "! " + call + "; printf 'st:%s\\n' $?")
+            yield row("errexit-" + name, "set -e; if " + call + "; then printf yes; else printf no; fi; printf ':alive:%s\\n' $?")
+            yield row("errexit-exit-" + name, "trap 'printf \"exit:%s\\n\" \"$?\"' EXIT; set -e; " + call + "; printf survived")
+            yield row("trace-" + name, "PS4='+ '; set -x; " + call + "; printf 'st:%s\\n' $?; set +x")
+            yield row("exit-trap-" + name, "trap 'printf \"exit:%s\\n\" \"$?\"' EXIT; " + call + "; printf 'st:%s\\n' $?")
+        extra = {
+            "readonly": "readonly x=3; @test \"$x\" -eq 3@; printf 'st:%s x:%s\\n' $? \"$x\"",
+            "nounset": "set -u; @test \"$missing\" = x@; printf survived",
+            "unquoted": "x='a b'; @test $x = a@; printf 'st:%s\\n' $?",
+            "default": "unset x; @test \"${x-3}\" -eq 3@; printf 'st:%s\\n' $?",
+            "assign-default": "unset x; @test \"${x:=3}\" -eq 3@; printf 'st:%s counter:%s\\n' $? \"$x\"",
+            "arithmetic": "n=0; @test \"$((n=n+1))\" -eq 1@; printf 'st:%s counter:%s\\n' $? \"$n\"",
+            "substitution": "n=0; @test \"$(printf x; printf tick >> counter)\" = x@; printf 'st:%s counter:' $?; cat counter",
+            "all-positionals": "set -- a b; @test \"$@\"@; printf 'st:%s\\n' $?",
+            "empty-positionals": "set --; @test \"$@\"@; printf 'st:%s\\n' $?",
+            "star-positionals": "IFS=:; set -- a b; @test \"$*\" = a:b@; printf 'st:%s\\n' $?",
+            "glob": "touch aa ab; @test a* = aa@; printf 'st:%s\\n' $?",
+            "quote-concat": "x=a; @test \"$x\"b = ab@; printf 'st:%s\\n' $?",
+            "integer-error": "@test bad -eq 1@; printf 'st:%s\\n' $?",
+            "overflow": "@test 999999999999999999999999999 -eq 1@; printf 'st:%s\\n' $?",
+            "signed": "x=' +03 '; @test \"$x\" -eq 3@; printf 'st:%s\\n' $?",
+            "empty-operand": "x=; @test \"$x\" = \"$x\"@; printf 'st:%s\\n' $?",
+            "bracket-error": "@[ 1 -eq 1@; printf 'st:%s\\n' $?",
+        }
+        for name, text in extra.items():
+            text = re.sub(r"@((?:(?:\$@)|[^@])+)@", lambda m: cmd(m[1]), text)
+            yield row(name, text)
+        for signal in ("ERR", "DEBUG"):
+            yield row("trap-" + signal, "if (trap ':' " + signal + ") 2>/dev/null; then printf supported; else printf unsupported; fi; " + cmd("false") + "; printf 'st:%s\\n' $?")
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--selfcheck", required=True)
+    p.add_argument("--pelt")
+    p.add_argument("--reference", default="/bin/dash")
+    a = p.parse_args()
+    checked = subprocess.run([str(Path(a.selfcheck).resolve())], capture_output=True, text=True, timeout=60)
+    if checked.returncode or not route_counters(checked.stdout):
+        print("FAIL readonly-status-routes reason=missing-or-wrong-route-counters")
+        print(checked.stdout, end="")
+        print(checked.stderr, end="")
+        return 1
+    print(checked.stdout, end="")
+    print("PASS readonly-status-routes")
+    if not a.pelt:
+        return 0
+    failed = 0
+    for name, script in cases():
+        results = []
+        for binary in (a.reference, a.pelt):
+            with tempfile.TemporaryDirectory(prefix="status-witness-", dir=os.environ.get("TMPDIR")) as tmp:
+                env = {"PATH": "/usr/bin:/bin", "HOME": tmp, "SHELL": "/bin/sh", "LC_ALL": "C", "TZ": "UTC"}
+                got = subprocess.run([str(Path(binary).resolve()), "-c", script], env=env, cwd=tmp, capture_output=True, timeout=10)
+                # Like difftest: diagnostic presence, not implementation-specific wording.
+                results.append((got.returncode, got.stdout, bool(got.stderr)))
+        ok = results[0] == results[1]
+        failed += not ok
+        print(("PASS" if ok else "FAIL") + " status-builtin-" + name)
+        if not ok:
+            print(repr(results))
+    return int(bool(failed))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
