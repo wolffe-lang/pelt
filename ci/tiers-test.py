@@ -65,6 +65,12 @@ ci/tiers-test.py, tl21, cut to pelt). python3, git and bash only.
       asks it before it plans, with read-only permissions, and only the
       plan step reads the answer (S6). The nightly's issue says a
       `tier skipped` night is not a green one (S7).
+  T12 the plan job runs tools/status-census-test, the status census's
+      contracts (stdlib, about two seconds, nothing built), in a step of its
+      own with the same gate as the proof chunk step, after it and before
+      the plan. The check is shown to say no to a plan job without the step,
+      to one whose step lacks the gate, and to one that runs it after the
+      plan.
 
 Exit 0 when every check passes, 1 otherwise.
 """
@@ -863,6 +869,47 @@ said_ = ["\n".join(nightly_red(existing=e)[1]) for e in ("", "41")]
 say("issue create" in said_[0] and "issue comment 41" in said_[1]
     and all("close this issue once a nightly is green again (a `tier skipped` night is not one)" in t for t in said_),
     "T11 S7 the nightly's issue, opened or commented, says to close it once a nightly is green again, and that a tier skipped night is not one")
+
+# T12 the status census's contracts run in CI: the plan job runs tools/status-census-test, gated as the proof chunk
+# step is, after it and before the plan. The test needs no build (a stdlib unittest over fixtures), so the plan job's
+# runner is enough, and a broken contract stops every run before any long job starts.
+CENSUS_STEP = ("      - name: the status census contracts (tools/status-census-test)\n%s"
+               "        run: python3 -I tools/status-census-test\n")
+
+
+def census_problems(plan_block):
+    """What keeps the plan job from running the status census test as T12 asks: [] when nothing does."""
+    chunk = re.search(r"^      - name: proof chunk controller contracts\n(        if: .*\n)?        run: python3 tools/shape-rss-rig-test\n",
+                      plan_block, re.M)
+    gate = chunk.group(1) if chunk and chunk.group(1) else None
+    if gate is None:
+        return ["the proof chunk step or its gate is not where T12 reads it"]
+    want = CENSUS_STEP % gate
+    if want not in plan_block:
+        bare = re.search(r"^      - name: the status census contracts \(tools/status-census-test\)\n", plan_block, re.M)
+        return ["the step is there without the proof chunk step's gate" if bare else "no step runs python3 -I tools/status-census-test"]
+    at = plan_block.index(want)
+    found = []
+    if at < chunk.start():
+        found.append("it runs before the proof chunk step")
+    plan_at = plan_block.find("      - name: the plan\n")
+    if plan_at < 0 or at > plan_at:
+        found.append("it runs after the plan")
+    return found
+
+
+_gate = (re.search(r"^      - name: proof chunk controller contracts\n(        if: .*\n)", blocks["plan"], re.M) or [None, "        if: ${{ x }}\n"])[1]
+_chunk = "      - name: proof chunk controller contracts\n%s        run: python3 tools/shape-rss-rig-test\n" % _gate
+_plan = "      - name: the plan\n        run: plan\n"
+census_says_no = (not census_problems(_chunk + CENSUS_STEP % _gate + _plan)
+                  and census_problems(_chunk + _plan)
+                  and census_problems(_chunk + CENSUS_STEP % "" + _plan)
+                  and census_problems(_chunk + _plan + CENSUS_STEP % _gate))
+census = census_problems(blocks["plan"])
+say(not census and census_says_no,
+    "T12 the plan job runs the status census's contracts (python3 -I tools/status-census-test), gated as the proof chunk "
+    "step, after it and before the plan%s%s" % ((": " + "; ".join(census)) if census else "",
+                                              "" if census_says_no else "; the check does not say no to a plan job without it"))
 
 print("tiers-test: %s" % ("PASS" if fails == 0 else "FAIL (%d)" % fails))
 sys.exit(1 if fails else 0)
