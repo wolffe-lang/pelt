@@ -249,6 +249,14 @@ jobs:
         if: matrix.tier == 'native'
         run: tools/clause-census
 
+      # pelt#69: tests/diff/ORACLE names dash and bash by exact package and
+      # program digest; tools/oracle-record and tools/session-record refuse
+      # any other (stub programs, no network, no container, no build).
+      - name: the oracle recorders refuse any other dash or bash
+        # Once a host, on the native leg: it needs no build and no tier.
+        if: matrix.tier == 'native'
+        run: python3 tools/oracle-test
+
       # sh11: the line editor's width table is what tools/gen-width
       # makes from Unicode 16.0.0. A runner whose Python carries another
       # Unicode version says so here rather than in a session.
