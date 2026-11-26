@@ -61,7 +61,7 @@ fn want_split(mut bad: List[str], ifs_value: str, value: str, want: str) {
     sh.vals["IFS"] = ifs_value
     var m = buf()
     ustr(mut m, value)
-    let got = joined(split_marked(sh, text(m)))
+    let got = joined(split_marked(ifs_in(sh.vals), text(m)))
     if got != want {
         (mut bad).push("split({value}) on IFS {escaped(ifs_value)} = {got}, want {want}")
     }

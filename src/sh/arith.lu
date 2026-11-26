@@ -349,14 +349,15 @@ fn parse_const(s: str) -> int ! {parse} {
     n
 }
 
-fn var_value(sh: Sh, mut r: Ar, name: str) -> int {
-    if !has_var(sh, name) {
-        if sh.opt_u && r.skip == 0 {
+/// A variable's value as a number. It reads only the variables and `-u`:
+/// a whole `Sh` taken by value is copied at every call.
+fn var_value(vals: Map[str, str], opt_u: bool, mut r: Ar, name: str) -> int {
+    let v = vals[name] else {
+        if opt_u && r.skip == 0 {
             ar_err(mut r, "{name}: parameter not set")
         }
         return 0
     }
-    let v = value_of(sh, name)
     if v.len == 0 {
         return 0
     }
@@ -406,7 +407,7 @@ fn assign_expr(mut sh: Sh, mut r: Ar) -> int {
             }
             var v = rhs
             if k != AT_ASSIGN {
-                let cur = var_value(sh, mut r, name)
+                let cur = var_value(sh.vals, sh.opt_u, mut r, name)
                 v = binop(mut r, k - AT_SET, cur, rhs)
             }
             if r.skip == 0 && r.err.len == 0 {
@@ -601,7 +602,7 @@ fn primary(mut sh: Sh, mut r: Ar) -> int {
     }
     if k == AT_NAME {
         let name = read_name(mut r)
-        return var_value(sh, mut r, name)
+        return var_value(sh.vals, sh.opt_u, mut r, name)
     }
     let c = ch(r.s, r.i)
     ar_err(mut r, "unexpected '{c}' in \"{r.s}\"")

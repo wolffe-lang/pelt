@@ -176,7 +176,7 @@ fn pattern_of(m: str) -> str {
 // ------------------------------------------------------- finding the end
 
 /// The index just past the `"` that closes the double quote at `i`.
-fn dq_end(sh: Sh, w: str, i: int) -> int {
+fn dq_end(w: str, i: int) -> int {
     var j = i + 1
     while j < w.len {
         let c = ch(w, j)
@@ -409,7 +409,7 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
     let dq = flags & X_DQ != 0
     var i = from
     if !dq && flags & X_TILDE != 0 && ch(w, from) == '~' {
-        i = tilde(sh, w, from, to, flags, mut o)
+        i = tilde(sh.vals, w, from, to, flags, mut o)
     }
     while i < to {
         if sh.flow != F_NONE {
@@ -471,7 +471,7 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
             continue
         }
         if c == '"' {
-            let e = dq_end(sh, w, i)
+            let e = dq_end(w, i)
             let mark = o.b.len
             xw(mut sh, w, i + 1, e - 1, flags | X_DQ, mut o)
             if o.b.len == mark {
@@ -531,7 +531,7 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
         }
         if flags & X_ASSIGN != 0 && c == ':' && ch(w, i + 1) == '~' {
             lit(mut o, 58)
-            i = tilde(sh, w, i + 1, to, flags, mut o)
+            i = tilde(sh.vals, w, i + 1, to, flags, mut o)
             continue
         }
         lit(mut o, byte_at(w, i))
@@ -542,7 +542,9 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
 /// A tilde prefix at `i` (XCU 2.6.1): `~` alone or before `/` is
 /// `$HOME`. `~login` needs the user database, which wolf 0.2.24 cannot
 /// read, so it is left as written (PENDING). Returns where to resume.
-fn tilde(sh: Sh, w: str, i: int, to: int, flags: int, mut o: Buf) -> int {
+/// It reads only the variables (`vals`): a whole `Sh` taken by value is
+/// copied at every call, and `xw`'s loop would make that copy each step.
+fn tilde(vals: Map[str, str], w: str, i: int, to: int, flags: int, mut o: Buf) -> int {
     var j = i + 1
     while j < to {
         let c = ch(w, j)
@@ -555,8 +557,12 @@ fn tilde(sh: Sh, w: str, i: int, to: int, flags: int, mut o: Buf) -> int {
         }
         j += 1
     }
-    if j == i + 1 && has_var(sh, "HOME") {
-        qstr(mut o, value_of(sh, "HOME"))
+    if j == i + 1 {
+        let home = vals["HOME"] else {
+            lit(mut o, 126)
+            return i + 1
+        }
+        qstr(mut o, home)
         return j
     }
     lit(mut o, 126)
@@ -1099,8 +1105,7 @@ fn in_ifs(f: str, b: int) -> bool {
 
 /// Field splitting (XCU 2.6.5) of a marked string; the fields keep
 /// their `Q` marks for pathname expansion.
-fn split_marked(sh: Sh, m: str) -> List[str] {
-    let f = ifs(sh)
+fn split_marked(f: str, m: str) -> List[str] {
     var fields = List[str]()
     var cur = buf()
     // 0 nothing yet, 1 in a field, 2 after IFS white space, 3 after
@@ -1184,7 +1189,7 @@ fn expand_words(mut sh: Sh, words: List[str]) -> List[str] {
         if sh.flow != F_NONE {
             return out
         }
-        for f in split_marked(sh, text(o)) {
+        for f in split_marked(ifs_in(sh.vals), text(o)) {
             if !sh.opt_f && has_magic(f) {
                 let found = glob(mut sh, f)
                 if found.len > 0 {

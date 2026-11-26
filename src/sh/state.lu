@@ -1248,7 +1248,13 @@ fn unset_var(mut sh: Sh, name: str) -> bool {
 }
 
 fn ifs(sh: Sh) -> str {
-    sh.vals["IFS"] else " \t\n"
+    ifs_in(sh.vals)
+}
+
+/// `IFS` from the variables alone, for a caller that holds the state
+/// mutably: passing a whole `Sh` by value copies it.
+fn ifs_in(vals: Map[str, str]) -> str {
+    vals["IFS"] else " \t\n"
 }
 
 /// `$-`: the single-letter options that are on, in the order dash
