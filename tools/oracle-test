@@ -1,0 +1,323 @@
+#!/usr/bin/env python3
+"""oracle-test — the oracle recorders refuse any dash or bash but ORACLE's.
+
+The rows run the real tools against stub programs and temporary files: a stub
+`pacman` that answers what a row says, a stub container engine that runs the
+container's script on this host, a temporary tests/diff/ORACLE
+($PELT_ORACLE_FILE), a temporary corpus ($PELT_DIFF_DIR, $PELT_SESSION_DIR)
+and a temporary package manifest ($ORACLE_PACKAGES). Nothing is downloaded,
+built or run in a container. The dash and bash the rows hash are this host's
+own (/usr/bin:/bin), the ones the corpus runners would run; a host without
+both fails here by name rather than skipping.
+
+pelt#69: the identity is exact (the package string and the program's sha256),
+never a substring of ORACLE's text.
+"""
+
+import hashlib
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TOOLS = os.path.join(ROOT, "tools")
+SEARCH = "/usr/bin:/bin"
+ZERO = "0" * 64
+
+
+def digest(name):
+    path = shutil.which(name, path=SEARCH)
+    if path is None:
+        raise AssertionError(f"oracle-test needs {name} on {SEARCH}")
+    with open(os.path.realpath(path), "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
+PACMAN = """#!/bin/sh
+# answers `pacman -Q NAME` from $STUB_PACMAN/NAME, as pacman would
+[ "$1" = -Q ] || exit 64
+if [ -f "$STUB_PACMAN/$2" ]; then cat "$STUB_PACMAN/$2"; exit 0; fi
+echo "error: package '$2' was not found" >&2
+exit 1
+"""
+
+ENGINE = """#!/bin/sh
+# a container engine that runs the container's command on this host, in the
+# directory bound at /pelt; it records that it was called
+echo "$*" >> "$STUB_ENGINE_LOG"
+[ "$1" = run ] || exit 64
+shift
+root=
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -v) case "$2" in *:/pelt|*:/pelt:ro) root=${2%%:/pelt*} ;; esac; shift 2 ;;
+    sha256:*) shift; break ;;
+    *) shift ;;
+    esac
+done
+[ -n "$root" ] || exit 65
+cd "$root" && exec "$@"
+"""
+
+
+class Rig(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="oracle-test.")
+        self.bin = os.path.join(self.tmp, "bin")
+        self.answers = os.path.join(self.tmp, "pacman")
+        os.mkdir(self.bin)
+        os.mkdir(self.answers)
+        self.stub("pacman", PACMAN)
+        self.engine = self.stub("engine", ENGINE)
+        self.oracle = os.path.join(self.tmp, "ORACLE")
+        self.diff = os.path.join(self.tmp, "diff")
+        self.sess = os.path.join(self.tmp, "session")
+        os.makedirs(os.path.join(self.diff, "t"))
+        os.mkdir(self.sess)
+        self.case("one", "echo hi\n")
+        self.log = os.path.join(self.tmp, "engine.log")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def stub(self, name, text):
+        path = os.path.join(self.bin, name)
+        with open(path, "w") as fh:
+            fh.write(text)
+        os.chmod(path, 0o755)
+        return path
+
+    def case(self, name, script, out=None, meta=None):
+        base = os.path.join(self.diff, "t", name)
+        with open(base + ".sh", "w") as fh:
+            fh.write(script)
+        if out is not None:
+            with open(base + ".out", "w") as fh:
+                fh.write(out)
+        if meta is not None:
+            with open(base + ".meta", "w") as fh:
+                fh.write(meta)
+
+    def answer(self, **packages):
+        for name, text in packages.items():
+            with open(os.path.join(self.answers, name), "w") as fh:
+                fh.write(text + "\n")
+
+    def write_oracle(self, dash="dash 0.5.13.4-1", bash="bash 5.3.20-1", dash_sha=None, bash_sha=None):
+        dash_sha = digest("dash") if dash_sha is None else dash_sha
+        bash_sha = digest("bash") if bash_sha is None else bash_sha
+        text = (f"{dash} — the oracle of record (test, /usr/bin/dash sha256 {dash_sha})\n"
+                f"{bash} run as `bash --posix` — the second opinion (test, /usr/bin/bash sha256 {bash_sha})\n")
+        # $PELT_ORACLE_FILE, and the corpus's own ORACLE (where a recorder
+        # that reads ORACLE beside its corpus looks)
+        for path in (self.oracle, os.path.join(self.diff, "ORACLE")):
+            with open(path, "w") as fh:
+                fh.write(text)
+
+    def env(self, engine_on_path=False):
+        env = dict(os.environ)
+        path = self.bin + os.pathsep + env.get("PATH", "")
+        if not engine_on_path:
+            path = os.pathsep.join(p for p in path.split(os.pathsep) if not os.path.exists(os.path.join(p, "podman")) or p == self.bin)
+        env.update(PATH=path, STUB_PACMAN=self.answers, STUB_ENGINE_LOG=self.log,
+                   PELT_ORACLE_FILE=self.oracle, PELT_DIFF_DIR=self.diff, PELT_SESSION_DIR=self.sess,
+                   ORACLE_ENGINE=self.engine)
+        if engine_on_path:
+            shutil.copy(self.engine, os.path.join(self.bin, "podman"))
+        return env
+
+    def tool(self, name, *args, env=None, shell=False):
+        argv = (["/bin/sh", os.path.join(TOOLS, name)] if shell else [sys.executable, "-B", os.path.join(TOOLS, name)]) + list(args)
+        return subprocess.run(argv, cwd=ROOT, env=env or self.env(), capture_output=True, text=True, timeout=120)
+
+    def recorded(self):
+        return os.path.exists(os.path.join(self.diff, "t", "one.out"))
+
+
+class Record(Rig):
+    """tools/oracle-record writes only from ORACLE's exact dash and bash."""
+
+    def test_r1_silent_pacman_is_refused(self):
+        self.write_oracle()
+        r = self.tool("oracle-record", "t")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertFalse(self.recorded())
+
+    def test_r2_substring_package_is_refused(self):
+        self.write_oracle(dash="dash 0.5.13.4-1.1")
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        r = self.tool("oracle-record", "t")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertFalse(self.recorded())
+
+    def test_r3_dash_digest_is_refused(self):
+        self.write_oracle(dash="dash 0.5.13.4-1.1", dash_sha=ZERO)
+        self.answer(dash="dash 0.5.13.4-1.1", bash="bash 5.3.20-1")
+        r = self.tool("oracle-record", "t")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("sha256", r.stderr)
+        self.assertFalse(self.recorded())
+
+    def test_r4_bash_digest_is_refused(self):
+        self.write_oracle(dash="dash 0.5.13.4-1.1", bash_sha=ZERO)
+        self.answer(dash="dash 0.5.13.4-1.1", bash="bash 5.3.20-1")
+        r = self.tool("oracle-record", "t")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("sha256", r.stderr)
+        self.assertFalse(self.recorded())
+
+    def test_r5_check_names_old_and_new_lines(self):
+        self.write_oracle()
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        self.case("one", "echo hi\n", out="ho\n", meta="exit=0\nstderr=no\nbash=agree\n")
+        r = self.tool("oracle-record", "--check", "t")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("DRIFT t/one: stdout", r.stdout)
+        self.assertIn("-ho", r.stdout)
+        self.assertIn("+hi", r.stdout)
+
+    def test_r6_check_reports_a_second_opinion_flip(self):
+        self.write_oracle()
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        self.case("one", "echo hi\n", out="hi\n", meta="exit=0\nstderr=no\nbash=differs\n")
+        r = self.tool("oracle-record", "--check", "t")
+        self.assertIn("FLAG t/one: bash=differs -> bash=agree", r.stdout, r.stdout + r.stderr)
+        self.assertNotIn("DRIFT", r.stdout)
+
+    def test_c1_exact_identity_records(self):
+        self.write_oracle()
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        r = self.tool("oracle-record", "t")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(self.recorded())
+
+
+class Session(Rig):
+    """tools/session-record runs only ORACLE's exact dash and bash."""
+
+    def test_s1_silent_pacman_is_refused(self):
+        self.write_oracle()
+        r = self.tool("session-record", "--check")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+
+    def test_s2_substring_package_is_refused(self):
+        self.write_oracle(dash="dash 0.5.13.4-1.1")
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        r = self.tool("session-record", "--check")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+
+    def test_s3_dash_digest_is_refused(self):
+        self.write_oracle(dash="dash 0.5.13.4-1.1", dash_sha=ZERO)
+        self.answer(dash="dash 0.5.13.4-1.1", bash="bash 5.3.20-1")
+        r = self.tool("session-record", "--check")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+
+    def test_s4_bash_digest_is_refused(self):
+        self.write_oracle(dash="dash 0.5.13.4-1.1", bash_sha=ZERO)
+        self.answer(dash="dash 0.5.13.4-1.1", bash="bash 5.3.20-1")
+        r = self.tool("session-record", "--check")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+
+    def test_c2_exact_identity_runs(self):
+        self.write_oracle()
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        r = self.tool("session-record", "--check")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+
+class Container(Rig):
+    """tools/oracle-container: the engine by $ORACLE_ENGINE, identity inside."""
+
+    IMAGE = "sha256:" + "a" * 64
+
+    def ready(self):
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1", python="python 3.14.7-1")
+        self.case("one", "echo hi\n", out="hi\n", meta="exit=0\nstderr=no\nbash=agree\n")
+
+    def test_k1_wrong_program_digest_is_refused(self):
+        self.ready()
+        self.write_oracle(dash_sha=ZERO)
+        r = self.tool("oracle-container", self.IMAGE, "t", env=self.env(engine_on_path=True), shell=True)
+        self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("sha256", r.stderr)
+
+    def test_k2_engine_comes_from_oracle_engine(self):
+        self.ready()
+        self.write_oracle()
+        r = self.tool("oracle-container", self.IMAGE, "t", shell=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(os.path.exists(self.log))
+
+    def test_k3_exact_identity_checks_clean(self):
+        self.ready()
+        self.write_oracle()
+        r = self.tool("oracle-container", self.IMAGE, "t", env=self.env(engine_on_path=True), shell=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("oracle-record: 0 drifted", r.stdout)
+
+    def test_k4_missing_python_is_refused(self):
+        self.ready()
+        os.remove(os.path.join(self.answers, "python"))
+        self.write_oracle()
+        r = self.tool("oracle-container", self.IMAGE, "t", shell=True)
+        self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("python", r.stderr)
+
+
+class Image(Rig):
+    """tools/oracle-image refuses a manifest it cannot pin, before any download."""
+
+    def manifest(self, text):
+        path = os.path.join(self.tmp, "packages.sha256")
+        with open(path, "w") as fh:
+            fh.write(text)
+        env = self.env()
+        env["ORACLE_PACKAGES"] = path
+        return env
+
+    def test_i1_unavailable_is_refused(self):
+        env = self.manifest("UNAVAILABLE  https://archive.archlinux.org/packages/b/bash/bash-9-1-x86_64.pkg.tar.zst\n")
+        r = self.tool("oracle-image", env=env, shell=True)
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("BLOCKED", r.stderr)
+
+    def test_i2_bad_digest_is_refused(self):
+        env = self.manifest("12345  https://archive.archlinux.org/packages/d/dash/dash-9-1-x86_64.pkg.tar.zst\n")
+        r = self.tool("oracle-image", env=env, shell=True)
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("invalid digest", r.stderr)
+
+    def test_i3_url_outside_the_archive_is_refused(self):
+        env = self.manifest(ZERO + "  https://example.org/dash-9-1-x86_64.pkg.tar.zst\n")
+        r = self.tool("oracle-image", env=env, shell=True)
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("not an archive URL", r.stderr)
+
+
+class Oracle(unittest.TestCase):
+    """tests/diff/ORACLE names its programs whole."""
+
+    def test_o1_the_tree_oracle_names_full_digests(self):
+        sys.path.insert(0, TOOLS)
+        import lib_oracle
+        got = lib_oracle.identity(os.path.join(ROOT, "tests", "diff", "ORACLE"))
+        self.assertEqual(sorted(got), ["bash", "dash"])
+
+    def test_o2_a_truncated_digest_is_refused(self):
+        sys.path.insert(0, TOOLS)
+        import lib_oracle
+        with tempfile.NamedTemporaryFile("w", suffix=".ORACLE", delete=False) as fh:
+            fh.write("dash 0.5.13.4-1.1 — the oracle of record (/usr/bin/dash sha256 c6221703b6197ce2…)\n"
+                     "bash 5.3.20-2 run as `bash --posix` — the second opinion (/usr/bin/bash sha256 a8ce2b3c38c81853…)\n")
+        try:
+            with self.assertRaises(lib_oracle.Refused):
+                lib_oracle.identity(fh.name)
+        finally:
+            os.remove(fh.name)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
