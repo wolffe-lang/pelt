@@ -1,7 +1,15 @@
 #!/bin/sh
-# Run the immutable oracle without host /usr overlays or network access.
-# Usage: tools/oracle-container sha256:IMAGE_ID [--write] [area/name ...]
-# Default is read-only --check. --write explicitly opts into new recordings.
+# Run the oracle of record in its pinned image, without host /usr overlays or
+# network access.
+# Usage: tools/oracle-container sha256:IMAGE_ID [--write] [--session] [case ...]
+# Default is a read-only --check of the differential corpus (area or
+# area/name arguments); --session works on tests/session instead (case
+# names). --write explicitly opts into new recordings.
+# The engine is $ORACLE_ENGINE (default podman): name it by absolute path
+# where podman is not on PATH. Inside, python is checked by package, and
+# tools/oracle-record or tools/session-record refuse unless dash and bash
+# are exactly the ones tests/diff/ORACLE names, by package and program
+# digest (tools/lib_oracle.py, pelt#69).
 set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 image=${1:-}
@@ -12,26 +20,25 @@ case "$digest" in *[!0-9a-f]*) exit 2 ;; esac
 shift
 mode=check
 if [ "${1:-}" = --write ]; then mode=write; shift; fi
-exec podman run --rm --pull=never --network=none --init --pids-limit 4096 \
+tool=oracle-record
+if [ "${1:-}" = --session ]; then tool=session-record; shift; fi
+exec "${ORACLE_ENGINE:-podman}" run --rm --pull=never --network=none --init --pids-limit 4096 \
     --userns=keep-id -u "$(id -u):$(id -g)" \
     -v "$root:/pelt$(if [ "$mode" = check ]; then printf ':ro'; fi)" \
     --tmpfs /tmp:rw,nosuid,nodev -e HOME=/tmp -e TMPDIR=/tmp -w /pelt \
     "$image" /bin/sh -eu -c '
-        for expected in "dash 0.5.13.4-1" "bash 5.3.20-2" "fish 4.9.3-1"; do
-            package=${expected%% *}
-            have=$(pacman -Q "$package") || {
-                echo "oracle-container: REFUSED: missing package $package" >&2
-                exit 2
-            }
-            [ "$have" = "$expected" ] || {
-                echo "oracle-container: REFUSED: $have, expected $expected" >&2
-                exit 2
-            }
-            printf "%s\n" "$have"
-        done
-        mode=$1; shift
+        expected="python 3.14.7-1"
+        have=$(pacman -Q python) || {
+            echo "oracle-container: REFUSED: missing package python" >&2
+            exit 2
+        }
+        [ "$have" = "$expected" ] || {
+            echo "oracle-container: REFUSED: $have, expected $expected" >&2
+            exit 2
+        }
+        mode=$1; tool=$2; shift 2
         if [ "$mode" = check ]; then
-            exec python3 -B tools/oracle-record --check "$@"
+            exec python3 -B "tools/$tool" --check "$@"
         fi
-        exec python3 -B tools/oracle-record "$@"
-    ' oracle "$mode" "$@"
+        exec python3 -B "tools/$tool" "$@"
+    ' oracle "$mode" "$tool" "$@"
