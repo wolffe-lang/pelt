@@ -77,7 +77,7 @@ def check_host(names=("dash", "bash"), search=SEARCH, oracle=None):
             got = subprocess.run(["pacman", "-Q", name], capture_output=True, text=True).stdout.strip()
         except FileNotFoundError:
             got = ""
-        if got != w["package"]:
+        if got not in w["package"]:
             raise Refused(f"this host has {got or 'no pacman ' + name}; tests/diff/ORACLE names {w['package']}")
         program = shutil.which(name, path=search)
         if program is None:
