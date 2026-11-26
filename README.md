@@ -335,7 +335,9 @@ expiry are reported separately; the ten-second prompt deadline and memory
 bounds are unchanged.
 
 Unlabelled PRs run one cheap job. The `ci` or `full-matrix` label runs the
-full CI set; trunk pushes run it only on cross-cutting paths. The nightly
+full CI set; trunk pushes run it only on cross-cutting paths, and leave out a
+macOS leg that a run at the same commit, over the same tree, already ran
+green (the plan names that run). The nightly
 still re-runs every host/compiler leg and opens an issue when red, except at a
 commit whose `tier all` is already green from the last 144 hours: that night
 runs nothing, its last job is named `tier skipped`, and the run's page names
