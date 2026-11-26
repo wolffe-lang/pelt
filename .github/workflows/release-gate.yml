@@ -121,6 +121,10 @@ jobs:
         if: matrix.tier == 'native'
         run: tools/clause-census
 
+      - name: the oracle recorders refuse any other dash or bash
+        if: matrix.tier == 'native'
+        run: python3 tools/oracle-test
+
       - name: the width table is the generated one
         if: matrix.tier == 'native'
         run: |
