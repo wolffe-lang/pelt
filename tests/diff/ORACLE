@@ -1,7 +1,17 @@
-dash 0.5.13.4-1.1 — the oracle of record (kasumi, CachyOS linux x86-64, /usr/bin/dash sha256 c6221703b6197ce2…)
-bash 5.3.20-2 run as `bash --posix` — the second opinion (kasumi, /usr/bin/bash sha256 a8ce2b3c38c81853…)
+dash 0.5.13.4-1 — the oracle of record (Arch package dash-0.5.13.4-1-x86_64.pkg.tar.zst sha256 e6170d471b1b5b8411c4884563548c38ea9c2448822bfe1762e9f0702ab69a18; /usr/bin/dash sha256 954b8837f636e6956a6c377d80829b72dd2e94a015fbe198bb1272973742447d)
+bash 5.3.20-1 run as `bash --posix` — the second opinion (Arch package bash-5.3.20-1-x86_64.pkg.tar.zst sha256 73a67dc509ed4a6dd64e4c7eca2895643f48083940f49431782ce78c4d4619e1; /usr/bin/bash sha256 c14c8f498f3be96f076ceb07d65dba584a86dca3c86b5dce65ed0f6cae73358d)
 
-Recorded by tools/oracle-record, which refuses to write against any other
-dash package. Each case runs from nothing: PATH=/usr/bin:/bin,
+Both run in the image tools/oracle-image builds from pinned inputs
+(tools/oracle/: the base docker.io/library/archlinux by registry digest
+sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785,
+and every package file by sha256). Recorded by tools/oracle-record and
+tools/session-record, run there by tools/oracle-container; they refuse any
+dash or bash but the two above, by exact package and program digest
+(tools/lib_oracle.py). Each case runs from nothing: PATH=/usr/bin:/bin,
 HOME=/home/pelt, LC_ALL=C, a fresh scratch directory as the working
 directory, the script as `../s.sh`.
+
+Until 2026-11-26 the oracle of record was CachyOS's dash 0.5.13.4-1.1
+(/usr/bin/dash sha256 c6221703b6197ce2…) with bash 5.3.20-2, on a host that
+no longer runs Linux. Expectations recorded before then come from it, or
+from the builds the change that recorded them names (pelt#69).
