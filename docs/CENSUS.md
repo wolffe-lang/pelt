@@ -2,7 +2,7 @@
 
 pelt at `b32bebc` (wolf 0.2.27 / lupin 0.1.50), measured on 2026-10-11
 against dash 0.5.13.4 (the oracle of record, `tests/diff/ORACLE`) and
-`bash --posix` 5.3.20, on linux x86-64 (kasumi) with CI on linux x86-64
+`bash --posix` 5.3.20, on a linux x86-64 development host with CI on linux x86-64
 and macOS arm64. Four measurements, each kept in the tree so it can be
 taken again: the POSIX clauses, real scripts, the prompt, and speed.
 The plan that follows from them is [`PLAN.md`](PLAN.md).
@@ -241,7 +241,7 @@ pipelines (`notes/sh06-evidence/loopmem.sh`, `leak.py`, logs).
 
 ## 4. Speed
 
-`tools/bench/run`, nine runs each, median, on kasumi; output checked
+`tools/bench/run`, nine runs each, median, on that host; output checked
 identical across shells.
 
 | loop | dash | pelt release | ratio | pelt native | ratio |
@@ -415,7 +415,7 @@ Not counted: 43 statements recorded for what dash does where POSIX leaves the be
 | 2.5.3/12 | PS4 is parameter-expanded and written before each line of a set -x trace; default "+ " | met | `option/xtrace`, `option/c_ps4`, `option/ps4_forms` |  |
 | 2.5.3/13 | PWD is set from the environment when that is an absolute pathname of the current directory with no dot components | met | `cd/c_pwd_from_env` |  |
 | 2.5.3/14 | HOME is used by tilde expansion | met | `tilde/home` |  |
-| 2.5.3/15 | LANG, LC_ALL, LC_COLLATE, LC_CTYPE, LC_MESSAGES select the locale for patterns, characters and messages | untestable |  | needs a non-C locale present on every CI host; measured by hand on kasumi (docs/CENSUS.md, locale rows) |
+| 2.5.3/15 | LANG, LC_ALL, LC_COLLATE, LC_CTYPE, LC_MESSAGES select the locale for patterns, characters and messages | untestable |  | needs a non-C locale present on every CI host; measured by hand on a Linux x86-64 development host (docs/CENSUS.md, locale rows) |
 | 2.5.3/16 | The shell processes values as characters where the standard speaks of characters (${#x} counts characters) | met | `param/c_length_bytes_in_c` | the corpus runs in the C locale, where a character is a byte; the UTF-8 answer is measured by hand (docs/CENSUS.md, locale rows) |
 
 ### 2.6 Word expansions
