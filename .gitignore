@@ -5,3 +5,4 @@
 __pycache__/
 .lu-cache/
 CLAUDE.md
+/.cache/
