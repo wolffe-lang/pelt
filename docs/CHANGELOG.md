@@ -6,6 +6,22 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **The oracle of record lives in a pinned image (pelt#69).** The CachyOS
+  dash 0.5.13.4-1.1 that `tests/diff/ORACLE` named exists on no host now,
+  and the pinned recording image could not be built: bash 5.3.20-2 never
+  reached the Arch archive. The oracle is now Arch's dash 0.5.13.4-1, with
+  bash 5.3.20-1 as the second opinion. Both are named in ORACLE by package
+  and by the sha256 of the programs the corpus runs, and both are installed,
+  with python, into an image whose inputs are pinned: the base by registry
+  digest, every package file by sha256. Nothing is published, and fish,
+  which nothing reads, is no longer in the image. The recorders compared the
+  host's dash package with ORACLE's text as a substring. That let a
+  different build through, and with a pacman that answered nothing they
+  recorded unchecked. They now refuse any dash or bash but the exact ones
+  ORACLE names. `--check` names every drifting case with its old and new
+  lines, and every second-opinion flag that would change.
+  `tools/oracle-test` holds the refusals and runs in CI.
+
 - **Corpus diagnostics keep counter loss separate from shell behavior.** An
   isolated generated probe writes parent-counter prefixes to an externally
   owned case file, including before successful exec or fatal signal death.
