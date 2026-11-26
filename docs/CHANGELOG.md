@@ -24,10 +24,12 @@ lane) and in the README's status.
   and the pinned recording image could not be built: bash 5.3.20-2 never
   reached the Arch archive. The oracle is now Arch's dash 0.5.13.4-1, with
   bash 5.3.20-1 as the second opinion. Both are named in ORACLE by package
-  and by the sha256 of the programs the corpus runs, and both are installed,
-  with python, into an image whose inputs are pinned: the base by registry
-  digest, every package file by sha256. Nothing is published, and fish,
-  which nothing reads, is no longer in the image. The recorders compared the
+  and by the sha256 of the programs the corpus runs. Both are installed into
+  an image whose inputs are pinned: the base by registry digest, every
+  package file by sha256 (dash, libedit and bash). Before building, pacman
+  must prove in the base that the files close over what it has installed.
+  Nothing is published, and fish, which nothing reads, is no longer in the
+  image. The recorders compared the
   host's dash package with ORACLE's text as a substring. That let a
   different build through, and with a pacman that answered nothing they
   recorded unchecked. They now refuse any dash or bash but the exact ones
