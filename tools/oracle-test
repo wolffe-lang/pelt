@@ -137,6 +137,60 @@ class Rig(unittest.TestCase):
         return os.path.exists(os.path.join(self.diff, "t", "one.out"))
 
 
+class HostPath(Rig):
+    """The rows run on hosts that ship a real podman beside the system tools
+    (hosted Linux runners keep /usr/bin/podman, and /bin is a link to
+    /usr/bin): the rows' PATH must keep those tools and still never let a
+    tool reach that podman."""
+
+    def system_dir_with_podman(self):
+        # every program of /usr/bin and /bin in one directory, with a podman
+        # that must never run
+        sysdir = os.path.join(self.tmp, "usr-bin")
+        os.mkdir(sysdir)
+        for d in ("/usr/bin", "/bin"):
+            for name in os.listdir(d):
+                src, dst = os.path.join(d, name), os.path.join(sysdir, name)
+                if os.path.isfile(src) and os.access(src, os.X_OK) and not os.path.lexists(dst):
+                    os.symlink(src, dst)
+        podman = os.path.join(sysdir, "podman")
+        if os.path.lexists(podman):
+            os.remove(podman)
+        with open(podman, "w") as fh:
+            fh.write("#!/bin/sh\necho 'the system podman ran' >&2\nexit 97\n")
+        os.chmod(podman, 0o755)
+        return sysdir
+
+    def env_on(self, path, **kw):
+        saved = os.environ["PATH"]
+        os.environ["PATH"] = path
+        try:
+            return self.env(**kw)
+        finally:
+            os.environ["PATH"] = saved
+
+    def test_p1_the_system_tools_stay_and_podman_is_shadowed(self):
+        env = self.env_on(self.system_dir_with_podman())
+        for tool in ("cat", "dirname", "sed"):
+            self.assertIsNotNone(shutil.which(tool, path=env["PATH"]), tool)
+        self.assertEqual(os.path.dirname(shutil.which("podman", path=env["PATH"]) or ""), self.bin)
+
+    def test_p2_exact_identity_records_beside_a_system_podman(self):
+        self.write_oracle()
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        r = self.tool("oracle-record", "t", env=self.env_on(self.system_dir_with_podman()))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(self.recorded())
+
+    def test_p3_the_container_engine_comes_from_oracle_engine_beside_a_system_podman(self):
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1", python="python 3.14.7-1")
+        self.case("one", "echo hi\n", out="hi\n", meta="exit=0\nstderr=no\nbash=agree\n")
+        self.write_oracle()
+        r = self.tool("oracle-container", "sha256:" + "a" * 64, "t", env=self.env_on(self.system_dir_with_podman()), shell=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("the system podman ran", r.stderr)
+
+
 class Record(Rig):
     """tools/oracle-record writes only from ORACLE's exact dash and bash."""
 
