@@ -72,7 +72,7 @@ id	kind	statement	cases	note
 2.5.3/12	T	PS4 is parameter-expanded and written before each line of a set -x trace; default "+ "	option/xtrace option/c_ps4 option/ps4_forms	
 2.5.3/13	T	PWD is set from the environment when that is an absolute pathname of the current directory with no dot components	cd/c_pwd_from_env	
 2.5.3/14	T	HOME is used by tilde expansion	tilde/home	
-2.5.3/15	U	LANG, LC_ALL, LC_COLLATE, LC_CTYPE, LC_MESSAGES select the locale for patterns, characters and messages		needs a non-C locale present on every CI host; measured by hand on kasumi (docs/CENSUS.md, locale rows)
+2.5.3/15	U	LANG, LC_ALL, LC_COLLATE, LC_CTYPE, LC_MESSAGES select the locale for patterns, characters and messages		needs a non-C locale present on every CI host; measured by hand on a Linux x86-64 development host (docs/CENSUS.md, locale rows)
 2.5.3/16	T	The shell processes values as characters where the standard speaks of characters (${#x} counts characters)	param/c_length_bytes_in_c	the corpus runs in the C locale, where a character is a byte; the UTF-8 answer is measured by hand (docs/CENSUS.md, locale rows)
 2.6/1	T	Tilde, parameter, command and arithmetic expansion happen first, beginning to end; then field splitting, pathname expansion, quote removal	param/c_expansion_order	
 2.6/2	T	Expansions within one word give one field unless split, globbed or "$@"	split/c_one_field	
