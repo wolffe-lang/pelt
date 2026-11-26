@@ -1,9 +1,11 @@
 # The oracle of record (tests/diff/ORACLE), for recording only. No registry
 # push and no rolling upgrade: the base by registry digest, every package by
 # its archive file's sha256 (packages.sha256, checked by tools/oracle-image
-# before the build), installed with no network. pelt#69: Arch's dash
-# 0.5.13.4-1 and bash 5.3.20-1 (bash 5.3.20-2, the second opinion's earlier
-# build, never reached the archive), and python for the corpus runner.
+# before the build, which also has pacman prove they close over the base),
+# installed with no network. pelt#69: Arch's dash 0.5.13.4-1 with libedit,
+# its one dependency the base lacks, and bash 5.3.20-1 over the base's
+# 5.3.15-1 (bash 5.3.20-2, the second opinion's earlier build, never reached
+# the archive). Python 3.14.7-1, for the corpus runner, comes with the base.
 FROM docker.io/library/archlinux@sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785
 COPY *.pkg.tar.zst /oracle-packages/
 RUN pacman -U --noconfirm /oracle-packages/*.pkg.tar.zst \
