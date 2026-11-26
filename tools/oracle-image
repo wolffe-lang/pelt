@@ -5,10 +5,14 @@
 # and every package file by sha256 (tools/oracle/packages.sha256, or
 # $ORACLE_PACKAGES): all are checked before anything is downloaded, each
 # download is checked against its digest, and the build itself has no network.
-# The base must already be present (pull it by digest first). The engine is
-# $ORACLE_ENGINE (default podman). The image id printed at the end is an
-# observed value, not a pin: the build checks that the image's dash and bash
-# are the programs tests/diff/ORACLE names, by sha256 (pelt#69).
+# The base must already be present (pull it by digest first). Before building,
+# pacman itself, in the base image and with no network, must resolve the pinned
+# files against what the base has installed (`pacman -U --print`): a manifest
+# that leaves a dependency open is refused by name before any build. The
+# engine is $ORACLE_ENGINE (default podman); downloads go under $ORACLE_CACHE
+# (default .cache/oracle). The image id printed at the end is an observed
+# value, not a pin: the build checks that the image's dash and bash are the
+# programs tests/diff/ORACLE names, by sha256 (pelt#69).
 set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 manifest=${ORACLE_PACKAGES:-$root/tools/oracle/packages.sha256}
@@ -34,8 +38,11 @@ want_bash=$(sed -n '2s|.*/usr/bin/bash sha256 \([0-9a-f]\{64\}\).*|\1|p' "$root/
     echo 'oracle-image: tests/diff/ORACLE does not name both programs by full sha256' >&2
     exit 2
 }
-mkdir -p "$root/.cache/oracle"
-context=$(mktemp -d "$root/.cache/oracle/build.XXXXXXXX")
+base=$(sed -n 's/^FROM //p' "$root/tools/oracle/Containerfile")
+case "$base" in *@sha256:*) ;; *) echo 'oracle-image: the Containerfile base is not pinned by digest' >&2; exit 2 ;; esac
+cache=${ORACLE_CACHE:-$root/.cache/oracle}
+mkdir -p "$cache"
+context=$(mktemp -d "$cache/build.XXXXXXXX")
 # Retain inputs on failure for diagnosis, rather than an unverified cleanup.
 while read -r digest url; do
     case "$digest" in ''|'#'*) continue ;; esac
@@ -43,6 +50,13 @@ while read -r digest url; do
     curl --fail --location --silent --show-error "$url" -o "$context/$file"
     printf '%s  %s\n' "$digest" "$context/$file" | sha256sum -c -
 done < "$manifest"
+if ! closure=$("$engine" run --rm --network=none -v "$context:/oracle-packages:ro" "$base" \
+    sh -c 'pacman -U --print --noconfirm /oracle-packages/*.pkg.tar.zst' 2>&1); then
+    printf '%s\n' "$closure" >&2
+    echo 'oracle-image: REFUSED: the pinned packages are not closed over the base image; pin what pacman names above' >&2
+    exit 2
+fi
+echo 'PASS oracle-image: the pinned packages close over the base'
 "$engine" build --pull=never --network=none -f "$root/tools/oracle/Containerfile" -t "$tag" "$context"
 id=$("$engine" image inspect "$tag" --format '{{.Id}}')
 got=$("$engine" run --rm --network=none "$id" sha256sum /usr/bin/dash /usr/bin/bash)
