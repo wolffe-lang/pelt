@@ -55,9 +55,12 @@ witnesses and measurement tools, one behaviour each.
 
 - **A behaviour change comes with its case**: a differential case under
   `tests/diff/` or a typed session under `tests/session/`, its expectation
-  recorded from the oracle (`tools/oracle-record`, `tools/session-record`, which
-  refuse any dash but the one `tests/diff/ORACLE` names; `tools/oracle-image`
-  and `tools/oracle-container` run that oracle in a container).
+  recorded from the oracle. `tests/diff/ORACLE` names dash and bash by package
+  and by the sha256 of the programs the corpus runs. `tools/oracle-image`
+  builds the image that carries them from pinned inputs, and
+  `tools/oracle-container` runs `tools/oracle-record` (or, with `--session`,
+  `tools/session-record`) there. Both recorders refuse any dash or bash but
+  exactly those two (`tools/oracle/README.txt`).
 - **Seen red before green**: the case fails against pelt before the change and
   passes after it.
 - A case that needs something pelt does not have yet is marked `pending=` and
