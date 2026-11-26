@@ -6,6 +6,17 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **Arithmetic reads each token once.** Every operand of an arithmetic
+  expansion used to descend through ten precedence levels and try each
+  level's operators by slicing the text and comparing strings, so `i+1` made
+  44 operator probes and each further `+1` nine more. A token is now read
+  once, taking the longest operator, and named by an integer kind; one table
+  gives each binary operator its level. The grammar, evaluation order,
+  short-circuit rules, results and error messages are unchanged. Six new
+  differential cases, recorded from the oracle image, pin operator lexing
+  near its near misses, assignment chains, side effects on the unevaluated
+  side of `&&`, `||` and `?:`, every adjacent pair of precedence levels,
+  long chains and tabs and newlines between tokens.
 - **A command's redirections are performed once (pelt#156).** The fast path
   for a simple command opens its redirections and can still give the
   command to the ordinary path afterwards: when it is not found, when a
