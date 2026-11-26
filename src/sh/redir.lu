@@ -240,6 +240,27 @@ fn close_opened(sh: Sh) {
     }
 }
 
+/// Whether the shadow state (`sh.exec`'s `run_fast`) may open `target`
+/// for `op`. A command the fast path has redirected can still go the
+/// ordinary way after (not found, a spawn refused, a built-in's
+/// diagnostic, a later redirection that fails), and the ordinary path
+/// performs every redirection again (pelt#156). So the shadow opens only
+/// what a second open cannot be told from: a regular file, a file not
+/// there yet that the second open finds as the first left it, and
+/// `/dev/null`. A FIFO or another special file sees each open and close,
+/// and a file `>` creates under `set -C` would be refused the second
+/// time as one that exists.
+fn reopens_unseen(sh: Sh, op: str, target: str) -> bool {
+    if target == "/dev/null" {
+        return true
+    }
+    let rec = stat_of(target, false)
+    if rec.len == 0 {
+        return !(op == ">" && sh.opt_bigc)
+    }
+    rec[0] == K_FILE
+}
+
 fn install(mut sh: Sh, fd: int, h: int, framed: bool) {
     let old = fd_get(sh, fd)
     if framed {
@@ -309,6 +330,11 @@ fn redir_one(mut sh: Sh, rd: Rd, framed: bool) -> bool {
         }
         install(mut sh, fd, h, framed)
         return true
+    }
+    if sh.shadow && !reopens_unseen(sh, op, target) {
+        // the ordinary path takes the command before anything is opened
+        sh.bail = true
+        return false
     }
     var h = -1
     if op == "<" {
