@@ -1,12 +1,14 @@
-# Reference recording only. No registry push and no rolling upgrade.
+# The oracle of record (tests/diff/ORACLE), for recording only. No registry
+# push and no rolling upgrade: the base by registry digest, every package by
+# its archive file's sha256 (packages.sha256, checked by tools/oracle-image
+# before the build), installed with no network. pelt#69: Arch's dash
+# 0.5.13.4-1 and bash 5.3.20-1 (bash 5.3.20-2, the second opinion's earlier
+# build, never reached the archive), and python for the corpus runner.
 FROM docker.io/library/archlinux@sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785
-# The builder checks every archive against packages.sha256 before building.
-# bash-5.3.20-2 is not in archive.archlinux.org at sh33: the builder
-# deliberately refuses until that EXACT package and its digest exist.
 COPY *.pkg.tar.zst /oracle-packages/
 RUN pacman -U --noconfirm /oracle-packages/*.pkg.tar.zst \
     && test "$(pacman -Q dash)" = 'dash 0.5.13.4-1' \
-    && test "$(pacman -Q bash)" = 'bash 5.3.20-2' \
-    && test "$(pacman -Q fish)" = 'fish 4.9.3-1' \
+    && test "$(pacman -Q bash)" = 'bash 5.3.20-1' \
+    && test "$(pacman -Q python)" = 'python 3.14.7-1' \
     && rm -rf /oracle-packages
 WORKDIR /pelt
