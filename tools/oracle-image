@@ -1,20 +1,39 @@
 #!/bin/sh
-# Build a local, exact-version oracle image; never publish it.
-# Usage: tools/oracle-image [TAG] (default localhost/pelt-oracle:sh33)
+# Build the local oracle-of-record image from pinned inputs; never publish it.
+# Usage: tools/oracle-image [TAG] (default localhost/pelt-oracle:69)
+# The inputs are the base image by registry digest (tools/oracle/Containerfile)
+# and every package file by sha256 (tools/oracle/packages.sha256, or
+# $ORACLE_PACKAGES): all are checked before anything is downloaded, each
+# download is checked against its digest, and the build itself has no network.
+# The base must already be present (pull it by digest first). The engine is
+# $ORACLE_ENGINE (default podman). The image id printed at the end is an
+# observed value, not a pin: the build checks that the image's dash and bash
+# are the programs tests/diff/ORACLE names, by sha256 (pelt#69).
 set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-manifest=$root/tools/oracle/packages.sha256
-# Validate ALL inputs before downloading anything or invoking podman.
+manifest=${ORACLE_PACKAGES:-$root/tools/oracle/packages.sha256}
+engine=${ORACLE_ENGINE:-podman}
+tag=${1:-localhost/pelt-oracle:69}
+# Validate ALL inputs before downloading anything or invoking the engine.
 while read -r digest url; do
     case "$digest" in ''|'#'*) continue ;; esac
     if [ "$digest" = UNAVAILABLE ]; then
         echo "oracle-image: BLOCKED: exact archive unavailable: $url" >&2
         exit 2
     fi
-    [ "${#digest}" -eq 64 ] || { echo 'oracle-image: invalid digest' >&2; exit 2; }
-    case "$digest" in *[!0-9a-f]*) echo 'oracle-image: invalid digest' >&2; exit 2 ;; esac
-    case "$url" in https://archive.archlinux.org/packages/*.pkg.tar.zst) ;; *) exit 2 ;; esac
+    [ "${#digest}" -eq 64 ] || { echo "oracle-image: invalid digest for $url" >&2; exit 2; }
+    case "$digest" in *[!0-9a-f]*) echo "oracle-image: invalid digest for $url" >&2; exit 2 ;; esac
+    case "$url" in
+    https://archive.archlinux.org/packages/*.pkg.tar.zst) ;;
+    *) echo "oracle-image: not an archive URL: $url" >&2; exit 2 ;;
+    esac
 done < "$manifest"
+want_dash=$(sed -n '1s|.*/usr/bin/dash sha256 \([0-9a-f]\{64\}\).*|\1|p' "$root/tests/diff/ORACLE")
+want_bash=$(sed -n '2s|.*/usr/bin/bash sha256 \([0-9a-f]\{64\}\).*|\1|p' "$root/tests/diff/ORACLE")
+[ "${#want_dash}" -eq 64 ] && [ "${#want_bash}" -eq 64 ] || {
+    echo 'oracle-image: tests/diff/ORACLE does not name both programs by full sha256' >&2
+    exit 2
+}
 mkdir -p "$root/.cache/oracle"
 context=$(mktemp -d "$root/.cache/oracle/build.XXXXXXXX")
 # Retain inputs on failure for diagnosis, rather than an unverified cleanup.
@@ -24,6 +43,15 @@ while read -r digest url; do
     curl --fail --location --silent --show-error "$url" -o "$context/$file"
     printf '%s  %s\n' "$digest" "$context/$file" | sha256sum -c -
 done < "$manifest"
-podman build --pull=never --network=none -f "$root/tools/oracle/Containerfile" \
-    -t "${1:-localhost/pelt-oracle:sh33}" "$context"
-podman image inspect "${1:-localhost/pelt-oracle:sh33}" --format '{{.Id}}'
+"$engine" build --pull=never --network=none -f "$root/tools/oracle/Containerfile" -t "$tag" "$context"
+id=$("$engine" image inspect "$tag" --format '{{.Id}}')
+got=$("$engine" run --rm --network=none "$id" sha256sum /usr/bin/dash /usr/bin/bash)
+got_dash=$(printf '%s\n' "$got" | awk '$2 == "/usr/bin/dash" { print $1 }')
+got_bash=$(printf '%s\n' "$got" | awk '$2 == "/usr/bin/bash" { print $1 }')
+printf 'image id (observed, not a pin): sha256:%s\n' "${id#sha256:}"
+printf '/usr/bin/dash sha256 %s\n/usr/bin/bash sha256 %s\n' "$got_dash" "$got_bash"
+[ "$got_dash" = "$want_dash" ] && [ "$got_bash" = "$want_bash" ] || {
+    echo 'oracle-image: REFUSED: the image programs are not the ones tests/diff/ORACLE names' >&2
+    exit 2
+}
+echo 'PASS oracle-image: dash and bash are the programs tests/diff/ORACLE names'
