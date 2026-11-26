@@ -8,17 +8,25 @@
 //!
 //! The text has already had its parameters, command substitutions and
 //! quotes expanded. It is parsed and evaluated in one pass by
-//! precedence climbing; `skip` counts the unevaluated sides of `&&`,
-//! `||` and `?:`, under which an assignment changes nothing — the
+//! precedence climbing over tokens: `ar_scan` reads the token at the
+//! current position once, by its first byte and at most two more,
+//! taking the longest operator, and names it by an integer kind; a
+//! binary operator's level comes from one table (`ar_level`). `skip`
+//! counts the unevaluated sides of `&&`, `||` and `?:`, under which an
+//! assignment changes nothing and an error is not raised — the
 //! short-circuit is about side effects, not only the value. Overflow
-//! wraps at 64 bits (the arithmetic is `wrapping[i64]`), division by
-//! zero is an error, and so is `min / -1`, whose quotient does not fit.
+//! wraps at 64 bits (the arithmetic is `wrapping[i64]`) and division by
+//! zero is an error.
 
 struct Ar {
     s: str,
     i: int,
     err: str,
     skip: int,
+    /// The token at `pk_at`, once read: its kind and where it ends.
+    pk_at: int,
+    pk: int,
+    pk_end: int,
 }
 
 fn ar_err(mut r: Ar, msg: str) {
@@ -39,26 +47,218 @@ fn ws(mut r: Ar) {
     }
 }
 
-/// Is the operator `op` next (after blanks)? Consumes it when it is and
-/// is not the start of a longer operator in `longer`.
-fn eat(mut r: Ar, op: str, not_before: str) -> bool {
-    ws(mut r)
-    let end = r.i + op.len
-    if end > r.s.len || (r.s.get(r.i..end) else "") != op {
-        return false
+// Token kinds. A binary operator's kind is 10 + its level-ordered
+// place; an assignment operator's is 40 + the binary kind it applies.
+const AT_END: int = 0
+
+const AT_NUM: int = 1
+
+const AT_NAME: int = 2
+
+const AT_LP: int = 3
+
+const AT_RP: int = 4
+
+const AT_QUEST: int = 5
+
+const AT_COLON: int = 6
+
+const AT_NOT: int = 7
+
+const AT_TILDE: int = 8
+
+const AT_BAD: int = 9
+
+const AT_OROR: int = 10
+
+const AT_ANDAND: int = 11
+
+const AT_OR: int = 12
+
+const AT_XOR: int = 13
+
+const AT_AND: int = 14
+
+const AT_EQ: int = 15
+
+const AT_NE: int = 16
+
+const AT_LE: int = 17
+
+const AT_GE: int = 18
+
+const AT_LT: int = 19
+
+const AT_GT: int = 20
+
+const AT_SHL: int = 21
+
+const AT_SHR: int = 22
+
+const AT_ADD: int = 23
+
+const AT_SUB: int = 24
+
+const AT_MUL: int = 25
+
+const AT_DIV: int = 26
+
+const AT_MOD: int = 27
+
+const AT_ASSIGN: int = 40
+
+/// `AT_SET + k` is the assignment that applies binary kind `k`
+/// (`+=` is `AT_SET + AT_ADD`).
+const AT_SET: int = 40
+
+/// Read the token that starts at `p` (blanks already skipped): its kind,
+/// in `r.pk`, and its end, in `r.pk_end`. An operator is the longest one
+/// its bytes spell: `<<=` before `<<` before `<=` before `<`. A `<` or a
+/// `>` that the other one follows is no operator, as `<>` is none.
+fn ar_scan(mut r: Ar, p: int) {
+    r.pk_at = p
+    r.pk_end = p + 1
+    if p >= r.s.len {
+        r.pk = AT_END
+        r.pk_end = p
+        return
     }
-    if not_before.len > 0 && end < r.s.len {
-        let next = ch(r.s, end)
-        var k = 0
-        while k < not_before.len {
-            if ch(not_before, k) == next {
-                return false
+    let c = ch(r.s, p)
+    let c1 = ch(r.s, p + 1)
+    if is_digit(c) || is_alpha(c) {
+        var e = p + 1
+        while e < r.s.len && is_alnum(ch(r.s, e)) {
+            e += 1
+        }
+        r.pk = if is_digit(c) then AT_NUM else AT_NAME
+        r.pk_end = e
+        return
+    }
+    var k = AT_BAD
+    var n = 1
+    if c == '(' {
+        k = AT_LP
+    } else if c == ')' {
+        k = AT_RP
+    } else if c == '?' {
+        k = AT_QUEST
+    } else if c == ':' {
+        k = AT_COLON
+    } else if c == '~' {
+        k = AT_TILDE
+    } else if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '^' {
+        k = AT_XOR
+        if c == '+' {
+            k = AT_ADD
+        } else if c == '-' {
+            k = AT_SUB
+        } else if c == '*' {
+            k = AT_MUL
+        } else if c == '/' {
+            k = AT_DIV
+        } else if c == '%' {
+            k = AT_MOD
+        }
+        if c1 == '=' {
+            k = AT_SET + k
+            n = 2
+        }
+    } else if c == '|' || c == '&' {
+        let single = if c == '|' then AT_OR else AT_AND
+        if c1 == c {
+            k = if c == '|' then AT_OROR else AT_ANDAND
+            n = 2
+        } else if c1 == '=' {
+            k = AT_SET + single
+            n = 2
+        } else {
+            k = single
+        }
+    } else if c == '=' {
+        if c1 == '=' {
+            k = AT_EQ
+            n = 2
+        } else {
+            k = AT_ASSIGN
+        }
+    } else if c == '!' {
+        if c1 == '=' {
+            k = AT_NE
+            n = 2
+        } else {
+            k = AT_NOT
+        }
+    } else if c == '<' || c == '>' {
+        let shift = if c == '<' then AT_SHL else AT_SHR
+        if c1 == c {
+            if ch(r.s, p + 2) == '=' {
+                k = AT_SET + shift
+                n = 3
+            } else {
+                k = shift
+                n = 2
             }
-            k += 1
+        } else if c1 == '=' {
+            k = if c == '<' then AT_LE else AT_GE
+            n = 2
+        } else if c1 == '<' || c1 == '>' {
+            k = AT_BAD
+        } else {
+            k = if c == '<' then AT_LT else AT_GT
         }
     }
-    r.i = end
-    true
+    r.pk = k
+    r.pk_end = p + n
+}
+
+/// The kind of the next token, after blanks; read once per position.
+fn ar_peek(mut r: Ar) -> int {
+    ws(mut r)
+    if r.pk_at != r.i {
+        ar_scan(mut r, r.i)
+    }
+    r.pk
+}
+
+/// Consume the token `ar_peek` named.
+fn ar_take(mut r: Ar) {
+    r.i = r.pk_end
+}
+
+/// A binary operator's level, loosest first (`||` 0 through `*` `/` `%`
+/// 9), or -1 for any other kind.
+fn ar_level(k: int) -> int {
+    if k < AT_OROR || k > AT_MOD {
+        return -1
+    }
+    if k == AT_OROR {
+        return 0
+    }
+    if k == AT_ANDAND {
+        return 1
+    }
+    if k == AT_OR {
+        return 2
+    }
+    if k == AT_XOR {
+        return 3
+    }
+    if k == AT_AND {
+        return 4
+    }
+    if k <= AT_NE {
+        return 5
+    }
+    if k <= AT_GT {
+        return 6
+    }
+    if k <= AT_SHR {
+        return 7
+    }
+    if k <= AT_SUB {
+        return 8
+    }
+    9
 }
 
 fn wadd(a: int, b: int) -> int {
@@ -171,7 +371,7 @@ fn var_value(sh: Sh, mut r: Ar, name: str) -> int {
 
 /// Evaluate `s`. The error, when there is one, is in the second field.
 fn arith(mut sh: Sh, s: str) -> (int, str) {
-    var r = Ar { s: s, i: 0, err: "", skip: 0 }
+    var r = Ar { s: s, i: 0, err: "", skip: 0, pk_at: -1, pk: AT_END, pk_end: 0 }
     ws(mut r)
     if r.i >= r.s.len {
         return (0, "")
@@ -195,42 +395,19 @@ fn read_name(mut r: Ar) -> str {
 fn assign_expr(mut sh: Sh, mut r: Ar) -> int {
     ws(mut r)
     let save = r.i
-    if r.i < r.s.len && is_alpha(ch(r.s, r.i)) {
+    if ar_peek(mut r) == AT_NAME {
         let name = read_name(mut r)
-        ws(mut r)
-        var op = ""
-        if eat(mut r, "<<=", "") {
-            op = "<<"
-        } else if eat(mut r, ">>=", "") {
-            op = ">>"
-        } else if eat(mut r, "*=", "") {
-            op = "*"
-        } else if eat(mut r, "/=", "") {
-            op = "/"
-        } else if eat(mut r, "%=", "") {
-            op = "%"
-        } else if eat(mut r, "+=", "") {
-            op = "+"
-        } else if eat(mut r, "-=", "") {
-            op = "-"
-        } else if eat(mut r, "&=", "") {
-            op = "&"
-        } else if eat(mut r, "^=", "") {
-            op = "^"
-        } else if eat(mut r, "|=", "") {
-            op = "|"
-        } else if eat(mut r, "=", "=") {
-            op = "="
-        }
-        if op.len > 0 {
+        let k = ar_peek(mut r)
+        if k == AT_ASSIGN || k > AT_SET && ar_level(k - AT_SET) >= 2 {
+            ar_take(mut r)
             let rhs = assign_expr(mut sh, mut r)
             if r.err.len > 0 {
                 return 0
             }
             var v = rhs
-            if op != "=" {
+            if k != AT_ASSIGN {
                 let cur = var_value(sh, mut r, name)
-                v = binop(mut r, op, cur, rhs)
+                v = binop(mut r, k - AT_SET, cur, rhs)
             }
             if r.skip == 0 && r.err.len == 0 {
                 if !set_var(mut sh, name, "{v}") {
@@ -246,15 +423,17 @@ fn assign_expr(mut sh: Sh, mut r: Ar) -> int {
 
 fn cond_expr(mut sh: Sh, mut r: Ar) -> int {
     let c = binary(mut sh, mut r, 0)
-    if !eat(mut r, "?", "") {
+    if ar_peek(mut r) != AT_QUEST {
         return c
     }
+    ar_take(mut r)
     if c != 0 {
         let a = assign_expr(mut sh, mut r)
-        if !eat(mut r, ":", "") {
+        if ar_peek(mut r) != AT_COLON {
             ar_err(mut r, "expecting ':' in \"{r.s}\"")
             return 0
         }
+        ar_take(mut r)
         r.skip += 1
         let _b = assign_expr(mut sh, mut r)
         r.skip -= 1
@@ -263,114 +442,29 @@ fn cond_expr(mut sh: Sh, mut r: Ar) -> int {
     r.skip += 1
     let _a = assign_expr(mut sh, mut r)
     r.skip -= 1
-    if !eat(mut r, ":", "") {
+    if ar_peek(mut r) != AT_COLON {
         ar_err(mut r, "expecting ':' in \"{r.s}\"")
         return 0
     }
+    ar_take(mut r)
     assign_expr(mut sh, mut r)
 }
 
-/// The binary operators by level, loosest first, without a temporary list.
-fn level_count(level: int) -> int {
-    if level < 5 {
-        return 1
-    }
-    if level == 6 {
-        return 4
-    }
-    if level == 9 {
-        return 3
-    }
-    2
-}
-
-fn level_op(level: int, index: int) -> str {
-    if level == 0 {
-        return "||"
-    }
-    if level == 1 {
-        return "&&"
-    }
-    if level == 2 {
-        return "|"
-    }
-    if level == 3 {
-        return "^"
-    }
-    if level == 4 {
-        return "&"
-    }
-    if level == 5 {
-        return if index == 0 then "==" else "!="
-    }
-    if level == 6 {
-        if index == 0 {
-            return "<="
-        }
-        if index == 1 {
-            return ">="
-        }
-        return if index == 2 then "<" else ">"
-    }
-    if level == 7 {
-        return if index == 0 then "<<" else ">>"
-    }
-    if level == 8 {
-        return if index == 0 then "+" else "-"
-    }
-    if index == 0 {
-        return "*"
-    }
-    if index == 1 {
-        return "/"
-    }
-    "%"
-}
-
-/// What may not follow an operator for it to be that operator: `|` is
-/// not `||` or `|=`, `<` is not `<<` or `<=`, and so on.
-fn not_after(op: str) -> str {
-    if op == "|" {
-        return "|="
-    }
-    if op == "&" {
-        return "&="
-    }
-    if op == "<" || op == ">" {
-        return "<>="
-    }
-    if op == "<<" || op == ">>" {
-        return "="
-    }
-    if op == "+" || op == "-" || op == "*" || op == "/" || op == "%" || op == "^" {
-        return "="
-    }
-    ""
-}
-
-fn binary(mut sh: Sh, mut r: Ar, level: int) -> int {
-    if level > 9 {
-        return unary(mut sh, mut r)
-    }
-    var a = binary(mut sh, mut r, level + 1)
-    let count = level_count(level)
+/// The operators at `least` and tighter, left to right: each right side
+/// takes only the operators tighter than its own.
+fn binary(mut sh: Sh, mut r: Ar, least: int) -> int {
+    var a = unary(mut sh, mut r)
     loop {
         if r.err.len > 0 {
             return 0
         }
-        var found = ""
-        var index = 0
-        while index < count {
-            let op = level_op(level, index)
-            if found.len == 0 && eat(mut r, op, not_after(op)) {
-                found = op
-            }
-            index += 1
-        }
-        if found.len == 0 {
+        let k = ar_peek(mut r)
+        let level = ar_level(k)
+        if level < least {
             return a
         }
-        if found == "&&" {
+        ar_take(mut r)
+        if k == AT_ANDAND {
             if a == 0 {
                 r.skip += 1
                 let _b = binary(mut sh, mut r, level + 1)
@@ -382,7 +476,7 @@ fn binary(mut sh: Sh, mut r: Ar, level: int) -> int {
             }
             continue
         }
-        if found == "||" {
+        if k == AT_OROR {
             if a != 0 {
                 r.skip += 1
                 let _b = binary(mut sh, mut r, level + 1)
@@ -395,22 +489,22 @@ fn binary(mut sh: Sh, mut r: Ar, level: int) -> int {
             continue
         }
         let b = binary(mut sh, mut r, level + 1)
-        a = binop(mut r, found, a, b)
+        a = binop(mut r, k, a, b)
     }
     a
 }
 
-fn binop(mut r: Ar, op: str, a: int, b: int) -> int {
-    if op == "+" {
+fn binop(mut r: Ar, k: int, a: int, b: int) -> int {
+    if k == AT_ADD {
         return wadd(a, b)
     }
-    if op == "-" {
+    if k == AT_SUB {
         return wsub(a, b)
     }
-    if op == "*" {
+    if k == AT_MUL {
         return wmul(a, b)
     }
-    if op == "/" || op == "%" {
+    if k == AT_DIV || k == AT_MOD {
         if b == 0 {
             if r.skip == 0 {
                 ar_err(mut r, "division by zero")
@@ -418,95 +512,98 @@ fn binop(mut r: Ar, op: str, a: int, b: int) -> int {
             return 0
         }
         if b == -1 {
-            return if op == "/" then wneg(a) else 0
+            return if k == AT_DIV then wneg(a) else 0
         }
-        return if op == "/" then a / b else a % b
+        return if k == AT_DIV then a / b else a % b
     }
-    if op == "<<" {
+    if k == AT_SHL {
         return wshl(a, b)
     }
-    if op == ">>" {
+    if k == AT_SHR {
         return wshr(a, b)
     }
-    if op == "<" {
+    if k == AT_LT {
         return if a < b then 1 else 0
     }
-    if op == "<=" {
+    if k == AT_LE {
         return if a <= b then 1 else 0
     }
-    if op == ">" {
+    if k == AT_GT {
         return if a > b then 1 else 0
     }
-    if op == ">=" {
+    if k == AT_GE {
         return if a >= b then 1 else 0
     }
-    if op == "==" {
+    if k == AT_EQ {
         return if a == b then 1 else 0
     }
-    if op == "!=" {
+    if k == AT_NE {
         return if a != b then 1 else 0
     }
-    if op == "&" {
+    if k == AT_AND {
         return band(a, b)
     }
-    if op == "|" {
+    if k == AT_OR {
         return bor(a, b)
     }
-    if op == "^" {
+    if k == AT_XOR {
         return bxor(a, b)
     }
     0
 }
 
+/// `!` `~` `-` `+` before an operand. A `-` that another `-` follows, or
+/// a `+` that another `+` follows, is not a sign (`--` and `++` are not
+/// operators here), and neither is `!=`.
 fn unary(mut sh: Sh, mut r: Ar) -> int {
-    ws(mut r)
-    if eat(mut r, "!", "=") {
+    let k = ar_peek(mut r)
+    if k == AT_NOT {
+        ar_take(mut r)
         let v = unary(mut sh, mut r)
         return if v == 0 then 1 else 0
     }
-    if eat(mut r, "~", "") {
+    if k == AT_TILDE {
+        ar_take(mut r)
         return bnot(unary(mut sh, mut r))
     }
-    if eat(mut r, "-", "-=") {
-        return wneg(unary(mut sh, mut r))
-    }
-    if eat(mut r, "+", "+=") {
-        return unary(mut sh, mut r)
+    if (k == AT_SUB || k == AT_ADD) && ch(r.s, r.pk_end) != ch(r.s, r.i) {
+        ar_take(mut r)
+        let v = unary(mut sh, mut r)
+        return if k == AT_SUB then wneg(v) else v
     }
     primary(mut sh, mut r)
 }
 
 fn primary(mut sh: Sh, mut r: Ar) -> int {
-    ws(mut r)
-    if r.i >= r.s.len {
+    let k = ar_peek(mut r)
+    if k == AT_END {
         ar_err(mut r, "missing operand in \"{r.s}\"")
         return 0
     }
-    if eat(mut r, "(", "") {
+    if k == AT_LP {
+        ar_take(mut r)
         let v = assign_expr(mut sh, mut r)
-        if !eat(mut r, ")", "") {
+        if ar_peek(mut r) != AT_RP {
             ar_err(mut r, "missing ')' in \"{r.s}\"")
             return 0
         }
+        ar_take(mut r)
         return v
     }
-    let c = ch(r.s, r.i)
-    if is_digit(c) {
-        let start = r.i
-        while r.i < r.s.len && is_alnum(ch(r.s, r.i)) {
-            r.i += 1
-        }
-        let lit = r.s[start..r.i]
+    if k == AT_NUM {
+        let lit = r.s[r.i..r.pk_end]
+        ar_take(mut r)
         let n = parse_const(lit) else |_| {
             ar_err(mut r, "{lit}: not a number")
             return 0
         }
         return n
     }
-    if is_alpha(c) {
+    if k == AT_NAME {
         let name = read_name(mut r)
         return var_value(sh, mut r, name)
     }
+    let c = ch(r.s, r.i)
     ar_err(mut r, "unexpected '{c}' in \"{r.s}\"")
     0
 }
