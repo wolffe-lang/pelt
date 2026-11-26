@@ -9,20 +9,24 @@ status (its prompts and its messages are its own). Keys a person wrote
 in the meta are kept.
 
 The oracle is a program we RUN, never a source we read (ruling #43).
-Run it on the oracle host (tests/diff/ORACLE); it refuses another dash.
+Run it where the oracle of record runs: it refuses (exit 2) unless this
+host's dash and bash are exactly the ones tests/diff/ORACLE names, by
+package and program digest (tools/lib_oracle.py; tools/oracle-container
+--session runs it in the image that carries them).
 
 usage: tools/session-record [--check] [--no-second] [case ...]
   --check      write nothing; exit 1 when a recorded transcript no longer
-               matches what this host's oracle answers
+               matches what this host's oracle answers (DRIFT), or a
+               second-opinion flag would change (FLAG)
   --no-second  the oracle alone: no second opinion is run, and the
                meta's `bash=` is left out (sh15 runs dash only)
 """
 
 import os
-import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lib_oracle  # noqa: E402
 import lib_session as ls  # noqa: E402
 
 KEEP = ("args", "pelt_args", "oracle_args", "env", "oracle", "compare", "pending", "why",
@@ -39,11 +43,10 @@ def main(argv):
         else:
             second = False
         argv = argv[1:]
-    want = open(os.path.join(ls.ROOT, "tests", "diff", "ORACLE"), encoding="utf-8").read()
-    pkg = subprocess.run(["pacman", "-Q", "dash"], capture_output=True, text=True).stdout.strip()
-    if not pkg or pkg not in want:
-        print(f"session-record: this host has {pkg or 'no pacman dash'}; tests/diff/ORACLE "
-              f"names another dash", file=sys.stderr)
+    try:
+        lib_oracle.check_host(names=("dash", "bash") if second else ("dash",))
+    except lib_oracle.Refused as exc:
+        print(f"session-record: REFUSED: {exc}", file=sys.stderr)
         return 2
     drift = 0
     for name, keys in ls.cases(argv or None):
@@ -78,14 +81,18 @@ def main(argv):
             drift += 1
             continue
         same = True
+        flag = "dash" if meta.get("oracle") == "bash" else "bash"
         if second:
             b = ls.run(ls.argv_for(other, meta, False), keys, meta)
             same = ls.stdout_and_exit(b) == ls.stdout_and_exit(d)
-            meta["dash" if meta.get("oracle") == "bash" else "bash"] = "agree" if same else "differs"
+            meta[flag] = "agree" if same else "differs"
         if check:
             have = open(trp, encoding="utf-8").read().split("\n")[:-1] if os.path.exists(trp) else None
             if have is None or view(have) != view(d):
                 print(f"DRIFT {name}")
+                drift += 1
+            if second and old.get(flag) != meta[flag]:
+                print(f"FLAG {name}: {flag + '=' + old[flag] if flag in old else '(no ' + flag + '=)'} -> {flag}={meta[flag]}")
                 drift += 1
             continue
         with open(trp, "w", encoding="utf-8") as fh:
