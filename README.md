@@ -292,7 +292,8 @@ the tree so the measurement can be taken again.
 |---|---|
 | `tools/difftest --bin target/release` | the differential corpus, every case's output, status and files against the expectation recorded from dash |
 | `tools/session --bin target/release` | typed sessions through a pseudo-terminal, byte for byte against `dash -i` |
-| `tools/oracle-record`, `tools/session-record` | record a new case's expectation from the oracle |
+| `tools/oracle-record`, `tools/session-record` | record a new case's expectation from the oracle (in its image: `tools/oracle-container`) |
+| `python3 tools/oracle-test` | the recorders refuse any dash or bash but the exact ones `tests/diff/ORACLE` names, by package and program digest |
 | `tools/exec-witness`, `tools/signal-witness`, `tools/hist-witness`, `tools/edit-witness` | one behaviour each, measured on the live process (the same pid after `exec`, a signal's disposition, the history file, the editor) |
 | `tools/shadow-witness`, `tools/colour-witness`, `tools/words-witness`, `tools/prompt-witness` | display-only suggestions, syntax colours, abbreviations, history events, described completion, prompt precedence and VCS deadlines, raw resets, resize, idle memory and per-key latency |
 | `tools/reap-witness` | a test case that times out leaves nothing running |
