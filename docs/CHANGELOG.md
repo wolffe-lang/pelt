@@ -27,15 +27,21 @@ lane) and in the README's status.
   and by the sha256 of the programs the corpus runs. Both are installed into
   an image whose inputs are pinned: the base by registry digest, every
   package file by sha256 (dash, libedit and bash). Before building, pacman
-  must prove in the base that the files close over what it has installed.
-  Nothing is published, and fish, which nothing reads, is no longer in the
-  image. The recorders compared the
-  host's dash package with ORACLE's text as a substring. That let a
-  different build through, and with a pacman that answered nothing they
-  recorded unchecked. They now refuse any dash or bash but the exact ones
-  ORACLE names. `--check` names every drifting case with its old and new
-  lines, and every second-opinion flag that would change.
-  `tools/oracle-test` holds the refusals and runs in CI.
+  must prove in the base that the files close over what it has installed,
+  and the build prints what pacman would install. Nothing is published, and
+  fish, which nothing reads, is no longer in the image. The recorders
+  compared the host's dash package with ORACLE's text as a substring. That
+  let a different build through, and with a pacman that answered nothing
+  they recorded unchecked. They now refuse any dash or bash but the exact
+  ones ORACLE names. `--check` names every drifting case with its old and
+  new lines, and every second-opinion flag that would change; when the
+  second opinion differs on a session, its transcript is printed.
+  `tools/oracle-test` holds the refusals and runs in CI. Recorded from the
+  image: the ten redirect-once cases, whose hand-written expectations dash
+  matched exactly, gain their second-opinion flags; `test/c_files` now
+  expects `-s` to hold for an empty directory, because the image runs each
+  case in a tmpfs, and stays pending, since on btrfs an empty directory has
+  no size; and fifteen session cases gain their first second-opinion flag.
 
 - **Corpus diagnostics keep counter loss separate from shell behavior.** An
   isolated generated probe writes parent-counter prefixes to an externally
