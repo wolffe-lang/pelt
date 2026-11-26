@@ -8,7 +8,8 @@
 # The base must already be present (pull it by digest first). Before building,
 # pacman itself, in the base image and with no network, must resolve the pinned
 # files against what the base has installed (`pacman -U --print`): a manifest
-# that leaves a dependency open is refused by name before any build. The
+# that leaves a dependency open is refused by name before any build, and
+# pacman's list of what it would install is printed either way. The
 # engine is $ORACLE_ENGINE (default podman); downloads go under $ORACLE_CACHE
 # (default .cache/oracle). The image id printed at the end is an observed
 # value, not a pin: the build checks that the image's dash and bash are the
@@ -56,6 +57,7 @@ if ! closure=$("$engine" run --rm --pull=never --network=none -v "$context:/orac
     echo 'oracle-image: REFUSED: the pinned packages are not closed over the base image; pin what pacman names above' >&2
     exit 2
 fi
+printf '%s\n' "$closure"
 echo 'PASS oracle-image: the pinned packages close over the base'
 "$engine" build --pull=never --network=none -f "$root/tools/oracle/Containerfile" -t "$tag" "$context"
 id=$("$engine" image inspect "$tag" --format '{{.Id}}')
