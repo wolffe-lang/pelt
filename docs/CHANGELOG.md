@@ -6,6 +6,20 @@ lane) and in the README's status.
 
 ## Unreleased
 
+- **A command's redirections are performed once (pelt#156).** The fast path
+  for a simple command opens its redirections and can still give the
+  command to the ordinary path afterwards: when it is not found, when a
+  file without `#!` must run as a script, or when a built-in reports an
+  error. The ordinary path then opened every target a second time. A FIFO
+  saw two opens (its reader an early end of file, then a second open that
+  waited forever), and under `set -C` the file the first open created was
+  refused as one that exists (status 2 instead of 127). The fast path now
+  opens only a target whose second opening cannot be told from one: a
+  regular file, a file not yet there (except `>` under `set -C`), and
+  `/dev/null`. Any other target sends the command the ordinary way before
+  anything is opened. Ten differential cases cover the shapes and their
+  controls.
+
 - **Corpus diagnostics keep counter loss separate from shell behavior.** An
   isolated generated probe writes parent-counter prefixes to an externally
   owned case file, including before successful exec or fatal signal death.
