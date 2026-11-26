@@ -227,6 +227,22 @@ class Session(Rig):
         r = self.tool("session-record", "--check")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
+    def test_s5_a_differing_second_opinion_shows_its_transcript(self):
+        # bash sets BASH_VERSION and dash does not: the second opinion differs
+        # on standard output, and the check shows bash's own transcript and
+        # how its compared view differs; a case where both agree shows nothing
+        self.write_oracle()
+        self.answer(dash="dash 0.5.13.4-1", bash="bash 5.3.20-1")
+        for name, line in (("two", 'echo "[${BASH_VERSION+b}]"'), ("one", "echo hi")):
+            with open(os.path.join(self.sess, name + ".keys"), "w") as fh:
+                fh.write(line + "\nexit\n")
+        r = self.tool("session-record", "--check", "one", "two")
+        self.assertIn("FLAG two: (no bash=) -> bash=differs", r.stdout, r.stdout + r.stderr)
+        self.assertIn("SECOND two: bash differs", r.stdout)
+        self.assertIn('    out "[b]\\n"', r.stdout)
+        self.assertIn('    -out "[]\\n"', r.stdout)
+        self.assertNotIn("SECOND one", r.stdout)
+
 
 class Container(Rig):
     """tools/oracle-container: the engine by $ORACLE_ENGINE, identity inside."""
@@ -373,6 +389,8 @@ class ImageClosure(Rig):
         closure = next(i for i, c in enumerate(calls) if "pacman -U --print" in c)
         self.assertLess(closure, first_build)
         self.assertIn("PASS oracle-image: the pinned packages close over the base", r.stdout)
+        # pacman's own list of what it would install is in the log
+        self.assertIn("/oracle-packages/dash-9-1-x86_64.pkg.tar.zst", r.stdout)
         self.assertIn("PASS oracle-image: dash and bash are the programs", r.stdout)
 
 
