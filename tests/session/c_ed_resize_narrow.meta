@@ -1,4 +1,5 @@
 compare=stdout
+bash=agree
 why=the window narrows from 40 to 20 columns while a line is edited: the line is drawn again at the new width (RESIZE, os_term_size; sh15). The screen is written by hand from the design (xterm's resize: rows kept, cut at the margin); the transcript is dash's
 cols=40
 screen=2
