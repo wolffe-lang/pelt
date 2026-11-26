@@ -531,7 +531,7 @@ fn xw(mut sh: Sh, w: str, from: int, to: int, flags: int, mut o: Buf) {
         }
         if flags & X_ASSIGN != 0 && c == ':' && ch(w, i + 1) == '~' {
             lit(mut o, 58)
-            i = tilde(sh.vals, w, i + 1, to, flags, mut o)
+            i += 1
             continue
         }
         lit(mut o, byte_at(w, i))
