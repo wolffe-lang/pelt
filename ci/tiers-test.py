@@ -185,8 +185,9 @@ def extra_checks(say, plan, expect, blocks, wf):
         and "        run: tools/difftest-selftest target/release\n" in g
         and "        if: ${{ matrix.tier == 'release' && !cancelled() }}\n        run: tools/session-selftest target/release\n" in se,
         "T4 the two planted-red selftests run on the release leg, the session harness's in the sessions job")
-    say(g.count("        if: matrix.tier == 'native'\n") == 3 and "        if: matrix.builds && matrix.tier == 'native'\n" in g,
-        "T4 fmt, the clause table, the width table and wolf test run once a host, on the native leg")
+    say(g.count("        if: matrix.tier == 'native'\n") == 4 and "        if: matrix.builds && matrix.tier == 'native'\n" in g
+        and "        run: python3 tools/oracle-test\n" in g,
+        "T4 fmt, the clause table, the oracle test (pelt#69), the width table and wolf test run once a host, on the native leg")
     say("    timeout-minutes: 40\n" in g and "    timeout-minutes: 45\n" in se,
         "T4 the limits by the house rule (pelt#99): the gauntlet 40 minutes, the sessions 45")
     say("      - name: the session corpus" not in g and "run: tools/session --bin" not in g and "run: tools/session-selftest" not in g,
