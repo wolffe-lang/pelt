@@ -12,7 +12,7 @@ must be terminals. `set +o friendly` restores the POSIX editor;
 ## How this table was obtained
 
 The baseline is pelt `70eec14`. The reference programs were run, never read:
-dash **0.5.13.4-1.1**, bash **5.3.20-2**, fish **4.9.3-1**, on kasumi,
+dash **0.5.13.4-1.1**, bash **5.3.20-2**, fish **4.9.3-1**, on a Linux x86-64 development host,
 CPUs 12–15, inside the lane's rootless Arch container. Image id
 `3ed18d5c7b242c675807f875e43eabf11bdf87f9eebd875fce9e9b1d1bf7297f`,
 digest `sha256:8185e444e45ba166146b244b41f1cba2d7d91f3eddce533a839cc9591e0fa785`.
@@ -431,7 +431,7 @@ listing, quit remaps and vi/search flushes. There are 375 active session
 expectations and two named pending cases in the tree; the full gauntlet and
 CI decide the final head. No pre-existing session expectation was changed.
 
-The focused witness before the idle-accounting correction (kasumi, CPUs
+The focused witness before the idle-accounting correction (the same host, CPUs
 12–15, the pinned container and
 compiler pair above) loads 32,767 history entries and measures 100 M-.
 responses after one warmup. It waits for the requested word, not just the
@@ -496,7 +496,7 @@ is one undo group. `friendly_keys` does not gate `suggest` or `histsearch`.
 Both new options default off at this pin; enable them explicitly. See
 [FRIENDLY.md](FRIENDLY.md) for the future invocation-name-gated default.
 
-Fish 4.9.3 was measured through a pty on kasumi, CPUs 4–7, using the same
+Fish 4.9.3 was measured through a pty on the same host, CPUs 4–7, using the same
 Arch image and package versions recorded above. It emits SGR 90, not SGR 2,
 indexed 244 or RGB grey, even with truecolour advertised. Its narrow shadow
 uses an ellipsis and does not wrap in the measured case; pelt truncates
