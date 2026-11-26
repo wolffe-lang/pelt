@@ -5,8 +5,10 @@ Types every case (or the named ones) into `dash -i +m` through a
 pseudo-terminal, pacing by quiet (tools/lib_session.py), and writes
 <name>.tr; types it into `bash --posix -i +m` too and records in the
 meta whether the second opinion agrees on standard output and the exit
-status (its prompts and its messages are its own). Keys a person wrote
-in the meta are kept.
+status (its prompts and its messages are its own). When the second
+opinion differs, its whole transcript is printed, indented, with a diff
+of the compared view, so a reader can see how. Keys a person wrote in
+the meta are kept.
 
 The oracle is a program we RUN, never a source we read (ruling #43).
 Run it where the oracle of record runs: it refuses (exit 2) unless this
@@ -22,6 +24,7 @@ usage: tools/session-record [--check] [--no-second] [case ...]
                meta's `bash=` is left out (sh15 runs dash only)
 """
 
+import difflib
 import os
 import sys
 
@@ -31,6 +34,15 @@ import lib_session as ls  # noqa: E402
 
 KEEP = ("args", "pelt_args", "oracle_args", "env", "oracle", "compare", "pending", "why",
         "screen", "cols", "rows", "screen_by", "tr_by")
+
+
+def show_second(name, who, first, other):
+    """The second opinion's transcript and how its compared view differs."""
+    print(f"SECOND {name}: {who} differs on standard output or the exit; its transcript, then the compared view against the oracle's:")
+    for ln in other:
+        print("    " + ln)
+    for ln in difflib.unified_diff(ls.stdout_and_exit(first), ls.stdout_and_exit(other), "oracle", who, lineterm="", n=1):
+        print("    " + ln)
 
 
 def main(argv):
@@ -86,6 +98,8 @@ def main(argv):
             b = ls.run(ls.argv_for(other, meta, False), keys, meta)
             same = ls.stdout_and_exit(b) == ls.stdout_and_exit(d)
             meta[flag] = "agree" if same else "differs"
+            if not same:
+                show_second(name, flag, d, b)
         if check:
             have = open(trp, encoding="utf-8").read().split("\n")[:-1] if os.path.exists(trp) else None
             if have is None or view(have) != view(d):
