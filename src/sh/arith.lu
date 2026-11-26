@@ -253,7 +253,7 @@ fn ar_level(k: int) -> int {
         return 6
     }
     if k <= AT_SHR {
-        return 7
+        return 8
     }
     if k <= AT_SUB {
         return 8
