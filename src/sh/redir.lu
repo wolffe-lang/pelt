@@ -331,7 +331,7 @@ fn redir_one(mut sh: Sh, rd: Rd, framed: bool) -> bool {
         install(mut sh, fd, h, framed)
         return true
     }
-    if sh.shadow && !reopens_unseen(sh, op, target) {
+    if sh.shadow && !reopens_unseen(sh, op, "/dev/null") {
         // the ordinary path takes the command before anything is opened
         sh.bail = true
         return false
