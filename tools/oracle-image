@@ -50,7 +50,7 @@ while read -r digest url; do
     curl --fail --location --silent --show-error "$url" -o "$context/$file"
     printf '%s  %s\n' "$digest" "$context/$file" | sha256sum -c -
 done < "$manifest"
-if ! closure=$("$engine" run --rm --network=none -v "$context:/oracle-packages:ro" "$base" \
+if ! closure=$("$engine" run --rm --pull=never --network=none -v "$context:/oracle-packages:ro" "$base" \
     sh -c 'pacman -U --print --noconfirm /oracle-packages/*.pkg.tar.zst' 2>&1); then
     printf '%s\n' "$closure" >&2
     echo 'oracle-image: REFUSED: the pinned packages are not closed over the base image; pin what pacman names above' >&2
