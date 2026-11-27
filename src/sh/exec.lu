@@ -1248,7 +1248,10 @@ fn status_word(sh: Sh, w: str) -> (bool, str) {
 
 /// Status-only builtins need neither a full shell nor a general argv expansion.
 /// A refusal has no effects; the original full-shadow path then runs unchanged.
-fn readonly_status(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
+/// The answer is the command's status (0 or 1), or -1 for a refusal: an
+/// `int`, so that `run_fast` builds its one result where it returns it and
+/// the status route copies no `Fast` out.
+fn readonly_status(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> int {
     if nowait ||
         bg ||
         sh.opt_x ||
@@ -1256,26 +1259,26 @@ fn readonly_status(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
         a.nodes[n].ints[0] != 0 ||
         a.nodes[n].redirs.len != 0 ||
         a.nodes[n].words.len == 0 {
-        return slow()
+        return -1
     }
     let name = a.nodes[n].words[0]
     let comparison = name == "test" || name == "["
     if name != ":" && name != "true" && name != "false" && !comparison {
-        return slow()
+        return -1
     }
     let fnode = sh.funcs[name] else -1
     if fnode >= 0 || !(is_special_builtin(name) || is_available_builtin(sh, name)) {
-        return slow()
+        return -1
     }
     var end = a.nodes[n].words.len
     if name == "[" {
         if end == 1 || a.nodes[n].words[end - 1] != "]" {
-            return slow()
+            return -1
         }
         end -= 1
     }
     if comparison && end != 4 {
-        return slow()
+        return -1
     }
     var left = ""
     var op = ""
@@ -1284,7 +1287,7 @@ fn readonly_status(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
     while i < end {
         let (ok, value) = status_word(sh, a.nodes[n].words[i])
         if !ok {
-            return slow()
+            return -1
         }
         if comparison {
             if i == 1 {
@@ -1307,28 +1310,36 @@ fn readonly_status(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
             op != "-ge" &&
             op != "-lt" &&
             op != "-le" {
-            return slow()
+            return -1
         }
         var t = Tst { args: List[str](), i: 0, err: "" }
         let value = binary_test(sh, mut t, left, op, right)
         if t.err.len > 0 {
-            return slow()
+            return -1
         }
         status = if value then 0 else 1
     }
-    var r = slow()
-    r.kind = R_DONE
-    r.status_route = true
-    r.status = status
-    r
+    status
 }
 
 fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
-    let direct = readonly_status(sh, a, n, nowait, bg)
-    if direct.kind != R_SLOW {
-        return direct
+    let status = readonly_status(sh, a, n, nowait, bg)
+    if status >= 0 {
+        var r = slow()
+        r.kind = R_DONE
+        r.status_route = true
+        r.status = status
+        return r
     }
     var t = shadow_of(sh)
+    fast_shadow(sh, a, n, nowait, bg, mut t)
+}
+
+/// The rest of the fast path, run in the shadow `t`. The shadow is a
+/// parameter here, not a local: a whole `Sh` held as a local is moved
+/// about the frame around every call that takes it, and a parameter is
+/// passed on where it lies.
+fn fast_shadow(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool, mut t: Sh) -> Fast {
     t.line = a.nodes[n].line
     let na = a.nodes[n].ints[0]
     var assigns = List[str]()

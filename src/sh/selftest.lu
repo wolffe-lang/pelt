@@ -849,16 +849,15 @@ fn want_status_routes(mut bad: List[str]) {
         }
         let stage = names[i] == "stage"
         let bg = names[i] == "background"
-        let r = copy region turn {
+        let st = copy region turn {
             readonly_status(sh, a, n, stage, bg)
         }
-        let done = if r.kind == R_DONE then 1 else 0
-        let fallback = if r.kind == R_SLOW then 1 else 0
+        let done = if st >= 0 then 1 else 0
+        let fallback = if st == -1 then 1 else 0
         let want = if i < 7 then 1 else 0
         if done != want ||
             done + fallback != 1 ||
-            r.status_route != (done == 1) ||
-            done == 1 && r.status != (if names[i] == "false" then 1 else 0) {
+            done == 1 && st != (if names[i] == "false" then 1 else 0) {
             (mut bad).push("status route {names[i]} done={done} fallback={fallback}")
         }
         print("ROUTE status shape={names[i]} done={done} fallback={fallback}")
@@ -868,8 +867,8 @@ fn want_status_routes(mut bad: List[str]) {
         let general = copy region turn {
             readonly_status(sh, a, n, false, false)
         }
-        let gd = if general.kind == R_DONE then 1 else 0
-        let gf = if general.kind == R_SLOW then 1 else 0
+        let gd = if general >= 0 then 1 else 0
+        let gf = if general == -1 then 1 else 0
         if gd != 0 || gf != 1 {
             (mut bad).push("status general route {names[i]} did not fall back")
         }
