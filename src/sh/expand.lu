@@ -1296,7 +1296,8 @@ fn expand_one(mut sh: Sh, w: str, flags: int) -> str {
 /// is split (XCU 2.6.5); it is globbed only when it holds a pattern
 /// character and `noglob` (`-f`) is off.
 fn literal_field(w: str, noglob: bool) -> bool {
-    plain_lit(w) && (noglob || !has_magic(w))
+    plain_lit(w) &&
+        (noglob || !has_magic(w) || (w.find("*") else -1) < 0 && (w.find("[") else -1) < 0)
 }
 
 /// Whether the assignment value `w` is itself: literal (`plain_lit`) and
@@ -1304,7 +1305,7 @@ fn literal_field(w: str, noglob: bool) -> bool {
 /// after the `=` and after each unquoted `:`. Values are neither split nor
 /// globbed.
 fn literal_value(w: str) -> bool {
-    plain_lit(w) && (w.find("~") else -1) < 0
+    plain_lit(w)
 }
 
 /// A word as a pattern (a `case` pattern): expanded, quoting kept.
