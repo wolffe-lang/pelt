@@ -1184,6 +1184,10 @@ fn split_marked(f: str, m: str) -> List[str] {
 fn expand_words(mut sh: Sh, words: List[str]) -> List[str] {
     var out = List[str]()
     for w in words {
+        if literal_field(w, sh.opt_f) {
+            (mut out).push(w)
+            continue
+        }
         var o = buf()
         xw(mut sh, w, 0, w.len, X_TILDE, mut o)
         if sh.flow != F_NONE {
@@ -1278,9 +1282,29 @@ fn declares(fields: List[str]) -> bool {
 /// One word expanded without splitting or pathname expansion: a `case`
 /// word, a here-document delimiter's sibling, an assignment's value.
 fn expand_one(mut sh: Sh, w: str, flags: int) -> str {
+    if flags & X_ASSIGN != 0 && literal_value(w) {
+        return w
+    }
     var o = buf()
     xw(mut sh, w, 0, w.len, flags | X_NOSPLIT, mut o)
     unmark(text(o))
+}
+
+/// Whether the command word `w` is its own one field. A literal word
+/// (`plain_lit`: no quoting, no expansion, no leading `~`, no byte the
+/// expander would mark) is never split, since only what expansions produce
+/// is split (XCU 2.6.5); it is globbed only when it holds a pattern
+/// character and `noglob` (`-f`) is off.
+fn literal_field(w: str, noglob: bool) -> bool {
+    plain_lit(w) && (noglob || !has_magic(w))
+}
+
+/// Whether the assignment value `w` is itself: literal (`plain_lit`) and
+/// with no `~` anywhere, since in an assignment a tilde prefix may start
+/// after the `=` and after each unquoted `:`. Values are neither split nor
+/// globbed.
+fn literal_value(w: str) -> bool {
+    plain_lit(w) && (w.find("~") else -1) < 0
 }
 
 /// A word as a pattern (a `case` pattern): expanded, quoting kept.
