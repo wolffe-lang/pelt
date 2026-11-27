@@ -1353,7 +1353,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
         opt_e: sh.opt_e,
         opt_u: sh.opt_u,
         opt_x: sh.opt_x,
-        opt_f: sh.opt_f,
+        opt_f: false,
         opt_n: sh.opt_n,
         opt_v: sh.opt_v,
         opt_a: sh.opt_a,
