@@ -2729,9 +2729,7 @@ fn sync_env(sh: Sh) {
 /// by the shadow's own table (`set -a` in this command) or else by the
 /// real state's, and set in the shadow.
 fn fast_wants(sh: Sh, t: Sh, k: str) -> bool {
-    let on = t.exported[k] else {
-        sh.exported[k] else false
-    }
+    let on = t.exported[k] else false
     on && has_var(t, k)
 }
 
