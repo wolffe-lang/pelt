@@ -1411,7 +1411,7 @@ fn fast_shadow(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool, mut t: Sh) -> Fas
         // in order, left to right); the shadow keeps nothing, and the
         // last one has nobody after it to see it
         ai += 1
-        if ai < assigns.len {
+        if ai > assigns.len {
             t.vals[name] = v
         }
         if fields.len == 0 {
