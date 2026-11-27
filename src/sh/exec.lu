@@ -1334,12 +1334,18 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
     // The shadow is built here, in `t` itself, rather than by
     // `shadow_of`: a state returned from a call is copied whole into
     // `t`, and `new_sh` makes containers `shadow_of` then replaces. The
-    // fields are `new_sh`'s, with `shadow_of`'s copies of the real state.
+    // fields are `new_sh`'s, with `shadow_of`'s copies of the real state,
+    // except the export and readonly tables, which are not copied: the
+    // shadow's export table holds only what `set -a` exports here (a
+    // program's environment reads it and the real one, `sync_env_fast`),
+    // and its readonly table stays empty: with any name readonly in the
+    // real state, the shadow keeps no assignment an expansion makes
+    // (`defer_ok` off), so the ordinary path makes it and checks it.
     var t = Sh {
         ast: new_ast(),
         vals: copy sh.vals,
-        exported: copy sh.exported,
-        ronly: copy sh.ronly,
+        exported: Map[str, bool](),
+        ronly: Map[str, bool](),
         funcs: Map[str, int](),
         hash: Map[str, str](),
         hash_path: "",
@@ -1465,7 +1471,7 @@ fn run_fast(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool) -> Fast {
         phys: sh.phys,
         shadow: true,
         bail: false,
-        defer_ok: true,
+        defer_ok: sh.ronly.len == 0,
         eof0: false,
         name: sh.name,
         line: sh.line,
@@ -1780,7 +1786,7 @@ fn fast_shadow(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool, mut t: Sh) -> Fas
             to = pw
         }
     }
-    sync_env(t)
+    sync_env_fast(sh, t)
     var k = 0
     while k < names.len {
         env_set(names[k], values[k]) else |_| {}
@@ -1830,7 +1836,7 @@ fn fast_shadow(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool, mut t: Sh) -> Fas
         st = code
         sig = signo
     }
-    env_back(t, names)
+    env_back_fast(sh, t, names)
     // The simple command's descriptor 2, while its redirections still
     // exist (pelt#53); a subshell's parent notice stays outside them.
     if signal_spoken(sig) && sh.sub == 0 {
@@ -2715,6 +2721,53 @@ fn sync_env(sh: Sh) {
             if env_wants(sh, k) {
                 env_set(k, sh.vals[k] else "") else |_| {}
             }
+        }
+    }
+}
+
+/// Whether the fast path's shadow `t` hands `k` to a program: exported
+/// by the shadow's own table (`set -a` in this command) or else by the
+/// real state's, and set in the shadow.
+fn fast_wants(sh: Sh, t: Sh, k: str) -> bool {
+    let on = t.exported[k] else {
+        sh.exported[k] else false
+    }
+    on && has_var(t, k)
+}
+
+/// `sync_env` for a program the fast path starts: the shadow `t` holds
+/// only the exports this command made, so the real state's are read too.
+fn sync_env_fast(sh: Sh, t: Sh) {
+    region scratch {
+        for kv in env_vars() {
+            let eq = kv.find("=") else -1
+            if eq > 0 {
+                let k = kv[0..eq]
+                if !fast_wants(sh, t, k) {
+                    env_unset(k) else |_| {}
+                }
+            }
+        }
+        for k in sh.exported.keys() {
+            if fast_wants(sh, t, k) {
+                env_set(k, t.vals[k] else "") else |_| {}
+            }
+        }
+        for k in t.exported.keys() {
+            if fast_wants(sh, t, k) {
+                env_set(k, t.vals[k] else "") else |_| {}
+            }
+        }
+    }
+}
+
+/// `env_back` for a program the fast path started (`sync_env_fast`).
+fn env_back_fast(sh: Sh, t: Sh, names: List[str]) {
+    for n in names {
+        if fast_wants(sh, t, n) {
+            env_set(n, value_of(t, n)) else |_| {}
+        } else {
+            env_unset(n) else |_| {}
         }
     }
 }
