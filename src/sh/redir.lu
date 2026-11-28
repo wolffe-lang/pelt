@@ -118,7 +118,9 @@ fn feed(vals: Map[str, str], data: List[byte]) -> int {
 /// answered as `FD_CLOSED`.
 fn feed_said(mut sh: Sh, h: int) -> int {
     if h == FEED_NO_TEMP {
-        diag(mut sh, "cannot make a temporary file in {temp_dir(sh.vals)}")
+        let dir = temp_dir(sh.vals)
+        let also = if dir == "/tmp" then "" else " or in /tmp"
+        diag(mut sh, "cannot make a temporary file in {dir}{also}")
         return FD_CLOSED
     }
     if h == FEED_NO_READ {
@@ -138,9 +140,21 @@ fn temp_dir(vals: Map[str, str]) -> str {
 }
 
 /// A new file nobody else has (`fs_open_mode` 4, create-new): its write
-/// handle and path, or (-1, "").
+/// handle and path, or (-1, ""). It is made in `temp_dir`, or in `/tmp`
+/// when that directory cannot hold one (pelt#165): XBD 8.3 and 10.1 make
+/// both a place for temporary files, and what the reference shells print
+/// shows neither which directory they use nor whether they use one.
 fn temp_create(vals: Map[str, str]) -> (int, str) {
     let dir = temp_dir(vals)
+    let (h, path) = temp_in(dir)
+    if h >= 0 || dir == "/tmp" {
+        return (h, path)
+    }
+    temp_in("/tmp")
+}
+
+/// A new file nobody else has in `dir`, by up to 16 random names.
+fn temp_in(dir: str) -> (int, str) {
     var tries = 0
     while tries < 16 {
         var o = buf()
