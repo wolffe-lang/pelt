@@ -1,0 +1,66 @@
+//! The temporary file's directory (pelt#165), below the differential
+//! rows, which cannot see it: TMPDIR's directory when it can hold the
+//! file, else /tmp.
+
+fn want_temp_files(mut bad: List[str]) {
+    let free = temp_probe_dir(0o700)
+    if free.len == 0 {
+        (mut bad).push("temp-files: no scratch directory could be made in /tmp")
+        return
+    }
+    var sh = new_sh("temp-files")
+    sh.vals["TMPDIR"] = free
+    let (h, path) = temp_create(sh.vals)
+    if h < 0 || !path.starts_with("{free}/") {
+        (mut bad).push("temp-files: TMPDIR {free} can hold a file, but it went to {escaped(path)}")
+    }
+    if h >= 0 {
+        fs_close(h) else |_| {}
+        fs_remove(path) else |_| {}
+    }
+    fs_remove_dir(free) else |_| {}
+    // a read-only directory holds files for root
+    if (os_euid() else -1) == 0 {
+        return
+    }
+    let shut = temp_probe_dir(0o500)
+    if shut.len == 0 {
+        (mut bad).push("temp-files: no read-only scratch directory could be made in /tmp")
+        return
+    }
+    sh.vals["TMPDIR"] = shut
+    let (h2, path2) = temp_create(sh.vals)
+    if h2 < 0 || !path2.starts_with("/tmp/pelt.") {
+        (mut bad).push(
+            "temp-files: TMPDIR {shut} cannot hold a file, but it went to {escaped(path2)}",
+        )
+    }
+    if h2 >= 0 {
+        fs_close(h2) else |_| {}
+        fs_remove(path2) else |_| {}
+    }
+    fs_remove_dir(shut) else |_| {}
+}
+
+/// A new directory in /tmp with `mode`, by up to 16 random names; its
+/// path, or "".
+fn temp_probe_dir(mode: int) -> str {
+    var tries = 0
+    while tries < 16 {
+        var o = buf()
+        put(mut o, "/tmp/pelt-selftest.")
+        for x in os_random(10) {
+            putb(mut o, 97 + (x & 255) % 26)
+        }
+        let path = text(o)
+        var made = true
+        fs_create_dir_mode(path, mode) else |_| {
+            made = false
+        }
+        if made {
+            return path
+        }
+        tries += 1
+    }
+    ""
+}
