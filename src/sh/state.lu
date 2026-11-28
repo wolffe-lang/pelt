@@ -1450,7 +1450,7 @@ fn cap_text(sh: Sh, start: int, trim: bool) -> str {
 fn cap_feed(mut sh: Sh) -> int {
     let start = cap_close(mut sh)
     let h = copy region cf {
-        feed(sh, sh.cap_data[start..sh.cap_data.len])
+        feed(sh.vals, sh.cap_data[start..sh.cap_data.len])
     }
     cap_cut(mut sh, start)
     feed_said(mut sh, h)

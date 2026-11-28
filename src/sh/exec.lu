@@ -1700,7 +1700,7 @@ fn fast_shadow(sh: Sh, a: Ast, n: int, nowait: bool, bg: bool, mut t: Sh) -> Fas
             if nowait {
                 // a pure built-in may run again: when no reader can be
                 // made, the ordinary path makes it and says why
-                let fd = feed(t, t.cap_data)
+                let fd = feed(t.vals, t.cap_data)
                 if fd < 0 {
                     return slow()
                 }
@@ -2914,7 +2914,7 @@ fn start_child(
             if nowait && sh.stage_w >= 0 && level == sh.stage_cap {
                 to = sh.stage_w
             } else if nowait {
-                let (w, p) = temp_create(sh)
+                let (w, p) = temp_create(sh.vals)
                 if w >= 0 {
                     let r = fs_open(p) else -1
                     fs_remove(p) else |_| {}

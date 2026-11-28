@@ -1002,7 +1002,7 @@ fn bi_fc(mut sh: Sh, args: List[str]) -> int {
 fn fc_edit(mut sh: Sh, body: str, editor: str) -> (int, str) {
     let path = fc_temp(sh, body)
     if path.len == 0 {
-        diag(mut sh, "fc: cannot make a file to edit in {temp_dir(sh)}")
+        diag(mut sh, "fc: cannot make a file to edit in {temp_dir(sh.vals)}")
         return (1, "")
     }
     let st = eval_string(mut sh, "{editor} {squote(path)}", "fc")
@@ -1025,7 +1025,7 @@ fn fc_edit(mut sh: Sh, body: str, editor: str) -> (int, str) {
 
 /// A new file (create-new, mode 0600) holding `body`; its path, or "".
 fn fc_temp(sh: Sh, body: str) -> str {
-    let dir = temp_dir(sh)
+    let dir = temp_dir(sh.vals)
     var tries = 0
     while tries < 16 {
         var o = buf()
