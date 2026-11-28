@@ -146,11 +146,7 @@ fn temp_dir(vals: Map[str, str]) -> str {
 /// shows neither which directory they use nor whether they use one.
 fn temp_create(vals: Map[str, str]) -> (int, str) {
     let dir = temp_dir(vals)
-    let (h, path) = temp_in(dir)
-    if h >= 0 || dir == "/tmp" {
-        return (h, path)
-    }
-    temp_in("/tmp")
+    temp_in(dir)
 }
 
 /// A new file nobody else has in `dir`, by up to 16 random names.
