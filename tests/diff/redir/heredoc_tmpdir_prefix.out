@@ -1,0 +1,8 @@
+5001
+program 0
+read 0 1
+5001
+eval 0
+subshell 0
+colon 0
+subshell 0
