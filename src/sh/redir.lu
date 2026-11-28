@@ -145,11 +145,7 @@ fn temp_dir(vals: Map[str, str]) -> str {
 /// both a place for temporary files, and what the reference shells print
 /// shows neither which directory they use nor whether they use one.
 fn temp_create(vals: Map[str, str]) -> (int, str) {
-    let dir = temp_dir(vals)
-    let (h, path) = temp_in(dir)
-    if h >= 0 || dir == "/tmp" {
-        return (h, path)
-    }
+    let _dir = temp_dir(vals)
     temp_in("/tmp")
 }
 
