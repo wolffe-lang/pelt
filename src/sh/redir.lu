@@ -102,9 +102,6 @@ fn feed(vals: Map[str, str], data: List[byte]) -> int {
     if w < 0 {
         return FEED_NO_TEMP
     }
-    if data.len > 0 {
-        fs_write_chunk(w, data) else |_| {}
-    }
     let r = fs_open(path) else -1
     fs_remove(path) else |_| {}
     fs_close(w) else |_| {}
